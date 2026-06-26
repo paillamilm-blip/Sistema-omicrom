@@ -43,3 +43,37 @@ export async function loadSecureMessages(networkId: string): Promise<SecureHisto
     integrity_ok: data?.integrity_ok !== false,
   };
 }
+
+// ===== Apertura de la Caja Negra (quórum de árbitros) =====
+
+export interface BlackboxTranscriptItem {
+  id: string;
+  sender_id: string;
+  sender?: { id: string; username: string };
+  content: string;
+  created_at: string;
+}
+
+export interface BlackboxResult {
+  unlocked: boolean;
+  votes: number;
+  threshold: number;
+  integrity_ok?: boolean;
+  transcript?: BlackboxTranscriptItem[];
+  message?: string;
+}
+
+/**
+ * Un árbitro asignado vota para abrir la Caja Negra de una disputa.
+ * - Si aún no hay quórum: devuelve { unlocked:false, votes, threshold }.
+ * - Si se alcanza el quórum (2 de 3): devuelve la transcripción descifrada.
+ */
+export async function openBlackbox(disputeId: string): Promise<BlackboxResult> {
+  const { data, error } = await supabase.functions.invoke('blackbox-open', {
+    body: { dispute_id: disputeId },
+  });
+  if (error || data?.error) {
+    throw new Error(data?.error || error?.message || 'Error al abrir la Caja Negra.');
+  }
+  return data as BlackboxResult;
+}
