@@ -1,0 +1,379 @@
+/* ═══════════════════════════════════════════════════════════
+   SISTEMA ÓMICRON · INTERFAZ CYBERPUNK INDUSTRIA 5.0
+   Sistema de diseño holográfico global
+   ═══════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neon-cyan:    #00f3ff;
+  --neon-magenta: #ff2bd6;
+  --neon-violet:  #7c3aed;
+  --neon-green:   #00ff9f;
+  --neon-gold:    #ffb800;
+  --void:         #04060f;
+  --glow-cyan:    0 0 12px rgba(0, 243, 255, 0.55);
+  --glow-magenta: 0 0 12px rgba(255, 43, 214, 0.55);
+  --glow-violet:  0 0 14px rgba(124, 58, 237, 0.6);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--void);
+  color: var(--neon-cyan);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+
+/* ─── FONDO: GRID 3D HOLOGRÁFICO ANIMADO + VIÑETA ─── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 243, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  background-position: center;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, #000 55%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, #000 55%, transparent 100%);
+  animation: gridPan 24s linear infinite;
+}
+
+/* ─── SCANLINES CRT ─── */
+body::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.18) 50%);
+  background-size: 100% 4px;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  border-left: 1px solid rgba(0, 243, 255, 0.15);
+  border-right: 1px solid rgba(0, 243, 255, 0.15);
+  box-shadow: 0 0 60px rgba(0, 243, 255, 0.08), 0 0 120px rgba(124, 58, 237, 0.06);
+  background:
+    radial-gradient(circle at 50% -10%, rgba(124, 58, 237, 0.18), transparent 60%),
+    radial-gradient(circle at 50% 110%, rgba(0, 243, 255, 0.1), transparent 55%);
+}
+
+
+/* ═══ TARJETAS HOLOGRÁFICAS (glassmorphism + borde neón animado) ═══ */
+.bg-omicron-card {
+  position: relative;
+  background:
+    linear-gradient(135deg, rgba(11, 17, 36, 0.85) 0%, rgba(7, 11, 24, 0.92) 100%) !important;
+  border: 1px solid rgba(0, 243, 255, 0.35) !important;
+  box-shadow:
+    0 0 18px rgba(0, 243, 255, 0.12),
+    inset 0 0 24px rgba(124, 58, 237, 0.06) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+/* Brillo holográfico que recorre la tarjeta */
+.bg-omicron-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(0, 243, 255, 0.08) 45%,
+    rgba(255, 43, 214, 0.08) 55%,
+    transparent 70%
+  );
+  background-size: 250% 250%;
+  animation: holoShimmer 7s ease-in-out infinite;
+}
+
+/* Línea superior de energía */
+.bg-omicron-card::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-magenta), transparent);
+  opacity: 0.7;
+}
+
+
+/* ═══ BARRA DE TAB ACTIVO (neón pulsante) — antes faltaba ═══ */
+.tab-active-bar {
+  background: linear-gradient(90deg, var(--neon-violet), var(--neon-cyan), var(--neon-magenta));
+  background-size: 200% 100%;
+  box-shadow: 0 0 10px var(--neon-cyan), 0 0 18px rgba(124, 58, 237, 0.7);
+  border-radius: 2px;
+  animation: barFlow 3s linear infinite, glowPulse 2s ease-in-out infinite;
+}
+
+/* ═══ TEXTO NEÓN / HOLOGRAMA ═══ */
+.cyber-text-neon {
+  text-shadow: 0 0 8px rgba(0, 243, 255, 0.6), 0 0 16px rgba(0, 243, 255, 0.35);
+}
+
+.holo-text {
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-violet), var(--neon-magenta), var(--neon-cyan));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: holoText 6s linear infinite;
+}
+
+.glitch {
+  position: relative;
+  animation: glitchSkew 4s infinite steps(1);
+}
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  overflow: hidden;
+}
+.glitch::before { color: var(--neon-magenta); animation: glitchTop 2.5s infinite linear alternate; }
+.glitch::after  { color: var(--neon-cyan);    animation: glitchBot 2s infinite linear alternate; }
+
+
+/* ═══ SCROLLBAR ESTILO CONSOLA ═══ */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--neon-cyan), var(--neon-violet));
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+}
+
+.scroll-area {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ═══ KEYFRAMES ═══ */
+@keyframes gridPan {
+  0%   { background-position: 0 0; }
+  100% { background-position: 44px 44px; }
+}
+
+@keyframes holoShimmer {
+  0%, 100% { background-position: 0% 0%; }
+  50%      { background-position: 100% 100%; }
+}
+
+@keyframes barFlow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 1;   filter: brightness(1); }
+  50%      { opacity: 0.7; filter: brightness(1.4); }
+}
+
+@keyframes holoText {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+
+/* radarStroke vive ahora SOLO dentro de ProgressRadar.tsx (style inline) para
+   evitar el conflicto de doble definición. Aquí ya no se declara. */
+
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.8; }
+}
+.animate-flicker { animation: flicker 3s infinite; }
+
+@keyframes hologramFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+@keyframes glitchSkew {
+  0%, 90%, 100% { transform: skewX(0deg); }
+  92%  { transform: skewX(3deg); }
+  94%  { transform: skewX(-3deg); }
+}
+@keyframes glitchTop {
+  0%   { clip-path: inset(0 0 70% 0); transform: translate(-2px, -1px); }
+  100% { clip-path: inset(0 0 60% 0); transform: translate(2px, 1px); }
+}
+@keyframes glitchBot {
+  0%   { clip-path: inset(70% 0 0 0); transform: translate(2px, 1px); }
+  100% { clip-path: inset(60% 0 0 0); transform: translate(-2px, -1px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, body::after, .bg-omicron-card::before, .tab-active-bar, .holo-text {
+    animation: none !important;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   UTILIDADES HOLOGRÁFICAS REUTILIZABLES (Industria 5.0)
+   Úsalas en componentes: className="holo-panel" etc.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Panel holográfico flotante (alternativa más marcada a bg-omicron-card) */
+.holo-panel {
+  position: relative;
+  background: linear-gradient(135deg, rgba(11,17,36,0.7), rgba(7,11,24,0.85));
+  border: 1px solid rgba(0,243,255,0.3);
+  border-radius: 16px;
+  box-shadow: 0 0 24px rgba(0,243,255,0.1), inset 0 0 30px rgba(124,58,237,0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: hologramFloat 6s ease-in-out infinite;
+}
+
+/* Botón neón con barrido de luz al hover */
+.neon-btn {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  background: rgba(0,243,255,0.05);
+  text-shadow: var(--glow-cyan);
+  box-shadow: 0 0 12px rgba(0,243,255,0.25), inset 0 0 12px rgba(0,243,255,0.08);
+  transition: all 0.25s ease;
+}
+.neon-btn:hover {
+  background: rgba(0,243,255,0.15);
+  box-shadow: 0 0 22px rgba(0,243,255,0.55), inset 0 0 18px rgba(0,243,255,0.15);
+}
+.neon-btn::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -120%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.5s ease;
+}
+.neon-btn:hover::after { left: 140%; }
+
+
+/* Borde neón animado (energía corriendo por el contorno) */
+.neon-border {
+  position: relative;
+  border-radius: 14px;
+}
+.neon-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(120deg, var(--neon-cyan), var(--neon-violet), var(--neon-magenta), var(--neon-cyan));
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: holoText 5s linear infinite;
+  pointer-events: none;
+}
+
+/* Modificadores de color para acentos neón */
+.neon-magenta { color: var(--neon-magenta); text-shadow: var(--glow-magenta); }
+.neon-violet  { color: var(--neon-violet);  text-shadow: var(--glow-violet); }
+.neon-green   { color: var(--neon-green);   text-shadow: 0 0 12px rgba(0,255,159,0.55); }
+.neon-gold    { color: var(--neon-gold);    text-shadow: 0 0 12px rgba(255,184,0,0.55); }
+
+/* Glow utilitario para íconos / contenedores */
+.glow-cyan    { box-shadow: var(--glow-cyan); }
+.glow-magenta { box-shadow: var(--glow-magenta); }
+.glow-violet  { box-shadow: var(--glow-violet); }
+
+/* Chip / etiqueta de estado HUD */
+.hud-chip {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(0,243,255,0.3);
+  background: rgba(0,243,255,0.06);
+  box-shadow: inset 0 0 10px rgba(0,243,255,0.08);
+}
+
+/* Flotación de holograma utilitaria */
+.animate-hologram { animation: hologramFloat 6s ease-in-out infinite; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   CLASES UTILITARIAS USADAS POR COMPONENTES (antes faltaban)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Hover de tarjetas del Market */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 243, 255, 0.5);
+  box-shadow: 0 0 22px rgba(0, 243, 255, 0.18);
+}
+
+/* Badge de PE (vendedores) */
+.pe-badge {
+  background: rgba(255, 184, 0, 0.12);
+  border: 1px solid rgba(255, 184, 0, 0.35);
+  box-shadow: 0 0 8px rgba(255, 184, 0, 0.25);
+}
+
+/* Punto pulsante (estado "en vivo") */
+.pulse-dot {
+  animation: pulseDot 1.6s ease-in-out infinite;
+}
+@keyframes pulseDot {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* Entrada de mensajes del chat */
+.msg-enter {
+  animation: msgEnter 0.28s ease-out;
+}
+@keyframes msgEnter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Spinner genérico (usado por MaxSkillTab via style inline) */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Pulso del header del MaxSkillTab */
+@keyframes pulse-cp {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 6px var(--neon-cyan); }
+  50%      { opacity: 0.5; box-shadow: 0 0 14px var(--neon-cyan); }
+}
