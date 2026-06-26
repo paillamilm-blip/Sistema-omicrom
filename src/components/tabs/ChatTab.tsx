@@ -1,134 +1,184 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Shield, Lock, Timer } from 'lucide-react';
+import { Send, Shield, Lock, Timer, CheckCircle2, AlertTriangle, MessageSquare } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
+import { sendSecureMessage, loadSecureMessages } from '../../lib/secureChat';
 import type { Message } from '../../types';
 
-const SYSTEM_MESSAGES: Omit<Message, 'id' | 'sender_id' | 'receiver_id' | 'network_id' | 'is_read'>[] = [
-  {
-    content: 'Bienvenido al canal seguro! Toda comunicación es monitoreada por el escáner de seguridad y respaldada en la Caja Negra.',
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-  }
-];
+interface Room {
+  network_id:    string; // id del contrato
+  title:         string;
+  status:        string;
+  counterpart:   string;
+}
 
 export function ChatTab() {
   const { profile } = useApp();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const mountedRef = useRef(true);
 
-  // Ghost Approval (Fase 2): SLA de 15 min sin objeción = liberación de fondos.
-  // TODO: estos valores vendrán de la tabla escrow_contracts (deadline real).
-  const isGhostApprovalActive = true;
+  const [rooms, setRooms]         = useState<Room[]>([]);
+  const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const [messages, setMessages]   = useState<Message[]>([]);
+  const [integrityOk, setIntegrityOk] = useState(true);
+  const [input, setInput]         = useState('');
+  const [sending, setSending]     = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(true);
+  const [loadingMsgs, setLoadingMsgs]   = useState(false);
+
+  const bottomRef   = useRef<HTMLDivElement>(null);
+  const channelRef  = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const mountedRef  = useRef(true);
+
+  // ── Ghost Approval (banner SLA 15 min) ──
+  const activeRoomData = rooms.find(r => r.network_id === activeRoom);
+  const isGhostApprovalActive = activeRoomData?.status === 'delivered' || activeRoomData?.status === 'in_progress';
   const slaMinutes = 15;
   const [ghostSecondsLeft, setGhostSecondsLeft] = useState(slaMinutes * 60);
 
-  // ✅ Innovación: cuenta regresiva funcional (antes era estática "29:59")
   useEffect(() => {
     if (!isGhostApprovalActive) return;
-    const t = setInterval(() => {
-      setGhostSecondsLeft(s => (s > 0 ? s - 1 : 0));
-    }, 1000);
+    setGhostSecondsLeft(slaMinutes * 60);
+    const t = setInterval(() => setGhostSecondsLeft(s => (s > 0 ? s - 1 : 0)), 1000);
     return () => clearInterval(t);
-  }, [isGhostApprovalActive]);
+  }, [isGhostApprovalActive, activeRoom]);
 
   const ghostMM = String(Math.floor(ghostSecondsLeft / 60)).padStart(2, '0');
   const ghostSS = String(ghostSecondsLeft % 60).padStart(2, '0');
 
-  const loadMessages = useCallback(async () => {
+
+  // ── Cargar salas (contratos del usuario) ──
+  const loadRooms = useCallback(async () => {
     if (!profile) return;
-    const { data } = await supabase
-      .from('messages')
-      .select('*, sender:profiles!messages_sender_id_fkey(id, username)')
-      .or(`sender_id.eq.${profile.id},receiver_id.eq.${profile.id}`)
-      .order('created_at', { ascending: true })
-      .limit(50);
-    if (mountedRef.current) {
-      setMessages(data as Message[] ?? []);
+    setLoadingRooms(true);
+    const { data: cs } = await supabase
+      .from('contracts')
+      .select('*')
+      .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
+      .order('created_at', { ascending: false });
+
+    const contracts = (cs ?? []) as Array<{
+      id: string; title: string; status: string; buyer_id: string; seller_id: string;
+    }>;
+
+    // Nombres de las contrapartes (sin joins, en una sola query)
+    const ids = [...new Set(contracts.flatMap(c => [c.buyer_id, c.seller_id]))];
+    let nameById: Record<string, string> = {};
+    if (ids.length) {
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('id, username, full_name')
+        .in('id', ids);
+      nameById = Object.fromEntries(
+        (profs ?? []).map((p: { id: string; username?: string; full_name?: string }) =>
+          [p.id, p.username || p.full_name || 'Nodo']),
+      );
     }
+
+    const list: Room[] = contracts.map(c => {
+      const otherId = c.buyer_id === profile.id ? c.seller_id : c.buyer_id;
+      return {
+        network_id:  c.id,
+        title:       c.title || 'Contrato',
+        status:      c.status || 'active',
+        counterpart: nameById[otherId] || 'Nodo',
+      };
+    });
+
+    if (mountedRef.current) {
+      setRooms(list);
+      setLoadingRooms(false);
+      // Auto-seleccionar la primera sala si no hay ninguna activa
+      if (!activeRoom && list.length) setActiveRoom(list[0].network_id);
+    }
+  }, [profile, activeRoom]);
+
+
+  // ── Cargar mensajes (descifrados) de la sala activa ──
+  const loadMessages = useCallback(async () => {
+    if (!activeRoom) { setMessages([]); return; }
+    setLoadingMsgs(true);
+    try {
+      const { messages: msgs, integrity_ok } = await loadSecureMessages(activeRoom);
+      if (mountedRef.current) {
+        setMessages(msgs);
+        setIntegrityOk(integrity_ok);
+      }
+    } catch (e) {
+      console.error('Error cargando chat seguro:', e);
+      if (mountedRef.current) setMessages([]);
+    } finally {
+      if (mountedRef.current) setLoadingMsgs(false);
+    }
+  }, [activeRoom]);
+
+
+  // Montaje: cargar salas
+  useEffect(() => {
+    mountedRef.current = true;
+    loadRooms();
+    return () => { mountedRef.current = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
 
+  // Cambio de sala: cargar mensajes + suscribir realtime de esa sala
   useEffect(() => {
-    if (!profile) return;
-    mountedRef.current = true;
-
+    if (!activeRoom) return;
     loadMessages();
 
     const channel = supabase
-      .channel(`chat-${profile.id}`)
+      .channel(`room-${activeRoom}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
-      }, payload => {
-        const newMsg = payload.new as Message;
-        if (newMsg.sender_id === profile.id || newMsg.receiver_id === profile.id) {
-          setMessages(prev => {
-            if (prev.some(m => m.id === newMsg.id)) return prev;
-            return [...prev, newMsg];
-          });
-        }
+        filter: `network_id=eq.${activeRoom}`,
+      }, () => {
+        // El payload llega cifrado → recargar descifrado
+        loadMessages();
       })
       .subscribe();
 
     channelRef.current = channel;
-
     return () => {
-      mountedRef.current = false;
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [profile, loadMessages]);
+  }, [activeRoom, loadMessages]);
+
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
 
+  // ── Enviar mensaje cifrado ──
   async function sendMessage() {
-    if (!input.trim() || !profile || sending) return;
+    if (!input.trim() || !profile || !activeRoom || sending) return;
     const content = input.trim();
     setInput('');
     setSending(true);
-
-    const optimistic: Message = {
-      id: crypto.randomUUID(),
-      sender_id: profile.id,
-      receiver_id: null,
-      network_id: null,
-      content,
-      is_read: false,
-      created_at: new Date().toISOString(),
-    };
-    setMessages(prev => [...prev, optimistic]);
-
-    await supabase.from('messages').insert({
-      sender_id: profile.id,
-      content,
-    });
-
-    setSending(false);
+    try {
+      await sendSecureMessage(activeRoom, content);
+      await loadMessages();
+    } catch (e) {
+      console.error('Error enviando mensaje:', e);
+      setInput(content); // restaurar si falla
+    } finally {
+      setSending(false);
+    }
   }
 
   function formatTime(iso: string) {
     return new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
   }
 
-  const allMessages = [
-    ...SYSTEM_MESSAGES.map((m, i) => ({ ...m, id: `sys-${i}`, sender_id: 'system', receiver_id: null, network_id: null, is_read: true })),
-    ...messages,
-  ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-
 
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-omicron-bg">
-      {/* Header alineado al Manifiesto */}
+
+      {/* ── HEADER ── */}
       <div className="flex-none px-4 py-3 bg-omicron-card border-b border-omicron-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -136,23 +186,57 @@ export function ChatTab() {
               <Lock size={18} className="text-omicron-accent" />
             </div>
             <div>
-              <p className="text-omicron-text font-semibold text-sm">Chat Seguro</p>
+              <p className="text-omicron-text font-semibold text-sm">
+                {activeRoomData ? activeRoomData.counterpart : 'Chat Seguro'}
+              </p>
               <div className="flex items-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-omicron-green pulse-dot" />
-                <span className="text-omicron-cyan text-xs">Caja Negra Activa</span>
-                <span className="text-omicron-subtle text-xs">. Cifrado E2E</span>
+                <span className="text-omicron-cyan text-xs">Caja Negra</span>
+                <span className="text-omicron-subtle text-xs">· AES-256</span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-omicron-subtle text-xs">
-            <Shield size={12} className="text-omicron-accent" />
-            <span className="text-[11px]">Auditado<br/>en vivo</span>
-          </div>
+
+          {/* Sello de integridad de la cadena */}
+          {activeRoom && (
+            integrityOk ? (
+              <div className="flex items-center gap-1 text-omicron-green text-[11px]">
+                <CheckCircle2 size={13} />
+                <span>Cadena<br/>íntegra</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-red-400 text-[11px] animate-pulse">
+                <AlertTriangle size={13} />
+                <span>Cadena<br/>alterada</span>
+              </div>
+            )
+          )}
         </div>
       </div>
 
-      {/* FIX H-04: Banner Ghost Approval Dinámico */}
-      {isGhostApprovalActive && (
+
+      {/* ── SELECTOR DE SALAS ── */}
+      {rooms.length > 0 && (
+        <div className="flex-none flex gap-2 px-3 py-2 bg-omicron-bg border-b border-omicron-border overflow-x-auto">
+          {rooms.map(r => (
+            <button
+              key={r.network_id}
+              onClick={() => setActiveRoom(r.network_id)}
+              className={`flex-none px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+                activeRoom === r.network_id
+                  ? 'bg-omicron-accent/20 border-omicron-accent/50 text-omicron-text'
+                  : 'bg-omicron-card border-omicron-border text-omicron-subtle'
+              }`}
+            >
+              {r.counterpart}
+            </button>
+          ))}
+        </div>
+      )}
+
+
+      {/* ── BANNER GHOST APPROVAL ── */}
+      {activeRoom && isGhostApprovalActive && (
         <div className="flex-none bg-omicron-accent/10 border-b border-omicron-accent/20 px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Timer size={14} className="text-omicron-accent animate-pulse" />
@@ -175,45 +259,65 @@ export function ChatTab() {
       )}
 
 
-      {/* Messages */}
+      {/* ── MENSAJES ── */}
       <div className="flex-1 scroll-area px-4 py-3 space-y-3">
-        {allMessages.map((msg, idx) => {
+
+        {/* Sin salas */}
+        {!loadingRooms && rooms.length === 0 && (
+          <div className="h-full flex flex-col items-center justify-center text-center px-6">
+            <MessageSquare size={40} className="text-omicron-subtle mb-3 opacity-50" />
+            <p className="text-omicron-text text-sm font-medium">Aún no tienes salas activas</p>
+            <p className="text-omicron-subtle text-xs mt-1">
+              Cuando inicies un contrato (Escrow) en el Market, se abrirá aquí un canal seguro y cifrado con tu contraparte.
+            </p>
+          </div>
+        )}
+
+        {/* Cargando */}
+        {loadingMsgs && (
+          <div className="flex justify-center py-6">
+            <span className="text-omicron-subtle text-xs animate-pulse">Descifrando Caja Negra…</span>
+          </div>
+        )}
+
+        {/* Sala vacía */}
+        {activeRoom && !loadingMsgs && messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <Shield size={28} className="text-omicron-accent mb-2 opacity-60" />
+            <p className="text-omicron-subtle text-xs">
+              Canal cifrado listo. Envía el primer mensaje seguro.
+            </p>
+          </div>
+        )}
+
+        {/* Lista de mensajes */}
+        {messages.map((msg, idx) => {
           const isOwn = msg.sender_id === profile?.id;
-          const isSystem = msg.sender_id === 'system';
-          const senderName = isSystem ? 'Sistema Ómicron' : isOwn ? (profile?.username ?? 'Tú') : ((msg as Message & { sender?: { username: string } }).sender?.username ?? 'Nodo');
+          const senderName = isOwn
+            ? (profile?.username ?? 'Tú')
+            : ((msg as Message & { sender?: { username: string } }).sender?.username ?? activeRoomData?.counterpart ?? 'Nodo');
 
           return (
             <div key={`${msg.id}-${idx}`} className={`msg-enter ${isOwn ? 'flex flex-col items-end' : 'flex flex-col items-start'}`}>
               <span className="text-omicron-subtle text-[10px] mb-1 px-1">
-                {isSystem ? 'Sistema Ómicron' : senderName} . {formatTime(msg.created_at)}
+                {senderName} · {formatTime(msg.created_at)}
               </span>
               <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                 isOwn
                   ? 'bg-omicron-accent/20 border border-omicron-accent/40 rounded-tr-sm'
                   : 'bg-omicron-card border border-omicron-border rounded-tl-sm'
               }`}>
-                <p className="text-omicron-text text-sm leading-relaxed">{msg.content}</p>
+                <p className="text-omicron-text text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
               </div>
             </div>
           );
         })}
 
-        {messages.length === 0 && (
-          <div className="flex flex-col items-start msg-enter">
-            <span className="text-omicron-subtle text-[10px] mb-1 px-1">Nodo_Arquitecto_N2 . 10:15</span>
-            <div className="max-w-[85%] rounded-2xl rounded-tl-sm px-4 py-3 bg-omicron-card border border-omicron-border">
-              <p className="text-omicron-text text-sm leading-relaxed">
-                ¡Hola! Vi tu perfil en el Market. ¿Podemos coordinar un proyecto bajo contrato Escrow?
-              </p>
-            </div>
-          </div>
-        )}
-
         <div ref={bottomRef} />
       </div>
 
 
-      {/* Input */}
+      {/* ── INPUT ── */}
       <div className="flex-none px-4 py-3 bg-omicron-bg border-t border-omicron-border">
         <div className="flex items-center gap-2">
           <input
@@ -221,12 +325,13 @@ export function ChatTab() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-            placeholder="Escribe un mensaje seguro..."
-            className="flex-1 bg-omicron-card border border-omicron-border rounded-2xl px-4 py-3 text-omicron-text placeholder:text-omicron-muted text-sm focus:outline-none focus:border-omicron-accent transition"
+            placeholder={activeRoom ? 'Escribe un mensaje cifrado…' : 'Selecciona una sala…'}
+            disabled={!activeRoom}
+            className="flex-1 bg-omicron-card border border-omicron-border rounded-2xl px-4 py-3 text-omicron-text placeholder:text-omicron-muted text-sm focus:outline-none focus:border-omicron-accent transition disabled:opacity-50"
           />
           <button
             onClick={sendMessage}
-            disabled={!input.trim() || sending}
+            disabled={!input.trim() || sending || !activeRoom}
             className="w-11 h-11 bg-omicron-accent hover:bg-violet-600 disabled:opacity-40 rounded-xl flex items-center justify-center transition active:scale-90"
           >
             <Send size={16} className="text-white" />
