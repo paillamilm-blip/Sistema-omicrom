@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Auditoría · Sistema Ómicron</title>
+<style>
+  :root{
+    --bg:#060a12; --surface:#0d1524; --card:#101b30; --border:#1e3a5f;
+    --cyan:#00f5ff; --cyanDim:#3aa0b5; --gold:#ffd700; --green:#22c55e;
+    --red:#ff3b5c; --purple:#a855f7; --text:#dbeafe; --sub:#5f7e9c;
+    --mono:'Share Tech Mono','Courier New',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+    background-image:linear-gradient(rgba(0,245,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.04) 1px,transparent 1px);
+    background-size:32px 32px;padding:24px;max-width:1000px;margin:0 auto}
+  h1{font-family:var(--mono);color:var(--cyan);font-size:26px;letter-spacing:2px;text-shadow:0 0 12px rgba(0,245,255,.4)}
+  .sub{color:var(--sub);font-family:var(--mono);font-size:12px;margin-top:4px;letter-spacing:1px}
+  .bar{height:10px;background:var(--card);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin:16px 0 6px}
+  .bar > div{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));width:0;transition:width .4s}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+  .stat{flex:1;min-width:120px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}
+  .stat .n{font-family:var(--mono);font-size:24px;font-weight:700}
+  .stat .l{font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:1px}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+  .filters button{background:var(--card);border:1px solid var(--border);color:var(--sub);
+    font-family:var(--mono);font-size:11px;padding:6px 12px;border-radius:20px;cursor:pointer;letter-spacing:1px}
+  .filters button.active{color:var(--cyan);border-color:var(--cyan)}
+  .item{background:var(--surface);border:1px solid var(--border);border-left-width:4px;border-radius:10px;padding:14px;margin-bottom:12px;transition:opacity .2s}
+  .item.done{opacity:.45}
+  .item.done .title{text-decoration:line-through}
+  .item.C{border-left-color:var(--red)} .item.H{border-left-color:var(--gold)}
+  .item.M{border-left-color:var(--purple)} .item.L{border-left-color:var(--cyanDim)}
+  .row{display:flex;align-items:flex-start;gap:12px}
+  .row input{margin-top:4px;width:18px;height:18px;accent-color:var(--cyan);cursor:pointer;flex:none}
+  .title{font-weight:700;font-size:15px}
+  .badge{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:10px;letter-spacing:1px;margin-left:8px;vertical-align:middle}
+  .b-C{background:rgba(255,59,92,.15);color:var(--red);border:1px solid var(--red)}
+  .b-H{background:rgba(255,215,0,.12);color:var(--gold);border:1px solid var(--gold)}
+  .b-M{background:rgba(168,85,247,.12);color:var(--purple);border:1px solid var(--purple)}
+  .b-L{background:rgba(58,160,181,.12);color:var(--cyanDim);border:1px solid var(--cyanDim)}
+  .tag{font-family:var(--mono);font-size:9px;color:var(--sub);border:1px solid var(--border);padding:1px 6px;border-radius:4px;margin-left:6px}
+  .desc{color:var(--text);font-size:13px;line-height:1.5;margin-top:8px}
+  .fix{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:8px;font-size:12.5px;line-height:1.5}
+  .fix b{color:var(--green);font-family:var(--mono);font-size:11px;letter-spacing:1px}
+  code{font-family:var(--mono);background:#000;color:var(--cyan);padding:1px 5px;border-radius:4px;font-size:12px}
+  .reset{background:none;border:1px solid var(--border);color:var(--sub);font-family:var(--mono);font-size:10px;padding:6px 12px;border-radius:6px;cursor:pointer;margin-top:10px}
+  footer{color:var(--sub);font-size:11px;font-family:var(--mono);margin-top:24px;text-align:center;letter-spacing:1px}
+</style>
+</head>
+<body>
+  <h1>◆ AUDITORÍA · SISTEMA ÓMICRON</h1>
+  <div class="sub">REVISIÓN DE INGENIERÍA SENIOR · BITÁCORA INTERACTIVA · <span id="date"></span></div>
+
+  <div class="bar"><div id="progbar"></div></div>
+  <div class="sub" id="progtext">0 / 0 resueltos</div>
+
+  <div class="stats">
+    <div class="stat"><div class="n" style="color:var(--red)" id="c-C">0</div><div class="l">Críticos</div></div>
+    <div class="stat"><div class="n" style="color:var(--gold)" id="c-H">0</div><div class="l">Altos</div></div>
+    <div class="stat"><div class="n" style="color:var(--purple)" id="c-M">0</div><div class="l">Medios</div></div>
+    <div class="stat"><div class="n" style="color:var(--cyanDim)" id="c-L">0</div><div class="l">Bajos</div></div>
+  </div>
+
+  <div class="filters">
+    <button data-f="all" class="active">TODOS</button>
+    <button data-f="C">CRÍTICOS</button>
+    <button data-f="H">ALTOS</button>
+    <button data-f="M">MEDIOS</button>
+    <button data-f="L">BAJOS</button>
+    <button data-f="open">PENDIENTES</button>
+  </div>
+
+  <div id="list"></div>
+  <button class="reset" onclick="resetAll()">↺ Reiniciar marcas</button>
+  <footer>SISTEMA ÓMICRON // AUDITORÍA GENERADA POR KIRO · Las marcas se guardan en tu navegador</footer>
+
+<script>
+const FINDINGS = [
+  { id:'sec-profile', sev:'C', area:'SEGURIDAD', title:'El cliente puede falsificar su propio perfil (reputación, tokens, nodo)',
+    desc:'La política RLS <code>profiles_update_own</code> permite <code>update using (auth.uid() = id)</code> SIN restringir columnas. Cualquier usuario, desde la consola del navegador, puede hacer <code>supabase.from("profiles").update({ token_balance: 999999, reputation_score: 100, node_type: "Nodo Fundador", is_verified_professional: true })</code>. Toda la economía y la reputación son forjables.',
+    fix:'Quita el permiso de UPDATE directo a columnas sensibles. Crea un TRIGGER BEFORE UPDATE que rechace cambios a <code>token_balance, token_escrow, reputation_score, execution/quality/transcendence/foundation_score, pe_points, node_type, node_level, is_verified_professional, total_earnings</code> salvo que venga de una función SECURITY DEFINER (rol postgres). El usuario solo debería poder editar <code>username, full_name, bio, avatar_url, location, skills</code>.' },
+
+  { id:'sec-rpc-auth', sev:'C', area:'SEGURIDAD', title:'RPCs de dinero confían en un ID pasado por parámetro, no en auth.uid()',
+    desc:'<code>transfer_tokens(p_sender_id, ...)</code> y <code>create_escrow_contract(p_buyer_id, ...)</code> son SECURITY DEFINER (bypassan RLS) y usan el ID que llega por parámetro. Un atacante llama <code>transfer_tokens(p_sender_id = VICTIMA, p_receiver_id = yo, amount)</code> y vacía la billetera de cualquiera. Lo mismo aplica a withdraw_stake / resolve_dispute si no validan al llamante.',
+    fix:'Dentro de cada RPC, IGNORA el parámetro de identidad y usa <code>auth.uid()</code>, o agrega al inicio <code>if auth.uid() &lt;&gt; p_sender_id then raise exception \'No autorizado\'; end if;</code>. Revisa TODAS las RPCs SECURITY DEFINER con este criterio.' },
+
+  { id:'sec-score', sev:'C', area:'SEGURIDAD', title:'handle_skill_attempt confía en el score que manda el cliente',
+    desc:'La RPC recibe <code>p_score</code> y <code>p_result</code> desde el navegador. Como el runner ahora corre en el cliente, un usuario llama directamente <code>handle_skill_attempt(p_score:100, p_result:"PASS")</code> y valida nodos + gana PE sin resolver nada.',
+    fix:'La validación del código DEBE ejecutarse en el servidor (Edge Function run-code) para que el score sea autoritativo. Si te quedas con el runner en el navegador, asúmelo como "modo demo" y NO uses el PE para nada con valor económico real.' },
+
+  { id:'schema-drift', sev:'H', area:'ARQUITECTURA', title:'Las migraciones del repo NO coinciden con tu base de datos real',
+    desc:'<code>0001_core.sql</code> define <code>node_level integer (1..3)</code>, pero tu BD real lo tiene como <code>TEXT</code> ("N1","N2"). Además <code>0003</code> crea <code>escrow_contracts</code> pero la app usa una tabla <code>contracts</code> distinta. El repo no es la fuente de verdad: si alguien corre estas migraciones, rompe la BD.',
+    fix:'Haz un dump real del esquema de producción (<code>supabase db dump</code> o desde el dashboard) y reemplaza las migraciones del repo para que reflejen la realidad. Decide UNA tabla de contratos (<code>contracts</code>) y elimina <code>escrow_contracts</code>.' },
+
+  { id:'node-level-type', sev:'H', area:'TIPOS', title:'node_level: número en el código, texto en la BD',
+    desc:'<code>types/index.ts</code> declara <code>node_level: 1|2|3</code> y <code>AppContext</code> hace upsert con <code>node_level: 1</code> (entero), pero la columna real es TEXT ("N1"). Esto provoca incoherencias silenciosas y comparaciones que nunca matchean.',
+    fix:'Unifica: o todo TEXT ("N1") o todo entero. Recomiendo derivar el nivel desde la reputación con <code>determineNodeLevel()</code> y guardarlo consistente. Ajusta el tipo TS para que coincida con la BD.' },
+
+  { id:'runner-token', sev:'H', area:'SEGURIDAD', title:'El runner en el navegador puede leer el token de sesión',
+    desc:'El simulador ejecuta el código del usuario con <code>new Function(...)</code> en el MISMO contexto que la app. Ese código puede leer <code>localStorage</code> (donde Supabase guarda el JWT por defecto) y exfiltrarlo. Es tu propia sesión (riesgo bajo), PERO si algún día se ejecuta código de OTRO usuario (revisión, retos compartidos), se vuelve crítico.',
+    fix:'Ejecuta el código en un Web Worker o iframe sandbox (sin acceso a localStorage), o muévelo a la Edge Function. Nunca ejecutes código ajeno en el hilo principal.' },
+
+  { id:'msg-rls', sev:'H', area:'SEGURIDAD', title:'RLS de messages deja leer todo mensaje con receiver_id NULL',
+    desc:'La política permite <code>... or receiver_id is null</code>. Cualquier usuario autenticado puede leer todos los mensajes sin destinatario. Hoy van cifrados, pero es un vector de fuga innecesario.',
+    fix:'Quita el <code>or receiver_id is null</code>. Define el acceso solo por participantes (o por pertenencia al contrato/network_id).' },
+
+  { id:'rep-formula', sev:'M', area:'LÓGICA', title:'Dos fórmulas de reputación que se contradicen',
+    desc:'<code>calculateFinalReputation</code> usa la regla 80/20 (manifiesto), pero <code>updateReputationInDatabase</code> guarda reputación = promedio de los 4 ejes, y <code>handle_skill_attempt</code> ni toca <code>reputation_score</code>. No hay una fuente de verdad única.',
+    fix:'Define UNA fórmula canónica en el servidor (idealmente un trigger o RPC que recalcule reputation_score al cambiar ejes o experience/traditional) y elimina los cálculos duplicados del cliente.' },
+
+  { id:'pe-accrual', sev:'M', area:'LÓGICA', title:'experience_score se acumula con dos reglas distintas',
+    desc:'<code>awardPEPoints</code> da +5 cada 500 PE; <code>handle_skill_attempt</code> da <code>floor(pe/100)*5</code> por cada premio (no acumulado). Resultado: el experience_score depende del camino y puede sobre/sub-otorgarse.',
+    fix:'Centraliza el cálculo de experience_score en una sola función a partir del total de PE acumulado (no por evento).' },
+
+  { id:'realtime-partial', sev:'M', area:'ESTADO', title:'El canal realtime de profiles puede sobrescribir el perfil con datos parciales',
+    desc:'En <code>AppContext</code>, el canal hace <code>setProfile(payload.new)</code>. Si la tabla no tiene <code>REPLICA IDENTITY FULL</code>, <code>payload.new</code> puede traer solo columnas cambiadas + PK, borrando campos del estado y causando que la UI "pierda" datos.',
+    fix:'Ejecuta <code>alter table public.profiles replica identity full;</code> o haz merge: <code>setProfile(p => ({...p, ...payload.new}))</code>.' },
+
+  { id:'username-collision', sev:'M', area:'LÓGICA', title:'Registro se rompe con usernames duplicados',
+    desc:'<code>username</code> es UNIQUE. El trigger lo arma con <code>split_part(email,"@",1)</code>. Dos correos <code>juan@a.com</code> y <code>juan@b.com</code> → mismo "juan" → choque UNIQUE. El <code>on conflict (id)</code> no cubre el conflicto de username y el signup falla.',
+    fix:'Genera username único (sufijo aleatorio) o maneja el conflicto: <code>... do nothing</code> sobre username y luego forzar uno libre.' },
+
+  { id:'status-machine', sev:'M', area:'ARQUITECTURA', title:'Vocabulario de estados inconsistente entre tablas',
+    desc:'<code>escrow_contracts.status</code> usa LOCKED/APPROVED/RELEASED; <code>contracts.status</code> es texto libre; ChatTab depende de "DELIVERED" + delivery_declared_at para el Ghost Approval. Si el backend no setea esos estados igual, el Ghost Approval nunca se dispara.',
+    fix:'Define una máquina de estados única para contratos y un solo lugar (trigger/RPC) que la avance. Documenta los estados válidos.' },
+
+  { id:'indexes', sev:'M', area:'RENDIMIENTO', title:'Faltan índices en consultas calientes',
+    desc:'<code>messages</code> se consulta por <code>network_id</code> (chat) pero no hay índice por esa columna. <code>blackbox_votes</code> se filtra por <code>dispute_id</code> sin índice. <code>skill_test_attempts</code> por (user_id, test_id) sin índice compuesto.',
+    fix:'Agrega: <code>create index on messages(network_id, created_at);</code> <code>create index on blackbox_votes(dispute_id);</code> <code>create index on skill_test_attempts(user_id, test_id);</code>' },
+
+  { id:'ghost-btn', sev:'L', area:'UX', title:'El botón "OBJETAR" del Ghost Approval no hace nada',
+    desc:'En ChatTab el botón OBJETAR no tiene <code>onClick</code>. El usuario cree que puede objetar la liberación de fondos pero no pasa nada.',
+    fix:'Conéctalo a una RPC que marque el contrato como DISPUTED y detenga el temporizador de liberación.' },
+
+  { id:'infinite-loop', sev:'L', area:'UX', title:'El simulador puede congelar la pestaña',
+    desc:'Un <code>while(true){}</code> en el código del usuario bloquea el hilo principal (no hay forma de matarlo en el cliente).',
+    fix:'Ejecuta en Web Worker con timeout que haga <code>worker.terminate()</code> (justo lo que hace la versión Edge Function).' },
+
+  { id:'no-tests', sev:'M', area:'CALIDAD', title:'Cero tests automatizados y sin CI',
+    desc:'Un sistema que mueve tokens y reputación no tiene pruebas. Cualquier cambio puede romper la economía sin que nadie se entere.',
+    fix:'Agrega tests de las funciones puras (reputationService) con Vitest, y tests de integración de las RPCs críticas (transfer_tokens, handle_skill_attempt) con una BD de prueba.' },
+
+  { id:'rate-limit', sev:'M', area:'SEGURIDAD', title:'Sin rate limiting (anti-spam / anti-abuso)',
+    desc:'Nada impide spamear mensajes, intentos del simulador o aperturas de disputa. En las RPCs no hay control de frecuencia.',
+    fix:'Agrega rate limiting (p. ej. contar acciones por usuario/minuto en una tabla, o usar la capa de Supabase/Edge). Prioriza send_secure_message y handle_skill_attempt.' },
+
+  { id:'history-forge', sev:'L', area:'SEGURIDAD', title:'El historial de reputación se inserta desde el cliente',
+    desc:'<code>reputation_history</code> permite insert_own: el usuario puede fabricar su propio historial. Pierde valor como evidencia/auditoría.',
+    fix:'Inserta el historial solo desde funciones SECURITY DEFINER; quita el permiso de insert directo al usuario.' },
+
+  { id:'currency', sev:'L', area:'PRODUCTO', title:'Modelo de moneda ambiguo (tokens vs USD)',
+    desc:'Los empleos usan <code>budget_usd</code> y la wallet usa tokens "T". No queda claro el tipo de cambio ni cómo se convierte. Puede confundir al usuario y a la contabilidad.',
+    fix:'Define una sola unidad interna (tokens) y, si necesitas USD, guarda el tipo de cambio en el momento de la transacción.' },
+];
+
+const SEV_NAME = {C:'CRÍTICO',H:'ALTO',M:'MEDIO',L:'BAJO'};
+const KEY='omicron_audit_v1';
+let done = JSON.parse(localStorage.getItem(KEY) || '{}');
+let filter='all';
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(done)); }
+
+function render(){
+  const list=document.getElementById('list'); list.innerHTML='';
+  let counts={C:0,H:0,M:0,L:0}, total=0, resolved=0;
+  FINDINGS.forEach(f=>{ counts[f.sev]++; total++; if(done[f.id]) resolved++; });
+
+  FINDINGS.forEach(f=>{
+    const isDone=!!done[f.id];
+    if(filter!=='all'){
+      if(filter==='open' && isDone) return;
+      if(filter!=='open' && filter!==f.sev) return;
+    }
+    const el=document.createElement('div');
+    el.className='item '+f.sev+(isDone?' done':'');
+    el.innerHTML=`
+      <div class="row">
+        <input type="checkbox" ${isDone?'checked':''} onchange="toggle('${f.id}')" />
+        <div>
+          <span class="title">${f.title}</span>
+          <span class="badge b-${f.sev}">${SEV_NAME[f.sev]}</span>
+          <span class="tag">${f.area}</span>
+          <div class="desc">${f.desc}</div>
+          <div class="fix"><b>▸ CÓMO ARREGLARLO</b><br/>${f.fix}</div>
+        </div>
+      </div>`;
+    list.appendChild(el);
+  });
+
+  document.getElementById('c-C').textContent=counts.C;
+  document.getElementById('c-H').textContent=counts.H;
+  document.getElementById('c-M').textContent=counts.M;
+  document.getElementById('c-L').textContent=counts.L;
+  const pct= total? Math.round(resolved/total*100):0;
+  document.getElementById('progbar').style.width=pct+'%';
+  document.getElementById('progtext').textContent=`${resolved} / ${total} resueltos · ${pct}%`;
+}
+function toggle(id){ done[id]=!done[id]; save(); render(); }
+function resetAll(){ if(confirm('¿Borrar todas las marcas?')){ done={}; save(); render(); } }
+document.querySelectorAll('.filters button').forEach(b=>{
+  b.onclick=()=>{ filter=b.dataset.f; document.querySelectorAll('.filters button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); render(); };
+});
+document.getElementById('date').textContent=new Date().toLocaleDateString('es-CL');
+render();
+</script>
+</body>
+</html>
