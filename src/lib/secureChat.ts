@@ -1,5 +1,6 @@
 // src/lib/secureChat.ts
-// Cliente de la "Caja Negra": habla con las Edge Functions de cifrado.
+// Cliente de la "Caja Negra" — versión 100% SQL (RPCs Postgres).
+// El cifrado/descifrado ocurre dentro de Supabase (pgcrypto + Vault).
 // El navegador NUNCA ve la clave; solo envía/recibe texto plano por TLS.
 
 import { supabase } from './supabase';
@@ -12,35 +13,26 @@ export interface SecureHistory {
 
 /** Envía un mensaje cifrado a la sala (network_id = contrato). */
 export async function sendSecureMessage(networkId: string, content: string): Promise<void> {
-  const { data, error } = await supabase.functions.invoke('chat-send', {
-    body: { network_id: networkId, content },
+  const { data, error } = await supabase.rpc('send_secure_message', {
+    p_network_id: networkId,
+    p_content: content,
   });
-  // Reintento simple ante conflicto de cadena (dos envíos a la vez)
-  if (data?.retry) {
-    const retry = await supabase.functions.invoke('chat-send', {
-      body: { network_id: networkId, content },
-    });
-    if (retry.error || retry.data?.error) {
-      throw new Error(retry.data?.error || retry.error?.message || 'Error al enviar.');
-    }
-    return;
-  }
-  if (error || data?.error) {
-    throw new Error(data?.error || error?.message || 'Error al enviar el mensaje.');
+  if (error) throw new Error(error.message || 'Error al enviar el mensaje.');
+  if (data && (data as { ok?: boolean }).ok === false) {
+    throw new Error('No se pudo enviar el mensaje.');
   }
 }
 
 /** Carga y descifra el historial de una sala + flag de integridad. */
 export async function loadSecureMessages(networkId: string): Promise<SecureHistory> {
-  const { data, error } = await supabase.functions.invoke('chat-history', {
-    body: { network_id: networkId },
+  const { data, error } = await supabase.rpc('get_secure_messages', {
+    p_network_id: networkId,
   });
-  if (error || data?.error) {
-    throw new Error(data?.error || error?.message || 'Error al cargar el chat.');
-  }
+  if (error) throw new Error(error.message || 'Error al cargar el chat.');
+  const payload = (data ?? {}) as { messages?: Message[]; integrity_ok?: boolean };
   return {
-    messages: (data?.messages as Message[]) ?? [],
-    integrity_ok: data?.integrity_ok !== false,
+    messages: payload.messages ?? [],
+    integrity_ok: payload.integrity_ok !== false,
   };
 }
 
@@ -65,15 +57,13 @@ export interface BlackboxResult {
 
 /**
  * Un árbitro asignado vota para abrir la Caja Negra de una disputa.
- * - Si aún no hay quórum: devuelve { unlocked:false, votes, threshold }.
+ * - Si aún no hay quórum: { unlocked:false, votes, threshold }.
  * - Si se alcanza el quórum (2 de 3): devuelve la transcripción descifrada.
  */
 export async function openBlackbox(disputeId: string): Promise<BlackboxResult> {
-  const { data, error } = await supabase.functions.invoke('blackbox-open', {
-    body: { dispute_id: disputeId },
+  const { data, error } = await supabase.rpc('open_blackbox', {
+    p_dispute_id: disputeId,
   });
-  if (error || data?.error) {
-    throw new Error(data?.error || error?.message || 'Error al abrir la Caja Negra.');
-  }
-  return data as BlackboxResult;
+  if (error) throw new Error(error.message || 'Error al abrir la Caja Negra.');
+  return (data ?? { unlocked: false, votes: 0, threshold: 2 }) as BlackboxResult;
 }
