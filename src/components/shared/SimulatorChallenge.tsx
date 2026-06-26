@@ -1,5 +1,10 @@
 // components/shared/SimulatorChallenge.tsx
 // Editor de código + cronómetro + tests automáticos + historial de intentos
+//
+// SEGURIDAD: el código del usuario YA NO se ejecuta en el navegador.
+// Se envía a la Edge Function `run-code` (Deno, sandbox con permissions:"none"),
+// que lo ejecuta, lo puntúa contra los test_cases del servidor y persiste el
+// intento de forma autoritativa. El cliente solo muestra el resultado.
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -37,63 +42,6 @@ interface SimulatorChallengeProps {
 }
 
 
-// ===== RUNNER SANDBOXED =====
-// Ejecuta el código del usuario en un contexto aislado con timeout.
-// NOTA: En producción reemplazar por una Edge Function de Supabase
-// para evitar ejecución de código arbitrario en el cliente.
-function runCodeSandboxed(
-  code: string,
-  testCases: Array<{ input: string; expected_output: string; explanation: string }>,
-  timeLimitMs: number
-): RunResult {
-  const results: TestCaseResult[] = [];
-  let errorMessage: string | undefined;
-
-  const startTime = Date.now();
-
-  for (const tc of testCases) {
-    if (Date.now() - startTime > timeLimitMs) {
-      return {
-        result:           'TIMEOUT',
-        score:            0,
-        testCaseResults:  results,
-        timeTakenSeconds: Math.round((Date.now() - startTime) / 1000),
-        errorMessage:     'Tiempo límite excedido',
-      };
-    }
-
-    try {
-      // eslint-disable-next-line no-new-func
-      const fn = new Function('input', `
-        ${code}
-        // Intentar llamar "solution" o la primera función definida
-        if (typeof solution === 'function') return solution(input);
-        throw new Error('Define una función llamada "solution"');
-      `);
-
-      const actual   = String(fn(tc.input));
-      const expected = String(tc.expected_output);
-      results.push({ input: tc.input, expected, actual, passed: actual.trim() === expected.trim() });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      results.push({ input: tc.input, expected: tc.expected_output, actual: '', passed: false, error: msg });
-      errorMessage = msg;
-    }
-  }
-
-  const passed = results.filter(r => r.passed).length;
-  const score  = testCases.length > 0 ? Math.round((passed / testCases.length) * 100) : 0;
-
-  return {
-    result:           score >= 80 ? 'PASS' : errorMessage ? 'ERROR' : 'FAIL',
-    score,
-    testCaseResults:  results,
-    timeTakenSeconds: Math.round((Date.now() - startTime) / 1000),
-    errorMessage,
-  };
-}
-
-
 // ===== COMPONENTE PRINCIPAL =====
 
 export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: SimulatorChallengeProps) {
@@ -112,7 +60,7 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
   // Cronómetro
   const [elapsed, setElapsed]       = useState(0);
   const [remaining, setRemaining]   = useState(test.time_limit_seconds);
-  const timerRef                    = useRef<NodeJS.Timeout | null>(null);
+  const timerRef                    = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef                = useRef<number>(0);
 
   // Historial
@@ -152,57 +100,81 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
 
   useEffect(() => () => stopTimer(), [stopTimer]);
 
-  // Ejecutar código
+  // Refrescar historial de intentos
+  const refreshHistory = useCallback(async () => {
+    if (!profile?.id) return;
+    const { data: hist } = await supabase
+      .from('skill_test_attempts')
+      .select('*')
+      .eq('user_id', profile.id)
+      .eq('test_id', test.id)
+      .order('attempted_at', { ascending: false })
+      .limit(10);
+    setAttempts((hist as SkillTestAttempt[]) || []);
+  }, [profile?.id, test.id]);
+
+
+  // Ejecutar código — ahora vía Edge Function segura
   const handleRun = useCallback(async () => {
     if (!profile?.id || phase === 'running') return;
     setPhase('running');
+    setIsSaving(true);
     startTimer();
 
-    // Pequeño delay para que el UI actualice antes de bloquear el hilo
-    await new Promise(r => setTimeout(r, 50));
-
-    const result = runCodeSandboxed(
-      code,
-      test.test_cases,
-      test.time_limit_seconds * 1000
-    );
-
-    stopTimer();
-    setRunResult(result);
-    setPhase('result');
-
-
-    // Guardar intento en BD via RPC
-    setIsSaving(true);
     try {
-      const { data } = await supabase.rpc('handle_skill_attempt', {
-        p_user_id:    profile.id,
-        p_test_id:    test.id,
-        p_node_id:    nodeId,
-        p_score:      result.score,
-        p_time_sec:   result.timeTakenSeconds,
-        p_code:       code,
-        p_result:     result.result,
-        p_tc_results: result.testCaseResults,
+      const { data, error } = await supabase.functions.invoke('run-code', {
+        body: { test_id: test.id, node_id: nodeId, code },
       });
 
-      const pe = data?.pe_awarded ?? 0;
-      setPeAwarded(pe);
-      if (result.result === 'PASS') onSuccess(pe);
+      stopTimer();
+      const elapsedSec = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
-      // Refrescar historial
-      const { data: hist } = await supabase
-        .from('skill_test_attempts')
-        .select('*')
-        .eq('user_id', profile.id)
-        .eq('test_id', test.id)
-        .order('attempted_at', { ascending: false })
-        .limit(10);
-      setAttempts((hist as SkillTestAttempt[]) || []);
+      // Error de invocación o error devuelto por la función
+      if (error || !data || (data as { error?: string }).error) {
+        const msg =
+          (data as { error?: string })?.error ||
+          error?.message ||
+          'No se pudo ejecutar el código en el servidor. ¿Está desplegada la Edge Function "run-code"?';
+        setRunResult({
+          result: 'ERROR',
+          score: 0,
+          testCaseResults: [],
+          timeTakenSeconds: elapsedSec,
+          errorMessage: msg,
+        });
+        setPhase('result');
+        return;
+      }
+
+      const rr: RunResult = {
+        result:           data.result,
+        score:            data.score,
+        testCaseResults:  data.testCaseResults ?? [],
+        timeTakenSeconds: data.timeTakenSeconds ?? elapsedSec,
+        errorMessage:     data.errorMessage,
+      };
+      setRunResult(rr);
+      setPhase('result');
+
+      const pe = data.pe_awarded ?? 0;
+      setPeAwarded(pe);
+      if (rr.result === 'PASS') onSuccess(pe);
+
+      await refreshHistory();
+    } catch (e) {
+      stopTimer();
+      setRunResult({
+        result: 'ERROR',
+        score: 0,
+        testCaseResults: [],
+        timeTakenSeconds: Math.floor((Date.now() - startTimeRef.current) / 1000),
+        errorMessage: String((e as Error)?.message ?? e),
+      });
+      setPhase('result');
     } finally {
       setIsSaving(false);
     }
-  }, [profile?.id, phase, code, test, nodeId, startTimer, stopTimer, onSuccess]);
+  }, [profile?.id, phase, code, test.id, nodeId, startTimer, stopTimer, onSuccess, refreshHistory]);
 
   const handleReset = () => {
     stopTimer();
@@ -491,6 +463,9 @@ function ResultPanel({ result, passingScore, peAwarded }: {
             <p className="text-xs text-omicron-subtle">
               {result.score}% · {result.testCaseResults.filter(r => r.passed).length}/{result.testCaseResults.length} casos · {formatTime(result.timeTakenSeconds)}
             </p>
+            {result.errorMessage && (
+              <p className="text-[11px] text-red-400 mt-1 font-mono">{result.errorMessage}</p>
+            )}
           </div>
         </div>
 
@@ -519,35 +494,38 @@ function ResultPanel({ result, passingScore, peAwarded }: {
       </div>
 
       {/* Casos (expandibles) */}
-      <button
-        onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-2 border-t border-omicron-border/40 text-xs text-omicron-subtle"
-      >
-        <span>Ver detalle de casos</span>
-        {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-      </button>
+      {result.testCaseResults.length > 0 && (
+        <>
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-2 border-t border-omicron-border/40 text-xs text-omicron-subtle"
+          >
+            <span>Ver detalle de casos</span>
+            {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </button>
 
-
-      {expanded && (
-        <div className="divide-y divide-omicron-border/30">
-          {result.testCaseResults.map((tc, i) => (
-            <div key={i} className="px-4 py-2.5 flex items-start gap-3">
-              {tc.passed
-                ? <CheckCircle size={13} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                : <XCircle    size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
-              }
-              <div className="text-xs font-mono space-y-0.5 min-w-0">
-                <p className="text-omicron-subtle truncate">Input: <span className="text-blue-400">{tc.input}</span></p>
-                <p className="text-omicron-subtle truncate">Esperado: <span className="text-emerald-400">{tc.expected}</span></p>
-                {!tc.passed && (
-                  <p className="text-omicron-subtle truncate">
-                    Obtenido: <span className="text-red-400">{tc.error || tc.actual || '—'}</span>
-                  </p>
-                )}
-              </div>
+          {expanded && (
+            <div className="divide-y divide-omicron-border/30">
+              {result.testCaseResults.map((tc, i) => (
+                <div key={i} className="px-4 py-2.5 flex items-start gap-3">
+                  {tc.passed
+                    ? <CheckCircle size={13} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                    : <XCircle    size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
+                  }
+                  <div className="text-xs font-mono space-y-0.5 min-w-0">
+                    <p className="text-omicron-subtle truncate">Input: <span className="text-blue-400">{tc.input}</span></p>
+                    <p className="text-omicron-subtle truncate">Esperado: <span className="text-emerald-400">{tc.expected}</span></p>
+                    {!tc.passed && (
+                      <p className="text-omicron-subtle truncate">
+                        Obtenido: <span className="text-red-400">{tc.error || tc.actual || '—'}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
