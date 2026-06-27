@@ -1,7 +1,7 @@
 // components/shared/SimulatorChallenge.tsx
 // Editor de código + cronómetro + tests + historial.
-// VERSIÓN SIN EDGE FUNCTION: ejecuta en el navegador y guarda el intento
-// (+ reputación) con el RPC handle_skill_attempt. No requiere desplegar nada.
+// El código se ejecuta de forma SEGURA en la Edge Function `run-code`
+// (scoring autoritativo del servidor; el navegador no calcula la nota).
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -28,10 +28,8 @@ interface SimulatorChallengeProps {
   onSuccess: (peAwarded: number) => void;
 }
 
-// Ejecuta el código del usuario en el navegador contra los casos de prueba.
 // El código se ejecuta de forma SEGURA en la Edge Function `run-code`
-// (scoring autoritativo del servidor). El navegador ya no calcula la nota.
-
+// (scoring autoritativo del servidor; el navegador no calcula la nota).
 export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: SimulatorChallengeProps) {
   const { profile } = useApp();
 
