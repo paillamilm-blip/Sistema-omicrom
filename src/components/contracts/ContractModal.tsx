@@ -26,16 +26,21 @@ export function ContractModal({ service, onClose }: Props) {
     if (!profile || !service.seller_id) return;
     setStep('loading');
     try {
-      const { data, error } = await supabase.rpc('create_escrow_contract', {
-        p_buyer_id:   profile.id,
-        p_seller_id:  service.seller_id,
-        p_service_id: service.id,
-        p_title:      service.title,
-        p_amount:     service.price,
-        p_buyer_note: note || null,
-      });
+      const { data, error } = await supabase
+        .from('contracts')
+        .insert({
+          buyer_id:   profile.id,
+          seller_id:  service.seller_id,
+          service_id: service.id,
+          title:      service.title,
+          amount:     service.price,
+          buyer_note: note || null,
+          // status omitido → el trigger lock_escrow_on_contract lo deja en 'LOCKED' y bloquea el escrow
+        })
+        .select('id')
+        .single();
       if (error) throw error;
-      setContractId(data as string);
+      setContractId(data.id as string);
       await refreshProfile();
       setStep('success');
     } catch (e: unknown) {
