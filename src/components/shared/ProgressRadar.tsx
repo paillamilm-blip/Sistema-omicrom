@@ -46,10 +46,12 @@ export function ProgressRadar({
   animated = true,
   threshold = 50,
 }: ProgressRadarProps) {
-  const viewBoxSize = size === 'sm' ? 200 : size === 'md' ? 280 : 400;
-  const radius      = size === 'sm' ? 70  : size === 'md' ? 100 : 140;
+  const radius      = size === 'sm' ? 64 : size === 'md' ? 92 : 130;
+  const labelPad    = size === 'sm' ? 52 : size === 'md' ? 70 : 90;
+  const viewBoxSize = radius * 2 + labelPad * 2;
   const centerX     = viewBoxSize / 2;
   const centerY     = viewBoxSize / 2;
+  const labelDist   = radius + (size === 'sm' ? 18 : size === 'md' ? 24 : 30);
 
   const points = useMemo(() => {
     const data = [
@@ -71,11 +73,11 @@ export function ProgressRadar({
         angle,
         x:      centerX + distance * Math.cos(angle),
         y:      centerY + distance * Math.sin(angle),
-        labelX: centerX + (radius + 40) * Math.cos(angle),
-        labelY: centerY + (radius + 40) * Math.sin(angle),
+        labelX: centerX + labelDist * Math.cos(angle),
+        labelY: centerY + labelDist * Math.sin(angle),
       };
     });
-  }, [gemelo, radius, centerX, centerY]);
+  }, [gemelo, radius, centerX, centerY, labelDist]);
 
   const hasAlert = useMemo(() => points.some(p => p.value < threshold), [points, threshold]);
 
@@ -120,7 +122,7 @@ export function ProgressRadar({
   const fontSize    = size === 'sm' ? '11' : size === 'md' ? '13' : '16';
   const subFontSize = size === 'sm' ? '10' : size === 'md' ? '12' : '14';
   const labelOffset = size === 'sm' ? 14  : size === 'md' ? 18  : 24;
-  const svgSize     = size === 'sm' ? 200 : size === 'md' ? 280 : 400;
+  const svgSize     = viewBoxSize;
 
 
   return (
@@ -148,6 +150,7 @@ export function ProgressRadar({
           viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
           width={svgSize}
           height={svgSize}
+          style={{ maxWidth: '100%', height: 'auto' }}
           className="drop-shadow-lg"
         >
           {/* Grid */}
