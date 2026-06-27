@@ -11,10 +11,10 @@ import type { SkillTreeNode, UserSkillProgress, SkillTest } from '../../types';
 // ─────────────────────────────────────────────
 // Constantes de diseño
 // ─────────────────────────────────────────────
-const NODE_W = 148;
+const NODE_W = 128;
 const NODE_H = 52;
 const TIER_GAP_Y = 110;   // espacio vertical entre tiers
-const PEER_GAP_X = 12;    // espacio horizontal entre nodos del mismo tier
+const PEER_GAP_X = 14;    // espacio horizontal entre nodos del mismo tier
 
 const COLORS = {
   cyan:       '#00f5ff',
@@ -37,7 +37,7 @@ const COLORS = {
 // Color por status
 function nodeColor(status: string, depth: number) {
   if (status === 'VALIDATED' || status === 'MASTERED') return COLORS.green;
-  if (status === 'IN_PROGRESS') return COLORS.cyan;
+  if (status === 'IN_PROGRESS' || status === 'AVAILABLE') return COLORS.cyan;
   // locked — varía por profundidad para jerarquía visual
   if (depth === 0) return COLORS.cyan;
   if (depth === 1) return COLORS.cyanDim;
@@ -175,7 +175,19 @@ export function MaxSkillTab() {
     return () => { supabase.removeChannel(channel); };
   }, [profile?.id]);
 
-  const getStatus     = (id: string) => progress.get(id)?.status              || 'LOCKED';
+  // Estado efectivo: si no hay progreso, los nodos raíz (o hijos de nodos
+  // ya validados) quedan AVAILABLE (brillan y son clickeables). El resto LOCKED.
+  const getStatus = useCallback((id: string): string => {
+    const p = progress.get(id);
+    if (p) return p.status;
+    const node = nodes.find(n => n.id === id);
+    if (!node) return 'LOCKED';
+    if (!node.parent_node_id) return 'AVAILABLE';
+    const parentNode = nodes.find(n => n.id === node.parent_node_id);
+    const parentStatus = progress.get(node.parent_node_id)?.status
+      ?? (parentNode && !parentNode.parent_node_id ? 'AVAILABLE' : 'LOCKED');
+    return (parentStatus === 'VALIDATED' || parentStatus === 'MASTERED') ? 'AVAILABLE' : 'LOCKED';
+  }, [progress, nodes]);
   const getPercentage = (id: string) => progress.get(id)?.progress_percentage || 0;
 
 
@@ -554,13 +566,19 @@ export function MaxSkillTab() {
             </div>
           </div>
 
-          <button
-            style={styles.challengeBtn}
-            onClick={() => handleStartChallenge(selectedNode)}
-          >
-            <Play size={14} fill="currentColor" />
-            Iniciar Desafío
-          </button>
+          {getStatus(selectedNode.id) === 'LOCKED' ? (
+            <button style={{ ...styles.challengeBtn, opacity: 0.4, cursor: 'not-allowed' }} disabled>
+              🔒 Completa el nodo anterior para desbloquear
+            </button>
+          ) : (
+            <button
+              style={styles.challengeBtn}
+              onClick={() => handleStartChallenge(selectedNode)}
+            >
+              <Play size={14} fill="currentColor" />
+              Iniciar Desafío
+            </button>
+          )}
         </div>
       )}
 
