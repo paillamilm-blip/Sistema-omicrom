@@ -54,7 +54,8 @@ body::after {
   animation: gridPan 24s linear infinite;
 }
 
-/* ─── SCANLINES CRT ─── */
+/* ─── SCANLINES CRT (DESACTIVADAS para un look nítido) ───
+   Si algún día quieres el efecto retro de monitor, descomenta este bloque.
 body::before {
   content: " ";
   display: block;
@@ -65,6 +66,7 @@ body::before {
   background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.18) 50%);
   background-size: 100% 4px;
 }
+*/
 
 #root {
   display: flex;
