@@ -10,6 +10,7 @@ interface ProgressRadarProps {
   gemelo: GemeloDigital;
   size?: 'sm' | 'md' | 'lg';
   showLabels?: boolean;
+  showHeader?: boolean;
   animated?: boolean;
   threshold?: number;
 }
@@ -43,6 +44,7 @@ export function ProgressRadar({
   gemelo,
   size = 'md',
   showLabels = true,
+  showHeader = true,
   animated = true,
   threshold = 50,
 }: ProgressRadarProps) {
@@ -128,21 +130,23 @@ export function ProgressRadar({
   return (
     <div className="flex flex-col gap-4">
       {/* Reputación General */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-omicron-subtle uppercase tracking-wide">Gemelo Digital</p>
-          <p className="text-3xl font-bold mt-1">
-            {formatScore(gemelo.overallReputation)}
-            <span className="text-lg text-omicron-subtle ml-1">/100</span>
-          </p>
+      {showHeader && (
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-omicron-subtle uppercase tracking-wide">Gemelo Digital</p>
+            <p className="text-3xl font-bold mt-1">
+              {formatScore(gemelo.overallReputation)}
+              <span className="text-lg text-omicron-subtle ml-1">/100</span>
+            </p>
+          </div>
+          <div
+            className="px-4 py-2 rounded-xl border-2 text-center"
+            style={{ borderColor }}
+          >
+            <p className="text-sm font-bold">{badge.emoji} {badge.label}</p>
+          </div>
         </div>
-        <div
-          className="px-4 py-2 rounded-xl border-2 text-center"
-          style={{ borderColor }}
-        >
-          <p className="text-sm font-bold">{badge.emoji} {badge.label}</p>
-        </div>
-      </div>
+      )}
 
       {/* SVG Radar Chart */}
       <div className="flex justify-center">
