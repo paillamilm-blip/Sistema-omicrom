@@ -20,6 +20,7 @@ export function ChatTab() {
   const [integrityOk, setIntegrityOk] = useState(true);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [objecting, setObjecting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -98,6 +99,28 @@ export function ChatTab() {
     }
   }
 
+  // Objetar la entrega durante Ghost Approval → abre disputa + detiene liberación
+  async function objectDelivery() {
+    if (!room || !profile || objecting) return;
+    const reason = window.prompt('Motivo de la objeción a la entrega:', 'No cumple lo acordado');
+    if (reason === null) return; // canceló
+    setObjecting(true);
+    try {
+      const { error } = await supabase.rpc('object_delivery', {
+        p_contract_id: room.id,
+        p_reason: reason || 'Objeción durante Ghost Approval',
+      });
+      if (error) throw error;
+      setRoom({ ...room, status: 'DISPUTED' }); // detiene el cronómetro en la UI
+      await loadRooms();
+    } catch (e) {
+      console.error('Error al objetar:', e);
+      alert('No se pudo objetar: ' + ((e as Error).message ?? e));
+    } finally {
+      setObjecting(false);
+    }
+  }
+
   function fmt(iso: string) { return new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }); }
 
   if (loading) return <LoadingScreen message="ABRIENDO CANALES SEGUROS..." />;
@@ -165,9 +188,16 @@ export function ChatTab() {
             <Timer size={14} style={{ color: C.purple }} />
             <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: '#dbeafe' }}>GHOST APPROVAL</span>
           </div>
-          <span style={{ fontFamily: FONT.mono, fontSize: 14, fontWeight: 700, letterSpacing: 2, color: gl <= 60 ? C.red : C.cyan }}>
-            {String(Math.floor(gl / 60)).padStart(2, '0')}:{String(gl % 60).padStart(2, '0')}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: 14, fontWeight: 700, letterSpacing: 2, color: gl <= 60 ? C.red : C.cyan }}>
+              {String(Math.floor(gl / 60)).padStart(2, '0')}:{String(gl % 60).padStart(2, '0')}
+            </span>
+            <button onClick={objectDelivery} disabled={objecting}
+              style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#fff', background: C.red,
+                border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', opacity: objecting ? 0.5 : 1 }}>
+              {objecting ? '...' : 'OBJETAR'}
+            </button>
+          </div>
         </div>
       )}
 
