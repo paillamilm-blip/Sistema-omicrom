@@ -6,6 +6,7 @@ import { ResetPasswordOverlay } from './components/auth/ResetPasswordOverlay';
 import { supabase } from './lib/supabase';
 import { NoAccess } from './components/shared/NoAccess';
 import { BottomNav } from './components/shared/BottomNav';
+import { HubSubNav } from './components/shared/HubSubNav';
 import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { WalletTab }     from './components/tabs/WalletTab';
 import { ChatTab }       from './components/tabs/ChatTab';
@@ -95,6 +96,9 @@ function AppShell() {
           </button>
         </div>
       </header>
+
+      {/* Sub-pestañas del hub activo (píldoras) */}
+      <HubSubNav />
 
       {/* Tab content area */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
