@@ -1,8 +1,8 @@
 import { useApp } from '../../store/AppContext';
 import { HUBS, hubForTab } from '../../config/hubs';
+import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
 
-// Hubs que muestran badge de notificaciones (si alguno de sus miembros aplica)
 const NOTIF_TABS: TabId[] = ['chat', 'market'];
 
 export function BottomNav() {
@@ -10,41 +10,46 @@ export function BottomNav() {
   const currentHub = hubForTab(activeTab);
 
   return (
-    <nav className="flex-none bg-omicron-surface border-t border-omicron-border">
+    <nav style={{ flexShrink: 0, background: C.surface, borderTop: `1px solid ${C.cyanFaint}`, position: 'relative', zIndex: 3 }}>
       {/* Barra indicadora del hub activo */}
-      <div className="flex">
+      <div style={{ display: 'flex' }}>
         {HUBS.map(hub => (
-          <div key={hub.id} className="flex-1 h-0.5">
-            {currentHub.id === hub.id && <div className="h-full tab-active-bar" />}
+          <div key={hub.id} style={{ flex: 1, height: 2 }}>
+            {currentHub.id === hub.id && (
+              <div style={{ height: '100%', background: C.cyan, boxShadow: `0 0 8px ${C.cyan}` }} />
+            )}
           </div>
         ))}
       </div>
 
-      <div className="flex">
+      <div style={{ display: 'flex' }}>
         {HUBS.map(hub => {
           const active = currentHub.id === hub.id;
           const Icon = hub.Icon;
           const showBadge = unreadCount > 0 && hub.members.some(m => NOTIF_TABS.includes(m.tab));
-
           return (
             <button
               key={hub.id}
               onClick={() => setActiveTab(hub.members[0].tab)}
-              className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 transition-all active:scale-90 relative ${
-                active ? '' : 'opacity-50'
-              }`}
+              style={{
+                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                justifyContent: 'center', gap: 4, padding: '8px 0', background: 'none',
+                border: 'none', cursor: 'pointer', opacity: active ? 1 : 0.5, transition: 'opacity .2s',
+              }}
             >
-              <div className="relative">
-                <Icon size={20} className={active ? 'text-omicron-accent' : 'text-omicron-subtle'} />
+              <div style={{ position: 'relative', display: 'flex' }}>
+                <Icon size={20} color={active ? C.cyan : C.cyanDim} />
                 {showBadge && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 rounded-full bg-red-500 flex items-center justify-center text-[9px] font-bold text-white px-1 leading-none">
+                  <span style={{
+                    position: 'absolute', top: -6, right: -8, minWidth: 16, height: 16, borderRadius: 8,
+                    background: C.red, color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', padding: '0 4px',
+                  }}>
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </div>
-              <span className={`text-[10px] font-semibold leading-tight text-center ${
-                active ? 'text-omicron-accent' : 'text-omicron-subtle'
-              }`}>
+              <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: active ? C.cyan : C.cyanDim }}>
                 {hub.label}
               </span>
             </button>
