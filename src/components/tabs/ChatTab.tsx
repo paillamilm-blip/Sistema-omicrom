@@ -21,6 +21,8 @@ export function ChatTab() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [objecting, setObjecting] = useState(false);
+  const [delivering, setDelivering] = useState(false);
+  const [approving, setApproving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -121,6 +123,39 @@ export function ChatTab() {
     }
   }
 
+  // Vendedor declara entrega → DELIVERED + arranca Ghost Approval
+  async function markDelivered() {
+    if (!room || delivering) return;
+    setDelivering(true);
+    try {
+      const { error } = await supabase.rpc('declare_delivery', { p_contract_id: room.id, p_note: null });
+      if (error) throw error;
+      setRoom({ ...room, status: 'DELIVERED', delivery_declared_at: new Date().toISOString() });
+      await loadRooms();
+    } catch (e) {
+      alert('No se pudo marcar entregado: ' + ((e as Error).message ?? e));
+    } finally {
+      setDelivering(false);
+    }
+  }
+
+  // Comprador aprueba la entrega → libera fondos (RELEASED)
+  async function approveDelivery() {
+    if (!room || approving) return;
+    if (!window.confirm('¿Aprobar la entrega y liberar los fondos al vendedor?')) return;
+    setApproving(true);
+    try {
+      const { error } = await supabase.rpc('release_escrow', { p_contract_id: room.id });
+      if (error) throw error;
+      setRoom({ ...room, status: 'RELEASED' });
+      await loadRooms();
+    } catch (e) {
+      alert('No se pudo aprobar: ' + ((e as Error).message ?? e));
+    } finally {
+      setApproving(false);
+    }
+  }
+
   function fmt(iso: string) { return new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }); }
 
   if (loading) return <LoadingScreen message="ABRIENDO CANALES SEGUROS..." />;
@@ -159,6 +194,8 @@ export function ChatTab() {
 
   // ── CONVERSACIÓN ──
   const gl = ghostLeft(room);
+  const isSeller = room.seller_id === profile?.id;
+  const isBuyer = room.buyer_id === profile?.id;
   return (
     <div style={BASE.root}>
       <ScanlineOverlay />
@@ -181,6 +218,17 @@ export function ChatTab() {
         <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan, padding: '3px 8px', borderRadius: 12, border: `1px solid ${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}55` }}>{room.status ?? 'LOCKED'}</span>
       </div>
 
+      {/* Acción del vendedor: marcar entregado (solo en LOCKED) */}
+      {isSeller && room.status === 'LOCKED' && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(34,197,94,0.07)', borderBottom: `1px solid ${C.cyanFaint}` }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.green }}>TRABAJO EN CURSO · ESCROW BLOQUEADO</span>
+          <button onClick={markDelivered} disabled={delivering}
+            style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#04110a', background: C.green, border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontWeight: 700, opacity: delivering ? 0.5 : 1 }}>
+            {delivering ? '...' : 'MARCAR ENTREGADO ▸'}
+          </button>
+        </div>
+      )}
+
       {/* Ghost Approval por contrato */}
       {gl !== null && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(124,58,237,0.08)', borderBottom: `1px solid ${C.cyanFaint}` }}>
@@ -192,6 +240,13 @@ export function ChatTab() {
             <span style={{ fontFamily: FONT.mono, fontSize: 14, fontWeight: 700, letterSpacing: 2, color: gl <= 60 ? C.red : C.cyan }}>
               {String(Math.floor(gl / 60)).padStart(2, '0')}:{String(gl % 60).padStart(2, '0')}
             </span>
+            {isBuyer && (
+              <button onClick={approveDelivery} disabled={approving}
+                style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#04110a', background: C.green,
+                  border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 700, opacity: approving ? 0.5 : 1 }}>
+                {approving ? '...' : 'APROBAR'}
+              </button>
+            )}
             <button onClick={objectDelivery} disabled={objecting}
               style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#fff', background: C.red,
                 border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', opacity: objecting ? 0.5 : 1 }}>
