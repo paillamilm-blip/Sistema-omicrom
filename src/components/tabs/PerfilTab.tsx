@@ -2,7 +2,7 @@
 // Sistema Ómicron — Perfil · Industrial 5.0 / Cyberpunk
 
 import { useState, useEffect, useCallback } from 'react';
-import { LogOut, Edit3, Shield, TrendingUp, Award, AlertTriangle, Lock, MapPin, Zap, Camera } from 'lucide-react';
+import { LogOut, Edit3, Shield, TrendingUp, Award, AlertTriangle, Lock, MapPin, Zap, Camera, GraduationCap } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp, useGemeloDigital } from '../../store/AppContext';
 import { EditProfileModal } from '../perfil/EditProfileModal';
@@ -33,6 +33,13 @@ const CAPABILITIES = [
   { lvl: 1, name: 'ESTUDIANTE',  tag: 'N1', scope: 'Nivelación · micro-trabajos · dudas rápidas', col: C.cyan   },
   { lvl: 2, name: 'TÉCNICO',     tag: 'N2', scope: 'Docencia · pasantías · contratos empresa',    col: C.gold   },
   { lvl: 3, name: 'ARQUITECTO',  tag: 'N3', scope: 'Proyectos críticos · arbitraje · staking',    col: C.purple },
+];
+
+type Section = 'gemelo' | 'credenciales' | 'capacidades';
+const SECTIONS: { id: Section; label: string; icon: any }[] = [
+  { id: 'gemelo',       label: 'GEMELO',       icon: TrendingUp },
+  { id: 'credenciales', label: 'CREDENCIALES', icon: GraduationCap },
+  { id: 'capacidades',  label: 'CAPACIDADES',  icon: Shield },
 ];
 
 // ─── Corners animados ─────────────────────────────────────────────────────────
@@ -438,6 +445,7 @@ export function PerfilTab() {
   const [redNode,   setRedNode]   = useState('');
   const [toast,     setToast]     = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [section,   setSection]   = useState<Section>('gemelo');
 
   const nodeColor = NODE_COLOR[profile?.node_type ?? 'Nodo Operativo'] ?? C.cyan;
   const initials  = (profile?.full_name ?? profile?.username ?? 'U')
@@ -577,25 +585,52 @@ export function PerfilTab() {
           <StatCard label="CONTRATOS"  value={String(profile?.total_contracts_completed ?? 0)} color={C.green}  />
         </StatGrid>
 
-        {gemelo && <GemeloPanel gemelo={gemelo} />}
+        {/* Sub-secciones tipo píldoras */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+          {SECTIONS.map(s => {
+            const Icon = s.icon;
+            const active = section === s.id;
+            return (
+              <button key={s.id} onClick={() => setSection(s.id)} style={{
+                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                padding: '11px 6px', borderRadius: RADIUS.lg, cursor: 'pointer',
+                background: active ? `${C.cyan}14` : 'rgba(10,17,32,0.6)',
+                border: `1px solid ${active ? C.cyan : C.cyanFaint}`,
+                boxShadow: active ? `0 0 12px ${C.cyan}33` : 'none',
+                transition: 'all 0.2s',
+              }}>
+                <Icon size={16} style={{ color: active ? C.cyan : C.cyanDim }} />
+                <span style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1, color: active ? C.cyan : C.cyanDim }}>
+                  {s.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-        <CapabilidadesPanel userRank={userRank} />
+        {/* Contenido de la sección activa */}
+        {section === 'gemelo' && gemelo && <GemeloPanel gemelo={gemelo} />}
 
-        <CredentialsPanel />
+        {section === 'credenciales' && <CredentialsPanel />}
 
-        {profile?.is_pioneer && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '12px 16px', borderRadius: RADIUS.lg, marginBottom: 14,
-            background: C.goldFaint, border: `1px solid ${C.goldDim}`,
-          }}>
-            <Award size={20} style={{ color: C.gold, flexShrink: 0 }} />
-            <div>
-              <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold, letterSpacing: 1.5 }}>ESTATUS PIONEER</div>
-              <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.goldDim, marginTop: 2 }}>Beneficio fundacional vitalicio</div>
-            </div>
-            <div style={{ marginLeft: 'auto', fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold }}>⬡</div>
-          </div>
+        {section === 'capacidades' && (
+          <>
+            <CapabilidadesPanel userRank={userRank} />
+            {profile?.is_pioneer && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 16px', borderRadius: RADIUS.lg, marginBottom: 14,
+                background: C.goldFaint, border: `1px solid ${C.goldDim}`,
+              }}>
+                <Award size={20} style={{ color: C.gold, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold, letterSpacing: 1.5 }}>ESTATUS PIONEER</div>
+                  <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.goldDim, marginTop: 2 }}>Beneficio fundacional vitalicio</div>
+                </div>
+                <div style={{ marginLeft: 'auto', fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold }}>⬡</div>
+              </div>
+            )}
+          </>
         )}
 
         <Divider glow style={{ margin: '4px 0 14px' }} />
