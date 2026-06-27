@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Shield, Timer, ArrowLeft, MessageCircle, Lock, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Send, Shield, Timer, ArrowLeft, MessageCircle, Lock, ShieldCheck, ShieldAlert, Star, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
@@ -7,9 +7,88 @@ import { ScanlineOverlay, CyberHeader, CyberCard, SectionLabel, LoadingScreen } 
 import { sendSecureMessage, loadSecureMessages } from '../../lib/secureChat';
 import type { Message } from '../../types';
 
-interface Room { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; delivery_declared_at: string | null; }
+interface Room { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; delivery_declared_at: string | null; rating: number | null; }
 
 const ST_COLOR: Record<string, string> = { LOCKED: C.gold, DELIVERED: C.cyan, RELEASED: C.green, DISPUTED: C.red };
+
+// ─── Modal de calificación ────────────────────────────────────────────────────
+function RatingModal({
+  sellerName, stars, setStars, comment, setComment, saving, onSubmit, onClose,
+}: {
+  sellerName: string; stars: number; setStars: (n: number) => void;
+  comment: string; setComment: (s: string) => void; saving: boolean;
+  onSubmit: () => void; onClose: () => void;
+}) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(2,6,14,0.8)', backdropFilter: 'blur(4px)', padding: 20,
+    }}>
+      <div style={{
+        width: '100%', maxWidth: 360, borderRadius: 16, padding: 20,
+        background: 'rgba(10,17,32,0.99)', border: `1px solid ${C.cyanDim}`,
+        boxShadow: `0 0 30px ${C.cyanFaint}`, position: 'relative',
+      }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: C.cyanDim, cursor: 'pointer', display: 'flex' }}>
+          <X size={18} />
+        </button>
+
+        <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 2, color: C.cyan, textTransform: 'uppercase', marginBottom: 4 }}>
+          CALIFICAR ENTREGA
+        </div>
+        <div style={{ fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, marginBottom: 18 }}>
+          ¿Cómo fue el trabajo de <span style={{ color: '#e2f3ff' }}>@{sellerName}</span>?
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
+          {[1, 2, 3, 4, 5].map(n => (
+            <button key={n} onClick={() => setStars(n)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
+              <Star
+                size={34}
+                style={{
+                  color: n <= stars ? C.gold : C.cyanFaint,
+                  fill: n <= stars ? C.gold : 'transparent',
+                  transition: 'all 0.15s',
+                  filter: n <= stars ? `drop-shadow(0 0 6px ${C.gold}88)` : 'none',
+                }}
+              />
+            </button>
+          ))}
+        </div>
+        <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 11, color: C.gold, marginBottom: 16 }}>
+          {['', 'Deficiente', 'Regular', 'Bueno', 'Muy bueno', 'Excelente'][stars]}
+        </div>
+
+        <textarea
+          value={comment}
+          onChange={e => setComment(e.target.value)}
+          placeholder="Comentario (opcional)..."
+          rows={3}
+          style={{
+            width: '100%', boxSizing: 'border-box', resize: 'none',
+            background: 'rgba(0,245,255,0.04)', border: `1px solid ${C.cyanFaint}`,
+            borderRadius: 10, padding: '10px 12px', color: '#e2f3ff',
+            fontFamily: FONT.body, fontSize: 13, outline: 'none', marginBottom: 16,
+          }}
+        />
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{
+            flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer',
+            background: 'transparent', border: `1px solid ${C.cyanFaint}`,
+            color: C.cyanDim, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1,
+          }}>CANCELAR</button>
+          <button onClick={onSubmit} disabled={saving} style={{
+            flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer',
+            background: C.gold, border: 'none', color: '#1a1205',
+            fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700,
+            opacity: saving ? 0.6 : 1,
+          }}>{saving ? 'ENVIANDO…' : 'ENVIAR CALIFICACIÓN'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function ChatTab() {
   const { profile } = useApp();
@@ -25,6 +104,10 @@ export function ChatTab() {
   const [approving, setApproving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
+  const [rateFor, setRateFor] = useState<Room | null>(null);
+  const [stars, setStars] = useState(5);
+  const [ratingComment, setRatingComment] = useState('');
+  const [ratingSaving, setRatingSaving] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
@@ -32,7 +115,7 @@ export function ChatTab() {
   const loadRooms = useCallback(async () => {
     if (!profile) return;
     const { data } = await supabase
-      .from('contracts').select('id,title,buyer_id,seller_id,status,delivery_declared_at')
+      .from('contracts').select('id,title,buyer_id,seller_id,status,delivery_declared_at,rating')
       .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
       .order('created_at', { ascending: false });
     const rs = (data as Room[]) ?? [];
@@ -47,27 +130,19 @@ export function ChatTab() {
 
   useEffect(() => { loadRooms(); }, [loadRooms]);
 
-  // Mensajes (DESCIFRADOS vía Edge Function) + realtime de la sala seleccionada
   useEffect(() => {
     if (!room || !profile) return;
     let active = true;
-
     const reload = async () => {
       try {
         const { messages: msgs, integrity_ok } = await loadSecureMessages(room.id);
         if (active) { setMessages(msgs); setIntegrityOk(integrity_ok); }
-      } catch (e) {
-        console.error('Error cargando chat seguro:', e);
-      }
+      } catch (e) { console.error('Error cargando chat seguro:', e); }
     };
     reload();
-
     const ch = supabase.channel(`room-${room.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `network_id=eq.${room.id}` }, () => {
-        // El payload llega cifrado → recargar descifrado
-        reload();
-      }).subscribe();
-
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `network_id=eq.${room.id}` }, () => { reload(); })
+      .subscribe();
     return () => { active = false; supabase.removeChannel(ch); };
   }, [room, profile]);
 
@@ -95,25 +170,21 @@ export function ChatTab() {
     } catch (e) {
       console.error('Error enviando mensaje:', e);
       setInput(content);
-      setMessages(p => p.filter(x => x.id !== opt.id)); // revertir optimista
+      setMessages(p => p.filter(x => x.id !== opt.id));
     } finally {
       setSending(false);
     }
   }
 
-  // Objetar la entrega durante Ghost Approval → abre disputa + detiene liberación
   async function objectDelivery() {
     if (!room || !profile || objecting) return;
     const reason = window.prompt('Motivo de la objeción a la entrega:', 'No cumple lo acordado');
-    if (reason === null) return; // canceló
+    if (reason === null) return;
     setObjecting(true);
     try {
-      const { error } = await supabase.rpc('object_delivery', {
-        p_contract_id: room.id,
-        p_reason: reason || 'Objeción durante Ghost Approval',
-      });
+      const { error } = await supabase.rpc('object_delivery', { p_contract_id: room.id, p_reason: reason || 'Objeción durante Ghost Approval' });
       if (error) throw error;
-      setRoom({ ...room, status: 'DISPUTED' }); // detiene el cronómetro en la UI
+      setRoom({ ...room, status: 'DISPUTED' });
       await loadRooms();
     } catch (e) {
       console.error('Error al objetar:', e);
@@ -123,7 +194,6 @@ export function ChatTab() {
     }
   }
 
-  // Vendedor declara entrega → DELIVERED + arranca Ghost Approval
   async function markDelivered() {
     if (!room || delivering) return;
     setDelivering(true);
@@ -139,7 +209,6 @@ export function ChatTab() {
     }
   }
 
-  // Comprador aprueba la entrega → libera fondos (RELEASED)
   async function approveDelivery() {
     if (!room || approving) return;
     if (!window.confirm('¿Aprobar la entrega y liberar los fondos al vendedor?')) return;
@@ -147,8 +216,11 @@ export function ChatTab() {
     try {
       const { error } = await supabase.rpc('release_escrow', { p_contract_id: room.id });
       if (error) throw error;
-      setRoom({ ...room, status: 'RELEASED' });
+      const released = { ...room, status: 'RELEASED' };
+      setRoom(released);
       await loadRooms();
+      setStars(5); setRatingComment('');
+      setRateFor(released);
     } catch (e) {
       alert('No se pudo aprobar: ' + ((e as Error).message ?? e));
     } finally {
@@ -156,11 +228,29 @@ export function ChatTab() {
     }
   }
 
+  async function submitRating() {
+    if (!rateFor || ratingSaving) return;
+    setRatingSaving(true);
+    try {
+      const { error } = await supabase.rpc('rate_contract', {
+        p_contract_id: rateFor.id, p_stars: stars, p_comment: ratingComment.trim() || null,
+      });
+      if (error) throw error;
+      setRooms(prev => prev.map(r => r.id === rateFor.id ? { ...r, rating: stars } : r));
+      if (room && room.id === rateFor.id) setRoom({ ...room, rating: stars });
+      setRateFor(null); setStars(5); setRatingComment('');
+      await loadRooms();
+    } catch (e) {
+      alert('No se pudo calificar: ' + ((e as Error).message ?? e));
+    } finally {
+      setRatingSaving(false);
+    }
+  }
+
   function fmt(iso: string) { return new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }); }
 
   if (loading) return <LoadingScreen message="ABRIENDO CANALES SEGUROS..." />;
 
-  // ── LISTA DE SALAS ──
   if (!room) {
     return (
       <div style={BASE.root}>
@@ -180,7 +270,7 @@ export function ChatTab() {
                   <Lock size={15} style={{ color: ST_COLOR[r.status ?? 'LOCKED'] ?? C.cyan }} />
                   <div>
                     <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe' }}>{r.title}</div>
-                    <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>@{otherName(r)} · {r.status ?? 'LOCKED'}</div>
+                    <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>@{otherName(r)} · {r.status ?? 'LOCKED'}{r.rating ? ` · ${r.rating}★` : ''}</div>
                   </div>
                 </div>
                 <Send size={14} style={{ color: C.cyanDim }} />
@@ -192,14 +282,12 @@ export function ChatTab() {
     );
   }
 
-  // ── CONVERSACIÓN ──
   const gl = ghostLeft(room);
   const isSeller = room.seller_id === profile?.id;
   const isBuyer = room.buyer_id === profile?.id;
   return (
     <div style={BASE.root}>
       <ScanlineOverlay />
-      {/* Header de sala */}
       <div style={cx(BASE.header, { gap: 10 })}>
         <button onClick={() => { setRoom(null); setMessages([]); }} style={{ background: 'none', border: 'none', color: C.cyan, cursor: 'pointer', display: 'flex' }}>
           <ArrowLeft size={18} />
@@ -207,9 +295,7 @@ export function ChatTab() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: C.cyan, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{room.title}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            {integrityOk
-              ? <ShieldCheck size={9} style={{ color: C.green }} />
-              : <ShieldAlert size={9} style={{ color: C.red }} />}
+            {integrityOk ? <ShieldCheck size={9} style={{ color: C.green }} /> : <ShieldAlert size={9} style={{ color: C.red }} />}
             <span style={{ fontFamily: FONT.mono, fontSize: 8, color: integrityOk ? C.cyanDim : C.red }}>
               @{otherName(room)} · {integrityOk ? 'CAJA NEGRA · CADENA OK' : 'CADENA ALTERADA'}
             </span>
@@ -218,7 +304,6 @@ export function ChatTab() {
         <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan, padding: '3px 8px', borderRadius: 12, border: `1px solid ${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}55` }}>{room.status ?? 'LOCKED'}</span>
       </div>
 
-      {/* Acción del vendedor: marcar entregado (solo en LOCKED) */}
       {isSeller && room.status === 'LOCKED' && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(34,197,94,0.07)', borderBottom: `1px solid ${C.cyanFaint}` }}>
           <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.green }}>TRABAJO EN CURSO · ESCROW BLOQUEADO</span>
@@ -229,7 +314,6 @@ export function ChatTab() {
         </div>
       )}
 
-      {/* Ghost Approval por contrato */}
       {gl !== null && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(124,58,237,0.08)', borderBottom: `1px solid ${C.cyanFaint}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -242,21 +326,33 @@ export function ChatTab() {
             </span>
             {isBuyer && (
               <button onClick={approveDelivery} disabled={approving}
-                style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#04110a', background: C.green,
-                  border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 700, opacity: approving ? 0.5 : 1 }}>
+                style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#04110a', background: C.green, border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 700, opacity: approving ? 0.5 : 1 }}>
                 {approving ? '...' : 'APROBAR'}
               </button>
             )}
             <button onClick={objectDelivery} disabled={objecting}
-              style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#fff', background: C.red,
-                border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', opacity: objecting ? 0.5 : 1 }}>
+              style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#fff', background: C.red, border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', opacity: objecting ? 0.5 : 1 }}>
               {objecting ? '...' : 'OBJETAR'}
             </button>
           </div>
         </div>
       )}
 
-      {/* Mensajes */}
+      {isBuyer && room.status === 'RELEASED' && !room.rating && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(251,191,36,0.08)', borderBottom: `1px solid ${C.cyanFaint}` }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.gold }}>ENTREGA APROBADA · CALIFICA AL VENDEDOR</span>
+          <button onClick={() => { setStars(5); setRatingComment(''); setRateFor(room); }}
+            style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#1a1205', background: C.gold, border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontWeight: 700 }}>
+            CALIFICAR ★
+          </button>
+        </div>
+      )}
+      {isBuyer && room.status === 'RELEASED' && room.rating && (
+        <div style={{ padding: '6px 14px', flexShrink: 0, background: 'rgba(34,197,94,0.06)', borderBottom: `1px solid ${C.cyanFaint}`, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.green }}>
+          YA CALIFICASTE ESTA ENTREGA: {room.rating}★
+        </div>
+      )}
+
       <div style={cx(BASE.scrollArea, { padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 12 })}>
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', padding: 30, fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>CANAL CIFRADO · INICIA LA CONVERSACIÓN</div>
@@ -275,7 +371,6 @@ export function ChatTab() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
       <div style={{ display: 'flex', gap: 8, padding: '10px 14px', flexShrink: 0, borderTop: `1px solid ${C.cyanFaint}` }}>
         <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()} placeholder="Mensaje cifrado..."
           style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "'Rajdhani', sans-serif", fontSize: 14, outline: 'none' }} />
@@ -283,6 +378,17 @@ export function ChatTab() {
           <Send size={16} />
         </button>
       </div>
+
+      {rateFor && (
+        <RatingModal
+          sellerName={otherName(rateFor)}
+          stars={stars} setStars={setStars}
+          comment={ratingComment} setComment={setRatingComment}
+          saving={ratingSaving}
+          onSubmit={submitRating}
+          onClose={() => setRateFor(null)}
+        />
+      )}
     </div>
   );
 }
