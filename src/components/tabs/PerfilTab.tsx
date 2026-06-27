@@ -592,15 +592,28 @@ export function PerfilTab() {
             const active = section === s.id;
             return (
               <button key={s.id} onClick={() => setSection(s.id)} style={{
-                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                padding: '11px 6px', borderRadius: RADIUS.lg, cursor: 'pointer',
+                position: 'relative', flex: 1, display: 'flex', flexDirection: 'column',
+                alignItems: 'center', gap: 5, padding: '11px 6px',
+                borderRadius: RADIUS.lg, cursor: 'pointer', overflow: 'hidden',
                 background: active ? `${C.cyan}14` : 'rgba(10,17,32,0.6)',
                 border: `1px solid ${active ? C.cyan : C.cyanFaint}`,
-                boxShadow: active ? `0 0 12px ${C.cyan}33` : 'none',
-                transition: 'all 0.2s',
+                boxShadow: active ? `0 0 14px ${C.cyan}44` : 'none',
+                transform: active ? 'translateY(-2px) scale(1.03)' : 'none',
+                transition: 'all 0.28s cubic-bezier(0.22,1,0.36,1)',
               }}>
-                <Icon size={16} style={{ color: active ? C.cyan : C.cyanDim }} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1, color: active ? C.cyan : C.cyanDim }}>
+                {active && (
+                  <span style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+                    background: `linear-gradient(90deg, transparent, ${C.cyan}, transparent)`,
+                    animation: 'pillGlow 1.8s ease-in-out infinite',
+                  }} />
+                )}
+                <Icon size={16} style={{
+                  color: active ? C.cyan : C.cyanDim,
+                  transition: 'color 0.28s',
+                  animation: active ? 'pillPulse 1.8s ease-in-out infinite' : 'none',
+                }} />
+                <span style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1, color: active ? C.cyan : C.cyanDim, transition: 'color 0.28s' }}>
                   {s.label}
                 </span>
               </button>
@@ -608,30 +621,47 @@ export function PerfilTab() {
           })}
         </div>
 
-        {/* Contenido de la sección activa */}
-        {section === 'gemelo' && gemelo && <GemeloPanel gemelo={gemelo} />}
+        {/* Contenido de la sección activa (con animación de entrada) */}
+        <div key={section} style={{ animation: 'sectionIn 0.4s cubic-bezier(0.22,1,0.36,1) both' }}>
+          {section === 'gemelo' && gemelo && <GemeloPanel gemelo={gemelo} />}
 
-        {section === 'credenciales' && <CredentialsPanel />}
+          {section === 'credenciales' && <CredentialsPanel />}
 
-        {section === 'capacidades' && (
-          <>
-            <CapabilidadesPanel userRank={userRank} />
-            {profile?.is_pioneer && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '12px 16px', borderRadius: RADIUS.lg, marginBottom: 14,
-                background: C.goldFaint, border: `1px solid ${C.goldDim}`,
-              }}>
-                <Award size={20} style={{ color: C.gold, flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold, letterSpacing: 1.5 }}>ESTATUS PIONEER</div>
-                  <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.goldDim, marginTop: 2 }}>Beneficio fundacional vitalicio</div>
+          {section === 'capacidades' && (
+            <>
+              <CapabilidadesPanel userRank={userRank} />
+              {profile?.is_pioneer && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px 16px', borderRadius: RADIUS.lg, marginBottom: 14,
+                  background: C.goldFaint, border: `1px solid ${C.goldDim}`,
+                }}>
+                  <Award size={20} style={{ color: C.gold, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold, letterSpacing: 1.5 }}>ESTATUS PIONEER</div>
+                    <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.goldDim, marginTop: 2 }}>Beneficio fundacional vitalicio</div>
+                  </div>
+                  <div style={{ marginLeft: 'auto', fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold }}>⬡</div>
                 </div>
-                <div style={{ marginLeft: 'auto', fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold }}>⬡</div>
-              </div>
-            )}
-          </>
-        )}
+              )}
+            </>
+          )}
+        </div>
+
+        <style>{`
+          @keyframes sectionIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes pillGlow {
+            0%, 100% { opacity: 0.35; }
+            50%      { opacity: 1; }
+          }
+          @keyframes pillPulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.15); }
+          }
+        `}</style>
 
         <Divider glow style={{ margin: '4px 0 14px' }} />
 
