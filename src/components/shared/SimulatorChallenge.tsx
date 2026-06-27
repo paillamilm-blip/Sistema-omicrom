@@ -29,35 +29,8 @@ interface SimulatorChallengeProps {
 }
 
 // Ejecuta el código del usuario en el navegador contra los casos de prueba.
-function runCodeLocally(code: string, testCases: SkillTest['test_cases']): TestCaseResult[] {
-  let solution: (input: string) => unknown;
-  try {
-    const factory = new Function(`
-      "use strict";
-      ${code}
-      if (typeof solution !== 'function') {
-        throw new Error('Define una función llamada "solution".');
-      }
-      return solution;
-    `);
-    solution = factory() as (input: string) => unknown;
-  } catch (err) {
-    return testCases.map(tc => ({
-      input: tc.input, expected: String(tc.expected_output), actual: '',
-      passed: false, error: String((err as Error)?.message ?? err),
-    }));
-  }
-
-  return testCases.map(tc => {
-    const expected = String(tc.expected_output);
-    try {
-      const actual = String(solution(tc.input));
-      return { input: tc.input, expected, actual, passed: actual.trim() === expected.trim() };
-    } catch (err) {
-      return { input: tc.input, expected, actual: '', passed: false, error: String((err as Error)?.message ?? err) };
-    }
-  });
-}
+// El código se ejecuta de forma SEGURA en la Edge Function `run-code`
+// (scoring autoritativo del servidor). El navegador ya no calcula la nota.
 
 export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: SimulatorChallengeProps) {
   const { profile } = useApp();
