@@ -3,19 +3,18 @@ import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { Modal } from '../shared/Modal';
 import { Plus, X } from 'lucide-react';
-import { NODE_TYPES, NODE_LEVELS, formatNodeLevel } from '../../config/nodes';
 
 interface Props { onClose: () => void }
 
 export function EditProfileModal({ onClose }: Props) {
   const { profile, refreshProfile } = useApp();
+  // Solo campos que el usuario PUEDE editar. El rango (node_type/node_level),
+  // tokens y reputación los controla el servidor (no se editan aquí).
   const [form, setForm] = useState({
     username:  profile?.username  ?? '',
     full_name: profile?.full_name ?? '',
     bio:       profile?.bio       ?? '',
     location:  profile?.location  ?? '',
-    node_type: profile?.node_type ?? 'Nodo Operativo',
-    node_level: profile?.node_level ?? 1,
   });
   const [skills, setSkills] = useState<string[]>(profile?.skills ?? []);
   const [skillInput, setSkillInput] = useState('');
@@ -33,7 +32,6 @@ export function EditProfileModal({ onClose }: Props) {
   function removeSkill(s: string) {
     setSkills(skills.filter(x => x !== s));
   }
-
 
   async function handleSave() {
     if (!profile) return;
@@ -78,7 +76,6 @@ export function EditProfileModal({ onClose }: Props) {
     );
   }
 
-
   return (
     <Modal title="Editar Perfil" onClose={onClose}>
       <div className="px-5 py-4 space-y-4">
@@ -88,46 +85,8 @@ export function EditProfileModal({ onClose }: Props) {
         {field('Ubicación', 'location', 'text', 'Santiago, Chile')}
         {field('Biografía', 'bio', 'textarea', 'Cuéntanos sobre ti y tu expertise...')}
 
-        {/* Node Type */}
-        <div>
-          <label className="text-omicron-subtle text-xs uppercase tracking-wide mb-1 block">Tipo de Nodo</label>
-          <div className="grid grid-cols-2 gap-2">
-            {NODE_TYPES.map(t => (
-              <button
-                key={t}
-                onClick={() => setForm({ ...form, node_type: t })}
-                className={`py-2 rounded-xl text-xs font-medium border transition ${
-                  form.node_type === t
-                    ? 'border-omicron-accent bg-omicron-accent/20 text-omicron-accent'
-                    : 'border-omicron-border bg-omicron-surface text-omicron-subtle hover:text-omicron-text'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Node Level */}
-        <div>
-          <label className="text-omicron-subtle text-xs uppercase tracking-wide mb-1 block">Nivel</label>
-          <div className="flex gap-2">
-            {NODE_LEVELS.map(l => (
-              <button
-                key={l}
-                onClick={() => setForm({ ...form, node_level: l })}
-                className={`flex-1 py-2 rounded-xl text-sm font-bold border transition ${
-                  form.node_level === l
-                    ? 'border-omicron-accent bg-omicron-accent/20 text-omicron-accent'
-                    : 'border-omicron-border bg-omicron-surface text-omicron-subtle hover:text-omicron-text'
-                }`}
-              >
-                {formatNodeLevel(l)}
-              </button>
-            ))}
-          </div>
-        </div>
-
+        {/* Nota: el Tipo de Nodo y el Nivel los determina el sistema según tu
+            reputación y trayectoria — no se editan manualmente. */}
 
         {/* Skills */}
         <div>
@@ -163,7 +122,6 @@ export function EditProfileModal({ onClose }: Props) {
             </div>
           )}
         </div>
-
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>
