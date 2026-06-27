@@ -91,43 +91,46 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
     setIsSaving(true);
     startTimer();
 
-    // Ejecuta en el navegador
-    const testCaseResults = runCodeLocally(code, test.test_cases);
-    stopTimer();
-    const elapsedSec = Math.floor((Date.now() - startTimeRef.current) / 1000);
-
-    const passedCount = testCaseResults.filter(r => r.passed).length;
-    const score = test.test_cases.length ? Math.round((passedCount / test.test_cases.length) * 100) : 0;
-    const hasError = testCaseResults.some(r => r.error);
-    const result: RunResult['result'] = score >= test.passing_score ? 'PASS' : hasError ? 'ERROR' : 'FAIL';
-
-    const rr: RunResult = { result, score, testCaseResults, timeTakenSeconds: elapsedSec };
-    setRunResult(rr);
-    setPhase('result');
-
-    // Guarda intento + reputación (autoritativo en el servidor)
-    let pe = 0;
     try {
-      const { data } = await supabase.rpc('handle_skill_attempt', {
-        p_user_id: profile.id,
-        p_test_id: test.id,
-        p_node_id: nodeId,
-        p_score: score,
-        p_time_sec: elapsedSec,
-        p_code: code,
-        p_result: result,
-        p_tc_results: testCaseResults,
+      const { data, error } = await supabase.functions.invoke('run-code', {
+        body: { test_id: test.id, node_id: nodeId, code },
       });
-      pe = (data as { pe_awarded?: number } | null)?.pe_awarded ?? 0;
-    } catch (e) {
-      console.error('Error guardando intento:', e);
-    }
+      stopTimer();
+      const elapsedSec = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
-    setPeAwarded(pe);
-    if (result === 'PASS') onSuccess(pe);
-    await refreshHistory();
-    setIsSaving(false);
-  }, [profile?.id, phase, code, test, nodeId, startTimer, stopTimer, onSuccess, refreshHistory]);
+      if (error || !data || (data as { error?: string }).error) {
+        const msg = (data as { error?: string })?.error || error?.message
+          || 'No se pudo ejecutar en el servidor. ¿Está desplegada la función "run-code"?';
+        setRunResult({ result: 'ERROR', score: 0, testCaseResults: [], timeTakenSeconds: elapsedSec, errorMessage: msg });
+        setPhase('result');
+        return;
+      }
+
+      const rr: RunResult = {
+        result: data.result,
+        score: data.score,
+        testCaseResults: data.testCaseResults ?? [],
+        timeTakenSeconds: data.timeTakenSeconds ?? elapsedSec,
+        errorMessage: data.errorMessage,
+      };
+      setRunResult(rr);
+      setPhase('result');
+      const pe = data.pe_awarded ?? 0;
+      setPeAwarded(pe);
+      if (rr.result === 'PASS') onSuccess(pe);
+      await refreshHistory();
+    } catch (e) {
+      stopTimer();
+      setRunResult({
+        result: 'ERROR', score: 0, testCaseResults: [],
+        timeTakenSeconds: Math.floor((Date.now() - startTimeRef.current) / 1000),
+        errorMessage: String((e as Error)?.message ?? e),
+      });
+      setPhase('result');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [profile?.id, phase, code, test.id, nodeId, startTimer, stopTimer, onSuccess, refreshHistory]);
 
   const handleReset = () => {
     stopTimer();
