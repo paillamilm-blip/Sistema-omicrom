@@ -112,3 +112,58 @@ _Lo necesario para abrir al público con responsabilidad._
 2. Solo 2 módulos núcleo completos: **Contratos+Calidad** y **MaxSkill** (lo demás "próximamente")
 3. Legal básico + deploy + beta
 → **MVP lanzable en ~4-5 semanas** a ritmo medio.
+
+
+
+---
+
+# 📅 PLAN PERSONALIZADO — 9 h/día (~50 h/semana)
+
+**Tu jornada:**
+- 🌅 **Mañana 07:00–11:30 (4.5h)** → construir lo pesado (foco máximo: SQL, lógica, módulos nuevos)
+- 🌙 **Noche 20:30–00:00 (3.5h)** → probar, pulir UI, arreglar bugs, tareas livianas
+
+> A este ritmo: **lanzamiento en ~5-6 semanas.** Detalle por semana:
+
+## 🗓️ SEMANA 1 — Estabilización + Academia
+- **Mañanas:** arreglar Supabase/404 (Fase 0) · separar dev/prod · construir Academia (tablas + cursos + quizzes) · conectarla a Fundamento
+- **Noches:** probar todos los flujos actuales con cuentas de prueba · arreglar lo que falle · manejo de errores con toasts
+
+## 🗓️ SEMANA 2 — Gobernanza + Wallet
+- **Mañanas:** Gobernanza completa (disputa → 3 árbitros → resolución → liberar/reembolsar) · Wallet (saldo, historial, conversión)
+- **Noches:** probar disputas de punta a punta · pulir Wallet · validar saldos
+
+## 🗓️ SEMANA 3 — Empleos + Bóveda + Auditorías
+- **Mañanas:** Empleos (publicar, matchmaking, aplicar) · Bóveda (publicar, comprar, regalías) · panel de validación de credenciales (Tanda C) · auditoría de rango (`resolve_audit` + trigger)
+- **Noches:** probar matchmaking · probar compras de Bóveda · cerrar pendientes del núcleo
+
+## 🗓️ SEMANA 4 — Profesionalización
+- **Mañanas:** estados de carga/vacío/error en todas las pantallas · validación de formularios · responsive móvil/tablet/desktop
+- **Noches:** ampliar tests (Vitest) · revisión de seguridad RLS tabla por tabla · índices y performance · notificaciones por email
+
+## 🗓️ SEMANA 5 — Pre-lanzamiento
+- **Mañanas:** Términos + Privacidad · definir monetización · onboarding guiado · deploy a Vercel + dominio + variables de entorno
+- **Noches:** analítica (PostHog/GA) · monitoreo (Sentry) · backups · **abrir beta cerrada (10-20 personas)**
+
+## 🗓️ SEMANA 6 — Beta + Lanzamiento 🚀
+- **Mañanas:** corregir lo que reporte la beta · landing page de marketing
+- **Noches:** canal de soporte · plan de difusión · **LANZAMIENTO PÚBLICO**
+
+---
+
+## ⏱️ TIEMPOS RECALCULADOS (a tu ritmo de 9 h/día)
+
+| Hito | Cuándo |
+|------|--------|
+| Núcleo funcional completo | fin de Semana 3 |
+| Producto profesional (pulido) | fin de Semana 4 |
+| En producción + beta | fin de Semana 5 |
+| **Lanzamiento al mercado** | **fin de Semana 6 (~6 semanas)** |
+
+- 🏃 **Si solo haces el MVP mínimo** (Contratos/Calidad + MaxSkill + legal + deploy): **~2-3 semanas**.
+- ⚠️ Con **dinero real** (Stripe + KYC/legal): suma ~2 semanas.
+
+### 💡 Regla de oro
+- **No saltes la Fase 0.** Una base estable te ahorra días de bugs después.
+- **Mañana = crear, Noche = probar.** No construyas funciones nuevas de noche (cansado = bugs).
+- **Cierra un módulo antes de empezar otro.** Mejor 1 módulo 100% que 5 al 60%.
