@@ -53,21 +53,21 @@ function AppShell() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {/* Top bar HUD */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.cyanFaint}`, background: 'rgba(0,245,255,0.02)', flexShrink: 0, position: 'relative', zIndex: 3 }}>
+      {/* Top bar HUD — barra de comando distintiva */}
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'linear-gradient(180deg, #0d1422, #0a0f17)', borderBottom: '1px solid rgba(46,155,255,0.35)', boxShadow: '0 3px 16px rgba(0,0,0,0.55), inset 0 -1px 0 rgba(46,155,255,0.25)', flexShrink: 0, position: 'relative', zIndex: 3 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,245,255,0.1)', border: `1px solid ${C.cyanDim}`, boxShadow: `0 0 8px ${C.cyanFaint}` }}>
-            <span style={{ color: C.cyan, fontFamily: FONT.display, fontWeight: 700, fontSize: 14 }}>Ω</span>
+          <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #6fc3ff, #2e9bff)', boxShadow: '0 0 14px rgba(46,155,255,0.55)' }}>
+            <span style={{ color: '#06090f', fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ω</span>
           </div>
-          <span style={{ fontFamily: FONT.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: C.cyan }}>{TAB_TITLES[activeTab]}</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: '#eaf2ff', fontWeight: 700 }}>{TAB_TITLES[activeTab]}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {profile && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 12, color: C.gold }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 13, color: '#ff9d2e', fontWeight: 700 }}>
               🪙 {(profile.token_balance ?? 0).toLocaleString()}
             </span>
           )}
-          <button onClick={() => setShowNotifications(true)} style={{ position: 'relative', width: 34, height: 34, borderRadius: 8, background: 'rgba(0,245,255,0.06)', border: `1px solid ${C.cyanFaint}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={() => setShowNotifications(true)} style={{ position: 'relative', width: 34, height: 34, borderRadius: 8, background: 'rgba(46,155,255,0.1)', border: '1px solid rgba(46,155,255,0.3)', color: '#6fc3ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Bell size={16} />
             {unreadCount > 0 && (
               <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, background: C.red, color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
