@@ -17,7 +17,7 @@ const FM = "'Share Tech Mono', 'Courier New', monospace";
 const FR = "'Rajdhani', sans-serif";
 
 interface Doc {
-  id: string; author_id: string | null; title: string; description: string | null;
+  id: string; author_id: string | null; title: string;
   current_token_cost: number; competency_tags: string | null;
   parent_document_id: string | null; total_royalties: number; is_validated: boolean;
 }
@@ -38,6 +38,7 @@ export function VaultTab() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [access, setAccess] = useState<Set<string>>(new Set());
+  const [contents, setContents] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [showPublish, setShowPublish] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -50,7 +51,8 @@ export function VaultTab() {
   const load = useCallback(async () => {
     if (!profile) return;
     const { data: ds } = await supabase
-      .from('knowledge_vault_documents').select('*')
+      .from('knowledge_vault_documents')
+      .select('id,author_id,title,initial_token_cost,current_token_cost,competency_tags,parent_document_id,total_royalties,is_validated,created_at')
       .eq('is_validated', true).order('created_at', { ascending: false });
     const list = (ds as Doc[]) ?? [];
     setDocs(list);
@@ -61,7 +63,17 @@ export function VaultTab() {
       setNames(new Map(((p as { id: string; username: string }[]) ?? []).map(x => [x.id, x.username])));
     }
     const { data: q } = await supabase.from('vault_queries').select('document_id').eq('reader_id', profile.id);
-    setAccess(new Set(((q as { document_id: string }[]) ?? []).map(x => x.document_id)));
+    const acc = new Set(((q as { document_id: string }[]) ?? []).map(x => x.document_id));
+    setAccess(acc);
+
+    // Contenido SOLO de los docs a los que tienes acceso (o eres autor)
+    const unlocked = list.filter(d => acc.has(d.id) || d.author_id === profile.id);
+    const pairs = await Promise.all(unlocked.map(async d => {
+      const { data } = await supabase.rpc('get_vault_content', { p_doc_id: d.id });
+      return [d.id, (data as string) ?? ''] as [string, string];
+    }));
+    setContents(new Map(pairs.filter(p => p[1])));
+
     setLoading(false);
   }, [profile]);
 
@@ -175,7 +187,7 @@ export function VaultTab() {
               {d.competency_tags && <div style={{ marginTop: 8 }}><span style={styles.tag}>{d.competency_tags}</span></div>}
 
               {unlocked ? (
-                <div style={styles.content}>{d.description || 'Sin contenido.'}</div>
+                <div style={styles.content}>{contents.get(d.id) ?? 'Cargando contenido…'}</div>
               ) : (
                 <div style={styles.locked}>🔒 Contenido bloqueado · consulta para desbloquear</div>
               )}
