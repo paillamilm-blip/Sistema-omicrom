@@ -1,8 +1,9 @@
 // components/tabs/MarketTab.tsx
-// Mercado — tema "Energía Limpia": fondo blanco, azul eléctrico, futurista.
+// Mercado — tema "Industria 5.0": acero oscuro, rejilla blueprint, HUD,
+// azul eléctrico + ámbar de energía. Look tecnológico/industrial de alto impacto.
 
 import { useState, useEffect, useCallback } from 'react';
-import { ShoppingCart, Star, Plus, Zap } from 'lucide-react';
+import { ShoppingCart, Star, Plus, Zap, Cpu } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { ContractModal } from '../contracts/ContractModal';
@@ -11,14 +12,14 @@ import type { MarketService } from '../../types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
 
-// ── Paleta "Energía Limpia" ──────────────────────────────────────────
+// ── Paleta "Industria 5.0" ───────────────────────────────────────────
 const C = {
-  bg: '#f4f8ff', surface: '#ffffff',
-  blue: '#0062ff', blueBright: '#00aaff',
-  blueSoft: 'rgba(0,98,255,0.10)', blueLine: 'rgba(0,98,255,0.18)',
-  teal: '#06d6a0', gold: '#f5a623',
-  ink: '#0a1f44', muted: '#5b6b8c',
-  glow: '0 8px 24px rgba(0,98,255,0.12)',
+  bg: '#080b12', bg2: '#0b1119',
+  panelA: '#141c28', panelB: '#0d141e',
+  blue: '#00a8ff', blueHi: '#4ad8ff',
+  amber: '#ffb020', amberHi: '#ffd166',
+  line: 'rgba(0,168,255,0.22)', lineSoft: 'rgba(0,168,255,0.10)',
+  steel: '#2a3646', ink: '#e8f4ff', muted: '#6b829e',
 } as const;
 const FONT_MONO = "'Share Tech Mono', 'Courier New', monospace";
 const FONT_RAJ  = "'Rajdhani', sans-serif";
@@ -53,6 +54,19 @@ const CAT_MAP: { key: Category; label: string; icon: string }[] = [
   { key: 'diseño',  label: 'Diseño', icon: '🎨' },
   { key: 'consulta',label: 'Consul', icon: '🛰️' },
 ];
+
+// HUD corner brackets
+function Corners({ color }: { color: string }) {
+  const b: React.CSSProperties = { position: 'absolute', width: 12, height: 12, pointerEvents: 'none' };
+  return (
+    <>
+      <span style={{ ...b, top: -1, left: -1, borderTop: `2px solid ${color}`, borderLeft: `2px solid ${color}` }} />
+      <span style={{ ...b, top: -1, right: -1, borderTop: `2px solid ${color}`, borderRight: `2px solid ${color}` }} />
+      <span style={{ ...b, bottom: -1, left: -1, borderBottom: `2px solid ${color}`, borderLeft: `2px solid ${color}` }} />
+      <span style={{ ...b, bottom: -1, right: -1, borderBottom: `2px solid ${color}`, borderRight: `2px solid ${color}` }} />
+    </>
+  );
+}
 
 export function MarketTab() {
   const { profile } = useApp();
@@ -94,17 +108,19 @@ export function MarketTab() {
 
   return (
     <div style={styles.root}>
-      {/* Header */}
+      <div style={styles.grid} />
+
+      {/* Header HUD */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
-          <div style={styles.iconBadge}><Zap size={15} style={{ color: '#fff' }} /></div>
+          <div style={styles.iconBadge}><Cpu size={16} style={{ color: C.bg }} /></div>
           <div>
-            <div style={styles.headerTitle}>MERCADO DE SERVICIOS</div>
-            <div style={styles.headerSub}>Capital intelectual · energía limpia</div>
+            <div style={styles.headerTitle}>MERCADO · CAPITAL INTELECTUAL</div>
+            <div style={styles.headerSub}>◢ INDUSTRIA 5.0 // RED ÓMICROM</div>
           </div>
         </div>
         <button style={styles.publishBtn} onClick={() => setShowPublish(true)}>
-          <Plus size={14} /> Publicar
+          <Plus size={14} /> PUBLICAR
         </button>
       </div>
 
@@ -115,10 +131,10 @@ export function MarketTab() {
           return (
             <button key={c.key} onClick={() => setCategory(c.key)} style={{
               ...styles.catPill,
-              background: active ? C.blue : C.surface,
-              border: `1px solid ${active ? C.blue : C.blueLine}`,
-              color: active ? '#fff' : C.muted,
-              boxShadow: active ? '0 4px 14px rgba(0,98,255,0.35)' : 'none',
+              background: active ? 'rgba(0,168,255,0.16)' : 'rgba(255,255,255,0.02)',
+              border: `1px solid ${active ? C.blue : C.lineSoft}`,
+              color: active ? C.blueHi : C.muted,
+              boxShadow: active ? `0 0 14px rgba(0,168,255,0.35)` : 'none',
             }}>
               {c.icon && <span>{c.icon}</span>}{c.label}
             </button>
@@ -129,15 +145,15 @@ export function MarketTab() {
       {/* Lista */}
       <div style={styles.scroll}>
         {loading ? (
-          <p style={styles.muted}>Cargando servicios...</p>
+          <p style={styles.muted}>// CARGANDO CATÁLOGO...</p>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
-            <ShoppingCart size={28} style={{ color: C.blueLine }} />
-            <p style={styles.muted}>No hay servicios en esta categoría.</p>
+            <ShoppingCart size={28} style={{ color: C.line }} />
+            <p style={styles.muted}>Sin servicios en esta categoría.</p>
           </div>
         ) : (
-          filtered.map(svc => (
-            <ServiceCard key={svc.id} service={svc} canHire={canHire(svc)} onHire={() => setSelectedService(svc)} />
+          filtered.map((svc, i) => (
+            <ServiceCard key={svc.id} service={svc} index={i} canHire={canHire(svc)} onHire={() => setSelectedService(svc)} />
           ))
         )}
       </div>
@@ -152,24 +168,37 @@ export function MarketTab() {
   );
 }
 
-function ServiceCard({ service, canHire, onHire }: { service: MarketService; canHire: boolean; onHire: () => void }) {
+function ServiceCard({ service, index, canHire, onHire }: { service: MarketService; index: number; canHire: boolean; onHire: () => void }) {
   const pe = service.seller?.pe_points ?? 0;
   return (
     <div style={styles.card}>
+      <Corners color={C.line} />
       <div style={styles.cardTopBar} />
+
+      {/* ID técnico */}
+      <div style={styles.idTag}>UNIT-{String(index + 1).padStart(3, '0')}</div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, paddingRight: 50 }}>
           <div style={styles.cardTitle}>{service.title}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
             <span style={styles.seller}>@{service.seller?.username ?? 'vendedor'}</span>
             {pe > 0 && (
-              <span style={styles.peBadge}><Zap size={9} style={{ color: C.teal }} /> {pe} PE</span>
+              <span style={styles.peBadge}><Zap size={9} style={{ color: C.amber }} /> {pe} PE</span>
             )}
           </div>
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+      </div>
+
+      {/* Línea técnica precio/rating */}
+      <div style={styles.statRow}>
+        <div style={styles.statBox}>
+          <div style={styles.statLabel}>COSTO</div>
           <div style={styles.price}>🪙 {service.price}</div>
-          <div style={styles.rating}><Star size={11} style={{ fill: C.gold, color: C.gold }} /> {service.rating.toFixed(1)}</div>
+        </div>
+        <div style={styles.statBox}>
+          <div style={styles.statLabel}>RATING</div>
+          <div style={styles.rating}><Star size={12} style={{ fill: C.amber, color: C.amber }} /> {service.rating.toFixed(1)}</div>
         </div>
       </div>
 
@@ -181,37 +210,42 @@ function ServiceCard({ service, canHire, onHire }: { service: MarketService; can
 
       <button onClick={canHire ? onHire : undefined} disabled={!canHire} style={{
         ...styles.hireBtn,
-        background: canHire ? C.blue : C.surface,
-        border: `1px solid ${canHire ? C.blue : C.blueLine}`,
-        color: canHire ? '#fff' : C.muted,
-        boxShadow: canHire ? '0 4px 14px rgba(0,98,255,0.30)' : 'none',
+        background: canHire ? `linear-gradient(135deg, ${C.blue}, #0077cc)` : 'transparent',
+        border: `1px solid ${canHire ? C.blue : C.lineSoft}`,
+        color: canHire ? '#04121f' : C.muted,
+        boxShadow: canHire ? `0 0 18px rgba(0,168,255,0.4)` : 'none',
         cursor: canHire ? 'pointer' : 'default',
       }}>
-        {canHire ? 'CONTRATAR · ESCROW' : service.seller_id ? 'TU SERVICIO' : 'DEMO'}
+        {canHire ? '▸ CONTRATAR · ESCROW' : service.seller_id ? 'TU SERVICIO' : 'DEMO'}
       </button>
     </div>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  root: { display: 'flex', flexDirection: 'column', height: '100%', background: C.bg, overflow: 'hidden' },
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.blueLine}`, background: C.surface, flexShrink: 0 },
+  root: { position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', background: `radial-gradient(circle at 50% 0%, ${C.bg2}, ${C.bg})`, overflow: 'hidden' },
+  grid: { position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `linear-gradient(${C.lineSoft} 1px, transparent 1px), linear-gradient(90deg, ${C.lineSoft} 1px, transparent 1px)`, backgroundSize: '28px 28px', maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 70%)', WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 70%)' },
+  header: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.line}`, background: 'rgba(8,11,18,0.7)', flexShrink: 0 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: 10 },
-  iconBadge: { width: 30, height: 30, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blue}, ${C.blueBright})`, boxShadow: '0 4px 12px rgba(0,98,255,0.35)' },
-  headerTitle: { fontFamily: FONT_MONO, fontSize: 12, color: C.ink, letterSpacing: 1.5, fontWeight: 700 },
-  headerSub: { fontFamily: FONT_RAJ, fontSize: 11, color: C.muted, marginTop: 1 },
-  publishBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 9, background: C.blue, border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 13, boxShadow: '0 4px 14px rgba(0,98,255,0.35)' },
-  catRow: { display: 'flex', gap: 8, padding: '12px 14px', overflowX: 'auto', flexShrink: 0, background: C.bg },
-  catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 22, cursor: 'pointer', fontFamily: FONT_RAJ, fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', transition: 'all .2s' },
-  scroll: { flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 12 },
-  muted: { fontFamily: FONT_RAJ, fontSize: 13, color: C.muted, textAlign: 'center', marginTop: 12 },
-  card: { position: 'relative', background: C.surface, border: `1px solid ${C.blueLine}`, borderRadius: 16, padding: '16px', overflow: 'hidden', boxShadow: C.glow },
-  cardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${C.blue}, ${C.blueBright}, ${C.teal})` },
-  cardTitle: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 17, color: C.ink, lineHeight: 1.2 },
+  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: `0 0 14px rgba(0,168,255,0.5)` },
+  headerTitle: { fontFamily: FONT_MONO, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
+  headerSub: { fontFamily: FONT_MONO, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
+  publishBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,168,255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 1 },
+  catRow: { position: 'relative', zIndex: 2, display: 'flex', gap: 8, padding: '12px 14px', overflowX: 'auto', flexShrink: 0 },
+  catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, whiteSpace: 'nowrap', transition: 'all .2s', textTransform: 'uppercase' },
+  scroll: { position: 'relative', zIndex: 2, flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
+  muted: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
+  card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.line}`, borderRadius: 4, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,0.5)' },
+  cardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.blue}, ${C.amber}, transparent)` },
+  idTag: { position: 'absolute', top: 12, right: 14, fontFamily: FONT_MONO, fontSize: 8, color: C.muted, letterSpacing: 1, border: `1px solid ${C.lineSoft}`, padding: '2px 6px', borderRadius: 3 },
+  cardTitle: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 18, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', letterSpacing: 0.5 },
   seller: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted },
-  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.teal, background: 'rgba(6,214,160,0.10)', border: '1px solid rgba(6,214,160,0.30)', padding: '1px 7px', borderRadius: 10 },
-  price: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 21, color: C.blue },
-  rating: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, fontFamily: FONT_MONO, fontSize: 12, color: C.gold, marginTop: 2 },
-  tag: { fontFamily: FONT_RAJ, fontWeight: 600, fontSize: 12, color: C.blue, background: C.blueSoft, border: `1px solid ${C.blueLine}`, padding: '3px 10px', borderRadius: 8 },
-  hireBtn: { width: '100%', marginTop: 4, padding: '12px 0', borderRadius: 10, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 14, letterSpacing: 0.5, transition: 'all .15s' },
+  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.amber, background: 'rgba(255,176,32,0.1)', border: '1px solid rgba(255,176,32,0.3)', padding: '1px 7px', borderRadius: 3 },
+  statRow: { display: 'flex', gap: 10, marginTop: 12 },
+  statBox: { flex: 1, background: 'rgba(0,0,0,0.25)', border: `1px solid ${C.lineSoft}`, borderRadius: 4, padding: '7px 10px' },
+  statLabel: { fontFamily: FONT_MONO, fontSize: 8, color: C.muted, letterSpacing: 1.5 },
+  price: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 20, color: C.amberHi, marginTop: 1 },
+  rating: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 18, color: C.amberHi, marginTop: 1 },
+  tag: { fontFamily: FONT_MONO, fontSize: 10, color: C.blueHi, background: 'rgba(0,168,255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3, letterSpacing: 0.5 },
+  hireBtn: { width: '100%', marginTop: 6, padding: '12px 0', borderRadius: 5, fontFamily: FONT_MONO, fontWeight: 700, fontSize: 13, letterSpacing: 1.5, transition: 'all .15s' },
 };
