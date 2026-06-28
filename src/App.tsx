@@ -15,20 +15,13 @@ import { MarketTab }     from './components/tabs/MarketTab';
 import { PerfilTab }     from './components/tabs/PerfilTab';
 import { MaxSkillTab }   from './components/tabs/MaxSkillTab';
 import { AcademiaTab }   from './components/tabs/AcademiaTab';
-import { GobernanzaTab } from './components/tabs/GobernanzaTab'; // ✅ FIX: Tab faltante agregado
-
+import { GobernanzaTab } from './components/tabs/GobernanzaTab';
+import { C, FONT } from './theme';
 import type { TabId } from './types';
 
-// ✅ FIX: 'gobernanza' agregado al Record para que coincida con TabId completo
 const TAB_TITLES: Record<TabId, string> = {
-  perfil:     'Mi Perfil',
-  maxskill:   'Max Skill',
-  academia:   'Academia',
-  market:     'Market',
-  empleos:    'Empleos',
-  chat:       'Chat Seguro',
-  wallet:     'Wallet',
-  gobernanza: 'Gobernanza',
+  perfil: 'Mi Perfil', maxskill: 'Max Skill', academia: 'Academia', market: 'Market',
+  empleos: 'Empleos', chat: 'Chat Seguro', wallet: 'Wallet', gobernanza: 'Gobernanza',
 };
 
 function AppShell() {
@@ -36,60 +29,48 @@ function AppShell() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
 
-  // ✅ FIX: Listener de PASSWORD_RECOVERY movido aquí solo como fallback visual.
-  // El manejo de sesión real ya ocurre en AppContext; este solo controla el overlay.
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setShowResetPassword(true);
-      }
+      if (event === 'PASSWORD_RECOVERY') setShowResetPassword(true);
     });
     return () => subscription.unsubscribe();
   }, []);
 
   if (authStatus === 'loading' || isLoadingProfile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-omicron-bg gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-omicron-accent/20 border border-omicron-accent/40 flex items-center justify-center">
-          <div className="w-5 h-5 border-2 border-omicron-accent border-t-transparent rounded-full animate-spin" />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 14, background: C.bg }}>
+        <div style={{ width: 44, height: 44, borderRadius: 8, background: 'rgba(0,245,255,0.06)', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
         </div>
-        <p className="text-omicron-subtle text-sm">Conectando a la Red Ómicron...</p>
+        <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase' }}>Conectando a la Red Ómicron...</p>
       </div>
     );
   }
 
-  if (showResetPassword) {
-    return <ResetPasswordOverlay onDone={() => setShowResetPassword(false)} />;
-  }
-
+  if (showResetPassword) return <ResetPasswordOverlay onDone={() => setShowResetPassword(false)} />;
   if (authStatus === 'unauthenticated') return <AuthOverlay />;
   if (authStatus === 'no_access') return <NoAccess />;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Top bar */}
-      <header className="flex-none flex items-center justify-between px-4 py-3 bg-omicron-surface border-b border-omicron-border">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-omicron-accent/20 border border-omicron-accent/40 flex items-center justify-center">
-            <span className="text-omicron-accent text-[10px] font-bold">Ω</span>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* Top bar HUD */}
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.cyanFaint}`, background: 'rgba(0,245,255,0.02)', flexShrink: 0, position: 'relative', zIndex: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,245,255,0.1)', border: `1px solid ${C.cyanDim}`, boxShadow: `0 0 8px ${C.cyanFaint}` }}>
+            <span style={{ color: C.cyan, fontFamily: FONT.display, fontWeight: 700, fontSize: 14 }}>Ω</span>
           </div>
-          <span className="text-omicron-text text-sm font-semibold">{TAB_TITLES[activeTab]}</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: C.cyan }}>{TAB_TITLES[activeTab]}</span>
         </div>
-
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {profile && (
-            <span className="flex items-center gap-1 text-omicron-subtle text-xs">
-              <span className="text-sm">🪙</span>
-              <span className="font-semibold text-omicron-text">{(profile.token_balance ?? 0).toLocaleString()}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 12, color: C.gold }}>
+              🪙 {(profile.token_balance ?? 0).toLocaleString()}
             </span>
           )}
-          <button
-            onClick={() => setShowNotifications(true)}
-            className="relative w-8 h-8 rounded-xl bg-omicron-card border border-omicron-border flex items-center justify-center text-omicron-subtle hover:text-omicron-text transition active:scale-90"
-          >
+          <button onClick={() => setShowNotifications(true)} style={{ position: 'relative', width: 34, height: 34, borderRadius: 8, background: 'rgba(0,245,255,0.06)', border: `1px solid ${C.cyanFaint}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Bell size={16} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 flex items-center justify-center text-[9px] font-bold text-white px-1">
+              <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, background: C.red, color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -97,11 +78,11 @@ function AppShell() {
         </div>
       </header>
 
-      {/* Sub-pestañas del hub activo (píldoras) */}
+      {/* Sub-pestañas del hub activo (Árbol / Academia, Identidad / Wallet, etc.) */}
       <HubSubNav />
 
-      {/* Tab content area */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      {/* Tab content */}
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
         {activeTab === 'perfil'     && <PerfilTab />}
         {activeTab === 'maxskill'   && <MaxSkillTab />}
         {activeTab === 'academia'   && <AcademiaTab />}
@@ -109,11 +90,10 @@ function AppShell() {
         {activeTab === 'empleos'    && <EmpleosTab />}
         {activeTab === 'chat'       && <ChatTab />}
         {activeTab === 'wallet'     && <WalletTab />}
-        {activeTab === 'gobernanza' && <GobernanzaTab />} {/* ✅ FIX: Render del tab faltante */}
+        {activeTab === 'gobernanza' && <GobernanzaTab />}
       </div>
 
       <BottomNav />
-
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
     </div>
   );
