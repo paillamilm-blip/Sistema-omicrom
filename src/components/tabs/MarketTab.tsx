@@ -1,8 +1,8 @@
 // components/tabs/MarketTab.tsx
-// Mercado — estilo cyberpunk (variante MaxSkill: estilos inline + paleta propia)
+// Mercado — tema "Energía Limpia": fondo blanco, azul eléctrico, futurista.
 
 import { useState, useEffect, useCallback } from 'react';
-import { ShoppingCart, Star, Plus } from 'lucide-react';
+import { ShoppingCart, Star, Plus, Zap } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { ContractModal } from '../contracts/ContractModal';
@@ -11,10 +11,14 @@ import type { MarketService } from '../../types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
 
+// ── Paleta "Energía Limpia" ──────────────────────────────────────────
 const C = {
-  cyan: '#00f5ff', cyanDim: 'rgba(0,245,255,0.35)', cyanFaint: 'rgba(0,245,255,0.12)',
-  gold: '#ffd700', goldDim: 'rgba(255,215,0,0.35)', purple: '#b44fff', green: '#39ff14',
-  bg: '#080c14', panel: 'rgba(13,20,33,0.97)', grid: 'rgba(0,245,255,0.04)',
+  bg: '#f4f8ff', surface: '#ffffff',
+  blue: '#0062ff', blueBright: '#00aaff',
+  blueSoft: 'rgba(0,98,255,0.10)', blueLine: 'rgba(0,98,255,0.18)',
+  teal: '#06d6a0', gold: '#f5a623',
+  ink: '#0a1f44', muted: '#5b6b8c',
+  glow: '0 8px 24px rgba(0,98,255,0.12)',
 } as const;
 const FONT_MONO = "'Share Tech Mono', 'Courier New', monospace";
 const FONT_RAJ  = "'Rajdhani', sans-serif";
@@ -47,7 +51,7 @@ const CAT_MAP: { key: Category; label: string; icon: string }[] = [
   { key: 'todos',   label: 'Todos',  icon: '' },
   { key: 'dev',     label: 'Dev',    icon: '💻' },
   { key: 'diseño',  label: 'Diseño', icon: '🎨' },
-  { key: 'consulta',label: 'Consul', icon: '🏳️' },
+  { key: 'consulta',label: 'Consul', icon: '🛰️' },
 ];
 
 export function MarketTab() {
@@ -83,8 +87,7 @@ export function MarketTab() {
   });
 
   function canHire(svc: MarketService) {
-    if (!svc.seller_id) return false;
-    if (!profile) return false;
+    if (!svc.seller_id || !profile) return false;
     if (svc.seller_id === profile.id) return false;
     return true;
   }
@@ -94,14 +97,14 @@ export function MarketTab() {
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
-          <div style={styles.pulseDot} />
+          <div style={styles.iconBadge}><Zap size={15} style={{ color: '#fff' }} /></div>
           <div>
             <div style={styles.headerTitle}>MERCADO DE SERVICIOS</div>
-            <div style={styles.headerSub}>SISTEMA ÓMICROM // CAPITAL INTELECTUAL</div>
+            <div style={styles.headerSub}>Capital intelectual · energía limpia</div>
           </div>
         </div>
         <button style={styles.publishBtn} onClick={() => setShowPublish(true)}>
-          <Plus size={14} /> PUBLICAR
+          <Plus size={14} /> Publicar
         </button>
       </div>
 
@@ -112,10 +115,10 @@ export function MarketTab() {
           return (
             <button key={c.key} onClick={() => setCategory(c.key)} style={{
               ...styles.catPill,
-              background: active ? 'rgba(0,245,255,0.14)' : 'transparent',
-              border: `1px solid ${active ? C.cyan : C.cyanFaint}`,
-              color: active ? C.cyan : C.cyanDim,
-              boxShadow: active ? `0 0 10px ${C.cyan}33` : 'none',
+              background: active ? C.blue : C.surface,
+              border: `1px solid ${active ? C.blue : C.blueLine}`,
+              color: active ? '#fff' : C.muted,
+              boxShadow: active ? '0 4px 14px rgba(0,98,255,0.35)' : 'none',
             }}>
               {c.icon && <span>{c.icon}</span>}{c.label}
             </button>
@@ -129,7 +132,7 @@ export function MarketTab() {
           <p style={styles.muted}>Cargando servicios...</p>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
-            <ShoppingCart size={28} style={{ color: C.cyanDim }} />
+            <ShoppingCart size={28} style={{ color: C.blueLine }} />
             <p style={styles.muted}>No hay servicios en esta categoría.</p>
           </div>
         ) : (
@@ -160,7 +163,7 @@ function ServiceCard({ service, canHire, onHire }: { service: MarketService; can
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
             <span style={styles.seller}>@{service.seller?.username ?? 'vendedor'}</span>
             {pe > 0 && (
-              <span style={styles.peBadge}><Star size={9} style={{ fill: C.gold, color: C.gold }} /> {pe} PE</span>
+              <span style={styles.peBadge}><Zap size={9} style={{ color: C.teal }} /> {pe} PE</span>
             )}
           </div>
         </div>
@@ -178,9 +181,10 @@ function ServiceCard({ service, canHire, onHire }: { service: MarketService; can
 
       <button onClick={canHire ? onHire : undefined} disabled={!canHire} style={{
         ...styles.hireBtn,
-        background: canHire ? 'rgba(0,245,255,0.12)' : 'transparent',
-        border: `1px solid ${canHire ? C.cyan : C.cyanFaint}`,
-        color: canHire ? C.cyan : C.cyanDim,
+        background: canHire ? C.blue : C.surface,
+        border: `1px solid ${canHire ? C.blue : C.blueLine}`,
+        color: canHire ? '#fff' : C.muted,
+        boxShadow: canHire ? '0 4px 14px rgba(0,98,255,0.30)' : 'none',
         cursor: canHire ? 'pointer' : 'default',
       }}>
         {canHire ? 'CONTRATAR · ESCROW' : service.seller_id ? 'TU SERVICIO' : 'DEMO'}
@@ -191,23 +195,23 @@ function ServiceCard({ service, canHire, onHire }: { service: MarketService; can
 
 const styles: Record<string, React.CSSProperties> = {
   root: { display: 'flex', flexDirection: 'column', height: '100%', background: C.bg, overflow: 'hidden' },
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid rgba(0,245,255,0.1)`, background: 'rgba(0,245,255,0.02)', flexShrink: 0 },
+  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.blueLine}`, background: C.surface, flexShrink: 0 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: 10 },
-  pulseDot: { width: 8, height: 8, borderRadius: '50%', background: C.cyan, boxShadow: `0 0 6px ${C.cyan}`, animation: 'pulse-cp 1.5s ease-in-out infinite' },
-  headerTitle: { fontFamily: FONT_MONO, fontSize: 12, color: C.cyan, letterSpacing: 2 },
-  headerSub: { fontFamily: FONT_MONO, fontSize: 9, color: C.cyanDim, letterSpacing: 1, marginTop: 2 },
-  publishBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, background: 'rgba(0,245,255,0.1)', border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 1 },
-  catRow: { display: 'flex', gap: 8, padding: '10px 14px', overflowX: 'auto', flexShrink: 0, borderBottom: `1px solid rgba(0,245,255,0.06)` },
-  catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 20, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 0.5, whiteSpace: 'nowrap', transition: 'all .2s' },
-  scroll: { flex: 1, overflowY: 'auto', padding: '12px 14px 20px', display: 'flex', flexDirection: 'column', gap: 12 },
-  muted: { fontFamily: FONT_MONO, fontSize: 11, color: C.cyanDim, textAlign: 'center', marginTop: 12 },
-  card: { position: 'relative', background: C.panel, border: `1px solid ${C.cyanFaint}`, borderRadius: 10, padding: '14px', overflow: 'hidden' },
-  cardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, transparent, ${C.cyan}, transparent)`, opacity: 0.7 },
-  cardTitle: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 16, color: '#dbeafe', lineHeight: 1.2 },
-  seller: { fontFamily: FONT_MONO, fontSize: 11, color: C.cyanDim },
-  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.gold, background: 'rgba(255,215,0,0.1)', border: `1px solid ${C.goldDim}`, padding: '1px 7px', borderRadius: 10 },
-  price: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 20, color: C.gold },
+  iconBadge: { width: 30, height: 30, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blue}, ${C.blueBright})`, boxShadow: '0 4px 12px rgba(0,98,255,0.35)' },
+  headerTitle: { fontFamily: FONT_MONO, fontSize: 12, color: C.ink, letterSpacing: 1.5, fontWeight: 700 },
+  headerSub: { fontFamily: FONT_RAJ, fontSize: 11, color: C.muted, marginTop: 1 },
+  publishBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 9, background: C.blue, border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 13, boxShadow: '0 4px 14px rgba(0,98,255,0.35)' },
+  catRow: { display: 'flex', gap: 8, padding: '12px 14px', overflowX: 'auto', flexShrink: 0, background: C.bg },
+  catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 22, cursor: 'pointer', fontFamily: FONT_RAJ, fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', transition: 'all .2s' },
+  scroll: { flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 12 },
+  muted: { fontFamily: FONT_RAJ, fontSize: 13, color: C.muted, textAlign: 'center', marginTop: 12 },
+  card: { position: 'relative', background: C.surface, border: `1px solid ${C.blueLine}`, borderRadius: 16, padding: '16px', overflow: 'hidden', boxShadow: C.glow },
+  cardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${C.blue}, ${C.blueBright}, ${C.teal})` },
+  cardTitle: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 17, color: C.ink, lineHeight: 1.2 },
+  seller: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted },
+  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.teal, background: 'rgba(6,214,160,0.10)', border: '1px solid rgba(6,214,160,0.30)', padding: '1px 7px', borderRadius: 10 },
+  price: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 21, color: C.blue },
   rating: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, fontFamily: FONT_MONO, fontSize: 12, color: C.gold, marginTop: 2 },
-  tag: { fontFamily: FONT_MONO, fontSize: 10, color: '#b9d4e6', background: 'rgba(0,245,255,0.05)', border: `1px solid ${C.cyanFaint}`, padding: '3px 9px', borderRadius: 8 },
-  hireBtn: { width: '100%', marginTop: 4, padding: '11px 0', borderRadius: 8, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 14, letterSpacing: 1, transition: 'all .15s' },
+  tag: { fontFamily: FONT_RAJ, fontWeight: 600, fontSize: 12, color: C.blue, background: C.blueSoft, border: `1px solid ${C.blueLine}`, padding: '3px 10px', borderRadius: 8 },
+  hireBtn: { width: '100%', marginTop: 4, padding: '12px 0', borderRadius: 10, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 14, letterSpacing: 0.5, transition: 'all .15s' },
 };
