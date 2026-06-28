@@ -4,6 +4,12 @@
 -- movimiento de fondos, y staking de talento. Idempotente.
 -- =====================================================================
 
+-- ── 0) Eliminar versiones previas (evita "cannot change return type") ─
+drop function if exists public.resolve_dispute(uuid, text);
+drop function if exists public.create_stake(uuid, numeric);
+drop function if exists public.create_stake(uuid, integer);
+drop function if exists public.withdraw_stake(uuid);
+
 -- ── 1) Al abrir una disputa, asignar 3 árbitros aleatorios ───────────
 create or replace function public.fn_assign_arbiters()
 returns trigger language plpgsql security definer set search_path = public as $fn$
