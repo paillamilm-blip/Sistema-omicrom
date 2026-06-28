@@ -196,3 +196,62 @@ Deploy:    Vercel (pendiente)
 **Sistema Ómicrom — el gemelo digital de tu conocimiento.**
 
 </div>
+
+
+
+---
+
+## 🔁 11. FLUJO SEGMENTADO DE TRANSACCIONES
+
+Todas las acciones que un usuario puede realizar, agrupadas por segmento.
+_(La semilla `supabase/seed_demo.sql` genera un ejemplo de cada una para verlas en la app.)_
+
+```mermaid
+flowchart LR
+    subgraph PERFIL["🧬 PERFIL / GEMELO"]
+      P1[Editar perfil]; P2[Subir foto]; P3[Cargar credencial]; P4[Docente valida credencial]
+    end
+    subgraph APRENDER["🎮 APRENDER"]
+      A1[Validar nodo del árbol]; A2[Rendir simulador]; A3[Completar curso + quiz]
+    end
+    subgraph MERCADO["💼 MERCADO"]
+      M1[Publicar servicio]; M2[Contratar · Escrow]; M3[Publicar empleo]; M4[Aplicar a empleo]; M5[Publicar en Bóveda]; M6[Buscar/Consultar Bóveda]
+    end
+    subgraph CHAT["💬 CHAT"]
+      H1[Mensaje cifrado]; H2[Marcar entregado]; H3[Aprobar · liberar]; H4[Objetar]; H5[Calificar ⭐]
+    end
+    subgraph GOBERN["⚖️ GOBERN"]
+      G1[Abrir disputa]; G2[Arbitrar · fallar]; G3[Invertir staking]; G4[Reclamar +15%]
+    end
+    subgraph WALLET["💰 WALLET"]
+      W1[Ver saldo/escrow]; W2[Historial]; W3[Enviar/Recibir]
+    end
+```
+
+### Detalle por segmento
+
+| Segmento | Transacción | Efecto en el sistema |
+|----------|-------------|----------------------|
+| 🧬 **Perfil** | Editar perfil / subir foto | Actualiza identidad (avatar en Storage) |
+| 🧬 **Perfil** | Cargar credencial | Queda PENDIENTE (o auto-verificada si tiene QR) |
+| 🧬 **Perfil** | Docente valida credencial | ✅ VERIFICADA → ↑ **Tradicional** → ↑ Reputación |
+| 🎮 **Aprender** | Validar nodo / simulador | ↑ **Fundamento** + PE |
+| 🎮 **Aprender** | Completar curso + quiz | Valida nodo → ↑ **Fundamento** |
+| 💼 **Mercado** | Publicar servicio | Aparece en el Market |
+| 💼 **Mercado** | Contratar (Escrow) | Bloquea tokens del comprador (escrow) |
+| 💼 **Mercado** | Publicar empleo | Genera **terna** (matchmaking 80/20) |
+| 💼 **Mercado** | Aplicar a empleo | Registra postulación |
+| 💼 **Mercado** | Publicar en Bóveda | Doc con embedding + anti-plagio (linaje) |
+| 💼 **Mercado** | Consultar Bóveda | Paga tokens → **regalías** al autor (y 20% al original si es derivado) → ↑ **Trascendencia** |
+| 💬 **Chat** | Marcar entregado | Inicia Ghost Approval (15 min) |
+| 💬 **Chat** | Aprobar (liberar) | Libera escrow al vendedor → ↑ **Ejecución** |
+| 💬 **Chat** | Calificar ⭐ | ↑ **Calidad** del vendedor |
+| 💬 **Chat** | Objetar | Abre el camino a disputa |
+| ⚖️ **Gobern** | Abrir disputa | Asigna **3 árbitros** aleatorios |
+| ⚖️ **Gobern** | Arbitrar (fallar) | Mueve fondos (libera/reembolsa) + reputación |
+| ⚖️ **Gobern** | Invertir staking | Bloquea tokens en un nodo |
+| ⚖️ **Gobern** | Reclamar staking | Devuelve +15% |
+| 💰 **Wallet** | Ver saldo / historial | Refleja TODAS las transacciones |
+| 💰 **Wallet** | Enviar / Recibir | Transferencia de tokens entre nodos |
+
+> Cada transacción que mueve tokens queda registrada en el **Wallet**, y cada acción que demuestra valor **sube un eje del Gemelo Digital**.
