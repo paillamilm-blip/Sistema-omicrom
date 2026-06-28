@@ -1,9 +1,9 @@
 // components/tabs/VaultTab.tsx
-// Bóveda de Conocimiento — publicar, explorar y consultar documentos técnicos
-// con regalías encadenadas. Estilo Industria 5.0.
+// Bóveda de Conocimiento — publicar, explorar, CONSULTAR y BUSCAR por significado
+// (pgvector + Edge Function embed). Regalías encadenadas. Estilo Industria 5.0.
 
 import { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Plus, Lock, Unlock, X, Coins, GitBranch } from 'lucide-react';
+import { BookOpen, Plus, Lock, Unlock, X, Coins, GitBranch, Search, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 
@@ -22,6 +22,17 @@ interface Doc {
   parent_document_id: string | null; total_royalties: number; is_validated: boolean;
 }
 
+// Llama a la Edge Function "embed" y devuelve el vector (o null si falla)
+async function embedText(text: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('embed', { body: { text } });
+    if (error || !data?.embedding) return null;
+    return `[${(data.embedding as number[]).join(',')}]`;
+  } catch {
+    return null;
+  }
+}
+
 export function VaultTab() {
   const { profile, refreshProfile } = useApp();
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -30,6 +41,11 @@ export function VaultTab() {
   const [loading, setLoading] = useState(true);
   const [showPublish, setShowPublish] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+
+  // Búsqueda semántica
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [resultIds, setResultIds] = useState<{ id: string; similarity: number }[] | null>(null);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -51,6 +67,24 @@ export function VaultTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  async function runSearch() {
+    if (!query.trim()) { setResultIds(null); return; }
+    setSearching(true);
+    try {
+      const vec = await embedText(query.trim());
+      if (!vec) { alert('Buscador no disponible (¿desplegaste la función embed?)'); return; }
+      const { data, error } = await supabase.rpc('match_vault_documents', { query_embedding: vec, match_count: 12 });
+      if (error) throw error;
+      setResultIds((data as { id: string; similarity: number }[] ?? []).map(r => ({ id: r.id, similarity: r.similarity })));
+    } catch (e) {
+      alert('Error en la búsqueda: ' + ((e as Error).message ?? e));
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  function clearSearch() { setQuery(''); setResultIds(null); }
+
   async function consult(d: Doc) {
     setBusy(d.id);
     try {
@@ -66,6 +100,12 @@ export function VaultTab() {
     }
   }
 
+  // Lista a mostrar: resultados de búsqueda (mapeados a docs) o todos
+  const simMap = new Map((resultIds ?? []).map(r => [r.id, r.similarity]));
+  const display: Doc[] = resultIds
+    ? resultIds.map(r => docs.find(d => d.id === r.id)).filter(Boolean) as Doc[]
+    : docs;
+
   return (
     <div style={styles.root}>
       <div style={styles.header}>
@@ -73,26 +113,54 @@ export function VaultTab() {
           <div style={styles.iconBadge}><BookOpen size={15} style={{ color: C.bg }} /></div>
           <div>
             <div style={styles.hTitle}>BÓVEDA DE CONOCIMIENTO</div>
-            <div style={styles.hSub}>SOLUCIONES · REGALÍAS ENCADENADAS</div>
+            <div style={styles.hSub}>BÚSQUEDA SEMÁNTICA · REGALÍAS</div>
           </div>
         </div>
         <button style={styles.pubBtn} onClick={() => setShowPublish(true)}><Plus size={14} /> PUBLICAR</button>
       </div>
 
+      {/* Buscador semántico */}
+      <div style={styles.searchRow}>
+        <div style={styles.searchBox}>
+          <Search size={14} style={{ color: C.muted, flexShrink: 0 }} />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && runSearch()}
+            placeholder="Busca por idea, no por palabra exacta…"
+            style={styles.searchInput}
+          />
+          {query && <button onClick={clearSearch} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', display: 'flex' }}><X size={14} /></button>}
+        </div>
+        <button onClick={runSearch} disabled={searching} style={styles.searchBtn}>
+          {searching ? '...' : <Sparkles size={14} />}
+        </button>
+      </div>
+
       <div style={styles.scroll}>
+        {resultIds && (
+          <div style={{ fontFamily: FM, fontSize: 9, color: C.blueHi, letterSpacing: 1, marginBottom: 4 }}>
+            ◢ {display.length} RESULTADOS SEMÁNTICOS · <span onClick={clearSearch} style={{ color: C.muted, cursor: 'pointer', textDecoration: 'underline' }}>limpiar</span>
+          </div>
+        )}
+
         {loading ? (
           <p style={styles.muted}>// CARGANDO BÓVEDA...</p>
-        ) : docs.length === 0 ? (
+        ) : display.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
             <BookOpen size={28} style={{ color: C.line }} />
-            <p style={styles.muted}>Bóveda vacía. ¡Publica la primera solución!</p>
+            <p style={styles.muted}>{resultIds ? 'Sin coincidencias.' : 'Bóveda vacía. ¡Publica la primera solución!'}</p>
           </div>
-        ) : docs.map(d => {
+        ) : display.map(d => {
           const unlocked = access.has(d.id) || d.author_id === profile?.id;
           const mine = d.author_id === profile?.id;
+          const sim = simMap.get(d.id);
           return (
             <div key={d.id} style={styles.card}>
               <div style={styles.cardTop} />
+              {sim != null && (
+                <div style={styles.simBadge}>{Math.round(sim * 100)}% afín</div>
+              )}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={styles.title}>{d.title}</div>
@@ -101,16 +169,11 @@ export function VaultTab() {
                     {d.parent_document_id && <span style={{ color: C.blueHi }}> · <GitBranch size={9} style={{ verticalAlign: 'middle' }} /> derivado</span>}
                   </div>
                 </div>
-                {unlocked
-                  ? <Unlock size={16} style={{ color: C.green, flexShrink: 0 }} />
-                  : <Lock size={16} style={{ color: C.amber, flexShrink: 0 }} />}
+                {unlocked ? <Unlock size={16} style={{ color: C.green, flexShrink: 0 }} /> : <Lock size={16} style={{ color: C.amber, flexShrink: 0 }} />}
               </div>
 
-              {d.competency_tags && (
-                <div style={{ marginTop: 8 }}><span style={styles.tag}>{d.competency_tags}</span></div>
-              )}
+              {d.competency_tags && <div style={{ marginTop: 8 }}><span style={styles.tag}>{d.competency_tags}</span></div>}
 
-              {/* Contenido: bloqueado o desbloqueado */}
               {unlocked ? (
                 <div style={styles.content}>{d.description || 'Sin contenido.'}</div>
               ) : (
@@ -152,10 +215,13 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
     setSaving(true); setErr(null);
     try {
       const cost = Number(f.cost) || 0;
+      // Embedding del contenido para búsqueda semántica (si la función está disponible)
+      const vec = await embedText(`${f.title}. ${f.description} ${f.tags}`);
       const { error } = await supabase.from('knowledge_vault_documents').insert({
         author_id: profile.id, title: f.title.trim(), description: f.description.trim(),
         initial_token_cost: cost, current_token_cost: cost,
         competency_tags: f.tags.trim() || null, is_validated: true,
+        ...(vec ? { embedding: vec } : {}),
       });
       if (error) throw error;
       onDone();
@@ -198,11 +264,16 @@ const styles: Record<string, React.CSSProperties> = {
   hTitle: { fontFamily: FM, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   hSub: { fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
   pubBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(46,155,255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1 },
-  scroll: { flex: 1, overflowY: 'auto', padding: '12px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
+  searchRow: { display: 'flex', gap: 8, padding: '12px 14px', flexShrink: 0 },
+  searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', borderRadius: 8, background: 'rgba(46,155,255,0.05)', border: `1px solid ${C.line}` },
+  searchInput: { flex: 1, background: 'none', border: 'none', outline: 'none', color: C.ink, fontFamily: FR, fontSize: 14, padding: '10px 0' },
+  searchBtn: { width: 44, borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #0077cc)`, border: 'none', color: '#04121f', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  scroll: { flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
   muted: { fontFamily: FM, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
   card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.line}`, borderRadius: 4, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,0.5)' },
   cardTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.blue}, transparent)` },
-  title: { fontFamily: FR, fontWeight: 700, fontSize: 17, color: C.ink, lineHeight: 1.15 },
+  simBadge: { position: 'absolute', top: 12, right: 14, fontFamily: FM, fontSize: 8, color: C.blueHi, background: 'rgba(46,155,255,0.12)', border: `1px solid ${C.blue}`, padding: '2px 7px', borderRadius: 3 },
+  title: { fontFamily: FR, fontWeight: 700, fontSize: 17, color: C.ink, lineHeight: 1.15, paddingRight: 60 },
   author: { fontFamily: FM, fontSize: 10, color: C.muted, marginTop: 3 },
   tag: { fontFamily: FM, fontSize: 10, color: C.blueHi, background: 'rgba(46,155,255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3 },
   content: { fontFamily: FR, fontSize: 14, color: '#b9d4e6', lineHeight: 1.5, marginTop: 10, whiteSpace: 'pre-wrap', background: 'rgba(43,217,124,0.05)', border: '1px solid rgba(43,217,124,0.2)', borderRadius: 6, padding: '10px 12px' },
