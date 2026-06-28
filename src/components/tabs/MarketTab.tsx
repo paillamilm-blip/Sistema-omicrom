@@ -12,14 +12,14 @@ import type { MarketService } from '../../types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
 
-// ── Paleta "Industria 5.0" ───────────────────────────────────────────
+// ── Paleta refinada "Industria 5.0" — armónica: azul héroe + ámbar acento ──
 const C = {
-  bg: '#080b12', bg2: '#0b1119',
-  panelA: '#141c28', panelB: '#0d141e',
-  blue: '#00a8ff', blueHi: '#4ad8ff',
-  amber: '#ffb020', amberHi: '#ffd166',
-  line: 'rgba(0,168,255,0.22)', lineSoft: 'rgba(0,168,255,0.10)',
-  steel: '#2a3646', ink: '#e8f4ff', muted: '#6b829e',
+  bg: '#06090f', bg2: '#0a0f17',
+  panelA: '#131b28', panelB: '#0b1119',
+  blue: '#2e9bff', blueHi: '#6fc3ff',
+  amber: '#ff9d2e', amberHi: '#ffc266',
+  line: 'rgba(110,150,200,0.14)', lineSoft: 'rgba(110,150,200,0.07)',
+  ink: '#eaf2ff', muted: '#7d93b0',
 } as const;
 const FONT_MONO = "'Share Tech Mono', 'Courier New', monospace";
 const FONT_RAJ  = "'Rajdhani', sans-serif";
@@ -184,7 +184,7 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
             <span style={styles.seller}>@{service.seller?.username ?? 'vendedor'}</span>
             {pe > 0 && (
-              <span style={styles.peBadge}><Zap size={9} style={{ color: C.amber }} /> {pe} PE</span>
+              <span style={styles.peBadge}><Zap size={9} style={{ color: C.blueHi }} /> {pe} PE</span>
             )}
           </div>
         </div>
@@ -236,16 +236,16 @@ const styles: Record<string, React.CSSProperties> = {
   scroll: { position: 'relative', zIndex: 2, flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
   muted: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
   card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.line}`, borderRadius: 4, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,0.5)' },
-  cardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.blue}, ${C.amber}, transparent)` },
+  cardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.blue}, transparent)` },
   idTag: { position: 'absolute', top: 12, right: 14, fontFamily: FONT_MONO, fontSize: 8, color: C.muted, letterSpacing: 1, border: `1px solid ${C.lineSoft}`, padding: '2px 6px', borderRadius: 3 },
   cardTitle: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 18, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', letterSpacing: 0.5 },
   seller: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted },
-  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.amber, background: 'rgba(255,176,32,0.1)', border: '1px solid rgba(255,176,32,0.3)', padding: '1px 7px', borderRadius: 3 },
+  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.blueHi, background: 'rgba(46,155,255,0.10)', border: '1px solid rgba(46,155,255,0.30)', padding: '1px 7px', borderRadius: 3 },
   statRow: { display: 'flex', gap: 10, marginTop: 12 },
   statBox: { flex: 1, background: 'rgba(0,0,0,0.25)', border: `1px solid ${C.lineSoft}`, borderRadius: 4, padding: '7px 10px' },
   statLabel: { fontFamily: FONT_MONO, fontSize: 8, color: C.muted, letterSpacing: 1.5 },
   price: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 20, color: C.amberHi, marginTop: 1 },
-  rating: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 18, color: C.amberHi, marginTop: 1 },
+  rating: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 18, color: C.ink, marginTop: 1 },
   tag: { fontFamily: FONT_MONO, fontSize: 10, color: C.blueHi, background: 'rgba(0,168,255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3, letterSpacing: 0.5 },
   hireBtn: { width: '100%', marginTop: 6, padding: '12px 0', borderRadius: 5, fontFamily: FONT_MONO, fontWeight: 700, fontSize: 13, letterSpacing: 1.5, transition: 'all .15s' },
 };
