@@ -207,26 +207,39 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
   const [f, setF] = useState({ title: '', description: '', cost: '50', tags: '' });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [similar, setSimilar] = useState<{ id: string; title: string; similarity: number; vec: string } | null>(null);
 
-  async function submit() {
+  async function insertDoc(vec: string | null, parentId: string | null) {
     if (!profile) return;
-    if (!f.title.trim()) { setErr('Pon un título'); return; }
-    if (!f.description.trim()) { setErr('Escribe la solución'); return; }
     setSaving(true); setErr(null);
     try {
       const cost = Number(f.cost) || 0;
-      // Embedding del contenido para búsqueda semántica (si la función está disponible)
-      const vec = await embedText(`${f.title}. ${f.description} ${f.tags}`);
       const { error } = await supabase.from('knowledge_vault_documents').insert({
         author_id: profile.id, title: f.title.trim(), description: f.description.trim(),
         initial_token_cost: cost, current_token_cost: cost,
         competency_tags: f.tags.trim() || null, is_validated: true,
+        ...(parentId ? { parent_document_id: parentId } : {}),
         ...(vec ? { embedding: vec } : {}),
       });
       if (error) throw error;
       onDone();
     } catch (e) { setErr((e as Error).message ?? 'Error'); }
     finally { setSaving(false); }
+  }
+
+  async function submit() {
+    if (!profile) return;
+    if (!f.title.trim()) { setErr('Pon un título'); return; }
+    if (!f.description.trim()) { setErr('Escribe la solución'); return; }
+    setSaving(true); setErr(null);
+    const vec = await embedText(`${f.title}. ${f.description} ${f.tags}`);
+    // Anti-plagio / Linaje H-07: ¿hay algo muy parecido de otro autor?
+    if (vec) {
+      const { data: sim } = await supabase.rpc('find_similar_documents', { query_embedding: vec, p_threshold: 0.85, p_exclude_author: profile.id });
+      const top = (sim as { id: string; title: string; similarity: number }[] ?? [])[0];
+      if (top) { setSimilar({ id: top.id, title: top.title, similarity: top.similarity, vec }); setSaving(false); return; }
+    }
+    await insertDoc(vec, null);
   }
 
   const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'rgba(46,155,255,0.05)', border: `1px solid ${C.line}`, borderRadius: 6, padding: '9px 11px', color: C.ink, fontFamily: FM, fontSize: 12, outline: 'none', marginBottom: 10 };
@@ -249,9 +262,21 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
 
         {err && <div style={{ fontFamily: FM, fontSize: 10, color: '#ff5066', marginBottom: 10 }}>{err}</div>}
 
-        <button onClick={submit} disabled={saving} style={{ width: '100%', padding: '12px', borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #0077cc)`, border: 'none', color: '#04121f', fontFamily: FM, fontSize: 12, letterSpacing: 1, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
-          {saving ? 'PUBLICANDO…' : 'PUBLICAR'}
-        </button>
+        {similar ? (
+          <>
+            <div style={{ fontFamily: FM, fontSize: 10, color: C.amber, background: 'rgba(255,157,46,0.08)', border: '1px solid rgba(255,157,46,0.3)', borderRadius: 6, padding: '10px 12px', lineHeight: 1.5, marginBottom: 10 }}>
+              ⚠️ Esto es <b>{Math.round(similar.similarity * 100)}%</b> parecido a <b>"{similar.title}"</b>. Se publicará como <b>DERIVADO</b> (Linaje H-07): el <b>20%</b> de las regalías irá al autor original.
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setSimilar(null)} style={{ flex: 1, padding: '11px', borderRadius: 8, cursor: 'pointer', background: 'transparent', border: `1px solid ${C.line}`, color: C.muted, fontFamily: FM, fontSize: 11, letterSpacing: 1 }}>VOLVER</button>
+              <button onClick={() => insertDoc(similar.vec, similar.id)} disabled={saving} style={{ flex: 1, padding: '11px', borderRadius: 8, cursor: 'pointer', background: C.amber, border: 'none', color: '#1a1205', fontFamily: FM, fontSize: 11, letterSpacing: 1, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>PUBLICAR DERIVADO</button>
+            </div>
+          </>
+        ) : (
+          <button onClick={submit} disabled={saving} style={{ width: '100%', padding: '12px', borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #0077cc)`, border: 'none', color: '#04121f', fontFamily: FM, fontSize: 12, letterSpacing: 1, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
+            {saving ? 'ANALIZANDO…' : 'PUBLICAR'}
+          </button>
+        )}
       </div>
     </div>
   );
