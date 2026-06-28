@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { useApp, useGemeloDigital } from '../../store/AppContext';
 import { EditProfileModal } from '../perfil/EditProfileModal';
 import { CredentialsPanel } from '../perfil/CredentialsPanel';
+import { CredentialReview } from '../perfil/CredentialReview';
 import { ProgressRadar } from '../shared/ProgressRadar';
 import { SimulatorChallenge } from '../shared/SimulatorChallenge';
 import {
@@ -625,7 +626,12 @@ export function PerfilTab() {
         <div key={section} style={{ animation: 'sectionIn 0.4s cubic-bezier(0.22,1,0.36,1) both' }}>
           {section === 'gemelo' && gemelo && <GemeloPanel gemelo={gemelo} />}
 
-          {section === 'credenciales' && <CredentialsPanel />}
+          {section === 'credenciales' && (
+            <>
+              <CredentialReview />
+              <CredentialsPanel />
+            </>
+          )}
 
           {section === 'capacidades' && (
             <>
