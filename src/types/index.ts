@@ -5,7 +5,7 @@
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'no_access';
 
 // ===== TAB NAVIGATION =====
-export type TabId = 'perfil' | 'maxskill' | 'academia' | 'empleos' | 'chat' | 'market' | 'wallet' | 'gobernanza';
+export type TabId = 'perfil' | 'maxskill' | 'academia' | 'empleos' | 'chat' | 'market' | 'wallet' | 'gobernanza' | 'vault';
 
 // ===== PROFILE & REPUTATION =====
 export type NodeLevel = 1 | 2 | 3;

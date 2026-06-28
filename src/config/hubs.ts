@@ -26,6 +26,7 @@ export const HUBS: Hub[] = [
     members: [
       { tab: 'market',  label: 'Servicios' },
       { tab: 'empleos', label: 'Empleos' },
+      { tab: 'vault',   label: 'Bóveda' },
     ],
   },
   {

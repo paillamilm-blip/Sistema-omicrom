@@ -16,12 +16,14 @@ import { PerfilTab }     from './components/tabs/PerfilTab';
 import { MaxSkillTab }   from './components/tabs/MaxSkillTab';
 import { AcademiaTab }   from './components/tabs/AcademiaTab';
 import { GobernanzaTab } from './components/tabs/GobernanzaTab';
+import { VaultTab }      from './components/tabs/VaultTab';
 import { C, FONT } from './theme';
 import type { TabId } from './types';
 
 const TAB_TITLES: Record<TabId, string> = {
   perfil: 'Mi Perfil', maxskill: 'Max Skill', academia: 'Academia', market: 'Market',
   empleos: 'Empleos', chat: 'Chat Seguro', wallet: 'Wallet', gobernanza: 'Gobernanza',
+  vault: 'Bóveda',
 };
 
 function AppShell() {
@@ -91,6 +93,7 @@ function AppShell() {
         {activeTab === 'chat'       && <ChatTab />}
         {activeTab === 'wallet'     && <WalletTab />}
         {activeTab === 'gobernanza' && <GobernanzaTab />}
+        {activeTab === 'vault'      && <VaultTab />}
       </div>
 
       <BottomNav />
