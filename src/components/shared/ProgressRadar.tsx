@@ -26,7 +26,7 @@ const AXIS_COLORS = {
   execution:    '#10b981',
   quality:      '#3b82f6',
   transcendence:'#f59e0b',
-  foundation:   '#8b5cf6',
+  foundation:   '#06d6a0',
 } as const;
 
 // ✅ FIX: getReputationBadge devuelve el hex directamente para que el componente
