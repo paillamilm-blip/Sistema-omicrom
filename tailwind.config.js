@@ -5,22 +5,22 @@ export default {
     extend: {
       colors: {
         omicron: {
-          // === FONDOS (void industrial profundo) ===
-          bg:       '#04060f',   // void absoluto
-          surface:  '#070b18',   // superficie base
-          card:     '#0b1124',   // tarjetas (glass se aplica en CSS)
-          border:   '#1b2b52',   // borde base (neon se aplica en CSS)
+          // === FONDOS (acero industrial profundo) ===
+          bg:       '#06090f',
+          surface:  '#0a0f17',
+          card:     '#131b28',
+          border:   '#1f3a5c',
           muted:    '#24365f',
-          text:     '#dbeafe',   // texto frío casi blanco
-          subtle:   '#8aa0c8',
-          // === ACENTOS NEÓN (Industria 5.0) ===
-          accent:   '#7c3aed',   // violeta eléctrico (primario)
-          cyan:     '#00f3ff',   // cian holográfico
-          magenta:  '#ff2bd6',   // magenta neón
-          green:    '#00ff9f',   // verde ácido
-          gold:     '#ffb800',   // ámbar industrial
-          red:      '#ff3b5c',   // alerta neón
-          blue:     '#2b8bff',
+          text:     '#eaf2ff',
+          subtle:   '#7d93b0',
+          // === ACENTOS (Industria 5.0 · azul héroe + ámbar) ===
+          accent:   '#2e9bff',   // AZUL héroe (antes violeta)
+          cyan:     '#2e9bff',
+          magenta:  '#6fc3ff',   // azul claro (antes magenta)
+          green:    '#2bd97c',
+          gold:     '#ff9d2e',   // ÁMBAR acento
+          red:      '#ff5066',
+          blue:     '#2e9bff',
         }
       },
       fontFamily: {
