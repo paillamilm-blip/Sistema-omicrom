@@ -1,4 +1,4 @@
-# 🚀 Bitácora de Lanzamiento — Sistema Ómicron
+# 🚀 Bitácora de Lanzamiento — Sistema Ómicrom
 **Camino a la profesionalidad y salida al mercado**
 _Última actualización: 27 de junio de 2026_
 

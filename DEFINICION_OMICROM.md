@@ -1,4 +1,4 @@
-# 🌐 Sistema Ómicron — Definición Maestra
+# 🌐 Sistema Ómicrom — Definición Maestra
 _27 de junio de 2026_
 
 Este documento tiene **dos versiones de la definición** (una visión, una para usuarios) y el
@@ -8,11 +8,11 @@ Este documento tiene **dos versiones de la definición** (una visión, una para 
 
 ## 🏛️ VERSIÓN VISIÓN (para CORFO / inversionistas / manifiesto)
 
-**Sistema Ómicron es un ecosistema de capital intelectual y validación meritocrática que
+**Sistema Ómicrom es un ecosistema de capital intelectual y validación meritocrática que
 transforma la capacidad humana en valor económico, mediante una reputación verificable e
 imposible de falsear: el Gemelo Digital.**
 
-Donde un CV se inventa y las reseñas se compran, Ómicron construye confianza con **evidencia
+Donde un CV se inventa y las reseñas se compran, Ómicrom construye confianza con **evidencia
 real, validada entre pares**. Opera bajo una arquitectura de **"confianza cero"**: nada se asume,
 todo se prueba.
 

@@ -1,4 +1,4 @@
-# 🎯 Estrategia de Lanzamiento — Sistema Ómicron (Chile)
+# 🎯 Estrategia de Lanzamiento — Sistema Ómicrom (Chile)
 _Talento + comunidad primero · Camino a CORFO_
 _27 de junio de 2026_
 

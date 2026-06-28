@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ SISTEMA ÓMICRON ⚡
+# ⚡ SISTEMA ÓMICROM ⚡
 ### Bitácora Maestra · Respaldo Total del Proyecto
 
 `Industria 5.0` · `Capital Intelectual` · `Confianza Cero`
@@ -15,7 +15,7 @@ _Última actualización: 27 de junio de 2026_
 
 ---
 
-## 🌐 1. QUÉ ES ÓMICRON
+## 🌐 1. QUÉ ES ÓMICROM
 
 > **Marketplace de capital intelectual donde estudiantes y técnicos construyen una reputación
 > verificable e imposible de falsear —el Gemelo Digital— para aprender, demostrar lo que saben
@@ -201,8 +201,8 @@ Deploy:    Vercel (pendiente)
 <div align="center">
 
 ### 🔒 Documentos de respaldo relacionados
-`DEFINICION_OMICRON.md` · `ESTRATEGIA_LANZAMIENTO.md` · `ROADMAP_LANZAMIENTO.md`
+`DEFINICION_OMICROM.md` · `ESTRATEGIA_LANZAMIENTO.md` · `ROADMAP_LANZAMIENTO.md`
 
-**Sistema Ómicron — el gemelo digital de tu conocimiento.**
+**Sistema Ómicrom — el gemelo digital de tu conocimiento.**
 
 </div>
