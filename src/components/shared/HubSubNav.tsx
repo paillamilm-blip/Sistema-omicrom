@@ -25,11 +25,10 @@ export function HubSubNav() {
             onClick={() => setActiveTab(m.tab)}
             style={{
               flex: 1, padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
-              fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.5, fontWeight: 700,
-              textTransform: 'uppercase',
+              fontFamily: FONT.display, fontSize: 13, letterSpacing: 0.3, fontWeight: 700,
               background: active ? 'linear-gradient(135deg, #00F0FF, #008b9e)' : 'transparent',
               border: `1px solid ${active ? '#00F0FF' : 'rgba(0,95,115,0.30)'}`,
-              color: active ? '#020613' : '#7d93b0',
+              color: active ? '#020613' : '#9fb3cc',
               boxShadow: active ? '0 0 16px rgba(0,240,255,0.45)' : 'none',
               transition: 'all .2s',
             }}

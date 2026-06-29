@@ -1,6 +1,7 @@
 // config/hubs.ts
-// Navegación por "hubs": agrupa las 8 pestañas en 5 grupos por intención.
-import { User, Zap, ShoppingCart, MessageCircle, Scale, type LucideIcon } from 'lucide-react';
+// Navegación por "hubs": agrupa las pestañas en 5 grupos por intención,
+// con etiquetas en lenguaje natural (claras y autoexplicativas).
+import { User, GraduationCap, Store, MessageCircle, Scale, type LucideIcon } from 'lucide-react';
 import type { TabId } from '../types';
 
 export interface HubMember { tab: TabId; label: string; }
@@ -8,21 +9,21 @@ export interface Hub { id: string; label: string; Icon: LucideIcon; members: Hub
 
 export const HUBS: Hub[] = [
   {
-    id: 'perfil', label: 'PERFIL', Icon: User,
+    id: 'perfil', label: 'Perfil', Icon: User,
     members: [
-      { tab: 'perfil', label: 'Identidad' },
-      { tab: 'wallet', label: 'Wallet' },
+      { tab: 'perfil', label: 'Mi Perfil' },
+      { tab: 'wallet', label: 'Billetera' },
     ],
   },
   {
-    id: 'aprender', label: 'APRENDER', Icon: Zap,
+    id: 'aprender', label: 'Aprender', Icon: GraduationCap,
     members: [
-      { tab: 'maxskill', label: 'Árbol' },
+      { tab: 'maxskill', label: 'Habilidades' },
       { tab: 'academia', label: 'Academia' },
     ],
   },
   {
-    id: 'mercado', label: 'MERCADO', Icon: ShoppingCart,
+    id: 'mercado', label: 'Mercado', Icon: Store,
     members: [
       { tab: 'market',  label: 'Servicios' },
       { tab: 'empleos', label: 'Empleos' },
@@ -30,11 +31,11 @@ export const HUBS: Hub[] = [
     ],
   },
   {
-    id: 'chat', label: 'CHAT', Icon: MessageCircle,
-    members: [{ tab: 'chat', label: 'Chat' }],
+    id: 'chat', label: 'Mensajes', Icon: MessageCircle,
+    members: [{ tab: 'chat', label: 'Mensajes' }],
   },
   {
-    id: 'gobernanza', label: 'GOBERN', Icon: Scale,
+    id: 'gobernanza', label: 'Gobernanza', Icon: Scale,
     members: [{ tab: 'gobernanza', label: 'Gobernanza' }],
   },
 ];

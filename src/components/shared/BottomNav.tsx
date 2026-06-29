@@ -49,7 +49,7 @@ export function BottomNav() {
                   </span>
                 )}
               </div>
-              <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: active ? C.cyan : C.cyanDim }}>
+              <span style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, letterSpacing: 0.2, color: active ? C.cyan : C.cyanDim }}>
                 {hub.label}
               </span>
             </button>

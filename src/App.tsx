@@ -28,8 +28,8 @@ const GobernanzaTab = lazy(() => import('./components/tabs/GobernanzaTab').then(
 const VaultTab      = lazy(() => import('./components/tabs/VaultTab').then(m => ({ default: m.VaultTab })));
 
 const TAB_TITLES: Record<TabId, string> = {
-  perfil: 'Mi Perfil', maxskill: 'Max Skill', academia: 'Academia', market: 'Market',
-  empleos: 'Empleos', chat: 'Chat Seguro', wallet: 'Wallet', gobernanza: 'Gobernanza',
+  perfil: 'Mi Perfil', maxskill: 'Habilidades', academia: 'Academia', market: 'Servicios',
+  empleos: 'Empleos', chat: 'Mensajes', wallet: 'Billetera', gobernanza: 'Gobernanza',
   vault: 'Bóveda',
 };
 
@@ -88,7 +88,7 @@ function AppShell() {
           <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #7df9ff, #00F0FF)', boxShadow: '0 0 16px rgba(0,240,255,0.6)' }}>
             <span style={{ color: '#020613', fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ω</span>
           </div>
-          <span style={{ fontFamily: FONT.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: '#eaf2ff', fontWeight: 700 }}>{TAB_TITLES[activeTab]}</span>
+          <span style={{ fontFamily: FONT.display, fontSize: 17, letterSpacing: 0.3, color: '#eaf2ff', fontWeight: 700 }}>{TAB_TITLES[activeTab]}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {profile && (
