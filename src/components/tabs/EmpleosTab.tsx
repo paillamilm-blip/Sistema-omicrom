@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Briefcase, Plus, Flame, Clock, CheckCircle2, X, Star, Send } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
+import { EmptyState } from '../shared/EmptyState';
 
 const C = {
   bg: '#020613', panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
@@ -111,10 +112,25 @@ export function EmpleosTab() {
         {loading ? (
           <p style={styles.muted}>// CARGANDO OFERTAS...</p>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40 }}>
-            <Briefcase size={28} style={{ color: C.line }} />
-            <p style={styles.muted}>{filter === 'all' ? 'Aún no hay ofertas. ¡Publica la primera!' : 'Nada por aquí todavía.'}</p>
-          </div>
+          filter === 'all' ? (
+            <EmptyState
+              icon={<Briefcase size={30} />}
+              title="Aún no hay ofertas"
+              hint="Sé el primero en publicar una oportunidad. El matchmaking 80/20 conectará tu oferta con el mejor talento."
+              ctaLabel="Publicar oferta"
+              onCta={() => setShowPublish(true)}
+            />
+          ) : (
+            <EmptyState
+              icon={<Briefcase size={30} />}
+              title={filter === 'matched' ? 'Sin matches todavía' : 'Sin aplicaciones'}
+              hint={filter === 'matched'
+                ? 'Sube tu reputación y completa nodos: el sistema te emparejará con ofertas afines.'
+                : 'Aún no has aplicado a ninguna oferta. Revisa la pestaña "Todos".'}
+              ctaLabel="Ver todas las ofertas"
+              onCta={() => setFilter('all')}
+            />
+          )
         ) : filtered.map(j => {
           const rank = myMatches.get(j.id);
           const isApplied = applied.has(j.id);

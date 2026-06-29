@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
 import { ScanlineOverlay, CyberHeader, CyberCard, SectionLabel, LoadingScreen } from '../shared/CyberComponents';
+import { EmptyState } from '../shared/EmptyState';
 
 interface Course {
   id: string; node_id: string | null; title: string; description: string;
@@ -14,7 +15,7 @@ interface QuizQ { id: string; question: string; options: string[]; order_index: 
 interface Prog { course_id: string; status: string; quiz_passed: boolean; }
 
 export function AcademiaTab() {
-  const { profile, refreshProfile } = useApp();
+  const { profile, refreshProfile, setActiveTab } = useApp();
   const [courses, setCourses] = useState<Course[]>([]);
   const [prog, setProg] = useState<Map<string, Prog>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -105,10 +106,13 @@ export function AcademiaTab() {
         <div style={cx(BASE.scrollArea, { padding: '10px 14px 20px' })}>
           <SectionLabel>◆ CURSOS DISPONIBLES ({courses.length})</SectionLabel>
           {courses.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40 }}>
-              <BookOpen size={28} style={{ color: C.cyanDim }} />
-              <p style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, marginTop: 10 }}>AÚN NO HAY CURSOS PUBLICADOS</p>
-            </div>
+            <EmptyState
+              icon={<BookOpen size={30} />}
+              title="Aún no hay cursos"
+              hint="Pronto los docentes publicarán cursos aquí. Mientras tanto, gana Fundamento validando nodos en el Árbol de Habilidades."
+              ctaLabel="Ir al Árbol de Habilidades"
+              onCta={() => setActiveTab('maxskill')}
+            />
           ) : courses.map(c => {
             const p = prog.get(c.id);
             const done = p?.status === 'COMPLETED';

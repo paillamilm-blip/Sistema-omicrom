@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
 import { ScanlineOverlay, CyberHeader, CyberCard, SectionLabel, LoadingScreen } from '../shared/CyberComponents';
+import { EmptyState } from '../shared/EmptyState';
 import { sendSecureMessage, loadSecureMessages } from '../../lib/secureChat';
 import type { Message } from '../../types';
 
@@ -91,7 +92,7 @@ function RatingModal({
 }
 
 export function ChatTab() {
-  const { profile } = useApp();
+  const { profile, setActiveTab } = useApp();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [room, setRoom] = useState<Room | null>(null);
@@ -259,10 +260,13 @@ export function ChatTab() {
         <div style={cx(BASE.scrollArea, { padding: '10px 14px 20px' })}>
           <SectionLabel>◆ CANALES ACTIVOS ({rooms.length})</SectionLabel>
           {rooms.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40 }}>
-              <MessageCircle size={28} style={{ color: C.cyanDim }} />
-              <p style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, marginTop: 10 }}>SIN CONTRATOS · CONTRATA EN MARKET PARA ABRIR UN CANAL</p>
-            </div>
+            <EmptyState
+              icon={<MessageCircle size={30} />}
+              title="Sin canales activos"
+              hint="Cuando contrates un servicio se abrirá un canal privado y cifrado con la contraparte. Empieza explorando el Mercado."
+              ctaLabel="Explorar Mercado"
+              onCta={() => setActiveTab('market')}
+            />
           ) : rooms.map(r => (
             <CyberCard key={r.id} color={ST_COLOR[r.status ?? 'LOCKED'] ?? C.cyan} margin="0 0 10px" onClick={() => setRoom(r)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
