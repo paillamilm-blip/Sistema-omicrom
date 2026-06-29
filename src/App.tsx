@@ -9,6 +9,7 @@ import { BottomNav } from './components/shared/BottomNav';
 import { HubSubNav } from './components/shared/HubSubNav';
 import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
+import { Onboarding, shouldShowOnboarding } from './components/shared/Onboarding';
 import { C, FONT } from './theme';
 import type { TabId } from './types';
 
@@ -45,6 +46,7 @@ function AppShell() {
   const { authStatus, isLoadingProfile, activeTab, profile, unreadCount } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding());
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -77,6 +79,7 @@ function AppShell() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
       {/* Top bar HUD — barra de comando distintiva */}
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'linear-gradient(180deg, rgba(10,20,40,0.9), rgba(2,6,19,0.92))', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderBottom: '1px solid rgba(0,240,255,0.40)', boxShadow: '0 3px 18px rgba(0,0,0,0.55), 0 0 22px rgba(0,240,255,0.10), inset 0 -1px 0 rgba(0,240,255,0.30)', flexShrink: 0, position: 'relative', zIndex: 3 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
