@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Bell } from 'lucide-react';
 import { AppProvider, useApp } from './store/AppContext';
 import { AuthOverlay } from './components/auth/AuthOverlay';
@@ -8,23 +8,38 @@ import { NoAccess } from './components/shared/NoAccess';
 import { BottomNav } from './components/shared/BottomNav';
 import { HubSubNav } from './components/shared/HubSubNav';
 import { NotificationsPanel } from './components/shared/NotificationsPanel';
-import { WalletTab }     from './components/tabs/WalletTab';
-import { ChatTab }       from './components/tabs/ChatTab';
-import { EmpleosTab }    from './components/tabs/EmpleosTab';
-import { MarketTab }     from './components/tabs/MarketTab';
-import { PerfilTab }     from './components/tabs/PerfilTab';
-import { MaxSkillTab }   from './components/tabs/MaxSkillTab';
-import { AcademiaTab }   from './components/tabs/AcademiaTab';
-import { GobernanzaTab } from './components/tabs/GobernanzaTab';
-import { VaultTab }      from './components/tabs/VaultTab';
+import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { C, FONT } from './theme';
 import type { TabId } from './types';
+
+// ── Carga diferida (code-splitting): cada pestaña es su propio chunk, ──
+// ── por lo que el arranque inicial en móvil es mucho más liviano. ──
+const WalletTab     = lazy(() => import('./components/tabs/WalletTab').then(m => ({ default: m.WalletTab })));
+const ChatTab       = lazy(() => import('./components/tabs/ChatTab').then(m => ({ default: m.ChatTab })));
+const EmpleosTab    = lazy(() => import('./components/tabs/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
+const MarketTab     = lazy(() => import('./components/tabs/MarketTab').then(m => ({ default: m.MarketTab })));
+const PerfilTab     = lazy(() => import('./components/tabs/PerfilTab').then(m => ({ default: m.PerfilTab })));
+const MaxSkillTab   = lazy(() => import('./components/tabs/MaxSkillTab').then(m => ({ default: m.MaxSkillTab })));
+const AcademiaTab   = lazy(() => import('./components/tabs/AcademiaTab').then(m => ({ default: m.AcademiaTab })));
+const GobernanzaTab = lazy(() => import('./components/tabs/GobernanzaTab').then(m => ({ default: m.GobernanzaTab })));
+const VaultTab      = lazy(() => import('./components/tabs/VaultTab').then(m => ({ default: m.VaultTab })));
 
 const TAB_TITLES: Record<TabId, string> = {
   perfil: 'Mi Perfil', maxskill: 'Max Skill', academia: 'Academia', market: 'Market',
   empleos: 'Empleos', chat: 'Chat Seguro', wallet: 'Wallet', gobernanza: 'Gobernanza',
   vault: 'Bóveda',
 };
+
+function TabLoader() {
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: C.bg }}>
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(0,240,255,0.06)', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 18px rgba(0,240,255,0.18)' }}>
+        <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
+      </div>
+      <p style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase' }}>Cargando módulo...</p>
+    </div>
+  );
+}
 
 function AppShell() {
   const { authStatus, isLoadingProfile, activeTab, profile, unreadCount } = useApp();
@@ -85,15 +100,19 @@ function AppShell() {
 
       {/* Tab content */}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-        {activeTab === 'perfil'     && <PerfilTab />}
-        {activeTab === 'maxskill'   && <MaxSkillTab />}
-        {activeTab === 'academia'   && <AcademiaTab />}
-        {activeTab === 'market'     && <MarketTab />}
-        {activeTab === 'empleos'    && <EmpleosTab />}
-        {activeTab === 'chat'       && <ChatTab />}
-        {activeTab === 'wallet'     && <WalletTab />}
-        {activeTab === 'gobernanza' && <GobernanzaTab />}
-        {activeTab === 'vault'      && <VaultTab />}
+        <ErrorBoundary section={TAB_TITLES[activeTab]} key={activeTab}>
+          <Suspense fallback={<TabLoader />}>
+            {activeTab === 'perfil'     && <PerfilTab />}
+            {activeTab === 'maxskill'   && <MaxSkillTab />}
+            {activeTab === 'academia'   && <AcademiaTab />}
+            {activeTab === 'market'     && <MarketTab />}
+            {activeTab === 'empleos'    && <EmpleosTab />}
+            {activeTab === 'chat'       && <ChatTab />}
+            {activeTab === 'wallet'     && <WalletTab />}
+            {activeTab === 'gobernanza' && <GobernanzaTab />}
+            {activeTab === 'vault'      && <VaultTab />}
+          </Suspense>
+        </ErrorBoundary>
       </div>
 
       <BottomNav />

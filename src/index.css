@@ -373,6 +373,10 @@ body::before {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+/* Alias usado por los loaders de App.tsx (antes faltaba → no animaba) */
+@keyframes cp-spin {
+  to { transform: rotate(360deg); }
+}
 
 /* Pulso del header del MaxSkillTab */
 @keyframes pulse-cp {

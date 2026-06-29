@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#0a1428"/>
+      <stop offset="100%" stop-color="#020613"/>
+    </radialGradient>
+    <linearGradient id="omega" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7df9ff"/>
+      <stop offset="55%" stop-color="#00F0FF"/>
+      <stop offset="100%" stop-color="#005F73"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="8" y="8" width="496" height="496" rx="106" fill="none" stroke="#00F0FF" stroke-opacity="0.35" stroke-width="4"/>
+  <text x="256" y="256" text-anchor="middle" dominant-baseline="central"
+        font-family="'Rajdhani','Segoe UI',sans-serif" font-weight="700" font-size="320"
+        fill="url(#omega)" filter="url(#glow)">Ω</text>
+</svg>
