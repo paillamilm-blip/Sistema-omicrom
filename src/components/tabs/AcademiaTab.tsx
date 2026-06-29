@@ -5,6 +5,7 @@ import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
 import { ScanlineOverlay, CyberHeader, CyberCard, SectionLabel, LoadingScreen } from '../shared/CyberComponents';
 import { EmptyState } from '../shared/EmptyState';
+import { useToast } from '../shared/Toast';
 
 interface Course {
   id: string; node_id: string | null; title: string; description: string;
@@ -16,6 +17,7 @@ interface Prog { course_id: string; status: string; quiz_passed: boolean; }
 
 export function AcademiaTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
+  const { toast } = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [prog, setProg] = useState<Map<string, Prog>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ export function AcademiaTab() {
       await loadCourses();
       if (r.passed) await refreshProfile(); // el nodo validado sube tu Fundamento
     } catch (e) {
-      alert('No se pudo enviar el quiz: ' + ((e as Error).message ?? e));
+      toast('No se pudo enviar el quiz: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setSubmitting(false);
     }

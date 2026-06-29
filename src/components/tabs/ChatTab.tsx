@@ -5,6 +5,7 @@ import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
 import { ScanlineOverlay, CyberHeader, CyberCard, SectionLabel, LoadingScreen } from '../shared/CyberComponents';
 import { EmptyState } from '../shared/EmptyState';
+import { useToast } from '../shared/Toast';
 import { sendSecureMessage, loadSecureMessages } from '../../lib/secureChat';
 import type { Message } from '../../types';
 
@@ -93,6 +94,7 @@ function RatingModal({
 
 export function ChatTab() {
   const { profile, setActiveTab } = useApp();
+  const { toast } = useToast();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [room, setRoom] = useState<Room | null>(null);
@@ -189,7 +191,7 @@ export function ChatTab() {
       await loadRooms();
     } catch (e) {
       console.error('Error al objetar:', e);
-      alert('No se pudo objetar: ' + ((e as Error).message ?? e));
+      toast('No se pudo objetar: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setObjecting(false);
     }
@@ -204,7 +206,7 @@ export function ChatTab() {
       setRoom({ ...room, status: 'DELIVERED', delivery_declared_at: new Date().toISOString() });
       await loadRooms();
     } catch (e) {
-      alert('No se pudo marcar entregado: ' + ((e as Error).message ?? e));
+      toast('No se pudo marcar entregado: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setDelivering(false);
     }
@@ -223,7 +225,7 @@ export function ChatTab() {
       setStars(5); setRatingComment('');
       setRateFor(released);
     } catch (e) {
-      alert('No se pudo aprobar: ' + ((e as Error).message ?? e));
+      toast('No se pudo aprobar: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setApproving(false);
     }
@@ -242,7 +244,7 @@ export function ChatTab() {
       setRateFor(null); setStars(5); setRatingComment('');
       await loadRooms();
     } catch (e) {
-      alert('No se pudo calificar: ' + ((e as Error).message ?? e));
+      toast('No se pudo calificar: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setRatingSaving(false);
     }

@@ -6,6 +6,7 @@ import { Briefcase, Plus, Flame, Clock, CheckCircle2, X, Star, Send } from 'luci
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
+import { useToast } from '../shared/Toast';
 
 const C = {
   bg: '#020613', panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
@@ -27,6 +28,7 @@ const LEVEL_LABEL = ['', 'N1 Operativo', 'N2 Core', 'N3 Arquitecto'];
 
 export function EmpleosTab() {
   const { profile } = useApp();
+  const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [myMatches, setMyMatches] = useState<Map<string, number>>(new Map()); // job_id -> rank
@@ -65,8 +67,9 @@ export function EmpleosTab() {
       const { error } = await supabase.rpc('apply_to_job', { p_job_id: jobId, p_cover_note: null });
       if (error) throw error;
       setApplied(prev => new Set(prev).add(jobId));
+      toast('¡Aplicación enviada!', 'success');
     } catch (e) {
-      alert('Error al aplicar: ' + ((e as Error).message ?? e));
+      toast('Error al aplicar: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setBusy(null);
     }

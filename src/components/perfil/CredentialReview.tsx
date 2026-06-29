@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Check, X, FileText, ExternalLink, GraduationCap, Award, Briefcase, FileCheck, QrCode } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
+import { useToast } from '../shared/Toast';
 import { C, FONT, RADIUS } from '../../theme';
 
 interface Pending {
@@ -20,6 +21,7 @@ const TYPE_ICON: Record<string, any> = {
 
 export function CredentialReview() {
   const { profile } = useApp();
+  const { toast } = useToast();
   const isValidator = (profile as any)?.is_verified_professional === true;
 
   const [items, setItems] = useState<Pending[]>([]);
@@ -48,8 +50,9 @@ export function CredentialReview() {
       const { error } = await supabase.rpc('review_credential', { p_credential_id: id, p_approve: approve, p_reason: reason });
       if (error) throw error;
       setItems(prev => prev.filter(i => i.id !== id));
+      toast(approve ? 'Credencial aprobada' : 'Credencial rechazada', 'success');
     } catch (e) {
-      alert('Error: ' + ((e as Error).message ?? e));
+      toast('Error: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setBusy(null);
     }

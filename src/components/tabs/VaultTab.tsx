@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, Plus, Lock, Unlock, X, Coins, GitBranch, Search, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
+import { useToast } from '../shared/Toast';
 
 // Paleta v5.0 "Neo-Académico Holográfico" — Bóveda = Cajas Negras (azul acero industrial)
 const C = {
@@ -37,6 +38,7 @@ async function embedText(text: string): Promise<string | null> {
 
 export function VaultTab() {
   const { profile, refreshProfile } = useApp();
+  const { toast } = useToast();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [access, setAccess] = useState<Set<string>>(new Set());
@@ -86,12 +88,12 @@ export function VaultTab() {
     setSearching(true);
     try {
       const vec = await embedText(query.trim());
-      if (!vec) { alert('Buscador no disponible (¿desplegaste la función embed?)'); return; }
+      if (!vec) { toast('Buscador no disponible (¿desplegaste la función embed?)', 'error'); return; }
       const { data, error } = await supabase.rpc('match_vault_documents', { query_embedding: vec, match_count: 12 });
       if (error) throw error;
       setResultIds((data as { id: string; similarity: number }[] ?? []).map(r => ({ id: r.id, similarity: r.similarity })));
     } catch (e) {
-      alert('Error en la búsqueda: ' + ((e as Error).message ?? e));
+      toast('Error en la búsqueda: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setSearching(false);
     }
@@ -108,7 +110,7 @@ export function VaultTab() {
       await refreshProfile();
       await load();
     } catch (e) {
-      alert('Error: ' + ((e as Error).message ?? e));
+      toast('Error: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setBusy(null);
     }

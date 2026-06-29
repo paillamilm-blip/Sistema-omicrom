@@ -10,6 +10,7 @@ import { HubSubNav } from './components/shared/HubSubNav';
 import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { Onboarding, shouldShowOnboarding } from './components/shared/Onboarding';
+import { ToastProvider } from './components/shared/Toast';
 import { C, FONT } from './theme';
 import type { TabId } from './types';
 
@@ -134,7 +135,9 @@ function AppShell() {
 export default function App() {
   return (
     <AppProvider>
-      <AppShell />
+      <ToastProvider>
+        <AppShell />
+      </ToastProvider>
     </AppProvider>
   );
 }
