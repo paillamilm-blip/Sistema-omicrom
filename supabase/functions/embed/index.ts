@@ -7,9 +7,16 @@
 // Desplegar desde el Dashboard de Supabase > Edge Functions > New function "embed".
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { checkRateLimit, tooManyRequests, clientIp } from '../_shared/rateLimit.ts';
 
 // Modelo local de Supabase (gte-small -> vector de 384 dimensiones)
 const session = new Supabase.ai.Session('gte-small');
+
+const _admin = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+);
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +30,10 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Anti-spam por IP: 40 embeddings por minuto.
+    const rl = await checkRateLimit(_admin, 'embed', clientIp(req), 40, 60);
+    if (!rl.allowed) return tooManyRequests(rl.reset_at);
+
     const { text } = await req.json();
     if (!text || typeof text !== 'string') {
       return new Response(JSON.stringify({ error: 'Falta el campo "text"' }), {

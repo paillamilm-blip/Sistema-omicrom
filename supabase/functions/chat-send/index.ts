@@ -14,6 +14,7 @@ import {
   json,
   sha256hex,
 } from "../_shared/blackbox.ts";
+import { checkRateLimit, tooManyRequests } from "../_shared/rateLimit.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -31,6 +32,10 @@ Deno.serve(async (req) => {
     if (!userId) return json({ error: "No autenticado." }, 401);
 
     const admin = adminClient();
+
+    // Anti-spam: 30 mensajes por minuto por usuario.
+    const rl = await checkRateLimit(admin, "chat-send", userId, 30, 60);
+    if (!rl.allowed) return tooManyRequests(rl.reset_at);
 
     // Control de acceso: solo participantes del contrato
     const parts = await getRoomParticipants(admin, network_id);

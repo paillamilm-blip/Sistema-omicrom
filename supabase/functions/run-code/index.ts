@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { checkRateLimit, tooManyRequests } from "../_shared/rateLimit.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -168,6 +169,11 @@ Deno.serve(async (req) => {
 
     // Test autoritativo desde la BD (con service role, NUNCA expuesto al código).
     const admin = createClient(url, service);
+
+    // Anti-spam: el sandbox es costoso → 20 ejecuciones por minuto por usuario.
+    const rl = await checkRateLimit(admin, "run-code", userId, 20, 60);
+    if (!rl.allowed) return tooManyRequests(rl.reset_at);
+
     const { data: test, error: te } = await admin
       .from("skill_tests")
       .select("test_cases, time_limit_seconds, passing_score")
