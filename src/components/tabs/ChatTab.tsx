@@ -301,7 +301,10 @@ export function ChatTab() {
             </span>
           </div>
         </div>
-        <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan, padding: '3px 8px', borderRadius: 12, border: `1px solid ${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}55` }}>{room.status ?? 'LOCKED'}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan, padding: '3px 9px', borderRadius: 12, border: `1px solid ${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}55`, background: `${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}14`, animation: 'liquidPulse 2.6s ease-in-out infinite' }}>
+          <span className="liquid-dot" />
+          {room.status ?? 'LOCKED'}
+        </span>
       </div>
 
       {isSeller && room.status === 'LOCKED' && (
@@ -321,7 +324,7 @@ export function ChatTab() {
             <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: '#dbeafe' }}>GHOST APPROVAL</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontFamily: FONT.mono, fontSize: 14, fontWeight: 700, letterSpacing: 2, color: gl <= 60 ? C.red : C.cyan }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: 14, fontWeight: 700, letterSpacing: 2, color: gl <= 60 ? C.red : C.cyan, textShadow: `0 0 10px ${gl <= 60 ? C.red : C.cyan}`, animation: `liquidPulse ${gl <= 60 ? '1s' : '2.4s'} ease-in-out infinite`, borderRadius: 6, padding: '1px 6px' }}>
               {String(Math.floor(gl / 60)).padStart(2, '0')}:{String(gl % 60).padStart(2, '0')}
             </span>
             {isBuyer && (

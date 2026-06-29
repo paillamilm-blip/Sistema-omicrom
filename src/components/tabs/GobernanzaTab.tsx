@@ -170,7 +170,9 @@ export function GobernanzaTab() {
             {disputes.map(d => (
               <CyberCard key={d.id} color={DISPUTE_COLOR[d.status] ?? C.cyan} margin="0 14px 10px">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: DISPUTE_COLOR[d.status] ?? C.cyan }}>{d.status}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: DISPUTE_COLOR[d.status] ?? C.cyan }}>
+                    <span className="liquid-dot" />{d.status}
+                  </span>
                   <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>{new Date(d.created_at).toLocaleDateString('es-CL')}</span>
                 </div>
                 <p style={{ margin: 0, fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: '#dbeafe' }}>{d.reason}</p>
@@ -208,7 +210,8 @@ export function GobernanzaTab() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: s.status === 'ACTIVE' ? 10 : 0 }}>
                   <div>
                     <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#dbeafe' }}>🪙 {s.amount}</div>
-                    <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: s.status === 'ACTIVE' ? C.green : C.cyanDim }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: s.status === 'ACTIVE' ? C.green : C.cyanDim }}>
+                      {s.status === 'ACTIVE' && <span className="liquid-dot" />}
                       {s.status === 'ACTIVE' ? 'ACTIVO' : `RETORNADO · ${s.return_amount} T`}
                     </div>
                   </div>

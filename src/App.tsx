@@ -55,11 +55,18 @@ function AppShell() {
 
   if (authStatus === 'loading' || isLoadingProfile) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 14, background: C.bg }}>
-        <div style={{ width: 44, height: 44, borderRadius: 8, background: 'rgba(0,245,255,0.06)', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
+        {/* Halo radial de fondo */}
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(0,240,255,0.10), transparent 60%)', pointerEvents: 'none' }} />
+        {/* Logo Ω flotante con glow */}
+        <div style={{ position: 'relative', width: 88, height: 88, borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(125,249,255,0.18), rgba(0,240,255,0.06))', border: '1px solid rgba(0,240,255,0.4)', boxShadow: '0 0 38px rgba(0,240,255,0.35), inset 0 0 26px rgba(0,95,115,0.18)', animation: 'floatY 5s ease-in-out infinite' }}>
+          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 48, background: 'linear-gradient(135deg, #7df9ff, #00F0FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 0 10px rgba(0,240,255,0.6))' }}>Ω</span>
         </div>
-        <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase' }}>Conectando a la Red Ómicron...</p>
+        {/* Spinner + texto */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
+          <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
+          <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicron...</p>
+        </div>
       </div>
     );
   }
