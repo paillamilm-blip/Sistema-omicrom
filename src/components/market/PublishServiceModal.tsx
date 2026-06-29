@@ -142,7 +142,7 @@ export function PublishServiceModal({ onClose, onPublished }: Props) {
               placeholder="React, Figma..."
               className="flex-1 bg-omicron-surface border border-omicron-border rounded-xl px-3 py-2.5 text-omicron-text placeholder:text-omicron-muted text-sm focus:outline-none focus:border-omicron-accent transition"
             />
-            <button onClick={addTag} className="w-10 h-10 bg-omicron-accent rounded-xl flex items-center justify-center text-white hover:bg-violet-600 transition">
+            <button onClick={addTag} className="w-10 h-10 bg-omicron-accent rounded-xl flex items-center justify-center text-white hover:bg-omicron-magenta transition">
               <Plus size={16} />
             </button>
           </div>
@@ -170,7 +170,7 @@ export function PublishServiceModal({ onClose, onPublished }: Props) {
           <button
             onClick={handlePublish}
             disabled={saving}
-            className="flex-1 py-3 rounded-xl bg-omicron-accent text-white text-sm font-semibold hover:bg-violet-600 disabled:opacity-60 transition active:scale-95"
+            className="flex-1 py-3 rounded-xl bg-omicron-accent text-omicron-bg text-sm font-semibold hover:bg-omicron-magenta disabled:opacity-60 transition active:scale-95"
           >
             {saving ? 'Publicando...' : 'Publicar Servicio'}
           </button>

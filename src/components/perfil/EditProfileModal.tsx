@@ -104,7 +104,7 @@ export function EditProfileModal({ onClose }: Props) {
             />
             <button
               onClick={addSkill}
-              className="w-10 h-10 bg-omicron-accent rounded-xl flex items-center justify-center text-white hover:bg-violet-600 transition"
+              className="w-10 h-10 bg-omicron-accent rounded-xl flex items-center justify-center text-white hover:bg-omicron-magenta transition"
             >
               <Plus size={16} />
             </button>
@@ -137,7 +137,7 @@ export function EditProfileModal({ onClose }: Props) {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 py-3 rounded-xl bg-omicron-accent text-white text-sm font-semibold hover:bg-violet-600 disabled:opacity-60 transition active:scale-95"
+            className="flex-1 py-3 rounded-xl bg-omicron-accent text-omicron-bg text-sm font-semibold hover:bg-omicron-magenta disabled:opacity-60 transition active:scale-95"
           >
             {saving ? 'Guardando...' : 'Guardar Cambios'}
           </button>

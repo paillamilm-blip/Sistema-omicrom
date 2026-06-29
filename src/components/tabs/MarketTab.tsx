@@ -12,13 +12,14 @@ import type { MarketService } from '../../types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
 
-// ── Paleta refinada "Industria 5.0" — armónica: azul héroe + ámbar acento ──
+// ── Paleta v5.0 "Neo-Académico Holográfico" — cyan eléctrico + ámbar energía ──
 const C = {
-  bg: '#06090f', bg2: '#0a0f17',
-  panelA: '#131b28', panelB: '#0b1119',
-  blue: '#2e9bff', blueHi: '#6fc3ff',
-  amber: '#ff9d2e', amberHi: '#ffc266',
-  line: 'rgba(110,150,200,0.14)', lineSoft: 'rgba(110,150,200,0.07)',
+  bg: '#020613', bg2: '#030a1a',
+  panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
+  blue: '#00F0FF', blueHi: '#7df9ff',
+  amber: '#F59E0B', amberHi: '#ffcf6b',
+  steel: '#005F73', steelHi: '#0a8ba3',
+  line: 'rgba(0,95,115,0.30)', lineSoft: 'rgba(0,240,255,0.08)',
   ink: '#eaf2ff', muted: '#7d93b0',
 } as const;
 const FONT_MONO = "'Share Tech Mono', 'Courier New', monospace";
@@ -131,10 +132,10 @@ export function MarketTab() {
           return (
             <button key={c.key} onClick={() => setCategory(c.key)} style={{
               ...styles.catPill,
-              background: active ? 'rgba(0,168,255,0.16)' : 'rgba(255,255,255,0.02)',
+              background: active ? 'rgba(0,240,255,0.16)' : 'rgba(255,255,255,0.02)',
               border: `1px solid ${active ? C.blue : C.lineSoft}`,
               color: active ? C.blueHi : C.muted,
-              boxShadow: active ? `0 0 14px rgba(0,168,255,0.35)` : 'none',
+              boxShadow: active ? `0 0 14px rgba(0,240,255,0.35)` : 'none',
             }}>
               {c.icon && <span>{c.icon}</span>}{c.label}
             </button>
@@ -210,10 +211,10 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
 
       <button onClick={canHire ? onHire : undefined} disabled={!canHire} style={{
         ...styles.hireBtn,
-        background: canHire ? `linear-gradient(135deg, ${C.blue}, #0077cc)` : 'transparent',
+        background: canHire ? `linear-gradient(135deg, ${C.blue}, #008b9e)` : 'transparent',
         border: `1px solid ${canHire ? C.blue : C.lineSoft}`,
         color: canHire ? '#04121f' : C.muted,
-        boxShadow: canHire ? `0 0 18px rgba(0,168,255,0.4)` : 'none',
+        boxShadow: canHire ? `0 0 18px rgba(0,240,255,0.4)` : 'none',
         cursor: canHire ? 'pointer' : 'default',
       }}>
         {canHire ? '▸ CONTRATAR · ESCROW' : service.seller_id ? 'TU SERVICIO' : 'DEMO'}
@@ -227,25 +228,25 @@ const styles: Record<string, React.CSSProperties> = {
   grid: { position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `linear-gradient(${C.lineSoft} 1px, transparent 1px), linear-gradient(90deg, ${C.lineSoft} 1px, transparent 1px)`, backgroundSize: '28px 28px', maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 70%)', WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 70%)' },
   header: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.line}`, background: 'rgba(8,11,18,0.7)', flexShrink: 0 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: 10 },
-  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: `0 0 14px rgba(0,168,255,0.5)` },
+  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: `0 0 14px rgba(0,240,255,0.5)` },
   headerTitle: { fontFamily: FONT_MONO, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   headerSub: { fontFamily: FONT_MONO, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
-  publishBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,168,255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 1 },
+  publishBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,240,255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 1 },
   catRow: { position: 'relative', zIndex: 2, display: 'flex', gap: 8, padding: '12px 14px', overflowX: 'auto', flexShrink: 0 },
   catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, whiteSpace: 'nowrap', transition: 'all .2s', textTransform: 'uppercase' },
   scroll: { position: 'relative', zIndex: 2, flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
   muted: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
-  card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.line}`, borderRadius: 4, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,0.5)' },
-  cardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.blue}, transparent)` },
+  card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 10, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
+  cardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.steelHi}, ${C.blue}, transparent)` },
   idTag: { position: 'absolute', top: 12, right: 14, fontFamily: FONT_MONO, fontSize: 8, color: C.muted, letterSpacing: 1, border: `1px solid ${C.lineSoft}`, padding: '2px 6px', borderRadius: 3 },
   cardTitle: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 18, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', letterSpacing: 0.5 },
   seller: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted },
-  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.blueHi, background: 'rgba(46,155,255,0.10)', border: '1px solid rgba(46,155,255,0.30)', padding: '1px 7px', borderRadius: 3 },
+  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.blueHi, background: 'rgba(0,240,255,0.10)', border: '1px solid rgba(0,240,255,0.30)', padding: '1px 7px', borderRadius: 3 },
   statRow: { display: 'flex', gap: 10, marginTop: 12 },
   statBox: { flex: 1, background: 'rgba(0,0,0,0.25)', border: `1px solid ${C.lineSoft}`, borderRadius: 4, padding: '7px 10px' },
   statLabel: { fontFamily: FONT_MONO, fontSize: 8, color: C.muted, letterSpacing: 1.5 },
   price: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 20, color: C.amberHi, marginTop: 1 },
   rating: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 18, color: C.ink, marginTop: 1 },
-  tag: { fontFamily: FONT_MONO, fontSize: 10, color: C.blueHi, background: 'rgba(0,168,255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3, letterSpacing: 0.5 },
+  tag: { fontFamily: FONT_MONO, fontSize: 10, color: C.blueHi, background: 'rgba(0,240,255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3, letterSpacing: 0.5 },
   hireBtn: { width: '100%', marginTop: 6, padding: '12px 0', borderRadius: 5, fontFamily: FONT_MONO, fontWeight: 700, fontSize: 13, letterSpacing: 1.5, transition: 'all .15s' },
 };

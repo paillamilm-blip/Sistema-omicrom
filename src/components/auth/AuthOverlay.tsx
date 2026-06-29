@@ -72,7 +72,7 @@ export function AuthOverlay() {
                 onClick={() => { setMode(m); setError(null); setSuccess(null); }}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                   mode === m
-                    ? 'bg-omicron-accent text-white shadow'
+                    ? 'bg-omicron-accent text-omicron-bg shadow'
                     : 'text-omicron-subtle hover:text-omicron-text'
                 }`}
               >
@@ -163,7 +163,7 @@ export function AuthOverlay() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-omicron-accent hover:bg-violet-600 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-all active:scale-95 text-sm"
+            className="w-full bg-omicron-accent hover:bg-omicron-magenta disabled:opacity-60 text-omicron-bg font-semibold py-3 rounded-xl transition-all active:scale-95 text-sm"
           >
             {loading ? 'Procesando...' : mode === 'login' ? 'Acceder a la Red' : mode === 'register' ? 'Unirse a Omicron' : 'Enviar enlace de recuperacion'}
           </button>

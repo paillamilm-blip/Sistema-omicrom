@@ -1,33 +1,33 @@
 // src/theme.ts
 // Sistema Ómicrom — Design System · Industria 5.0
-// Paleta armónica: AZUL héroe (#2e9bff) + ÁMBAR acento (#ff9d2e) + neutros acero.
+// Paleta armónica: AZUL héroe (#00F0FF) + ÁMBAR acento (#F59E0B) + neutros acero.
 // Nota: las claves históricas (cyan/gold/purple) se conservan por compatibilidad,
 // pero ahora apuntan a la nueva identidad azul/ámbar.
 
 export const C = {
-  cyan:         '#2e9bff',   // AZUL HÉROE
-  cyanDim:      'rgba(46,155,255,0.40)',
-  cyanFaint:    'rgba(46,155,255,0.14)',
-  cyanGhost:    'rgba(46,155,255,0.07)',
-  gold:         '#ff9d2e',   // ÁMBAR ACENTO
-  goldDim:      'rgba(255,157,46,0.40)',
-  goldFaint:    'rgba(255,157,46,0.10)',
-  purple:       '#6fc3ff',   // azul claro (tiers / destacados)
-  purpleDim:    'rgba(111,195,255,0.35)',
-  purpleFaint:  'rgba(111,195,255,0.10)',
-  green:        '#2bd97c',   // estado OK
-  greenDim:     'rgba(43,217,124,0.35)',
-  greenFaint:   'rgba(43,217,124,0.10)',
+  cyan:         '#00F0FF',   // AZUL HÉROE
+  cyanDim:      'rgba(0,240,255,0.40)',
+  cyanFaint:    'rgba(0,240,255,0.14)',
+  cyanGhost:    'rgba(0,240,255,0.07)',
+  gold:         '#F59E0B',   // ÁMBAR ACENTO
+  goldDim:      'rgba(245,158,11,0.40)',
+  goldFaint:    'rgba(245,158,11,0.10)',
+  purple:       '#0a8ba3',   // azul claro (tiers / destacados)
+  purpleDim:    'rgba(10,139,163,0.35)',
+  purpleFaint:  'rgba(10,139,163,0.10)',
+  green:        '#39FF14',   // estado OK
+  greenDim:     'rgba(57,255,20,0.35)',
+  greenFaint:   'rgba(57,255,20,0.10)',
   red:          '#ff5066',   // estado peligro
   redDim:       'rgba(255,80,102,0.35)',
   redFaint:     'rgba(255,80,102,0.10)',
-  bg:           '#06090f',
-  surface:      'rgba(16,23,34,0.97)',
+  bg:           '#020613',
+  surface:      'rgba(10,20,40,0.97)',
   surfaceLight: 'rgba(20,28,40,0.95)',
-  overlay:      'rgba(6,9,15,0.99)',
+  overlay:      'rgba(2,6,19,0.99)',
   locked:       'rgba(255,255,255,0.12)',
   lockedBg:     'rgba(255,255,255,0.04)',
-  grid:         'rgba(46,155,255,0.05)',
+  grid:         'rgba(0,240,255,0.05)',
 } as const;
 
 export function statusColor(status: string, options?: { master?: boolean; depth?: number }): string {
@@ -65,7 +65,7 @@ export const FONT_STYLE = {
 } as const;
 
 export const KEYFRAMES = `
-@keyframes cp-pulse { 0%,100% { opacity:1; box-shadow:0 0 6px #2e9bff; } 50% { opacity:0.3; box-shadow:none; } }
+@keyframes cp-pulse { 0%,100% { opacity:1; box-shadow:0 0 6px #00F0FF; } 50% { opacity:0.3; box-shadow:none; } }
 @keyframes cp-spin { to { transform: rotate(360deg); } }
 @keyframes cp-scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
 @keyframes cp-node-pop { 0% { opacity:0; transform:scale(0.9); } 100% { opacity:1; transform:scale(1); } }
@@ -87,31 +87,31 @@ export const ANIM = {
 export const RADIUS = { sm: 4, md: 6, lg: 10, xl: 12, pill: 24 } as const;
 
 export const BORDER = {
-  default: '1px solid rgba(46,155,255,0.14)',
-  faint:   '1px solid rgba(46,155,255,0.07)',
-  gold:    '1px solid rgba(255,157,46,0.25)',
-  purple:  '1px solid rgba(111,195,255,0.25)',
-  green:   '1px solid rgba(43,217,124,0.25)',
+  default: '1px solid rgba(0,240,255,0.14)',
+  faint:   '1px solid rgba(0,240,255,0.07)',
+  gold:    '1px solid rgba(245,158,11,0.25)',
+  purple:  '1px solid rgba(10,139,163,0.25)',
+  green:   '1px solid rgba(57,255,20,0.25)',
   red:     '1px solid rgba(255,80,102,0.25)',
   locked:  '1px solid rgba(255,255,255,0.08)',
 } as const;
 
 export const GLOW = {
-  cyan: '0 0 10px rgba(46,155,255,0.5)', gold: '0 0 10px rgba(255,157,46,0.5)',
-  purple: '0 0 10px rgba(111,195,255,0.5)', green: '0 0 10px rgba(43,217,124,0.5)',
-  red: '0 0 10px rgba(255,80,102,0.5)', toast: '0 4px 24px rgba(255,157,46,0.4)',
+  cyan: '0 0 10px rgba(0,240,255,0.5)', gold: '0 0 10px rgba(245,158,11,0.5)',
+  purple: '0 0 10px rgba(10,139,163,0.5)', green: '0 0 10px rgba(57,255,20,0.5)',
+  red: '0 0 10px rgba(255,80,102,0.5)', toast: '0 4px 24px rgba(245,158,11,0.4)',
 } as const;
 
 export const BASE: Record<string, React.CSSProperties> = {
-  root: { display: 'flex', flexDirection: 'column', height: '100%', background: '#06090f', overflow: 'hidden', position: 'relative' },
+  root: { display: 'flex', flexDirection: 'column', height: '100%', background: '#020613', overflow: 'hidden', position: 'relative' },
   scrollArea: { flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0, WebkitOverflowScrolling: 'touch' },
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', flexShrink: 0, borderBottom: '1px solid rgba(46,155,255,0.18)', background: 'rgba(46,155,255,0.03)', position: 'relative', zIndex: 2 },
-  card: { padding: '12px 14px', borderRadius: 10, background: 'rgba(16,23,34,0.97)', border: '1px solid rgba(46,155,255,0.14)' },
-  detailPanel: { flexShrink: 0, borderTop: '1px solid rgba(46,155,255,0.18)', padding: '14px 16px', background: 'rgba(6,9,15,0.99)', maxHeight: '38vh', overflowY: 'auto', position: 'relative', zIndex: 2 },
+  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', flexShrink: 0, borderBottom: '1px solid rgba(0,240,255,0.18)', background: 'rgba(0,240,255,0.03)', position: 'relative', zIndex: 2 },
+  card: { padding: '12px 14px', borderRadius: 10, background: 'rgba(10,20,40,0.97)', border: '1px solid rgba(0,240,255,0.14)' },
+  detailPanel: { flexShrink: 0, borderTop: '1px solid rgba(0,240,255,0.18)', padding: '14px 16px', background: 'rgba(2,6,19,0.99)', maxHeight: '38vh', overflowY: 'auto', position: 'relative', zIndex: 2 },
   statsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
-  statCard: { padding: '8px 10px', borderRadius: 6, background: 'rgba(46,155,255,0.05)', border: '1px solid rgba(46,155,255,0.10)' },
-  btnPrimary: { width: '100%', padding: '10px 0', background: '#ff9d2e', border: 'none', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, color: '#06090f', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
-  btnSecondary: { width: '100%', padding: '10px 0', background: 'rgba(46,155,255,0.10)', border: '1px solid rgba(46,155,255,0.35)', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, color: '#2e9bff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
+  statCard: { padding: '8px 10px', borderRadius: 6, background: 'rgba(0,240,255,0.05)', border: '1px solid rgba(0,240,255,0.10)' },
+  btnPrimary: { width: '100%', padding: '10px 0', background: '#F59E0B', border: 'none', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, color: '#020613', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
+  btnSecondary: { width: '100%', padding: '10px 0', background: 'rgba(0,240,255,0.10)', border: '1px solid rgba(0,240,255,0.35)', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, color: '#00F0FF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
   btnDanger: { width: '100%', padding: '10px 0', background: 'rgba(255,80,102,0.12)', border: '1px solid rgba(255,80,102,0.35)', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, color: '#ff5066', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
 };
 

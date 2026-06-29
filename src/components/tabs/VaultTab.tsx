@@ -7,11 +7,13 @@ import { BookOpen, Plus, Lock, Unlock, X, Coins, GitBranch, Search, Sparkles } f
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 
+// Paleta v5.0 "Neo-Académico Holográfico" — Bóveda = Cajas Negras (azul acero industrial)
 const C = {
-  bg: '#06090f', panelA: '#131b28', panelB: '#0b1119',
-  blue: '#2e9bff', blueHi: '#6fc3ff', amber: '#ff9d2e', amberHi: '#ffc266',
-  line: 'rgba(110,150,200,0.14)', lineSoft: 'rgba(110,150,200,0.07)',
-  ink: '#eaf2ff', muted: '#7d93b0', green: '#2bd97c',
+  bg: '#020613', panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
+  blue: '#00F0FF', blueHi: '#7df9ff', amber: '#F59E0B', amberHi: '#ffcf6b',
+  steel: '#005F73', steelHi: '#0a8ba3',
+  line: 'rgba(0,95,115,0.30)', lineSoft: 'rgba(0,240,255,0.08)',
+  ink: '#eaf2ff', muted: '#7d93b0', green: '#39FF14',
 } as const;
 const FM = "'Share Tech Mono', 'Courier New', monospace";
 const FR = "'Rajdhani', sans-serif";
@@ -181,7 +183,9 @@ export function VaultTab() {
                     {d.parent_document_id && <span style={{ color: C.blueHi }}> · <GitBranch size={9} style={{ verticalAlign: 'middle' }} /> derivado</span>}
                   </div>
                 </div>
-                {unlocked ? <Unlock size={16} style={{ color: C.green, flexShrink: 0 }} /> : <Lock size={16} style={{ color: C.amber, flexShrink: 0 }} />}
+                {unlocked
+                  ? <Unlock size={16} style={{ color: C.green, flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(57,255,20,0.8))' }} />
+                  : <Lock size={16} style={{ color: C.amber, flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(245,158,11,0.8))', animation: 'lockPulse 2.2s ease-in-out infinite' }} />}
               </div>
 
               {d.competency_tags && <div style={{ marginTop: 8 }}><span style={styles.tag}>{d.competency_tags}</span></div>}
@@ -254,7 +258,7 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
     await insertDoc(vec, null);
   }
 
-  const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'rgba(46,155,255,0.05)', border: `1px solid ${C.line}`, borderRadius: 6, padding: '9px 11px', color: C.ink, fontFamily: FM, fontSize: 12, outline: 'none', marginBottom: 10 };
+  const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'rgba(0,240,255,0.05)', border: `1px solid ${C.line}`, borderRadius: 6, padding: '9px 11px', color: C.ink, fontFamily: FM, fontSize: 12, outline: 'none', marginBottom: 10 };
   const lbl: React.CSSProperties = { fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, display: 'block' };
 
   return (
@@ -276,7 +280,7 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
 
         {similar ? (
           <>
-            <div style={{ fontFamily: FM, fontSize: 10, color: C.amber, background: 'rgba(255,157,46,0.08)', border: '1px solid rgba(255,157,46,0.3)', borderRadius: 6, padding: '10px 12px', lineHeight: 1.5, marginBottom: 10 }}>
+            <div style={{ fontFamily: FM, fontSize: 10, color: C.amber, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 6, padding: '10px 12px', lineHeight: 1.5, marginBottom: 10 }}>
               ⚠️ Esto es <b>{Math.round(similar.similarity * 100)}%</b> parecido a <b>"{similar.title}"</b>. Se publicará como <b>DERIVADO</b> (Linaje H-07): el <b>20%</b> de las regalías irá al autor original.
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -285,7 +289,7 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
             </div>
           </>
         ) : (
-          <button onClick={submit} disabled={saving} style={{ width: '100%', padding: '12px', borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #0077cc)`, border: 'none', color: '#04121f', fontFamily: FM, fontSize: 12, letterSpacing: 1, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
+          <button onClick={submit} disabled={saving} style={{ width: '100%', padding: '12px', borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: 'none', color: '#04121f', fontFamily: FM, fontSize: 12, letterSpacing: 1, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
             {saving ? 'ANALIZANDO…' : 'PUBLICAR'}
           </button>
         )}
@@ -297,27 +301,27 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
 const styles: Record<string, React.CSSProperties> = {
   root: { display: 'flex', flexDirection: 'column', height: '100%', background: C.bg, overflow: 'hidden' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.line}`, background: 'rgba(8,11,18,0.7)', flexShrink: 0 },
-  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: '0 0 14px rgba(46,155,255,0.5)' },
+  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: '0 0 14px rgba(0,240,255,0.5)' },
   hTitle: { fontFamily: FM, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   hSub: { fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
-  pubBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(46,155,255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1 },
+  pubBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,240,255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1 },
   searchRow: { display: 'flex', gap: 8, padding: '12px 14px', flexShrink: 0 },
-  searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', borderRadius: 8, background: 'rgba(46,155,255,0.05)', border: `1px solid ${C.line}` },
+  searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', borderRadius: 8, background: 'rgba(0,240,255,0.05)', border: `1px solid ${C.line}` },
   searchInput: { flex: 1, background: 'none', border: 'none', outline: 'none', color: C.ink, fontFamily: FR, fontSize: 14, padding: '10px 0' },
-  searchBtn: { width: 44, borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #0077cc)`, border: 'none', color: '#04121f', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  searchBtn: { width: 44, borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: 'none', color: '#04121f', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   scroll: { flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
   muted: { fontFamily: FM, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
-  card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.line}`, borderRadius: 4, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,0.5)' },
-  cardTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.blue}, transparent)` },
-  simBadge: { position: 'absolute', top: 12, right: 14, fontFamily: FM, fontSize: 8, color: C.blueHi, background: 'rgba(46,155,255,0.12)', border: `1px solid ${C.blue}`, padding: '2px 7px', borderRadius: 3 },
+  card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 10, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
+  cardTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.steelHi}, ${C.blue}, transparent)` },
+  simBadge: { position: 'absolute', top: 12, right: 14, fontFamily: FM, fontSize: 8, color: C.blueHi, background: 'rgba(0,240,255,0.12)', border: `1px solid ${C.blue}`, padding: '2px 7px', borderRadius: 3 },
   title: { fontFamily: FR, fontWeight: 700, fontSize: 17, color: C.ink, lineHeight: 1.15, paddingRight: 60 },
   author: { fontFamily: FM, fontSize: 10, color: C.muted, marginTop: 3 },
-  tag: { fontFamily: FM, fontSize: 10, color: C.blueHi, background: 'rgba(46,155,255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3 },
-  content: { fontFamily: FR, fontSize: 14, color: '#b9d4e6', lineHeight: 1.5, marginTop: 10, whiteSpace: 'pre-wrap', background: 'rgba(43,217,124,0.05)', border: '1px solid rgba(43,217,124,0.2)', borderRadius: 6, padding: '10px 12px' },
-  locked: { fontFamily: FM, fontSize: 11, color: C.amber, marginTop: 10, background: 'rgba(255,157,46,0.06)', border: '1px solid rgba(255,157,46,0.25)', borderRadius: 6, padding: '12px', textAlign: 'center' },
+  tag: { fontFamily: FM, fontSize: 10, color: C.blueHi, background: 'rgba(0,240,255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3 },
+  content: { fontFamily: FR, fontSize: 14, color: '#b9d4e6', lineHeight: 1.5, marginTop: 10, whiteSpace: 'pre-wrap', background: 'rgba(57,255,20,0.05)', border: '1px solid rgba(57,255,20,0.2)', borderRadius: 6, padding: '10px 12px' },
+  locked: { fontFamily: FM, fontSize: 11, color: C.amber, marginTop: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 6, padding: '12px', textAlign: 'center' },
   footer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
   royalties: { display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: FM, fontSize: 10, color: C.amberHi },
-  consultBtn: { padding: '8px 14px', borderRadius: 6, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #0077cc)`, border: 'none', color: '#04121f', fontFamily: FM, fontSize: 11, letterSpacing: 0.5, fontWeight: 700 },
+  consultBtn: { padding: '8px 14px', borderRadius: 6, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: 'none', color: '#04121f', fontFamily: FM, fontSize: 11, letterSpacing: 0.5, fontWeight: 700 },
   modalBg: { position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(2,5,11,0.8)', backdropFilter: 'blur(4px)', padding: 20 },
-  modal: { width: '100%', maxWidth: 400, maxHeight: '85vh', overflowY: 'auto', borderRadius: 10, padding: 20, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.blue}`, boxShadow: '0 0 30px rgba(46,155,255,0.3)', position: 'relative' },
+  modal: { width: '100%', maxWidth: 400, maxHeight: '85vh', overflowY: 'auto', borderRadius: 10, padding: 20, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.blue}`, boxShadow: '0 0 30px rgba(0,240,255,0.3)', position: 'relative' },
 };

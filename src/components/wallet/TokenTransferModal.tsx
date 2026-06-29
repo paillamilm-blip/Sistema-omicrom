@@ -81,7 +81,7 @@ export function TokenTransferModal({ mode, onClose }: Props) {
           <p className="text-omicron-subtle text-sm">
             <span className="text-omicron-text font-bold">{amountNum} tokens</span> enviados a <span className="text-omicron-text font-bold">@{username}</span>
           </p>
-          <button onClick={onClose} className="w-full py-3 rounded-xl bg-omicron-accent text-white font-semibold text-sm hover:bg-violet-600 transition mt-2">
+          <button onClick={onClose} className="w-full py-3 rounded-xl bg-omicron-accent text-omicron-bg font-semibold text-sm hover:bg-omicron-magenta transition mt-2">
             Listo
           </button>
         </div>
@@ -98,7 +98,7 @@ export function TokenTransferModal({ mode, onClose }: Props) {
           <p className="text-red-400 text-sm">{errorMsg}</p>
           <div className="flex gap-3 w-full">
             <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-omicron-border text-omicron-subtle text-sm">Cerrar</button>
-            <button onClick={() => setStep('form')} className="flex-1 py-3 rounded-xl bg-omicron-accent text-white text-sm font-semibold">Reintentar</button>
+            <button onClick={() => setStep('form')} className="flex-1 py-3 rounded-xl bg-omicron-accent text-omicron-bg text-sm font-semibold">Reintentar</button>
           </div>
         </div>
       </Modal>
@@ -219,7 +219,7 @@ export function TokenTransferModal({ mode, onClose }: Props) {
           <button
             onClick={handleSend}
             disabled={!canSend}
-            className="flex-1 py-3 rounded-xl bg-omicron-green text-white text-sm font-semibold hover:bg-emerald-500 disabled:opacity-40 transition active:scale-95"
+            className="flex-1 py-3 rounded-xl bg-omicron-green text-omicron-bg text-sm font-semibold hover:bg-emerald-400 disabled:opacity-40 transition active:scale-95"
           >
             Enviar Tokens
           </button>

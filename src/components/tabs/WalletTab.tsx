@@ -27,7 +27,7 @@ const TX_META: Record<WalletTransaction['type'], {
   escrow_release: { label: 'Payment received', sign: '+', color: 'text-omicron-green', dot: 'bg-omicron-green'  },
   refund:         { label: 'Refund',           sign: '+', color: 'text-omicron-cyan',  dot: 'bg-omicron-cyan'   },
   commission:     { label: 'Network fee',      sign: '−', color: 'text-red-400',       dot: 'bg-red-400'        },
-  withdrawal:     { label: 'Withdrawal',       sign: '−', color: 'text-purple-400',    dot: 'bg-purple-400'     },
+  withdrawal:     { label: 'Withdrawal',       sign: '−', color: 'text-omicron-gold',  dot: 'bg-omicron-gold'   },
 };
 
 function formatDate(iso: string) {

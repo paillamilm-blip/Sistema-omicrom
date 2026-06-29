@@ -76,7 +76,7 @@ export function NotificationsPanel({ onClose }: Props) {
           <span className="text-omicron-subtle text-xs">{unread} sin leer</span>
           <button
             onClick={markAllRead}
-            className="flex items-center gap-1 text-omicron-accent text-xs font-medium hover:text-violet-400 transition"
+            className="flex items-center gap-1 text-omicron-accent text-xs font-medium hover:text-omicron-magenta transition"
           >
             <CheckCheck size={14} />
             Marcar todo leído

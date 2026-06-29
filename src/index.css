@@ -9,15 +9,15 @@
 @tailwind utilities;
 
 :root {
-  --neon-cyan:    #00f3ff;
-  --neon-magenta: #ff2bd6;
-  --neon-violet:  #7c3aed;
-  --neon-green:   #00ff9f;
-  --neon-gold:    #ffb800;
-  --void:         #04060f;
-  --glow-cyan:    0 0 12px rgba(0, 243, 255, 0.55);
-  --glow-magenta: 0 0 12px rgba(255, 43, 214, 0.55);
-  --glow-violet:  0 0 14px rgba(124, 58, 237, 0.6);
+  --neon-cyan:    #00f0ff;
+  --neon-magenta: #39ff14;
+  --neon-violet:  #005f73;
+  --neon-green:   #39ff14;
+  --neon-gold:    #f59e0b;
+  --void:         #020613;
+  --glow-cyan:    0 0 12px rgba(0, 240, 255, 0.55);
+  --glow-magenta: 0 0 12px rgba(57, 255, 20, 0.5);
+  --glow-violet:  0 0 14px rgba(0, 95, 115, 0.6);
 }
 
 * { box-sizing: border-box; }
@@ -46,7 +46,7 @@ body::after {
   pointer-events: none;
   background-image:
     linear-gradient(rgba(0, 243, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(0, 95, 115, 0.06) 1px, transparent 1px);
   background-size: 44px 44px;
   background-position: center;
   mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, #000 55%, transparent 100%);
@@ -77,9 +77,9 @@ body::before {
   z-index: 1;
   border-left: 1px solid rgba(0, 243, 255, 0.15);
   border-right: 1px solid rgba(0, 243, 255, 0.15);
-  box-shadow: 0 0 60px rgba(0, 243, 255, 0.08), 0 0 120px rgba(124, 58, 237, 0.06);
+  box-shadow: 0 0 60px rgba(0, 243, 255, 0.08), 0 0 120px rgba(0, 95, 115, 0.06);
   background:
-    radial-gradient(circle at 50% -10%, rgba(124, 58, 237, 0.18), transparent 60%),
+    radial-gradient(circle at 50% -10%, rgba(0, 95, 115, 0.18), transparent 60%),
     radial-gradient(circle at 50% 110%, rgba(0, 243, 255, 0.1), transparent 55%);
 }
 
@@ -92,7 +92,7 @@ body::before {
   border: 1px solid rgba(0, 243, 255, 0.35) !important;
   box-shadow:
     0 0 18px rgba(0, 243, 255, 0.12),
-    inset 0 0 24px rgba(124, 58, 237, 0.06) !important;
+    inset 0 0 24px rgba(0, 95, 115, 0.06) !important;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   overflow: hidden;
@@ -108,7 +108,7 @@ body::before {
     115deg,
     transparent 30%,
     rgba(0, 243, 255, 0.08) 45%,
-    rgba(255, 43, 214, 0.08) 55%,
+    rgba(57, 255, 20, 0.08) 55%,
     transparent 70%
   );
   background-size: 250% 250%;
@@ -130,7 +130,7 @@ body::before {
 .tab-active-bar {
   background: linear-gradient(90deg, var(--neon-violet), var(--neon-cyan), var(--neon-magenta));
   background-size: 200% 100%;
-  box-shadow: 0 0 10px var(--neon-cyan), 0 0 18px rgba(124, 58, 237, 0.7);
+  box-shadow: 0 0 10px var(--neon-cyan), 0 0 18px rgba(0, 95, 115, 0.7);
   border-radius: 2px;
   animation: barFlow 3s linear infinite, glowPulse 2s ease-in-out infinite;
 }
@@ -252,7 +252,7 @@ body::before {
   background: linear-gradient(135deg, rgba(11,17,36,0.7), rgba(7,11,24,0.85));
   border: 1px solid rgba(0,243,255,0.3);
   border-radius: 16px;
-  box-shadow: 0 0 24px rgba(0,243,255,0.1), inset 0 0 30px rgba(124,58,237,0.05);
+  box-shadow: 0 0 24px rgba(0,243,255,0.1), inset 0 0 30px rgba(0,95,115,0.05);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   animation: hologramFloat 6s ease-in-out infinite;
@@ -346,9 +346,9 @@ body::before {
 
 /* Badge de PE (vendedores) */
 .pe-badge {
-  background: rgba(255, 184, 0, 0.12);
-  border: 1px solid rgba(255, 184, 0, 0.35);
-  box-shadow: 0 0 8px rgba(255, 184, 0, 0.25);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.25);
 }
 
 /* Punto pulsante (estado "en vivo") */

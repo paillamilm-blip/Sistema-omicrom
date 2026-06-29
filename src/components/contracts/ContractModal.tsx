@@ -76,7 +76,7 @@ export function ContractModal({ service, onClose }: Props) {
             <p className="text-omicron-subtle text-xs">ID de Contrato</p>
             <p className="text-omicron-text text-xs font-mono mt-0.5 break-all">{contractId}</p>
           </div>
-          <button onClick={onClose} className="w-full py-3 rounded-xl bg-omicron-accent text-white font-semibold text-sm hover:bg-violet-600 transition mt-2">
+          <button onClick={onClose} className="w-full py-3 rounded-xl bg-omicron-accent text-omicron-bg font-semibold text-sm hover:bg-omicron-magenta transition mt-2">
             Entendido
           </button>
         </div>
@@ -96,7 +96,7 @@ export function ContractModal({ service, onClose }: Props) {
           <p className="text-red-400 text-sm">{errorMsg}</p>
           <div className="flex gap-3 w-full">
             <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-omicron-border text-omicron-subtle text-sm transition">Cerrar</button>
-            <button onClick={() => setStep('confirm')} className="flex-1 py-3 rounded-xl bg-omicron-accent text-white text-sm font-semibold transition">Reintentar</button>
+            <button onClick={() => setStep('confirm')} className="flex-1 py-3 rounded-xl bg-omicron-accent text-omicron-bg text-sm font-semibold transition">Reintentar</button>
           </div>
         </div>
       </Modal>
@@ -180,7 +180,7 @@ export function ContractModal({ service, onClose }: Props) {
           <button
             onClick={handleHire}
             disabled={!canAfford}
-            className="flex-1 py-3 rounded-xl bg-omicron-accent text-white text-sm font-semibold hover:bg-violet-600 disabled:opacity-40 transition active:scale-95"
+            className="flex-1 py-3 rounded-xl bg-omicron-accent text-omicron-bg text-sm font-semibold hover:bg-omicron-magenta disabled:opacity-40 transition active:scale-95"
           >
             Confirmar Escrow
           </button>

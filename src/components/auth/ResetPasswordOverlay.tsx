@@ -107,7 +107,7 @@ export function ResetPasswordOverlay({ onDone }: { onDone: () => void }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-omicron-accent hover:bg-omicron-accent/90 disabled:opacity-60 text-white font-semibold rounded-xl py-3 text-sm transition active:scale-95 mt-2"
+              className="w-full bg-omicron-accent hover:bg-omicron-magenta disabled:opacity-60 text-omicron-bg font-semibold rounded-xl py-3 text-sm transition active:scale-95 mt-2"
             >
               {loading ? 'Guardando...' : 'Guardar nueva contraseña'}
             </button>

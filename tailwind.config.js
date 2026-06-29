@@ -5,22 +5,23 @@ export default {
     extend: {
       colors: {
         omicron: {
-          // === FONDOS (acero industrial profundo) ===
-          bg:       '#06090f',
-          surface:  '#0a0f17',
-          card:     '#131b28',
-          border:   '#1f3a5c',
-          muted:    '#24365f',
+          // === FONDOS (void holográfico v5.0) ===
+          bg:       '#020613',   // void azul profundo absoluto
+          surface:  '#0a1428',   // superficie elevada
+          card:     '#0e1a36',   // tarjetas
+          border:   '#0e4250',   // borde acero industrial (steel-blue)
+          muted:    '#1c3a52',
           text:     '#eaf2ff',
           subtle:   '#7d93b0',
-          // === ACENTOS (Industria 5.0 · azul héroe + ámbar) ===
-          accent:   '#2e9bff',   // AZUL héroe (antes violeta)
-          cyan:     '#2e9bff',
-          magenta:  '#6fc3ff',   // azul claro (antes magenta)
-          green:    '#2bd97c',
-          gold:     '#ff9d2e',   // ÁMBAR acento
+          // === ACENTOS (Neo-Académico Holográfico) ===
+          accent:   '#00F0FF',   // CYAN eléctrico (flujos / energía limpia)
+          cyan:     '#00F0FF',
+          magenta:  '#7df9ff',   // cyan claro (hover / destacados)
+          steel:    '#005F73',   // azul acero (Bóveda / cajas negras)
+          green:    '#39FF14',   // esmeralda (validado / éxito)
+          gold:     '#F59E0B',   // ÁMBAR (alertas / simulador / tokens)
           red:      '#ff5066',
-          blue:     '#2e9bff',
+          blue:     '#00F0FF',
         }
       },
       fontFamily: {

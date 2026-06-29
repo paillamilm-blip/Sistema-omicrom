@@ -315,9 +315,9 @@ export function ChatTab() {
       )}
 
       {gl !== null && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(124,58,237,0.08)', borderBottom: `1px solid ${C.cyanFaint}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(245,158,11,0.08)', borderBottom: `1px solid ${C.cyanFaint}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Timer size={14} style={{ color: C.purple }} />
+            <Timer size={14} style={{ color: C.gold }} />
             <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: '#dbeafe' }}>GHOST APPROVAL</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
