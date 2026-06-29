@@ -78,18 +78,29 @@ export function MarketTab() {
   const [selectedService, setSelectedService] = useState<MarketService | null>(null);
   const [showPublish, setShowPublish] = useState(false);
 
-  const loadServices = useCallback(() => {
+  const loadServices = useCallback(async () => {
     setLoading(true);
-    supabase
+    // Embed desacoplado: traemos servicios y luego los vendedores por separado.
+    // (Evita el 400 de PostgREST si la relación FK no se detecta por nombre.)
+    const { data } = await supabase
       .from('market_services')
-      .select('*, seller:profiles!market_services_seller_id_fkey(*)')
+      .select('*')
       .eq('is_active', true)
-      .order('rating', { ascending: false })
-      .then(({ data }) => {
-        const fetched = data as MarketService[] ?? [];
-        setServices(fetched.length > 0 ? fetched : DEMO_SERVICES);
-        setLoading(false);
-      });
+      .order('rating', { ascending: false });
+    let fetched = (data as MarketService[]) ?? [];
+    if (fetched.length > 0) {
+      const ids = [...new Set(fetched.map(s => s.seller_id).filter(Boolean))] as string[];
+      if (ids.length) {
+        const { data: sellers } = await supabase.from('profiles').select('*').in('id', ids);
+        const map = new Map((sellers ?? []).map((p: { id: string }) => [p.id, p]));
+        fetched = fetched.map(s => ({
+          ...s,
+          seller: s.seller_id ? (map.get(s.seller_id) ?? null) : null,
+        })) as MarketService[];
+      }
+    }
+    setServices(fetched.length > 0 ? fetched : DEMO_SERVICES);
+    setLoading(false);
   }, []);
 
   useEffect(() => { loadServices(); }, [loadServices]);

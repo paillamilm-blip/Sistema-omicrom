@@ -41,12 +41,23 @@ export function GobernanzaTab() {
       supabase.from('disputes').select('id,reason,status,created_at').or(`plaintiff_id.eq.${profile.id},defendant_id.eq.${profile.id}`).order('created_at', { ascending: false }),
       supabase.from('contracts').select('id,title,buyer_id,seller_id,status,amount').or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`),
       supabase.from('human_venture_stakes').select('id,target_id,amount,status,return_amount').eq('investor_id', profile.id).order('created_at', { ascending: false }),
-      supabase.from('arbitration_cases').select('id, dispute_id, verdict, dispute:disputes(reason,status)').contains('arbiters', [profile.id]),
+      supabase.from('arbitration_cases').select('id, dispute_id, verdict').contains('arbiters', [profile.id]),
     ]);
     setDisputes((d.data as Dispute[]) ?? []);
     setContracts((c.data as Contract[]) ?? []);
     setStakes((s.data as Stake[]) ?? []);
-    setArbCases((a.data as unknown as ArbCase[]) ?? []);
+
+    // Embed desacoplado: traemos las disputas de los casos por separado
+    // (evita el 500 del embed dispute:disputes(...) por relación/RLS).
+    const rawCases = (a.data as { id: string; dispute_id: string; verdict: string | null }[]) ?? [];
+    let cases: ArbCase[] = rawCases.map(x => ({ ...x, dispute: null }));
+    const dIds = [...new Set(rawCases.map(x => x.dispute_id).filter(Boolean))];
+    if (dIds.length) {
+      const { data: dd } = await supabase.from('disputes').select('id,reason,status').in('id', dIds);
+      const dmap = new Map(((dd as { id: string; reason: string; status: string }[]) ?? []).map(x => [x.id, { reason: x.reason, status: x.status }]));
+      cases = rawCases.map(x => ({ ...x, dispute: dmap.get(x.dispute_id) ?? null }));
+    }
+    setArbCases(cases);
     setLoading(false);
   }, [profile]);
 
