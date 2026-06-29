@@ -181,6 +181,12 @@ export function GobernanzaTab() {
           </>
         )}
 
+        {disputes.length === 0 && pendientesArb.length === 0 && (
+          <p style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, padding: '2px 28px 6px', lineHeight: 1.6 }}>
+            Aún no tienes disputas. Si un contrato sale mal, ábrela desde el botón de arriba.
+          </p>
+        )}
+
         <Divider glow margin="14px 16px" />
 
         {/* STAKING */}
@@ -225,6 +231,11 @@ export function GobernanzaTab() {
               </CyberCard>
             ))}
           </>
+        )}
+        {stakes.length === 0 && (
+          <p style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, padding: '2px 28px 6px', lineHeight: 1.6 }}>
+            Aún no tienes inversiones. Financia talento en el Mercado de Staking y gana +15%.
+          </p>
         )}
       </div>
 

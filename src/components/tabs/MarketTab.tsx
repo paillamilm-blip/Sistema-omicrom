@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ShoppingCart, Star, Plus, Zap, Cpu } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
+import { EmptyState } from '../shared/EmptyState';
 import { ContractModal } from '../contracts/ContractModal';
 import { PublishServiceModal } from '../market/PublishServiceModal';
 import type { MarketService } from '../../types';
@@ -148,10 +149,15 @@ export function MarketTab() {
         {loading ? (
           <p style={styles.muted}>// CARGANDO CATÁLOGO...</p>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40 }}>
-            <ShoppingCart size={28} style={{ color: C.line }} />
-            <p style={styles.muted}>Sin servicios en esta categoría.</p>
-          </div>
+          <EmptyState
+            icon={<ShoppingCart size={30} />}
+            title={category !== 'todos' ? 'Nada en esta categoría' : 'Aún no hay servicios'}
+            hint={category !== 'todos'
+              ? 'Prueba con otra categoría o explora todo el catálogo disponible.'
+              : 'Sé el primero en ofrecer tu talento. Publica un servicio y empieza a generar ingresos.'}
+            ctaLabel={category !== 'todos' ? 'Ver todo el catálogo' : 'Publicar servicio'}
+            onCta={() => (category !== 'todos' ? setCategory('todos') : setShowPublish(true))}
+          />
         ) : (
           filtered.map((svc, i) => (
             <ServiceCard key={svc.id} service={svc} index={i} canHire={canHire(svc)} onHire={() => setSelectedService(svc)} />

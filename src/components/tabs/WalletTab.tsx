@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
+import { EmptyState } from '../shared/EmptyState';
 import { TokenTransferModal } from '../wallet/TokenTransferModal';
 import type { WalletTransaction } from '../../types';
 
@@ -39,7 +40,7 @@ function formatDate(iso: string) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function WalletTab() {
-  const { profile, refreshProfile } = useApp();
+  const { profile, refreshProfile, setActiveTab } = useApp();
   const [txs, setTxs]               = useState<WalletTransaction[]>([]);
   const [loading, setLoading]        = useState(true);
   const [view, setView]              = useState<'transactions' | 'nodes'>('transactions');
@@ -174,10 +175,13 @@ export function WalletTab() {
               {loading ? (
                 <div className="text-center py-6 text-omicron-subtle text-sm">Loading…</div>
               ) : txs.length === 0 ? (
-                <div className="flex flex-col items-center py-8 gap-2">
-                  <Clock size={22} className="text-omicron-muted" />
-                  <p className="text-omicron-subtle text-sm">No transactions yet</p>
-                </div>
+                <EmptyState
+                  icon={<Clock size={28} />}
+                  title="Sin movimientos aún"
+                  hint="Tus transacciones aparecerán aquí. Gana tokens completando contratos o vendiendo en el Mercado."
+                  ctaLabel="Explorar Mercado"
+                  onCta={() => setActiveTab('market')}
+                />
               ) : (
                 <div className="space-y-1">
                   {txs.map(tx => {
