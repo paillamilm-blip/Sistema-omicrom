@@ -25,7 +25,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ toast }}>
       {children}
-      <div style={S.viewport}>
+      <div style={S.viewport} role="status" aria-live="polite" aria-atomic="true">
         {items.map((t) => (
           <div key={t.id} style={{ ...S.toast, borderColor: `${COLOR[t.type]}66`, boxShadow: `0 0 18px ${COLOR[t.type]}33` }}>
             <span style={{ color: COLOR[t.type], display: 'flex', flexShrink: 0 }}>

@@ -1,7 +1,7 @@
 // components/shared/Onboarding.tsx
 // Onboarding de primer ingreso (se muestra una sola vez por dispositivo).
 // Presenta el concepto del Gemelo Digital, los hubs y cómo empezar.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Fingerprint, Radar, Compass, Rocket } from 'lucide-react';
 
 const KEY = 'omicron_onboarded_v1';
@@ -53,10 +53,17 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
     onClose();
   };
 
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') finish(); };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <div style={S.overlay}>
+    <div style={S.overlay} role="dialog" aria-modal="true" aria-label="Bienvenida a Sistema Ómicron">
       <div style={{ ...S.card, borderColor: `${step.accent}55`, boxShadow: `0 0 40px ${step.accent}33, inset 0 1px 1px rgba(255,255,255,0.05)` }}>
-        <button style={S.skip} onClick={finish}>Saltar</button>
+        <button style={S.skip} onClick={finish} aria-label="Saltar introducción">Saltar</button>
 
         <div style={{ ...S.iconRing, borderColor: `${step.accent}88`, color: step.accent, boxShadow: `0 0 24px ${step.accent}55` }}>
           {step.icon}

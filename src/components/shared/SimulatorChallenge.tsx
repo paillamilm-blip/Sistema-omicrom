@@ -154,8 +154,14 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
   const timerColor = remaining < 30 ? 'text-red-500' : remaining < 60 ? 'text-amber-500' : 'text-emerald-500';
   const bestAttempt = attempts.find(a => a.result === 'PASS');
 
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape' && phase !== 'running') onClose(); };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [phase, onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col" role="dialog" aria-modal="true" aria-label={`Simulador: ${test.test_name}`}>
       <header className="flex-none flex items-center justify-between px-4 py-3 bg-omicron-surface border-b border-omicron-border">
         <div className="flex items-center gap-3">
           <div className="p-1.5 rounded-lg bg-omicron-accent/20 border border-omicron-accent/40">
@@ -181,7 +187,7 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
               <span>{formatTime(bestAttempt.time_taken_seconds)}</span>
             </div>
           )}
-          <button onClick={onClose} className="w-7 h-7 rounded-lg bg-omicron-card border border-omicron-border flex items-center justify-center text-omicron-subtle hover:text-omicron-text text-sm">×</button>
+          <button onClick={onClose} aria-label="Cerrar simulador" className="w-7 h-7 rounded-lg bg-omicron-card border border-omicron-border flex items-center justify-center text-omicron-subtle hover:text-omicron-text text-sm">×</button>
         </div>
       </header>
 
