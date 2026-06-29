@@ -449,3 +449,11 @@ body::before {
   background: currentColor;
   animation: liquidPulse 2.2s ease-in-out infinite;
 }
+
+
+
+/* Entrada del banner de conexión (cae desde arriba) */
+@keyframes bannerDrop {
+  from { transform: translate(-50%, -100%); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
+}

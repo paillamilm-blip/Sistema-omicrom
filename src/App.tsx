@@ -11,6 +11,7 @@ import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { Onboarding, shouldShowOnboarding } from './components/shared/Onboarding';
 import { ToastProvider } from './components/shared/Toast';
+import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { C, FONT } from './theme';
 import type { TabId } from './types';
 
@@ -136,6 +137,7 @@ export default function App() {
   return (
     <AppProvider>
       <ToastProvider>
+        <ConnectionBanner />
         <AppShell />
       </ToastProvider>
     </AppProvider>
