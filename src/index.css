@@ -379,3 +379,54 @@ body::before {
   0%, 100% { opacity: 1;   box-shadow: 0 0 6px var(--neon-cyan); }
   50%      { opacity: 0.5; box-shadow: 0 0 14px var(--neon-cyan); }
 }
+
+
+
+/* ═══════════════════════════════════════════════════════════
+   TEMA v5.0 · NEO-ACADÉMICO HOLOGRÁFICO
+   Keyframes de movimiento para líneas de flujo, flotación y pulsos
+   ═══════════════════════════════════════════════════════════ */
+
+/* Flujo continuo de energía en las líneas conectoras del árbol */
+@keyframes dash {
+  to { stroke-dashoffset: -40; }
+}
+
+/* Flotación suave para hologramas / poliedros del Gemelo */
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* Pulso de candados bloqueados (respiración tenue) */
+@keyframes lockPulse {
+  0%, 100% { opacity: 0.45; filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); }
+  50%      { opacity: 0.85; filter: drop-shadow(0 0 6px rgba(255,255,255,0.55)); }
+}
+
+/* Halo pulsante para nodos disponibles (cyan) */
+@keyframes haloPulseCyan {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+/* Botón premium ámbar: respiración del glow */
+@keyframes amberBreathe {
+  0%, 100% { box-shadow: 0 0 14px rgba(245,158,11,0.45), inset 0 0 12px rgba(245,158,11,0.15); }
+  50%      { box-shadow: 0 0 26px rgba(245,158,11,0.7),  inset 0 0 18px rgba(245,158,11,0.25); }
+}
+
+/* Utilidades holográficas v5 reutilizables */
+.holo-glass {
+  background: rgba(8,16,38,0.40);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
+}
+.holo-float { animation: floatY 6s ease-in-out infinite; }
+.holo-glow-cyan {
+  box-shadow: 0 0 15px rgba(0,240,255,0.25);
+  transition: box-shadow 0.3s ease;
+}
+.holo-glow-cyan:hover { box-shadow: 0 0 25px rgba(0,240,255,0.45); }

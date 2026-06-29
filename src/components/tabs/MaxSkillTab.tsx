@@ -16,21 +16,24 @@ const NODE_H = 52;
 const TIER_GAP_Y = 110;   // espacio vertical entre tiers
 const PEER_GAP_X = 14;    // espacio horizontal entre nodos del mismo tier
 
+// Paleta v5.0 "Neo-Académico Holográfico":
+// cyan eléctrico (flujos activos) · esmeralda (validado) ·
+// ámbar (simulador/recompensas) · azul acero (jerarquía profunda).
 const COLORS = {
-  cyan:       '#2e9bff',
-  cyanDim:    'rgba(46,155,255,0.40)',
-  cyanFaint:  'rgba(46,155,255,0.14)',
-  gold:       '#ff9d2e',
-  goldDim:    'rgba(255,157,46,0.40)',
-  purple:     '#6fc3ff',
-  purpleDim:  'rgba(111,195,255,0.35)',
-  green:      '#2bd97c',
-  greenDim:   'rgba(43,217,124,0.35)',
-  locked:     'rgba(255,255,255,0.07)',
-  lockedBorder: 'rgba(255,255,255,0.12)',
-  bg:         '#06090f',
-  panel:      'rgba(16,23,34,0.97)',
-  grid:       'rgba(46,155,255,0.05)',
+  cyan:       '#00F0FF',
+  cyanDim:    'rgba(0,240,255,0.40)',
+  cyanFaint:  'rgba(0,240,255,0.12)',
+  gold:       '#F59E0B',
+  goldDim:    'rgba(245,158,11,0.45)',
+  purple:     '#005F73',   // azul acero industrial (jerarquía profunda)
+  purpleDim:  'rgba(0,95,115,0.55)',
+  green:      '#39FF14',
+  greenDim:   'rgba(57,255,20,0.40)',
+  locked:     'rgba(255,255,255,0.04)',
+  lockedBorder: 'rgba(255,255,255,0.10)',
+  bg:         '#020613',   // void azul profundo
+  panel:      'rgba(8,16,38,0.55)',   // glassmorphism traslúcido
+  grid:       'rgba(0,240,255,0.05)',
 } as const;
 
 
@@ -317,7 +320,7 @@ export function MaxSkillTab() {
                 <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
               <pattern id="cp-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(46,155,255,0.07)" strokeWidth="1.5" />
+                <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(0,240,255,0.06)" strokeWidth="1.5" />
               </pattern>
             </defs>
 
@@ -353,9 +356,14 @@ export function MaxSkillTab() {
                     key={`branch-${layoutNode.node.id}-${child.node.id}`}
                     d={`M ${px} ${py} L ${px} ${midY} L ${cx} ${midY} L ${cx} ${cy}`}
                     fill="none"
-                    stroke={isActive ? color : 'rgba(46,155,255,0.18)'}
-                    strokeWidth={isActive ? 1.5 : 1}
-                    strokeDasharray={isActive ? undefined : '4,5'}
+                    stroke={isActive ? color : 'rgba(0,240,255,0.15)'}
+                    strokeWidth={isActive ? 2 : 1}
+                    strokeLinecap="round"
+                    strokeDasharray={isActive ? '6,7' : '3,5'}
+                    filter={isActive ? 'url(#cp-glow-cyan)' : undefined}
+                    style={isActive
+                      ? { animation: 'dash 1.2s linear infinite' }
+                      : undefined}
                   />
                 );
               })
@@ -462,7 +470,7 @@ export function MaxSkillTab() {
                         width={NODE_W - 16}
                         height={3}
                         rx="1.5"
-                        fill="rgba(46,155,255,0.15)"
+                        fill="rgba(0,240,255,0.15)"
                       />
                       <rect
                         x={nodeX + 8}
@@ -477,7 +485,8 @@ export function MaxSkillTab() {
 
                   {/* Icono de lock o check */}
                   {locked ? (
-                    <text x={nodeX + 10} y={y + 20} fontSize="10" fill={color} opacity={0.5}>
+                    <text x={nodeX + 10} y={y + 20} fontSize="10" fill={color}
+                      style={{ animation: 'lockPulse 2.2s ease-in-out infinite' }}>
                       🔒
                     </text>
                   ) : validated ? (
@@ -637,8 +646,8 @@ const styles: Record<string, React.CSSProperties> = {
     width: 44,
     height: 44,
     borderRadius: 10,
-    background: 'rgba(46,155,255,0.08)',
-    border: `1px solid rgba(46,155,255,0.3)`,
+    background: 'rgba(0,240,255,0.08)',
+    border: `1px solid rgba(0,240,255,0.3)`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -662,8 +671,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '12px 16px',
-    borderBottom: `1px solid rgba(46,155,255,0.1)`,
-    background: 'rgba(46,155,255,0.02)',
+    borderBottom: `1px solid rgba(0,240,255,0.1)`,
+    background: 'rgba(0,240,255,0.02)',
     flexShrink: 0,
   },
   headerLeft: { display: 'flex', alignItems: 'center', gap: 10 },
@@ -682,7 +691,7 @@ const styles: Record<string, React.CSSProperties> = {
   headerSub: {
     fontFamily: FONT_MONO,
     fontSize: 9,
-    color: 'rgba(46,155,255,0.35)',
+    color: 'rgba(0,240,255,0.35)',
     letterSpacing: 1,
     marginTop: 2,
   },
@@ -694,13 +703,13 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 8,
     padding: '6px 16px',
-    borderBottom: `1px solid rgba(46,155,255,0.06)`,
+    borderBottom: `1px solid rgba(0,240,255,0.06)`,
     flexShrink: 0,
   },
   peBarBg: {
     flex: 1,
     height: 3,
-    background: 'rgba(46,155,255,0.08)',
+    background: 'rgba(0,240,255,0.08)',
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -716,27 +725,30 @@ const styles: Record<string, React.CSSProperties> = {
   peBarLabel: {
     fontFamily: FONT_MONO,
     fontSize: 9,
-    color: 'rgba(46,155,255,0.35)',
+    color: 'rgba(0,240,255,0.35)',
     letterSpacing: 1,
     whiteSpace: 'nowrap',
   },
   rangeCard: {
     margin: '12px 14px 8px',
     padding: '12px 14px',
-    borderRadius: 10,
-    border: `1px solid rgba(255,157,46,0.25)`,
-    background: 'rgba(255,157,46,0.04)',
+    borderRadius: 12,
+    border: `1px solid rgba(245,158,11,0.35)`,
+    background: 'linear-gradient(135deg, rgba(245,158,11,0.10), rgba(8,16,38,0.45))',
+    backdropFilter: 'blur(18px)',
+    WebkitBackdropFilter: 'blur(18px)',
+    boxShadow: '0 0 18px rgba(245,158,11,0.18), inset 0 1px 1px rgba(255,255,255,0.05)',
     flexShrink: 0,
   },
   rangeCardInner: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 },
-  rangeIcon: { fontSize: 18 },
+  rangeIcon: { fontSize: 18, filter: 'drop-shadow(0 0 6px rgba(245,158,11,0.7))' },
   rangeTitle: { fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 13, color: COLORS.gold },
   rangeSub: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.goldDim, marginTop: 2 },
   rangeBtn: {
     width: '100%',
     padding: '10px 0',
-    background: COLORS.gold,
-    color: COLORS.bg,
+    background: `linear-gradient(90deg, ${COLORS.gold}, #ffb84d)`,
+    color: '#020613',
     border: 'none',
     borderRadius: 8,
     fontFamily: FONT_RAJDHANI,
@@ -748,13 +760,14 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     gap: 8,
     letterSpacing: 0.5,
+    animation: 'amberBreathe 2.8s ease-in-out infinite',
   },
 
 
   treeLabel: {
     fontFamily: FONT_MONO,
     fontSize: 9,
-    color: 'rgba(46,155,255,0.3)',
+    color: 'rgba(0,240,255,0.3)',
     letterSpacing: 2,
     textTransform: 'uppercase',
     padding: '4px 16px',
@@ -769,11 +782,14 @@ const styles: Record<string, React.CSSProperties> = {
   },
   detailPanel: {
     flexShrink: 0,
-    borderTop: `1px solid rgba(46,155,255,0.12)`,
+    borderTop: `1px solid rgba(0,240,255,0.18)`,
     padding: '14px 16px',
-    background: 'rgba(6,9,15,0.98)',
+    background: 'rgba(2,6,19,0.85)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
     maxHeight: '38vh',
     overflowY: 'auto',
+    boxShadow: '0 -8px 30px rgba(0,240,255,0.08)',
   },
   detailHeader: {
     display: 'flex',
@@ -794,7 +810,7 @@ const styles: Record<string, React.CSSProperties> = {
   closeBtn: {
     background: 'none',
     border: 'none',
-    color: 'rgba(46,155,255,0.4)',
+    color: 'rgba(0,240,255,0.4)',
     fontSize: 22,
     cursor: 'pointer',
     lineHeight: 1,
@@ -804,8 +820,8 @@ const styles: Record<string, React.CSSProperties> = {
   detailCard: {
     padding: '8px 10px',
     borderRadius: 6,
-    background: 'rgba(46,155,255,0.04)',
-    border: '1px solid rgba(46,155,255,0.08)',
+    background: 'rgba(0,240,255,0.04)',
+    border: '1px solid rgba(0,240,255,0.08)',
   },
   detailCardLabel: {
     fontFamily: FONT_MONO,
@@ -818,8 +834,8 @@ const styles: Record<string, React.CSSProperties> = {
   progressBox: {
     padding: '8px 10px',
     borderRadius: 6,
-    background: 'rgba(46,155,255,0.04)',
-    border: '1px solid rgba(46,155,255,0.08)',
+    background: 'rgba(0,240,255,0.04)',
+    border: '1px solid rgba(0,240,255,0.08)',
     marginBottom: 12,
   },
   progressRow: { display: 'flex', justifyContent: 'space-between', marginBottom: 6 },
@@ -829,7 +845,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   progressBg: {
     height: 4,
-    background: 'rgba(46,155,255,0.1)',
+    background: 'rgba(0,240,255,0.1)',
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -842,7 +858,7 @@ const styles: Record<string, React.CSSProperties> = {
   challengeBtn: {
     width: '100%',
     padding: '10px 0',
-    background: 'rgba(46,155,255,0.12)',
+    background: 'rgba(0,240,255,0.10)',
     border: `1px solid ${COLORS.cyanDim}`,
     color: COLORS.cyan,
     borderRadius: 8,
@@ -855,7 +871,8 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     gap: 8,
     letterSpacing: 0.5,
-    transition: 'background 0.15s',
+    boxShadow: '0 0 15px rgba(0,240,255,0.25)',
+    transition: 'box-shadow 0.3s ease, background 0.15s',
   },
   peToast: {
     position: 'absolute',
@@ -872,7 +889,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: FONT_RAJDHANI,
     fontWeight: 700,
     fontSize: 14,
-    boxShadow: `0 4px 20px rgba(255,157,46,0.4)`,
+    boxShadow: `0 4px 20px rgba(245,158,11,0.45)`,
     whiteSpace: 'nowrap',
     zIndex: 50,
   },
