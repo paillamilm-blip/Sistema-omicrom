@@ -23,10 +23,10 @@ const AXIS_LABELS = {
 } as const;
 
 const AXIS_COLORS = {
-  execution:    '#10b981',
-  quality:      '#3b82f6',
-  transcendence:'#f59e0b',
-  foundation:   '#06d6a0',
+  execution:    '#00F0FF',   // cyan — flujo de ejecución
+  quality:      '#0a8ba3',   // acero-cyan — calidad
+  transcendence:'#F59E0B',   // ámbar — trascendencia
+  foundation:   '#39FF14',   // esmeralda — fundamento
 } as const;
 
 // ✅ FIX: getReputationBadge devuelve el hex directamente para que el componente
@@ -148,17 +148,37 @@ export function ProgressRadar({
         </div>
       )}
 
-      {/* SVG Radar Chart */}
+      {/* Poliedro Radar 3D · contenedor holográfico flotante translúcido */}
       <div className="flex justify-center">
+        <div
+          style={{
+            position: 'relative',
+            borderRadius: '50%',
+            padding: 6,
+            background: 'radial-gradient(circle at 50% 45%, rgba(0,240,255,0.10), rgba(8,16,38,0.25) 60%, transparent 75%)',
+            boxShadow: '0 0 40px rgba(0,240,255,0.12), inset 0 0 40px rgba(0,95,115,0.10)',
+            animation: animated ? 'floatY 6s ease-in-out infinite' : undefined,
+          }}
+        >
         <svg
           viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
           width={svgSize}
           height={svgSize}
-          style={{ maxWidth: '100%', height: 'auto' }}
-          className="drop-shadow-lg"
+          style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
         >
-          {/* Grid */}
-          <g stroke="#64748b" strokeWidth="1" opacity="0.3">
+          <defs>
+            <filter id="radar-glow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="3.2" result="b" />
+              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <radialGradient id="radar-fill" cx="50%" cy="50%" r="60%">
+              <stop offset="0%" stopColor="#00F0FF" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="#005F73" stopOpacity="0.10" />
+            </radialGradient>
+          </defs>
+
+          {/* Grid (malla del poliedro) */}
+          <g stroke="rgba(0,240,255,0.22)" strokeWidth="1" opacity="0.55">
             {gridLines.filter(l => l.type === 'concentric').map((line, i) => (
               <polygon key={`concentric-${i}`} points={line.points} fill="none" />
             ))}
@@ -172,18 +192,19 @@ export function ProgressRadar({
               Si animated=true, se aplica una animación CSS en el stroke que sí es visible. */}
           <polygon
             points={polygonPoints}
-            fill="#3b82f6"
-            fillOpacity="0.15"
-            stroke="#3b82f6"
+            fill="url(#radar-fill)"
+            stroke="#00F0FF"
             strokeWidth="2"
+            strokeLinejoin="round"
+            filter="url(#radar-glow)"
             style={animated ? { animation: 'radarStroke 3s ease-in-out infinite' } : undefined}
           />
 
-          {/* Puntos de los ejes */}
+          {/* Puntos de los ejes (nodos neón del poliedro) */}
           {points.map((p) => (
             <g key={p.key}>
-              <circle cx={p.x} cy={p.y} r={dotRadius}  fill={p.color} stroke="white" strokeWidth="2" />
-              <circle cx={p.x} cy={p.y} r={glowRadius} fill={p.color} fillOpacity="0.2" stroke={p.color} strokeWidth="1" strokeOpacity="0.5" />
+              <circle cx={p.x} cy={p.y} r={glowRadius} fill={p.color} fillOpacity="0.25" stroke={p.color} strokeWidth="1" strokeOpacity="0.5" />
+              <circle cx={p.x} cy={p.y} r={dotRadius}  fill={p.color} stroke="#020613" strokeWidth="1.5" filter="url(#radar-glow)" />
             </g>
           ))}
 
@@ -203,6 +224,7 @@ export function ProgressRadar({
             </g>
           )}
         </svg>
+        </div>
 
 
         {/* ✅ FIX: Keyframe definido en un <style> inline dentro del SVG container */}
