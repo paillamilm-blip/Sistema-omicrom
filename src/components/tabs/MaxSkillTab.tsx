@@ -3,7 +3,7 @@
 // trazas con energia fluyendo y nodos-chip que se ramifican.
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { Play, Trophy, BookOpen, ArrowRight } from 'lucide-react';
+import { Play, Trophy, BookOpen, ArrowRight, Brain } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../shared/Toast';
@@ -266,15 +266,15 @@ export function MaxSkillTab() {
 
       <div style={styles.rangeCard}>
         <div style={styles.rangeCardInner}>
-          <div style={styles.rangeIcon}>⚡</div>
+          <div style={styles.rangeIcon}>🧬</div>
           <div>
-            <div style={styles.rangeTitle}>Simulador de Rango (Contrarreloj)</div>
-            <div style={styles.rangeSub}>Reto de alta dificultad para defender tu estatus.</div>
+            <div style={styles.rangeTitle}>Examen de Rango · Defiende tu Gemelo</div>
+            <div style={styles.rangeSub}>La IA te toma un examen exigente de tus competencias para mantener tu reputación vigente y validada.</div>
           </div>
         </div>
         <button style={styles.rangeBtn} onClick={handleRangeChallenge}>
-          <Play size={14} fill="currentColor" />
-          Iniciar Reto de Alta Frecuencia
+          <Brain size={15} />
+          Iniciar Examen de Rango
         </button>
       </div>
 
@@ -598,12 +598,12 @@ const styles: Record<string, React.CSSProperties> = {
   spinnerBox: { width: 44, height: 44, borderRadius: 10, background: 'rgba(0,240,255,0.08)', border: `1px solid rgba(0,240,255,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   spinner: { width: 20, height: 20, borderRadius: '50%', border: `2px solid ${COLORS.cyan}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' },
   loadingText: { fontFamily: FONT_MONO, fontSize: 12, color: COLORS.cyanDim, letterSpacing: 2 },
-  rangeCard: { margin: '12px 14px 8px', padding: '12px 14px', borderRadius: 12, border: `1px solid rgba(245,158,11,0.35)`, background: 'linear-gradient(135deg, rgba(245,158,11,0.10), rgba(8,16,38,0.45))', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', boxShadow: '0 0 18px rgba(245,158,11,0.18), inset 0 1px 1px rgba(255,255,255,0.05)', flexShrink: 0 },
+  rangeCard: { margin: '12px 14px 8px', padding: '12px 14px', borderRadius: 12, border: `1px solid ${COLORS.cyanDim}`, background: 'linear-gradient(135deg, rgba(0,240,255,0.10), rgba(8,16,38,0.55))', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', boxShadow: '0 0 18px rgba(0,240,255,0.15), inset 0 1px 1px rgba(255,255,255,0.05)', flexShrink: 0 },
   rangeCardInner: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 },
-  rangeIcon: { fontSize: 18, filter: 'drop-shadow(0 0 6px rgba(245,158,11,0.7))' },
-  rangeTitle: { fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 13, color: COLORS.gold },
-  rangeSub: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.goldDim, marginTop: 2 },
-  rangeBtn: { width: '100%', padding: '10px 0', background: `linear-gradient(90deg, ${COLORS.gold}, #ffb84d)`, color: '#020613', border: 'none', borderRadius: 8, fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5, animation: 'amberBreathe 2.8s ease-in-out infinite' },
+  rangeIcon: { fontSize: 18, filter: 'drop-shadow(0 0 6px rgba(0,240,255,0.7))' },
+  rangeTitle: { fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 13, color: COLORS.cyan },
+  rangeSub: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.cyanDim, marginTop: 2, lineHeight: 1.4 },
+  rangeBtn: { width: '100%', padding: '10px 0', background: `linear-gradient(90deg, ${COLORS.cyan}, #5ad6ff)`, color: '#020613', border: 'none', borderRadius: 8, fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5, boxShadow: '0 0 16px rgba(0,240,255,0.4)' },
   treeLabel: { fontFamily: FONT_MONO, fontSize: 9, color: 'rgba(0,240,255,0.3)', letterSpacing: 2, textTransform: 'uppercase', padding: '4px 16px', flexShrink: 0 },
   treeScroll: { flex: 1, overflowY: 'auto', overflowX: 'auto', padding: '8px 12px 20px', WebkitOverflowScrolling: 'touch' },
   detailPanel: { flexShrink: 0, borderTop: `1px solid rgba(0,240,255,0.18)`, padding: '14px 16px', background: 'rgba(2,6,19,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', maxHeight: '38vh', overflowY: 'auto', boxShadow: '0 -8px 30px rgba(0,240,255,0.08)' },
