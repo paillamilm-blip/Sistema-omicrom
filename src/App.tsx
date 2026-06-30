@@ -12,11 +12,10 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { Onboarding, shouldShowOnboarding } from './components/shared/Onboarding';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
+import { PublicProfileGate } from './components/perfil/RedSocial';
 import { C, FONT } from './theme';
 import type { TabId } from './types';
 
-// ── Carga diferida (code-splitting): cada pestaña es su propio chunk, ──
-// ── por lo que el arranque inicial en móvil es mucho más liviano. ──
 const WalletTab     = lazy(() => import('./components/tabs/WalletTab').then(m => ({ default: m.WalletTab })));
 const ChatTab       = lazy(() => import('./components/tabs/ChatTab').then(m => ({ default: m.ChatTab })));
 const EmpleosTab    = lazy(() => import('./components/tabs/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
@@ -60,13 +59,10 @@ function AppShell() {
   if (authStatus === 'loading' || isLoadingProfile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
-        {/* Halo radial de fondo */}
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(0,240,255,0.10), transparent 60%)', pointerEvents: 'none' }} />
-        {/* Logo Ω flotante con glow */}
         <div style={{ position: 'relative', width: 88, height: 88, borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(125,249,255,0.18), rgba(0,240,255,0.06))', border: '1px solid rgba(0,240,255,0.4)', boxShadow: '0 0 38px rgba(0,240,255,0.35), inset 0 0 26px rgba(0,95,115,0.18)', animation: 'floatY 5s ease-in-out infinite' }}>
           <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 48, background: 'linear-gradient(135deg, #7df9ff, #00F0FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 0 10px rgba(0,240,255,0.6))' }}>Ω</span>
         </div>
-        {/* Spinner + texto */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
           <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
           <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicron...</p>
@@ -82,7 +78,6 @@ function AppShell() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
-      {/* Top bar HUD — barra de comando distintiva */}
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'linear-gradient(180deg, rgba(10,20,40,0.9), rgba(2,6,19,0.92))', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderBottom: '1px solid rgba(0,240,255,0.40)', boxShadow: '0 3px 18px rgba(0,0,0,0.55), 0 0 22px rgba(0,240,255,0.10), inset 0 -1px 0 rgba(0,240,255,0.30)', flexShrink: 0, position: 'relative', zIndex: 3 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #7df9ff, #00F0FF)', boxShadow: '0 0 16px rgba(0,240,255,0.6)' }}>
@@ -107,10 +102,8 @@ function AppShell() {
         </div>
       </header>
 
-      {/* Sub-pestañas del hub activo (Árbol / Academia, Identidad / Wallet, etc.) */}
       <HubSubNav />
 
-      {/* Tab content */}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
         <ErrorBoundary section={TAB_TITLES[activeTab]} key={activeTab}>
           <Suspense fallback={<TabLoader />}>
@@ -129,6 +122,7 @@ function AppShell() {
 
       <BottomNav />
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
+      <PublicProfileGate />
     </div>
   );
 }

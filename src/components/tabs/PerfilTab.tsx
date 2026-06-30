@@ -7,13 +7,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   LogOut, Edit3, Shield, TrendingUp, Award, AlertTriangle, Lock,
-  MapPin, Zap, Camera, GraduationCap, BadgeCheck, Briefcase,
+  MapPin, Zap, Camera, GraduationCap, BadgeCheck, Briefcase, Share2, Users,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp, useGemeloDigital } from '../../store/AppContext';
 import { EditProfileModal } from '../perfil/EditProfileModal';
 import { CredentialsPanel } from '../perfil/CredentialsPanel';
 import { CredentialReview } from '../perfil/CredentialReview';
+import { ShareCredentialModal, RedPanel } from '../perfil/RedSocial';
 import { ProgressRadar } from '../shared/ProgressRadar';
 import { SimulatorChallenge } from '../shared/SimulatorChallenge';
 import {
@@ -71,6 +72,7 @@ function getRango(rep: number) {
 
 const SECTIONS = [
   { id: 'gemelo'       as const, label: 'GEMELO',       icon: TrendingUp },
+  { id: 'red'          as const, label: 'MI RED',       icon: Users },
   { id: 'credenciales' as const, label: 'CV / TÍTULOS', icon: GraduationCap },
   { id: 'capacidades'  as const, label: 'CAPACIDADES',  icon: Shield },
 ];
@@ -124,7 +126,7 @@ function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: (
 function CredencialCard({
   initials, name, username, location, nodeType, nodeLevel, verified,
   reputacion, gemelo, tokens, pe, contratos, nextPe, tierProgress,
-  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit,
+  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit, onShare,
 }: {
   initials: string; name: string; username: string; location?: string;
   nodeType: string; nodeLevel: number; verified: boolean;
@@ -133,7 +135,7 @@ function CredencialCard({
   nextPe: number | null; tierProgress: number;
   paused: boolean; onTogglePause: () => void;
   avatarUrl?: string; uploading: boolean; onPickFile: (f: File) => void;
-  onEdit: () => void;
+  onEdit: () => void; onShare: () => void;
 }) {
   const nodeColor = NODE_COLOR[nodeType] ?? C.cyan;
   const rango = getRango(reputacion);
@@ -149,7 +151,6 @@ function CredencialCard({
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl,
       padding: 18, marginBottom: 14, overflow: 'hidden',
-      // Fondo más claro y limpio (gradiente suave, menos negro plano)
       background: 'linear-gradient(165deg, rgba(22,34,58,0.96) 0%, rgba(12,20,38,0.98) 60%, rgba(10,17,32,0.98) 100%)',
       border: `1px solid ${rango.color}40`,
       boxShadow: `0 8px 32px rgba(0,0,0,0.35), 0 0 24px ${rango.color}1a`,
@@ -160,20 +161,33 @@ function CredencialCard({
         background: `linear-gradient(90deg, transparent, ${rango.color}, transparent)`,
       }} />
 
-      {/* Botón editar integrado en la tarjeta */}
-      <button
-        onClick={onEdit}
-        title="Editar mi credencial"
-        style={{
-          position: 'absolute', top: 12, right: 12, zIndex: 3,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: 32, height: 32, borderRadius: 10,
-          background: 'rgba(255,255,255,0.06)', border: `1px solid ${rango.color}55`,
-          color: rango.color, cursor: 'pointer',
-        }}
-      >
-        <Edit3 size={15} />
-      </button>
+      {/* Botones compartir + editar integrados en la tarjeta */}
+      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 3, display: 'flex', gap: 8 }}>
+        <button
+          onClick={onShare}
+          title="Compartir mi credencial (QR / link)"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 32, height: 32, borderRadius: 10,
+            background: 'rgba(255,255,255,0.06)', border: `1px solid ${rango.color}55`,
+            color: rango.color, cursor: 'pointer',
+          }}
+        >
+          <Share2 size={15} />
+        </button>
+        <button
+          onClick={onEdit}
+          title="Editar mi credencial"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 32, height: 32, borderRadius: 10,
+            background: 'rgba(255,255,255,0.06)', border: `1px solid ${rango.color}55`,
+            color: rango.color, cursor: 'pointer',
+          }}
+        >
+          <Edit3 size={15} />
+        </button>
+      </div>
 
       {/* Fila identidad */}
       <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
@@ -221,7 +235,7 @@ function CredencialCard({
         </div>
 
         {/* Nombre + meta */}
-        <div style={{ flex: 1, minWidth: 0, paddingRight: 30 }}>
+        <div style={{ flex: 1, minWidth: 0, paddingRight: 64 }}>
           <div style={{
             fontFamily: FONT.display, fontWeight: 700, fontSize: 21,
             color: '#eaf4ff', lineHeight: 1.1, whiteSpace: 'nowrap',
@@ -452,6 +466,7 @@ export function PerfilTab() {
   const gemelo = useGemeloDigital();
   const [paused,    setPaused]    = useState(false);
   const [showEdit,  setShowEdit]  = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [audit,     setAudit]     = useState<Audit | null>(null);
   const [redTest,   setRedTest]   = useState<SkillTest | null>(null);
   const [redNode,   setRedNode]   = useState('');
@@ -575,6 +590,7 @@ export function PerfilTab() {
             uploading={uploadingAvatar}
             onPickFile={handleAvatarUpload}
             onEdit={() => setShowEdit(true)}
+            onShare={() => setShowShare(true)}
           />
         )}
 
@@ -605,6 +621,8 @@ export function PerfilTab() {
         {/* Contenido de la sección activa */}
         <div key={section} style={{ animation: 'sectionIn 0.35s cubic-bezier(0.22,1,0.36,1) both' }}>
           {section === 'gemelo' && gemelo && <EjesPanel gemelo={gemelo} />}
+
+          {section === 'red' && <RedPanel />}
 
           {section === 'credenciales' && (
             <>
@@ -654,6 +672,13 @@ export function PerfilTab() {
       {toast && <CyberToast variant="cyan">{toast}</CyberToast>}
 
       {showEdit && <EditProfileModal onClose={() => setShowEdit(false)} />}
+      {showShare && profile && (
+        <ShareCredentialModal
+          username={profile.username}
+          fullName={profile.full_name}
+          onClose={() => setShowShare(false)}
+        />
+      )}
       {redTest && (
         <SimulatorChallenge
           test={redTest} nodeId={redNode}
