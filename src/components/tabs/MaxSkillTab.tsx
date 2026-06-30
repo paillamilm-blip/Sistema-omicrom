@@ -2,7 +2,7 @@
 // Árbol de Habilidades — diseño cyberpunk con ramas SVG reales
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { Play, Trophy } from 'lucide-react';
+import { Play, Trophy, BookOpen, ArrowRight } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
 import { SimulatorChallenge } from '../shared/SimulatorChallenge';
@@ -122,7 +122,7 @@ function svgDimensions(flat: LayoutNode[]) {
 // Componente principal
 // ─────────────────────────────────────────────
 export function MaxSkillTab() {
-  const { profile } = useApp();
+  const { profile, setActiveTab } = useApp();
   const [nodes, setNodes]             = useState<SkillTreeNode[]>([]);
   const [progress, setProgress]       = useState<Map<string, UserSkillProgress>>(new Map());
   const [isLoading, setIsLoading]     = useState(true);
@@ -130,6 +130,7 @@ export function MaxSkillTab() {
   const [simulatorTest, setSimulatorTest] = useState<SkillTest | null>(null);
   const [simulatorNode, setSimulatorNode] = useState<string>('');
   const [lastPeEarned, setLastPeEarned]   = useState<number | null>(null);
+  const [courseByNode, setCourseByNode]   = useState<Map<string, string>>(new Map());
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Cargar nodos
@@ -147,6 +148,18 @@ export function MaxSkillTab() {
       }
     };
     load();
+  }, []);
+
+  // Mapa nodo -> curso de Academia que lo desbloquea (cross-link)
+  useEffect(() => {
+    supabase.from('academy_courses').select('title,node_id').eq('is_published', true)
+      .then(({ data }) => {
+        const m = new Map<string, string>();
+        ((data as { title: string; node_id: string | null }[]) ?? []).forEach(c => {
+          if (c.node_id) m.set(c.node_id, c.title);
+        });
+        setCourseByNode(m);
+      });
   }, []);
 
 
@@ -588,6 +601,34 @@ export function MaxSkillTab() {
               Iniciar Desafío
             </button>
           )}
+
+          {courseByNode.get(selectedNode.id) && (
+            <button
+              onClick={() => setActiveTab('academia')}
+              style={{
+                width: '100%', marginTop: 10, padding: '11px', borderRadius: 10, cursor: 'pointer',
+                background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.45)', color: '#F59E0B',
+                fontFamily: "'Share Tech Mono', monospace", fontSize: 11.5, fontWeight: 700, letterSpacing: 0.5,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              <BookOpen size={14} /> APRENDE ESTO EN ACADEMIA
+            </button>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 12, fontFamily: "'Share Tech Mono', monospace", fontSize: 8.5, letterSpacing: 0.5 }}>
+            {(() => {
+              const st = getStatus(selectedNode.id);
+              const validated = st === 'VALIDATED' || st === 'MASTERED';
+              const steps = [{ k: 'APRENDE', on: true, col: '#00F0FF' }, { k: 'DESAFÍA', on: st !== 'LOCKED', col: '#00F0FF' }, { k: 'VALIDA', on: validated, col: '#39FF14' }];
+              return steps.map((s2, i) => (
+                <span key={s2.k} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ color: s2.on ? s2.col : 'rgba(255,255,255,0.25)' }}>{s2.k}</span>
+                  {i < 2 && <ArrowRight size={9} style={{ color: 'rgba(255,255,255,0.25)' }} />}
+                </span>
+              ));
+            })()}
+          </div>
         </div>
       )}
 
