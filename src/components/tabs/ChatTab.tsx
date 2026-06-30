@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Shield, Timer, ArrowLeft, MessageCircle, Lock, ShieldCheck, ShieldAlert, Star, X } from 'lucide-react';
+import { Send, Shield, Timer, ArrowLeft, MessageCircle, Lock, ShieldCheck, ShieldAlert, Star, X, Plus, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
@@ -7,9 +7,11 @@ import { ScanlineOverlay, CyberHeader, CyberCard, SectionLabel, LoadingScreen } 
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
 import { sendSecureMessage, loadSecureMessages } from '../../lib/secureChat';
+import { DirectChatModal } from '../perfil/RedSocial';
 import type { Message } from '../../types';
 
 interface Room { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; delivery_declared_at: string | null; rating: number | null; }
+interface DMConvo { user_id: string; username: string; full_name: string; avatar_url: string | null; last_message: string; last_at: string; unread: number; }
 
 const ST_COLOR: Record<string, string> = { LOCKED: C.gold, DELIVERED: C.cyan, RELEASED: C.green, DISPUTED: C.red };
 
@@ -92,10 +94,83 @@ function RatingModal({
   );
 }
 
+// ─── Selector de conexiones para iniciar un mensaje directo ────────────────────
+interface Conn { id: string; name: string; username: string; avatar: string | null; }
+
+function NewMessagePicker({ onPick, onClose }: { onPick: (c: Conn) => void; onClose: () => void }) {
+  const [list, setList] = useState<Conn[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.rpc('my_connections');
+      setList(((data as any[]) ?? []).map(x => ({
+        id: x.user_id, name: x.full_name ?? x.username, username: x.username, avatar: x.avatar_url,
+      })));
+      setLoading(false);
+    })();
+  }, []);
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(2,6,19,0.78)', backdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: '100%', maxWidth: 420, maxHeight: '80vh', overflowY: 'auto',
+        borderRadius: 16, background: 'rgba(10,17,32,0.99)', border: `1px solid ${C.cyanDim}`,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.6)', position: 'relative', padding: 18,
+      }}>
+        <button onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
+          <X size={16} />
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <Users size={16} style={{ color: C.cyan }} />
+          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 17, color: '#eaf4ff' }}>Nuevo mensaje</span>
+        </div>
+        <p style={{ margin: '0 0 14px', fontFamily: FONT.body, fontSize: 12, color: C.cyanDim }}>
+          Elige una de tus conexiones para escribirle.
+        </p>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: 24, fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>CARGANDO...</div>
+        ) : list.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 22, fontFamily: FONT.body, fontSize: 12.5, color: C.cyanDim }}>
+            Aún no tienes conexiones. Comparte tu QR desde Perfil → Mi Red para empezar tu red. 🔗
+          </div>
+        ) : list.map(c => (
+          <button key={c.id} onClick={() => onPick(c)} style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 8px',
+            background: 'none', border: 'none', borderBottom: `1px solid ${C.cyanFaint}`, cursor: 'pointer', textAlign: 'left',
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 11, overflow: 'hidden', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: c.avatar ? '#0a1120' : `linear-gradient(135deg, ${C.cyan}, ${C.green})`,
+              color: '#060a12', fontWeight: 700, fontFamily: FONT.display, fontSize: 15,
+            }}>
+              {c.avatar ? <img src={c.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (c.name || c.username || 'U').slice(0, 1).toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe' }}>{c.name}</div>
+              <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>@{c.username}</div>
+            </div>
+            <Send size={15} style={{ color: C.cyan }} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ChatTab() {
   const { profile, setActiveTab } = useApp();
   const { toast } = useToast();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [dmConvos, setDmConvos] = useState<DMConvo[]>([]);
+  const [chatWith, setChatWith] = useState<{ id: string; name: string; username: string; avatar: string | null } | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -132,6 +207,14 @@ export function ChatTab() {
   }, [profile]);
 
   useEffect(() => { loadRooms(); }, [loadRooms]);
+
+  const loadDMs = useCallback(async () => {
+    if (!profile) return;
+    const { data } = await supabase.rpc('my_dm_conversations');
+    setDmConvos((data as DMConvo[]) ?? []);
+  }, [profile]);
+
+  useEffect(() => { loadDMs(); }, [loadDMs]);
 
   useEffect(() => {
     if (!room || !profile) return;
@@ -260,6 +343,41 @@ export function ChatTab() {
         <ScanlineOverlay />
         <CyberHeader title="CHAT SEGURO" subtitle="SALAS POR CONTRATO // CAJA NEGRA" dotColor={C.green} badge={<Shield size={16} style={{ color: C.cyan }} />} />
         <div style={cx(BASE.scrollArea, { padding: '10px 14px 20px' })}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <SectionLabel>◆ MENSAJES DIRECTOS ({dmConvos.length})</SectionLabel>
+            <button onClick={() => setPickerOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 9, cursor: 'pointer', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan, fontFamily: FONT.mono, fontSize: 10, letterSpacing: 0.5 }}>
+              <Plus size={13} /> NUEVO
+            </button>
+          </div>
+          {dmConvos.length > 0 && (
+            <>
+              {dmConvos.map(d => (
+                <CyberCard key={d.user_id} color={C.cyan} margin="0 0 10px" onClick={() => setChatWith({ id: d.user_id, name: d.full_name, username: d.username, avatar: d.avatar_url })}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: 10, overflow: 'hidden', flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: d.avatar_url ? '#0a1120' : `linear-gradient(135deg, ${C.cyan}, ${C.green})`,
+                      color: '#060a12', fontWeight: 700, fontFamily: FONT.display, fontSize: 14,
+                    }}>
+                      {d.avatar_url
+                        ? <img src={d.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : (d.full_name || d.username || 'U').slice(0, 1).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.full_name}</div>
+                      <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.last_message}</div>
+                    </div>
+                    {d.unread > 0 && (
+                      <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: C.red, color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: FONT.mono, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{d.unread}</span>
+                    )}
+                  </div>
+                </CyberCard>
+              ))}
+              <div style={{ height: 8 }} />
+            </>
+          )}
+
           <SectionLabel>◆ CANALES ACTIVOS ({rooms.length})</SectionLabel>
           {rooms.length === 0 ? (
             <EmptyState
@@ -284,6 +402,19 @@ export function ChatTab() {
             </CyberCard>
           ))}
         </div>
+
+        {chatWith && (
+          <DirectChatModal
+            other={chatWith}
+            onClose={() => { setChatWith(null); loadDMs(); }}
+          />
+        )}
+        {pickerOpen && (
+          <NewMessagePicker
+            onPick={(c) => { setPickerOpen(false); setChatWith(c); }}
+            onClose={() => setPickerOpen(false)}
+          />
+        )}
       </div>
     );
   }
