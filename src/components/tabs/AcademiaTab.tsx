@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   GraduationCap, ArrowLeft, BookOpen, CheckCircle2, Lock, Award, Loader2,
-  ChevronDown, Sparkles, Trophy,
+  ChevronDown, Sparkles, Trophy, Target,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
@@ -35,6 +35,7 @@ export function AcademiaTab() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [prog, setProg] = useState<Map<string, Prog>>(new Map());
   const [counts, setCounts] = useState<Map<string, { total: number; done: number }>>(new Map());
+  const [nodes, setNodes] = useState<Map<string, { title: string; color: string }>>(new Map());
   const [loading, setLoading] = useState(true);
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -71,6 +72,12 @@ export function AcademiaTab() {
       m.set(l.course_id, c);
     });
     setCounts(m);
+
+    const nodeIds = [...new Set(courseList.map(c => c.node_id).filter(Boolean))] as string[];
+    if (nodeIds.length) {
+      const { data: nd } = await supabase.from('skill_tree_nodes').select('id,title,color').in('id', nodeIds);
+      setNodes(new Map(((nd as { id: string; title: string; color: string }[]) ?? []).map(n => [n.id, { title: n.title, color: n.color }])));
+    }
     setLoading(false);
   }, [profile]);
 
@@ -205,6 +212,11 @@ export function AcademiaTab() {
                     <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, marginTop: 3 }}>
                       {DIFF_LABEL[c.difficulty] ?? 'Curso'} · {lc.done}/{lc.total} lecciones
                     </div>
+                    {c.node_id && nodes.get(c.node_id) && (
+                      <div style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.gold, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Target size={10} /> Desbloquea: {nodes.get(c.node_id)!.title}
+                      </div>
+                    )}
                   </div>
                   <span style={{
                     fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: accent,
@@ -307,7 +319,9 @@ export function AcademiaTab() {
               <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: allDone ? C.gold : C.cyanDim }}>Quiz final</span>
             </div>
             <p style={{ margin: '0 0 12px', fontFamily: FONT.body, fontSize: 12, color: C.cyanDim, lineHeight: 1.4 }}>
-              Aprueba con {course.passing_score}% para <strong style={{ color: C.cyan }}>validar el nodo</strong> y subir tu Fundamento del Gemelo Digital. 🧬
+              Aprueba con {course.passing_score}% para validar {course.node_id && nodes.get(course.node_id)
+                ? <strong style={{ color: C.gold }}>la habilidad "{nodes.get(course.node_id)!.title}"</strong>
+                : <strong style={{ color: C.cyan }}>el nodo</strong>} en tu Árbol y subir tu <strong style={{ color: C.cyan }}>Fundamento</strong> del Gemelo Digital. 🧬
             </p>
             <button onClick={startQuiz} disabled={!allDone} style={{
               width: '100%', padding: '13px', borderRadius: RADIUS.lg, cursor: allDone ? 'pointer' : 'not-allowed',
@@ -358,11 +372,21 @@ export function AcademiaTab() {
                 ? '🔓 Nodo validado en tu árbol. Tu Fundamento (Gemelo Digital) subió. ¡Bien hecho!'
                 : `Necesitas ${course?.passing_score}% para aprobar. Repasa las lecciones e inténtalo de nuevo.`}
             </p>
-            <button onClick={result.passed ? backToList : () => setView('course')} style={{
-              marginTop: 20, padding: '11px 22px', borderRadius: 10, cursor: 'pointer',
-              background: `${C.cyan}18`, border: `1px solid ${C.cyan}`, color: C.cyan,
-              fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700,
-            }}>{result.passed ? 'VOLVER A CURSOS' : 'REINTENTAR'}</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', marginTop: 20 }}>
+              {result.passed && (
+                <button onClick={() => setActiveTab('maxskill')} style={{
+                  padding: '11px 22px', borderRadius: 10, cursor: 'pointer',
+                  background: C.gold, border: 'none', color: '#1a1205',
+                  fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700,
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                }}><Target size={14} /> VER EN EL ÁRBOL</button>
+              )}
+              <button onClick={result.passed ? backToList : () => setView('course')} style={{
+                padding: '11px 22px', borderRadius: 10, cursor: 'pointer',
+                background: `${C.cyan}18`, border: `1px solid ${C.cyan}`, color: C.cyan,
+                fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700,
+              }}>{result.passed ? 'VOLVER A CURSOS' : 'REINTENTAR'}</button>
+            </div>
           </div>
         ) : (
           <>
