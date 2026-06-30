@@ -608,13 +608,17 @@ export function RedPanel() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [dmWith, setDmWith] = useState<Req | null>(null);
+  const [top, setTop] = useState<any[]>([]);
+  const [viewUser, setViewUser] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [rq, cn] = await Promise.all([
+    const [rq, cn, lb] = await Promise.all([
       supabase.rpc('my_pending_requests'),
       supabase.rpc('my_connections'),
+      supabase.rpc('get_leaderboard', { p_limit: 10 }),
     ]);
+    setTop((lb.data as any[]) ?? []);
     const norm = (rows: any[]): Req[] => (rows ?? []).map(x => ({
       connection_id: x.connection_id,
       user_id: x.user_id,
@@ -663,6 +667,29 @@ export function RedPanel() {
 
       {!loading && (
         <>
+          {top.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.gold, letterSpacing: 1.5, marginBottom: 6 }}>🏆 RANKING DE NODOS</div>
+              {top.map((t, idx) => {
+                const rr = rango(Number(t.reputation_score) || 0);
+                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+                return (
+                  <button key={t.user_id} onClick={() => setViewUser(t.username)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 4px', background: 'none', border: 'none', borderBottom: `1px solid ${C.cyanFaint}`, cursor: 'pointer', textAlign: 'left' }}>
+                    <span style={{ width: 26, textAlign: 'center', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: idx < 3 ? C.gold : C.cyanDim }}>{medal}</span>
+                    <div style={{ width: 34, height: 34, borderRadius: 9, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: t.avatar_url ? '#0a1120' : `linear-gradient(135deg, ${rr.color}, ${C.cyan})`, color: '#060a12', fontWeight: 700, fontFamily: FONT.display, fontSize: 13 }}>
+                      {t.avatar_url ? <img src={t.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (t.full_name || t.username || 'U').slice(0, 1).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.full_name || t.username}</div>
+                      <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>@{t.username}</div>
+                    </div>
+                    <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: rr.color }}>{(Number(t.reputation_score) || 0).toFixed(0)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {requests.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.gold, letterSpacing: 1.5, marginBottom: 4 }}>
@@ -725,6 +752,9 @@ export function RedPanel() {
         </>
       )}
 
+      {viewUser && (
+        <PublicCredentialModal username={viewUser} onClose={() => { setViewUser(null); load(); }} />
+      )}
       {dmWith && (
         <DirectChatModal
           other={{ id: dmWith.user_id, name: dmWith.full_name, username: dmWith.username, avatar: dmWith.avatar_url }}
