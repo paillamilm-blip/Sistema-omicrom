@@ -484,3 +484,9 @@ body::before {
   0%, 100% { opacity: 0.55; filter: brightness(1); }
   50%      { opacity: 1;    filter: brightness(1.55); }
 }
+
+/* cp-breathe (latido de pads/LED del nucleo y simulador) */
+@keyframes cp-breathe {
+  0%, 100% { opacity: 0.55; filter: brightness(1); }
+  50%      { opacity: 1;    filter: brightness(1.55); }
+}
