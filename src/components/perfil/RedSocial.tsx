@@ -355,6 +355,24 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             <ProgressRadar gemelo={gemelo} size="sm" showHeader={false} showScores={false} showAlert={false} showFooter={false} />
           </div>
 
+          {profile && !isSelf && (() => {
+            const mine = [Number(profile.execution_score) || 0, Number(profile.quality_score) || 0, Number(profile.transcendence_score) || 0, Number(profile.foundation_score) || 0];
+            const theirs = [cred.execution_score, cred.quality_score, cred.transcendence_score, cred.foundation_score];
+            const aff = Math.round(mine.reduce((s, m, i) => s + Math.max(m, theirs[i]), 0) / mine.length);
+            const ac = aff >= 75 ? C.green : aff >= 50 ? C.gold : C.cyan;
+            return (
+              <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: RADIUS.lg, background: `${ac}10`, border: `1px solid ${ac}40` }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: ac, letterSpacing: 1 }}>AFINIDAD DE COLABORACION</span>
+                  <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: ac }}>{aff}%</span>
+                </div>
+                <p style={{ margin: '6px 0 0', fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, lineHeight: 1.4 }}>
+                  Juntos cubren el {aff}% de las 4 dimensiones del Gemelo. Mientras mas alto, mejor se complementan para contratos exigentes.
+                </p>
+              </div>
+            );
+          })()}
+
           {isSelf ? (
             <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, padding: 8 }}>
               Esta es tu propia credencial
