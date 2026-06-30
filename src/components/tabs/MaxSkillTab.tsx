@@ -7,9 +7,9 @@ import { Play, Trophy, BookOpen, ArrowRight } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../shared/Toast';
-import { SimulatorChallenge } from '../shared/SimulatorChallenge';
+import { ExamenChallenge } from '../shared/ExamenChallenge';
 import { CourseFlowModal } from '../shared/CourseFlow';
-import type { SkillTreeNode, UserSkillProgress, SkillTest } from '../../types';
+import type { SkillTreeNode, UserSkillProgress, ActaEvidencia } from '../../types';
 
 const NODE_W = 136;
 const NODE_H = 58;
@@ -117,14 +117,14 @@ function svgDimensions(flat: LayoutNode[]) {
 }
 
 export function MaxSkillTab() {
-  const { profile } = useApp();
+  const { profile, refreshProfile } = useApp();
   const { toast } = useToast();
   const [nodes, setNodes]             = useState<SkillTreeNode[]>([]);
   const [progress, setProgress]       = useState<Map<string, UserSkillProgress>>(new Map());
   const [isLoading, setIsLoading]     = useState(true);
   const [selectedNode, setSelectedNode] = useState<SkillTreeNode | null>(null);
-  const [simulatorTest, setSimulatorTest] = useState<SkillTest | null>(null);
-  const [simulatorNode, setSimulatorNode] = useState<string>('');
+  const [examNode, setExamNode] = useState<SkillTreeNode | null>(null);
+  const [actas, setActas] = useState<Map<string, ActaEvidencia>>(new Map());
   const [lastPeEarned, setLastPeEarned]   = useState<number | null>(null);
   const [courseByNode, setCourseByNode]   = useState<Map<string, string>>(new Map());
   const [courseNode, setCourseNode]       = useState<string | null>(null);
@@ -197,45 +197,29 @@ export function MaxSkillTab() {
   }, [progress, nodes]);
   const getPercentage = (id: string) => progress.get(id)?.progress_percentage || 0;
 
-  const handleStartChallenge = useCallback(async (node: SkillTreeNode) => {
-    const { data, error } = await supabase
-      .from('skill_tests')
-      .select('*')
-      .eq('node_id', node.id)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (error) {
-      toast('No se pudo cargar el reto. Intenta de nuevo.', 'error');
-      return;
-    }
-    if (!data) {
-      toast('Este nodo todavía no tiene un reto disponible. 🛠️', 'info');
-      return;
-    }
-    setSimulatorTest(data as SkillTest);
-    setSimulatorNode(node.id);
-  }, [toast]);
+  const loadActas = useCallback(async () => {
+    if (!profile?.id) return;
+    const { data } = await supabase
+      .from('actas_evidencia').select('*')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false });
+    const m = new Map<string, ActaEvidencia>();
+    ((data as ActaEvidencia[]) ?? []).forEach(a => { if (!m.has(a.node_id)) m.set(a.node_id, a); });
+    setActas(m);
+  }, [profile?.id]);
 
-  const handleRangeChallenge = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('skill_tests')
-      .select('*')
-      .order('difficulty_multiplier', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) {
-      toast('No se pudo cargar el reto. Intenta de nuevo.', 'error');
-      return;
-    }
-    if (!data) {
-      toast('Aún no hay retos disponibles. 🛠️', 'info');
-      return;
-    }
-    const test = data as SkillTest;
-    setSimulatorTest(test);
-    setSimulatorNode(test.node_id);
-  }, [toast]);
+  const handleStartChallenge = useCallback((node: SkillTreeNode) => {
+    setExamNode(node);
+  }, []);
+
+  const handleRangeChallenge = useCallback(() => {
+    if (nodes.length === 0) { toast('Aún no hay nodos disponibles. 🛠️', 'info'); return; }
+    const byStatus = (want: string) => nodes.find(n => getStatus(n.id) === want);
+    const target = byStatus('VALIDATED') || byStatus('MASTERED') || byStatus('AVAILABLE') || nodes[0];
+    setExamNode(target);
+  }, [nodes, getStatus, toast]);
+
+  useEffect(() => { loadActas(); }, [loadActas]);
 
   const roots = useMemo(() => nodes.filter(n => !n.parent_node_id), [nodes]);
   const { nodes: layoutRoots } = useMemo(
@@ -463,7 +447,11 @@ export function MaxSkillTab() {
 
                   <text x={x + 6} y={y + NODE_H - 11} textAnchor="middle"
                     fontFamily="'Share Tech Mono', monospace" fontSize="8" fill={color} opacity={locked ? 0.25 : 0.6}>
-                    {'+' + node.pe_reward + ' PE · ' + node.estimated_hours + 'h '}{'★'.repeat(node.difficulty_level)}
+                    {(() => {
+                      const a = actas.get(node.id);
+                      if (a) return `IA ${a.puntaje_global}%${a.veredicto === 'APROBADO' ? ' ✓' : ''}`;
+                      return '+' + node.pe_reward + ' PE · ' + node.estimated_hours + 'h ' + '★'.repeat(node.difficulty_level);
+                    })()}
                   </text>
                 </g>
               );
@@ -497,6 +485,27 @@ export function MaxSkillTab() {
             ))}
           </div>
 
+          {actas.get(selectedNode.id) && (() => {
+            const a = actas.get(selectedNode.id)!;
+            const ok = a.veredicto === 'APROBADO';
+            return (
+              <div style={{ borderRadius: 10, padding: '12px 14px', marginBottom: 12, background: 'rgba(0,240,255,0.06)', border: `1px solid ${ok ? COLORS.greenDim : 'rgba(255,77,109,0.4)'}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, letterSpacing: 1.5, color: COLORS.cyan }}>📜 ACTA DE EVIDENCIA · IA</span>
+                  <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, fontWeight: 700, color: ok ? COLORS.green : '#ff4d6d' }}>{ok ? 'VALIDADO' : 'PENDIENTE'} · {a.puntaje_global}%</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#dbeafe' }}>
+                  <span>Ejecución: <strong style={{ color: COLORS.cyan }}>{a.ejecucion}</strong></span>
+                  <span>Calidad: <strong style={{ color: COLORS.cyan }}>{a.calidad}</strong></span>
+                  <span>Trascendencia: <strong style={{ color: COLORS.cyan }}>{a.trascendencia}</strong></span>
+                  <span>Fundamento: <strong style={{ color: COLORS.cyan }}>{a.fundamento}</strong></span>
+                </div>
+                {a.resumen && <p style={{ margin: '8px 0 0', fontFamily: "'Rajdhani', sans-serif", fontSize: 12.5, color: '#cfe6ff', lineHeight: 1.5 }}>{a.resumen}</p>}
+                <p style={{ margin: '6px 0 0', fontFamily: "'Share Tech Mono', monospace", fontSize: 8.5, color: COLORS.cyanDim }}>Emitida {new Date(a.created_at).toLocaleDateString('es-CL')}</p>
+              </div>
+            );
+          })()}
+
           <div style={{ borderRadius: 10, padding: '12px 14px', marginBottom: 12, background: 'rgba(57,255,20,0.07)', border: `1px solid ${COLORS.greenDim}` }}>
             <div style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, letterSpacing: 1.5, color: COLORS.green, marginBottom: 8 }}>⬡ LO QUE GANAS AL COMPLETARLO</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, color: '#dbeafe' }}>
@@ -523,7 +532,7 @@ export function MaxSkillTab() {
             </button>
           ) : (
             <button style={styles.challengeBtn} onClick={() => handleStartChallenge(selectedNode)}>
-              <Play size={14} fill="currentColor" /> Iniciar Desafío
+              <Play size={14} fill="currentColor" /> Rendir Examen IA
             </button>
           )}
 
@@ -558,12 +567,18 @@ export function MaxSkillTab() {
         <div style={styles.peToast}><Trophy size={16} /> +{lastPeEarned} PE ganados</div>
       )}
 
-      {simulatorTest && (
-        <SimulatorChallenge
-          test={simulatorTest}
-          nodeId={simulatorNode}
-          onClose={() => { setSimulatorTest(null); setSimulatorNode(''); }}
-          onSuccess={(pe) => { setLastPeEarned(pe); setTimeout(() => setLastPeEarned(null), 3000); }}
+      {examNode && (
+        <ExamenChallenge
+          node={examNode}
+          onClose={() => setExamNode(null)}
+          onFinished={(res) => {
+            loadActas();
+            void refreshProfile?.();
+            if (res.veredicto === 'APROBADO') {
+              setLastPeEarned(examNode.pe_reward);
+              setTimeout(() => setLastPeEarned(null), 3500);
+            }
+          }}
         />
       )}
 

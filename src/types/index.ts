@@ -161,6 +161,45 @@ export interface SkillTestAttempt {
   attempted_at: string;
 }
 
+// ===== EXAMINADOR IA / ACTA DE EVIDENCIA =====
+export interface ExamMultipleChoice { pregunta: string; opciones: string[]; }
+export interface ExamGenerated {
+  session_id: string;
+  node: { id: string; title: string };
+  multiple_choice: ExamMultipleChoice[];
+  caso: { enunciado: string };
+}
+export interface ExamEjes {
+  ejecucion: number;
+  calidad: number;
+  trascendencia: number;
+  fundamento: number;
+}
+export interface ExamResultado {
+  acta_id: string;
+  node: { id: string; title: string } | null;
+  veredicto: 'APROBADO' | 'REPROBADO';
+  puntaje_global: number;
+  ejes: ExamEjes;
+  resumen: string;
+  feedback: string;
+}
+export interface ActaEvidencia {
+  id: string;
+  user_id: string;
+  node_id: string;
+  ejecucion: number;
+  calidad: number;
+  trascendencia: number;
+  fundamento: number;
+  puntaje_global: number;
+  veredicto: 'APROBADO' | 'REPROBADO';
+  resumen: string | null;
+  detalle: unknown;
+  validador: string;
+  created_at: string;
+}
+
 // ===== NOTIFICACIONES =====
 export type NotificationType =
   | 'JOB_MATCH'
