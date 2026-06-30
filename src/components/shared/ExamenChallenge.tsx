@@ -31,6 +31,20 @@ const DISP = "'Rajdhani', sans-serif";
 
 type Phase = 'cargando' | 'preguntas' | 'defensa' | 'evaluando' | 'resultado' | 'error';
 
+// Extrae el mensaje de error real que devuelve la Edge Function (incluye "detail").
+async function serverError(error: unknown, data: unknown, fallback: string): Promise<string> {
+  const d = data as { error?: string; detail?: string } | null;
+  if (d?.error) return d.detail ? `${d.error} — ${d.detail}` : d.error;
+  const ctx = (error as { context?: Response } | null)?.context;
+  if (ctx && typeof ctx.json === 'function') {
+    try {
+      const body = await ctx.json();
+      if (body?.error) return body.detail ? `${body.error} — ${body.detail}` : body.error;
+    } catch { /* sin cuerpo legible */ }
+  }
+  return (error as { message?: string } | null)?.message || fallback;
+}
+
 const EJE_LABELS: Record<string, string> = {
   ejecucion: 'Ejecución', calidad: 'Calidad', trascendencia: 'Trascendencia', fundamento: 'Fundamento',
 };
@@ -57,7 +71,7 @@ export function ExamenChallenge({ node, onClose, onFinished }: Props) {
       });
       const d = data as ExamGenerated & { error?: string };
       if (error || !d || d.error || !d.multiple_choice) {
-        setErrMsg(d?.error || 'No se pudo generar el examen. ¿Está desplegada la función "examen-ia"?');
+        setErrMsg(await serverError(error, data, 'No se pudo generar el examen. ¿Está desplegada la función "examen-ia"?'));
         setPhase('error');
         return;
       }
@@ -81,7 +95,7 @@ export function ExamenChallenge({ node, onClose, onFinished }: Props) {
       });
       const d = data as { defensa?: string; error?: string };
       if (error || d?.error) {
-        setErrMsg(d?.error || 'No se pudo cargar la defensa.');
+        setErrMsg(await serverError(error, data, 'No se pudo cargar la defensa.'));
         setPhase('error');
         return;
       }
@@ -108,7 +122,7 @@ export function ExamenChallenge({ node, onClose, onFinished }: Props) {
       });
       const d = data as ExamResultado & { error?: string };
       if (error || d?.error || !d?.ejes) {
-        setErrMsg(d?.error || 'No se pudo evaluar el examen.');
+        setErrMsg(await serverError(error, data, 'No se pudo evaluar el examen.'));
         setPhase('error');
         return;
       }
