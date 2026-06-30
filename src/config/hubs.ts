@@ -18,8 +18,7 @@ export const HUBS: Hub[] = [
   {
     id: 'aprender', label: 'Aprender', Icon: GraduationCap,
     members: [
-      { tab: 'maxskill', label: 'Habilidades' },
-      { tab: 'academia', label: 'Academia' },
+      { tab: 'maxskill', label: 'Aprender' },
     ],
   },
   {
