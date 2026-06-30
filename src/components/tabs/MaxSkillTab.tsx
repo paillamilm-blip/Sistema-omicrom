@@ -217,6 +217,26 @@ export function MaxSkillTab() {
     setSimulatorNode(node.id);
   }, [toast]);
 
+  const handleRangeChallenge = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('skill_tests')
+      .select('*')
+      .order('difficulty_multiplier', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      toast('No se pudo cargar el reto. Intenta de nuevo.', 'error');
+      return;
+    }
+    if (!data) {
+      toast('Aún no hay retos disponibles. 🛠️', 'info');
+      return;
+    }
+    const test = data as SkillTest;
+    setSimulatorTest(test);
+    setSimulatorNode(test.node_id);
+  }, [toast]);
+
   const roots = useMemo(() => nodes.filter(n => !n.parent_node_id), [nodes]);
   const { nodes: layoutRoots } = useMemo(
     () => buildLayout(roots, nodes, 0, 24),
@@ -268,7 +288,7 @@ export function MaxSkillTab() {
             <div style={styles.rangeSub}>Reto de alta dificultad para defender tu estatus.</div>
           </div>
         </div>
-        <button style={styles.rangeBtn}>
+        <button style={styles.rangeBtn} onClick={handleRangeChallenge}>
           <Play size={14} fill="currentColor" />
           Iniciar Reto de Alta Frecuencia
         </button>
