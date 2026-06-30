@@ -6,6 +6,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Play, Trophy, BookOpen, ArrowRight } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../shared/Toast';
 import { SimulatorChallenge } from '../shared/SimulatorChallenge';
 import { CourseFlowModal } from '../shared/CourseFlow';
 import type { SkillTreeNode, UserSkillProgress, SkillTest } from '../../types';
@@ -117,6 +118,7 @@ function svgDimensions(flat: LayoutNode[]) {
 
 export function MaxSkillTab() {
   const { profile } = useApp();
+  const { toast } = useToast();
   const [nodes, setNodes]             = useState<SkillTreeNode[]>([]);
   const [progress, setProgress]       = useState<Map<string, UserSkillProgress>>(new Map());
   const [isLoading, setIsLoading]     = useState(true);
@@ -203,10 +205,17 @@ export function MaxSkillTab() {
       .order('created_at', { ascending: true })
       .limit(1)
       .maybeSingle();
-    if (error || !data) return;
+    if (error) {
+      toast('No se pudo cargar el reto. Intenta de nuevo.', 'error');
+      return;
+    }
+    if (!data) {
+      toast('Este nodo todavía no tiene un reto disponible. 🛠️', 'info');
+      return;
+    }
     setSimulatorTest(data as SkillTest);
     setSimulatorNode(node.id);
-  }, []);
+  }, [toast]);
 
   const roots = useMemo(() => nodes.filter(n => !n.parent_node_id), [nodes]);
   const { nodes: layoutRoots } = useMemo(
