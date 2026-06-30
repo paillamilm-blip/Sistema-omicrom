@@ -15,10 +15,10 @@ const NODE_W = 136;
 const NODE_H = 58;
 const TIER_GAP_Y = 124;
 const PEER_GAP_X = 22;
-const TOP = 116;
-const CORE_W = 92;
-const CORE_H = 68;
-const CORE_CY = 50;
+const TOP = 160;
+const CORE_W = 120;
+const CORE_H = 88;
+const CORE_CY = 78;
 
 const COLORS = {
   cyan:       '#00F0FF',
@@ -283,7 +283,7 @@ export function MaxSkillTab() {
         {flat.length === 0 ? (
           <p style={{ color: COLORS.cyanDim, fontFamily: 'monospace', fontSize: 12, padding: 20 }}>No hay nodos cargados.</p>
         ) : (
-          <svg width={W} height={svgH + TOP} style={{ display: 'block', overflow: 'visible' }}>
+          <svg width="100%" viewBox={`0 0 ${W} ${svgH + TOP}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block', overflow: 'visible', maxWidth: '100%', height: 'auto' }}>
             <defs>
               <pattern id="cp-grid" width="22" height="22" patternUnits="userSpaceOnUse">
                 <path d="M 22 0 L 0 0 0 22" fill="none" stroke={COLORS.grid} strokeWidth="0.5" />
@@ -295,6 +295,11 @@ export function MaxSkillTab() {
               <radialGradient id="core-inner" cx="50%" cy="40%" r="70%">
                 <stop offset="0%" stopColor="rgba(0,240,255,0.18)" />
                 <stop offset="100%" stopColor={COLORS.bg} />
+              </radialGradient>
+              <radialGradient id="core-halo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="rgba(0,240,255,0.28)" />
+                <stop offset="65%" stopColor="rgba(0,240,255,0.07)" />
+                <stop offset="100%" stopColor="rgba(0,240,255,0)" />
               </radialGradient>
               <filter id="cp-glow-cyan" x="-60%" y="-60%" width="220%" height="220%">
                 <feGaussianBlur stdDeviation="2.6" result="b" />
@@ -330,19 +335,26 @@ export function MaxSkillTab() {
               );
             })}
 
-            <g>
-              <circle cx={coreX} cy={CORE_CY} r={46} fill="none" stroke={COLORS.cyanFaint} strokeWidth={1} />
+            <g style={{ animation: 'cp-breathe 3s ease-in-out infinite' }}>
+              {/* Halo / resplandor exterior */}
+              <circle cx={coreX} cy={CORE_CY} r={76} fill="url(#core-halo)" />
+              {/* Anillo exterior girando */}
               <g>
-                <circle cx={coreX} cy={CORE_CY} r={43} fill="none" stroke={COLORS.cyanDim} strokeWidth={1.1} strokeDasharray="3 9" />
-                <animateTransform attributeName="transform" type="rotate" from={`0 ${coreX} ${CORE_CY}`} to={`360 ${coreX} ${CORE_CY}`} dur="16s" repeatCount="indefinite" />
+                <circle cx={coreX} cy={CORE_CY} r={62} fill="none" stroke={COLORS.cyanFaint} strokeWidth={1} />
+                <animateTransform attributeName="transform" type="rotate" from={`0 ${coreX} ${CORE_CY}`} to={`360 ${coreX} ${CORE_CY}`} dur="22s" repeatCount="indefinite" />
+              </g>
+              {/* Anillo interior girando al revés */}
+              <g>
+                <circle cx={coreX} cy={CORE_CY} r={56} fill="none" stroke={COLORS.cyanDim} strokeWidth={1.2} strokeDasharray="4 10" />
+                <animateTransform attributeName="transform" type="rotate" from={`360 ${coreX} ${CORE_CY}`} to={`0 ${coreX} ${CORE_CY}`} dur="14s" repeatCount="indefinite" />
               </g>
               <polygon points={hexPoints(coreX, CORE_CY, CORE_W, CORE_H)} fill="url(#core-grad)" filter="url(#cp-glow-cyan)" />
-              <polygon points={hexPoints(coreX, CORE_CY, CORE_W - 9, CORE_H - 9)} fill="url(#core-inner)" stroke={COLORS.cyanFaint} strokeWidth={0.5} />
+              <polygon points={hexPoints(coreX, CORE_CY, CORE_W - 11, CORE_H - 11)} fill="url(#core-inner)" stroke={COLORS.cyanFaint} strokeWidth={0.6} />
               {hexVerts(coreX, CORE_CY, CORE_W, CORE_H).map((p, i) => (
-                <circle key={`pad-${i}`} cx={p.x} cy={p.y} r={3.2} fill={COLORS.cyan} filter="url(#cp-glow-cyan)" style={{ animation: `cp-breathe ${1.6 + (i % 3) * 0.3}s ease-in-out infinite` }} />
+                <circle key={`pad-${i}`} cx={p.x} cy={p.y} r={3.6} fill={COLORS.cyan} filter="url(#cp-glow-cyan)" style={{ animation: `cp-breathe ${1.6 + (i % 3) * 0.3}s ease-in-out infinite` }} />
               ))}
-              <text x={coreX} y={CORE_CY - 1} textAnchor="middle" dominantBaseline="central" fontFamily="'Rajdhani', sans-serif" fontWeight="700" fontSize="21" fill="#eaf4ff">{corePct}%</text>
-              <text x={coreX} y={CORE_CY + 16} textAnchor="middle" fontFamily="'Share Tech Mono', monospace" fontSize="7" letterSpacing="1.5" fill={COLORS.cyanDim}>NÚCLEO</text>
+              <text x={coreX} y={CORE_CY - 6} textAnchor="middle" dominantBaseline="central" fontFamily="'Rajdhani', sans-serif" fontWeight="700" fontSize="36" fill="#eaf4ff" style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.6))' }}>{corePct}%</text>
+              <text x={coreX} y={CORE_CY + 20} textAnchor="middle" fontFamily="'Share Tech Mono', monospace" fontSize="8" letterSpacing="2" fill={COLORS.cyanDim}>GEMELO · NÚCLEO</text>
             </g>
 
             <g transform={`translate(0 ${TOP})`}>
