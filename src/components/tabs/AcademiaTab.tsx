@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   GraduationCap, ArrowLeft, BookOpen, CheckCircle2, Lock, Award, Loader2,
-  ChevronDown, Sparkles, Trophy, Target,
+  ChevronDown, Sparkles, Target, Bot, Send, X,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
@@ -20,7 +20,6 @@ interface Prog { course_id: string; status: string; quiz_passed: boolean; }
 
 const DIFF_LABEL = ['', 'Inicial', 'Básico', 'Intermedio', 'Avanzado', 'Experto'];
 
-// ─── Barra de progreso reutilizable ───────────────────────────────────────────
 function Bar({ pct, color }: { pct: number; color: string }) {
   return (
     <div style={{ height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
@@ -29,7 +28,115 @@ function Bar({ pct, color }: { pct: number; color: string }) {
   );
 }
 
-// ─── Coach IA: diagnostico del perfil + que estudiar (Edge Function "coach") ──
+function TutorModal({ lesson, onClose }: { lesson: { title: string; content: string }; onClose: () => void }) {
+  const [msgs, setMsgs] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function ask(q?: string) {
+    const question = (q ?? input).trim();
+    if (!question || loading) return;
+    setInput('');
+    const base = [...msgs, { role: 'user' as const, text: question }];
+    setMsgs(base);
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('tutor', {
+        body: { question, lessonTitle: lesson.title, lessonContent: lesson.content, history: msgs },
+      });
+      const answer = error
+        ? 'El Tutor IA no está disponible ahora. Avísale a tu equipo que despliegue la función "tutor".'
+        : (data?.answer ?? data?.error ?? 'Sin respuesta.');
+      setMsgs([...base, { role: 'model', text: answer }]);
+    } catch {
+      setMsgs([...base, { role: 'model', text: 'Error de conexión con el Tutor.' }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const chips = ['Explícamelo más simple', 'Dame un ejemplo', 'Hazme un ejercicio'];
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(2,6,19,0.8)', backdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+        borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))',
+        border: `1px solid ${C.gold}55`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.gold}18`, border: `1px solid ${C.gold}55` }}>
+            <Bot size={18} style={{ color: C.gold }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Tutor IA</div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lesson.title}</div>
+          </div>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div style={{ flex: 1, minHeight: 200, maxHeight: '54vh', overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {msgs.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '10px 0', fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, lineHeight: 1.5 }}>
+              👋 Soy tu tutor. Pregúntame lo que no entiendas de <strong style={{ color: '#eaf4ff' }}>{lesson.title}</strong>.
+            </div>
+          )}
+          {msgs.map((m, i) => {
+            const own = m.role === 'user';
+            return (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  maxWidth: '85%', padding: '10px 13px', borderRadius: 12,
+                  background: own ? 'rgba(0,240,255,0.12)' : `${C.gold}12`,
+                  border: `1px solid ${own ? C.cyanDim : C.gold + '40'}`,
+                  borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3,
+                }}>
+                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#e6f1fb', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</p>
+                </div>
+              </div>
+            );
+          })}
+          {loading && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.gold, fontFamily: FONT.mono, fontSize: 11 }}>
+              <Loader2 size={14} className="animate-spin" /> El tutor está pensando...
+            </div>
+          )}
+        </div>
+
+        {msgs.length === 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '0 16px 8px' }}>
+            {chips.map(ch => (
+              <button key={ch} onClick={() => ask(ch)} style={{
+                fontFamily: FONT.mono, fontSize: 10, color: C.cyan, cursor: 'pointer',
+                background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, borderRadius: 16, padding: '6px 11px',
+              }}>{ch}</button>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
+          <input
+            type="text" value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) ask(); }}
+            placeholder="Escribe tu duda..."
+            style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 14, outline: 'none' }}
+          />
+          <button onClick={() => ask()} disabled={!input.trim() || loading}
+            style={{ width: 44, height: 44, borderRadius: 11, background: C.gold, border: 'none', color: '#1a1205', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || loading ? 0.4 : 1 }}>
+            <Send size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CoachModal({ onClose }: { onClose: () => void }) {
   const [advice, setAdvice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,10 +146,10 @@ function CoachModal({ onClose }: { onClose: () => void }) {
     try {
       const { data, error } = await supabase.functions.invoke('coach', { body: {} });
       setAdvice(error
-        ? 'El Coach IA no esta disponible. Avisa a tu equipo que despliegue la funcion coach.'
+        ? 'El Coach IA no está disponible. Avisa a tu equipo que despliegue la función coach.'
         : ((data as { advice?: string; error?: string })?.advice ?? (data as { error?: string })?.error ?? 'Sin respuesta.'));
     } catch {
-      setAdvice('Error de conexion con el Coach IA.');
+      setAdvice('Error de conexión con el Coach IA.');
     } finally {
       setLoading(false);
     }
@@ -109,6 +216,7 @@ export function AcademiaTab() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [doneLessons, setDoneLessons] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [tutor, setTutor] = useState<Lesson | null>(null);
   const [coachOpen, setCoachOpen] = useState(false);
   const [view, setView] = useState<'list' | 'course' | 'quiz'>('list');
 
@@ -128,7 +236,6 @@ export function AcademiaTab() {
       .from('user_course_progress').select('course_id,status,quiz_passed').eq('user_id', profile.id);
     setProg(new Map(((ps as Prog[]) ?? []).map(p => [p.course_id, p])));
 
-    // Progreso por curso (lecciones leídas / total)
     const { data: allLessons } = await supabase.from('course_lessons').select('id,course_id');
     const { data: doneRows } = await supabase.from('user_lesson_progress').select('lesson_id');
     const doneSet = new Set(((doneRows as { lesson_id: string }[]) ?? []).map(d => d.lesson_id));
@@ -210,7 +317,6 @@ export function AcademiaTab() {
 
   if (loading) return <LoadingScreen message="CARGANDO ACADEMIA..." />;
 
-  // ─── VISTA: lista de cursos ──────────────────────────────────────────
   if (view === 'list') {
     const totalDone = [...counts.values()].reduce((s, c) => s + c.done, 0);
     const totalAll = [...counts.values()].reduce((s, c) => s + c.total, 0);
@@ -234,35 +340,15 @@ export function AcademiaTab() {
                 <GraduationCap size={22} style={{ color: C.cyan }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Coach IA - Que estudio ahora?</div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Coach IA · ¿Qué estudio ahora?</div>
                 <div style={{ fontFamily: FONT.body, fontSize: 11.5, color: C.cyanDim, marginTop: 2, lineHeight: 1.35 }}>
-                  Analiza tu Gemelo, tu CV y tus habilidades, y te dice tu brecha y el curso ideal.
+                  Analiza tu Gemelo, tu CV y tus habilidades, y te dice tu brecha y el curso ideal. 🧭
                 </div>
               </div>
               <Sparkles size={18} style={{ color: C.gold, flexShrink: 0 }} />
             </div>
           </button>
 
-          {/* Resumen de progreso */}
-          <div style={{
-            borderRadius: RADIUS.xl, padding: 16, marginBottom: 16,
-            background: 'linear-gradient(165deg, rgba(22,34,58,0.92), rgba(12,20,38,0.96))',
-            border: `1px solid ${C.cyan}33`,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Trophy size={16} style={{ color: C.gold }} />
-                <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Tu avance</span>
-              </div>
-              <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>{completed}/{courses.length} cursos</span>
-            </div>
-            <Bar pct={totalAll ? Math.round((totalDone / totalAll) * 100) : 0} color={C.gold} />
-            <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, marginTop: 8 }}>
-              {totalDone} de {totalAll} lecciones leídas · cada curso aprobado sube tu <strong style={{ color: C.cyan }}>Fundamento</strong> 🧬
-            </div>
-          </div>
-
-          <SectionLabel>◆ CURSOS ({courses.length})</SectionLabel>
           {courses.length === 0 ? (
             <EmptyState
               icon={<BookOpen size={30} />}
@@ -271,59 +357,66 @@ export function AcademiaTab() {
               ctaLabel="Ir al Árbol de Habilidades"
               onCta={() => setActiveTab('maxskill')}
             />
-          ) : courses.map(c => {
-            const p = prog.get(c.id);
-            const lc = counts.get(c.id) ?? { total: 0, done: 0 };
-            const pct = lc.total ? Math.round((lc.done / lc.total) * 100) : 0;
-            const done = p?.status === 'COMPLETED';
-            const inProgress = !done && lc.done > 0;
-            const accent = done ? C.green : inProgress ? C.cyan : C.gold;
-            const statusLabel = done ? 'COMPLETADO' : inProgress ? 'EN CURSO' : 'NUEVO';
-            return (
-              <button key={c.id} onClick={() => openCourse(c)} style={{
-                width: '100%', textAlign: 'left', cursor: 'pointer',
-                borderRadius: RADIUS.xl, padding: 15, marginBottom: 11, position: 'relative', overflow: 'hidden',
-                background: 'linear-gradient(165deg, rgba(20,30,52,0.85), rgba(12,20,38,0.92))',
-                border: `1px solid ${accent}40`,
-              }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 3, background: accent }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
-                  <div style={{
-                    width: 48, height: 48, borderRadius: 14, flexShrink: 0, fontSize: 26,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: `${accent}14`, border: `1px solid ${accent}33`,
-                  }}>{c.cover_emoji}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title}</span>
-                    </div>
-                    <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, marginTop: 3 }}>
-                      {DIFF_LABEL[c.difficulty] ?? 'Curso'} · {lc.done}/{lc.total} lecciones
-                    </div>
-                    {c.node_id && nodes.get(c.node_id) && (
-                      <div style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.gold, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Target size={10} /> Desbloquea: {nodes.get(c.node_id)!.title}
-                      </div>
-                    )}
+          ) : (
+            <div style={{ position: 'relative' }}>
+              <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyan, marginBottom: 12 }}>◆ NÚCLEO DE APRENDIZAJE</div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>
+                <div style={{ width: 128, height: 116, clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)', background: `linear-gradient(165deg, ${C.cyan}, ${C.gold})`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 34px ${C.cyan}66`, animation: 'corePulse 3s ease-in-out infinite' }}>
+                  <div style={{ width: 120, height: 108, clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)', background: 'linear-gradient(165deg, rgba(10,17,32,0.97), rgba(6,12,24,0.99))', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyan, letterSpacing: 2 }}>NÚCLEO</span>
+                    <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 28, color: '#eaf4ff', lineHeight: 1 }}>{totalAll ? Math.round((totalDone / totalAll) * 100) : 0}%</span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 7.5, color: C.cyanDim, letterSpacing: 1 }}>{completed}/{courses.length} CURSOS</span>
                   </div>
-                  <span style={{
-                    fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: accent,
-                    padding: '3px 8px', borderRadius: 20, background: `${accent}14`, border: `1px solid ${accent}44`, flexShrink: 0,
-                  }}>{statusLabel}</span>
                 </div>
-                <div style={{ marginTop: 11 }}>
-                  <Bar pct={pct} color={accent} />
-                </div>
-              </button>
-            );
-          })}
+              </div>
+
+              <div style={{ position: 'relative', paddingTop: 4 }}>
+                <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 18, width: 2, transform: 'translateX(-50%)', backgroundImage: `repeating-linear-gradient(to bottom, ${C.cyan} 0, ${C.cyan} 5px, transparent 5px, transparent 12px)`, backgroundSize: '2px 12px', animation: 'busFlow 0.7s linear infinite', opacity: 0.55 }} />
+
+                {courses.map((c, i) => {
+                  const p = prog.get(c.id);
+                  const lc = counts.get(c.id) ?? { total: 0, done: 0 };
+                  const pct = lc.total ? Math.round((lc.done / lc.total) * 100) : 0;
+                  const done = p?.status === 'COMPLETED';
+                  const inProgress = !done && lc.done > 0;
+                  const accent = done ? C.green : inProgress ? C.cyan : C.gold;
+                  const statusLabel = done ? 'COMPLETADO' : inProgress ? 'EN CURSO' : 'NUEVO';
+                  const left = i % 2 === 0;
+                  return (
+                    <div key={c.id} style={{ position: 'relative', minHeight: 96, display: 'flex', alignItems: 'center', justifyContent: left ? 'flex-start' : 'flex-end' }}>
+                      <span style={{ position: 'absolute', top: '50%', height: 2, background: accent, boxShadow: `0 0 6px ${accent}`, left: left ? '44%' : '50%', width: '6%' }} />
+                      <span style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 13, height: 13, borderRadius: '50%', background: accent, border: '2px solid #060a12', boxShadow: `0 0 10px ${accent}`, zIndex: 3, animation: inProgress ? 'corePulse 1.8s ease-in-out infinite' : undefined }} />
+                      <button onClick={() => openCourse(c)} style={{
+                        width: '44%', textAlign: 'left', cursor: 'pointer', position: 'relative', zIndex: 2,
+                        borderRadius: 12, padding: 11,
+                        background: 'linear-gradient(165deg, rgba(20,30,52,0.92), rgba(12,20,38,0.96))',
+                        border: `1px solid ${accent}66`, boxShadow: `0 0 16px ${accent}26`,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 22, flexShrink: 0 }}>{c.cover_emoji}</span>
+                          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12.5, color: '#eaf4ff', lineHeight: 1.15 }}>{c.title}</span>
+                        </div>
+                        <div style={{ fontFamily: FONT.mono, fontSize: 7.5, color: accent, letterSpacing: 0.5, marginTop: 6 }}>{statusLabel} · {DIFF_LABEL[c.difficulty] ?? 'Curso'} · {lc.done}/{lc.total}</div>
+                        <div style={{ marginTop: 5 }}><Bar pct={pct} color={accent} /></div>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <style>{`
+                @keyframes busFlow { 0% { background-position: 0 0; } 100% { background-position: 0 12px; } }
+                @keyframes corePulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
+              `}</style>
+            </div>
+          )}
         </div>
         {coachOpen && <CoachModal onClose={() => setCoachOpen(false)} />}
       </div>
     );
   }
 
-  // ─── VISTA: detalle del curso (lecciones) ───────────────────────────
   if (view === 'course' && course) {
     const allDone = lessons.length > 0 && lessons.every(l => doneLessons.has(l.id));
     const pct = lessons.length ? Math.round((doneLessons.size / lessons.length) * 100) : 0;
@@ -392,6 +485,13 @@ export function AcademiaTab() {
                         <CheckCircle2 size={14} /> Completada
                       </span>
                     )}
+                    <div style={{ marginTop: 10 }}>
+                      <button onClick={() => setTutor(l)} style={{
+                        fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: C.gold,
+                        background: `${C.gold}14`, border: `1px solid ${C.gold}55`, borderRadius: 8, padding: '8px 14px',
+                        cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+                      }}><Sparkles size={14} /> PREGÚNTALE AL TUTOR IA</button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -424,11 +524,11 @@ export function AcademiaTab() {
         </div>
 
         <style>{`@keyframes acaIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+        {tutor && <TutorModal lesson={{ title: tutor.title, content: tutor.content }} onClose={() => setTutor(null)} />}
       </div>
     );
   }
 
-  // ─── VISTA: quiz ─────────────────────────────────────────────────────
   return (
     <div style={BASE.root}>
       <ScanlineOverlay />
