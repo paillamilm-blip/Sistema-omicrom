@@ -36,7 +36,8 @@ async function gemini(systemText: string, userText: string, jsonMode = true): Pr
         contents: [{ role: 'user', parts: [{ text: userText }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 1200,
+          maxOutputTokens: 2048,
+          thinkingConfig: { thinkingBudget: 0 },
           ...(jsonMode ? { responseMimeType: 'application/json' } : {}),
         },
       }),
@@ -116,7 +117,7 @@ Deno.serve(async (req) => {
 
       const raw = await gemini(sys, user, true);
       const exam = parseJson(raw);
-      if (!exam?.multiple_choice || !exam?.caso) return json({ error: 'No pude generar el examen. Reintenta.' }, 502);
+      if (!exam?.multiple_choice || !exam?.caso) return json({ error: 'No pude generar el examen. Reintenta.', detail: (raw ?? '').slice(0, 300) }, 502);
 
       // Guardar examen completo (con clave) en la sesion — no viaja al cliente.
       const { data: sess, error: se } = await admin
