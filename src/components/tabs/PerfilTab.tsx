@@ -17,7 +17,7 @@ import { CredentialReview } from '../perfil/CredentialReview';
 import { ProgressRadar } from '../shared/ProgressRadar';
 import { SimulatorChallenge } from '../shared/SimulatorChallenge';
 import {
-  ScanlineOverlay, CyberHeader, CyberButton,
+  ScanlineOverlay, CyberButton,
   CyberToast, Divider, ProgressBar,
 } from '../shared/CyberComponents';
 import { C, FONT, BASE, ANIM, GLOW, RADIUS, cx } from '../../theme';
@@ -124,7 +124,7 @@ function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: (
 function CredencialCard({
   initials, name, username, location, nodeType, nodeLevel, verified,
   reputacion, gemelo, tokens, pe, contratos, nextPe, tierProgress,
-  paused, onTogglePause, avatarUrl, uploading, onPickFile,
+  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit,
 }: {
   initials: string; name: string; username: string; location?: string;
   nodeType: string; nodeLevel: number; verified: boolean;
@@ -133,6 +133,7 @@ function CredencialCard({
   nextPe: number | null; tierProgress: number;
   paused: boolean; onTogglePause: () => void;
   avatarUrl?: string; uploading: boolean; onPickFile: (f: File) => void;
+  onEdit: () => void;
 }) {
   const nodeColor = NODE_COLOR[nodeType] ?? C.cyan;
   const rango = getRango(reputacion);
@@ -158,6 +159,21 @@ function CredencialCard({
         position: 'absolute', top: 0, left: 0, right: 0, height: 3,
         background: `linear-gradient(90deg, transparent, ${rango.color}, transparent)`,
       }} />
+
+      {/* Botón editar integrado en la tarjeta */}
+      <button
+        onClick={onEdit}
+        title="Editar mi credencial"
+        style={{
+          position: 'absolute', top: 12, right: 12, zIndex: 3,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 32, height: 32, borderRadius: 10,
+          background: 'rgba(255,255,255,0.06)', border: `1px solid ${rango.color}55`,
+          color: rango.color, cursor: 'pointer',
+        }}
+      >
+        <Edit3 size={15} />
+      </button>
 
       {/* Fila identidad */}
       <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
@@ -205,7 +221,7 @@ function CredencialCard({
         </div>
 
         {/* Nombre + meta */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, paddingRight: 30 }}>
           <div style={{
             fontFamily: FONT.display, fontWeight: 700, fontSize: 21,
             color: '#eaf4ff', lineHeight: 1.1, whiteSpace: 'nowrap',
@@ -443,7 +459,6 @@ export function PerfilTab() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [section,   setSection]   = useState<Section>('gemelo');
 
-  const nodeColor = NODE_COLOR[profile?.node_type ?? 'Nodo Operativo'] ?? C.cyan;
   const initials  = (profile?.full_name ?? profile?.username ?? 'U')
     .split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
   const avatarUrl = (profile as any)?.avatar_url as string | undefined;
@@ -533,25 +548,6 @@ export function PerfilTab() {
     <div style={BASE.root}>
       <ScanlineOverlay />
 
-      <CyberHeader
-        title="MI PERFIL"
-        subtitle="TU CREDENCIAL DIGITAL"
-        dotColor={nodeColor}
-        badge={
-          <button
-            onClick={() => setShowEdit(true)}
-            title="Editar perfil"
-            style={{
-              background: C.cyanGhost, border: `1px solid ${C.cyanDim}`,
-              borderRadius: 8, padding: 8, color: C.cyan,
-              cursor: 'pointer', display: 'flex',
-            }}
-          >
-            <Edit3 size={16} />
-          </button>
-        }
-      />
-
       <div style={cx(BASE.scrollArea, { padding: 14 })}>
 
         {audit && <AuditBanner audit={audit} onStart={startRedemption} />}
@@ -578,6 +574,7 @@ export function PerfilTab() {
             avatarUrl={avatarUrl}
             uploading={uploadingAvatar}
             onPickFile={handleAvatarUpload}
+            onEdit={() => setShowEdit(true)}
           />
         )}
 
