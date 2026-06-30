@@ -518,7 +518,7 @@ export function MaxSkillTab() {
                     fill={color}
                     opacity={locked ? 0.25 : 0.55}
                   >
-                    {node.pe_reward} PE {'★'.repeat(node.difficulty_level)}
+                    {'+' + node.pe_reward + ' PE · ' + node.estimated_hours + 'h '}{'★'.repeat(node.difficulty_level)}
                   </text>
                 </g>
               );
@@ -555,6 +555,17 @@ export function MaxSkillTab() {
             ))}
           </div>
 
+
+          {/* Lo que ganas al completar el nodo */}
+          <div style={{ borderRadius: 10, padding: '12px 14px', marginBottom: 12, background: 'rgba(57,255,20,0.07)', border: `1px solid ${COLORS.greenDim}` }}>
+            <div style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, letterSpacing: 1.5, color: COLORS.green, marginBottom: 8 }}>⬡ LO QUE GANAS AL COMPLETARLO</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, color: '#dbeafe' }}>
+              <div>⚡ <strong style={{ color: COLORS.gold }}>+{selectedNode.pe_reward} PE</strong> de experiencia</div>
+              <div>🧬 Sube tu <strong style={{ color: COLORS.cyan }}>Fundamento</strong> en el Gemelo Digital</div>
+              <div>🎯 Validas la habilidad <strong style={{ color: COLORS.green }}>{selectedNode.title}</strong></div>
+              <div>⏱️ Inversión: <strong>{selectedNode.estimated_hours}h</strong> · Dificultad {'·'.repeat(selectedNode.difficulty_level)}</div>
+            </div>
+          </div>
 
           {/* Barra de progreso del nodo */}
           <div style={styles.progressBox}>
