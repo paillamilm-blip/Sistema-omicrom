@@ -1,12 +1,12 @@
 // components/perfil/RedSocial.tsx
 // Red de contactos de Ómicrom: compartir credencial (QR + link),
-// ver credencial pública de otra persona, conectar (con match mutuo)
-// y bandeja de solicitudes + mi red.
+// ver credencial pública de otra persona, conectar (con match mutuo),
+// bandeja de solicitudes + mi red, y chat directo (DM) entre conexiones.
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Share2, Copy, Check, QrCode, UserPlus, Users, Clock,
-  BadgeCheck, MapPin, Shield, Loader2,
+  BadgeCheck, MapPin, Shield, Loader2, MessageCircle, Send,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
@@ -124,7 +124,6 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
           Muestra este QR en persona o envía el link. Quien lo abra verá tu Gemelo Digital y podrá conectar contigo.
         </p>
 
-        {/* QR */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
           <div style={{ padding: 12, borderRadius: 16, background: '#fff', boxShadow: `0 0 22px ${C.cyan}33` }}>
             <img
@@ -144,7 +143,6 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
           </span>
         </div>
 
-        {/* Acciones */}
         <button
           onClick={nativeShare}
           style={{
@@ -290,10 +288,8 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
 
       {!loading && cred && r && gemelo && (
         <div style={{ padding: 20 }}>
-          {/* Accent bar */}
           <div style={{ height: 3, borderRadius: 3, marginBottom: 16, background: `linear-gradient(90deg, transparent, ${r.color}, transparent)` }} />
 
-          {/* Identidad */}
           <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 16 }}>
             <div style={{
               width: 72, height: 72, borderRadius: 18, overflow: 'hidden', flexShrink: 0,
@@ -339,7 +335,6 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             </div>
           </div>
 
-          {/* Reputación + radar */}
           <div style={{
             padding: '12px 8px 4px', borderRadius: RADIUS.lg, marginBottom: 16,
             background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
@@ -360,7 +355,6 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             <ProgressRadar gemelo={gemelo} size="sm" showHeader={false} showScores={false} showAlert={false} showFooter={false} />
           </div>
 
-          {/* Botón conectar / estado */}
           {isSelf ? (
             <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, padding: 8 }}>
               Esta es tu propia credencial
@@ -436,7 +430,7 @@ export function PublicProfileGate() {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// 4) PANEL "MI RED" — solicitudes recibidas + conexiones aceptadas
+// 4) PANEL "MI RED" + chat directo (DM)
 // ════════════════════════════════════════════════════════════════════════════
 interface Req { connection_id: string; user_id: string; username: string; full_name: string; avatar_url: string | null; node_type: string; reputation_score: number; }
 
@@ -468,11 +462,134 @@ function PersonRow({ name, username, avatar, rep, right }: {
   );
 }
 
+interface DMsg { id: string; sender_id: string; recipient_id: string; content: string; created_at: string; }
+
+export function DirectChatModal({ other, onClose }: {
+  other: { id: string; name: string; username: string; avatar: string | null };
+  onClose: () => void;
+}) {
+  const { profile } = useApp();
+  const [msgs, setMsgs] = useState<DMsg[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.rpc('get_direct_thread', { p_other: other.id });
+    setMsgs((data as DMsg[]) ?? []);
+    setLoading(false);
+    supabase.rpc('mark_dm_read', { p_other: other.id });
+  }, [other.id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!profile) return;
+    const ch = supabase.channel(`dm-${profile.id}`)
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${profile.id}` },
+        (payload) => {
+          const m = payload.new as DMsg;
+          if (m.sender_id === other.id) {
+            setMsgs(prev => prev.some(x => x.id === m.id) ? prev : [...prev, m]);
+            supabase.rpc('mark_dm_read', { p_other: other.id });
+          }
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [profile, other.id]);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs]);
+
+  async function send() {
+    const content = input.trim();
+    if (!content || !profile || sending) return;
+    setInput('');
+    setSending(true);
+    const opt: DMsg = { id: crypto.randomUUID(), sender_id: profile.id, recipient_id: other.id, content, created_at: new Date().toISOString() };
+    setMsgs(prev => [...prev, opt]);
+    try {
+      await supabase.rpc('send_direct_message', { p_recipient: other.id, p_content: content });
+      await load();
+    } catch {
+      setInput(content);
+      setMsgs(prev => prev.filter(x => x.id !== opt.id));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '92vh' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px', borderBottom: `1px solid ${C.cyanFaint}` }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 11, overflow: 'hidden', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: other.avatar ? '#0a1120' : `linear-gradient(135deg, ${C.cyan}, ${C.green})`,
+            color: '#060a12', fontWeight: 700, fontSize: 14, fontFamily: FONT.display,
+          }}>
+            {other.avatar ? <img src={other.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initialsOf(other.name)}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>{other.name}</div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>@{other.username} · mensaje directo</div>
+          </div>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div style={{ flex: 1, minHeight: 220, maxHeight: '58vh', overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 24, fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>CARGANDO...</div>
+          ) : msgs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 24, fontFamily: FONT.body, fontSize: 12.5, color: C.cyanDim }}>
+              Inicia la conversación con {other.name} 👋
+            </div>
+          ) : msgs.map((m, i) => {
+            const own = m.sender_id === profile?.id;
+            return (
+              <div key={`${m.id}-${i}`} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  maxWidth: '82%', padding: '9px 13px', borderRadius: 12,
+                  background: own ? 'rgba(0,240,255,0.12)' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${own ? C.cyanDim : 'rgba(255,255,255,0.08)'}`,
+                  borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3,
+                }}>
+                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#dbeafe', lineHeight: 1.4 }}>{m.content}</p>
+                </div>
+              </div>
+            );
+          })}
+          <div ref={bottomRef} />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
+          <input
+            type="text" value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) send(); }}
+            placeholder="Escribe un mensaje..."
+            style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 14, outline: 'none' }}
+          />
+          <button onClick={send} disabled={!input.trim() || sending}
+            style={{ width: 44, height: 44, borderRadius: 11, background: C.cyan, border: 'none', color: '#021018', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
+            <Send size={16} />
+          </button>
+        </div>
+      </div>
+    </Overlay>
+  );
+}
+
 export function RedPanel() {
   const [requests, setRequests] = useState<Req[]>([]);
   const [contacts, setContacts] = useState<Req[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [dmWith, setDmWith] = useState<Req | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -528,7 +645,6 @@ export function RedPanel() {
 
       {!loading && (
         <>
-          {/* Solicitudes recibidas */}
           {requests.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.gold, letterSpacing: 1.5, marginBottom: 4 }}>
@@ -563,7 +679,6 @@ export function RedPanel() {
             </div>
           )}
 
-          {/* Conexiones */}
           <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, letterSpacing: 1.5, marginBottom: 4 }}>
             CONECTADOS ({contacts.length})
           </div>
@@ -574,10 +689,29 @@ export function RedPanel() {
           ) : (
             contacts.map(c => (
               <PersonRow key={c.connection_id} name={c.full_name} username={c.username} avatar={c.avatar_url} rep={c.reputation_score}
-                right={<Users size={15} style={{ color: C.green }} />} />
+                right={
+                  <button
+                    onClick={() => setDmWith(c)}
+                    title={`Enviar mensaje a ${c.full_name}`}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 9, cursor: 'pointer',
+                      background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan,
+                      fontFamily: FONT.mono, fontSize: 10, letterSpacing: 0.5,
+                    }}
+                  >
+                    <MessageCircle size={14} /> MENSAJE
+                  </button>
+                } />
             ))
           )}
         </>
+      )}
+
+      {dmWith && (
+        <DirectChatModal
+          other={{ id: dmWith.user_id, name: dmWith.full_name, username: dmWith.username, avatar: dmWith.avatar_url }}
+          onClose={() => setDmWith(null)}
+        />
       )}
     </div>
   );
