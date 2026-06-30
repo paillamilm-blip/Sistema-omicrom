@@ -253,36 +253,20 @@ export function MaxSkillTab() {
 
   return (
     <div style={styles.root}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <div style={styles.pulseWrap}>
-            <div style={styles.pulseDot} />
-          </div>
-          <div>
-            <div style={styles.headerTitle}>ÁRBOL DE HABILIDADES</div>
-            <div style={styles.headerSub}>SISTEMA ÓMICRON // PROTOCOLO N1</div>
+      {/* Núcleo de dominio (unificado con Academia) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderBottom: `1px solid ${COLORS.cyanFaint}` }}>
+        <div style={{ width: 66, height: 60, flexShrink: 0, clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)', background: `linear-gradient(165deg, ${COLORS.cyan}, ${COLORS.gold})`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 22px ${COLORS.cyan}55` }}>
+          <div style={{ width: 60, height: 54, clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 18, color: '#eaf4ff', lineHeight: 1 }}>{maxPe > 0 ? Math.round((totalPe / maxPe) * 100) : 0}%</span>
           </div>
         </div>
-        <div style={styles.peCounter}>
-          <span style={styles.peValue}>{totalPe}</span>
-          <span style={styles.peSuffix}> PE</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 15, color: '#eaf4ff', letterSpacing: 0.5 }}>NÚCLEO DE DOMINIO</div>
+          <div style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, color: COLORS.cyanDim, marginTop: 1 }}>Tu mapa de habilidades · {totalPe}/{maxPe} PE</div>
+          <div style={{ height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginTop: 7 }}>
+            <div style={{ height: '100%', width: maxPe > 0 ? `${Math.round((totalPe / maxPe) * 100)}%` : '0%', background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.cyan})`, borderRadius: 4, transition: 'width 0.5s ease' }} />
+          </div>
         </div>
-      </div>
-
-      {/* Barra de PE */}
-      <div style={styles.peBarWrap}>
-        <div style={styles.peBarBg}>
-          <div
-            style={{
-              ...styles.peBarFill,
-              width: maxPe > 0 ? `${Math.round((totalPe / maxPe) * 100)}%` : '0%',
-            }}
-          />
-        </div>
-        <span style={styles.peBarLabel}>
-          {maxPe > 0 ? Math.round((totalPe / maxPe) * 100) : 0}% COMPLETADO
-        </span>
       </div>
 
 
