@@ -6,62 +6,48 @@ import { Play, Trophy, BookOpen, ArrowRight } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
 import { SimulatorChallenge } from '../shared/SimulatorChallenge';
+import { CourseFlowModal } from '../shared/CourseFlow';
 import type { SkillTreeNode, UserSkillProgress, SkillTest } from '../../types';
 
-// ─────────────────────────────────────────────
-// Constantes de diseño
-// ─────────────────────────────────────────────
 const NODE_W = 128;
 const NODE_H = 52;
-const TIER_GAP_Y = 110;   // espacio vertical entre tiers
-const PEER_GAP_X = 14;    // espacio horizontal entre nodos del mismo tier
+const TIER_GAP_Y = 110;
+const PEER_GAP_X = 14;
 
-// Paleta v5.0 "Neo-Académico Holográfico":
-// cyan eléctrico (flujos activos) · esmeralda (validado) ·
-// ámbar (simulador/recompensas) · azul acero (jerarquía profunda).
 const COLORS = {
   cyan:       '#00F0FF',
   cyanDim:    'rgba(0,240,255,0.40)',
   cyanFaint:  'rgba(0,240,255,0.12)',
   gold:       '#F59E0B',
   goldDim:    'rgba(245,158,11,0.45)',
-  purple:     '#005F73',   // azul acero industrial (jerarquía profunda)
+  purple:     '#005F73',
   purpleDim:  'rgba(0,95,115,0.55)',
   green:      '#39FF14',
   greenDim:   'rgba(57,255,20,0.40)',
   locked:     'rgba(255,255,255,0.04)',
   lockedBorder: 'rgba(255,255,255,0.10)',
-  bg:         '#020613',   // void azul profundo
-  panel:      'rgba(8,16,38,0.55)',   // glassmorphism traslúcido
+  bg:         '#020613',
+  panel:      'rgba(8,16,38,0.55)',
   grid:       'rgba(0,240,255,0.05)',
 } as const;
 
-
-// Color por status
 function nodeColor(status: string, depth: number) {
   if (status === 'VALIDATED' || status === 'MASTERED') return COLORS.green;
   if (status === 'IN_PROGRESS' || status === 'AVAILABLE') return COLORS.cyan;
-  // locked — varía por profundidad para jerarquía visual
   if (depth === 0) return COLORS.cyan;
   if (depth === 1) return COLORS.cyanDim;
   if (depth === 2) return COLORS.gold;
   return COLORS.purple;
 }
 
-// ─────────────────────────────────────────────
-// Tipos internos para layout
-// ─────────────────────────────────────────────
 interface LayoutNode {
   node: SkillTreeNode;
-  x: number;      // centro x del nodo
-  y: number;      // top y del nodo
+  x: number;
+  y: number;
   depth: number;
   children: LayoutNode[];
 }
 
-// ─────────────────────────────────────────────
-// Algoritmo de layout (árbol top-down)
-// ─────────────────────────────────────────────
 function buildLayout(
   roots: SkillTreeNode[],
   allNodes: SkillTreeNode[],
@@ -70,7 +56,6 @@ function buildLayout(
 ): { nodes: LayoutNode[]; totalWidth: number } {
   const result: LayoutNode[] = [];
   let curX = startX;
-
 
   for (const root of roots) {
     const children = allNodes.filter(n => n.parent_node_id === root.id);
@@ -100,7 +85,6 @@ function buildLayout(
   return { nodes: result, totalWidth };
 }
 
-// Aplanar árbol de layout en lista
 function flattenLayout(nodes: LayoutNode[]): LayoutNode[] {
   const out: LayoutNode[] = [];
   for (const n of nodes) {
@@ -110,19 +94,14 @@ function flattenLayout(nodes: LayoutNode[]): LayoutNode[] {
   return out;
 }
 
-// Calcular dimensiones totales del SVG
 function svgDimensions(flat: LayoutNode[]) {
   const maxX = Math.max(...flat.map(n => n.x + NODE_W / 2));
   const maxY = Math.max(...flat.map(n => n.y + NODE_H));
   return { width: maxX + 20, height: maxY + 40 };
 }
 
-
-// ─────────────────────────────────────────────
-// Componente principal
-// ─────────────────────────────────────────────
 export function MaxSkillTab() {
-  const { profile, setActiveTab } = useApp();
+  const { profile } = useApp();
   const [nodes, setNodes]             = useState<SkillTreeNode[]>([]);
   const [progress, setProgress]       = useState<Map<string, UserSkillProgress>>(new Map());
   const [isLoading, setIsLoading]     = useState(true);
@@ -131,9 +110,9 @@ export function MaxSkillTab() {
   const [simulatorNode, setSimulatorNode] = useState<string>('');
   const [lastPeEarned, setLastPeEarned]   = useState<number | null>(null);
   const [courseByNode, setCourseByNode]   = useState<Map<string, string>>(new Map());
+  const [courseNode, setCourseNode]       = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Cargar nodos
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
@@ -150,7 +129,6 @@ export function MaxSkillTab() {
     load();
   }, []);
 
-  // Mapa nodo -> curso de Academia que lo desbloquea (cross-link)
   useEffect(() => {
     supabase.from('academy_courses').select('title,node_id').eq('is_published', true)
       .then(({ data }) => {
@@ -162,8 +140,6 @@ export function MaxSkillTab() {
       });
   }, []);
 
-
-  // Cargar progreso + realtime
   useEffect(() => {
     if (!profile?.id) return;
     const load = async () => {
@@ -191,8 +167,6 @@ export function MaxSkillTab() {
     return () => { supabase.removeChannel(channel); };
   }, [profile?.id]);
 
-  // Estado efectivo: si no hay progreso, los nodos raíz (o hijos de nodos
-  // ya validados) quedan AVAILABLE (brillan y son clickeables). El resto LOCKED.
   const getStatus = useCallback((id: string): string => {
     const p = progress.get(id);
     if (p) return p.status;
@@ -205,7 +179,6 @@ export function MaxSkillTab() {
     return (parentStatus === 'VALIDATED' || parentStatus === 'MASTERED') ? 'AVAILABLE' : 'LOCKED';
   }, [progress, nodes]);
   const getPercentage = (id: string) => progress.get(id)?.progress_percentage || 0;
-
 
   const handleStartChallenge = useCallback(async (node: SkillTreeNode) => {
     const { data, error } = await supabase
@@ -220,7 +193,6 @@ export function MaxSkillTab() {
     setSimulatorNode(node.id);
   }, []);
 
-  // Layout
   const roots = useMemo(() => nodes.filter(n => !n.parent_node_id), [nodes]);
   const { nodes: layoutRoots } = useMemo(
     () => buildLayout(roots, nodes, 0, 20),
@@ -229,7 +201,6 @@ export function MaxSkillTab() {
   const flat    = useMemo(() => flattenLayout(layoutRoots), [layoutRoots]);
   const { width: svgW, height: svgH } = useMemo(() => svgDimensions(flat), [flat]);
 
-  // PE totales del usuario
   const totalPe    = useMemo(() =>
     [...progress.values()]
       .filter(p => p.status === 'VALIDATED' || p.status === 'MASTERED')
@@ -238,8 +209,6 @@ export function MaxSkillTab() {
   );
   const maxPe = useMemo(() => nodes.reduce((s, n) => s + n.pe_reward, 0), [nodes]);
 
-
-  // ─── Render ───────────────────────────────
   if (isLoading) {
     return (
       <div style={styles.loadingWrap}>
@@ -253,7 +222,6 @@ export function MaxSkillTab() {
 
   return (
     <div style={styles.root}>
-      {/* Núcleo de dominio (unificado con Academia) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderBottom: `1px solid ${COLORS.cyanFaint}` }}>
         <div style={{ width: 66, height: 60, flexShrink: 0, clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)', background: `linear-gradient(165deg, ${COLORS.cyan}, ${COLORS.gold})`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 22px ${COLORS.cyan}55` }}>
           <div style={{ width: 60, height: 54, clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -269,8 +237,6 @@ export function MaxSkillTab() {
         </div>
       </div>
 
-
-      {/* Reto de rango */}
       <div style={styles.rangeCard}>
         <div style={styles.rangeCardInner}>
           <div style={styles.rangeIcon}>⚡</div>
@@ -285,7 +251,6 @@ export function MaxSkillTab() {
         </button>
       </div>
 
-      {/* Árbol SVG */}
       <div style={styles.treeLabel}>RUTAS DE COMPETENCIA</div>
       <div style={styles.treeScroll} ref={scrollRef}>
         {flat.length === 0 ? (
@@ -298,8 +263,6 @@ export function MaxSkillTab() {
             height={svgH + 20}
             style={{ display: 'block', overflow: 'visible' }}
           >
-
-
             <defs>
               <pattern id="cp-grid" width="24" height="24" patternUnits="userSpaceOnUse">
                 <path d="M 24 0 L 0 0 0 24" fill="none" stroke={COLORS.grid} strokeWidth="0.5" />
@@ -321,7 +284,6 @@ export function MaxSkillTab() {
               </pattern>
             </defs>
 
-            {/* Fondo grilla */}
             <rect
               width={Math.max(svgW, 320)}
               height={svgH + 20}
@@ -335,8 +297,6 @@ export function MaxSkillTab() {
               rx="10"
             />
 
-
-            {/* Ramas (conectores padre→hijo) */}
             {flat.map(layoutNode =>
               layoutNode.children.map(child => {
                 const px = layoutNode.x;
@@ -366,7 +326,6 @@ export function MaxSkillTab() {
               })
             )}
 
-            {/* Puntos de unión en bifurcaciones */}
             {flat.map(layoutNode =>
               layoutNode.children.length > 1 ? (
                 <circle
@@ -380,8 +339,6 @@ export function MaxSkillTab() {
               ) : null
             )}
 
-
-            {/* Nodos */}
             {flat.map(({ node, x, y, depth }) => {
               const status  = getStatus(node.id);
               const pct     = getPercentage(node.id);
@@ -403,7 +360,6 @@ export function MaxSkillTab() {
                   style={{ cursor: 'pointer' }}
                   onClick={() => setSelectedNode(isSelected ? null : node)}
                 >
-                  {/* Sombra/glow exterior si seleccionado */}
                   {isSelected && (
                     <rect
                       x={nodeX - 3}
@@ -419,8 +375,6 @@ export function MaxSkillTab() {
                     />
                   )}
 
-
-                  {/* Fondo del nodo */}
                   <rect
                     x={nodeX}
                     y={y}
@@ -434,7 +388,6 @@ export function MaxSkillTab() {
                     opacity={locked ? 0.7 : 1}
                   />
 
-                  {/* Hatch para locked */}
                   {locked && (
                     <rect
                       x={nodeX}
@@ -446,7 +399,6 @@ export function MaxSkillTab() {
                     />
                   )}
 
-                  {/* Barra superior de color */}
                   <rect
                     x={nodeX}
                     y={y}
@@ -457,8 +409,6 @@ export function MaxSkillTab() {
                     opacity={locked ? 0.3 : 0.85}
                   />
 
-
-                  {/* Barra de progreso (si in_progress) */}
                   {status === 'IN_PROGRESS' && pct > 0 && (
                     <>
                       <rect
@@ -480,7 +430,6 @@ export function MaxSkillTab() {
                     </>
                   )}
 
-                  {/* Icono de lock o check */}
                   {locked ? (
                     <text x={nodeX + 10} y={y + 20} fontSize="10" fill={color}
                       style={{ animation: 'lockPulse 2.2s ease-in-out infinite' }}>
@@ -492,8 +441,6 @@ export function MaxSkillTab() {
                     </text>
                   ) : null}
 
-
-                  {/* Título del nodo */}
                   <text
                     x={x}
                     y={y + (status === 'IN_PROGRESS' && pct > 0 ? NODE_H / 2 - 4 : NODE_H / 2 + 2)}
@@ -508,7 +455,6 @@ export function MaxSkillTab() {
                     {node.title.toUpperCase()}
                   </text>
 
-                  {/* PE + estrellas */}
                   <text
                     x={x}
                     y={y + NODE_H - 10}
@@ -527,8 +473,6 @@ export function MaxSkillTab() {
         )}
       </div>
 
-
-      {/* Panel de detalle del nodo seleccionado */}
       {selectedNode && (
         <div style={styles.detailPanel}>
           <div style={styles.detailHeader}>
@@ -543,7 +487,7 @@ export function MaxSkillTab() {
 
           <div style={styles.detailGrid}>
             {[
-              { label: 'Dificultad', value: '⭐'.repeat(selectedNode.difficulty_level) },
+              { label: 'Dificultad', value: '·'.repeat(selectedNode.difficulty_level) },
               { label: 'Recompensa', value: `${selectedNode.pe_reward} PE` },
               { label: 'Categoría', value: selectedNode.category },
               { label: 'Horas Est.', value: `${selectedNode.estimated_hours}h` },
@@ -555,8 +499,6 @@ export function MaxSkillTab() {
             ))}
           </div>
 
-
-          {/* Lo que ganas al completar el nodo */}
           <div style={{ borderRadius: 10, padding: '12px 14px', marginBottom: 12, background: 'rgba(57,255,20,0.07)', border: `1px solid ${COLORS.greenDim}` }}>
             <div style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, letterSpacing: 1.5, color: COLORS.green, marginBottom: 8 }}>⬡ LO QUE GANAS AL COMPLETARLO</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, color: '#dbeafe' }}>
@@ -567,7 +509,6 @@ export function MaxSkillTab() {
             </div>
           </div>
 
-          {/* Barra de progreso del nodo */}
           <div style={styles.progressBox}>
             <div style={styles.progressRow}>
               <span style={styles.progressStatus}>{getStatus(selectedNode.id)}</span>
@@ -599,7 +540,7 @@ export function MaxSkillTab() {
 
           {courseByNode.get(selectedNode.id) && (
             <button
-              onClick={() => setActiveTab('academia')}
+              onClick={() => setCourseNode(selectedNode.id)}
               style={{
                 width: '100%', marginTop: 10, padding: '11px', borderRadius: 10, cursor: 'pointer',
                 background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.45)', color: '#F59E0B',
@@ -607,7 +548,7 @@ export function MaxSkillTab() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >
-              <BookOpen size={14} /> APRENDE ESTO EN ACADEMIA
+              <BookOpen size={14} /> APRENDER ESTE NODO
             </button>
           )}
 
@@ -616,9 +557,9 @@ export function MaxSkillTab() {
               const st = getStatus(selectedNode.id);
               const validated = st === 'VALIDATED' || st === 'MASTERED';
               const steps = [{ k: 'APRENDE', on: true, col: '#00F0FF' }, { k: 'DESAFÍA', on: st !== 'LOCKED', col: '#00F0FF' }, { k: 'VALIDA', on: validated, col: '#39FF14' }];
-              return steps.map((s2, i) => (
-                <span key={s2.k} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ color: s2.on ? s2.col : 'rgba(255,255,255,0.25)' }}>{s2.k}</span>
+              return steps.map((s, i) => (
+                <span key={s.k} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ color: s.on ? s.col : 'rgba(255,255,255,0.25)' }}>{s.k}</span>
                   {i < 2 && <ArrowRight size={9} style={{ color: 'rgba(255,255,255,0.25)' }} />}
                 </span>
               ));
@@ -627,7 +568,6 @@ export function MaxSkillTab() {
         </div>
       )}
 
-      {/* Toast PE */}
       {lastPeEarned !== null && (
         <div style={styles.peToast}>
           <Trophy size={16} />
@@ -635,8 +575,6 @@ export function MaxSkillTab() {
         </div>
       )}
 
-
-      {/* Simulador */}
       {simulatorTest && (
         <SimulatorChallenge
           test={simulatorTest}
@@ -648,13 +586,18 @@ export function MaxSkillTab() {
           }}
         />
       )}
+
+      {courseNode && (
+        <CourseFlowModal
+          nodeId={courseNode}
+          onClose={() => setCourseNode(null)}
+          onValidated={() => {}}
+        />
+      )}
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// Estilos en objeto (compatible sin Tailwind)
-// ─────────────────────────────────────────────
 const FONT_MONO = "'Share Tech Mono', 'Courier New', monospace";
 const FONT_RAJDHANI = "'Rajdhani', sans-serif";
 
@@ -676,8 +619,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: COLORS.bg,
     gap: 12,
   },
-
-
   spinnerBox: {
     width: 44,
     height: 44,
@@ -701,69 +642,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     color: COLORS.cyanDim,
     letterSpacing: 2,
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '12px 16px',
-    borderBottom: `1px solid rgba(0,240,255,0.1)`,
-    background: 'rgba(0,240,255,0.02)',
-    flexShrink: 0,
-  },
-  headerLeft: { display: 'flex', alignItems: 'center', gap: 10 },
-  pulseWrap: { display: 'flex', alignItems: 'center' },
-
-
-  pulseDot: {
-    width: 8,
-    height: 8,
-    borderRadius: '50%',
-    background: COLORS.cyan,
-    boxShadow: `0 0 6px ${COLORS.cyan}`,
-    animation: 'pulse-cp 1.5s ease-in-out infinite',
-  },
-  headerTitle: { fontFamily: FONT_MONO, fontSize: 12, color: COLORS.cyan, letterSpacing: 2 },
-  headerSub: {
-    fontFamily: FONT_MONO,
-    fontSize: 9,
-    color: 'rgba(0,240,255,0.35)',
-    letterSpacing: 1,
-    marginTop: 2,
-  },
-  peCounter: { fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 16, color: COLORS.gold },
-  peValue: { color: COLORS.gold },
-  peSuffix: { color: COLORS.goldDim, fontSize: 12 },
-  peBarWrap: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '6px 16px',
-    borderBottom: `1px solid rgba(0,240,255,0.06)`,
-    flexShrink: 0,
-  },
-  peBarBg: {
-    flex: 1,
-    height: 3,
-    background: 'rgba(0,240,255,0.08)',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  peBarFill: {
-    height: '100%',
-    background: COLORS.cyan,
-    borderRadius: 2,
-    boxShadow: `0 0 6px ${COLORS.cyan}`,
-    transition: 'width 0.4s ease',
-  },
-
-
-  peBarLabel: {
-    fontFamily: FONT_MONO,
-    fontSize: 9,
-    color: 'rgba(0,240,255,0.35)',
-    letterSpacing: 1,
-    whiteSpace: 'nowrap',
   },
   rangeCard: {
     margin: '12px 14px 8px',
@@ -798,8 +676,6 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: 0.5,
     animation: 'amberBreathe 2.8s ease-in-out infinite',
   },
-
-
   treeLabel: {
     fontFamily: FONT_MONO,
     fontSize: 9,
@@ -841,8 +717,6 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 3,
     maxWidth: '80%',
   },
-
-
   closeBtn: {
     background: 'none',
     border: 'none',
@@ -877,8 +751,6 @@ const styles: Record<string, React.CSSProperties> = {
   progressRow: { display: 'flex', justifyContent: 'space-between', marginBottom: 6 },
   progressStatus: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.cyan, letterSpacing: 1 },
   progressPct: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.cyanDim },
-
-
   progressBg: {
     height: 4,
     background: 'rgba(0,240,255,0.1)',
