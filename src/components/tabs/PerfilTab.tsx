@@ -1,8 +1,14 @@
 // components/tabs/PerfilTab.tsx
-// Sistema Ómicron — Perfil · Industrial 5.0 / Cyberpunk
+// Sistema Ómicrom — Perfil · Credencial Digital
+// Rediseño: el perfil es una TARJETA DE PRESENTACIÓN que cabe en el celular,
+// con el radar del Gemelo Digital como protagonista y un certificado claro
+// de "para qué contratos califica" el nodo.
 
 import { useState, useEffect, useCallback } from 'react';
-import { LogOut, Edit3, Shield, TrendingUp, Award, AlertTriangle, Lock, MapPin, Zap, Camera, GraduationCap } from 'lucide-react';
+import {
+  LogOut, Edit3, Shield, TrendingUp, Award, AlertTriangle, Lock,
+  MapPin, Zap, Camera, GraduationCap, BadgeCheck, Briefcase,
+} from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp, useGemeloDigital } from '../../store/AppContext';
 import { EditProfileModal } from '../perfil/EditProfileModal';
@@ -11,24 +17,23 @@ import { CredentialReview } from '../perfil/CredentialReview';
 import { ProgressRadar } from '../shared/ProgressRadar';
 import { SimulatorChallenge } from '../shared/SimulatorChallenge';
 import {
-  ScanlineOverlay, CyberHeader, PeBar, CyberCard,
-  StatGrid, StatCard, SectionLabel, CyberButton,
-  LoadingScreen, NodeBadge, ProgressBar, CyberToast, Divider,
+  ScanlineOverlay, CyberHeader, CyberButton,
+  CyberToast, Divider, ProgressBar,
 } from '../shared/CyberComponents';
-import { C, FONT, FONT_STYLE, BASE, ANIM, GLOW, RADIUS, cx } from '../../theme';
+import { C, FONT, BASE, ANIM, GLOW, RADIUS, cx } from '../../theme';
 import type { SkillTest } from '../../types';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 const NODE_COLOR: Record<string, string> = {
-  'Nodo Operativo': C.cyan,
-  'Nodo Core':      C.gold,
-  'Nodo Arquitecto':C.green,
-  'Nodo Fundador':  C.purple,
+  'Nodo Operativo':  C.cyan,
+  'Nodo Core':       C.gold,
+  'Nodo Arquitecto': C.green,
+  'Nodo Fundador':   C.purple,
 };
 const TIERS = [
-  { name: 'N1 · OPERATIVO',  min: 0    },
-  { name: 'N2 · CORE',       min: 500  },
-  { name: 'N3 · ARQUITECTO', min: 2000 },
+  { name: 'N1',  min: 0    },
+  { name: 'N2',  min: 500  },
+  { name: 'N3',  min: 2000 },
 ];
 const CAPABILITIES = [
   { lvl: 1, name: 'ESTUDIANTE',  tag: 'N1', scope: 'Nivelación · micro-trabajos · dudas rápidas', col: C.cyan   },
@@ -36,14 +41,42 @@ const CAPABILITIES = [
   { lvl: 3, name: 'ARQUITECTO',  tag: 'N3', scope: 'Proyectos críticos · arbitraje · staking',    col: C.purple },
 ];
 
-type Section = 'gemelo' | 'credenciales' | 'capacidades';
-const SECTIONS: { id: Section; label: string; icon: any }[] = [
-  { id: 'gemelo',       label: 'GEMELO',       icon: TrendingUp },
-  { id: 'credenciales', label: 'CREDENCIALES', icon: GraduationCap },
-  { id: 'capacidades',  label: 'CAPACIDADES',  icon: Shield },
+// Los 4 ejes explicados en lenguaje simple (anti-jerga)
+const EJES = [
+  { key: 'execution'    as const, label: 'Ejecución',    desc: 'Qué tan rápido y bien entregas tus contratos',          color: '#00F0FF' },
+  { key: 'quality'      as const, label: 'Calidad',      desc: 'Las calificaciones con estrellas de tus clientes',       color: '#0a8ba3' },
+  { key: 'transcendence'as const, label: 'Trascendencia',desc: 'El conocimiento que compartes (Bóveda y mentorías)',    color: '#F59E0B' },
+  { key: 'foundation'   as const, label: 'Fundamento',   desc: 'Tu dominio teórico y los cursos de la Academia',         color: '#39FF14' },
 ];
 
-// ─── Corners animados ─────────────────────────────────────────────────────────
+// ─── Rango + para qué contratos califica (la "certificación") ───────────────────
+function getRango(rep: number) {
+  if (rep >= 80) return {
+    label: 'SENIOR', emoji: '🏆', color: C.green,
+    califica: 'Contratos de alto rango · proyectos críticos · arbitraje · staking',
+  };
+  if (rep >= 70) return {
+    label: 'AVANZADO', emoji: '⚡', color: C.cyan,
+    califica: 'Contratos de empresa · pasantías · docencia',
+  };
+  if (rep >= 50) return {
+    label: 'INTERMEDIO', emoji: '🔷', color: C.gold,
+    califica: 'Contratos estándar · micro-trabajos · colaboraciones',
+  };
+  return {
+    label: 'EN FORMACIÓN', emoji: '🌱', color: C.purple,
+    califica: 'Nivelación · micro-trabajos · dudas rápidas',
+  };
+}
+
+const SECTIONS = [
+  { id: 'gemelo'       as const, label: 'GEMELO',       icon: TrendingUp },
+  { id: 'credenciales' as const, label: 'CV / TÍTULOS', icon: GraduationCap },
+  { id: 'capacidades'  as const, label: 'CAPACIDADES',  icon: Shield },
+];
+type Section = (typeof SECTIONS)[number]['id'];
+
+// ─── Corners animados ───────────────────────────────────────────────────────────
 function Corners({ color, size = 14 }: { color: string; size?: number }) {
   const b: React.CSSProperties = {
     position: 'absolute', width: size, height: size, pointerEvents: 'none',
@@ -59,47 +92,25 @@ function Corners({ color, size = 14 }: { color: string; size?: number }) {
   );
 }
 
-// ─── Decorative hex badge ─────────────────────────────────────────────────────
-function HexBadge({ label, color }: { label: string; color: string }) {
-  return (
-    <div style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6,
-      padding: '5px 14px', borderRadius: 24,
-      border: `1px solid ${color}55`,
-      background: `${color}12`,
-    }}>
-      <Shield size={12} style={{ color }} />
-      <span style={{ fontFamily: FONT.mono, fontSize: 10, color, letterSpacing: 1.5, textTransform: 'uppercase' as const }}>
-        {label}
-      </span>
-    </div>
-  );
-}
-
-// ─── Audit warning banner ─────────────────────────────────────────────────────
+// ─── Banner de auditoría (nodo congelado) ───────────────────────────────────────
 function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: () => void }) {
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.lg,
       padding: 16, marginBottom: 14,
-      background: 'rgba(255,59,92,0.06)',
+      background: 'rgba(255,80,102,0.06)',
       border: `1px solid ${C.red}`,
       animation: ANIM.breathe,
     }}>
       <Corners color={C.red} />
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.red}, transparent)` }} />
-
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <AlertTriangle size={18} style={{ color: C.red }} />
-        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.red, letterSpacing: 2, textTransform: 'uppercase' }}>
-          PROTOCOLO DE RESGUARDO TÉCNICO
+        <span style={{ fontFamily: FONT.body, fontWeight: 700, fontSize: 13, color: C.red }}>
+          Tu nodo está en pausa de resguardo
         </span>
       </div>
-      <p style={{ margin: '0 0 4px', fontFamily: FONT.body, fontSize: 14, color: '#fca5a5' }}>
-        Tu nodo está <strong style={{ color: C.red }}>CONGELADO</strong>. {audit.reason}
-      </p>
-      <p style={{ margin: '0 0 12px', fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, letterSpacing: 0.5 }}>
-        Supera el reto de redención para recuperar tu estatus.
+      <p style={{ margin: '0 0 12px', fontFamily: FONT.body, fontSize: 13, color: '#fca5a5', lineHeight: 1.4 }}>
+        {audit.reason} Supera el reto de redención para recuperar tu estatus.
       </p>
       <CyberButton variant="danger" onClick={onStart}>
         <Shield size={15} />
@@ -109,62 +120,60 @@ function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: (
   );
 }
 
-// ─── ID Holográfica ────────────────────────────────────────────────────────────
-function HoloID({
-  initials, name, username, location, nodeType, nodeLevel,
-  pe, nextPe, tierProgress, nodeColor, paused, onTogglePause,
-  avatarUrl, uploading, onPickFile,
+// ─── CREDENCIAL DIGITAL (tarjeta de presentación · protagonista) ────────────────
+function CredencialCard({
+  initials, name, username, location, nodeType, nodeLevel, verified,
+  reputacion, gemelo, tokens, pe, contratos, nextPe, tierProgress,
+  paused, onTogglePause, avatarUrl, uploading, onPickFile,
 }: {
   initials: string; name: string; username: string; location?: string;
-  nodeType: string; nodeLevel: string;
-  pe: number; nextPe: number | null; tierProgress: number;
-  nodeColor: string; paused: boolean; onTogglePause: () => void;
+  nodeType: string; nodeLevel: number; verified: boolean;
+  reputacion: number; gemelo: NonNullable<ReturnType<typeof useGemeloDigital>>;
+  tokens: number; pe: number; contratos: number;
+  nextPe: number | null; tierProgress: number;
+  paused: boolean; onTogglePause: () => void;
   avatarUrl?: string; uploading: boolean; onPickFile: (f: File) => void;
 }) {
+  const nodeColor = NODE_COLOR[nodeType] ?? C.cyan;
+  const rango = getRango(reputacion);
+
+  const miniStat = (label: string, value: string, color: string) => (
+    <div style={{ flex: 1, textAlign: 'center' }}>
+      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 18, color }}>{value}</div>
+      <div style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.cyanDim, letterSpacing: 1, marginTop: 2 }}>{label}</div>
+    </div>
+  );
+
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl,
       padding: 18, marginBottom: 14, overflow: 'hidden',
-      background: 'rgba(10,17,32,0.98)',
-      border: `1px solid ${nodeColor}33`,
+      // Fondo más claro y limpio (gradiente suave, menos negro plano)
+      background: 'linear-gradient(165deg, rgba(22,34,58,0.96) 0%, rgba(12,20,38,0.98) 60%, rgba(10,17,32,0.98) 100%)',
+      border: `1px solid ${rango.color}40`,
+      boxShadow: `0 8px 32px rgba(0,0,0,0.35), 0 0 24px ${rango.color}1a`,
     }}>
-      <Corners color={nodeColor} size={16} />
-
+      <Corners color={rango.color} size={16} />
       <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: 2,
-        background: `linear-gradient(90deg, transparent, ${nodeColor}, transparent)`,
-        animation: ANIM.breathe,
+        position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+        background: `linear-gradient(90deg, transparent, ${rango.color}, transparent)`,
       }} />
 
-      <svg style={{ position: 'absolute', top: 8, right: 8, opacity: 0.15 }} width="60" height="40">
-        <path d="M60 5 L40 5 L30 15 L10 15" fill="none" stroke={nodeColor} strokeWidth="1"/>
-        <path d="M60 20 L50 20 L40 30 L20 30" fill="none" stroke={nodeColor} strokeWidth="0.5" strokeDasharray="3,3"/>
-        <circle cx="10" cy="15" r="2" fill={nodeColor}/>
-        <circle cx="20" cy="30" r="2" fill={nodeColor}/>
-      </svg>
-
-      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-        {/* Avatar (clic para subir foto) */}
+      {/* Fila identidad */}
+      <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+        {/* Avatar (clic = subir foto · punto = pausar) */}
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <label style={{ cursor: 'pointer', display: 'block', position: 'relative' }} title="Cambiar foto de perfil">
             <input
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) onPickFile(f);
-                e.currentTarget.value = '';
-              }}
+              type="file" accept="image/*" style={{ display: 'none' }}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) onPickFile(f); e.currentTarget.value = ''; }}
             />
             <div style={{
-              width: 72, height: 72, borderRadius: 16, overflow: 'hidden',
+              width: 76, height: 76, borderRadius: 18, overflow: 'hidden',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: avatarUrl ? '#0a1120' : `linear-gradient(135deg, ${nodeColor}cc, ${C.purple}cc)`,
-              color: '#060a12', fontWeight: 700, fontSize: 26,
-              fontFamily: FONT.display,
-              boxShadow: `0 0 20px ${nodeColor}55`,
-              animation: ANIM.breathe,
+              background: avatarUrl ? '#0a1120' : `linear-gradient(135deg, ${rango.color}, ${C.cyan})`,
+              color: '#060a12', fontWeight: 700, fontSize: 28, fontFamily: FONT.display,
+              boxShadow: `0 0 18px ${rango.color}44`,
             }}>
               {avatarUrl
                 ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -175,223 +184,216 @@ function HoloID({
               width: 24, height: 24, borderRadius: '50%',
               background: '#0a1120', border: `1px solid ${C.cyanDim}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: `0 0 6px ${C.cyanFaint}`,
             }}>
               {uploading
                 ? <div style={{ width: 11, height: 11, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
                 : <Camera size={11} style={{ color: C.cyan }} />}
             </div>
           </label>
-          <div style={{
-            position: 'absolute', bottom: -2, right: -2,
-            width: 16, height: 16, borderRadius: '50%',
-            background: paused ? C.red : C.green,
-            border: '2px solid #060a12',
-            boxShadow: `0 0 8px ${paused ? C.red : C.green}`,
-            cursor: 'pointer', zIndex: 2,
-          }} onClick={onTogglePause} title={paused ? 'Reanudar' : 'Pausar'} />
+          <div
+            onClick={onTogglePause}
+            title={paused ? 'Pausado · clic para reanudar' : 'Disponible · clic para pausar'}
+            style={{
+              position: 'absolute', bottom: -2, right: -2,
+              width: 18, height: 18, borderRadius: '50%',
+              background: paused ? C.red : C.green,
+              border: '2px solid #060a12',
+              boxShadow: `0 0 8px ${paused ? C.red : C.green}`,
+              cursor: 'pointer', zIndex: 2,
+            }}
+          />
         </div>
 
-        {/* Name + meta */}
+        {/* Nombre + meta */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontFamily: FONT.display, fontWeight: 700,
-            fontSize: 22, color: '#e2f3ff', lineHeight: 1.1,
-            textShadow: `0 0 16px ${nodeColor}55`,
+            fontFamily: FONT.display, fontWeight: 700, fontSize: 21,
+            color: '#eaf4ff', lineHeight: 1.1, whiteSpace: 'nowrap',
+            overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {name}
           </div>
           <div style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim, marginTop: 2 }}>
             @{username}
           </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '4px 10px', borderRadius: 20,
+              background: `${nodeColor}14`, border: `1px solid ${nodeColor}44`,
+            }}>
+              <Shield size={11} style={{ color: nodeColor }} />
+              <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: nodeColor, letterSpacing: 1 }}>
+                {nodeType} · N{nodeLevel}
+              </span>
+            </span>
+            {verified && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                padding: '4px 9px', borderRadius: 20,
+                background: C.greenFaint, border: `1px solid ${C.greenDim}`,
+              }}>
+                <BadgeCheck size={12} style={{ color: C.green }} />
+                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.green, letterSpacing: 1 }}>VERIFICADO</span>
+              </span>
+            )}
+          </div>
+
           {location && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4, fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>
-              <MapPin size={10} /> {location}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, fontFamily: FONT.body, fontSize: 11, color: C.cyanDim }}>
+              <MapPin size={11} /> {location}
             </div>
           )}
-          <div style={{ marginTop: 10 }}>
-            <HexBadge label={`${nodeType} · ${nodeLevel}`} color={nodeColor} />
+        </div>
+      </div>
+
+      {/* Certificación: para qué contratos califica */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        marginTop: 16, padding: '12px 14px', borderRadius: RADIUS.lg,
+        background: `${rango.color}12`, border: `1px solid ${rango.color}40`,
+      }}>
+        <Briefcase size={20} style={{ color: rango.color, flexShrink: 0 }} />
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: 8.5, color: rango.color, letterSpacing: 1.5, marginBottom: 3 }}>
+            TU GEMELO TE CERTIFICA PARA
+          </div>
+          <div style={{ fontFamily: FONT.body, fontSize: 12.5, color: '#dbeafe', lineHeight: 1.35 }}>
+            {rango.califica}
           </div>
         </div>
       </div>
 
-      {/* PE Progress */}
-      <div style={{ marginTop: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-            PROGRESO DE RANGO
+      {/* Reputación (hero) + Radar protagonista */}
+      <div style={{
+        marginTop: 16, padding: '14px 8px 6px', borderRadius: RADIUS.lg,
+        background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 4 }}>
+          <span style={{ fontFamily: FONT.body, fontSize: 12, color: C.cyanDim }}>Tu reputación</span>
+          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 34, color: rango.color, textShadow: `0 0 16px ${rango.color}55`, lineHeight: 1 }}>
+            {reputacion.toFixed(1)}
           </span>
-          <span style={{ fontFamily: FONT.mono, fontSize: 10, color: nodeColor }}>
-            {nextPe ? `${pe} / ${nextPe} PE` : 'RANGO MÁXIMO'}
+          <span style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim }}>/100</span>
+          <span style={{
+            padding: '3px 10px', borderRadius: 20,
+            background: `${rango.color}18`, border: `1px solid ${rango.color}44`,
+            fontFamily: FONT.mono, fontSize: 10, color: rango.color, letterSpacing: 1,
+          }}>
+            {rango.emoji} {rango.label}
           </span>
         </div>
-        <div style={{ height: 6, borderRadius: 3, background: C.cyanFaint, overflow: 'hidden' }}>
+
+        <ProgressRadar
+          gemelo={gemelo}
+          size="md"
+          showHeader={false}
+          showScores={false}
+          showAlert={false}
+          showFooter={false}
+        />
+      </div>
+
+      {/* Stats clave (compactos) */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 4,
+        marginTop: 14, padding: '12px 6px', borderRadius: RADIUS.lg,
+        background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        {miniStat('TOKENS', tokens.toLocaleString(), C.gold)}
+        <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.08)' }} />
+        {miniStat('PE', pe.toLocaleString(), C.cyan)}
+        <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.08)' }} />
+        {miniStat('CONTRATOS', String(contratos), C.green)}
+      </div>
+
+      {/* Progreso de rango */}
+      <div style={{ marginTop: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <span style={{ fontFamily: FONT.body, fontSize: 11, color: C.cyanDim }}>Progreso al siguiente nivel</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: 10, color: nodeColor }}>
+            {nextPe ? `${pe} / ${nextPe} PE` : 'NIVEL MÁXIMO'}
+          </span>
+        </div>
+        <div style={{ height: 7, borderRadius: 4, background: C.cyanFaint, overflow: 'hidden' }}>
           <div style={{
             height: '100%', width: `${tierProgress}%`,
             background: `linear-gradient(90deg, ${nodeColor}, ${C.cyan})`,
-            boxShadow: GLOW.cyan, borderRadius: 3,
-            transition: 'width 0.6s ease',
+            boxShadow: GLOW.cyan, borderRadius: 4, transition: 'width 0.6s ease',
           }} />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-          {TIERS.map(t => (
-            <span key={t.name} style={{ fontFamily: FONT.mono, fontSize: 8, color: 'rgba(0,245,255,0.2)', letterSpacing: 0.5 }}>
-              {t.name.split(' ')[0]}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Pause toggle row */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginTop: 14, paddingTop: 12,
-        borderTop: '1px solid rgba(0,245,255,0.08)',
-      }}>
-        <div>
-          <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#e2f3ff' }}>
-            MODO PAUSA
-          </div>
-          <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, marginTop: 1, letterSpacing: 0.5 }}>
-            Suspende tu disponibilidad en el marketplace
-          </div>
-        </div>
-        <button onClick={onTogglePause} style={{
-          width: 52, height: 26, borderRadius: 13,
-          cursor: 'pointer', position: 'relative',
-          background: paused ? `${C.red}44` : C.cyanFaint,
-          border: `1px solid ${paused ? C.red : C.cyanDim}`,
-          transition: 'background 0.2s, border-color 0.2s',
-        }}>
-          <span style={{
-            position: 'absolute', top: 3,
-            left: paused ? 28 : 3,
-            width: 18, height: 18, borderRadius: '50%',
-            background: paused ? C.red : C.cyan,
-            transition: 'left 0.25s ease, background 0.2s',
-            boxShadow: `0 0 6px ${paused ? C.red : C.cyan}`,
-          }} />
-        </button>
       </div>
     </div>
   );
 }
 
-// ─── Gemelo Digital panel ──────────────────────────────────────────────────────
-function GemeloPanel({ gemelo }: { gemelo: NonNullable<ReturnType<typeof useGemeloDigital>> }) {
-  const reputacion = gemelo.overallReputation ?? 0;
-  const desempeno =
-    ((gemelo.execution ?? 0) +
-      (gemelo.quality ?? 0) +
-      (gemelo.transcendence ?? 0) +
-      (gemelo.foundation ?? 0)) / 4;
-
-  const rankLabel =
-    reputacion >= 80 ? 'SENIOR' :
-    reputacion >= 70 ? 'AVANZADO' :
-    reputacion >= 50 ? 'INTERMEDIO' : 'NOVATO';
-  const rankColor =
-    reputacion >= 80 ? C.green :
-    reputacion >= 70 ? C.cyan :
-    reputacion >= 50 ? C.gold : C.purple;
-  const rankEmoji =
-    reputacion >= 80 ? '🏆' :
-    reputacion >= 70 ? '⚡' :
-    reputacion >= 50 ? '🔷' : '🌱';
-
+// ─── Detalle del Gemelo: los 4 ejes en lenguaje simple ──────────────────────────
+function EjesPanel({ gemelo }: { gemelo: NonNullable<ReturnType<typeof useGemeloDigital>> }) {
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl,
-      padding: '16px 16px 20px', marginBottom: 14,
-      background: 'rgba(10,17,32,0.98)',
-      border: `1px solid rgba(0,245,255,0.15)`,
-      overflow: 'hidden',
+      padding: 16, marginBottom: 14,
+      background: 'rgba(12,20,38,0.95)',
+      border: '1px solid rgba(0,240,255,0.14)',
     }}>
-      <Corners color={C.cyan} />
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.cyan}, transparent)` }} />
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <TrendingUp size={14} style={{ color: C.cyan }} />
-        <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyan, letterSpacing: 2, textTransform: 'uppercase' }}>
-          AUDITORÍA · GEMELO DIGITAL
-        </span>
+      <div style={{
+        display: 'flex', alignItems: 'flex-start', gap: 8,
+        padding: '10px 12px', borderRadius: RADIUS.lg, marginBottom: 14,
+        background: C.cyanGhost, border: `1px solid ${C.cyanFaint}`,
+      }}>
+        <TrendingUp size={16} style={{ color: C.cyan, flexShrink: 0, marginTop: 1 }} />
+        <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 12, color: '#cfe8ff', lineHeight: 1.45 }}>
+          Tu reputación combina <strong style={{ color: C.gold }}>20% tus títulos validados</strong> + <strong style={{ color: C.cyan }}>80% tu desempeño real</strong>, que se mide con estos 4 ejes:
+        </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-        <div style={{
-          padding: '12px 14px', borderRadius: RADIUS.lg,
-          background: `${rankColor}0e`, border: `1px solid ${rankColor}33`,
-        }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 8, color: rankColor, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 }}>
-            REPUTACIÓN
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-            <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 30, color: rankColor, textShadow: `0 0 14px ${rankColor}66` }}>
-              {reputacion.toFixed(1)}
-            </span>
-            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>/100</span>
-          </div>
-          <div style={{
-            display: 'inline-block', marginTop: 6,
-            padding: '2px 10px', borderRadius: 20,
-            background: `${rankColor}18`, border: `1px solid ${rankColor}44`,
-            fontFamily: FONT.mono, fontSize: 9, color: rankColor, letterSpacing: 1,
-          }}>
-            {rankEmoji} {rankLabel}
-          </div>
-          <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyanDim, marginTop: 6, letterSpacing: 0.3 }}>
-            Oficial · define tu rango
-          </div>
-        </div>
-
-        <div style={{
-          padding: '12px 14px', borderRadius: RADIUS.lg,
-          background: 'rgba(0,245,255,0.05)', border: '1px solid rgba(0,245,255,0.2)',
-        }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyan, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 }}>
-            DESEMPEÑO GEMELO
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-            <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 30, color: C.cyan, textShadow: `0 0 14px ${C.cyan}66` }}>
-              {desempeno.toFixed(1)}
-            </span>
-            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>/100</span>
-          </div>
-          <ProgressBar value={desempeno} color={C.cyan} height={4} style={{ marginTop: 10 }} />
-          <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyanDim, marginTop: 6, letterSpacing: 0.3 }}>
-            Promedio de tus 4 ejes
-          </div>
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {EJES.map((eje) => {
+          const value = gemelo[eje.key] ?? 0;
+          return (
+            <div key={eje.key} style={{
+              padding: '12px 14px', borderRadius: RADIUS.lg,
+              background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: eje.color, boxShadow: `0 0 8px ${eje.color}99` }} />
+                  <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#eaf4ff' }}>{eje.label}</span>
+                </div>
+                <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: eje.color }}>{value.toFixed(0)}</span>
+              </div>
+              <ProgressBar value={value} color={eje.color} height={5} style={{ margin: '6px 0 8px' }} />
+              <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, lineHeight: 1.4 }}>{eje.desc}</p>
+            </div>
+          );
+        })}
       </div>
-
-      <ProgressRadar gemelo={gemelo} size="md" showHeader={false} />
     </div>
   );
 }
 
-// ─── Capacidades de nodo ───────────────────────────────────────────────────────
+// ─── Capacidades de nodo ─────────────────────────────────────────────────────────
 function CapabilidadesPanel({ userRank }: { userRank: number }) {
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl,
       padding: '14px 16px', marginBottom: 14,
-      background: 'rgba(10,17,32,0.98)',
-      border: '1px solid rgba(0,245,255,0.12)',
+      background: 'rgba(12,20,38,0.95)',
+      border: '1px solid rgba(0,240,255,0.12)',
       overflow: 'hidden',
     }}>
-      <Corners color={C.cyanDim} />
-      <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyan, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>
-        CAPACIDADES DE NODO
+      <div style={{ fontFamily: FONT.body, fontWeight: 700, fontSize: 13, color: '#eaf4ff', marginBottom: 4 }}>
+        Qué puedes hacer en cada nivel
+      </div>
+      <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, marginBottom: 12 }}>
+        Subes de nivel acumulando PE con tu trabajo y aprendizaje.
       </div>
       {CAPABILITIES.map((r, i) => {
         const unlocked = userRank >= r.lvl;
         return (
           <div key={r.lvl}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '10px 0',
-              opacity: unlocked ? 1 : 0.4,
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', opacity: unlocked ? 1 : 0.4 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: 8, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -405,23 +407,16 @@ function CapabilidadesPanel({ userRank }: { userRank: number }) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontFamily: FONT.mono, fontSize: 11, color: unlocked ? r.col : C.cyanDim, letterSpacing: 1 }}>
-                    {r.name}
-                  </span>
+                  <span style={{ fontFamily: FONT.mono, fontSize: 11, color: unlocked ? r.col : C.cyanDim, letterSpacing: 1 }}>{r.name}</span>
                   {unlocked && (
-                    <span style={{ fontFamily: FONT.mono, fontSize: 8, color: C.green, letterSpacing: 1, background: C.greenFaint, padding: '1px 6px', borderRadius: 10, border: `1px solid ${C.greenDim}` }}>
-                      ACTIVO
-                    </span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 8, color: C.green, letterSpacing: 1, background: C.greenFaint, padding: '1px 6px', borderRadius: 10, border: `1px solid ${C.greenDim}` }}>ACTIVO</span>
                   )}
                 </div>
-                <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, marginTop: 2, letterSpacing: 0.3 }}>
-                  {r.scope}
-                </div>
+                <div style={{ fontFamily: FONT.body, fontSize: 10.5, color: C.cyanDim, marginTop: 2 }}>{r.scope}</div>
               </div>
               {!unlocked
                 ? <Lock size={13} style={{ color: C.cyanDim, flexShrink: 0 }} />
-                : <Zap  size={13} style={{ color: r.col,    flexShrink: 0 }} />
-              }
+                : <Zap  size={13} style={{ color: r.col,    flexShrink: 0 }} />}
             </div>
             {i < CAPABILITIES.length - 1 && (
               <div style={{ height: 1, background: 'rgba(0,245,255,0.06)', marginLeft: 44 }} />
@@ -458,8 +453,8 @@ export function PerfilTab() {
 
   let tierIdx = 0;
   if (pe >= 2000) tierIdx = 2; else if (pe >= 500) tierIdx = 1;
-  const curMin      = TIERS[tierIdx].min;
-  const nextMin     = TIERS[tierIdx + 1]?.min ?? null;
+  const curMin       = TIERS[tierIdx].min;
+  const nextMin      = TIERS[tierIdx + 1]?.min ?? null;
   const tierProgress = nextMin ? Math.min(100, ((pe - curMin) / (nextMin - curMin)) * 100) : 100;
 
   const loadAudit = useCallback(async () => {
@@ -540,11 +535,12 @@ export function PerfilTab() {
 
       <CyberHeader
         title="MI PERFIL"
-        subtitle="IDENTIDAD DE NODO // VERIFICADO"
+        subtitle="TU CREDENCIAL DIGITAL"
         dotColor={nodeColor}
         badge={
           <button
             onClick={() => setShowEdit(true)}
+            title="Editar perfil"
             style={{
               background: C.cyanGhost, border: `1px solid ${C.cyanDim}`,
               borderRadius: 8, padding: 8, color: C.cyan,
@@ -556,37 +552,36 @@ export function PerfilTab() {
         }
       />
 
-      <PeBar current={pe} max={nextMin ?? pe} color={nodeColor} label={`${pe} PE ACUMULADOS`} />
-
       <div style={cx(BASE.scrollArea, { padding: 14 })}>
 
         {audit && <AuditBanner audit={audit} onStart={startRedemption} />}
 
-        <HoloID
-          initials={initials}
-          name={profile?.full_name ?? profile?.username ?? 'Usuario'}
-          username={profile?.username ?? 'nodo'}
-          location={profile?.location}
-          nodeType={profile?.node_type ?? 'Nodo Operativo'}
-          nodeLevel={profile?.node_level ?? 'N1'}
-          pe={pe}
-          nextPe={nextMin}
-          tierProgress={tierProgress}
-          nodeColor={nodeColor}
-          paused={paused}
-          onTogglePause={togglePause}
-          avatarUrl={avatarUrl}
-          uploading={uploadingAvatar}
-          onPickFile={handleAvatarUpload}
-        />
+        {/* TARJETA DE PRESENTACIÓN — protagonista */}
+        {gemelo && (
+          <CredencialCard
+            initials={initials}
+            name={profile?.full_name ?? profile?.username ?? 'Usuario'}
+            username={profile?.username ?? 'nodo'}
+            location={profile?.location}
+            nodeType={profile?.node_type ?? 'Nodo Operativo'}
+            nodeLevel={profile?.node_level ?? 1}
+            verified={!!profile?.is_verified_professional}
+            reputacion={gemelo.overallReputation ?? 0}
+            gemelo={gemelo}
+            tokens={profile?.token_balance ?? 0}
+            pe={pe}
+            contratos={profile?.total_contracts_completed ?? 0}
+            nextPe={nextMin}
+            tierProgress={tierProgress}
+            paused={paused}
+            onTogglePause={togglePause}
+            avatarUrl={avatarUrl}
+            uploading={uploadingAvatar}
+            onPickFile={handleAvatarUpload}
+          />
+        )}
 
-        <StatGrid cols={3} style={{ marginBottom: 14 }}>
-          <StatCard label="TOKENS"     value={(profile?.token_balance ?? 0).toLocaleString()} color={C.gold}   />
-          <StatCard label="PE"         value={pe.toLocaleString()}                             color={C.cyan}   />
-          <StatCard label="CONTRATOS"  value={String(profile?.total_contracts_completed ?? 0)} color={C.green}  />
-        </StatGrid>
-
-        {/* Sub-secciones tipo píldoras */}
+        {/* Sub-secciones */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           {SECTIONS.map(s => {
             const Icon = s.icon;
@@ -596,25 +591,13 @@ export function PerfilTab() {
                 position: 'relative', flex: 1, display: 'flex', flexDirection: 'column',
                 alignItems: 'center', gap: 5, padding: '11px 6px',
                 borderRadius: RADIUS.lg, cursor: 'pointer', overflow: 'hidden',
-                background: active ? `${C.cyan}14` : 'rgba(10,17,32,0.6)',
-                border: `1px solid ${active ? C.cyan : C.cyanFaint}`,
-                boxShadow: active ? `0 0 14px ${C.cyan}44` : 'none',
-                transform: active ? 'translateY(-2px) scale(1.03)' : 'none',
-                transition: 'all 0.28s cubic-bezier(0.22,1,0.36,1)',
+                background: active ? `${C.cyan}14` : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${active ? C.cyan : 'rgba(255,255,255,0.08)'}`,
+                boxShadow: active ? `0 0 14px ${C.cyan}33` : 'none',
+                transition: 'all 0.25s ease',
               }}>
-                {active && (
-                  <span style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, height: 2,
-                    background: `linear-gradient(90deg, transparent, ${C.cyan}, transparent)`,
-                    animation: 'pillGlow 1.8s ease-in-out infinite',
-                  }} />
-                )}
-                <Icon size={16} style={{
-                  color: active ? C.cyan : C.cyanDim,
-                  transition: 'color 0.28s',
-                  animation: active ? 'pillPulse 1.8s ease-in-out infinite' : 'none',
-                }} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1, color: active ? C.cyan : C.cyanDim, transition: 'color 0.28s' }}>
+                <Icon size={16} style={{ color: active ? C.cyan : C.cyanDim }} />
+                <span style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 0.8, color: active ? C.cyan : C.cyanDim }}>
                   {s.label}
                 </span>
               </button>
@@ -622,9 +605,9 @@ export function PerfilTab() {
           })}
         </div>
 
-        {/* Contenido de la sección activa (con animación de entrada) */}
-        <div key={section} style={{ animation: 'sectionIn 0.4s cubic-bezier(0.22,1,0.36,1) both' }}>
-          {section === 'gemelo' && gemelo && <GemeloPanel gemelo={gemelo} />}
+        {/* Contenido de la sección activa */}
+        <div key={section} style={{ animation: 'sectionIn 0.35s cubic-bezier(0.22,1,0.36,1) both' }}>
+          {section === 'gemelo' && gemelo && <EjesPanel gemelo={gemelo} />}
 
           {section === 'credenciales' && (
             <>
@@ -645,7 +628,7 @@ export function PerfilTab() {
                   <Award size={20} style={{ color: C.gold, flexShrink: 0 }} />
                   <div>
                     <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold, letterSpacing: 1.5 }}>ESTATUS PIONEER</div>
-                    <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.goldDim, marginTop: 2 }}>Beneficio fundacional vitalicio</div>
+                    <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.goldDim, marginTop: 2 }}>Beneficio fundacional vitalicio</div>
                   </div>
                   <div style={{ marginLeft: 'auto', fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold }}>⬡</div>
                 </div>
@@ -659,17 +642,9 @@ export function PerfilTab() {
             from { opacity: 0; transform: translateY(12px); }
             to   { opacity: 1; transform: translateY(0); }
           }
-          @keyframes pillGlow {
-            0%, 100% { opacity: 0.35; }
-            50%      { opacity: 1; }
-          }
-          @keyframes pillPulse {
-            0%, 100% { transform: scale(1); }
-            50%      { transform: scale(1.15); }
-          }
         `}</style>
 
-        <Divider glow style={{ margin: '4px 0 14px' }} />
+        <Divider glow margin="4px 0 14px" />
 
         <CyberButton variant="danger" onClick={() => supabase.auth.signOut()}>
           <LogOut size={15} />

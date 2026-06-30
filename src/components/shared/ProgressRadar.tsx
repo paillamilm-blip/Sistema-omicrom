@@ -13,6 +13,12 @@ interface ProgressRadarProps {
   showHeader?: boolean;
   animated?: boolean;
   threshold?: number;
+  /** Muestra la tabla de scores bajo el radar (default true) */
+  showScores?: boolean;
+  /** Muestra la alerta de ejes bajos (default true) */
+  showAlert?: boolean;
+  /** Muestra el pie "Actualizado en tiempo real" (default true) */
+  showFooter?: boolean;
 }
 
 const AXIS_LABELS = {
@@ -29,7 +35,7 @@ const AXIS_COLORS = {
   foundation:   '#39FF14',   // esmeralda — fundamento
 } as const;
 
-// ✅ FIX: getReputationBadge devuelve el hex directamente para que el componente
+// ✓ FIX: getReputationBadge devuelve el hex directamente para que el componente
 // no dependa de strings arbitrarios que se pueden desincronizar.
 const BADGE_BORDER_HEX: Record<string, string> = {
   gold:    '#fbbf24',
@@ -39,7 +45,6 @@ const BADGE_BORDER_HEX: Record<string, string> = {
   slate:   '#64748b',
 };
 
-
 export function ProgressRadar({
   gemelo,
   size = 'md',
@@ -47,6 +52,9 @@ export function ProgressRadar({
   showHeader = true,
   animated = true,
   threshold = 50,
+  showScores = true,
+  showAlert = true,
+  showFooter = true,
 }: ProgressRadarProps) {
   const radius      = size === 'sm' ? 64 : size === 'md' ? 92 : 130;
   const labelPad    = size === 'sm' ? 52 : size === 'md' ? 70 : 90;
@@ -84,7 +92,6 @@ export function ProgressRadar({
   const hasAlert = useMemo(() => points.some(p => p.value < threshold), [points, threshold]);
 
   const polygonPoints = useMemo(() => points.map(p => `${p.x},${p.y}`).join(' '), [points]);
-
 
   const gridLines = useMemo(() => {
     const lines: Array<{ type: string; x1?: number; y1?: number; x2?: number; y2?: number; points?: string }> = [];
@@ -125,7 +132,6 @@ export function ProgressRadar({
   const subFontSize = size === 'sm' ? '10' : size === 'md' ? '12' : '14';
   const labelOffset = size === 'sm' ? 14  : size === 'md' ? 18  : 24;
   const svgSize     = viewBoxSize;
-
 
   return (
     <div className="flex flex-col gap-4">
@@ -187,8 +193,7 @@ export function ProgressRadar({
             ))}
           </g>
 
-
-          {/* ✅ FIX: Eliminado animate-pulse del polígono (cambiaba opacidad, no tamaño).
+          {/* ✓ FIX: Eliminado animate-pulse del polígono (cambiaba opacidad, no tamaño).
               Si animated=true, se aplica una animación CSS en el stroke que sí es visible. */}
           <polygon
             points={polygonPoints}
@@ -226,8 +231,7 @@ export function ProgressRadar({
         </svg>
         </div>
 
-
-        {/* ✅ FIX: Keyframe definido en un <style> inline dentro del SVG container */}
+        {/* ✓ FIX: Keyframe definido en un <style> inline dentro del SVG container */}
         <style>{`
           @keyframes radarStroke {
             0%, 100% { stroke-opacity: 1; stroke-width: 2; }
@@ -237,6 +241,7 @@ export function ProgressRadar({
       </div>
 
       {/* Tabla de Scores */}
+      {showScores && (
       <div className="grid grid-cols-2 gap-3">
         {points.map((p) => (
           <div key={`score-${p.key}`} className="p-3 rounded-lg bg-omicron-card border border-omicron-border">
@@ -257,10 +262,10 @@ export function ProgressRadar({
           </div>
         ))}
       </div>
-
+      )}
 
       {/* Alerta */}
-      {hasAlert && (
+      {showAlert && hasAlert && (
         <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 flex gap-2">
           <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-red-500">
@@ -269,14 +274,15 @@ export function ProgressRadar({
         </div>
       )}
 
+      {showFooter && (
       <div className="flex items-center gap-2 text-xs text-omicron-subtle">
         <TrendingUp size={14} />
         <span>Actualizado en tiempo real</span>
       </div>
+      )}
     </div>
   );
 }
-
 
 // === HISTORIAL ===
 
