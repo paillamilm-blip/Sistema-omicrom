@@ -29,6 +29,73 @@ function Bar({ pct, color }: { pct: number; color: string }) {
   );
 }
 
+// ─── Coach IA: diagnostico del perfil + que estudiar (Edge Function "coach") ──
+function CoachModal({ onClose }: { onClose: () => void }) {
+  const [advice, setAdvice] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const run = useCallback(async () => {
+    setLoading(true); setAdvice(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('coach', { body: {} });
+      setAdvice(error
+        ? 'El Coach IA no esta disponible. Avisa a tu equipo que despliegue la funcion coach.'
+        : ((data as { advice?: string; error?: string })?.advice ?? (data as { error?: string })?.error ?? 'Sin respuesta.'));
+    } catch {
+      setAdvice('Error de conexion con el Coach IA.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { run(); }, [run]);
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(2,6,19,0.8)', backdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+        borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))',
+        border: `1px solid ${C.cyan}55`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.cyan}18`, border: `1px solid ${C.cyan}55` }}>
+            <GraduationCap size={18} style={{ color: C.cyan }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Coach IA</div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>Tu diagnostico y proximo paso</div>
+          </div>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan, fontSize: 18, lineHeight: 1 }}>
+            ×
+          </button>
+        </div>
+
+        <div style={{ flex: 1, minHeight: 180, maxHeight: '60vh', overflowY: 'auto', padding: '16px' }}>
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '30px 0' }}>
+              <Loader2 size={24} style={{ color: C.cyan }} className="animate-spin" />
+              <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1 }}>ANALIZANDO TU PERFIL...</span>
+            </div>
+          ) : (
+            <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#e6f1fb', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{advice}</p>
+          )}
+        </div>
+
+        <div style={{ padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
+          <button onClick={run} disabled={loading} style={{
+            width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: loading ? 'wait' : 'pointer',
+            background: C.cyan, border: 'none', color: '#021018', fontFamily: FONT.mono, fontSize: 12, letterSpacing: 1, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.5 : 1,
+          }}><Sparkles size={15} /> VOLVER A ANALIZAR</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AcademiaTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
   const { toast } = useToast();
@@ -42,6 +109,7 @@ export function AcademiaTab() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [doneLessons, setDoneLessons] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [coachOpen, setCoachOpen] = useState(false);
   const [view, setView] = useState<'list' | 'course' | 'quiz'>('list');
 
   const [questions, setQuestions] = useState<QuizQ[]>([]);
@@ -155,6 +223,26 @@ export function AcademiaTab() {
           badge={<GraduationCap size={16} style={{ color: C.cyan }} />} />
         <div style={cx(BASE.scrollArea, { padding: '12px 14px 20px' })}>
 
+          <button onClick={() => setCoachOpen(true)} style={{
+            width: '100%', textAlign: 'left', cursor: 'pointer',
+            borderRadius: RADIUS.xl, padding: 16, marginBottom: 16, position: 'relative', overflow: 'hidden',
+            background: `linear-gradient(135deg, ${C.cyan}1a, ${C.gold}12)`,
+            border: `1px solid ${C.cyan}55`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 13, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.cyan}18`, border: `1px solid ${C.cyan}55` }}>
+                <GraduationCap size={22} style={{ color: C.cyan }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Coach IA - Que estudio ahora?</div>
+                <div style={{ fontFamily: FONT.body, fontSize: 11.5, color: C.cyanDim, marginTop: 2, lineHeight: 1.35 }}>
+                  Analiza tu Gemelo, tu CV y tus habilidades, y te dice tu brecha y el curso ideal.
+                </div>
+              </div>
+              <Sparkles size={18} style={{ color: C.gold, flexShrink: 0 }} />
+            </div>
+          </button>
+
           {/* Resumen de progreso */}
           <div style={{
             borderRadius: RADIUS.xl, padding: 16, marginBottom: 16,
@@ -230,6 +318,7 @@ export function AcademiaTab() {
             );
           })}
         </div>
+        {coachOpen && <CoachModal onClose={() => setCoachOpen(false)} />}
       </div>
     );
   }
