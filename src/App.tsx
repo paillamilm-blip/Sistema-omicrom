@@ -13,6 +13,7 @@ import { Onboarding, shouldShowOnboarding } from './components/shared/Onboarding
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { PublicProfileGate } from './components/perfil/RedSocial';
+import { VerifyCredentialView } from './components/perfil/VerifyCredential';
 import { C, FONT } from './theme';
 import type { TabId } from './types';
 
@@ -128,6 +129,12 @@ function AppShell() {
 }
 
 export default function App() {
+  // Verificación pública del Pasaporte (no requiere cuenta): ?verificar=<token>
+  const verifyToken = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('verificar')
+    : null;
+  if (verifyToken) return <VerifyCredentialView token={verifyToken} />;
+
   return (
     <AppProvider>
       <ToastProvider>
