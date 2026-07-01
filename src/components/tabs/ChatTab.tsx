@@ -6,6 +6,7 @@ import { C, FONT, BASE, cx } from '../../theme';
 import { ScanlineOverlay, CyberHeader, CyberCard, SectionLabel, LoadingScreen } from '../shared/CyberComponents';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
+import { usePremium, PremiumLock } from '../shared/Premium';
 import { sendSecureMessage, loadSecureMessages } from '../../lib/secureChat';
 import { DirectChatModal } from '../perfil/RedSocial';
 import type { Message } from '../../types';
@@ -167,6 +168,8 @@ function NewMessagePicker({ onPick, onClose }: { onPick: (c: Conn) => void; onCl
 export function ChatTab() {
   const { profile, setActiveTab } = useApp();
   const { toast } = useToast();
+  const { isPremium } = usePremium();
+  const [premiumLock, setPremiumLock] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [dmConvos, setDmConvos] = useState<DMConvo[]>([]);
   const [chatWith, setChatWith] = useState<{ id: string; name: string; username: string; avatar: string | null } | null>(null);
@@ -336,6 +339,7 @@ export function ChatTab() {
 
   async function improveDraft() {
     if (!input.trim() || aiAssisting) return;
+    if (!isPremium) { setPremiumLock(true); return; }
     setAiAssisting(true);
     try {
       const { data, error } = await supabase.functions.invoke('chat-assist', { body: { draft: input.trim() } });
@@ -555,6 +559,7 @@ export function ChatTab() {
           onClose={() => setRateFor(null)}
         />
       )}
+      {premiumLock && <PremiumLock feature="El Redactor IA de Acuerdos" onClose={() => setPremiumLock(false)} />}
     </div>
   );
 }

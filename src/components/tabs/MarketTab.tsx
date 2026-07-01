@@ -9,6 +9,7 @@ import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { ContractModal } from '../contracts/ContractModal';
 import { PublishServiceModal } from '../market/PublishServiceModal';
+import { usePremium, PremiumLock } from '../shared/Premium';
 import type { MarketService } from '../../types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
@@ -94,9 +95,12 @@ export function MarketTab() {
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchResult, setMatchResult] = useState<string | null>(null);
   const [matchErr, setMatchErr] = useState<string | null>(null);
+  const { isPremium } = usePremium();
+  const [premiumLock, setPremiumLock] = useState(false);
 
   const askAdvisor = useCallback(async () => {
     if (!matchQuery.trim() || matchLoading) return;
+    if (!isPremium) { setPremiumLock(true); return; }
     setMatchLoading(true); setMatchErr(null); setMatchResult(null);
     try {
       const { data, error } = await supabase.functions.invoke('market-match', { body: { query: matchQuery } });
@@ -111,7 +115,7 @@ export function MarketTab() {
     } finally {
       setMatchLoading(false);
     }
-  }, [matchQuery, matchLoading]);
+  }, [matchQuery, matchLoading, isPremium]);
 
   const loadServices = useCallback(async () => {
     setLoading(true);
@@ -276,6 +280,7 @@ export function MarketTab() {
       {showPublish && (
         <PublishServiceModal onClose={() => setShowPublish(false)} onPublished={loadServices} />
       )}
+      {premiumLock && <PremiumLock feature="El Asesor IA de contratación" onClose={() => setPremiumLock(false)} />}
     </div>
   );
 }

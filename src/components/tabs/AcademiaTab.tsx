@@ -5,8 +5,9 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
+import { usePremium, PremiumLock } from '../shared/Premium';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '../../theme';
-import { ScanlineOverlay, CyberHeader, SectionLabel, LoadingScreen } from '../shared/CyberComponents';
+import { ScanlineOverlay, CyberHeader, LoadingScreen } from '../shared/CyberComponents';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
 
@@ -218,6 +219,8 @@ export function AcademiaTab() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [tutor, setTutor] = useState<Lesson | null>(null);
   const [coachOpen, setCoachOpen] = useState(false);
+  const { isPremium } = usePremium();
+  const [premiumLock, setPremiumLock] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'course' | 'quiz'>('list');
 
   const [questions, setQuestions] = useState<QuizQ[]>([]);
@@ -329,7 +332,7 @@ export function AcademiaTab() {
           badge={<GraduationCap size={16} style={{ color: C.cyan }} />} />
         <div style={cx(BASE.scrollArea, { padding: '12px 14px 20px' })}>
 
-          <button onClick={() => setCoachOpen(true)} style={{
+          <button onClick={() => { if (!isPremium) { setPremiumLock('El Coach IA'); return; } setCoachOpen(true); }} style={{
             width: '100%', textAlign: 'left', cursor: 'pointer',
             borderRadius: RADIUS.xl, padding: 16, marginBottom: 16, position: 'relative', overflow: 'hidden',
             background: `linear-gradient(135deg, ${C.cyan}1a, ${C.gold}12)`,
@@ -413,6 +416,7 @@ export function AcademiaTab() {
           )}
         </div>
         {coachOpen && <CoachModal onClose={() => setCoachOpen(false)} />}
+        {premiumLock && <PremiumLock feature={premiumLock} onClose={() => setPremiumLock(null)} />}
       </div>
     );
   }
@@ -486,7 +490,7 @@ export function AcademiaTab() {
                       </span>
                     )}
                     <div style={{ marginTop: 10 }}>
-                      <button onClick={() => setTutor(l)} style={{
+                      <button onClick={() => { if (!isPremium) { setPremiumLock('El Tutor IA'); return; } setTutor(l); }} style={{
                         fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: C.gold,
                         background: `${C.gold}14`, border: `1px solid ${C.gold}55`, borderRadius: 8, padding: '8px 14px',
                         cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -525,6 +529,7 @@ export function AcademiaTab() {
 
         <style>{`@keyframes acaIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
         {tutor && <TutorModal lesson={{ title: tutor.title, content: tutor.content }} onClose={() => setTutor(null)} />}
+        {premiumLock && <PremiumLock feature={premiumLock} onClose={() => setPremiumLock(null)} />}
       </div>
     );
   }

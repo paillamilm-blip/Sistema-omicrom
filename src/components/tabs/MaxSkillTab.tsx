@@ -7,6 +7,7 @@ import { Play, Trophy, BookOpen, ArrowRight, Brain } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../shared/Toast';
+import { usePremium, PremiumLock } from '../shared/Premium';
 import { ExamenChallenge } from '../shared/ExamenChallenge';
 import { CourseFlowModal } from '../shared/CourseFlow';
 import type { SkillTreeNode, UserSkillProgress, ActaEvidencia } from '../../types';
@@ -119,6 +120,8 @@ function svgDimensions(flat: LayoutNode[]) {
 export function MaxSkillTab() {
   const { profile, refreshProfile } = useApp();
   const { toast } = useToast();
+  const { isPremium } = usePremium();
+  const [premiumLock, setPremiumLock] = useState<string | null>(null);
   const [nodes, setNodes]             = useState<SkillTreeNode[]>([]);
   const [progress, setProgress]       = useState<Map<string, UserSkillProgress>>(new Map());
   const [isLoading, setIsLoading]     = useState(true);
@@ -209,15 +212,17 @@ export function MaxSkillTab() {
   }, [profile?.id]);
 
   const handleStartChallenge = useCallback((node: SkillTreeNode) => {
+    if (!isPremium) { setPremiumLock('El Examinador IA'); return; }
     setExamNode(node);
-  }, []);
+  }, [isPremium]);
 
   const handleRangeChallenge = useCallback(() => {
+    if (!isPremium) { setPremiumLock('El Examen de Rango IA'); return; }
     if (nodes.length === 0) { toast('Aún no hay nodos disponibles. 🛠️', 'info'); return; }
     const byStatus = (want: string) => nodes.find(n => getStatus(n.id) === want);
     const target = byStatus('VALIDATED') || byStatus('MASTERED') || byStatus('AVAILABLE') || nodes[0];
     setExamNode(target);
-  }, [nodes, getStatus, toast]);
+  }, [isPremium, nodes, getStatus, toast]);
 
   useEffect(() => { loadActas(); }, [loadActas]);
 
@@ -597,6 +602,7 @@ export function MaxSkillTab() {
       {courseNode && (
         <CourseFlowModal nodeId={courseNode} onClose={() => setCourseNode(null)} onValidated={() => {}} />
       )}
+      {premiumLock && <PremiumLock feature={premiumLock} onClose={() => setPremiumLock(null)} />}
     </div>
   );
 }

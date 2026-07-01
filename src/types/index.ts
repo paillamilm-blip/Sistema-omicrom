@@ -55,6 +55,7 @@ export interface Profile {
   // === FLAGS ===
   is_verified_professional: boolean;
   can_receive_contracts: boolean;
+  is_premium?: boolean;             // Ómicrom Premium: desbloquea las funciones de IA
 
   // === CONTADORES ===
   total_contracts_completed: number;
