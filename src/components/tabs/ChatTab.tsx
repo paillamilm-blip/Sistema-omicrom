@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Shield, Timer, ArrowLeft, MessageCircle, Lock, ShieldCheck, ShieldAlert, Star, X, Plus, Users } from 'lucide-react';
+import { Send, Shield, Timer, ArrowLeft, MessageCircle, Lock, ShieldCheck, ShieldAlert, Star, X, Plus, Users, Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
@@ -177,6 +177,7 @@ export function ChatTab() {
   const [integrityOk, setIntegrityOk] = useState(true);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [aiAssisting, setAiAssisting] = useState(false);
   const [objecting, setObjecting] = useState(false);
   const [delivering, setDelivering] = useState(false);
   const [approving, setApproving] = useState(false);
@@ -330,6 +331,27 @@ export function ChatTab() {
       toast('No se pudo calificar: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setRatingSaving(false);
+    }
+  }
+
+  async function improveDraft() {
+    if (!input.trim() || aiAssisting) return;
+    setAiAssisting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-assist', { body: { draft: input.trim() } });
+      const d = data as { texto?: string; error?: string; detail?: string };
+      if (error || d?.error || !d?.texto) {
+        let msg = d?.error || 'Redactor IA no disponible (¿desplegaste "chat-assist"?).';
+        const ctx = (error as { context?: Response } | null)?.context;
+        if (ctx && typeof ctx.json === 'function') { try { const b = await ctx.json(); if (b?.error) msg = b.detail ? `${b.error} — ${b.detail}` : b.error; } catch { /* */ } }
+        toast(msg, 'error');
+        return;
+      }
+      setInput(d.texto);
+    } catch {
+      toast('Error de conexión con el Redactor IA.', 'error');
+    } finally {
+      setAiAssisting(false);
     }
   }
 
@@ -514,6 +536,10 @@ export function ChatTab() {
       <div style={{ display: 'flex', gap: 8, padding: '10px 14px', flexShrink: 0, borderTop: `1px solid ${C.cyanFaint}` }}>
         <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()} placeholder="Mensaje cifrado..."
           style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "'Rajdhani', sans-serif", fontSize: 14, outline: 'none' }} />
+        <button onClick={improveDraft} disabled={!input.trim() || aiAssisting} title="Mejorar redacción con IA"
+          style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(245,158,11,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || aiAssisting ? 0.4 : 1 }}>
+          {aiAssisting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+        </button>
         <button onClick={send} disabled={!input.trim() || sending} style={{ width: 44, height: 44, borderRadius: 10, background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
           <Send size={16} />
         </button>
