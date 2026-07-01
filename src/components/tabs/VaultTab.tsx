@@ -3,7 +3,7 @@
 // (pgvector + Edge Function embed). Regalías encadenadas. Estilo Industria 5.0.
 
 import { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Plus, Lock, Unlock, X, Coins, GitBranch, Search, Sparkles } from 'lucide-react';
+import { BookOpen, Plus, Lock, Unlock, X, Coins, GitBranch, Search, Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { useToast } from '../shared/Toast';
@@ -18,6 +18,17 @@ const C = {
 } as const;
 const FM = "'Share Tech Mono', 'Courier New', monospace";
 const FR = "'Rajdhani', sans-serif";
+
+// Detalle real del error que devuelve la Edge Function.
+async function vaultServerError(error: unknown, data: unknown, fallback: string): Promise<string> {
+  const d = data as { error?: string; detail?: string } | null;
+  if (d?.error) return d.detail ? `${d.error} — ${d.detail}` : d.error;
+  const ctx = (error as { context?: Response } | null)?.context;
+  if (ctx && typeof ctx.json === 'function') {
+    try { const b = await ctx.json(); if (b?.error) return b.detail ? `${b.error} — ${b.detail}` : b.error; } catch { /* */ }
+  }
+  return (error as { message?: string } | null)?.message || fallback;
+}
 
 interface Doc {
   id: string; author_id: string | null; title: string;
@@ -51,6 +62,13 @@ export function VaultTab() {
   const [query, setQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [resultIds, setResultIds] = useState<{ id: string; similarity: number }[] | null>(null);
+
+  // Oráculo IA
+  const [oracleOpen, setOracleOpen] = useState(false);
+  const [oracleQuery, setOracleQuery] = useState('');
+  const [oracleLoading, setOracleLoading] = useState(false);
+  const [oracleResult, setOracleResult] = useState<string | null>(null);
+  const [oracleErr, setOracleErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -100,6 +118,39 @@ export function VaultTab() {
   }
 
   function clearSearch() { setQuery(''); setResultIds(null); }
+
+  async function askOracle() {
+    if (!oracleQuery.trim() || oracleLoading) return;
+    setOracleLoading(true); setOracleErr(null); setOracleResult(null);
+    try {
+      const vec = await embedText(oracleQuery.trim());
+      if (!vec) { setOracleErr('El buscador no está disponible (¿desplegaste la función "embed"?).'); return; }
+      const { data: matches, error: me } = await supabase.rpc('match_vault_documents', { query_embedding: vec, match_count: 6 });
+      if (me) { setOracleErr('Error buscando en la Bóveda: ' + me.message); return; }
+      const rows = (matches as { id: string; similarity: number }[]) ?? [];
+      const candidates = rows.flatMap(r => {
+        const d = docs.find(x => x.id === r.id);
+        return d ? [{
+          titulo: d.title,
+          etiquetas: d.competency_tags ?? '',
+          costo: d.current_token_cost,
+          autor: d.author_id ? (names.get(d.author_id) ?? 'autor') : 'sistema',
+          afinidad: r.similarity,
+        }] : [];
+      });
+      const { data, error } = await supabase.functions.invoke('vault-oracle', { body: { query: oracleQuery.trim(), candidates } });
+      const dd = data as { recomendacion?: string; error?: string };
+      if (error || dd?.error || !dd?.recomendacion) {
+        setOracleErr(await vaultServerError(error, data, 'No se pudo consultar el Oráculo. ¿Está desplegada la función "vault-oracle"?'));
+        return;
+      }
+      setOracleResult(dd.recomendacion);
+    } catch {
+      setOracleErr('Error de conexión con el Oráculo.');
+    } finally {
+      setOracleLoading(false);
+    }
+  }
 
   async function consult(d: Doc) {
     setBusy(d.id);
@@ -154,6 +205,39 @@ export function VaultTab() {
       </div>
 
       <div style={styles.scroll}>
+        {/* Oráculo IA de la Bóveda — pregunta natural → qué consultar y por qué */}
+        <div style={styles.oracleWrap}>
+          <button onClick={() => setOracleOpen(o => !o)} style={styles.oracleToggle}>
+            <Sparkles size={14} style={{ color: C.amberHi }} />
+            <span style={{ flex: 1, textAlign: 'left' }}>🔮 ORÁCULO DE LA BÓVEDA</span>
+            <span style={{ color: C.muted }}>{oracleOpen ? '▲' : '▼'}</span>
+          </button>
+          {oracleOpen && (
+            <div style={styles.oracleBody}>
+              <p style={styles.oracleHint}>Pregunta en lenguaje natural y la IA te dice qué conocimiento consultar para resolverlo (y por qué). Consultar paga regalías al autor.</p>
+              <textarea value={oracleQuery} onChange={e => setOracleQuery(e.target.value)}
+                placeholder="Ej: cómo mejorar el rendimiento de una consulta SQL lenta..."
+                style={styles.oracleInput} />
+              <button onClick={askOracle} disabled={oracleLoading || !oracleQuery.trim()} style={{
+                ...styles.oracleBtn,
+                opacity: (oracleLoading || !oracleQuery.trim()) ? 0.5 : 1,
+                cursor: (oracleLoading || !oracleQuery.trim()) ? 'not-allowed' : 'pointer',
+              }}>
+                {oracleLoading
+                  ? <><Loader2 size={14} className="animate-spin" /> Consultando el Oráculo...</>
+                  : <><Sparkles size={14} /> Preguntar al Oráculo</>}
+              </button>
+              {oracleErr && <div style={styles.oracleErr}>{oracleErr}</div>}
+              {oracleResult && (
+                <div style={styles.oracleResult}>
+                  <div style={styles.oracleResultHead}><BookOpen size={12} style={{ color: C.blueHi }} /> RECOMENDACIÓN DEL ORÁCULO</div>
+                  <p style={{ margin: 0, fontFamily: FR, fontSize: 14, color: C.ink, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{oracleResult}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {resultIds && (
           <div style={{ fontFamily: FM, fontSize: 9, color: C.blueHi, letterSpacing: 1, marginBottom: 4 }}>
             ◢ {display.length} RESULTADOS SEMÁNTICOS · <span onClick={clearSearch} style={{ color: C.muted, cursor: 'pointer', textDecoration: 'underline' }}>limpiar</span>
@@ -312,6 +396,15 @@ const styles: Record<string, React.CSSProperties> = {
   searchInput: { flex: 1, background: 'none', border: 'none', outline: 'none', color: C.ink, fontFamily: FR, fontSize: 14, padding: '10px 0' },
   searchBtn: { width: 44, borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: 'none', color: '#04121f', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   scroll: { flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
+  oracleWrap: { flexShrink: 0, borderRadius: 10, border: `1px solid rgba(245,158,11,0.35)`, background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(2,6,19,0.5))', overflow: 'hidden' },
+  oracleToggle: { width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FM, fontSize: 11, letterSpacing: 1, color: '#ffcf6b', fontWeight: 700 },
+  oracleBody: { padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 },
+  oracleHint: { margin: 0, fontFamily: FM, fontSize: 10, color: C.muted, lineHeight: 1.45 },
+  oracleInput: { width: '100%', minHeight: 62, boxSizing: 'border-box', padding: 10, borderRadius: 8, background: '#040a18', border: `1px solid ${C.lineSoft}`, color: C.ink, fontFamily: FR, fontSize: 14, lineHeight: 1.4, resize: 'vertical', outline: 'none' },
+  oracleBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 0', borderRadius: 8, border: 'none', background: `linear-gradient(135deg, ${C.amberHi}, ${C.amber})`, color: '#04121f', fontFamily: FR, fontWeight: 700, fontSize: 14, letterSpacing: 0.5 },
+  oracleErr: { padding: 10, borderRadius: 8, background: 'rgba(255,80,102,0.10)', border: '1px solid rgba(255,80,102,0.3)', fontFamily: FR, fontSize: 12.5, color: '#ffb3bf', lineHeight: 1.4 },
+  oracleResult: { padding: 12, borderRadius: 8, background: 'rgba(0,240,255,0.06)', border: `1px solid rgba(0,240,255,0.25)` },
+  oracleResultHead: { display: 'flex', alignItems: 'center', gap: 6, fontFamily: FM, fontSize: 9, letterSpacing: 1.5, color: C.blueHi, marginBottom: 8 },
   muted: { fontFamily: FM, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
   card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 10, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
   cardTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.steelHi}, ${C.blue}, transparent)` },
