@@ -321,7 +321,7 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
             <div style={styles.trustDivider} />
             <div style={styles.trustItem}>
               <span style={styles.trustLabel}>RANGO</span>
-              <span style={styles.trustValSmall}>{service.seller.node_type.replace('Nodo ', '')} · N{service.seller.node_level}</span>
+              <span style={styles.trustValSmall}>{service.seller.node_type.replace('Nodo ', '')} · N{String(service.seller.node_level).replace(/^N/i, '')}</span>
             </div>
           </div>
         );
@@ -378,7 +378,7 @@ const styles: Record<string, React.CSSProperties> = {
   trustVal: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 16, lineHeight: 1 },
   trustValSmall: { fontFamily: FONT_MONO, fontSize: 10, color: C.ink, lineHeight: 1.2 },
   trustDivider: { width: 1, height: 26, background: C.lineSoft, flexShrink: 0 },
-  advisorWrap: { borderRadius: 10, border: `1px solid rgba(245,158,11,0.35)`, background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(2,6,19,0.5))', overflow: 'hidden' },
+  advisorWrap: { flexShrink: 0, borderRadius: 10, border: `1px solid rgba(245,158,11,0.35)`, background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(2,6,19,0.5))', overflow: 'hidden' },
   advisorToggle: { width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: '#ffcf6b', fontWeight: 700 },
   advisorBody: { padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 },
   advisorHint: { margin: 0, fontFamily: FONT_MONO, fontSize: 10, color: C.muted, lineHeight: 1.45 },
@@ -390,7 +390,7 @@ const styles: Record<string, React.CSSProperties> = {
   catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, whiteSpace: 'nowrap', transition: 'all .2s', textTransform: 'uppercase' },
   scroll: { position: 'relative', zIndex: 2, flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
   muted: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
-  card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 10, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
+  card: { position: 'relative', flexShrink: 0, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 10, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
   cardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.steelHi}, ${C.blue}, transparent)` },
   idTag: { position: 'absolute', top: 12, right: 14, fontFamily: FONT_MONO, fontSize: 8, color: C.muted, letterSpacing: 1, border: `1px solid ${C.lineSoft}`, padding: '2px 6px', borderRadius: 3 },
   cardTitle: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 18, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', letterSpacing: 0.5 },
