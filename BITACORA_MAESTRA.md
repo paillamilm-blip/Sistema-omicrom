@@ -126,8 +126,12 @@ flowchart TD
 **📌 Pendiente de TU acción (en el Mac):**
 1. `git pull` en la rama del PR.
 2. Correr en el SQL Editor las migraciones **`0033`, `0034`, `0035`, `0036`** (o el archivo `supabase/APLICAR_PENDIENTES.sql` para 0033-0035).
-3. Poner el secreto **`GEMINI_API_KEY`** (ya hecho) y desplegar: `coach`, `run-code`, `tutor`, `examen-ia`.
+3. Poner el secreto **`GEMINI_API_KEY`** (ya hecho) y desplegar: `coach`, `run-code`, `tutor`, `examen-ia`, `carta-ia`.
 4. Revisar y **mergear el PR #1** a `main`.
+
+**⚠️ 5. CRÍTICO PARA EL LANZAMIENTO — Activar facturación (billing) de Gemini.**
+El plan **gratis** de la API de Gemini tiene un tope muy bajo (**~20 llamadas**), que se agota rápido en pruebas. Con usuarios reales, la IA (Coach, Tutor, Examinador, Carta) **se cortaría**. Hay que activar el **plan pago por uso** en Google AI Studio (el modelo `gemini-2.5-flash` es muy barato — fracciones de centavo por llamada). Ref: https://ai.google.dev/gemini-api/docs/rate-limits
+> ✅ Confirmado el 30-jun-2026: todo el ecosistema de IA funciona; lo único que lo frena es este tope del plan gratis.
 
 **💡 Próxima innovación propuesta:** "Carta de Competencias" auto-generada por IA (resumen profesional verificable que lee la empresa, respaldado por las actas).
 
@@ -251,7 +255,7 @@ Deploy:    Vercel (pendiente)
 | — | Identidad visual Industria 5.0 | ✅ |
 | — | Innovaciones (pgvector, linaje, depreciación) | ✅ |
 | 4 | Profesionalización (estados, validaciones, tests, performance) | ⬜ |
-| 5 | Pre-lanzamiento (legal, onboarding, deploy, beta) | ⬜ |
+| 5 | Pre-lanzamiento (legal, onboarding, deploy Vercel, **billing Gemini**, beta) | ⬜ |
 | 6 | Beta + Lanzamiento 🚀 | ⬜ |
 
 ---
