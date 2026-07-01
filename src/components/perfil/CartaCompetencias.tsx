@@ -7,7 +7,7 @@ import { useState, useCallback } from 'react';
 import { FileText, Sparkles, Loader2, Copy, Check, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { C, FONT, RADIUS } from '../../theme';
-import { usePremium, PremiumLock } from '../shared/Premium';
+import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 
 async function serverError(error: unknown, data: unknown, fallback: string): Promise<string> {
   const d = data as { error?: string; detail?: string } | null;
@@ -72,6 +72,7 @@ export function CartaCompetencias() {
           </p>
           <button onClick={generar} style={btn(C.cyan)}>
             <Sparkles size={15} /> Generar mi Carta de Competencias
+            {!isPremium && <PremiumBadge />}
           </button>
         </>
       )}

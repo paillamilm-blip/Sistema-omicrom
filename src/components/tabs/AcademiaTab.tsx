@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
-import { usePremium, PremiumLock } from '../shared/Premium';
+import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '../../theme';
 import { ScanlineOverlay, CyberHeader, LoadingScreen } from '../shared/CyberComponents';
 import { EmptyState } from '../shared/EmptyState';
@@ -350,6 +350,7 @@ export function AcademiaTab() {
               </div>
               <Sparkles size={18} style={{ color: C.gold, flexShrink: 0 }} />
             </div>
+            {!isPremium && <div style={{ position: 'absolute', top: 10, right: 12 }}><PremiumBadge /></div>}
           </button>
 
           {courses.length === 0 ? (
@@ -494,7 +495,7 @@ export function AcademiaTab() {
                         fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: C.gold,
                         background: `${C.gold}14`, border: `1px solid ${C.gold}55`, borderRadius: 8, padding: '8px 14px',
                         cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
-                      }}><Sparkles size={14} /> PREGÚNTALE AL TUTOR IA</button>
+                      }}><Sparkles size={14} /> PREGÚNTALE AL TUTOR IA {!isPremium && <PremiumBadge />}</button>
                     </div>
                   </div>
                 )}

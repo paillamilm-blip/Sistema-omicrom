@@ -7,7 +7,7 @@ import { BookOpen, Plus, Lock, Unlock, X, Coins, GitBranch, Search, Sparkles, Lo
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { useToast } from '../shared/Toast';
-import { usePremium, PremiumLock } from '../shared/Premium';
+import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 
 // Paleta v5.0 "Neo-Académico Holográfico" — Bóveda = Cajas Negras (azul acero industrial)
 const C = {
@@ -214,6 +214,7 @@ export function VaultTab() {
           <button onClick={() => setOracleOpen(o => !o)} style={styles.oracleToggle}>
             <Sparkles size={14} style={{ color: C.amberHi }} />
             <span style={{ flex: 1, textAlign: 'left' }}>🔮 ORÁCULO DE LA BÓVEDA</span>
+            {!isPremium && <PremiumBadge />}
             <span style={{ color: C.muted }}>{oracleOpen ? '▲' : '▼'}</span>
           </button>
           {oracleOpen && (

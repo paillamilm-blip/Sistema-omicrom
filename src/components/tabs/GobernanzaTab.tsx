@@ -8,7 +8,7 @@ import {
   StatGrid, StatCard, ScanlineOverlay, CyberToast, Divider, DetailPanel, LoadingScreen,
 } from '../shared/CyberComponents';
 import { openBlackbox, type BlackboxResult } from '../../lib/secureChat';
-import { usePremium, PremiumLock } from '../shared/Premium';
+import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 
 interface Contract { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; amount: number; }
 interface Dispute { id: string; reason: string; status: string; created_at: string; }
@@ -388,6 +388,7 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
               <button onClick={analyze} disabled={aLoading}
                 style={{ width: '100%', padding: '8px', borderRadius: 6, background: 'rgba(245,158,11,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: aLoading ? 0.6 : 1 }}>
                 {aLoading ? <><Loader2 size={13} className="animate-spin" /> ANALIZANDO…</> : <><Sparkles size={13} /> RELATOR IA · ANALIZAR CASO</>}
+                {!isPremium && !aLoading && <PremiumBadge />}
               </button>
             )}
             {aErr && <p style={{ fontFamily: FONT.mono, fontSize: 9, color: C.red, marginTop: 6 }}>{aErr}</p>}

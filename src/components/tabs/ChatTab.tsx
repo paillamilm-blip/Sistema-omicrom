@@ -540,9 +540,9 @@ export function ChatTab() {
       <div style={{ display: 'flex', gap: 8, padding: '10px 14px', flexShrink: 0, borderTop: `1px solid ${C.cyanFaint}` }}>
         <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()} placeholder="Mensaje cifrado..."
           style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "'Rajdhani', sans-serif", fontSize: 14, outline: 'none' }} />
-        <button onClick={improveDraft} disabled={!input.trim() || aiAssisting} title="Mejorar redacción con IA"
+        <button onClick={improveDraft} disabled={!input.trim() || aiAssisting} title={isPremium ? 'Mejorar redacción con IA' : 'Redactor IA · Premium'}
           style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(245,158,11,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || aiAssisting ? 0.4 : 1 }}>
-          {aiAssisting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+          {aiAssisting ? <Loader2 size={16} className="animate-spin" /> : isPremium ? <Sparkles size={16} /> : <Lock size={16} />}
         </button>
         <button onClick={send} disabled={!input.trim() || sending} style={{ width: 44, height: 44, borderRadius: 10, background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
           <Send size={16} />

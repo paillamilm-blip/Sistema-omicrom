@@ -2,13 +2,29 @@
 // Candado Premium: las funciones de IA son parte de Ómicrom Premium (de pago).
 // usePremium() lee el flag del perfil; <PremiumLock/> muestra el upsell.
 
-import { X } from 'lucide-react';
+import { X, Lock } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { C, FONT } from '../../theme';
 
 export function usePremium(): { isPremium: boolean } {
   const { profile } = useApp();
   return { isPremium: !!profile?.is_premium };
+}
+
+// Candado visual: chip tecnológico "PREMIUM" con glow ámbar para marcar funciones de IA.
+export function PremiumBadge({ style }: { style?: React.CSSProperties }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 20,
+      background: 'linear-gradient(135deg, rgba(245,158,11,0.28), rgba(245,158,11,0.08))',
+      border: '1px solid rgba(245,158,11,0.65)', color: '#ffcf6b',
+      fontFamily: "'Share Tech Mono', monospace", fontSize: 8.5, letterSpacing: 1, fontWeight: 700,
+      boxShadow: '0 0 10px rgba(245,158,11,0.35)', whiteSpace: 'nowrap', verticalAlign: 'middle',
+      ...style,
+    }}>
+      <Lock size={9} /> PREMIUM
+    </span>
+  );
 }
 
 export function PremiumLock({ feature, onClose }: { feature: string; onClose: () => void }) {

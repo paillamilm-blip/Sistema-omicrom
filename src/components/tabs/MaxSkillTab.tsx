@@ -7,7 +7,7 @@ import { Play, Trophy, BookOpen, ArrowRight, Brain } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../shared/Toast';
-import { usePremium, PremiumLock } from '../shared/Premium';
+import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import { ExamenChallenge } from '../shared/ExamenChallenge';
 import { CourseFlowModal } from '../shared/CourseFlow';
 import type { SkillTreeNode, UserSkillProgress, ActaEvidencia } from '../../types';
@@ -280,6 +280,7 @@ export function MaxSkillTab() {
         <button style={styles.rangeBtn} onClick={handleRangeChallenge}>
           <Brain size={15} />
           Iniciar Examen de Rango
+          {!isPremium && <PremiumBadge />}
         </button>
       </div>
 
@@ -550,6 +551,7 @@ export function MaxSkillTab() {
           ) : (
             <button style={styles.challengeBtn} onClick={() => handleStartChallenge(selectedNode)}>
               <Play size={14} fill="currentColor" /> Rendir Examen IA
+              {!isPremium && <PremiumBadge />}
             </button>
           )}
 

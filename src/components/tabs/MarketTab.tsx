@@ -9,7 +9,7 @@ import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { ContractModal } from '../contracts/ContractModal';
 import { PublishServiceModal } from '../market/PublishServiceModal';
-import { usePremium, PremiumLock } from '../shared/Premium';
+import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import type { MarketService } from '../../types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
@@ -227,6 +227,7 @@ export function MarketTab() {
           <button onClick={() => setAdvisorOpen(o => !o)} style={styles.advisorToggle}>
             <Sparkles size={14} style={{ color: C.amberHi }} />
             <span style={{ flex: 1, textAlign: 'left' }}>ASESOR IA DE CONTRATACIÓN</span>
+            {!isPremium && <PremiumBadge />}
             <span style={{ color: C.muted }}>{advisorOpen ? '▲' : '▼'}</span>
           </button>
           {advisorOpen && (
