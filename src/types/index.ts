@@ -372,6 +372,8 @@ export interface MarketSeller {
   skills: string[] | null;
   location: string | null;
   created_at: string;
+  reputation_score?: number;          // Gemelo: reputación 0-100 (sello de confianza)
+  competencias_validadas?: number;    // nº de competencias validadas por IA (actas)
 }
 
 export interface MarketService {

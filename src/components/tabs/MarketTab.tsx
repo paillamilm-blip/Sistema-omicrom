@@ -3,7 +3,7 @@
 // azul eléctrico + ámbar de energía. Look tecnológico/industrial de alto impacto.
 
 import { useState, useEffect, useCallback } from 'react';
-import { ShoppingCart, Star, Plus, Zap, Cpu } from 'lucide-react';
+import { ShoppingCart, Star, Plus, Zap, Cpu, ShieldCheck, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
@@ -32,21 +32,21 @@ const DEMO_SERVICES: MarketService[] = [
     description: 'Aplicación React completa con PWA', price: 350,
     category: 'dev', tags: ['React', 'PWA'], rating: 4.8, total_reviews: 24,
     is_active: true, created_at: new Date().toISOString(),
-    seller: { id: 'demo-s1', username: 'marco_v', full_name: 'Marco V', avatar_url: null, node_type: 'Nodo Core', node_level: 2, token_balance: 0, pe_points: 520, is_pioneer: true, bio: null, skills: null, location: null, created_at: '' },
+    seller: { id: 'demo-s1', username: 'marco_v', full_name: 'Marco V', avatar_url: null, node_type: 'Nodo Core', node_level: 2, token_balance: 0, pe_points: 520, is_pioneer: true, bio: null, skills: null, location: null, created_at: '', reputation_score: 78, competencias_validadas: 4 },
   },
   {
     id: 'demo-2', seller_id: null, title: 'Diseño UI/UX Completo',
     description: 'Sistema de diseño en Figma completo', price: 180,
     category: 'diseño', tags: ['Figma', 'Sistema'], rating: 4.9, total_reviews: 31,
     is_active: true, created_at: new Date().toISOString(),
-    seller: { id: 'demo-s2', username: 'ana_design', full_name: 'Ana Design', avatar_url: null, node_type: 'Nodo Arquitecto', node_level: 1, token_balance: 0, pe_points: 280, is_pioneer: false, bio: null, skills: null, location: null, created_at: '' },
+    seller: { id: 'demo-s2', username: 'ana_design', full_name: 'Ana Design', avatar_url: null, node_type: 'Nodo Arquitecto', node_level: 1, token_balance: 0, pe_points: 280, is_pioneer: false, bio: null, skills: null, location: null, created_at: '', reputation_score: 85, competencias_validadas: 6 },
   },
   {
     id: 'demo-3', seller_id: null, title: 'Consultoría Técnica Cloud',
     description: 'Asesoría en arquitectura y AWS', price: 120,
     category: 'consulta', tags: ['AWS', 'Arquitectura'], rating: 4.7, total_reviews: 18,
     is_active: true, created_at: new Date().toISOString(),
-    seller: { id: 'demo-s3', username: 'carlos_arch', full_name: 'Carlos Arch', avatar_url: null, node_type: 'Nodo Fundador', node_level: 1, token_balance: 0, pe_points: 890, is_pioneer: true, bio: null, skills: null, location: null, created_at: '' },
+    seller: { id: 'demo-s3', username: 'carlos_arch', full_name: 'Carlos Arch', avatar_url: null, node_type: 'Nodo Fundador', node_level: 1, token_balance: 0, pe_points: 890, is_pioneer: true, bio: null, skills: null, location: null, created_at: '', reputation_score: 92, competencias_validadas: 9 },
   },
 ];
 
@@ -77,6 +77,7 @@ export function MarketTab() {
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<MarketService | null>(null);
   const [showPublish, setShowPublish] = useState(false);
+  const [sortBy, setSortBy] = useState<'confianza' | 'rating'>('confianza');
 
   const loadServices = useCallback(async () => {
     setLoading(true);
@@ -111,6 +112,16 @@ export function MarketTab() {
     if (category === 'diseño') return cat === 'diseño' || cat === 'design';
     if (category === 'consulta') return cat === 'consulta' || cat === 'consulting';
     return cat === category;
+  });
+
+  const ordered = [...filtered].sort((a, b) => {
+    if (sortBy === 'confianza') {
+      const ra = a.seller?.reputation_score ?? 0;
+      const rb = b.seller?.reputation_score ?? 0;
+      if (rb !== ra) return rb - ra;
+      return (b.seller?.competencias_validadas ?? 0) - (a.seller?.competencias_validadas ?? 0);
+    }
+    return b.rating - a.rating;
   });
 
   function canHire(svc: MarketService) {
@@ -155,11 +166,27 @@ export function MarketTab() {
         })}
       </div>
 
+      {/* Orden por confianza (sinergia con el Gemelo) */}
+      <div style={styles.sortRow}>
+        <span style={styles.sortLabel}>ORDENAR POR</span>
+        {([['confianza', '🛡️ Confianza'], ['rating', '⭐ Rating']] as const).map(([key, label]) => {
+          const on = sortBy === key;
+          return (
+            <button key={key} onClick={() => setSortBy(key)} style={{
+              ...styles.sortPill,
+              background: on ? 'rgba(0,240,255,0.16)' : 'transparent',
+              border: `1px solid ${on ? C.blue : C.lineSoft}`,
+              color: on ? C.blueHi : C.muted,
+            }}>{label}</button>
+          );
+        })}
+      </div>
+
       {/* Lista */}
       <div style={styles.scroll}>
         {loading ? (
           <p style={styles.muted}>// CARGANDO CATÁLOGO...</p>
-        ) : filtered.length === 0 ? (
+        ) : ordered.length === 0 ? (
           <EmptyState
             icon={<ShoppingCart size={30} />}
             title={category !== 'todos' ? 'Nada en esta categoría' : 'Aún no hay servicios'}
@@ -170,7 +197,7 @@ export function MarketTab() {
             onCta={() => (category !== 'todos' ? setCategory('todos') : setShowPublish(true))}
           />
         ) : (
-          filtered.map((svc, i) => (
+          ordered.map((svc, i) => (
             <ServiceCard key={svc.id} service={svc} index={i} canHire={canHire(svc)} onHire={() => setSelectedService(svc)} />
           ))
         )}
@@ -207,6 +234,31 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
           </div>
         </div>
       </div>
+
+      {/* SELLO DE CONFIANZA — sinergia con el Gemelo Digital + Actas */}
+      {service.seller && (() => {
+        const rep = Math.round(service.seller.reputation_score ?? 0);
+        const val = service.seller.competencias_validadas ?? 0;
+        const repColor = rep >= 70 ? '#39FF14' : rep >= 50 ? C.amber : C.muted;
+        return (
+          <div style={styles.trustSeal}>
+            <div style={styles.trustItem}>
+              <span style={styles.trustLabel}>REPUTACIÓN</span>
+              <span style={{ ...styles.trustVal, color: repColor }}><TrendingUp size={11} /> {rep}</span>
+            </div>
+            <div style={styles.trustDivider} />
+            <div style={styles.trustItem}>
+              <span style={styles.trustLabel}>VALIDADAS · IA</span>
+              <span style={{ ...styles.trustVal, color: C.blueHi }}><ShieldCheck size={11} /> {val}</span>
+            </div>
+            <div style={styles.trustDivider} />
+            <div style={styles.trustItem}>
+              <span style={styles.trustLabel}>RANGO</span>
+              <span style={styles.trustValSmall}>{service.seller.node_type.replace('Nodo ', '')} · N{service.seller.node_level}</span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Línea técnica precio/rating */}
       <div style={styles.statRow}>
@@ -250,6 +302,15 @@ const styles: Record<string, React.CSSProperties> = {
   headerSub: { fontFamily: FONT_MONO, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
   publishBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,240,255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 1 },
   catRow: { position: 'relative', zIndex: 2, display: 'flex', gap: 8, padding: '12px 14px', overflowX: 'auto', flexShrink: 0 },
+  sortRow: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px 8px', flexShrink: 0 },
+  sortLabel: { fontFamily: FONT_MONO, fontSize: 8.5, color: C.muted, letterSpacing: 1.5 },
+  sortPill: { display: 'flex', alignItems: 'center', gap: 4, padding: '5px 11px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 0.5, whiteSpace: 'nowrap' },
+  trustSeal: { display: 'flex', alignItems: 'center', gap: 8, margin: '11px 0 2px', padding: '8px 10px', borderRadius: 6, background: 'rgba(0,240,255,0.05)', border: `1px solid ${C.lineSoft}` },
+  trustItem: { flex: 1, display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 },
+  trustLabel: { fontFamily: FONT_MONO, fontSize: 7.5, color: C.muted, letterSpacing: 1 },
+  trustVal: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 16, lineHeight: 1 },
+  trustValSmall: { fontFamily: FONT_MONO, fontSize: 10, color: C.ink, lineHeight: 1.2 },
+  trustDivider: { width: 1, height: 26, background: C.lineSoft, flexShrink: 0 },
   catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, whiteSpace: 'nowrap', transition: 'all .2s', textTransform: 'uppercase' },
   scroll: { position: 'relative', zIndex: 2, flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
   muted: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
