@@ -3,21 +3,23 @@
 // trazas con energia fluyendo y nodos-chip que se ramifican.
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { Play, Trophy, BookOpen, ArrowRight } from 'lucide-react';
+import { Play, Trophy, BookOpen, ArrowRight, Brain } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
-import { SimulatorChallenge } from '../shared/SimulatorChallenge';
+import { useToast } from '../shared/Toast';
+import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
+import { ExamenChallenge } from '../shared/ExamenChallenge';
 import { CourseFlowModal } from '../shared/CourseFlow';
-import type { SkillTreeNode, UserSkillProgress, SkillTest } from '../../types';
+import type { SkillTreeNode, UserSkillProgress, ActaEvidencia } from '../../types';
 
 const NODE_W = 136;
 const NODE_H = 58;
 const TIER_GAP_Y = 124;
 const PEER_GAP_X = 22;
-const TOP = 116;
-const CORE_W = 92;
-const CORE_H = 68;
-const CORE_CY = 50;
+const TOP = 160;
+const CORE_W = 120;
+const CORE_H = 88;
+const CORE_CY = 78;
 
 const COLORS = {
   cyan:       '#00F0FF',
@@ -116,13 +118,16 @@ function svgDimensions(flat: LayoutNode[]) {
 }
 
 export function MaxSkillTab() {
-  const { profile } = useApp();
+  const { profile, refreshProfile } = useApp();
+  const { toast } = useToast();
+  const { isPremium } = usePremium();
+  const [premiumLock, setPremiumLock] = useState<string | null>(null);
   const [nodes, setNodes]             = useState<SkillTreeNode[]>([]);
   const [progress, setProgress]       = useState<Map<string, UserSkillProgress>>(new Map());
   const [isLoading, setIsLoading]     = useState(true);
   const [selectedNode, setSelectedNode] = useState<SkillTreeNode | null>(null);
-  const [simulatorTest, setSimulatorTest] = useState<SkillTest | null>(null);
-  const [simulatorNode, setSimulatorNode] = useState<string>('');
+  const [examNode, setExamNode] = useState<SkillTreeNode | null>(null);
+  const [actas, setActas] = useState<Map<string, ActaEvidencia>>(new Map());
   const [lastPeEarned, setLastPeEarned]   = useState<number | null>(null);
   const [courseByNode, setCourseByNode]   = useState<Map<string, string>>(new Map());
   const [courseNode, setCourseNode]       = useState<string | null>(null);
@@ -195,18 +200,31 @@ export function MaxSkillTab() {
   }, [progress, nodes]);
   const getPercentage = (id: string) => progress.get(id)?.progress_percentage || 0;
 
-  const handleStartChallenge = useCallback(async (node: SkillTreeNode) => {
-    const { data, error } = await supabase
-      .from('skill_tests')
-      .select('*')
-      .eq('node_id', node.id)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (error || !data) return;
-    setSimulatorTest(data as SkillTest);
-    setSimulatorNode(node.id);
-  }, []);
+  const loadActas = useCallback(async () => {
+    if (!profile?.id) return;
+    const { data } = await supabase
+      .from('actas_evidencia').select('*')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false });
+    const m = new Map<string, ActaEvidencia>();
+    ((data as ActaEvidencia[]) ?? []).forEach(a => { if (!m.has(a.node_id)) m.set(a.node_id, a); });
+    setActas(m);
+  }, [profile?.id]);
+
+  const handleStartChallenge = useCallback((node: SkillTreeNode) => {
+    if (!isPremium) { setPremiumLock('El Examinador IA'); return; }
+    setExamNode(node);
+  }, [isPremium]);
+
+  const handleRangeChallenge = useCallback(() => {
+    if (!isPremium) { setPremiumLock('El Examen de Rango IA'); return; }
+    if (nodes.length === 0) { toast('Aún no hay nodos disponibles. 🛠️', 'info'); return; }
+    const byStatus = (want: string) => nodes.find(n => getStatus(n.id) === want);
+    const target = byStatus('VALIDATED') || byStatus('MASTERED') || byStatus('AVAILABLE') || nodes[0];
+    setExamNode(target);
+  }, [isPremium, nodes, getStatus, toast]);
+
+  useEffect(() => { loadActas(); }, [loadActas]);
 
   const roots = useMemo(() => nodes.filter(n => !n.parent_node_id), [nodes]);
   const { nodes: layoutRoots } = useMemo(
@@ -253,15 +271,16 @@ export function MaxSkillTab() {
 
       <div style={styles.rangeCard}>
         <div style={styles.rangeCardInner}>
-          <div style={styles.rangeIcon}>⚡</div>
+          <div style={styles.rangeIcon}>🧬</div>
           <div>
-            <div style={styles.rangeTitle}>Simulador de Rango (Contrarreloj)</div>
-            <div style={styles.rangeSub}>Reto de alta dificultad para defender tu estatus.</div>
+            <div style={styles.rangeTitle}>Examen de Rango · Defiende tu Gemelo</div>
+            <div style={styles.rangeSub}>La IA te toma un examen exigente de tus competencias para mantener tu reputación vigente y validada.</div>
           </div>
         </div>
-        <button style={styles.rangeBtn}>
-          <Play size={14} fill="currentColor" />
-          Iniciar Reto de Alta Frecuencia
+        <button style={styles.rangeBtn} onClick={handleRangeChallenge}>
+          <Brain size={15} />
+          Iniciar Examen de Rango
+          {!isPremium && <PremiumBadge />}
         </button>
       </div>
 
@@ -270,7 +289,7 @@ export function MaxSkillTab() {
         {flat.length === 0 ? (
           <p style={{ color: COLORS.cyanDim, fontFamily: 'monospace', fontSize: 12, padding: 20 }}>No hay nodos cargados.</p>
         ) : (
-          <svg width={W} height={svgH + TOP} style={{ display: 'block', overflow: 'visible' }}>
+          <svg width="100%" viewBox={`0 0 ${W} ${svgH + TOP}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block', overflow: 'visible', maxWidth: '100%', height: 'auto' }}>
             <defs>
               <pattern id="cp-grid" width="22" height="22" patternUnits="userSpaceOnUse">
                 <path d="M 22 0 L 0 0 0 22" fill="none" stroke={COLORS.grid} strokeWidth="0.5" />
@@ -282,6 +301,11 @@ export function MaxSkillTab() {
               <radialGradient id="core-inner" cx="50%" cy="40%" r="70%">
                 <stop offset="0%" stopColor="rgba(0,240,255,0.18)" />
                 <stop offset="100%" stopColor={COLORS.bg} />
+              </radialGradient>
+              <radialGradient id="core-halo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="rgba(0,240,255,0.28)" />
+                <stop offset="65%" stopColor="rgba(0,240,255,0.07)" />
+                <stop offset="100%" stopColor="rgba(0,240,255,0)" />
               </radialGradient>
               <filter id="cp-glow-cyan" x="-60%" y="-60%" width="220%" height="220%">
                 <feGaussianBlur stdDeviation="2.6" result="b" />
@@ -317,19 +341,26 @@ export function MaxSkillTab() {
               );
             })}
 
-            <g>
-              <circle cx={coreX} cy={CORE_CY} r={46} fill="none" stroke={COLORS.cyanFaint} strokeWidth={1} />
+            <g style={{ animation: 'cp-breathe 3s ease-in-out infinite' }}>
+              {/* Halo / resplandor exterior */}
+              <circle cx={coreX} cy={CORE_CY} r={76} fill="url(#core-halo)" />
+              {/* Anillo exterior girando */}
               <g>
-                <circle cx={coreX} cy={CORE_CY} r={43} fill="none" stroke={COLORS.cyanDim} strokeWidth={1.1} strokeDasharray="3 9" />
-                <animateTransform attributeName="transform" type="rotate" from={`0 ${coreX} ${CORE_CY}`} to={`360 ${coreX} ${CORE_CY}`} dur="16s" repeatCount="indefinite" />
+                <circle cx={coreX} cy={CORE_CY} r={62} fill="none" stroke={COLORS.cyanFaint} strokeWidth={1} />
+                <animateTransform attributeName="transform" type="rotate" from={`0 ${coreX} ${CORE_CY}`} to={`360 ${coreX} ${CORE_CY}`} dur="22s" repeatCount="indefinite" />
+              </g>
+              {/* Anillo interior girando al revés */}
+              <g>
+                <circle cx={coreX} cy={CORE_CY} r={56} fill="none" stroke={COLORS.cyanDim} strokeWidth={1.2} strokeDasharray="4 10" />
+                <animateTransform attributeName="transform" type="rotate" from={`360 ${coreX} ${CORE_CY}`} to={`0 ${coreX} ${CORE_CY}`} dur="14s" repeatCount="indefinite" />
               </g>
               <polygon points={hexPoints(coreX, CORE_CY, CORE_W, CORE_H)} fill="url(#core-grad)" filter="url(#cp-glow-cyan)" />
-              <polygon points={hexPoints(coreX, CORE_CY, CORE_W - 9, CORE_H - 9)} fill="url(#core-inner)" stroke={COLORS.cyanFaint} strokeWidth={0.5} />
+              <polygon points={hexPoints(coreX, CORE_CY, CORE_W - 11, CORE_H - 11)} fill="url(#core-inner)" stroke={COLORS.cyanFaint} strokeWidth={0.6} />
               {hexVerts(coreX, CORE_CY, CORE_W, CORE_H).map((p, i) => (
-                <circle key={`pad-${i}`} cx={p.x} cy={p.y} r={3.2} fill={COLORS.cyan} filter="url(#cp-glow-cyan)" style={{ animation: `cp-breathe ${1.6 + (i % 3) * 0.3}s ease-in-out infinite` }} />
+                <circle key={`pad-${i}`} cx={p.x} cy={p.y} r={3.6} fill={COLORS.cyan} filter="url(#cp-glow-cyan)" style={{ animation: `cp-breathe ${1.6 + (i % 3) * 0.3}s ease-in-out infinite` }} />
               ))}
-              <text x={coreX} y={CORE_CY - 1} textAnchor="middle" dominantBaseline="central" fontFamily="'Rajdhani', sans-serif" fontWeight="700" fontSize="21" fill="#eaf4ff">{corePct}%</text>
-              <text x={coreX} y={CORE_CY + 16} textAnchor="middle" fontFamily="'Share Tech Mono', monospace" fontSize="7" letterSpacing="1.5" fill={COLORS.cyanDim}>NÚCLEO</text>
+              <text x={coreX} y={CORE_CY - 6} textAnchor="middle" dominantBaseline="central" fontFamily="'Rajdhani', sans-serif" fontWeight="700" fontSize="36" fill="#eaf4ff" style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.6))' }}>{corePct}%</text>
+              <text x={coreX} y={CORE_CY + 20} textAnchor="middle" fontFamily="'Share Tech Mono', monospace" fontSize="8" letterSpacing="2" fill={COLORS.cyanDim}>GEMELO · NÚCLEO</text>
             </g>
 
             <g transform={`translate(0 ${TOP})`}>
@@ -434,7 +465,11 @@ export function MaxSkillTab() {
 
                   <text x={x + 6} y={y + NODE_H - 11} textAnchor="middle"
                     fontFamily="'Share Tech Mono', monospace" fontSize="8" fill={color} opacity={locked ? 0.25 : 0.6}>
-                    {'+' + node.pe_reward + ' PE · ' + node.estimated_hours + 'h '}{'★'.repeat(node.difficulty_level)}
+                    {(() => {
+                      const a = actas.get(node.id);
+                      if (a) return `IA ${a.puntaje_global}%${a.veredicto === 'APROBADO' ? ' ✓' : ''}`;
+                      return '+' + node.pe_reward + ' PE · ' + node.estimated_hours + 'h ' + '★'.repeat(node.difficulty_level);
+                    })()}
                   </text>
                 </g>
               );
@@ -468,6 +503,27 @@ export function MaxSkillTab() {
             ))}
           </div>
 
+          {actas.get(selectedNode.id) && (() => {
+            const a = actas.get(selectedNode.id)!;
+            const ok = a.veredicto === 'APROBADO';
+            return (
+              <div style={{ borderRadius: 10, padding: '12px 14px', marginBottom: 12, background: 'rgba(0,240,255,0.06)', border: `1px solid ${ok ? COLORS.greenDim : 'rgba(255,77,109,0.4)'}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, letterSpacing: 1.5, color: COLORS.cyan }}>📜 ACTA DE EVIDENCIA · IA</span>
+                  <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, fontWeight: 700, color: ok ? COLORS.green : '#ff4d6d' }}>{ok ? 'VALIDADO' : 'PENDIENTE'} · {a.puntaje_global}%</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#dbeafe' }}>
+                  <span>Ejecución: <strong style={{ color: COLORS.cyan }}>{a.ejecucion}</strong></span>
+                  <span>Calidad: <strong style={{ color: COLORS.cyan }}>{a.calidad}</strong></span>
+                  <span>Trascendencia: <strong style={{ color: COLORS.cyan }}>{a.trascendencia}</strong></span>
+                  <span>Fundamento: <strong style={{ color: COLORS.cyan }}>{a.fundamento}</strong></span>
+                </div>
+                {a.resumen && <p style={{ margin: '8px 0 0', fontFamily: "'Rajdhani', sans-serif", fontSize: 12.5, color: '#cfe6ff', lineHeight: 1.5 }}>{a.resumen}</p>}
+                <p style={{ margin: '6px 0 0', fontFamily: "'Share Tech Mono', monospace", fontSize: 8.5, color: COLORS.cyanDim }}>Emitida {new Date(a.created_at).toLocaleDateString('es-CL')}</p>
+              </div>
+            );
+          })()}
+
           <div style={{ borderRadius: 10, padding: '12px 14px', marginBottom: 12, background: 'rgba(57,255,20,0.07)', border: `1px solid ${COLORS.greenDim}` }}>
             <div style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, letterSpacing: 1.5, color: COLORS.green, marginBottom: 8 }}>⬡ LO QUE GANAS AL COMPLETARLO</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: "'Rajdhani', sans-serif", fontSize: 13, color: '#dbeafe' }}>
@@ -494,7 +550,8 @@ export function MaxSkillTab() {
             </button>
           ) : (
             <button style={styles.challengeBtn} onClick={() => handleStartChallenge(selectedNode)}>
-              <Play size={14} fill="currentColor" /> Iniciar Desafío
+              <Play size={14} fill="currentColor" /> Rendir Examen IA
+              {!isPremium && <PremiumBadge />}
             </button>
           )}
 
@@ -529,18 +586,25 @@ export function MaxSkillTab() {
         <div style={styles.peToast}><Trophy size={16} /> +{lastPeEarned} PE ganados</div>
       )}
 
-      {simulatorTest && (
-        <SimulatorChallenge
-          test={simulatorTest}
-          nodeId={simulatorNode}
-          onClose={() => { setSimulatorTest(null); setSimulatorNode(''); }}
-          onSuccess={(pe) => { setLastPeEarned(pe); setTimeout(() => setLastPeEarned(null), 3000); }}
+      {examNode && (
+        <ExamenChallenge
+          node={examNode}
+          onClose={() => setExamNode(null)}
+          onFinished={(res) => {
+            loadActas();
+            void refreshProfile?.();
+            if (res.veredicto === 'APROBADO') {
+              setLastPeEarned(examNode.pe_reward);
+              setTimeout(() => setLastPeEarned(null), 3500);
+            }
+          }}
         />
       )}
 
       {courseNode && (
         <CourseFlowModal nodeId={courseNode} onClose={() => setCourseNode(null)} onValidated={() => {}} />
       )}
+      {premiumLock && <PremiumLock feature={premiumLock} onClose={() => setPremiumLock(null)} />}
     </div>
   );
 }
@@ -554,12 +618,12 @@ const styles: Record<string, React.CSSProperties> = {
   spinnerBox: { width: 44, height: 44, borderRadius: 10, background: 'rgba(0,240,255,0.08)', border: `1px solid rgba(0,240,255,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   spinner: { width: 20, height: 20, borderRadius: '50%', border: `2px solid ${COLORS.cyan}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' },
   loadingText: { fontFamily: FONT_MONO, fontSize: 12, color: COLORS.cyanDim, letterSpacing: 2 },
-  rangeCard: { margin: '12px 14px 8px', padding: '12px 14px', borderRadius: 12, border: `1px solid rgba(245,158,11,0.35)`, background: 'linear-gradient(135deg, rgba(245,158,11,0.10), rgba(8,16,38,0.45))', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', boxShadow: '0 0 18px rgba(245,158,11,0.18), inset 0 1px 1px rgba(255,255,255,0.05)', flexShrink: 0 },
+  rangeCard: { margin: '12px 14px 8px', padding: '12px 14px', borderRadius: 12, border: `1px solid ${COLORS.cyanDim}`, background: 'linear-gradient(135deg, rgba(0,240,255,0.10), rgba(8,16,38,0.55))', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', boxShadow: '0 0 18px rgba(0,240,255,0.15), inset 0 1px 1px rgba(255,255,255,0.05)', flexShrink: 0 },
   rangeCardInner: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 },
-  rangeIcon: { fontSize: 18, filter: 'drop-shadow(0 0 6px rgba(245,158,11,0.7))' },
-  rangeTitle: { fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 13, color: COLORS.gold },
-  rangeSub: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.goldDim, marginTop: 2 },
-  rangeBtn: { width: '100%', padding: '10px 0', background: `linear-gradient(90deg, ${COLORS.gold}, #ffb84d)`, color: '#020613', border: 'none', borderRadius: 8, fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5, animation: 'amberBreathe 2.8s ease-in-out infinite' },
+  rangeIcon: { fontSize: 18, filter: 'drop-shadow(0 0 6px rgba(0,240,255,0.7))' },
+  rangeTitle: { fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 13, color: COLORS.cyan },
+  rangeSub: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.cyanDim, marginTop: 2, lineHeight: 1.4 },
+  rangeBtn: { width: '100%', padding: '10px 0', background: `linear-gradient(90deg, ${COLORS.cyan}, #5ad6ff)`, color: '#020613', border: 'none', borderRadius: 8, fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5, boxShadow: '0 0 16px rgba(0,240,255,0.4)' },
   treeLabel: { fontFamily: FONT_MONO, fontSize: 9, color: 'rgba(0,240,255,0.3)', letterSpacing: 2, textTransform: 'uppercase', padding: '4px 16px', flexShrink: 0 },
   treeScroll: { flex: 1, overflowY: 'auto', overflowX: 'auto', padding: '8px 12px 20px', WebkitOverflowScrolling: 'touch' },
   detailPanel: { flexShrink: 0, borderTop: `1px solid rgba(0,240,255,0.18)`, padding: '14px 16px', background: 'rgba(2,6,19,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', maxHeight: '38vh', overflowY: 'auto', boxShadow: '0 -8px 30px rgba(0,240,255,0.08)' },

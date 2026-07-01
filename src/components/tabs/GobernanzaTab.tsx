@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Gavel, TrendingUp, Users, ShieldAlert, Scale, Check, Lock, Unlock, ShieldCheck } from 'lucide-react';
+import { Gavel, TrendingUp, Users, ShieldAlert, Scale, Check, Lock, Unlock, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
@@ -8,6 +8,7 @@ import {
   StatGrid, StatCard, ScanlineOverlay, CyberToast, Divider, DetailPanel, LoadingScreen,
 } from '../shared/CyberComponents';
 import { openBlackbox, type BlackboxResult } from '../../lib/secureChat';
+import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 
 interface Contract { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; amount: number; }
 interface Dispute { id: string; reason: string; status: string; created_at: string; }
@@ -159,7 +160,7 @@ export function GobernanzaTab() {
                 </p>
 
                 {/* CAJA NEGRA · revisar evidencia cifrada antes del fallo */}
-                <BlackboxPanel disputeId={a.dispute_id} />
+                <BlackboxPanel disputeId={a.dispute_id} reason={a.dispute?.reason ?? ''} />
 
                 <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                   <CyberButton variant="primary" onClick={() => castVerdict(a.dispute_id, 'PLAINTIFF_WINS')} disabled={busy} style={{ borderColor: C.greenDim, color: C.green }}>
@@ -304,16 +305,39 @@ export function GobernanzaTab() {
 
 
 // ── Panel de la Caja Negra: quórum 2-de-3 para abrir la evidencia cifrada ──
-function BlackboxPanel({ disputeId }: { disputeId: string }) {
+function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: string }) {
   const [res, setRes] = useState<BlackboxResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [aLoading, setALoading] = useState(false);
+  const [aErr, setAErr] = useState<string | null>(null);
+  const { isPremium } = usePremium();
+  const [premiumLock, setPremiumLock] = useState(false);
 
   async function vote() {
     setLoading(true); setErr(null);
     try { setRes(await openBlackbox(disputeId)); }
     catch (e) { setErr((e as Error).message); }
     finally { setLoading(false); }
+  }
+
+  async function analyze() {
+    if (!isPremium) { setPremiumLock(true); return; }
+    setALoading(true); setAErr(null);
+    try {
+      const transcript = (res?.transcript ?? []).map(m => ({ autor: m.sender?.username ?? 'nodo', texto: m.content }));
+      const { data, error } = await supabase.functions.invoke('arbiter-ai', { body: { reason, transcript } });
+      const d = data as { analisis?: string; error?: string; detail?: string };
+      if (error || d?.error || !d?.analisis) {
+        let msg = d?.error || 'Relator IA no disponible (¿desplegaste "arbiter-ai"?).';
+        const ctx = (error as { context?: Response } | null)?.context;
+        if (ctx && typeof ctx.json === 'function') { try { const b = await ctx.json(); if (b?.error) msg = b.detail ? `${b.error} — ${b.detail}` : b.error; } catch { /* */ } }
+        setAErr(msg); return;
+      }
+      setAnalysis(d.analisis);
+    } catch { setAErr('Error de conexión con el Relator IA.'); }
+    finally { setALoading(false); }
   }
 
   return (
@@ -357,10 +381,31 @@ function BlackboxPanel({ disputeId }: { disputeId: string }) {
               <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>SIN MENSAJES EN ESTE CANAL</div>
             )}
           </div>
+
+          {/* RELATOR IA · análisis neutral del caso (no es veredicto) */}
+          <div style={{ marginTop: 10 }}>
+            {!analysis && (
+              <button onClick={analyze} disabled={aLoading}
+                style={{ width: '100%', padding: '8px', borderRadius: 6, background: 'rgba(245,158,11,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: aLoading ? 0.6 : 1 }}>
+                {aLoading ? <><Loader2 size={13} className="animate-spin" /> ANALIZANDO…</> : <><Sparkles size={13} /> RELATOR IA · ANALIZAR CASO</>}
+                {!isPremium && !aLoading && <PremiumBadge />}
+              </button>
+            )}
+            {aErr && <p style={{ fontFamily: FONT.mono, fontSize: 9, color: C.red, marginTop: 6 }}>{aErr}</p>}
+            {analysis && (
+              <div style={{ marginTop: 8, padding: 10, borderRadius: 8, background: 'rgba(0,240,255,0.06)', border: `1px solid ${C.cyanDim}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1.5, color: C.cyan }}>
+                  <Sparkles size={11} /> ANÁLISIS NEUTRAL · RELATOR IA (no es veredicto)
+                </div>
+                <p style={{ margin: 0, fontFamily: "'Rajdhani', sans-serif", fontSize: 13.5, color: '#dbeafe', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{analysis}</p>
+              </div>
+            )}
+          </div>
         </>
       )}
 
       {err && <p style={{ fontFamily: FONT.mono, fontSize: 9, color: C.red, marginTop: 8 }}>{err}</p>}
+      {premiumLock && <PremiumLock feature="El Relator IA del Tribunal" onClose={() => setPremiumLock(false)} />}
     </div>
   );
 }

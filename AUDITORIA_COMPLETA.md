@@ -20,15 +20,17 @@ _Seguridad · integridad económica · calidad · 27 de junio de 2026_
 
 ## 🔴 HALLAZGOS ALTOS (resolver antes de la beta)
 
-### A1 · Contenido de la Bóveda NO está protegido de verdad
+> ✅ **TODOS CERRADOS Y VERIFICADOS EN PRODUCCIÓN — 30 de junio de 2026** (RLS confirmada + columna `description` de la Bóveda ya no expone SELECT + quórum 2-de-3 aplicado).
+
+### A1 · Contenido de la Bóveda NO está protegido de verdad ✅ CERRADO (30-jun-2026)
 La política de `knowledge_vault_documents` es `select using(true)` → la **descripción (la solución que se paga)** viaja a cualquiera vía API. El "🔒 bloqueado" es **solo visual**. Alguien técnico puede leer el contenido **sin pagar**.
 **Fix:** servir el contenido completo solo vía RPC `get_vault_content(doc_id)` que verifique acceso en `vault_queries`; en el listado, exponer solo título/tags/costo.
 
-### A2 · Arbitraje sin quórum (un solo árbitro decide y mueve fondos)
+### A2 · Arbitraje sin quórum (un solo árbitro decide y mueve fondos) ✅ CERRADO (30-jun-2026)
 `resolve_dispute` permite que **cualquiera de los 3 árbitros** resuelva solo → riesgo de abuso/colusión.
 **Fix:** acumular votos y resolver con **mayoría 2-de-3**.
 
-### A3 · Verificar RLS de disputes / arbitration_cases / human_venture_stakes
+### A3 · Verificar RLS de disputes / arbitration_cases / human_venture_stakes ✅ CERRADO (30-jun-2026)
 No se añadió RLS en la migración de gobernanza. Si están **abiertas**, cualquiera podría leer disputas ajenas o (peor) escribir en `arbitration_cases`/`human_venture_stakes`.
 **Fix:** confirmar con el diagnóstico (bloque 1) y agregar políticas si falta.
 
@@ -36,7 +38,7 @@ No se añadió RLS en la migración de gobernanza. Si están **abiertas**, cualq
 
 ## 🟡 HALLAZGOS MEDIOS
 
-### M1 · RLS de `contracts` vive solo en la BD, no en una migración
+### M1 · RLS de `contracts` vive solo en la BD, no en una migración ✅ CERRADO (0030 + 30-jun-2026)
 El fix de permisos se corrió a mano → **no está versionado**. Si recreas la BD, se pierde.
 **Fix:** crear migración `00xx_contracts_rls.sql` con esas políticas.
 

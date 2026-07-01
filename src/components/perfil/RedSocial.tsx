@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Share2, Copy, Check, QrCode, UserPlus, Users, Clock,
-  BadgeCheck, MapPin, Shield, Loader2, MessageCircle, Send,
+  BadgeCheck, MapPin, Shield, ShieldCheck, Loader2, MessageCircle, Send,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
@@ -85,6 +85,23 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
   const [copied, setCopied] = useState(false);
   const link = profileLink(username);
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=${encodeURIComponent(link)}`;
+
+  const [passportUrl, setPassportUrl] = useState<string | null>(null);
+  const [issuing, setIssuing] = useState(false);
+  const [copiedP, setCopiedP] = useState(false);
+
+  async function generatePassport() {
+    setIssuing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('credential', { body: { action: 'issue' } });
+      const d = data as { token?: string; error?: string };
+      if (error || !d?.token) return;
+      const base = `${window.location.origin}${window.location.pathname}`;
+      setPassportUrl(`${base}?verificar=${d.token}`);
+    } finally {
+      setIssuing(false);
+    }
+  }
 
   async function copy() {
     try {
@@ -166,6 +183,34 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
           {copied ? <Check size={15} /> : <Copy size={15} />}
           {copied ? 'COPIADO' : 'COPIAR LINK'}
         </button>
+
+        <div style={{ height: 1, background: C.cyanFaint, margin: '18px 0' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <ShieldCheck size={15} style={{ color: C.green }} />
+          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Pasaporte Verificable</span>
+        </div>
+        <p style={{ margin: '0 0 12px', fontFamily: FONT.body, fontSize: 12, color: C.cyanDim, lineHeight: 1.4 }}>
+          Credencial firmada: quien la reciba puede comprobar que es auténtica y no fue alterada, <b>sin necesidad de cuenta</b>.
+        </p>
+        {!passportUrl ? (
+          <button onClick={generatePassport} disabled={issuing}
+            style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(57,255,20,0.12)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.display, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            {issuing ? <Loader2 size={16} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> : <ShieldCheck size={16} />}
+            {issuing ? 'Firmando...' : 'Generar Pasaporte Verificable'}
+          </button>
+        ) : (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <div style={{ padding: 10, borderRadius: 14, background: '#fff', boxShadow: `0 0 22px ${C.green}33` }}>
+                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(passportUrl)}`} width={190} height={190} alt="QR Pasaporte Verificable" style={{ display: 'block', width: 190, height: 190 }} />
+              </div>
+            </div>
+            <button onClick={() => { navigator.clipboard?.writeText(passportUrl); setCopiedP(true); setTimeout(() => setCopiedP(false), 2000); }}
+              style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.mono, fontSize: 12, letterSpacing: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              {copiedP ? <Check size={15} /> : <Copy size={15} />} {copiedP ? 'COPIADO' : 'COPIAR LINK VERIFICABLE'}
+            </button>
+          </>
+        )}
       </div>
     </Overlay>
   );

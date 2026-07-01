@@ -55,6 +55,7 @@ export interface Profile {
   // === FLAGS ===
   is_verified_professional: boolean;
   can_receive_contracts: boolean;
+  is_premium?: boolean;             // Ómicrom Premium: desbloquea las funciones de IA
 
   // === CONTADORES ===
   total_contracts_completed: number;
@@ -159,6 +160,45 @@ export interface SkillTestAttempt {
   time_taken_seconds: number;
   error_message?: string;
   attempted_at: string;
+}
+
+// ===== EXAMINADOR IA / ACTA DE EVIDENCIA =====
+export interface ExamMultipleChoice { pregunta: string; opciones: string[]; }
+export interface ExamGenerated {
+  session_id: string;
+  node: { id: string; title: string };
+  multiple_choice: ExamMultipleChoice[];
+  caso: { enunciado: string };
+}
+export interface ExamEjes {
+  ejecucion: number;
+  calidad: number;
+  trascendencia: number;
+  fundamento: number;
+}
+export interface ExamResultado {
+  acta_id: string;
+  node: { id: string; title: string } | null;
+  veredicto: 'APROBADO' | 'REPROBADO';
+  puntaje_global: number;
+  ejes: ExamEjes;
+  resumen: string;
+  feedback: string;
+}
+export interface ActaEvidencia {
+  id: string;
+  user_id: string;
+  node_id: string;
+  ejecucion: number;
+  calidad: number;
+  trascendencia: number;
+  fundamento: number;
+  puntaje_global: number;
+  veredicto: 'APROBADO' | 'REPROBADO';
+  resumen: string | null;
+  detalle: unknown;
+  validador: string;
+  created_at: string;
 }
 
 // ===== NOTIFICACIONES =====
@@ -333,6 +373,8 @@ export interface MarketSeller {
   skills: string[] | null;
   location: string | null;
   created_at: string;
+  reputation_score?: number;          // Gemelo: reputación 0-100 (sello de confianza)
+  competencias_validadas?: number;    // nº de competencias validadas por IA (actas)
 }
 
 export interface MarketService {

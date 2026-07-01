@@ -16,6 +16,8 @@ import { CredentialsPanel } from '../perfil/CredentialsPanel';
 import { CredentialReview } from '../perfil/CredentialReview';
 import { ShareCredentialModal, RedPanel } from '../perfil/RedSocial';
 import { ProgressRadar } from '../shared/ProgressRadar';
+import { DossierEvidencia } from '../perfil/DossierEvidencia';
+import { CartaCompetencias } from '../perfil/CartaCompetencias';
 import { SimulatorChallenge } from '../shared/SimulatorChallenge';
 import {
   ScanlineOverlay, CyberButton,
@@ -621,6 +623,8 @@ export function PerfilTab() {
         {/* Contenido de la sección activa */}
         <div key={section} style={{ animation: 'sectionIn 0.35s cubic-bezier(0.22,1,0.36,1) both' }}>
           {section === 'gemelo' && gemelo && <EjesPanel gemelo={gemelo} />}
+          {section === 'gemelo' && <CartaCompetencias />}
+          {section === 'gemelo' && <DossierEvidencia />}
 
           {section === 'red' && <RedPanel />}
 

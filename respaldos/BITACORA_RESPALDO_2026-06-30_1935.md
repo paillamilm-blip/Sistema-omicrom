@@ -126,42 +126,10 @@ flowchart TD
 **📌 Pendiente de TU acción (en el Mac):**
 1. `git pull` en la rama del PR.
 2. Correr en el SQL Editor las migraciones **`0033`, `0034`, `0035`, `0036`** (o el archivo `supabase/APLICAR_PENDIENTES.sql` para 0033-0035).
-3. Poner el secreto **`GEMINI_API_KEY`** (ya hecho) y desplegar: `coach`, `run-code`, `tutor`, `examen-ia`, `carta-ia`.
+3. Poner el secreto **`GEMINI_API_KEY`** (ya hecho) y desplegar: `coach`, `run-code`, `tutor`, `examen-ia`.
 4. Revisar y **mergear el PR #1** a `main`.
 
-**⚠️ 5. CRÍTICO PARA EL LANZAMIENTO — Activar facturación (billing) de Gemini.**
-El plan **gratis** de la API de Gemini tiene un tope muy bajo (**~20 llamadas**), que se agota rápido en pruebas. Con usuarios reales, la IA (Coach, Tutor, Examinador, Carta) **se cortaría**. Hay que activar el **plan pago por uso** en Google AI Studio (el modelo `gemini-2.5-flash` es muy barato — fracciones de centavo por llamada). Ref: https://ai.google.dev/gemini-api/docs/rate-limits
-> ✅ Confirmado el 30-jun-2026: todo el ecosistema de IA funciona; lo único que lo frena es este tope del plan gratis.
-
 **💡 Próxima innovación propuesta:** "Carta de Competencias" auto-generada por IA (resumen profesional verificable que lee la empresa, respaldado por las actas).
-
----
-
-## 🆕 ACTUALIZACIÓN v6.1 — 30 JUNIO 2026 (Sinergia IA en Perfil, Mercado y Bóveda)
-
-> Continuación de la sesión: se llevó la IA a las zonas de valor, todo con sinergia con el Gemelo/Actas.
-
-**📄 Perfil — Carta de Competencias IA** (`carta-ia`)
-- La IA lee el Gemelo + las actas y redacta un resumen profesional verificable ("lo que lee una empresa"). Botón en Perfil → Gemelo (copiar/regenerar).
-
-**🛒 Mercado — Mercado de Talento Verificado**
-- **Sello de Confianza** en cada tarjeta: reputación (Gemelo) + nº de **competencias validadas por IA** (Actas) + rango. Migración `0037` (contador `competencias_validadas` + `aplicar_acta` lo incrementa).
-- **Orden por Confianza** (además de Rating). Tarjetas **compactas** (~3 por pantalla).
-- **Asesor IA de Contratación** (`market-match`): describes qué necesitas y la IA recomienda al mejor talento **citando su evidencia**.
-
-**🔮 Bóveda — Oráculo de la Bóveda** (`vault-oracle`)
-- Preguntas en lenguaje natural → usa la búsqueda semántica (pgvector) → la IA recomienda **qué conocimiento consultar y por qué** (impulsa las regalías). No expone contenido pagado.
-
-**🎨 Aprender (UI)**
-- Núcleo de mayor impacto (halo + anillos) y árbol **responsive** a móviles.
-
-**📌 Pendiente de TU acción (cuando tengas cupo/billing de Gemini):**
-1. `git pull`.
-2. SQL Editor: migración **`0037`** (contador de competencias).
-3. Desplegar Edge Functions nuevas: **`carta-ia`**, **`market-match`**, **`vault-oracle`**.
-4. Probar: Carta (Perfil), Asesor IA (Mercado), Oráculo (Bóveda).
-
-> ⚙️ Todas las funciones de IA usan `gemini-2.5-flash` con `thinkingBudget: 0`. Ecosistema IA con sinergia: **Aprender (Examinador) · Perfil (Carta) · Mercado (Asesor) · Bóveda (Oráculo)**.
 
 ---
 
@@ -283,7 +251,7 @@ Deploy:    Vercel (pendiente)
 | — | Identidad visual Industria 5.0 | ✅ |
 | — | Innovaciones (pgvector, linaje, depreciación) | ✅ |
 | 4 | Profesionalización (estados, validaciones, tests, performance) | ⬜ |
-| 5 | Pre-lanzamiento (legal, onboarding, deploy Vercel, **billing Gemini**, beta) | ⬜ |
+| 5 | Pre-lanzamiento (legal, onboarding, deploy, beta) | ⬜ |
 | 6 | Beta + Lanzamiento 🚀 | ⬜ |
 
 ---
