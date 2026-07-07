@@ -1,0 +1,46 @@
+name: CI
+
+# Corre en cada Pull Request hacia main y en cada push directo a main,
+# para atrapar errores de tipos, lint y tests ANTES de que lleguen a
+# producción (ver BITACORA_MAESTRA.md v7.0 — el bug del trigger SQL que
+# rompió el signup vivió meses sin detectarse por falta de este check).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    name: Typecheck · Lint · Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # NOTA: se usa `npm install` en vez de `npm ci` porque el
+      # package-lock.json del repo aún no refleja las devDependencies de
+      # Vitest/ESLint agregadas en los PR #8-#10 (se generaron en un
+      # sandbox sin acceso a red). Una vez que el usuario suba su
+      # package-lock.json actualizado desde su máquina local, cambiar
+      # esto de vuelta a `npm ci` (más rápido y determinista).
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Tests (Vitest)
+        run: npm run test
+
+      - name: Build (vite build)
+        run: npm run build
