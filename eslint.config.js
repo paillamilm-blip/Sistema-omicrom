@@ -7,7 +7,9 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'supabase/functions/**'] },
+  // scripts/**: utilidades de build en CommonJS puro (.cjs), fuera del
+  // alcance de las reglas de TypeScript/React (no son código de la app).
+  { ignores: ['dist', 'node_modules', 'supabase/functions/**', 'scripts/**'] },
   ...tseslint.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
