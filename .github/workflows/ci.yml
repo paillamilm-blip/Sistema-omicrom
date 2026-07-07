@@ -14,6 +14,18 @@ jobs:
   check:
     name: Typecheck · Lint · Test
     runs-on: ubuntu-latest
+    # src/lib/supabase.ts llama createClient() a nivel de módulo (se
+    # ejecuta apenas se importa, no dentro de una función). Cualquier
+    # archivo que importe supabase.ts -directa o indirectamente-
+    # (ej. reputationService.test.ts) revienta con "supabaseUrl is
+    # required" si estas variables no existen. Los valores son ficticios
+    # a propósito: los tests unitarios (funciones puras) nunca llaman a
+    # Supabase de verdad, solo necesitan que createClient() no truene al
+    # importarse. NO son secretos reales, no requieren configurar
+    # GitHub Secrets.
+    env:
+      VITE_SUPABASE_URL: https://ci-placeholder.supabase.co
+      VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
     steps:
       - name: Checkout
         uses: actions/checkout@v4
