@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   GraduationCap, Award, Briefcase, FileCheck, QrCode,
-  Plus, X, Clock, CheckCircle2, XCircle, Trash2, FileText, ExternalLink,
+  Plus, Clock, CheckCircle2, XCircle, Trash2, FileText, ExternalLink,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
