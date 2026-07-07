@@ -133,7 +133,21 @@ export function AuthOverlay() {
         if (err) throw err;
         setSuccess('Revisa tu correo para restablecer la contraseña.');
       } else if (mode === 'login') {
-        const { error: err } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password });
+        // El campo de login acepta "usuario" o "email" indistintamente.
+        // Supabase Auth solo autentica con email, así que si lo ingresado
+        // no tiene forma de email, se resuelve el username -> email real
+        // vía RPC (profiles no almacena email; solo vive en auth.users).
+        let loginEmail = trimmedEmail;
+        if (!EMAIL_PATTERN.test(trimmedEmail)) {
+          const { data: resolvedEmail, error: rpcErr } = await supabase.rpc('get_email_for_login', {
+            p_identifier: trimmedEmail,
+          });
+          if (rpcErr || !resolvedEmail) {
+            throw new Error('Invalid login credentials');
+          }
+          loginEmail = resolvedEmail as string;
+        }
+        const { error: err } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
         if (err) throw err;
         // El cambio de estado de autenticación redirige automáticamente
       } else {
@@ -160,7 +174,7 @@ export function AuthOverlay() {
   // confirmarle a un atacante que el campo espera específicamente un
   // correo, mitigando ataques de enumeración de cuentas.
   const identifierLabel = mode === 'login' ? 'Usuario' : 'Correo electrónico';
-  const identifierPlaceholder = mode === 'login' ? 'Tu usuario' : 'nodo@omicron.io';
+  const identifierPlaceholder = mode === 'login' ? 'Tu usuario o correo' : 'nodo@omicron.io';
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-6 bg-omicron-bg">
