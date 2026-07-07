@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -7,6 +8,12 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+  },
+  // Configuración de Vitest (comparte el mismo config que Vite, sin bundler
+  // adicional). Ver: https://vitest.dev/config/
+  test: {
+    environment: 'jsdom',
+    globals: true,
   },
   build: {
     // Separa dependencias en chunks cacheables (mejor rendimiento en visitas
