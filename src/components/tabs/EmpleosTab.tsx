@@ -8,12 +8,14 @@ import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
 
+// ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
+// "muted" con más contraste para no forzar la vista.
 const C = {
   bg: '#020613', panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
-  blue: '#00F0FF', blueHi: '#7df9ff', amber: '#F59E0B', amberHi: '#ffcf6b',
-  steel: '#005F73', steelHi: '#0a8ba3',
-  line: 'rgba(0,95,115,0.30)', lineSoft: 'rgba(0,240,255,0.08)',
-  ink: '#eaf2ff', muted: '#7d93b0', green: '#39FF14',
+  blue: '#00D6E6', blueHi: '#5ad6e6', amber: '#E08A00', amberHi: '#f0b23d',
+  steel: '#045A68', steelHi: '#0977a3',
+  line: 'rgba(4,90,104,0.35)', lineSoft: 'rgba(0,214,230,0.10)',
+  ink: '#eaf2ff', muted: '#93a8c0', green: '#2FE014',
 } as const;
 const FM = "'Share Tech Mono', 'Courier New', monospace";
 const FR = "'Rajdhani', sans-serif";

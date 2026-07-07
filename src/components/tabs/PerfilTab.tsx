@@ -331,9 +331,12 @@ function CredencialCard({
       </div>
 
       {/* Stats clave (compactos) */}
+      <div style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.cyanDim, letterSpacing: 1.5, marginTop: 14, textTransform: 'uppercase' }}>
+        Resumen de actividad
+      </div>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 4,
-        marginTop: 14, padding: '12px 6px', borderRadius: RADIUS.lg,
+        marginTop: 6, padding: '12px 6px', borderRadius: RADIUS.lg,
         background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
       }}>
         {miniStat('TOKENS', tokens.toLocaleString(), C.gold)}
@@ -372,12 +375,14 @@ function EjesPanel({ gemelo }: { gemelo: NonNullable<ReturnType<typeof useGemelo
       background: 'rgba(12,20,38,0.95)',
       border: '1px solid rgba(0,240,255,0.14)',
     }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <TrendingUp size={16} style={{ color: C.cyan }} />
+        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Cómo se calcula tu reputación</span>
+      </div>
       <div style={{
-        display: 'flex', alignItems: 'flex-start', gap: 8,
         padding: '10px 12px', borderRadius: RADIUS.lg, marginBottom: 14,
         background: C.cyanGhost, border: `1px solid ${C.cyanFaint}`,
       }}>
-        <TrendingUp size={16} style={{ color: C.cyan, flexShrink: 0, marginTop: 1 }} />
         <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 12, color: '#cfe8ff', lineHeight: 1.45 }}>
           Tu reputación combina <strong style={{ color: C.gold }}>20% tus títulos validados</strong> + <strong style={{ color: C.cyan }}>80% tu desempeño real</strong>, que se mide con estos 4 ejes:
         </p>

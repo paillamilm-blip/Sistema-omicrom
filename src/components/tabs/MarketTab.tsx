@@ -3,7 +3,7 @@
 // azul eléctrico + ámbar de energía. Look tecnológico/industrial de alto impacto.
 
 import { useState, useEffect, useCallback } from 'react';
-import { ShoppingCart, Star, Plus, Cpu, ShieldCheck, TrendingUp, Sparkles, Loader2 } from 'lucide-react';
+import { ShoppingCart, Star, Plus, Cpu, ShieldCheck, TrendingUp, Sparkles, Loader2, Menu, X, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
@@ -15,14 +15,16 @@ import type { MarketService } from '../../types';
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
 
 // ── Paleta v5.0 "Neo-Académico Holográfico" — cyan eléctrico + ámbar energía ──
+// ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
+// "muted" con más contraste para no forzar la vista.
 const C = {
   bg: '#020613', bg2: '#030a1a',
   panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
-  blue: '#00F0FF', blueHi: '#7df9ff',
-  amber: '#F59E0B', amberHi: '#ffcf6b',
-  steel: '#005F73', steelHi: '#0a8ba3',
-  line: 'rgba(0,95,115,0.30)', lineSoft: 'rgba(0,240,255,0.08)',
-  ink: '#eaf2ff', muted: '#7d93b0',
+  blue: '#00D6E6', blueHi: '#5ad6e6',
+  amber: '#E08A00', amberHi: '#f0b23d',
+  steel: '#045A68', steelHi: '#0977a3',
+  line: 'rgba(4,90,104,0.35)', lineSoft: 'rgba(0,214,230,0.10)',
+  ink: '#eaf2ff', muted: '#93a8c0',
 } as const;
 const FONT_MONO = "'Share Tech Mono', 'Courier New', monospace";
 const FONT_RAJ  = "'Rajdhani', sans-serif";
@@ -91,6 +93,10 @@ export function MarketTab() {
   const [showPublish, setShowPublish] = useState(false);
   const [sortBy, setSortBy] = useState<'confianza' | 'rating'>('confianza');
   const [advisorOpen, setAdvisorOpen] = useState(false);
+  // ♿ Carga cognitiva: los filtros (categoría + orden) viven ahora dentro
+  // de un menú lateral tipo hamburguesa, en vez de ocupar espacio fijo en
+  // la pantalla principal.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [matchQuery, setMatchQuery] = useState('');
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchResult, setMatchResult] = useState<string | null>(null);
@@ -175,6 +181,13 @@ export function MarketTab() {
       {/* Header HUD */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
+          <button
+            onClick={() => setFiltersOpen(true)}
+            aria-label="Abrir filtros de búsqueda"
+            style={styles.hamburgerBtn}
+          >
+            <Menu size={18} style={{ color: C.blueHi }} />
+          </button>
           <div style={styles.iconBadge}><Cpu size={16} style={{ color: C.bg }} /></div>
           <div>
             <div style={styles.headerTitle}>MERCADO · CAPITAL INTELECTUAL</div>
@@ -186,39 +199,66 @@ export function MarketTab() {
         </button>
       </div>
 
-      {/* Categorías */}
-      <div style={styles.catRow}>
-        {CAT_MAP.map(c => {
-          const active = category === c.key;
-          return (
-            <button key={c.key} onClick={() => setCategory(c.key)} style={{
-              ...styles.catPill,
-              background: active ? 'rgba(0,240,255,0.16)' : 'rgba(255,255,255,0.02)',
-              border: `1px solid ${active ? C.blue : C.lineSoft}`,
-              color: active ? C.blueHi : C.muted,
-              boxShadow: active ? `0 0 14px rgba(0,240,255,0.35)` : 'none',
-            }}>
-              {c.icon && <span>{c.icon}</span>}{c.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* Indicador compacto de filtro activo (reemplaza las filas fijas de categoría/orden) */}
+      <button onClick={() => setFiltersOpen(true)} style={styles.activeFilterBar} aria-label="Ver y editar filtros activos">
+        <SlidersHorizontal size={13} style={{ color: C.blueHi, flexShrink: 0 }} />
+        <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          Categoría: <b style={{ color: C.ink }}>{CAT_MAP.find(c => c.key === category)?.label}</b>
+          {' · '}Orden: <b style={{ color: C.ink }}>{sortBy === 'confianza' ? 'Confianza' : 'Calificación'}</b>
+        </span>
+        <span style={{ color: C.muted, flexShrink: 0 }}>Editar</span>
+      </button>
 
-      {/* Orden por confianza (sinergia con el Gemelo) */}
-      <div style={styles.sortRow}>
-        <span style={styles.sortLabel}>ORDENAR POR</span>
-        {([['confianza', '🛡️ Confianza'], ['rating', '⭐ Rating']] as const).map(([key, label]) => {
-          const on = sortBy === key;
-          return (
-            <button key={key} onClick={() => setSortBy(key)} style={{
-              ...styles.sortPill,
-              background: on ? 'rgba(0,240,255,0.16)' : 'transparent',
-              border: `1px solid ${on ? C.blue : C.lineSoft}`,
-              color: on ? C.blueHi : C.muted,
-            }}>{label}</button>
-          );
-        })}
-      </div>
+      {/* Menú lateral (hamburguesa) con todos los filtros agrupados */}
+      {filtersOpen && (
+        <div style={styles.drawerBg} onClick={() => setFiltersOpen(false)}>
+          <div style={styles.drawerPanel} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Filtros de búsqueda del Mercado">
+            <div style={styles.drawerHeader}>
+              <div style={styles.drawerTitle}>FILTROS DE BÚSQUEDA</div>
+              <button onClick={() => setFiltersOpen(false)} aria-label="Cerrar filtros" style={styles.drawerClose}><X size={18} /></button>
+            </div>
+
+            <div style={{ padding: '16px 16px 24px', overflowY: 'auto', flex: 1 }}>
+              <div style={styles.drawerSectionTitle}>Categoría</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
+                {CAT_MAP.map(c => {
+                  const active = category === c.key;
+                  return (
+                    <button key={c.key} onClick={() => setCategory(c.key)} style={{
+                      ...styles.catPillVertical,
+                      background: active ? 'rgba(0,214,230,0.16)' : 'rgba(255,255,255,0.02)',
+                      border: `1px solid ${active ? C.blue : C.lineSoft}`,
+                      color: active ? C.blueHi : C.muted,
+                      boxShadow: active ? `0 0 14px rgba(0,214,230,0.35)` : 'none',
+                    }}>
+                      {c.icon && <span>{c.icon}</span>}{c.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div style={styles.drawerSectionTitle}>Ordenar por</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {([['confianza', '🛡️ Confianza'], ['rating', '⭐ Calificación']] as const).map(([key, label]) => {
+                  const on = sortBy === key;
+                  return (
+                    <button key={key} onClick={() => setSortBy(key)} style={{
+                      ...styles.catPillVertical,
+                      background: on ? 'rgba(0,214,230,0.16)' : 'transparent',
+                      border: `1px solid ${on ? C.blue : C.lineSoft}`,
+                      color: on ? C.blueHi : C.muted,
+                    }}>{label}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ padding: 16, borderTop: `1px solid ${C.line}` }}>
+              <button onClick={() => setFiltersOpen(false)} style={styles.drawerApplyBtn}>Ver resultados</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Lista */}
       <div style={styles.scroll}>
@@ -312,7 +352,7 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
 
       {/* SELLO DE CONFIANZA (compacto) — Gemelo + Actas */}
       {service.seller && (
-        <div style={styles.trustSealCompact}>
+        <div style={styles.trustSealCompact} aria-label="Sello de confianza del vendedor">
           <span style={styles.trustChip}><TrendingUp size={11} style={{ color: repColor }} /> <b style={{ color: repColor }}>{rep}</b> rep</span>
           <span style={styles.trustSep}>·</span>
           <span style={styles.trustChip}><ShieldCheck size={11} style={{ color: C.blueHi }} /> <b style={{ color: C.blueHi }}>{val}</b> validadas</span>
@@ -339,7 +379,17 @@ const styles: Record<string, React.CSSProperties> = {
   root: { position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', background: `radial-gradient(circle at 50% 0%, ${C.bg2}, ${C.bg})`, overflow: 'hidden' },
   grid: { position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `linear-gradient(${C.lineSoft} 1px, transparent 1px), linear-gradient(90deg, ${C.lineSoft} 1px, transparent 1px)`, backgroundSize: '28px 28px', maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 70%)', WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 70%)' },
   header: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.line}`, background: 'rgba(8,11,18,0.7)', flexShrink: 0 },
-  headerLeft: { display: 'flex', alignItems: 'center', gap: 10 },
+  headerLeft: { display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 },
+  hamburgerBtn: { flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,214,230,0.08)', border: `1px solid ${C.lineSoft}`, cursor: 'pointer' },
+  activeFilterBar: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, margin: '10px 14px 4px', padding: '9px 12px', borderRadius: 8, background: 'rgba(0,214,230,0.05)', border: `1px solid ${C.lineSoft}`, color: C.muted, fontFamily: FONT_MONO, fontSize: 11, cursor: 'pointer', flexShrink: 0, textAlign: 'left' },
+  drawerBg: { position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(2,5,11,0.72)', backdropFilter: 'blur(3px)' },
+  drawerPanel: { position: 'absolute', top: 0, left: 0, bottom: 0, width: '82%', maxWidth: 320, display: 'flex', flexDirection: 'column', background: `linear-gradient(165deg, ${C.panelA}, ${C.panelB})`, borderRight: `1px solid ${C.blue}`, boxShadow: '4px 0 30px rgba(0,0,0,0.5)' },
+  drawerHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 14px', borderBottom: `1px solid ${C.line}` },
+  drawerTitle: { fontFamily: FONT_MONO, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
+  drawerClose: { width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.lineSoft}`, color: C.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  drawerSectionTitle: { fontFamily: FONT_MONO, fontSize: 10, color: C.muted, letterSpacing: 1.5, marginBottom: 10, textTransform: 'uppercase' },
+  catPillVertical: { display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', borderRadius: 8, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 12, letterSpacing: 0.5, textAlign: 'left', textTransform: 'uppercase' },
+  drawerApplyBtn: { width: '100%', padding: '13px 0', borderRadius: 8, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, color: '#04121f', fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 15, boxShadow: '0 0 16px rgba(0,214,230,0.4)' },
   iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: `0 0 14px rgba(0,240,255,0.5)` },
   headerTitle: { fontFamily: FONT_MONO, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   headerSub: { fontFamily: FONT_MONO, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },

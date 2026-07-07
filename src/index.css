@@ -9,18 +9,28 @@
 @tailwind utilities;
 
 :root {
-  --neon-cyan:    #00f0ff;
-  --neon-magenta: #39ff14;
-  --neon-violet:  #005f73;
-  --neon-green:   #39ff14;
-  --neon-gold:    #f59e0b;
+  /* ♿ Accesibilidad: tonos oscurecidos respecto a la versión original para
+     mejorar el contraste sobre fondo oscuro y evitar que el usuario deba
+     forzar la vista o hacer zoom. */
+  --neon-cyan:    #00d6e6;
+  --neon-magenta: #2fe014;
+  --neon-violet:  #045a68;
+  --neon-green:   #2fe014;
+  --neon-gold:    #e08a00;
   --void:         #020613;
-  --glow-cyan:    0 0 12px rgba(0, 240, 255, 0.55);
-  --glow-magenta: 0 0 12px rgba(57, 255, 20, 0.5);
-  --glow-violet:  0 0 14px rgba(0, 95, 115, 0.6);
+  --glow-cyan:    0 0 12px rgba(0, 214, 230, 0.55);
+  --glow-magenta: 0 0 12px rgba(47, 224, 20, 0.5);
+  --glow-violet:  0 0 14px rgba(4, 90, 104, 0.6);
 }
 
 * { box-sizing: border-box; }
+
+/* ♿ Accesibilidad: tipografía base ligeramente mayor (16px → ~17.3px) para
+   que todo el texto en rem/em (Tailwind incluido) crezca de forma
+   consistente sin requerir zoom del usuario. */
+html {
+  font-size: 108%;
+}
 
 html, body, #root {
   height: 100%;
@@ -34,6 +44,7 @@ body {
   color: var(--neon-cyan);
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  line-height: 1.45;
 }
 
 
