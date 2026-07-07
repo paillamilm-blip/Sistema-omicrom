@@ -9,12 +9,16 @@ export function BottomNav() {
   const { activeTab, setActiveTab, unreadCount } = useApp();
   const currentHub = hubForTab(activeTab);
 
+  // 🧪 MVP PILOTO: con solo 3 hubs visibles (Perfil, Academia, Empleos),
+  // los botones ya no se estiran a todo el ancho (flex:1 por elemento).
+  // En su lugar se centran con un ancho máximo fijo por botón, para que
+  // se vean proporcionados y agrupados en el centro de la barra.
   return (
     <nav style={{ flexShrink: 0, background: C.surface, borderTop: `1px solid ${C.cyanFaint}`, position: 'relative', zIndex: 3 }}>
       {/* Barra indicadora del hub activo */}
-      <div style={{ display: 'flex' }}>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
         {HUBS.map(hub => (
-          <div key={hub.id} style={{ flex: 1, height: 2 }}>
+          <div key={hub.id} style={{ width: 96, maxWidth: '33%', height: 2 }}>
             {currentHub.id === hub.id && (
               <div style={{ height: '100%', background: C.cyan, boxShadow: `0 0 8px ${C.cyan}` }} />
             )}
@@ -22,7 +26,7 @@ export function BottomNav() {
         ))}
       </div>
 
-      <div style={{ display: 'flex' }}>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
         {HUBS.map(hub => {
           const active = currentHub.id === hub.id;
           const Icon = hub.Icon;
@@ -32,7 +36,7 @@ export function BottomNav() {
               key={hub.id}
               onClick={() => setActiveTab(hub.members[0].tab)}
               style={{
-                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                flex: '0 1 96px', maxWidth: '33%', display: 'flex', flexDirection: 'column', alignItems: 'center',
                 justifyContent: 'center', gap: 4, padding: '8px 0', background: 'none',
                 border: 'none', cursor: 'pointer', opacity: active ? 1 : 0.5, transition: 'opacity .2s',
               }}

@@ -16,8 +16,11 @@ import { CredentialsPanel } from '../perfil/CredentialsPanel';
 import { CredentialReview } from '../perfil/CredentialReview';
 import { ShareCredentialModal, RedPanel } from '../perfil/RedSocial';
 import { ProgressRadar } from '../shared/ProgressRadar';
-import { DossierEvidencia } from '../perfil/DossierEvidencia';
-import { CartaCompetencias } from '../perfil/CartaCompetencias';
+// 🧪 MVP PILOTO CONTROLADO: Dossier de Evidencia y Carta de Competencias
+// dependen del Examinador IA / carta-ia (Edge Functions de IA). Se ocultan
+// para el piloto (no se elimina el código, solo se comenta su uso).
+// import { DossierEvidencia } from '../perfil/DossierEvidencia';
+// import { CartaCompetencias } from '../perfil/CartaCompetencias';
 import { SimulatorChallenge } from '../shared/SimulatorChallenge';
 import {
   ScanlineOverlay, CyberButton,
@@ -623,8 +626,10 @@ export function PerfilTab() {
         {/* Contenido de la sección activa */}
         <div key={section} style={{ animation: 'sectionIn 0.35s cubic-bezier(0.22,1,0.36,1) both' }}>
           {section === 'gemelo' && gemelo && <EjesPanel gemelo={gemelo} />}
-          {section === 'gemelo' && <CartaCompetencias />}
-          {section === 'gemelo' && <DossierEvidencia />}
+          {/* 🧪 MVP PILOTO CONTROLADO: Carta de Competencias IA y Dossier de
+              Evidencia (Examinador IA) deshabilitados para el piloto. */}
+          {/* {section === 'gemelo' && <CartaCompetencias />} */}
+          {/* {section === 'gemelo' && <DossierEvidencia />} */}
 
           {section === 'red' && <RedPanel />}
 

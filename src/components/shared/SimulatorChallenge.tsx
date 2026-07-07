@@ -7,7 +7,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Play, Square, Clock, CheckCircle, XCircle,
   AlertTriangle, ChevronDown, ChevronUp, Trophy,
-  RotateCcw, History, Zap, Code2, Sparkles, Bot, Loader2,
+  RotateCcw, History, Zap, Code2,
+  // 🧪 MVP PILOTO: Sparkles, Bot y Loader2 eran usados solo por el
+  // Copiloto IA (AIPanel, comentado más abajo).
+  // Sparkles, Bot, Loader2,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
@@ -73,8 +76,9 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
   const [showHistory, setShowHistory] = useState(false);
   const [showTests, setShowTests] = useState(false);
   const [activeView, setActiveView] = useState<'editor' | 'problem'>('problem');
-  const [aiText, setAiText] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
+  // 🧪 MVP PILOTO CONTROLADO: estado del Copiloto IA deshabilitado.
+  // const [aiText, setAiText] = useState<string | null>(null);
+  // const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -108,28 +112,30 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
     setAttempts((hist as SkillTestAttempt[]) || []);
   }, [profile?.id, test.id]);
 
-  const askAI = useCallback(async (failing?: string) => {
-    setAiLoading(true);
-    setAiText(null);
-    try {
-      const { data, error } = await supabase.functions.invoke('code-tutor', {
-        body: { problem: test.problem_statement, code, failing: failing || undefined },
-      });
-      setAiText(error
-        ? 'El Copiloto IA no está disponible. Revisa el deploy de la función code-tutor.'
-        : ((data as { feedback?: string; error?: string })?.feedback ?? (data as { error?: string })?.error ?? 'Sin respuesta.'));
-    } catch {
-      setAiText('Error de conexión con el Copiloto IA.');
-    } finally {
-      setAiLoading(false);
-    }
-  }, [test.problem_statement, code]);
+  // 🧪 MVP PILOTO CONTROLADO: Copiloto IA deshabilitado (comentado
+  // completo). No se elimina para poder reactivarlo tras el piloto.
+  // const askAI = useCallback(async (failing?: string) => {
+  //   setAiLoading(true);
+  //   setAiText(null);
+  //   try {
+  //     const { data, error } = await supabase.functions.invoke('code-tutor', {
+  //       body: { problem: test.problem_statement, code, failing: failing || undefined },
+  //     });
+  //     setAiText(error
+  //       ? 'El Copiloto IA no está disponible. Revisa el deploy de la función code-tutor.'
+  //       : ((data as { feedback?: string; error?: string })?.feedback ?? (data as { error?: string })?.error ?? 'Sin respuesta.'));
+  //   } catch {
+  //     setAiText('Error de conexión con el Copiloto IA.');
+  //   } finally {
+  //     setAiLoading(false);
+  //   }
+  // }, [test.problem_statement, code]);
 
   const handleRun = useCallback(async () => {
     if (!profile?.id || phase === 'running') return;
     setPhase('running');
     setIsSaving(true);
-    setAiText(null);
+    // setAiText(null); // 🧪 MVP PILOTO: Copiloto IA deshabilitado
     startTimer();
 
     try {
@@ -160,11 +166,13 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
       setPeAwarded(pe);
       if (rr.result === 'PASS') {
         onSuccess(pe);
-      } else {
-        const failing = rr.testCaseResults.filter(t => !t.passed).slice(0, 3)
-          .map(t => `input=${t.input} | esperado=${t.expected} | obtenido=${t.error || t.actual || '-'}`).join(' ;; ');
-        askAI(failing || undefined);
       }
+      // 🧪 MVP PILOTO: ya no se invoca al Copiloto IA cuando el intento falla.
+      // else {
+      //   const failing = rr.testCaseResults.filter(t => !t.passed).slice(0, 3)
+      //     .map(t => `input=${t.input} | esperado=${t.expected} | obtenido=${t.error || t.actual || '-'}`).join(' ;; ');
+      //   askAI(failing || undefined);
+      // }
       await refreshHistory();
     } catch (e) {
       stopTimer();
@@ -177,7 +185,7 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
     } finally {
       setIsSaving(false);
     }
-  }, [profile?.id, phase, code, test.id, nodeId, startTimer, stopTimer, onSuccess, refreshHistory, askAI]);
+  }, [profile?.id, phase, code, test.id, nodeId, startTimer, stopTimer, onSuccess, refreshHistory]);
 
   const handleReset = () => {
     stopTimer();
@@ -186,7 +194,7 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
     setPhase('ready');
     setRunResult(null);
     setPeAwarded(0);
-    setAiText(null);
+    // setAiText(null); // 🧪 MVP PILOTO: Copiloto IA deshabilitado
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -314,7 +322,8 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
               <ResultPanel result={runResult} passingScore={test.passing_score} peAwarded={peAwarded} />
             )}
 
-            <AIPanel loading={aiLoading} text={aiText} onAsk={() => askAI()} />
+            {/* 🧪 MVP PILOTO CONTROLADO: Copiloto IA deshabilitado. */}
+            {/* <AIPanel loading={aiLoading} text={aiText} onAsk={() => askAI()} /> */}
           </div>
         )}
       </div>
@@ -343,36 +352,38 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
   );
 }
 
-function AIPanel({ loading, text, onAsk }: { loading: boolean; text: string | null; onAsk: () => void }) {
-  return (
-    <div style={{ borderRadius: 12, border: `1px solid ${C.gold}55`, overflow: 'hidden', background: C.goldFaint }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 13px', borderBottom: (loading || text) ? `1px solid ${C.gold}33` : 'none' }}>
-        <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(245,158,11,0.16)', border: `1px solid ${C.gold}55`, animation: loading ? 'cp-breathe 1s ease-in-out infinite' : undefined }}>
-          <Bot size={16} style={{ color: C.gold }} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 13.5, color: '#ffd98a' }}>Copiloto IA</div>
-          <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(245,158,11,0.7)', letterSpacing: 0.5 }}>Análisis neuronal en vivo</div>
-        </div>
-        {!loading && (
-          <button onClick={onAsk} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 9, background: 'rgba(245,158,11,0.16)', border: `1px solid ${C.gold}55`, color: '#ffd98a', cursor: 'pointer', fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
-            <Sparkles size={13} /> {text ? 'RE-ANALIZAR' : 'ANALIZAR'}
-          </button>
-        )}
-      </div>
-      {loading && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 14px', fontFamily: MONO, fontSize: 11.5, color: '#ffd98a' }}>
-          <Loader2 size={14} className="animate-spin" /> Escaneando tu código...
-        </div>
-      )}
-      {!loading && text && (
-        <div style={{ padding: '12px 14px' }}>
-          <p style={{ margin: 0, fontFamily: DISP, fontSize: 14, color: C.text, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{text}</p>
-        </div>
-      )}
-    </div>
-  );
-}
+// 🧪 MVP PILOTO CONTROLADO: panel del "Copiloto IA" deshabilitado
+// (comentado completo). No se elimina para poder reactivarlo tras el piloto.
+// function AIPanel({ loading, text, onAsk }: { loading: boolean; text: string | null; onAsk: () => void }) {
+//   return (
+//     <div style={{ borderRadius: 12, border: `1px solid ${C.gold}55`, overflow: 'hidden', background: C.goldFaint }}>
+//       <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 13px', borderBottom: (loading || text) ? `1px solid ${C.gold}33` : 'none' }}>
+//         <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(245,158,11,0.16)', border: `1px solid ${C.gold}55`, animation: loading ? 'cp-breathe 1s ease-in-out infinite' : undefined }}>
+//           <Bot size={16} style={{ color: C.gold }} />
+//         </div>
+//         <div style={{ flex: 1, minWidth: 0 }}>
+//           <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 13.5, color: '#ffd98a' }}>Copiloto IA</div>
+//           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(245,158,11,0.7)', letterSpacing: 0.5 }}>Análisis neuronal en vivo</div>
+//         </div>
+//         {!loading && (
+//           <button onClick={onAsk} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 9, background: 'rgba(245,158,11,0.16)', border: `1px solid ${C.gold}55`, color: '#ffd98a', cursor: 'pointer', fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
+//             <Sparkles size={13} /> {text ? 'RE-ANALIZAR' : 'ANALIZAR'}
+//           </button>
+//         )}
+//       </div>
+//       {loading && (
+//         <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 14px', fontFamily: MONO, fontSize: 11.5, color: '#ffd98a' }}>
+//           <Loader2 size={14} className="animate-spin" /> Escaneando tu código...
+//         </div>
+//       )}
+//       {!loading && text && (
+//         <div style={{ padding: '12px 14px' }}>
+//           <p style={{ margin: 0, fontFamily: DISP, fontSize: 14, color: C.text, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{text}</p>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
 
 function ResultPanel({ result, passingScore, peAwarded }: { result: RunResult; passingScore: number; peAwarded: number; }) {
   const passed = result.result === 'PASS';

@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   GraduationCap, ArrowLeft, BookOpen, CheckCircle2, Lock, Award, Loader2,
-  ChevronDown, Sparkles, Target, Bot, Send, X,
+  ChevronDown, Sparkles, Target,
+  // 🧪 MVP PILOTO: Bot, Send, X eran usados solo por el Tutor IA / Coach IA
+  // (modales comentados abajo). Se dejan comentados junto con esos bloques.
+  // Bot, Send, X,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
-import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
+// 🧪 MVP PILOTO: candado Premium usado únicamente por Coach IA / Tutor IA.
+// import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '../../theme';
 import { ScanlineOverlay, CyberHeader, LoadingScreen } from '../shared/CyberComponents';
 import { EmptyState } from '../shared/EmptyState';
@@ -29,180 +33,183 @@ function Bar({ pct, color }: { pct: number; color: string }) {
   );
 }
 
-function TutorModal({ lesson, onClose }: { lesson: { title: string; content: string }; onClose: () => void }) {
-  const [msgs, setMsgs] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
+// 🧪 MVP PILOTO CONTROLADO: Tutor IA deshabilitado (comentado completo).
+// No se elimina para poder reactivarlo fácilmente después del piloto.
+// function TutorModal({ lesson, onClose }: { lesson: { title: string; content: string }; onClose: () => void }) {
+//   const [msgs, setMsgs] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
+//   const [input, setInput] = useState('');
+//   const [loading, setLoading] = useState(false);
+//
+//   async function ask(q?: string) {
+//     const question = (q ?? input).trim();
+//     if (!question || loading) return;
+//     setInput('');
+//     const base = [...msgs, { role: 'user' as const, text: question }];
+//     setMsgs(base);
+//     setLoading(true);
+//     try {
+//       const { data, error } = await supabase.functions.invoke('tutor', {
+//         body: { question, lessonTitle: lesson.title, lessonContent: lesson.content, history: msgs },
+//       });
+//       const answer = error
+//         ? 'El Tutor IA no está disponible ahora. Avísale a tu equipo que despliegue la función "tutor".'
+//         : (data?.answer ?? data?.error ?? 'Sin respuesta.');
+//       setMsgs([...base, { role: 'model', text: answer }]);
+//     } catch {
+//       setMsgs([...base, { role: 'model', text: 'Error de conexión con el Tutor.' }]);
+//     } finally {
+//       setLoading(false);
+//     }
+//   }
+//
+//   const chips = ['Explícamelo más simple', 'Dame un ejemplo', 'Hazme un ejercicio'];
+//
+//   return (
+//     <div onClick={onClose} style={{
+//       position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(2,6,19,0.8)', backdropFilter: 'blur(6px)',
+//       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+//     }}>
+//       <div onClick={e => e.stopPropagation()} style={{
+//         width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+//         borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))',
+//         border: `1px solid ${C.gold}55`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+//       }}>
+//         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
+//           <div style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.gold}18`, border: `1px solid ${C.gold}55` }}>
+//             <Bot size={18} style={{ color: C.gold }} />
+//           </div>
+//           <div style={{ flex: 1, minWidth: 0 }}>
+//             <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Tutor IA</div>
+//             <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lesson.title}</div>
+//           </div>
+//           <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
+//             <X size={16} />
+//           </button>
+//         </div>
+//
+//         <div style={{ flex: 1, minHeight: 200, maxHeight: '54vh', overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+//           {msgs.length === 0 && (
+//             <div style={{ textAlign: 'center', padding: '10px 0', fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, lineHeight: 1.5 }}>
+//               👋 Soy tu tutor. Pregúntame lo que no entiendas de <strong style={{ color: '#eaf4ff' }}>{lesson.title}</strong>.
+//             </div>
+//           )}
+//           {msgs.map((m, i) => {
+//             const own = m.role === 'user';
+//             return (
+//               <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
+//                 <div style={{
+//                   maxWidth: '85%', padding: '10px 13px', borderRadius: 12,
+//                   background: own ? 'rgba(0,240,255,0.12)' : `${C.gold}12`,
+//                   border: `1px solid ${own ? C.cyanDim : C.gold + '40'}`,
+//                   borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3,
+//                 }}>
+//                   <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#e6f1fb', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</p>
+//                 </div>
+//               </div>
+//             );
+//           })}
+//           {loading && (
+//             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.gold, fontFamily: FONT.mono, fontSize: 11 }}>
+//               <Loader2 size={14} className="animate-spin" /> El tutor está pensando...
+//             </div>
+//           )}
+//         </div>
+//
+//         {msgs.length === 0 && (
+//           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '0 16px 8px' }}>
+//             {chips.map(ch => (
+//               <button key={ch} onClick={() => ask(ch)} style={{
+//                 fontFamily: FONT.mono, fontSize: 10, color: C.cyan, cursor: 'pointer',
+//                 background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, borderRadius: 16, padding: '6px 11px',
+//               }}>{ch}</button>
+//             ))}
+//           </div>
+//         )}
+//
+//         <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
+//           <input
+//             type="text" value={input}
+//             onChange={e => setInput(e.target.value)}
+//             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) ask(); }}
+//             placeholder="Escribe tu duda..."
+//             style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 14, outline: 'none' }}
+//           />
+//           <button onClick={() => ask()} disabled={!input.trim() || loading}
+//             style={{ width: 44, height: 44, borderRadius: 11, background: C.gold, border: 'none', color: '#1a1205', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || loading ? 0.4 : 1 }}>
+//             <Send size={16} />
+//           </button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
-  async function ask(q?: string) {
-    const question = (q ?? input).trim();
-    if (!question || loading) return;
-    setInput('');
-    const base = [...msgs, { role: 'user' as const, text: question }];
-    setMsgs(base);
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('tutor', {
-        body: { question, lessonTitle: lesson.title, lessonContent: lesson.content, history: msgs },
-      });
-      const answer = error
-        ? 'El Tutor IA no está disponible ahora. Avísale a tu equipo que despliegue la función "tutor".'
-        : (data?.answer ?? data?.error ?? 'Sin respuesta.');
-      setMsgs([...base, { role: 'model', text: answer }]);
-    } catch {
-      setMsgs([...base, { role: 'model', text: 'Error de conexión con el Tutor.' }]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const chips = ['Explícamelo más simple', 'Dame un ejemplo', 'Hazme un ejercicio'];
-
-  return (
-    <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(2,6,19,0.8)', backdropFilter: 'blur(6px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-    }}>
-      <div onClick={e => e.stopPropagation()} style={{
-        width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-        borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))',
-        border: `1px solid ${C.gold}55`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.gold}18`, border: `1px solid ${C.gold}55` }}>
-            <Bot size={18} style={{ color: C.gold }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Tutor IA</div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lesson.title}</div>
-          </div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
-            <X size={16} />
-          </button>
-        </div>
-
-        <div style={{ flex: 1, minHeight: 200, maxHeight: '54vh', overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {msgs.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '10px 0', fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, lineHeight: 1.5 }}>
-              👋 Soy tu tutor. Pregúntame lo que no entiendas de <strong style={{ color: '#eaf4ff' }}>{lesson.title}</strong>.
-            </div>
-          )}
-          {msgs.map((m, i) => {
-            const own = m.role === 'user';
-            return (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '85%', padding: '10px 13px', borderRadius: 12,
-                  background: own ? 'rgba(0,240,255,0.12)' : `${C.gold}12`,
-                  border: `1px solid ${own ? C.cyanDim : C.gold + '40'}`,
-                  borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3,
-                }}>
-                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#e6f1fb', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</p>
-                </div>
-              </div>
-            );
-          })}
-          {loading && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.gold, fontFamily: FONT.mono, fontSize: 11 }}>
-              <Loader2 size={14} className="animate-spin" /> El tutor está pensando...
-            </div>
-          )}
-        </div>
-
-        {msgs.length === 0 && (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '0 16px 8px' }}>
-            {chips.map(ch => (
-              <button key={ch} onClick={() => ask(ch)} style={{
-                fontFamily: FONT.mono, fontSize: 10, color: C.cyan, cursor: 'pointer',
-                background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, borderRadius: 16, padding: '6px 11px',
-              }}>{ch}</button>
-            ))}
-          </div>
-        )}
-
-        <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
-          <input
-            type="text" value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) ask(); }}
-            placeholder="Escribe tu duda..."
-            style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 14, outline: 'none' }}
-          />
-          <button onClick={() => ask()} disabled={!input.trim() || loading}
-            style={{ width: 44, height: 44, borderRadius: 11, background: C.gold, border: 'none', color: '#1a1205', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || loading ? 0.4 : 1 }}>
-            <Send size={16} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CoachModal({ onClose }: { onClose: () => void }) {
-  const [advice, setAdvice] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const run = useCallback(async () => {
-    setLoading(true); setAdvice(null);
-    try {
-      const { data, error } = await supabase.functions.invoke('coach', { body: {} });
-      setAdvice(error
-        ? 'El Coach IA no está disponible. Avisa a tu equipo que despliegue la función coach.'
-        : ((data as { advice?: string; error?: string })?.advice ?? (data as { error?: string })?.error ?? 'Sin respuesta.'));
-    } catch {
-      setAdvice('Error de conexión con el Coach IA.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { run(); }, [run]);
-
-  return (
-    <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(2,6,19,0.8)', backdropFilter: 'blur(6px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-    }}>
-      <div onClick={e => e.stopPropagation()} style={{
-        width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-        borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))',
-        border: `1px solid ${C.cyan}55`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.cyan}18`, border: `1px solid ${C.cyan}55` }}>
-            <GraduationCap size={18} style={{ color: C.cyan }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Coach IA</div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>Tu diagnostico y proximo paso</div>
-          </div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan, fontSize: 18, lineHeight: 1 }}>
-            ×
-          </button>
-        </div>
-
-        <div style={{ flex: 1, minHeight: 180, maxHeight: '60vh', overflowY: 'auto', padding: '16px' }}>
-          {loading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '30px 0' }}>
-              <Loader2 size={24} style={{ color: C.cyan }} className="animate-spin" />
-              <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1 }}>ANALIZANDO TU PERFIL...</span>
-            </div>
-          ) : (
-            <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#e6f1fb', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{advice}</p>
-          )}
-        </div>
-
-        <div style={{ padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
-          <button onClick={run} disabled={loading} style={{
-            width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: loading ? 'wait' : 'pointer',
-            background: C.cyan, border: 'none', color: '#021018', fontFamily: FONT.mono, fontSize: 12, letterSpacing: 1, fontWeight: 700,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.5 : 1,
-          }}><Sparkles size={15} /> VOLVER A ANALIZAR</button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// 🧪 MVP PILOTO CONTROLADO: Coach IA deshabilitado (comentado completo).
+// function CoachModal({ onClose }: { onClose: () => void }) {
+//   const [advice, setAdvice] = useState<string | null>(null);
+//   const [loading, setLoading] = useState(true);
+//
+//   const run = useCallback(async () => {
+//     setLoading(true); setAdvice(null);
+//     try {
+//       const { data, error } = await supabase.functions.invoke('coach', { body: {} });
+//       setAdvice(error
+//         ? 'El Coach IA no está disponible. Avisa a tu equipo que despliegue la función coach.'
+//         : ((data as { advice?: string; error?: string })?.advice ?? (data as { error?: string })?.error ?? 'Sin respuesta.'));
+//     } catch {
+//       setAdvice('Error de conexión con el Coach IA.');
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, []);
+//
+//   useEffect(() => { run(); }, [run]);
+//
+//   return (
+//     <div onClick={onClose} style={{
+//       position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(2,6,19,0.8)', backdropFilter: 'blur(6px)',
+//       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+//     }}>
+//       <div onClick={e => e.stopPropagation()} style={{
+//         width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+//         borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))',
+//         border: `1px solid ${C.cyan}55`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+//       }}>
+//         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
+//           <div style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.cyan}18`, border: `1px solid ${C.cyan}55` }}>
+//             <GraduationCap size={18} style={{ color: C.cyan }} />
+//           </div>
+//           <div style={{ flex: 1, minWidth: 0 }}>
+//             <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Coach IA</div>
+//             <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>Tu diagnostico y proximo paso</div>
+//           </div>
+//           <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan, fontSize: 18, lineHeight: 1 }}>
+//             ×
+//           </button>
+//         </div>
+//
+//         <div style={{ flex: 1, minHeight: 180, maxHeight: '60vh', overflowY: 'auto', padding: '16px' }}>
+//           {loading ? (
+//             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '30px 0' }}>
+//               <Loader2 size={24} style={{ color: C.cyan }} className="animate-spin" />
+//               <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1 }}>ANALIZANDO TU PERFIL...</span>
+//             </div>
+//           ) : (
+//             <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#e6f1fb', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{advice}</p>
+//           )}
+//         </div>
+//
+//         <div style={{ padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
+//           <button onClick={run} disabled={loading} style={{
+//             width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: loading ? 'wait' : 'pointer',
+//             background: C.cyan, border: 'none', color: '#021018', fontFamily: FONT.mono, fontSize: 12, letterSpacing: 1, fontWeight: 700,
+//             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.5 : 1,
+//           }}><Sparkles size={15} /> VOLVER A ANALIZAR</button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 export function AcademiaTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
@@ -217,10 +224,12 @@ export function AcademiaTab() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [doneLessons, setDoneLessons] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [tutor, setTutor] = useState<Lesson | null>(null);
-  const [coachOpen, setCoachOpen] = useState(false);
-  const { isPremium } = usePremium();
-  const [premiumLock, setPremiumLock] = useState<string | null>(null);
+  // 🧪 MVP PILOTO: estados del Tutor IA / Coach IA (deshabilitados). No se
+  // elimina para poder reactivarlo fácilmente después del piloto.
+  // const [tutor, setTutor] = useState<Lesson | null>(null);
+  // const [coachOpen, setCoachOpen] = useState(false);
+  // const { isPremium } = usePremium();
+  // const [premiumLock, setPremiumLock] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'course' | 'quiz'>('list');
 
   const [questions, setQuestions] = useState<QuizQ[]>([]);
@@ -332,7 +341,8 @@ export function AcademiaTab() {
           badge={<GraduationCap size={16} style={{ color: C.cyan }} />} />
         <div style={cx(BASE.scrollArea, { padding: '12px 14px 20px' })}>
 
-          <button onClick={() => { if (!isPremium) { setPremiumLock('El Coach IA'); return; } setCoachOpen(true); }} style={{
+          {/* 🧪 MVP PILOTO CONTROLADO: botón "Coach IA" deshabilitado (comentado). */}
+          {/* <button onClick={() => { if (!isPremium) { setPremiumLock('El Coach IA'); return; } setCoachOpen(true); }} style={{
             width: '100%', textAlign: 'left', cursor: 'pointer',
             borderRadius: RADIUS.xl, padding: 16, marginBottom: 16, position: 'relative', overflow: 'hidden',
             background: `linear-gradient(135deg, ${C.cyan}1a, ${C.gold}12)`,
@@ -351,7 +361,7 @@ export function AcademiaTab() {
               <Sparkles size={18} style={{ color: C.gold, flexShrink: 0 }} />
             </div>
             {!isPremium && <div style={{ position: 'absolute', top: 10, right: 12 }}><PremiumBadge /></div>}
-          </button>
+          </button> */}
 
           {courses.length === 0 ? (
             <EmptyState
@@ -416,8 +426,9 @@ export function AcademiaTab() {
             </div>
           )}
         </div>
-        {coachOpen && <CoachModal onClose={() => setCoachOpen(false)} />}
-        {premiumLock && <PremiumLock feature={premiumLock} onClose={() => setPremiumLock(null)} />}
+        {/* 🧪 MVP PILOTO: modales de Coach IA deshabilitados. */}
+        {/* {coachOpen && <CoachModal onClose={() => setCoachOpen(false)} />} */}
+        {/* {premiumLock && <PremiumLock feature={premiumLock} onClose={() => setPremiumLock(null)} />} */}
       </div>
     );
   }
@@ -490,13 +501,14 @@ export function AcademiaTab() {
                         <CheckCircle2 size={14} /> Completada
                       </span>
                     )}
-                    <div style={{ marginTop: 10 }}>
+                    {/* 🧪 MVP PILOTO CONTROLADO: botón "Tutor IA" deshabilitado (comentado). */}
+                    {/* <div style={{ marginTop: 10 }}>
                       <button onClick={() => { if (!isPremium) { setPremiumLock('El Tutor IA'); return; } setTutor(l); }} style={{
                         fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: C.gold,
                         background: `${C.gold}14`, border: `1px solid ${C.gold}55`, borderRadius: 8, padding: '8px 14px',
                         cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
                       }}><Sparkles size={14} /> PREGÚNTALE AL TUTOR IA {!isPremium && <PremiumBadge />}</button>
-                    </div>
+                    </div> */}
                   </div>
                 )}
               </div>
@@ -529,8 +541,9 @@ export function AcademiaTab() {
         </div>
 
         <style>{`@keyframes acaIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-        {tutor && <TutorModal lesson={{ title: tutor.title, content: tutor.content }} onClose={() => setTutor(null)} />}
-        {premiumLock && <PremiumLock feature={premiumLock} onClose={() => setPremiumLock(null)} />}
+        {/* 🧪 MVP PILOTO: modales de Tutor IA deshabilitados. */}
+        {/* {tutor && <TutorModal lesson={{ title: tutor.title, content: tutor.content }} onClose={() => setTutor(null)} />} */}
+        {/* {premiumLock && <PremiumLock feature={premiumLock} onClose={() => setPremiumLock(null)} />} */}
       </div>
     );
   }
