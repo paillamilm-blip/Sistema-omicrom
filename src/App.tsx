@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, MessageCircle, LogOut } from 'lucide-react';
 import { AppProvider, useApp } from './store/AppContext';
 import { AuthOverlay } from './components/auth/AuthOverlay';
 import { ResetPasswordOverlay } from './components/auth/ResetPasswordOverlay';
@@ -28,7 +28,7 @@ const GobernanzaTab = lazy(() => import('./components/tabs/GobernanzaTab').then(
 const VaultTab      = lazy(() => import('./components/tabs/VaultTab').then(m => ({ default: m.VaultTab })));
 
 const TAB_TITLES: Record<TabId, string> = {
-  perfil: 'Mi Perfil', maxskill: 'Habilidades', academia: 'Academia', market: 'Servicios',
+  perfil: 'Inicio', maxskill: 'Habilidades', academia: 'Academia', market: 'Servicios',
   empleos: 'Empleos', chat: 'Mensajes', wallet: 'Billetera', gobernanza: 'Gobernanza',
   vault: 'Bóveda',
 };
@@ -45,7 +45,7 @@ function TabLoader() {
 }
 
 function AppShell() {
-  const { authStatus, isLoadingProfile, activeTab, profile, unreadCount } = useApp();
+  const { authStatus, isLoadingProfile, activeTab, setActiveTab, profile, unreadCount } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding());
@@ -86,12 +86,16 @@ function AppShell() {
           </div>
           <span style={{ fontFamily: FONT.display, fontSize: 17, letterSpacing: 0.3, color: '#eaf2ff', fontWeight: 700 }}>{TAB_TITLES[activeTab]}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {profile && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 13, color: '#F59E0B', fontWeight: 700 }}>
               🪙 {(profile.token_balance ?? 0).toLocaleString()}
             </span>
           )}
+          {/* Mensajería: reubicada desde el menú inferior para dejarlo limpio con solo las áreas principales */}
+          <button onClick={() => setActiveTab('chat')} aria-label="Mensajes" style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', color: '#7df9ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <MessageCircle size={16} />
+          </button>
           <button onClick={() => setShowNotifications(true)} aria-label="Notificaciones" style={{ position: 'relative', width: 34, height: 34, borderRadius: 8, background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', color: '#7df9ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Bell size={16} />
             {unreadCount > 0 && (
@@ -99,6 +103,10 @@ function AppShell() {
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
+          </button>
+          {/* Cerrar sesión: reubicado desde PerfilTab para dejar el menú inferior enfocado en navegación */}
+          <button onClick={() => supabase.auth.signOut()} aria-label="Cerrar sesión" style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,77,109,0.1)', border: '1px solid rgba(255,77,109,0.3)', color: '#ff4d6d', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <LogOut size={16} />
           </button>
         </div>
       </header>

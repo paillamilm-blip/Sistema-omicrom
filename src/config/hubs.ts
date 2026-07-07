@@ -1,7 +1,7 @@
 // config/hubs.ts
 // Navegación por "hubs": agrupa las pestañas en 5 grupos por intención,
 // con etiquetas en lenguaje natural (claras y autoexplicativas).
-import { User, GraduationCap, Briefcase, type LucideIcon } from 'lucide-react';
+import { Home, GraduationCap, Briefcase, type LucideIcon } from 'lucide-react';
 // 🧪 Store, MessageCircle, Scale quedan sin usar mientras Mercado/Mensajes/
 // Gobernanza estén ocultos para el piloto (MVP). No se eliminan: se
 // reactivan junto con sus hubs comentados más abajo.
@@ -20,9 +20,9 @@ export interface Hub { id: string; label: string; Icon: LucideIcon; members: Hub
 // ─────────────────────────────────────────────────────────────
 export const HUBS: Hub[] = [
   {
-    id: 'perfil', label: 'Perfil', Icon: User,
+    id: 'perfil', label: 'Inicio', Icon: Home,
     members: [
-      { tab: 'perfil', label: 'Mi Perfil' },
+      { tab: 'perfil', label: 'Inicio' },
       // { tab: 'wallet', label: 'Billetera' }, // 🧪 oculto para el piloto (MVP)
     ],
   },

@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  LogOut, Edit3, Shield, TrendingUp, Award, AlertTriangle, Lock,
+  Edit3, Shield, TrendingUp, Award, AlertTriangle, Lock,
   MapPin, Zap, Camera, GraduationCap, BadgeCheck, Briefcase, Share2, Users,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -24,7 +24,7 @@ import { ProgressRadar } from '../shared/ProgressRadar';
 import { SimulatorChallenge } from '../shared/SimulatorChallenge';
 import {
   ScanlineOverlay, CyberButton,
-  CyberToast, Divider, ProgressBar,
+  CyberToast, ProgressBar,
 } from '../shared/CyberComponents';
 import { C, FONT, BASE, ANIM, GLOW, RADIUS, cx } from '../../theme';
 import type { SkillTest } from '../../types';
@@ -668,12 +668,7 @@ export function PerfilTab() {
           }
         `}</style>
 
-        <Divider glow margin="4px 0 14px" />
-
-        <CyberButton variant="danger" onClick={() => supabase.auth.signOut()}>
-          <LogOut size={15} />
-          CERRAR SESIÓN
-        </CyberButton>
+        {/* Cerrar sesión: reubicado a la barra superior (junto a la campana) para minimizar clics */}
 
         <div style={{ height: 16 }} />
       </div>
