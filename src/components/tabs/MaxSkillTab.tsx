@@ -21,22 +21,24 @@ const CORE_W = 120;
 const CORE_H = 88;
 const CORE_CY = 78;
 
+// ♿ Accesibilidad: tonos oscurecidos respecto a la versión original para
+// mejorar el contraste y no forzar la vista.
 const COLORS = {
-  cyan:       '#00F0FF',
-  cyanDim:    'rgba(0,240,255,0.40)',
-  cyanFaint:  'rgba(0,240,255,0.12)',
-  gold:       '#F59E0B',
-  goldDim:    'rgba(245,158,11,0.45)',
-  purple:     '#0a8ba3',
-  green:      '#39FF14',
-  greenDim:   'rgba(57,255,20,0.40)',
+  cyan:       '#00D6E6',
+  cyanDim:    'rgba(0,214,230,0.44)',
+  cyanFaint:  'rgba(0,214,230,0.14)',
+  gold:       '#E08A00',
+  goldDim:    'rgba(224,138,0,0.48)',
+  purple:     '#0977a3',
+  green:      '#2FE014',
+  greenDim:   'rgba(47,224,20,0.44)',
   locked:     'rgba(255,255,255,0.04)',
   lockedBorder: 'rgba(255,255,255,0.10)',
-  copper:     'rgba(0,240,255,0.13)',
+  copper:     'rgba(0,214,230,0.15)',
   copperLock: 'rgba(255,255,255,0.06)',
   bg:         '#020613',
   panel:      'rgba(8,16,38,0.65)',
-  grid:       'rgba(0,240,255,0.05)',
+  grid:       'rgba(0,214,230,0.05)',
 } as const;
 
 function nodeColor(status: string, depth: number) {
@@ -120,7 +122,12 @@ function svgDimensions(flat: LayoutNode[]) {
 export function MaxSkillTab() {
   const { profile, refreshProfile } = useApp();
   const { toast } = useToast();
-  const { isPremium } = usePremium();
+  // 🔓 TEMPORAL: el módulo de Aprendizaje (Árbol de Habilidades) queda de
+  // libre acceso durante el piloto — se bypassa el candado Premium. Para
+  // reactivar el cobro, basta con volver a `const { isPremium } = usePremium();`.
+  const { isPremium: _isPremiumReal } = usePremium();
+  void _isPremiumReal;
+  const isPremium = true;
   const [premiumLock, setPremiumLock] = useState<string | null>(null);
   const [nodes, setNodes]             = useState<SkillTreeNode[]>([]);
   const [progress, setProgress]       = useState<Map<string, UserSkillProgress>>(new Map());
@@ -489,6 +496,7 @@ export function MaxSkillTab() {
             <button style={styles.closeBtn} onClick={() => setSelectedNode(null)}>×</button>
           </div>
 
+          <div style={styles.detailSectionTitle}>⬡ DETALLES DEL NODO</div>
           <div style={styles.detailGrid}>
             {[
               { label: 'Dificultad', value: '·'.repeat(selectedNode.difficulty_level) },
@@ -534,6 +542,7 @@ export function MaxSkillTab() {
             </div>
           </div>
 
+          <div style={styles.detailSectionTitle}>⬡ TU PROGRESO EN ESTE NODO</div>
           <div style={styles.progressBox}>
             <div style={styles.progressRow}>
               <span style={styles.progressStatus}>{getStatus(selectedNode.id)}</span>
@@ -631,6 +640,7 @@ const styles: Record<string, React.CSSProperties> = {
   detailTitle: { fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 16, color: COLORS.cyan },
   detailSub: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.cyanDim, marginTop: 3, maxWidth: '80%' },
   closeBtn: { background: 'none', border: 'none', color: 'rgba(0,240,255,0.4)', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 },
+  detailSectionTitle: { fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: 1.5, color: COLORS.cyanDim, marginBottom: 8, textTransform: 'uppercase' },
   detailGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 },
   detailCard: { padding: '8px 10px', borderRadius: 6, background: 'rgba(0,240,255,0.04)', border: '1px solid rgba(0,240,255,0.08)' },
   detailCardLabel: { fontFamily: FONT_MONO, fontSize: 9, color: COLORS.cyanDim, letterSpacing: 1, marginBottom: 4 },

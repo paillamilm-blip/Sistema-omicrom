@@ -4,30 +4,33 @@
 // Nota: las claves históricas (cyan/gold/purple) se conservan por compatibilidad,
 // pero ahora apuntan a la nueva identidad azul/ámbar.
 
+// ♿ Accesibilidad: colores base oscurecidos ~10-15% respecto a la versión
+// original para subir el contraste sobre el fondo oscuro (#020613) y reducir
+// la necesidad de hacer zoom / forzar la vista en pantallas pequeñas.
 export const C = {
-  cyan:         '#00F0FF',   // AZUL HÉROE
-  cyanDim:      'rgba(0,240,255,0.40)',
-  cyanFaint:    'rgba(0,240,255,0.14)',
-  cyanGhost:    'rgba(0,240,255,0.07)',
-  gold:         '#F59E0B',   // ÁMBAR ACENTO
-  goldDim:      'rgba(245,158,11,0.40)',
-  goldFaint:    'rgba(245,158,11,0.10)',
-  purple:       '#0a8ba3',   // azul claro (tiers / destacados)
-  purpleDim:    'rgba(10,139,163,0.35)',
-  purpleFaint:  'rgba(10,139,163,0.10)',
-  green:        '#39FF14',   // estado OK
-  greenDim:     'rgba(57,255,20,0.35)',
-  greenFaint:   'rgba(57,255,20,0.10)',
-  red:          '#ff5066',   // estado peligro
-  redDim:       'rgba(255,80,102,0.35)',
-  redFaint:     'rgba(255,80,102,0.10)',
+  cyan:         '#00D6E6',   // AZUL HÉROE (oscurecido desde #00F0FF)
+  cyanDim:      'rgba(0,214,230,0.44)',
+  cyanFaint:    'rgba(0,214,230,0.16)',
+  cyanGhost:    'rgba(0,214,230,0.08)',
+  gold:         '#E08A00',   // ÁMBAR ACENTO (oscurecido desde #F59E0B)
+  goldDim:      'rgba(224,138,0,0.44)',
+  goldFaint:    'rgba(224,138,0,0.12)',
+  purple:       '#0977a3',   // azul claro (tiers / destacados)
+  purpleDim:    'rgba(9,119,163,0.38)',
+  purpleFaint:  'rgba(9,119,163,0.12)',
+  green:        '#2FE014',   // estado OK (oscurecido desde #39FF14)
+  greenDim:     'rgba(47,224,20,0.38)',
+  greenFaint:   'rgba(47,224,20,0.12)',
+  red:          '#FF3D57',   // estado peligro (oscurecido desde #ff5066)
+  redDim:       'rgba(255,61,87,0.38)',
+  redFaint:     'rgba(255,61,87,0.12)',
   bg:           '#020613',
   surface:      'rgba(10,20,40,0.97)',
   surfaceLight: 'rgba(20,28,40,0.95)',
   overlay:      'rgba(2,6,19,0.99)',
   locked:       'rgba(255,255,255,0.12)',
   lockedBg:     'rgba(255,255,255,0.04)',
-  grid:         'rgba(0,240,255,0.05)',
+  grid:         'rgba(0,214,230,0.05)',
 } as const;
 
 export function statusColor(status: string, options?: { master?: boolean; depth?: number }): string {
@@ -57,8 +60,10 @@ export const FONT = {
   body:    "'Rajdhani', sans-serif",
 } as const;
 
+// ♿ Accesibilidad: tamaños ligeramente aumentados respecto a la versión
+// original (+1px) para reducir la necesidad de hacer zoom.
 export const FONT_STYLE = {
-  label:    { fontFamily: "'Share Tech Mono', 'Courier New', monospace", fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' as const },
+  label:    { fontFamily: "'Share Tech Mono', 'Courier New', monospace", fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase' as const },
   mono:     { fontFamily: "'Share Tech Mono', 'Courier New', monospace" },
   title:    { fontFamily: "'Rajdhani', sans-serif", fontWeight: 700 as const },
   subtitle: { fontFamily: "'Share Tech Mono', 'Courier New', monospace", fontSize: 10, letterSpacing: 0.5 },
@@ -110,9 +115,9 @@ export const BASE: Record<string, React.CSSProperties> = {
   detailPanel: { flexShrink: 0, borderTop: '1px solid rgba(0,240,255,0.18)', padding: '14px 16px', background: 'rgba(2,6,19,0.99)', maxHeight: '38vh', overflowY: 'auto', position: 'relative', zIndex: 2 },
   statsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
   statCard: { padding: '8px 10px', borderRadius: 6, background: 'rgba(0,240,255,0.05)', border: '1px solid rgba(0,240,255,0.10)' },
-  btnPrimary: { width: '100%', padding: '10px 0', background: '#F59E0B', border: 'none', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, color: '#020613', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
-  btnSecondary: { width: '100%', padding: '10px 0', background: 'rgba(0,240,255,0.10)', border: '1px solid rgba(0,240,255,0.35)', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, color: '#00F0FF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
-  btnDanger: { width: '100%', padding: '10px 0', background: 'rgba(255,80,102,0.12)', border: '1px solid rgba(255,80,102,0.35)', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, color: '#ff5066', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
+  btnPrimary: { width: '100%', padding: '10px 0', background: '#E08A00', border: 'none', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 15, color: '#020613', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
+  btnSecondary: { width: '100%', padding: '10px 0', background: 'rgba(0,214,230,0.10)', border: '1px solid rgba(0,214,230,0.35)', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 15, color: '#00D6E6', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
+  btnDanger: { width: '100%', padding: '10px 0', background: 'rgba(255,61,87,0.12)', border: '1px solid rgba(255,61,87,0.35)', borderRadius: 8, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 15, color: '#FF3D57', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5 },
 };
 
 export function injectKeyframes(): void {

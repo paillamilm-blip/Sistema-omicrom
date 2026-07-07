@@ -117,6 +117,7 @@ export function ContractModal({ service, onClose }: Props) {
 
         {/* Price breakdown */}
         <div className="bg-omicron-surface border border-omicron-border rounded-2xl p-4 space-y-2">
+          <p className="text-omicron-subtle text-xs uppercase tracking-wide mb-1">Desglose de pago</p>
           <div className="flex justify-between text-sm">
             <span className="text-omicron-subtle">Precio servicio</span>
             <span className="text-omicron-text font-semibold">🪙 {service.price}</span>

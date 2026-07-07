@@ -14,14 +14,16 @@ export default {
           text:     '#eaf2ff',
           subtle:   '#7d93b0',
           // === ACENTOS (Neo-Académico Holográfico) ===
-          accent:   '#00F0FF',   // CYAN eléctrico (flujos / energía limpia)
-          cyan:     '#00F0FF',
-          magenta:  '#7df9ff',   // cyan claro (hover / destacados)
-          steel:    '#005F73',   // azul acero (Bóveda / cajas negras)
-          green:    '#39FF14',   // esmeralda (validado / éxito)
-          gold:     '#F59E0B',   // ÁMBAR (alertas / simulador / tokens)
-          red:      '#ff5066',
-          blue:     '#00F0FF',
+          // ♿ Accesibilidad: tonos oscurecidos (~10-15%) respecto a la
+          // versión original para subir el contraste y evitar el zoom.
+          accent:   '#00D6E6',   // CYAN eléctrico (flujos / energía limpia)
+          cyan:     '#00D6E6',
+          magenta:  '#5ad6e6',   // cyan claro (hover / destacados)
+          steel:    '#045A68',   // azul acero (Bóveda / cajas negras)
+          green:    '#2FE014',   // esmeralda (validado / éxito)
+          gold:     '#E08A00',   // ÁMBAR (alertas / simulador / tokens)
+          red:      '#FF3D57',
+          blue:     '#00D6E6',
         }
       },
       fontFamily: {
