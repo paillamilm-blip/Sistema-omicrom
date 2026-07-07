@@ -14,6 +14,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // No falla el CI si algún cambio temporalmente no trae archivos de test.
+    passWithNoTests: true,
   },
   build: {
     // Separa dependencias en chunks cacheables (mejor rendimiento en visitas
