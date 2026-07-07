@@ -6,6 +6,11 @@
 --     DIVERGEN de esta realidad (p.ej. definían node_level como integer y una
 --     tabla escrow_contracts que NO se usa). NO las corras sobre producción.
 --     Las migraciones 0005–0010 SÍ son reales/aditivas y ya están aplicadas.
+--
+-- ⚠️  BUG HISTÓRICO (corregido en 0040_fix_handle_new_user_email_column.sql):
+--     el trigger handle_new_user() de 0001_core.sql insertaba una columna
+--     "email" en profiles que nunca existió aquí, causando 500 en cada
+--     POST /auth/v1/signup (42703: column "email" does not exist).
 -- =====================================================================
 
 -- ---------- IDENTIDAD / NODOS ----------
