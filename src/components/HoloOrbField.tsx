@@ -36,6 +36,20 @@ interface HoloOrbFieldProps {
 
 const CYAN = '#22D3EE';
 
+// Campo de estrellas (puntos diminutos vía múltiples radial-gradients).
+const STARFIELD = [
+  'radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.9), transparent)',
+  'radial-gradient(1px 1px at 28% 62%, rgba(255,255,255,0.5), transparent)',
+  'radial-gradient(1.5px 1.5px at 44% 12%, rgba(224,247,255,0.8), transparent)',
+  'radial-gradient(1px 1px at 62% 74%, rgba(255,255,255,0.6), transparent)',
+  'radial-gradient(1px 1px at 78% 30%, rgba(255,255,255,0.7), transparent)',
+  'radial-gradient(1.5px 1.5px at 88% 60%, rgba(147,197,253,0.7), transparent)',
+  'radial-gradient(1px 1px at 8% 82%, rgba(255,255,255,0.5), transparent)',
+  'radial-gradient(1px 1px at 54% 90%, rgba(255,255,255,0.55), transparent)',
+  'radial-gradient(1px 1px at 70% 8%, rgba(255,255,255,0.6), transparent)',
+  'radial-gradient(1px 1px at 34% 40%, rgba(255,255,255,0.4), transparent)',
+].join(', ');
+
 export function HoloOrbField({
   variant = 'identity',
   orbState = 'idle',
@@ -47,6 +61,14 @@ export function HoloOrbField({
 }: HoloOrbFieldProps) {
   return (
     <div style={{ position: 'relative', width: '100%', height }} aria-label={ariaLabel}>
+      {/* Fondo espacial: nebulosa suave + campo de estrellas (recortado a
+          esquinas redondeadas; los chips flotan por fuera sin recortarse). */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden', borderRadius: 16 }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 44%, rgba(34,211,238,0.12), transparent 60%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 72% 74%, rgba(124,58,237,0.12), transparent 55%)' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: STARFIELD, backgroundRepeat: 'no-repeat', opacity: 0.7 }} />
+      </div>
+
       {/* Líneas conectoras (constelación). El orbe se dibuja encima y oculta
           el segmento interior, dando el efecto de conectar con su superficie. */}
       <svg
@@ -111,11 +133,11 @@ export function HoloOrbField({
               transform: 'translate(-50%, -50%)',
               zIndex: 4,
               padding: '7px 12px', borderRadius: 14,
-              background: 'rgba(30, 41, 59, 0.55)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: `1px solid ${color}44`,
-              boxShadow: `0 8px 24px -8px rgba(0,0,0,0.55), 0 0 12px -4px ${color}55`,
+              background: 'rgba(15, 23, 42, 0.45)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              border: `1px solid ${color}55`,
+              boxShadow: `0 10px 28px -10px rgba(0,0,0,0.6), 0 0 14px -4px ${color}66, inset 0 1px 0 rgba(255,255,255,0.08)`,
               minWidth: 60, textAlign: 'center', pointerEvents: 'none',
             }}
           >

@@ -34,13 +34,16 @@ interface OrbProps {
 const SIZE_PX: Record<OrbSize, number> = { sm: 120, md: 180, lg: 240 };
 
 // El núcleo del gradiente cambia de tinte según el rol del orbe en la pantalla.
+// Bordes profundos (índigo/violeta) + punto de luz desplazado → esfera con
+// profundidad espacial en vez de una bola plana. El centro geométrico queda
+// en tono medio para que el contenido (reputación) sea legible.
 const CORE_GRADIENT: Record<OrbVariant, string> = {
   'digital-twin':
-    'radial-gradient(circle at 38% 32%, #67E8F9, #06B6D4 40%, #1E293B 80%)',
+    'radial-gradient(circle at 40% 34%, #CFFAFE 0%, #22D3EE 34%, #1E40AF 68%, #1E1B4B 92%)',
   'learning-system':
-    'radial-gradient(circle at 38% 32%, #A5F3FC, #22D3EE 42%, #0E7490 82%)',
+    'radial-gradient(circle at 40% 34%, #CFFAFE 0%, #22D3EE 36%, #0E7490 66%, #164E63 92%)',
   'identity':
-    'radial-gradient(circle at 38% 32%, #E0F2FE, #38BDF8 40%, #1E293B 82%)',
+    'radial-gradient(circle at 40% 34%, #E0F7FF 0%, #38BDF8 34%, #3730A3 70%, #2E1065 92%)',
 };
 
 const LONG_PRESS_MS = 500;
@@ -215,16 +218,40 @@ export const Orb = ({
         animate={{ boxShadow: coreGlowActive }}
         transition={{ duration: 1.2, repeat: isLoading ? Infinity : 0, repeatType: 'reverse' }}
       >
-        {/* Rejilla holográfica interna (anillos concéntricos girando) */}
-        <motion.div
-          className="absolute inset-0 opacity-30 pointer-events-none"
+        {/* Núcleo luminoso (bloom central, sin tapar el contenido) */}
+        <div
+          className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'repeating-radial-gradient(circle, transparent, transparent 18px, rgba(255,255,255,0.25) 19px, transparent 21px)',
+              'radial-gradient(circle at 50% 47%, rgba(125,211,252,0.45) 0%, rgba(34,211,238,0.22) 30%, transparent 58%)',
+            mixBlendMode: 'screen',
+          }}
+        />
+
+        {/* Rejilla holográfica interna (anillos concéntricos girando) */}
+        <motion.div
+          className="absolute inset-0 opacity-40 pointer-events-none"
+          style={{
+            background:
+              'repeating-radial-gradient(circle, transparent, transparent 16px, rgba(224,247,255,0.28) 17px, transparent 19px)',
           }}
           animate={{ rotate: reduceMotion ? 0 : 360 }}
           transition={{ duration: isLoading ? 6 : 18, repeat: Infinity, ease: 'linear' }}
         />
+
+        {/* Anillos orbitales tipo radar / HUD (giroscopio) */}
+        <motion.svg
+          viewBox="0 0 100 100"
+          className="absolute inset-0 pointer-events-none"
+          style={{ width: '100%', height: '100%', opacity: 0.6, mixBlendMode: 'screen' }}
+          animate={{ rotate: reduceMotion ? 0 : 360 }}
+          transition={{ duration: isLoading ? 12 : 28, repeat: Infinity, ease: 'linear' }}
+        >
+          <ellipse cx="50" cy="50" rx="42" ry="15" fill="none" stroke="rgba(224,247,255,0.6)" strokeWidth="0.5" />
+          <ellipse cx="50" cy="50" rx="42" ry="15" fill="none" stroke="rgba(34,211,238,0.5)" strokeWidth="0.5" transform="rotate(60 50 50)" />
+          <ellipse cx="50" cy="50" rx="42" ry="15" fill="none" stroke="rgba(147,197,253,0.4)" strokeWidth="0.5" transform="rotate(120 50 50)" />
+          <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(34,211,238,0.3)" strokeWidth="0.4" strokeDasharray="1 3" />
+        </motion.svg>
 
         {/* Barrido de luz holográfico (GSAP controla xPercent/opacity) */}
         <div
@@ -252,6 +279,15 @@ export const Orb = ({
             background:
               'radial-gradient(ellipse at center, rgba(255,255,255,0.45), transparent 70%)',
             filter: 'blur(2px)',
+          }}
+        />
+
+        {/* Rim light (borde luminoso de la esfera + sombra inferior = volumen) */}
+        <div
+          className="absolute inset-0 rounded-full pointer-events-none"
+          style={{
+            boxShadow:
+              'inset 0 0 22px rgba(224,247,255,0.35), inset 0 -10px 34px rgba(30,27,75,0.55)',
           }}
         />
 

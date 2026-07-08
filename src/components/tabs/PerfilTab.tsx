@@ -312,7 +312,7 @@ function CredencialCard({
           ariaLabel={`Tu reputación es ${reputacion.toFixed(1)} de 100`}
           center={
             <div style={{ textAlign: 'center', lineHeight: 1 }}>
-              <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 38, color: '#ffffff', textShadow: `0 0 20px ${rango.color}` }}>
+              <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 38, color: '#ffffff', textShadow: `0 2px 10px rgba(0,0,0,0.55), 0 0 22px ${rango.color}` }}>
                 {reputacion.toFixed(1)}
               </div>
               <div style={{ fontFamily: FONT.mono, fontSize: 9, color: 'rgba(255,255,255,0.85)', letterSpacing: 1, marginTop: 2 }}>
