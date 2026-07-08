@@ -16,7 +16,7 @@ import { CredentialsPanel } from '../perfil/CredentialsPanel';
 import { CredentialReview } from '../perfil/CredentialReview';
 import { ShareCredentialModal, RedPanel } from '../perfil/RedSocial';
 import { ProgressRadar } from '../shared/ProgressRadar';
-import { Orb } from '../Orb';
+import { HoloOrbField } from '../HoloOrbField';
 // 🧪 MVP PILOTO CONTROLADO: Dossier de Evidencia y Carta de Competencias
 // dependen del Examinador IA / carta-ia (Edge Functions de IA). Se ocultan
 // para el piloto (no se elimina el código, solo se comenta su uso).
@@ -145,13 +145,6 @@ function CredencialCard({
 }) {
   const nodeColor = NODE_COLOR[nodeType] ?? C.cyan;
   const rango = getRango(reputacion);
-
-  const miniStat = (label: string, value: string, color: string) => (
-    <div style={{ flex: 1, textAlign: 'center' }}>
-      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 18, color }}>{value}</div>
-      <div style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.cyanDim, letterSpacing: 1, marginTop: 2 }}>{label}</div>
-    </div>
-  );
 
   return (
     <div style={{
@@ -301,53 +294,49 @@ function CredencialCard({
         </div>
       </div>
 
-      {/* Gemelo Digital · "Tú eres el orbe" (Ómicron Core) */}
+      {/* Gemelo Digital · "Tú eres el orbe" — constelación Ómicron Core */}
       <div style={{
-        marginTop: 16, padding: '20px 8px 16px', borderRadius: RADIUS.lg,
-        background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+        marginTop: 16, padding: '10px 4px 6px', borderRadius: RADIUS.lg,
+        background: 'radial-gradient(ellipse at 50% 42%, rgba(34,211,238,0.06), rgba(255,255,255,0.02) 60%)',
+        border: '1px solid rgba(255,255,255,0.06)',
       }}>
-        <span style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.cyanDim, letterSpacing: 1.5 }}>
-          TU GEMELO DIGITAL
-        </span>
-        <Orb
-          variant="identity"
-          size="lg"
-          state={paused ? 'error' : 'idle'}
-          ariaLabel={`Tu reputación es ${reputacion.toFixed(1)} de 100`}
-        >
-          <div style={{ textAlign: 'center', lineHeight: 1 }}>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 42, color: '#ffffff', textShadow: `0 0 20px ${rango.color}` }}>
-              {reputacion.toFixed(1)}
-            </div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 10, color: 'rgba(255,255,255,0.85)', letterSpacing: 1, marginTop: 3 }}>
-              / 100
-            </div>
-          </div>
-        </Orb>
-        <span style={{
-          padding: '4px 12px', borderRadius: 20,
-          background: `${rango.color}18`, border: `1px solid ${rango.color}44`,
-          fontFamily: FONT.mono, fontSize: 10, color: rango.color, letterSpacing: 1,
-        }}>
-          {rango.emoji} {rango.label}
-        </span>
-      </div>
+        <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 8.5, color: C.cyanDim, letterSpacing: 1.5, paddingTop: 6 }}>
+          TU GEMELO DIGITAL · TÚ ERES EL ORBE
+        </div>
 
-      {/* Stats clave (compactos) */}
-      <div style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.cyanDim, letterSpacing: 1.5, marginTop: 14, textTransform: 'uppercase' }}>
-        Resumen de actividad
-      </div>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 4,
-        marginTop: 6, padding: '12px 6px', borderRadius: RADIUS.lg,
-        background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
-      }}>
-        {miniStat('TOKENS', tokens.toLocaleString(), C.gold)}
-        <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.08)' }} />
-        {miniStat('PE', pe.toLocaleString(), C.cyan)}
-        <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.08)' }} />
-        {miniStat('CONTRATOS', String(contratos), C.green)}
+        <HoloOrbField
+          variant="identity"
+          orbState={paused ? 'error' : 'idle'}
+          orbSize="md"
+          height={318}
+          ariaLabel={`Tu reputación es ${reputacion.toFixed(1)} de 100`}
+          center={
+            <div style={{ textAlign: 'center', lineHeight: 1 }}>
+              <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 38, color: '#ffffff', textShadow: `0 0 20px ${rango.color}` }}>
+                {reputacion.toFixed(1)}
+              </div>
+              <div style={{ fontFamily: FONT.mono, fontSize: 9, color: 'rgba(255,255,255,0.85)', letterSpacing: 1, marginTop: 2 }}>
+                / 100
+              </div>
+            </div>
+          }
+          chips={[
+            { label: 'Tokens',    value: tokens.toLocaleString(),  color: C.gold,  x: 17, y: 17 },
+            { label: 'PE',        value: pe.toLocaleString(),      color: C.cyan,  x: 83, y: 17 },
+            { label: 'Contratos', value: String(contratos),        color: C.green, x: 17, y: 83 },
+            { label: nodeType.replace('Nodo ', ''), value: `N${nodeLevel}`, color: nodeColor, x: 83, y: 83 },
+          ]}
+        />
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 2, marginBottom: 6 }}>
+          <span style={{
+            padding: '4px 12px', borderRadius: 20,
+            background: `${rango.color}18`, border: `1px solid ${rango.color}44`,
+            fontFamily: FONT.mono, fontSize: 10, color: rango.color, letterSpacing: 1,
+          }}>
+            {rango.emoji} {rango.label}
+          </span>
+        </div>
       </div>
 
       {/* Progreso de rango */}
