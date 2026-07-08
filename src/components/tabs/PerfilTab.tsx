@@ -16,6 +16,7 @@ import { CredentialsPanel } from '../perfil/CredentialsPanel';
 import { CredentialReview } from '../perfil/CredentialReview';
 import { ShareCredentialModal, RedPanel } from '../perfil/RedSocial';
 import { ProgressRadar } from '../shared/ProgressRadar';
+import { Orb } from '../Orb';
 // 🧪 MVP PILOTO CONTROLADO: Dossier de Evidencia y Carta de Competencias
 // dependen del Examinador IA / carta-ia (Edge Functions de IA). Se ocultan
 // para el piloto (no se elimina el código, solo se comenta su uso).
@@ -130,12 +131,12 @@ function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: (
 // ─── CREDENCIAL DIGITAL (tarjeta de presentación · protagonista) ────────────────
 function CredencialCard({
   initials, name, username, location, nodeType, nodeLevel, verified,
-  reputacion, gemelo, tokens, pe, contratos, nextPe, tierProgress,
+  reputacion, tokens, pe, contratos, nextPe, tierProgress,
   paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit, onShare,
 }: {
   initials: string; name: string; username: string; location?: string;
   nodeType: string; nodeLevel: number; verified: boolean;
-  reputacion: number; gemelo: NonNullable<ReturnType<typeof useGemeloDigital>>;
+  reputacion: number;
   tokens: number; pe: number; contratos: number;
   nextPe: number | null; tierProgress: number;
   paused: boolean; onTogglePause: () => void;
@@ -300,34 +301,37 @@ function CredencialCard({
         </div>
       </div>
 
-      {/* Reputación (hero) + Radar protagonista */}
+      {/* Gemelo Digital · "Tú eres el orbe" (Ómicron Core) */}
       <div style={{
-        marginTop: 16, padding: '14px 8px 6px', borderRadius: RADIUS.lg,
+        marginTop: 16, padding: '20px 8px 16px', borderRadius: RADIUS.lg,
         background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 4 }}>
-          <span style={{ fontFamily: FONT.body, fontSize: 12, color: C.cyanDim }}>Tu reputación</span>
-          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 34, color: rango.color, textShadow: `0 0 16px ${rango.color}55`, lineHeight: 1 }}>
-            {reputacion.toFixed(1)}
-          </span>
-          <span style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim }}>/100</span>
-          <span style={{
-            padding: '3px 10px', borderRadius: 20,
-            background: `${rango.color}18`, border: `1px solid ${rango.color}44`,
-            fontFamily: FONT.mono, fontSize: 10, color: rango.color, letterSpacing: 1,
-          }}>
-            {rango.emoji} {rango.label}
-          </span>
-        </div>
-
-        <ProgressRadar
-          gemelo={gemelo}
-          size="md"
-          showHeader={false}
-          showScores={false}
-          showAlert={false}
-          showFooter={false}
-        />
+        <span style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.cyanDim, letterSpacing: 1.5 }}>
+          TU GEMELO DIGITAL
+        </span>
+        <Orb
+          variant="identity"
+          size="lg"
+          state={paused ? 'error' : 'idle'}
+          ariaLabel={`Tu reputación es ${reputacion.toFixed(1)} de 100`}
+        >
+          <div style={{ textAlign: 'center', lineHeight: 1 }}>
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 42, color: '#ffffff', textShadow: `0 0 20px ${rango.color}` }}>
+              {reputacion.toFixed(1)}
+            </div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 10, color: 'rgba(255,255,255,0.85)', letterSpacing: 1, marginTop: 3 }}>
+              / 100
+            </div>
+          </div>
+        </Orb>
+        <span style={{
+          padding: '4px 12px', borderRadius: 20,
+          background: `${rango.color}18`, border: `1px solid ${rango.color}44`,
+          fontFamily: FONT.mono, fontSize: 10, color: rango.color, letterSpacing: 1,
+        }}>
+          {rango.emoji} {rango.label}
+        </span>
       </div>
 
       {/* Stats clave (compactos) */}
@@ -388,7 +392,17 @@ function EjesPanel({ gemelo }: { gemelo: NonNullable<ReturnType<typeof useGemelo
         </p>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Radar del Gemelo Digital (detalle visual de los 4 ejes) */}
+      <ProgressRadar
+        gemelo={gemelo}
+        size="md"
+        showHeader={false}
+        showScores={false}
+        showAlert={false}
+        showFooter={false}
+      />
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
         {EJES.map((eje) => {
           const value = gemelo[eje.key] ?? 0;
           return (
@@ -588,7 +602,6 @@ export function PerfilTab() {
             nodeLevel={profile?.node_level ?? 1}
             verified={!!profile?.is_verified_professional}
             reputacion={gemelo.overallReputation ?? 0}
-            gemelo={gemelo}
             tokens={profile?.token_balance ?? 0}
             pe={pe}
             contratos={profile?.total_contracts_completed ?? 0}

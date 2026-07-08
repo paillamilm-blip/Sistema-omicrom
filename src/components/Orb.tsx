@@ -57,6 +57,9 @@ export const Orb = ({
 }: OrbProps) => {
   const reduceMotion = useReducedMotion();
   const px = SIZE_PX[size];
+  // Interactivo solo si hay handler; si no, es decorativo (role="img"),
+  // evitando "botones fantasma" sin acción (accesibilidad).
+  const interactive = !!(onClick || onLongPress);
 
   const isLoading = state === 'loading';
   const isCelebrating = state === 'celebration';
@@ -155,13 +158,27 @@ export const Orb = ({
 
   return (
     <motion.div
-      role="button"
-      tabIndex={0}
+      {...(interactive
+        ? {
+            role: 'button' as const,
+            tabIndex: 0,
+            onClick: handleClick,
+            onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick?.();
+              }
+            },
+            onPointerDown: startPress,
+            onPointerUp: cancelPress,
+            onPointerLeave: cancelPress,
+          }
+        : { role: 'img' as const })}
       aria-label={ariaLabel ?? 'Orbe Ómicron'}
       aria-busy={isLoading}
-      className={`relative flex items-center justify-center cursor-pointer select-none outline-none ${className}`}
+      className={`relative flex items-center justify-center select-none outline-none ${interactive ? 'cursor-pointer' : ''} ${className}`}
       style={{ width: px, height: px }}
-      whileTap={{ scale: 0.95 }}
+      whileTap={interactive ? { scale: 0.95 } : undefined}
       animate={{
         ...orbFloat,
         scale: isCelebrating && !reduceMotion ? [1, 1.12, 1] : 1,
@@ -171,16 +188,6 @@ export const Orb = ({
           ? { duration: 0.7, ease: 'easeOut' }
           : { y: { duration: 4, repeat: Infinity, ease: 'easeInOut' } }
       }
-      onClick={handleClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick?.();
-        }
-      }}
-      onPointerDown={startPress}
-      onPointerUp={cancelPress}
-      onPointerLeave={cancelPress}
     >
       {/* Halo exterior (glow) */}
       <motion.div

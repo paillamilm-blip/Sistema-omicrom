@@ -12,6 +12,7 @@ import { useApp } from '../../store/AppContext';
 // import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '../../theme';
 import { ScanlineOverlay, CyberHeader, LoadingScreen } from '../shared/CyberComponents';
+import { Orb } from '../Orb';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
 
@@ -375,14 +376,20 @@ export function AcademiaTab() {
             <div style={{ position: 'relative' }}>
               <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyan, marginBottom: 12 }}>◆ NÚCLEO DE APRENDIZAJE</div>
 
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>
-                <div style={{ width: 128, height: 116, clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)', background: `linear-gradient(165deg, ${C.cyan}, ${C.gold})`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 34px ${C.cyan}66`, animation: 'corePulse 3s ease-in-out infinite' }}>
-                  <div style={{ width: 120, height: 108, clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)', background: 'linear-gradient(165deg, rgba(10,17,32,0.97), rgba(6,12,24,0.99))', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                    <span style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyan, letterSpacing: 2 }}>NÚCLEO</span>
-                    <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 28, color: '#eaf4ff', lineHeight: 1 }}>{totalAll ? Math.round((totalDone / totalAll) * 100) : 0}%</span>
-                    <span style={{ fontFamily: FONT.mono, fontSize: 7.5, color: C.cyanDim, letterSpacing: 1 }}>{completed}/{courses.length} CURSOS</span>
+              {/* Sistema Solar del Aprendizaje · orbe Ómicron Core */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
+                <Orb
+                  variant="learning-system"
+                  size="md"
+                  state={totalAll && totalDone >= totalAll ? 'success' : 'idle'}
+                  ariaLabel={`Progreso de aprendizaje ${totalAll ? Math.round((totalDone / totalAll) * 100) : 0} por ciento`}
+                >
+                  <div style={{ textAlign: 'center', lineHeight: 1 }}>
+                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 8, color: C.cyan, letterSpacing: 2 }}>NÚCLEO</span>
+                    <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 32, color: '#ffffff', margin: '3px 0', textShadow: `0 0 18px ${C.cyan}` }}>{totalAll ? Math.round((totalDone / totalAll) * 100) : 0}%</span>
+                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 7.5, color: 'rgba(255,255,255,0.75)', letterSpacing: 1 }}>{completed}/{courses.length} CURSOS</span>
                   </div>
-                </div>
+                </Orb>
               </div>
 
               <div style={{ position: 'relative', paddingTop: 4 }}>
