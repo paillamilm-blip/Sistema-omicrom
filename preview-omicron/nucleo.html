@@ -32,6 +32,9 @@
       #gate .tag { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; color: rgba(0,240,255,0.6); text-transform: uppercase; }
       .enter { margin-top: 6px; font-family: var(--mono); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; padding: 14px 34px; border-radius: 30px; cursor: pointer; color: #020613; font-weight: 700; background: linear-gradient(135deg, #7df9ff, #00f0ff); border: none; box-shadow: 0 0 30px rgba(0,240,255,0.5); transition: transform 0.2s, box-shadow 0.2s; }
       .enter:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(0,240,255,0.8); }
+      .gate-status { font-family: var(--mono); font-size: 12px; letter-spacing: 0.4px; color: rgba(234,242,255,0.78); background: rgba(6,12,26,0.7); border: 1px solid rgba(0,240,255,0.2); border-radius: 14px; padding: 13px 18px; max-width: 350px; line-height: 1.65; backdrop-filter: blur(8px); }
+      .gate-status .gs-title { color: #7df9ff; font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; display: block; margin-bottom: 5px; }
+      .gate-status b { color: #F59E0B; font-weight: 700; }
 
       .hud { position: fixed; z-index: 10; opacity: 0; transition: opacity 1s; }
       .hud.show { opacity: 1; }
@@ -222,6 +225,7 @@
     <div id="gate">
       <div class="omega-big">Ω</div>
       <div><h1>Sistema Ómicron</h1><div class="tag">Núcleo · Gemelo Digital 3D</div></div>
+      <div class="gate-status" id="gateStatus"></div>
       <button class="enter" id="enter">▶ Despertar el Núcleo</button>
       <div class="tag" style="opacity:0.5;font-size:9px">Con voz y sonido · usa audífonos</div>
     </div>
@@ -864,6 +868,20 @@
       function openHist(){ _g("histPanel")&&_g("histPanel").classList.add("open"); _g("projPanel")&&_g("projPanel").classList.remove("open"); renderHist(); }
       if(_g("histClose")) _g("histClose").onclick=()=>_g("histPanel").classList.remove("open");
       renderHist();
+
+      // ── MEJORA · Entrada personalizada (reconoce si vuelves o eres nuevo) ──
+      (function initGate(){
+        const el=_g("gateStatus"); if(!el) return;
+        const has = prof.cv || prof.titles>0 || prof.years>0 || prof.vault>0;
+        const ti = tierInfo(prof.pe);
+        if(has){
+          const s = streakDays();
+          el.innerHTML = `<span class="gs-title">Bienvenido de vuelta</span>Nodo <b>${ti.cur.n}</b> · Reputación <b>${prof.rep}</b> · ${prof.pe.toLocaleString("es")} PE${s>0?` · 🔥 ${s} ${s===1?"día":"días"} de racha`:""}`;
+          const btn=_g("enter"); if(btn) btn.textContent="▶ Volver a mi Núcleo";
+        } else {
+          el.innerHTML = `<span class="gs-title">Tu capital intelectual, vivo</span>Convierte tu experiencia real —CV, títulos, años— en un Gemelo Digital verificable. Convalida y velo nacer.`;
+        }
+      })();
 
       // Reinicio total del Gemelo (para ver todo nacer desde cero)
       function resetGemelo(){ if(!confirm("¿Reiniciar tu Gemelo? Se borrarán tus datos convalidados y el historial.")) return; try{ localStorage.removeItem("omicron_gemelo"); localStorage.removeItem(HKEY); }catch(e){} Object.assign(prof, omiDefault()); omiRecompute(prof); for(let i=LATENT_START;i<nodes.length;i++){ nodes[i].locked=true; nodes[i].born=-1; } ["cv","cti","cyr","cvo"].forEach(id=>_g(id)&&_g(id).classList.remove("done")); quest=null; questPts.length=0; ghost.clear(); hist=[]; renderHist(); lastTier=-1; setRep(prof.rep,true); setPE(prof.pe,true); updateTier(false); flash("GEMELO REINICIADO","#F59E0B"); oracleType("Tu Gemelo se reinició. Empieza a convalidar y verás nacer tu universo desde cero."); if(convOv)convOv.classList.remove("open"); }
