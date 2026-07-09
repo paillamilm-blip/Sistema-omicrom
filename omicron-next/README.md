@@ -37,6 +37,19 @@ Dark mode profesional con acentos en **azul** (`hsl(217 91% 60%)`) y **morado**
 `tailwind.config.ts` (`bg-omicron-gradient`, `shadow-glow`) y en las variables de
 `src/app/globals.css`.
 
+## Rutas
+
+| Ruta                   | Descripción                                              |
+| ---------------------- | -------------------------------------------------------- |
+| `/`                    | Redirige a `/dashboard`                                  |
+| `/dashboard`           | Dashboard: nodo, XP, habilidades, ganancias, actividad   |
+| `/oportunidades`       | Listado con filtros (tipo + búsqueda)                    |
+| `/oportunidades/[id]`  | Detalle de una oportunidad                               |
+| `/ranking`             | Leaderboard de nodos con podio                           |
+| `/perfil`              | Perfil, insignias y progresión de nodos                  |
+
+Todas las rutas internas comparten el layout del grupo `(app)` (sidebar + topbar).
+
 ## Estructura
 
 ```
@@ -44,29 +57,43 @@ src/
 ├── app/
 │   ├── layout.tsx            # Layout raíz (dark, fuente Inter, metadata)
 │   ├── page.tsx              # Redirige a /dashboard
+│   ├── not-found.tsx         # 404 global
 │   ├── globals.css           # Tokens de diseño + utilidades
-│   └── dashboard/
-│       └── page.tsx          # Dashboard principal del usuario
+│   └── (app)/                # Grupo con sidebar + topbar
+│       ├── layout.tsx        # App shell (Sidebar + Topbar)
+│       ├── loading.tsx       # Skeletons de carga
+│       ├── error.tsx         # Error boundary
+│       ├── dashboard/
+│       ├── oportunidades/    # page.tsx + [id]/page.tsx
+│       ├── ranking/
+│       └── perfil/
 ├── components/
-│   ├── ui/                   # Primitivos shadcn/ui (button, card, avatar, ...)
-│   └── dashboard/            # Componentes del dashboard
-│       ├── dashboard-header.tsx
-│       ├── logo.tsx
-│       ├── level-overview.tsx    # Nodo + XP + progreso al siguiente nodo
-│       ├── progress-ring.tsx     # Anillo de progreso SVG
-│       ├── skill-map.tsx         # Mapa de habilidades circular (radar SVG)
-│       ├── earnings-card.tsx     # Ganancias del mes
-│       ├── opportunities-section.tsx
-│       └── opportunity-card.tsx
+│   ├── ui/                   # Primitivos shadcn/ui
+│   ├── layout/               # sidebar, topbar, page-header
+│   ├── dashboard/            # level-overview, skill-map, earnings, stats, ...
+│   ├── opportunities/        # opportunities-explorer (filtros)
+│   ├── ranking/              # leaderboard
+│   └── profile/              # profile-header, achievements, node-progression
 ├── lib/
-│   ├── utils.ts              # cn(), formatCurrency(), formatNumber()
-│   └── mock-data.ts          # Datos de ejemplo (reemplazar por API)
+│   ├── utils.ts              # cn(), formatCurrency, formatNumber, formatDate, timeAgo
+│   ├── icon-map.ts           # Resuelve iconos por nombre
+│   ├── navigation.ts         # Rutas de la navegación lateral
+│   ├── mock-data.ts          # Datos de ejemplo
+│   ├── data/                 # Repositorios (Supabase con fallback a mock)
+│   └── supabase/             # Clientes browser/server + tipos de DB
 └── types/
-    └── index.ts              # Tipos de dominio del dashboard
+    └── index.ts              # Tipos de dominio
 ```
 
-## Datos
+## Datos y Supabase
 
-Actualmente el dashboard consume datos de ejemplo desde `src/lib/mock-data.ts`.
-Para conectar un backend real, reemplaza esa fuente por una llamada a tu API
-(por ejemplo Supabase) dentro de un Server Component.
+La capa `src/lib/data/*` intenta leer de **Supabase** y, si no hay credenciales
+(`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`), recurre
+automáticamente a los datos mock de `src/lib/mock-data.ts`. Esto permite
+desarrollar toda la UI sin backend.
+
+Para conectar Supabase:
+
+1. Copia `.env.example` a `.env.local` y completa las variables.
+2. Crea las tablas (ver `src/lib/supabase/database.types.ts` como referencia).
+3. Genera los tipos: `npx supabase gen types typescript ... > src/lib/supabase/database.types.ts`.

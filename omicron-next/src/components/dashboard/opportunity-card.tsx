@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRight, Briefcase, GraduationCap, Users, Zap } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -87,10 +88,15 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
           <Button
             size="icon"
             variant="ghost"
+            asChild
             className="text-muted-foreground transition-colors group-hover:text-primary"
-            aria-label={`Ver ${opportunity.title}`}
           >
-            <ArrowRight className="h-4 w-4" />
+            <Link
+              href={`/oportunidades/${opportunity.id}`}
+              aria-label={`Ver ${opportunity.title}`}
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </CardContent>
