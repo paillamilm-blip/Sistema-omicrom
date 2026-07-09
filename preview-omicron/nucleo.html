@@ -734,6 +734,7 @@
         }
         if(celebrate && lastTier>=0 && i>lastTier){ flash("NODO "+cur.n.toUpperCase()+" ALCANZADO","#F59E0B"); try{Snd.sweep();}catch(e){} shocks.push({t:0,color:"#F59E0B"}); setTimeout(()=>oracleType(`¡Ascendiste a Nodo ${cur.n}! Tu capital intelectual sube de categoría en el ecosistema.`),300); }
         lastTier = i;
+        if(typeof refreshChips==="function") refreshChips();
       }
 
       // ── INNOVACIÓN · Motor "Siguiente mejor paso" (recomendación por ROI) ──
@@ -992,6 +993,17 @@
       COMMANDS.push({ k:["medir","conocimiento","examen","evalua","evalúa","test","cuánto sé","cuanto se","quiz"], cat:null, hi:"noclear", r:()=>{ openQuiz(); return "Midamos tu conocimiento en tiempo real. Elige la respuesta correcta."; } });
       // Botón para mostrar/ocultar las preguntas rápidas (mantiene el dock limpio)
       const askToggle=document.createElement("div"); askToggle.className="chip ask-toggle"; askToggle.textContent="💬 Preguntar"; askToggle.onclick=()=>{ Snd.blip(); const open=chipsEl.classList.toggle("open"); askToggle.classList.toggle("on",open); askToggle.textContent=open?"💬 Ocultar preguntas":"💬 Preguntar"; }; dockEl.appendChild(askToggle);
+
+      // ── INNOVACIÓN · Botones VIVOS: muestran info en tiempo real ──
+      function refreshChips(){
+        try{
+          const b = bestNextStep();
+          if(recoChip) recoChip.textContent = b ? ("✦ "+b.label+" +"+b.drep) : "✦ Vas al máximo";
+          if(histChip){ const s = streakDays(); histChip.textContent = s>0 ? ("📜 Historial · 🔥"+s) : "📜 Historial"; }
+          if(questChip) questChip.textContent = "🧭 Ruta → "+tierInfo(prof.pe).cur.n;
+        }catch(e){}
+      }
+      refreshChips();
 
       // Comandos de voz (historial / reinicio)
       COMMANDS.push(
