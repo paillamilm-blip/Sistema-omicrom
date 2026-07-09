@@ -132,6 +132,7 @@
           <div id="radar-box" class="card" style="display:grid;place-items:center;padding:10px"></div>
           <div style="height:12px"></div>
           <div id="skills"></div>
+          <div class="vchips" id="hab-acts"></div>
         </section>
 
         <!-- ACADEMIA -->
@@ -146,19 +147,21 @@
             <div class="planet" id="p4" style="background:var(--green)">UX</div>
           </div>
           <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><span class="label">Ruta activa</span><p style="font-size:14px;margin-top:2px;font-weight:600">Arquitectura de Sistemas</p></div><span style="font-family:var(--mono);color:var(--cyan);font-size:13px">68%</span></div><div class="bar" style="margin-top:8px"><i style="width:68%;background:linear-gradient(90deg,var(--cyan),var(--blue))"></i></div></div>
+          <div class="vchips" id="aca-acts"></div>
         </section>
 
         <!-- SERVICIOS -->
         <section id="s-servicios" class="screen">
           <h2 class="sec">Servicios</h2><p class="sub">Mercado con Sello de Confianza</p>
+          <div class="vchips" id="svc-acts" style="justify-content:flex-start;padding:0 0 12px"></div>
           <div id="services"></div>
         </section>
 
         <!-- BILLETERA -->
         <section id="s-billetera" class="screen">
           <h2 class="sec">Billetera</h2><p class="sub">Tokens · escrow · comisiones</p>
-          <div class="card" style="text-align:center;background:radial-gradient(circle at 50% 0%,rgba(245,158,11,0.12),transparent 70%)"><span class="label">Saldo disponible</span><p style="font-size:38px;font-weight:700;color:var(--amber);line-height:1.1;margin-top:4px">🪙 2,480</p><span style="font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1px">NODO CORE · COMISIÓN 10%</span></div>
-          <div style="height:12px"></div>
+          <div class="card" style="text-align:center;background:radial-gradient(circle at 50% 0%,rgba(245,158,11,0.12),transparent 70%)"><span class="label">Saldo disponible</span><p id="w-bal" style="font-size:38px;font-weight:700;color:var(--amber);line-height:1.1;margin-top:4px">🪙 2,480</p><span style="font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1px">NODO CORE · COMISIÓN 10%</span></div>
+          <div class="vchips" id="w-acts"></div>
           <span class="label">Movimientos</span>
           <div class="card" style="margin-top:8px" id="tx"></div>
         </section>
@@ -167,7 +170,7 @@
         <section id="s-gobernanza" class="screen">
           <h2 class="sec">Gobernanza</h2><p class="sub">Cámara de nodos · Confianza Cero</p>
           <div class="gov">
-            <div class="card"><span class="label" style="color:var(--red)">Propuesta #14 · Abierta</span><p style="font-size:14px;margin-top:4px;font-weight:600">Ajuste de comisión para Nodo Core</p><div style="display:flex;gap:8px;margin-top:10px"><div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:rgba(57,255,20,0.1);border:1px solid rgba(57,255,20,0.3)"><div style="color:var(--green);font-weight:700">62%</div><div style="font-family:var(--mono);font-size:9px;color:rgba(234,242,255,0.5)">A FAVOR</div></div><div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:rgba(255,61,87,0.1);border:1px solid rgba(255,61,87,0.3)"><div style="color:var(--red);font-weight:700">38%</div><div style="font-family:var(--mono);font-size:9px;color:rgba(234,242,255,0.5)">EN CONTRA</div></div></div></div>
+            <div class="card"><span class="label" style="color:var(--red)">Propuesta #14 · Abierta</span><p style="font-size:14px;margin-top:4px;font-weight:600">Ajuste de comisión para Nodo Core</p><div style="display:flex;gap:8px;margin-top:10px"><div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:rgba(57,255,20,0.1);border:1px solid rgba(57,255,20,0.3)"><div id="g-fav" style="color:var(--green);font-weight:700">62%</div><div style="font-family:var(--mono);font-size:9px;color:rgba(234,242,255,0.5)">A FAVOR</div></div><div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:rgba(255,61,87,0.1);border:1px solid rgba(255,61,87,0.3)"><div id="g-con" style="color:var(--red);font-weight:700">38%</div><div style="font-family:var(--mono);font-size:9px;color:rgba(234,242,255,0.5)">EN CONTRA</div></div></div><div class="vchips" id="g-acts" style="padding-bottom:0"></div></div>
             <div class="card"><span class="label">Tu rol</span><p style="font-size:14px;margin-top:4px;font-weight:600">Árbitro · 2 votos activos</p></div>
           </div>
         </section>
@@ -367,6 +370,43 @@
       const VC=[["habilidades","Habilidades","muéstrame mis habilidades"],["academia","Academia","abre la academia"],["reputacion","Mi reputación","cuánta reputación tengo"]];
       document.getElementById("vchips").innerHTML=VC.map(([k,label])=>`<button class="vchip" data-k="${k}">${svg(IC.mic,13)}${label}</button>`).join("");
       document.querySelectorAll("#vchips .vchip").forEach((b,i)=>{b.onclick=()=>{Snd.blip();route(VC[i][2]);};});
+
+      // ── Acciones intuitivas en cada pantalla ──
+      function fillChips(id,items){const el=document.getElementById(id);if(!el)return;items.forEach(([label,fn])=>{const b=document.createElement("button");b.className="vchip";b.textContent=label;b.onclick=()=>{Snd.blip();fn();};el.appendChild(b);});}
+
+      // Billetera: acciones con actualizacion de saldo en vivo
+      let wBal=2480;
+      function setBal(v){wBal=Math.max(0,v);const t="🪙 "+wBal.toLocaleString();const a=document.getElementById("w-bal");if(a)a.textContent=t;const h=document.getElementById("hdrtoken");if(h)h.textContent=t;}
+      fillChips("w-acts",[
+        ["Transferir 100",()=>{setBal(wBal-100);toast("Transferencia","−100 tokens en escrow");speakOracle("Transferencia de 100 tokens preparada en escrow.");}],
+        ["Depositar",()=>{setBal(wBal+2000);toast("Depósito","＋2,000 tokens acreditados");speakOracle("Depósito de dos mil tokens acreditado.");}],
+        ["Retirar",()=>{setBal(wBal-800);toast("Retiro","−800 tokens a tu cuenta");speakOracle("Retiro de 800 tokens en proceso.");}],
+      ]);
+
+      // Academia
+      fillChips("aca-acts",[
+        ["▶ Continuar ruta",()=>{toast("Academia","Arquitectura de Sistemas · 68%");speakOracle("Continuando tu ruta de Arquitectura de Sistemas.");}],
+        ["Rendir Examen IA",()=>{toast("Examen IA","Preparando tu evaluación");speakOracle("Preparando tu Examen con inteligencia artificial.");}],
+        ["Ver habilidades",()=>{go("habilidades");speakOracle("Abriendo Habilidades.");}],
+      ]);
+      [["p1","Frontend"],["p2","Backend"],["p3","Datos / IA"],["p4","UX"]].forEach(([id,name])=>{const el=document.getElementById(id);if(el){el.style.cursor="pointer";el.onclick=()=>{Snd.blip();toast("Módulo",name);speakOracle(name+".");};}});
+
+      // Servicios
+      fillChips("svc-acts",[
+        ["＋ Publicar servicio",()=>{toast("Nuevo servicio","Formulario de publicación listo");speakOracle("Listo para publicar tu servicio en el mercado.");}],
+      ]);
+      document.querySelectorAll("#services .card").forEach((card)=>{card.style.cursor="pointer";card.onclick=()=>{Snd.blip();toast("Solicitud enviada","Contactando al oferente");speakOracle("Solicitud enviada al oferente del servicio.");};});
+
+      // Gobernanza: votar actualiza los porcentajes
+      let gFav=62;
+      function gvote(fav){gFav=Math.max(0,Math.min(100,gFav+(fav?2:-2)));const f=document.getElementById("g-fav"),c=document.getElementById("g-con");if(f)f.textContent=gFav+"%";if(c)c.textContent=(100-gFav)+"%";toast("Voto registrado",fav?"A favor · Propuesta #14":"En contra · Propuesta #14");speakOracle(fav?"Voto a favor registrado.":"Voto en contra registrado.");}
+      fillChips("g-acts",[["✔ A favor",()=>gvote(true)],["✕ En contra",()=>gvote(false)]]);
+
+      // Habilidades
+      fillChips("hab-acts",[
+        ["▲ Mejorar en Academia",()=>{go("academia");speakOracle("Abriendo Academia para mejorar tus ejes.");}],
+        ["Compartir Pasaporte",()=>{toast("Pasaporte","Enlace de verificación generado");speakOracle("Enlace público de tu Pasaporte generado.");}],
+      ]);
       function placePlanets(){const box=document.querySelector(".solar");if(!box)return;const cx=box.clientWidth/2,cy=box.clientHeight/2;const set=(id,r,ang)=>{const el=document.getElementById(id);if(!el)return;el.style.left=cx+r*Math.cos(ang)-16+"px";el.style.top=cy+r*Math.sin(ang)-16+"px";};set("p1",65,-Math.PI/2);set("p2",65,Math.PI/2.2);set("p3",100,0.3);set("p4",100,Math.PI-0.5);}
 
       // ── Entrada ──
