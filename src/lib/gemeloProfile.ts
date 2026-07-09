@@ -12,6 +12,8 @@
 // 100% con localStorage).
 // ═══════════════════════════════════════════════════════════════════════
 
+import { supabase } from './supabase';
+
 export interface GemeloAxes {
   execution: number;
   quality: number;
@@ -99,6 +101,7 @@ export function subscribe(l: () => void): () => void {
 function mutate(patch: Partial<GemeloProfile>) {
   current = recompute({ ...current, ...patch });
   persist();
+  void pushToSupabase(); // fire-and-forget; se ignora si no hay backend
 }
 
 export const gemeloActions = {
@@ -121,7 +124,41 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// ── Enganches opcionales a Supabase (no rompen si no hay backend) ───────
-// TODO: hidratar desde una tabla `gemelo_profiles` y empujar cambios.
-export async function syncFromSupabase(): Promise<void> { /* opcional */ }
-export async function pushToSupabase(): Promise<void> { /* opcional */ }
+// ── Sincronización con Supabase (degradación elegante) ──────────────────
+// Tabla sugerida:
+//   create table gemelo_profiles (
+//     user_id uuid primary key references auth.users(id),
+//     cv boolean, titles int, years int, vault int,
+//     pe int, rep int, axes jsonb, updated_at timestamptz default now()
+//   );
+// RLS: el usuario solo puede leer/escribir su propia fila (auth.uid() = user_id).
+
+/** Hidrata el perfil desde Supabase (si hay sesión y tabla). */
+export async function syncFromSupabase(): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('gemelo_profiles').select('*').eq('user_id', user.id).maybeSingle();
+    if (error || !data) return;
+    current = recompute({
+      ...base(),
+      cv: !!data.cv, titles: data.titles ?? 0, years: data.years ?? 0, vault: data.vault ?? 0,
+    });
+    try { localStorage.setItem(KEY, JSON.stringify(current)); } catch { /* noop */ }
+    listeners.forEach((l) => l());
+  } catch { /* sin backend: se ignora */ }
+}
+
+/** Empuja los datos convalidados a Supabase (upsert). */
+export async function pushToSupabase(): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('gemelo_profiles').upsert({
+      user_id: user.id,
+      cv: current.cv, titles: current.titles, years: current.years, vault: current.vault,
+      pe: current.pe, rep: current.rep, axes: current.axes,
+    });
+  } catch { /* sin backend/tabla: se ignora */ }
+}

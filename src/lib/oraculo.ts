@@ -11,6 +11,7 @@ import type { TabId } from '../types';
 export type OraculoIntent =
   | { kind: 'navigate'; tab: TabId; label: string }
   | { kind: 'coach' }
+  | { kind: 'convalidate'; item: 'cv' | 'title' | 'year' | 'vault' }
   | { kind: 'fact'; topic: 'reputacion' | 'tokens' | 'pe' | 'ayuda' }
   | { kind: 'unknown' };
 
@@ -36,6 +37,14 @@ const COACH_TRIGGERS = [
 export function interpret(raw: string): OraculoIntent {
   const q = (raw || '').toLowerCase().trim();
   if (!q) return { kind: 'unknown' };
+
+  // Convalidar datos por voz (requiere un verbo de aporte + un objeto).
+  if (/(convalida|valida|sube|aporta|suma|agrega|añade|anade|carga|registra)/.test(q)) {
+    if (/(cv|curr[íi]culum)/.test(q)) return { kind: 'convalidate', item: 'cv' };
+    if (/(t[íi]tulo|certificaci|grado|diploma)/.test(q)) return { kind: 'convalidate', item: 'title' };
+    if (/(a[ñn]o|experiencia|trayectoria)/.test(q)) return { kind: 'convalidate', item: 'year' };
+    if (/(b[óo]veda|conocimiento|mentor[íi]?a?|aporte)/.test(q)) return { kind: 'convalidate', item: 'vault' };
+  }
 
   if (COACH_TRIGGERS.some((k) => q.includes(k))) return { kind: 'coach' };
 

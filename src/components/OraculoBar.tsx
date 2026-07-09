@@ -7,8 +7,9 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useEffect, useRef, useState } from 'react';
 import { Mic, Sparkles, X } from 'lucide-react';
-import { useApp, useGemeloDigital } from '../store/AppContext';
+import { useApp } from '../store/AppContext';
 import { interpret, askCoach } from '../lib/oraculo';
+import { gemeloActions, getProfile } from '../lib/gemeloProfile';
 import { C, FONT } from '../theme';
 
 type SpeechRecognitionCtor = new () => {
@@ -40,7 +41,6 @@ function speak(text: string) {
 
 export function OraculoBar() {
   const { setActiveTab, profile } = useApp();
-  const gemelo = useGemeloDigital();
   const [open, setOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [msg, setMsg] = useState<{ who: 'tu' | 'oraculo'; text: string } | null>(null);
@@ -69,11 +69,21 @@ export function OraculoBar() {
       speak(t);
       return;
     }
+    if (intent.kind === 'convalidate') {
+      const act = { cv: gemeloActions.addCV, title: gemeloActions.addTitle, year: gemeloActions.addYear, vault: gemeloActions.addVault };
+      act[intent.item]();
+      const p = getProfile();
+      const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia', vault: 'un aporte a la Bóveda' };
+      const t = `Convalidé ${names[intent.item]}. Tu reputación ahora es ${p.rep} y sumas ${Math.round(p.pe)} puntos de experiencia.`;
+      flash('oraculo', t);
+      speak(t);
+      return;
+    }
     if (intent.kind === 'fact') {
       let t = '';
-      if (intent.topic === 'reputacion') t = `Tu reputación es ${(gemelo?.overallReputation ?? 0).toFixed(1)} sobre 100.`;
+      if (intent.topic === 'reputacion') t = `Tu reputación es ${getProfile().rep} sobre 100.`;
       else if (intent.topic === 'tokens') t = `Tienes ${(profile?.token_balance ?? 0).toLocaleString()} tokens.`;
-      else if (intent.topic === 'pe') t = `Acumulas ${(profile?.pe_points ?? 0).toLocaleString()} puntos de experiencia.`;
+      else if (intent.topic === 'pe') t = `Acumulas ${Math.round(getProfile().pe).toLocaleString()} puntos de experiencia.`;
       else t = 'Soy tu Oráculo. Dime: abre mi billetera, ve a la academia, cuánta reputación tengo, o pídeme un consejo.';
       flash('oraculo', t);
       speak(t);

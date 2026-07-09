@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Ómicron · Ecosistema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <style>
+      :root { --cyan:#00f0ff; --cyans:#7df9ff; --amber:#f59e0b; --green:#39ff14; --bg:#020613; --mono:"Share Tech Mono",monospace; --display:"Rajdhani",sans-serif; }
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { font-family:var(--display); background:radial-gradient(circle at 50% -5%,rgba(0,240,255,0.1),transparent 55%),#01040d; color:#eaf2ff; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 16px; text-align:center; }
+      body::before { content:""; position:fixed; inset:0; background-image:linear-gradient(rgba(0,240,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,0.04) 1px,transparent 1px); background-size:44px 44px; pointer-events:none; -webkit-mask-image:radial-gradient(circle at 50% 40%,#000 35%,transparent 82%); mask-image:radial-gradient(circle at 50% 40%,#000 35%,transparent 82%); }
+      .wrap { position:relative; z-index:1; width:100%; max-width:760px; }
+      .omega { width:76px; height:76px; border-radius:20px; margin:0 auto 16px; display:grid; place-items:center; background:linear-gradient(135deg,#7df9ff,#00f0ff); box-shadow:0 0 40px rgba(0,240,255,0.5); color:#020613; font-size:42px; font-weight:700; animation:fl 4s ease-in-out infinite; }
+      @keyframes fl { 0%,100%{transform:translateY(-5px);} 50%{transform:translateY(5px);} }
+      h1 { font-size:30px; font-weight:700; letter-spacing:0.5px; }
+      .tag { font-family:var(--mono); font-size:11px; letter-spacing:3px; color:rgba(0,240,255,0.6); text-transform:uppercase; margin-top:4px; }
+      .lead { max-width:520px; margin:14px auto 26px; font-size:14px; color:rgba(234,242,255,0.7); line-height:1.5; }
+      .grid { display:grid; grid-template-columns:1fr; gap:14px; }
+      @media (min-width:680px){ .grid { grid-template-columns:1fr 1fr 1fr; } }
+      a.card { display:flex; flex-direction:column; gap:8px; padding:22px 18px; border-radius:18px; text-decoration:none; color:#eaf2ff; border:1px solid rgba(0,240,255,0.2); background:rgba(10,20,40,0.85); transition:transform .18s,border-color .18s,box-shadow .18s; text-align:left; }
+      a.card:hover { transform:translateY(-4px); border-color:rgba(0,240,255,0.55); box-shadow:0 20px 50px -20px rgba(0,0,0,0.8),0 0 40px -14px rgba(0,240,255,0.4); }
+      .ico { width:46px; height:46px; border-radius:13px; display:grid; place-items:center; font-size:24px; }
+      .c-blue { background:rgba(0,240,255,0.12); } .c-amber { background:rgba(245,158,11,0.14); } .c-green { background:rgba(57,255,20,0.12); }
+      .num { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:rgba(0,240,255,0.5); }
+      .ct { font-size:19px; font-weight:700; }
+      .cd { font-size:12.5px; color:rgba(234,242,255,0.6); line-height:1.4; }
+      .go { margin-top:auto; font-family:var(--mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--cyan); }
+      .foot { margin-top:24px; font-family:var(--mono); font-size:10px; letter-spacing:1px; color:rgba(57,255,20,0.7); }
+      .foot .step { color:rgba(234,242,255,0.5); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="omega">Ω</div>
+      <h1>Sistema Ómicron</h1>
+      <div class="tag">Ecosistema conectado · Industria 5.0</div>
+      <p class="lead">Todo se conecta con todo. Aportas datos en una pantalla y tu Gemelo se refleja en las demás (perfil compartido). Empieza por <b style="color:var(--cyans)">Convalidar</b>, luego mira tu <b style="color:var(--cyans)">Núcleo</b>.</p>
+
+      <div class="grid">
+        <a class="card" href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/convalida.html">
+          <span class="ico c-amber">🎓</span>
+          <span class="num">01</span>
+          <span class="ct">Convalida tu Gemelo</span>
+          <span class="cd">Sube tu CV, valida títulos y experiencia. Sube de nodo en vivo.</span>
+          <span class="go">Entrar →</span>
+        </a>
+        <a class="card" href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/nucleo.html">
+          <span class="ico c-blue">🌐</span>
+          <span class="num">02</span>
+          <span class="ct">Tu Núcleo 3D</span>
+          <span class="cd">Tu galaxia con lo que convalidaste. Gírala, habla con el Oráculo.</span>
+          <span class="go">Entrar →</span>
+        </a>
+        <a class="card" href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/os.html">
+          <span class="ico c-green">📱</span>
+          <span class="num">03</span>
+          <span class="ct">Ómicron OS</span>
+          <span class="cd">La app navegable por voz: hubs, billetera, academia, gobernanza.</span>
+          <span class="go">Entrar →</span>
+        </a>
+      </div>
+
+      <div class="foot">✔ Perfil compartido (localStorage) · lo que convalidas <span class="step">se refleja en las 3 pantallas</span></div>
+    </div>
+  </body>
+</html>

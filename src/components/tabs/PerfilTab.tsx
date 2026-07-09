@@ -18,6 +18,7 @@ import { ShareCredentialModal, RedPanel } from '../perfil/RedSocial';
 import { ProgressRadar } from '../shared/ProgressRadar';
 import { HoloNucleo3D } from '../HoloNucleo3D';
 import { ConvalidaGemelo } from '../perfil/ConvalidaGemelo';
+import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 // 🧪 MVP PILOTO CONTROLADO: Dossier de Evidencia y Carta de Competencias
 // dependen del Examinador IA / carta-ia (Edge Functions de IA). Se ocultan
 // para el piloto (no se elimina el código, solo se comenta su uso).
@@ -133,7 +134,7 @@ function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: (
 function CredencialCard({
   initials, name, username, location, nodeType, nodeLevel, verified,
   reputacion, tokens, pe, contratos, nextPe, tierProgress,
-  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit, onShare, axes, onNavigate,
+  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit, onShare, axes, onNavigate, galaxyRep,
 }: {
   initials: string; name: string; username: string; location?: string;
   nodeType: string; nodeLevel: number; verified: boolean;
@@ -145,6 +146,7 @@ function CredencialCard({
   onEdit: () => void; onShare: () => void;
   axes?: { execution?: number; quality?: number; transcendence?: number; foundation?: number };
   onNavigate?: (tab: string) => void;
+  galaxyRep?: number;
 }) {
   const nodeColor = NODE_COLOR[nodeType] ?? C.cyan;
   const rango = getRango(reputacion);
@@ -312,7 +314,7 @@ function CredencialCard({
           orbState={paused ? 'error' : 'idle'}
           orbSize="md"
           height={318}
-          reputation={reputacion}
+          reputation={galaxyRep ?? reputacion}
           axes={axes}
           onNavigate={onNavigate}
           ariaLabel={`Tu reputación es ${reputacion.toFixed(1)} de 100`}
@@ -483,6 +485,7 @@ interface Audit { id: string; reason: string; reputation_at_trigger: number | nu
 export function PerfilTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
   const gemelo = useGemeloDigital();
+  const { profile: gp } = useGemeloProfile(); // perfil compartido (convalidado)
   const [paused,    setPaused]    = useState(false);
   const [showEdit,  setShowEdit]  = useState(false);
   const [showShare, setShowShare] = useState(false);
@@ -609,12 +612,8 @@ export function PerfilTab() {
             onPickFile={handleAvatarUpload}
             onEdit={() => setShowEdit(true)}
             onShare={() => setShowShare(true)}
-            axes={{
-              execution: gemelo.execution,
-              quality: gemelo.quality,
-              transcendence: gemelo.transcendence,
-              foundation: gemelo.foundation,
-            }}
+            axes={gp.axes}
+            galaxyRep={gp.rep}
             onNavigate={(t) => setActiveTab(t as TabId)}
           />
         )}
