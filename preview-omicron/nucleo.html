@@ -41,6 +41,13 @@
       .brand .t { font-size: 17px; font-weight: 700; } .brand .s { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: rgba(0,240,255,0.6); text-transform: uppercase; }
       .top-right { top: 20px; right: 22px; display: flex; align-items: center; gap: 10px; }
       .rep { text-align: right; } .rep .n { font-size: 26px; font-weight: 700; color: var(--amber); line-height: 1; } .rep .k { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: rgba(234,242,255,0.5); text-transform: uppercase; }
+      .pe .n { color: #7df9ff; }
+      .tier { margin-top: 12px; width: 200px; }
+      .tier-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: #F59E0B; text-transform: uppercase; margin-bottom: 5px; text-shadow: 0 0 10px rgba(245,158,11,0.5); }
+      .tier-bar { height: 6px; border-radius: 6px; background: rgba(255,255,255,0.1); overflow: hidden; }
+      .tier-fill { height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg,#7df9ff,#00f0ff); transition: width .8s ease; box-shadow: 0 0 10px rgba(0,240,255,0.6); }
+      .tier-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 0.5px; color: rgba(234,242,255,0.55); margin-top: 5px; }
+      .chip.reco { border-color: rgba(245,158,11,0.6); color: #F59E0B; box-shadow: 0 0 14px rgba(245,158,11,0.3); }
       .toggle { width: 38px; height: 38px; border-radius: 10px; background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.3); color: var(--cyan); display: grid; place-items: center; cursor: pointer; }
       .toggle.off { color: rgba(234,242,255,0.35); border-color: rgba(255,255,255,0.12); }
       .toggle.live { color: #ff3d57; border-color: rgba(255,61,87,0.6); animation: micpulse 1s ease-in-out infinite; }
@@ -95,8 +102,10 @@
     <canvas id="c"></canvas>
     <div class="fx grid"></div><div class="fx scan"></div><div class="fx vig"></div>
 
-    <div class="hud top-left" id="tl"><div class="brand"><span class="omega">Ω</span><div><div class="t">Ómicron · Núcleo</div><div class="s">Gemelo Digital 3D · Confianza Cero</div></div></div></div>
-    <div class="hud top-right" id="tr"><div class="rep"><div class="n" id="rep">94</div><div class="k">Reputación</div></div><div class="toggle" id="mic" title="Hablar al Oráculo"></div><div class="toggle" id="mute"></div></div>
+    <div class="hud top-left" id="tl"><div class="brand"><span class="omega">Ω</span><div><div class="t">Ómicron · Núcleo</div><div class="s">Gemelo Digital 3D · Confianza Cero</div></div></div>
+      <div class="tier"><div class="tier-badge" id="tierBadge">NODO —</div><div class="tier-bar"><div class="tier-fill" id="tierFill"></div></div><div class="tier-lbl" id="tierLbl">—</div></div>
+    </div>
+    <div class="hud top-right" id="tr"><div class="rep pe" style="margin-right:2px"><div class="n" id="peN">0</div><div class="k">Puntaje PE</div></div><div class="rep"><div class="n" id="rep">94</div><div class="k">Reputación</div></div><div class="toggle" id="mic" title="Hablar al Oráculo"></div><div class="toggle" id="mute"></div></div>
 
     <div class="hint" id="hint">Arrastra para girar tu universo · pregúntale al Oráculo</div>
     <div id="tip"><div class="cat" id="tc"></div><div class="lbl" id="tlbl"></div><div class="val" id="tv"></div><div class="det" id="tdet"></div><div class="mej" id="tmej"></div></div>
@@ -314,7 +323,8 @@
         { k:["red","conexion","network"], cat:"red", r:()=>"Tu red de confianza tiene 128 conexiones activas y has mentoreado a tres nodos." },
         { k:["brecha","consejo","coach","diagnostico","diagnóstico","recomienda","mejorar","qué estudio","que estudio","orienta","oriénta"], cat:null, hi:"coach", r:()=>{ const w=weakestSkill(); if(w>=0){ focusNode(w); const n=nodes[w]; return `Tu eje más débil es ${n.label}, en ${n.val}. Para cerrar esa brecha: ${n.mejora}`; } return "Tu Gemelo está equilibrado. Sigue sumando experiencia en la Academia."; } },
         { k:["evolucion","subir","crecer","nivel","arquitecto"], cat:null, r:()=>{ evolveMsg(); return "Reforzando tu núcleo. Tu capital intelectual crece y tu reputación asciende hacia el Nodo Arquitecto."; }, hi:"amber" },
-        { k:["ayuda","help","comando","que puedo"], cat:null, r:()=>"Puedes preguntarme por: habilidades, reputación, tokens, credenciales, gobernanza, tu brecha, o pedirme evolucionar." },
+        { k:["ayuda","help","comando","que puedo"], cat:null, r:()=>"Puedes preguntarme por: habilidades, reputación, tokens, credenciales, gobernanza, tu brecha, tu siguiente mejor paso, o pedirme evolucionar." },
+        { k:["siguiente paso","mejor paso","mejor jugada","qué hago","que hago","recomiénd","recomiend","qué me conviene","que me conviene","optimiza","cómo subo","como subo"], cat:null, hi:"noclear", r:()=>recoText() },
         // ── Conversación espontánea (hi:"noclear" evita apagar el nodo iluminado) ──
         { k:["gracias","genial","excelente","perfecto","increíble","increible","me encanta"], cat:null, hi:"noclear", r:()=>{ const o=["De nada. Sigo aquí, contigo.","Para eso estoy. Sigamos construyendo tu universo.","Me alegra. ¿Qué más quieres explorar?"]; return o[Math.floor(Math.random()*o.length)]; } },
         { k:["cómo estás","como estas","quién eres","quien eres","qué eres","que eres","tu nombre"], cat:null, hi:"noclear", r:()=>"Soy el Oráculo de tu Gemelo Digital: la voz de tu capital intelectual dentro de Ómicron. Estoy para ayudarte a crecer." },
@@ -538,10 +548,72 @@
       // Sincroniza el número visible de Reputación con un pulso (antes NO se actualizaba → "no pasaba nada")
       const repEl = _g("rep");
       function setRep(v, animate){ rep = v; if(repEl){ repEl.textContent = v; if(animate) repEl.animate([{transform:"scale(1)"},{transform:"scale(1.45)",color:"#7df9ff"},{transform:"scale(1)"}],{duration:650,easing:"ease-out"}); } }
-      setRep(prof.rep, false); // refleja el estado real al cargar (no se queda pegado en 94)
+
+      // ── INNOVACIÓN · Puntaje de Experiencia (PE) visible con conteo animado ──
+      const peEl = _g("peN"); let peShown = 0;
+      function setPE(v, animate){ if(!peEl){ peShown=v; return; } if(!animate){ peShown=v; peEl.textContent=v.toLocaleString("es"); return; } const from=peShown, to=v, t0=performance.now(); (function step(now){ const k=Math.min(1,(now-t0)/700); const cur=Math.round(from+(to-from)*(1-Math.pow(1-k,3))); peEl.textContent=cur.toLocaleString("es"); if(k<1) requestAnimationFrame(step); else peShown=to; })(t0); }
+
+      // ── INNOVACIÓN · Nodo/Tier con barra de progreso y ascenso celebrado ──
+      const TIERS = [{n:"Operativo",min:0},{n:"Core",min:500},{n:"Arquitecto",min:2000}];
+      function tierInfo(pe){ let i=0; for(let k=0;k<TIERS.length;k++){ if(pe>=TIERS[k].min) i=k; } return { i, cur:TIERS[i], next:TIERS[i+1]||null }; }
+      let lastTier = -1;
+      function updateTier(celebrate){
+        const {i,cur,next} = tierInfo(prof.pe); tier = i;
+        if(_g("tierBadge")) _g("tierBadge").textContent = "NODO " + cur.n.toUpperCase();
+        if(_g("tierFill") && _g("tierLbl")){
+          if(next){ const span=next.min-cur.min, prog=Math.max(0,Math.min(1,(prof.pe-cur.min)/span)); _g("tierFill").style.width=(prog*100).toFixed(0)+"%"; _g("tierLbl").textContent=`${prof.pe} / ${next.min} PE → ${next.n}`; }
+          else { _g("tierFill").style.width="100%"; _g("tierLbl").textContent=`${prof.pe} PE · nivel máximo`; }
+        }
+        if(celebrate && lastTier>=0 && i>lastTier){ flash("NODO "+cur.n.toUpperCase()+" ALCANZADO","#F59E0B"); try{Snd.sweep();}catch(e){} shocks.push({t:0,color:"#F59E0B"}); setTimeout(()=>oracleType(`¡Ascendiste a Nodo ${cur.n}! Tu capital intelectual sube de categoría en el ecosistema.`),300); }
+        lastTier = i;
+      }
+
+      // ── INNOVACIÓN · Motor "Siguiente mejor paso" (recomendación por ROI) ──
+      function bestNextStep(){
+        const base = omiRecompute(JSON.parse(JSON.stringify(prof)));
+        const opts = [];
+        const trial = (label,btn,fn)=>{ const p=JSON.parse(JSON.stringify(prof)); fn(p); omiRecompute(p); opts.push({label,btn,drep:p.rep-base.rep,dpe:p.pe-base.pe}); };
+        if(!prof.cv) trial("subir tu CV","cv",(p)=>p.cv=true);
+        if(prof.titles<5) trial("validar un título","cti",(p)=>p.titles++);
+        if(prof.years<15) trial("acreditar 1 año de experiencia","cyr",(p)=>p.years++);
+        trial("hacer un aporte a la Bóveda","cvo",(p)=>p.vault++);
+        opts.sort((a,b)=> (b.drep*12+b.dpe) - (a.drep*12+a.dpe));
+        return opts[0]||null;
+      }
+      function recoText(){ const b=bestNextStep(); if(!b) return "Tu Gemelo está completo por ahora. Sigue sumando aportes a la Bóveda."; convOv.classList.add("open"); const el=_g(b.btn); if(el){ el.animate([{boxShadow:"0 0 0 rgba(0,240,255,0)"},{boxShadow:"0 0 22px rgba(0,240,255,0.9)"},{boxShadow:"0 0 0 rgba(0,240,255,0)"}],{duration:1400,iterations:2}); } return `Tu mejor jugada ahora: ${b.label}. Sumaría +${b.drep} de reputación y +${b.dpe} PE. Te abrí el panel Aportar datos y resalté la acción.`; }
+
+      // ── INNOVACIÓN · Análisis real del CV (lee el archivo, detecta años y habilidades) ──
+      function analyzeCV(file){
+        convOv.classList.remove("open"); flash("ANALIZANDO CV","#00F0FF"); oracleType("Analizando tu documento… extrayendo experiencia y habilidades.");
+        const done = (text)=>{
+          const t=(text||"").toLowerCase();
+          let years=0;
+          const my=t.match(/(\d{1,2})\s*(años|anos|years?|yr)/); if(my) years=Math.min(20,parseInt(my[1],10));
+          if(!years){ const ys=(t.match(/\b(19|20)\d{2}\b/g)||[]).map(Number); if(ys.length>=2){ years=Math.max(1,Math.min(20,(new Date().getFullYear())-Math.min(...ys))); } }
+          const SK=["javascript","typescript","python","react","node","sql","aws","docker","kubernetes","figma","ux","java","c++","excel","liderazgo","ventas","marketing","gestión","gestion","diseño","diseno","data","machine learning"];
+          const found=[...new Set(SK.filter(k=>t.includes(k)))];
+          if(!text){ years=Math.max(1,Math.min(12,Math.round((file.size||60000)/50000))); } // binario (pdf/doc/img): estima por tamaño
+          const already=prof.cv; prof.cv=true; if(years>prof.years) prof.years=years;
+          omiRecompute(prof);
+          const okCv=ignite(LATENT_START+0); if(prof.years>=1) ignite(LATENT_START+3);
+          _g("cv")&&_g("cv").classList.add("done"); if(prof.years>=1)_g("cyr")&&_g("cyr").classList.add("done");
+          const skTxt = found.length? `, ${found.length} habilidades (${found.slice(0,3).join(", ")})` : "";
+          const verb = already? "CV actualizado" : "CV convalidado";
+          commit(`${verb}: detecté ${years} ${years===1?"año":"años"} de experiencia${skTxt}. Tu reputación sube a ${prof.rep} y tu PE a ${prof.pe}.`, "#00F0FF", okCv?LATENT_START+0:(prof.years>=1?LATENT_START+3:-1));
+        };
+        try{
+          const isText = (file.type&&file.type.startsWith("text")) || /\.(txt|md|csv|json|rtf)$/i.test(file.name||"");
+          const r=new FileReader();
+          r.onload=()=>done(isText? String(r.result||"") : "");
+          r.onerror=()=>done("");
+          setTimeout(()=>{ try{ isText? r.readAsText(file) : r.readAsArrayBuffer(file); }catch(e){ done(""); } }, 950);
+        }catch(e){ setTimeout(()=>done(""),950); }
+      }
+
+      setRep(prof.rep, false); setPE(prof.pe, false); updateTier(false); // refleja el estado real al cargar (no se queda pegado en 94)
       const convOv = _g("convOv");
       function ignite(idx, instant){ const n=nodes[idx]; if(!n||!n.locked) return false; n.locked=false; n.born=instant?-1:performance.now(); if(!instant)n.pulse=1; return true; }
-      function commit(narr, col, idx){ omiRecompute(prof); setRep(prof.rep, true); omiSave(prof); if(idx>=0){ shocks.push({t:0,color:col||nodes[idx].color}); focusNode(idx); } try{Snd.sweep();}catch(e){} if(narr) oracleType(narr); }
+      function commit(narr, col, idx){ omiRecompute(prof); setRep(prof.rep, true); setPE(prof.pe, true); updateTier(true); omiSave(prof); if(idx>=0){ shocks.push({t:0,color:col||nodes[idx].color}); focusNode(idx); } try{Snd.sweep();}catch(e){} if(narr) oracleType(narr); }
       // Reflejar lo ya convalidado (persistencia entre pantallas/sesiones)
       (function reflect(){ if(prof.cv) ignite(LATENT_START+0,true); if(prof.titles>=1) ignite(LATENT_START+1,true); if(prof.titles>=2) ignite(LATENT_START+2,true); if(prof.years>=1) ignite(LATENT_START+3,true); if(prof.vault>=1) ignite(LATENT_START+4,true);
         if(prof.cv)_g("cv")&&_g("cv").classList.add("done"); if(prof.titles>=2)_g("cti")&&_g("cti").classList.add("done"); if(prof.years>=1)_g("cyr")&&_g("cyr").classList.add("done"); if(prof.vault>=1)_g("cvo")&&_g("cvo").classList.add("done"); })();
@@ -549,9 +621,7 @@
       if(_g("convBtn")) _g("convBtn").onclick = ()=>{ try{Snd.init();}catch(e){} convOv.classList.add("open"); };
       if(_g("convClose")) _g("convClose").onclick = ()=> convOv.classList.remove("open");
       if(convOv) convOv.onclick = (e)=>{ if(e.target===convOv) convOv.classList.remove("open"); };
-      if(_g("cvf")) _g("cvf").addEventListener("change",(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; e.target.value=""; convOv.classList.remove("open");
-        if(prof.cv){ focusNode(LATENT_START+0); flash("CV ACTUALIZADO","#00F0FF"); oracleType("Tu CV ya está convalidado y orbita tu núcleo. Suma títulos o experiencia para seguir subiendo tu reputación."); return; }
-        prof.cv=true; omiRecompute(prof); const ok=ignite(LATENT_START+0); _g("cv").classList.add("done"); flash("CV CONVALIDADO","#00F0FF"); commit(`CV convalidado. Tu experiencia ya orbita tu núcleo y tu reputación sube a ${prof.rep}. Reforzaste tu eje de Ejecución.`,"#00F0FF", ok?LATENT_START+0:-1); });
+      if(_g("cvf")) _g("cvf").addEventListener("change",(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; e.target.value=""; analyzeCV(f); });
       if(_g("cti")) _g("cti").onclick = ()=>{ if(prof.titles>=5) return; const slot = prof.titles<2 ? (LATENT_START+1+prof.titles) : -1; prof.titles++; const ok = slot>=0 ? ignite(slot) : false; if(prof.titles>=2)_g("cti").classList.add("done"); flash("TÍTULO VALIDADO","#F59E0B"); commit("Título validado y verificable en tu Pasaporte. Suma a tu Fundamento.","#F59E0B", ok?slot:-1); convOv.classList.remove("open"); };
       if(_g("cyr")) _g("cyr").onclick = ()=>{ if(prof.years>=15) return; prof.years++; const ok = prof.years===1 ? ignite(LATENT_START+3) : false; _g("cyr").classList.add("done"); flash("EXPERIENCIA +","#22d3ee"); commit("Experiencia acreditada. Tu trayectoria fortalece el núcleo.","#22d3ee", ok?LATENT_START+3:-1); convOv.classList.remove("open"); };
       if(_g("cvo")) _g("cvo").onclick = ()=>{ prof.vault++; const ok = prof.vault===1 ? ignite(LATENT_START+4) : false; _g("cvo").classList.add("done"); flash("APORTE REGISTRADO","#39FF14"); commit("Aporte a la Bóveda registrado. Tu Trascendencia crece.","#39FF14", ok?LATENT_START+4:-1); convOv.classList.remove("open"); };
@@ -562,7 +632,7 @@
         else if(act==="title"){ if(prof.titles<5){ const slot=prof.titles<2?LATENT_START+1+prof.titles:-1; prof.titles++; if(slot>=0)ignite(slot); if(prof.titles>=2)_g("cti")&&_g("cti").classList.add("done"); } }
         else if(act==="year"){ if(prof.years<15){ prof.years++; if(prof.years===1)ignite(LATENT_START+3); _g("cyr")&&_g("cyr").classList.add("done"); } }
         else if(act==="vault"){ prof.vault++; if(prof.vault===1)ignite(LATENT_START+4); _g("cvo")&&_g("cvo").classList.add("done"); }
-        omiRecompute(prof); setRep(prof.rep, true); omiSave(prof);
+        omiRecompute(prof); setRep(prof.rep, true); setPE(prof.pe, true); updateTier(true); omiSave(prof);
       }
       let currentActNode = -1;
       function showActionCard(idx){
@@ -583,11 +653,12 @@
         camActive=false; try{Snd.init();}catch(e){}
         oracleType("Bienvenido. Te muestro cómo funciona tu Gemelo en 20 segundos.");
         setTimeout(()=>{ convOv.classList.add("open"); oracleType("Aquí CONVALIDAS tus datos: CV, títulos, experiencia y aportes."); },4500);
-        setTimeout(()=>{ convOv.classList.remove("open"); if(prof.years<15){ prof.years++; if(prof.years===1)ignite(LATENT_START+3); omiRecompute(prof); setRep(prof.rep, true); omiSave(prof); shocks.push({t:0,color:"#22d3ee"}); focusNode(LATENT_START+3);} flash("NODO NACIDO","#22d3ee"); oracleType("Cada dato ENCIENDE un nodo y hace crecer un eje. Mira tus arcos alrededor del núcleo."); },9000);
+        setTimeout(()=>{ convOv.classList.remove("open"); if(prof.years<15){ prof.years++; if(prof.years===1)ignite(LATENT_START+3); omiRecompute(prof); setRep(prof.rep, true); setPE(prof.pe, true); updateTier(true); omiSave(prof); shocks.push({t:0,color:"#22d3ee"}); focusNode(LATENT_START+3);} flash("NODO NACIDO","#22d3ee"); oracleType("Cada dato ENCIENDE un nodo y hace crecer un eje. Mira tus arcos alrededor del núcleo."); },9000);
         setTimeout(()=>{ showActionCard(LATENT_START+3); oracleType("Cada punto te da una MEJORA que es una ACCIÓN real: Academia, Bóveda, Market. Ahí ejecutas tu crecimiento y ves a qué puedes optar."); },13500);
         setTimeout(()=>{ _g("actCard").classList.remove("show"); oracleType("Y puedes pedirme lo que quieras por voz. Gíralo, explóralo. Este es tu Gemelo Digital."); },18800);
       }
       const tourChip=document.createElement("div"); tourChip.className="chip"; tourChip.style.borderColor="rgba(57,255,20,0.5)"; tourChip.style.color="#39FF14"; tourChip.textContent="▶ Tour guiado"; tourChip.onclick=()=>runGuidedTour(); chipsEl.appendChild(tourChip);
+      const recoChip=document.createElement("div"); recoChip.className="chip reco"; recoChip.textContent="✦ Siguiente mejor paso"; recoChip.onclick=()=>{ Snd.blip(); oracle("siguiente paso"); }; chipsEl.appendChild(recoChip);
 
       requestAnimationFrame(frame);
     </script>
