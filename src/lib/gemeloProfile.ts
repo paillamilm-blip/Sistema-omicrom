@@ -164,6 +164,32 @@ export function bestNextStep(p: GemeloProfile = current): NextStep | null {
   return opts[0] ?? null;
 }
 
+// ── Ruta al siguiente Nodo (secuencia óptima de acciones) ───────────────
+export interface RouteStep { action: NextAction; label: string; }
+export interface Route { steps: RouteStep[]; endRep: number; endPe: number; endTier: string; }
+
+function applyAction(p: GemeloProfile, a: NextAction): GemeloProfile {
+  if (a === 'cv') return { ...p, cv: true };
+  if (a === 'title') return { ...p, titles: p.titles + 1 };
+  if (a === 'year') return { ...p, years: p.years + 1 };
+  return { ...p, vault: p.vault + 1 };
+}
+
+/** Secuencia greedy de acciones (por retorno) hasta alcanzar el siguiente Nodo. */
+export function routeToNextTier(p: GemeloProfile = current): Route {
+  let cur = recompute({ ...p });
+  const startTier = tierFor(cur.pe).name;
+  const steps: RouteStep[] = [];
+  for (let k = 0; k < 6; k++) {
+    const ns = bestNextStep(cur);
+    if (!ns) break;
+    steps.push({ action: ns.action, label: ns.label });
+    cur = recompute(applyAction(cur, ns.action));
+    if (tierFor(cur.pe).name !== startTier) break;
+  }
+  return { steps, endRep: cur.rep, endPe: cur.pe, endTier: tierFor(cur.pe).name };
+}
+
 export const gemeloActions = {
   addCV() { if (!current.cv) { mutate({ cv: true }); logEvent('CV convalidado'); } },
   addTitle() { if (current.titles < 10) { mutate({ titles: current.titles + 1 }); logEvent('Título validado'); } },
