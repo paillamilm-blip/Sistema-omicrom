@@ -173,6 +173,7 @@
       const mouse = { x: CX, y: CY, has: false, down: false };
       let hovered = -1, hoverPrev = -1;
       let highlight = null, highlightUntil = 0;
+      let spotlight = -1, spotlightUntil = 0;
       let rep = 94, tier = 2, born = 0;
 
       canvas.addEventListener("pointerdown", (e) => { if (scene!=="nexus") return; stopPresentation(); dragging=true; moved=false; mouse.down=true; lastX=e.clientX; lastY=e.clientY; });
@@ -210,6 +211,21 @@
         if (speak) Voice.say(text);
       }
       function setHighlight(cat){ highlight=cat; highlightUntil=performance.now()+6000; }
+      // Enfoca la cámara en un nodo, lo ilumina (spotlight) y lo pulsa.
+      function focusNode(idx){
+        const n = nodes[idx]; if(!n) return;
+        camActive = true;
+        camYaw = Math.atan2(n.bx, n.bz) + Math.PI;
+        camPitch = Math.max(-1, Math.min(1, -Math.asin(Math.max(-1, Math.min(1, n.by)))));
+        spotlight = idx; spotlightUntil = performance.now() + 7000;
+        n.pulse = 1;
+      }
+      // El "Coach": detecta la habilidad con menor nivel (tu brecha).
+      function weakestSkill(){
+        let idx = -1, min = 999;
+        nodes.forEach((n,i)=>{ if(n.cat!=="skill") return; const m=parseInt(String(n.val).replace(/\D/g,""),10); if(!isNaN(m) && m<min){ min=m; idx=i; } });
+        return idx;
+      }
       function evolveMsg(){
         rep = Math.min(99, rep+1);
         document.getElementById("rep").textContent = rep;
@@ -224,11 +240,12 @@
         { k:["credencial","pasaporte","verific"], cat:"cred", r:()=>"Posees cuatro credenciales; tres validadas y una en revisión. Tu Pasaporte es verificable públicamente sin exponer tus datos." },
         { k:["gobern","voto","arbitr","propuesta"], cat:"gob", r:()=>"En gobernanza tienes 2 votos activos y el rol de Árbitro. La propuesta 14 sigue abierta en la Cámara de nodos." },
         { k:["red","conexion","network"], cat:"red", r:()=>"Tu red de confianza tiene 128 conexiones activas y has mentoreado a tres nodos." },
-        { k:["evolucion","subir","crecer","nodo","nivel","arquitecto"], cat:null, r:()=>{ evolveMsg(); return "Reforzando tu núcleo. Tu capital intelectual crece y tu reputación asciende hacia el Nodo Arquitecto."; }, hi:"amber" },
-        { k:["ayuda","help","comando","que puedo"], cat:null, r:()=>"Puedes preguntarme por: habilidades, reputación, tokens, credenciales, gobernanza, red, o pedirme evolucionar." },
+        { k:["brecha","consejo","coach","diagnostico","diagnóstico","recomienda","mejorar","qué estudio","que estudio","orienta","oriénta"], cat:null, hi:"coach", r:()=>{ const w=weakestSkill(); if(w>=0){ focusNode(w); const n=nodes[w]; return `Tu eje más débil es ${n.label}, en ${n.val}. Para cerrar esa brecha: ${n.mejora}`; } return "Tu Gemelo está equilibrado. Sigue sumando experiencia en la Academia."; } },
+        { k:["evolucion","subir","crecer","nivel","arquitecto"], cat:null, r:()=>{ evolveMsg(); return "Reforzando tu núcleo. Tu capital intelectual crece y tu reputación asciende hacia el Nodo Arquitecto."; }, hi:"amber" },
+        { k:["ayuda","help","comando","que puedo"], cat:null, r:()=>"Puedes preguntarme por: habilidades, reputación, tokens, credenciales, gobernanza, tu brecha, o pedirme evolucionar." },
       ];
       function oracle(raw){
-        if (raw.startsWith("nodo:")) { const n = nodes[+raw.split(":")[1]]; if(n){ setHighlight(n.cat); oracleType(`${n.label} — ${CATS[n.cat].name}. ${n.val}.`); } return; }
+        if (raw.startsWith("nodo:")) { const idx=+raw.split(":")[1]; const n = nodes[idx]; if(n){ focusNode(idx); oracleType(`${n.label}. ${n.detail} Para mejorar: ${n.mejora}`); } return; }
         const q = raw.toLowerCase().trim();
         if (!q) return;
         let cmd = COMMANDS.find(c => c.k.some(k => q.includes(k)));
@@ -239,7 +256,7 @@
       document.getElementById("csend").onclick = send;
       document.getElementById("cin").addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
       function send(){ const el=document.getElementById("cin"); const v=el.value; el.value=""; Snd.blip(); oracle(v); }
-      const CHIPS = ["Habilidades","Reputación","Tokens","Credenciales","Gobernanza","Evolucionar"];
+      const CHIPS = ["Habilidades","Reputación","Tokens","Credenciales","Gobernanza","✦ Mi brecha","Evolucionar"];
       const chipsEl = document.getElementById("chips");
       CHIPS.forEach(c => { const b=document.createElement("div"); b.className="chip"; b.textContent=c; b.onclick=()=>{ Snd.blip(); oracle(c); }; chipsEl.appendChild(b); });
 
@@ -337,6 +354,7 @@
         // rotación
         if(!dragging){ if(camActive){ yaw += (camYaw-yaw)*0.05; pitch += (camPitch-pitch)*0.05; } else { yaw += autoYaw + velY*0.9; pitch += velX*0.9; velY*=0.92; velX*=0.92; pitch=Math.max(-1.2,Math.min(1.2,pitch)); } }
         if(highlight && performance.now()>highlightUntil) highlight=null;
+        if(spotlight>=0 && performance.now()>spotlightUntil){ spotlight=-1; camActive=false; }
 
         // proyectar nodos
         const mx=mouse.x, my=mouse.y;
@@ -373,7 +391,7 @@
       function drawSet(idxs, t, core){
         for(const i of idxs){
           const n=nodes[i];
-          const dim = highlight && n.cat!==highlight ? 0.18 : 1;
+          const dim = spotlight>=0 ? (i===spotlight ? 1 : 0.14) : (highlight && n.cat!==highlight ? 0.18 : 1);
           const isHover = i===hovered;
           const alpha = (0.5 + n.sc*0.5) * dim;
           if(core){ const la=(0.10+n.sc*0.12)*dim*(isHover?2:1); const grad=ctx.createLinearGradient(core.px,core.py,n.sx,n.sy); grad.addColorStop(0,hexA(n.color,0)); grad.addColorStop(1,hexA(n.color,la)); ctx.strokeStyle=grad; ctx.lineWidth=isHover?1.6:1; ctx.beginPath(); ctx.moveTo(core.px,core.py); ctx.lineTo(n.sx,n.sy); ctx.stroke(); let p=(pulses[i]+t*0.28)%1; ctx.fillStyle=hexA(n.color,(1-p)*alpha*0.9); ctx.beginPath(); ctx.arc(core.px+(n.sx-core.px)*p, core.py+(n.sy-core.py)*p,1.8,0,6.2832); ctx.fill(); }
