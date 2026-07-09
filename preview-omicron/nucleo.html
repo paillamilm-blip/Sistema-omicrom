@@ -134,6 +134,20 @@
   <body>
     <canvas id="c"></canvas>
     <div class="fx grid"></div><div class="fx scan"></div><div class="fx vig"></div>
+    <style>
+      .omni-nav{position:fixed;top:9px;left:50%;transform:translateX(-50%);z-index:120;display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:96vw;padding:4px;border-radius:22px;background:rgba(6,12,26,0.72);border:1px solid rgba(0,240,255,0.22);backdrop-filter:blur(10px);box-shadow:0 6px 24px rgba(0,0,0,0.45);}
+      .omni-nav a{font-family:"Share Tech Mono",monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:rgba(234,242,255,0.7);text-decoration:none;padding:5px 9px;border-radius:16px;transition:all .18s;white-space:nowrap;}
+      .omni-nav a:hover{background:#00f0ff;color:#020613;}
+      .omni-nav a.active{background:rgba(0,240,255,0.16);color:#7df9ff;}
+    </style>
+    <nav class="omni-nav">
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/omicron.html">Ω</a>
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/convalida.html">Convalida</a>
+      <a class="active" href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/nucleo.html">Núcleo</a>
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/os.html">OS</a>
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/gemelo-vivo.html">Gemelo</a>
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/nexus.html">Nexus</a>
+    </nav>
 
     <div class="hud top-left" id="tl"><div class="brand"><span class="omega">Ω</span><div><div class="t">Ómicron · Núcleo</div><div class="s">Gemelo Digital 3D · Confianza Cero</div></div></div>
       <div class="tier"><div class="tier-badge" id="tierBadge">NODO —</div><div class="tier-bar"><div class="tier-fill" id="tierFill"></div></div><div class="tier-lbl" id="tierLbl">—</div></div>

@@ -103,6 +103,20 @@
     </style>
   </head>
   <body>
+    <style>
+      .omni-nav{position:fixed;top:9px;left:50%;transform:translateX(-50%);z-index:120;display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:96vw;padding:4px;border-radius:22px;background:rgba(6,12,26,0.72);border:1px solid rgba(0,240,255,0.22);backdrop-filter:blur(10px);box-shadow:0 6px 24px rgba(0,0,0,0.45);}
+      .omni-nav a{font-family:"Share Tech Mono",monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:rgba(234,242,255,0.7);text-decoration:none;padding:5px 9px;border-radius:16px;transition:all .18s;white-space:nowrap;}
+      .omni-nav a:hover{background:#00f0ff;color:#020613;}
+      .omni-nav a.active{background:rgba(0,240,255,0.16);color:#7df9ff;}
+    </style>
+    <nav class="omni-nav">
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/omicron.html">Ω</a>
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/convalida.html">Convalida</a>
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/nucleo.html">Núcleo</a>
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/os.html">OS</a>
+      <a class="active" href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/gemelo-vivo.html">Gemelo</a>
+      <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/nexus.html">Nexus</a>
+    </nav>
     <div id="stage"><canvas id="c"></canvas></div>
     <div class="fx grid"></div>
     <div class="fx scan"></div>
@@ -133,6 +147,9 @@
       const canvas = document.getElementById("c");
       const ctx = canvas.getContext("2d");
       let W = 0, H = 0, DPR = 1, CX = 0, CY = 0;
+      // Reputación real desde el perfil compartido del ecosistema
+      let OMI_REP = 94;
+      try { const _p = JSON.parse(localStorage.getItem("omicron_gemelo") || "null"); if (_p && typeof _p.rep === "number") OMI_REP = _p.rep; } catch (e) {}
 
       function resize() {
         DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -320,7 +337,7 @@
         ctx.textAlign = "center";
         ctx.fillStyle = "#ffffff";
         ctx.font = `700 ${R * 0.62}px Rajdhani, sans-serif`;
-        ctx.fillText("94", px, py + R * 0.12);
+        ctx.fillText(String(OMI_REP), px, py + R * 0.12);
         ctx.fillStyle = "rgba(234,247,255,0.85)";
         ctx.font = `${R * 0.16}px 'Share Tech Mono', monospace`;
         ctx.fillText("REPUTACIÓN", px, py + R * 0.46);
