@@ -50,7 +50,19 @@
       .ninfo.show { pointer-events:auto; cursor:pointer; }
       .ninfo .ncta { margin-top:9px; text-align:center; padding:8px; border-radius:8px; border:1px solid rgba(0,240,255,0.5); font-family:var(--mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; }
       .stats3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:6px; }
-      .stat { background:rgba(0,240,255,0.05); border:1px solid rgba(0,240,255,0.1); border-radius:8px; padding:9px 6px; text-align:center; }
+      .stat { position:relative; background:rgba(0,240,255,0.05); border:1px solid rgba(0,240,255,0.12); border-radius:12px; padding:12px 6px 10px; text-align:center; cursor:pointer; transition:transform .18s, border-color .18s, background .18s; -webkit-tap-highlight-color:transparent; }
+      .stat:hover { transform:translateY(-3px); border-color:rgba(0,240,255,0.4); background:rgba(0,240,255,0.09); }
+      .stat:active { transform:translateY(-1px) scale(0.98); }
+      .stat .sico { display:grid; place-items:center; width:26px; height:26px; margin:0 auto 6px; border-radius:8px; background:rgba(0,240,255,0.1); color:var(--cyan); }
+      .stat .go { position:absolute; top:7px; right:9px; font-size:12px; color:rgba(234,242,255,0.3); transition:color .18s, transform .18s; }
+      .stat:hover .go { color:var(--cyan); transform:translateX(2px); }
+      .tip-explore { display:flex; align-items:center; justify-content:center; gap:7px; font-family:var(--mono); font-size:10px; letter-spacing:1px; color:rgba(234,242,255,0.45); text-transform:uppercase; padding:8px 0 10px; }
+      .pdot { width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 10px var(--cyan); animation:pdotp 1.6s ease-in-out infinite; }
+      @keyframes pdotp { 0%,100%{opacity:.35;transform:scale(0.8);} 50%{opacity:1;transform:scale(1.2);} }
+      .vchips { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; padding:14px 0 4px; }
+      .vchip { display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10px; letter-spacing:0.5px; padding:8px 12px; border-radius:20px; cursor:pointer; border:1px solid rgba(0,240,255,0.22); background:rgba(0,240,255,0.05); color:rgba(234,242,255,0.8); transition:all .18s; -webkit-tap-highlight-color:transparent; }
+      .vchip:hover { color:#020613; background:var(--cyan); border-color:var(--cyan); }
+      .vchip svg { width:13px; height:13px; }
       .stat .v { font-size:18px; font-weight:700; } .stat .v.a{color:var(--amber);} .stat .v.c{color:var(--cyan);} .stat .k { font-family:var(--mono); font-size:8px; letter-spacing:1px; color:rgba(234,242,255,0.5); text-transform:uppercase; margin-top:2px; }
       .skill { margin-bottom:9px; } .skill .top { display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; } .bar { height:6px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden; } .bar>i { display:block; height:100%; border-radius:4px; }
       .svc { display:flex; gap:11px; align-items:flex-start; margin-bottom:10px; } .thumb { width:42px; height:42px; border-radius:10px; display:grid; place-items:center; flex-shrink:0; background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.25); font-size:19px; } .seal { display:inline-flex; align-items:center; gap:3px; font-family:var(--mono); font-size:9px; color:var(--green); margin-top:3px; } .price { font-family:var(--mono); color:var(--amber); font-size:13px; font-weight:700; white-space:nowrap; }
@@ -109,13 +121,9 @@
             <div class="nucleo-center"><span class="big">94</span><span class="cap">Reputación</span></div>
             <div class="ninfo" id="ninfo"></div>
           </div>
-          <div class="hint" style="margin-top:2px">Acércate o toca un punto para ver su detalle</div>
-          <div class="stats3">
-            <div class="stat"><div class="v c">1,240</div><div class="k">Puntos exp.</div></div>
-            <div class="stat"><div class="v">12</div><div class="k">Contratos</div></div>
-            <div class="stat"><div class="v a">2,480</div><div class="k">Tokens</div></div>
-          </div>
-          <div class="hint">Di: "muéstrame mis habilidades" · "abre la academia" · "cuánta reputación tengo"</div>
+          <div class="tip-explore"><span class="pdot"></span> Acércate o toca un punto</div>
+          <div class="stats3" id="stats3"></div>
+          <div class="vchips" id="vchips"></div>
         </section>
 
         <!-- HABILIDADES -->
@@ -263,7 +271,7 @@
       // ── Navegación ──
       const NAV=[["inicio","Inicio","home"],["habilidades","Skills","target"],["academia","Academia","cap"],["servicios","Servicios","store"],["billetera","Billetera","wallet"]];
       const TITLES={inicio:"Inicio",habilidades:"Habilidades",academia:"Academia",servicios:"Servicios",billetera:"Billetera",gobernanza:"Gobernanza"};
-      const IC={home:'<path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',cap:'<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',store:'<path d="M2 7h20l-1.5 4H3.5z"/><path d="M4 11v9h16v-9"/>',wallet:'<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="21"/>',bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>',spk:'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>',spkoff:'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/>'};
+      const IC={home:'<path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',cap:'<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',store:'<path d="M2 7h20l-1.5 4H3.5z"/><path d="M4 11v9h16v-9"/>',wallet:'<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',brief:'<rect width="20" height="14" x="2" y="6" rx="2"/><path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',coin:'<circle cx="12" cy="12" r="9"/><path d="M14.5 9.5a2.5 2 0 0 0-5 .3c0 2.4 5 1.2 5 3.7a2.5 2 0 0 1-5 .3M12 6.5v11"/>',mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="21"/>',bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>',spk:'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>',spkoff:'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/>'};
       const svg=(p,w=18)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
       let activeScreen="inicio";
       const bn=document.getElementById("bottomnav");
@@ -349,6 +357,16 @@
       document.getElementById("services").innerHTML=SVC.map(([e,t,a,p])=>`<div class="card svc"><div class="thumb">${e}</div><div style="flex:1"><p style="font-size:14px;font-weight:600">${t}</p><p style="font-family:var(--mono);font-size:10px;color:rgba(234,242,255,0.5);margin-top:2px">${a}</p><span class="seal">✔ Sello de Confianza</span></div><span class="price">${p}</span></div>`).join("");
       const TX=[["Payment received","Landing Nébula","+1,200","var(--green)"],["Escrow locked","Rediseño panel · Hito 1","−1,100","#facc15"],["Network fee","Comisión de red (10%)","−120","var(--red)"],["Deposit","Recarga de tokens","+2,000","var(--green)"]];
       document.getElementById("tx").innerHTML=TX.map(([t,d,a,c])=>`<div class="tx"><span class="dot" style="background:${c}"></span><div><p style="font-size:13px">${t}</p><p style="font-family:var(--mono);font-size:10px;color:rgba(234,242,255,0.45)">${d}</p></div><span class="amt" style="color:${c}">${a}</span></div>`).join("");
+
+      // Métricas del Inicio: tocables → llevan a su hub
+      const ST=[["academia","zap","c","1,240","Puntos exp."],["servicios","brief","","12","Contratos"],["billetera","coin","a","2,480","Tokens"]];
+      document.getElementById("stats3").innerHTML=ST.map(([tab,icon,cls,v,k])=>`<button class="stat" data-go="${tab}"><span class="go">→</span><span class="sico">${svg(IC[icon],15)}</span><div class="v ${cls}">${v}</div><div class="k">${k}</div></button>`).join("");
+      document.querySelectorAll("#stats3 .stat").forEach(b=>{b.onclick=()=>{Snd.chime();const tb=b.dataset.go;go(tb);speakOracle(`Abriendo ${TITLES[tb]||tb}.`);};});
+
+      // Sugerencias de voz: tocarlas equivale a decirlas
+      const VC=[["habilidades","Habilidades","muéstrame mis habilidades"],["academia","Academia","abre la academia"],["reputacion","Mi reputación","cuánta reputación tengo"]];
+      document.getElementById("vchips").innerHTML=VC.map(([k,label])=>`<button class="vchip" data-k="${k}">${svg(IC.mic,13)}${label}</button>`).join("");
+      document.querySelectorAll("#vchips .vchip").forEach((b,i)=>{b.onclick=()=>{Snd.blip();route(VC[i][2]);};});
       function placePlanets(){const box=document.querySelector(".solar");if(!box)return;const cx=box.clientWidth/2,cy=box.clientHeight/2;const set=(id,r,ang)=>{const el=document.getElementById(id);if(!el)return;el.style.left=cx+r*Math.cos(ang)-16+"px";el.style.top=cy+r*Math.sin(ang)-16+"px";};set("p1",65,-Math.PI/2);set("p2",65,Math.PI/2.2);set("p3",100,0.3);set("p4",100,Math.PI-0.5);}
 
       // ── Entrada ──
