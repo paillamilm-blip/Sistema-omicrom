@@ -295,12 +295,20 @@
       let highlight = null, highlightUntil = 0;
       let spotlight = -1, spotlightUntil = 0;
       let rep = 94, tier = 2, born = 0;
-      let quest = null, questUntil = 0;          // ruta/quest activa (índices de nodos)
+      let quest = null, questUntil = 0;          // ruta/quest activa (items {idx,btn,label,done})
+      let questPts = [];                          // posiciones en pantalla de los pasos (para tocarlos)
       const ghost = new Set();                    // nodos "futuros" a proyectar
 
       canvas.addEventListener("pointerdown", (e) => { if (scene!=="nexus") return; stopPresentation(); dragging=true; moved=false; mouse.down=true; lastX=e.clientX; lastY=e.clientY; });
       addEventListener("pointermove", (e) => { mouse.x=e.clientX; mouse.y=e.clientY; mouse.has=true; if (dragging){ const dx=e.clientX-lastX, dy=e.clientY-lastY; if(Math.abs(dx)+Math.abs(dy)>3) moved=true; yaw+=dx*0.006; pitch+=dy*0.006; pitch=Math.max(-1.2,Math.min(1.2,pitch)); velY=dx*0.006; velX=dy*0.006; lastX=e.clientX; lastY=e.clientY; } });
-      addEventListener("pointerup", () => { if (scene==="nexus" && !moved && hovered>=0){ nodes[hovered].pulse=1; Snd.chime(); oracle(`nodo:${hovered}`); } dragging=false; mouse.down=false; });
+      addEventListener("pointerup", () => {
+        if (scene==="nexus" && !moved){
+          // ¿Tocó un paso de la ruta? (tiene prioridad sobre los nodos)
+          if(quest && questPts.length){ for(const qp of questPts){ if(Math.hypot(mouse.x-qp.sx, mouse.y-qp.sy) < 20){ executeQuestStep(qp.it); dragging=false; mouse.down=false; return; } } }
+          if(hovered>=0){ nodes[hovered].pulse=1; Snd.chime(); oracle(`nodo:${hovered}`); }
+        }
+        dragging=false; mouse.down=false;
+      });
 
       // ══ Proyección 3D ══
       function project(x, y, z) {
@@ -557,13 +565,14 @@
         // INNOVACIÓN · Nodos "futuros" (fantasma) de la proyección temporal
         if(ghost.size){ ghost.forEach(i=>{ const n=nodes[i]; if(!n||!n.locked)return; const p=project(n.bx,n.by,n.bz); const a=0.22+0.16*Math.sin(t*3+i); glow(p.sx,p.sy,n.baseR*p.sc,n.color,a); ctx.textAlign="center"; ctx.fillStyle=hexA("#7df9ff",0.7); ctx.font="9px 'Share Tech Mono', monospace"; ctx.fillText("◇ futuro",p.sx,p.sy-14); }); }
 
-        // INNOVACIÓN · Ruta / Quest al siguiente Nodo (constelación numerada animada)
+        // INNOVACIÓN · Ruta / Quest INTERACTIVA al siguiente Nodo (toca cada paso)
+        questPts.length = 0;
         if(quest && quest.length && performance.now()<questUntil){
-          const proj = quest.map(i=>{ const n=nodes[i]; const p=project(n.bx,n.by,n.bz); return {n,p}; });
+          const proj = quest.map(it=>{ const n=nodes[it.idx]; const p=project(n.bx,n.by,n.bz); return {it,p}; });
           ctx.setLineDash([6,7]); ctx.lineDashOffset = -((t*45)%13); ctx.strokeStyle=hexA("#F59E0B",0.85); ctx.lineWidth=2;
           ctx.beginPath(); ctx.moveTo(core.px,core.py); proj.forEach(({p})=>ctx.lineTo(p.sx,p.sy)); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset=0;
-          proj.forEach(({p},k)=>{ const pr=1+0.12*Math.sin(t*4+k); ctx.beginPath(); ctx.arc(p.sx,p.sy,11*pr,0,6.2832); ctx.fillStyle=hexA("#F59E0B",0.92); ctx.fill(); ctx.beginPath(); ctx.arc(p.sx,p.sy,11*pr+4,0,6.2832); ctx.strokeStyle=hexA("#F59E0B",0.4); ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle="#020613"; ctx.font="bold 12px 'Share Tech Mono', monospace"; ctx.textAlign="center"; ctx.fillText(String(k+1),p.sx,p.sy+4); });
-        } else if(quest && performance.now()>=questUntil){ quest=null; }
+          proj.forEach(({it,p},k)=>{ questPts.push({it,sx:p.sx,sy:p.sy}); const done=it.done; const col=done?"#39FF14":"#F59E0B"; const pr=1+0.12*Math.sin(t*4+k); ctx.beginPath(); ctx.arc(p.sx,p.sy,12*pr,0,6.2832); ctx.fillStyle=hexA(col,0.95); ctx.fill(); ctx.beginPath(); ctx.arc(p.sx,p.sy,12*pr+5,0,6.2832); ctx.strokeStyle=hexA(col,0.4); ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle="#020613"; ctx.font="bold 13px 'Share Tech Mono', monospace"; ctx.textAlign="center"; ctx.fillText(done?"✓":String(k+1),p.sx,p.sy+4.5); if(!done){ ctx.fillStyle=hexA("#F59E0B",0.85); ctx.font="9px 'Share Tech Mono', monospace"; ctx.fillText(it.label,p.sx,p.sy-20); } });
+        } else if(quest && performance.now()>=questUntil){ quest=null; questPts.length=0; }
 
         // tooltip
         if(hovered>=0){ const n=nodes[hovered]; tip.style.left=n.sx+"px"; tip.style.top=(n.sy-n.baseR*n.sc)+"px"; tip.style.opacity="1"; tip.style.borderColor=hexA(n.color,0.6); document.getElementById("tc").textContent=CATS[n.cat].name; document.getElementById("tc").style.color=n.color; document.getElementById("tlbl").textContent=n.label; document.getElementById("tv").textContent=n.val; document.getElementById("tdet").textContent=n.detail||""; document.getElementById("tmej").innerHTML=n.mejora?('<b>▸ Qué hacer</b>'+n.mejora+'<span style="display:block;margin-top:4px;color:#7df9ff;font-family:var(--mono);font-size:9px;letter-spacing:1px">TOCA EL NODO PARA ACTUAR ▸</span>'):""; canvas.style.cursor="pointer"; }
@@ -783,10 +792,11 @@
       if(_g("projClose")) _g("projClose").onclick=closeProj;
 
       // ── INNOVACIÓN 3 · Ruta / Quest al siguiente Nodo ──
-      function computeQuest(){ const p=JSON.parse(JSON.stringify(prof)); omiRecompute(p); const start=tierInfo(p.pe).i; const steps=[], route=[]; const lbl={cv:"Sube tu CV",cti:"Valida un título",cyr:"Acredita 1 año de experiencia",cvo:"Aporta a la Bóveda"};
-        for(let k=0;k<5;k++){ const btn=bestBtn(p); if(!btn)break; const b=stepApply(p,btn); omiRecompute(p); steps.push(lbl[btn]||btn); if(b>=0)route.push(b); if(tierInfo(p.pe).i>start)break; }
-        return {steps,route,endRep:p.rep,endPe:p.pe,endTier:tierInfo(p.pe).cur.n}; }
-      function runQuest(){ const q=computeQuest(); if(!q.steps.length) return "Estás en tu nivel máximo. Sigue aportando a la Bóveda para mantener tu ventaja."; quest=q.route.slice(); questUntil=performance.now()+40000; if(quest.length)focusNode(quest[0]); flash("RUTA TRAZADA","#F59E0B"); const list=q.steps.map((s,i)=>`${i+1}. ${s}`).join("  ·  "); return `Tu ruta al Nodo ${q.endTier}: ${list}. Al completarla tu reputación será ${q.endRep} y tu PE ${q.endPe}. Trazé la constelación en tu galaxia.`; }
+      function computeQuest(){ const p=JSON.parse(JSON.stringify(prof)); omiRecompute(p); const start=tierInfo(p.pe).i; const steps=[], items=[]; const lbl={cv:"Sube tu CV",cti:"Valida un título",cyr:"Acredita 1 año",cvo:"Aporta a la Bóveda"};
+        for(let k=0;k<6;k++){ const btn=bestBtn(p); if(!btn)break; const b=stepApply(p,btn); omiRecompute(p); steps.push(lbl[btn]||btn); if(b>=0)items.push({idx:b,btn,label:lbl[btn]||btn,done:false}); if(tierInfo(p.pe).i>start)break; }
+        return {steps,items,endRep:p.rep,endPe:p.pe,endTier:tierInfo(p.pe).cur.n}; }
+      function runQuest(){ const q=computeQuest(); if(!q.steps.length) return "Estás en tu nivel máximo. Sigue aportando a la Bóveda para mantener tu ventaja."; quest=q.items; questUntil=performance.now()+120000; if(quest.length)focusNode(quest[0].idx); flash("RUTA TRAZADA","#F59E0B"); const list=q.steps.map((s,i)=>`${i+1}. ${s}`).join("  ·  "); return `Tu ruta al Nodo ${q.endTier}: ${list}. Toca cada número en tu galaxia para completar el paso. Al terminarla tu reputación será ${q.endRep} y tu PE ${q.endPe}.`; }
+      function executeQuestStep(item){ if(!item||item.done) return; const actMap={cv:"cv",cti:"title",cyr:"year",cvo:"vault"}; doEcosystemAction(actMap[item.btn]||"vault"); item.done=true; try{Snd.chime();}catch(e){} flash("PASO COMPLETADO","#39FF14"); shocks.push({t:0,color:"#39FF14"}); focusNode(item.idx); questUntil=performance.now()+120000; const rem=quest?quest.filter(q=>!q.done):[]; if(!rem.length){ setTimeout(()=>{ oracleType(`¡Ruta completada! Tu reputación es ${rep} y tu PE ${prof.pe}. Pide otra ruta cuando quieras seguir subiendo.`); quest=null; questPts.length=0; },250); } else { const nextNo=quest.indexOf(rem[0])+1; oracleType(`Paso completado. Te quedan ${rem.length}. Toca el número ${nextNo} para seguir.`); } }
 
       // Chips nuevos
       const passChip=document.createElement("div"); passChip.className="chip"; passChip.style.borderColor="rgba(0,240,255,0.5)"; passChip.textContent="🎫 Pasaporte"; passChip.onclick=()=>{ Snd.blip(); openPassport(); }; chipsEl.appendChild(passChip);
