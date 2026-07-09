@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ómicron · Núcleo 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --cyan: #00f0ff; --amber: #f59e0b; --green: #39ff14; --blue: #38bdf8; --red: #ff3d57;
+        --mono: "Share Tech Mono", monospace; --display: "Rajdhani", sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; overflow: hidden; background: #01040d; }
+      body { font-family: var(--display); color: #eaf2ff; user-select: none; }
+      canvas { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
+      .fx { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
+      .fx.grid { background-image: linear-gradient(rgba(0,240,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px); background-size: 46px 46px; -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 26%, transparent 76%); mask-image: radial-gradient(circle at 50% 50%, #000 26%, transparent 76%); }
+      .fx.scan { background: repeating-linear-gradient(0deg, rgba(0,240,255,0.028) 0 1px, transparent 1px 3px); opacity: 0.5; }
+      .fx.vig { background: radial-gradient(circle at 50% 48%, transparent 44%, rgba(1,4,13,0.92) 100%); }
+
+      /* GATE */
+      #gate { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; background: #01040d; transition: opacity 0.8s; text-align: center; padding: 20px; }
+      .omega-big { width: 96px; height: 96px; border-radius: 24px; display: grid; place-items: center; background: linear-gradient(135deg, rgba(125,249,255,0.2), rgba(0,240,255,0.06)); border: 1px solid rgba(0,240,255,0.45); box-shadow: 0 0 45px rgba(0,240,255,0.4), inset 0 0 30px rgba(0,95,115,0.25); font-size: 52px; font-weight: 700; color: #7df9ff; animation: floatY 4s ease-in-out infinite; text-shadow: 0 0 20px rgba(0,240,255,0.7); }
+      @keyframes floatY { 0%,100% { transform: translateY(-6px); } 50% { transform: translateY(6px); } }
+      #gate h1 { font-size: 30px; font-weight: 700; letter-spacing: 1px; }
+      #gate .tag { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; color: rgba(0,240,255,0.6); text-transform: uppercase; }
+      .enter { margin-top: 6px; font-family: var(--mono); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; padding: 14px 34px; border-radius: 30px; cursor: pointer; color: #020613; font-weight: 700; background: linear-gradient(135deg, #7df9ff, #00f0ff); border: none; box-shadow: 0 0 30px rgba(0,240,255,0.5); transition: transform 0.2s, box-shadow 0.2s; }
+      .enter:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(0,240,255,0.8); }
+
+      .hud { position: fixed; z-index: 10; opacity: 0; transition: opacity 1s; }
+      .hud.show { opacity: 1; }
+      .top-left { top: 20px; left: 22px; }
+      .brand { display: flex; align-items: center; gap: 10px; }
+      .omega { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(135deg, #7df9ff, #00f0ff); box-shadow: 0 0 16px rgba(0,240,255,0.6); color: #020613; font-weight: 700; font-size: 17px; }
+      .brand .t { font-size: 17px; font-weight: 700; } .brand .s { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: rgba(0,240,255,0.6); text-transform: uppercase; }
+      .top-right { top: 20px; right: 22px; display: flex; align-items: center; gap: 10px; }
+      .rep { text-align: right; } .rep .n { font-size: 26px; font-weight: 700; color: var(--amber); line-height: 1; } .rep .k { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: rgba(234,242,255,0.5); text-transform: uppercase; }
+      .toggle { width: 38px; height: 38px; border-radius: 10px; background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.3); color: var(--cyan); display: grid; place-items: center; cursor: pointer; }
+      .toggle.off { color: rgba(234,242,255,0.35); border-color: rgba(255,255,255,0.12); }
+
+      /* Oráculo console */
+      .console { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 12; width: min(680px, 92vw); opacity: 0; transition: opacity 1s; }
+      .console.show { opacity: 1; }
+      .oracle-msg { min-height: 22px; font-family: var(--mono); font-size: 13px; color: var(--cyan); text-align: center; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0,240,255,0.4); line-height: 1.5; }
+      .oracle-msg .who { color: var(--amber); }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
+      .chip { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 6px 12px; border-radius: 20px; cursor: pointer; border: 1px solid rgba(0,240,255,0.25); background: rgba(6,12,26,0.6); color: rgba(234,242,255,0.75); backdrop-filter: blur(6px); transition: all 0.2s; }
+      .chip:hover { color: #020613; background: var(--cyan); border-color: var(--cyan); }
+      .inbar { display: flex; gap: 8px; background: rgba(6,12,26,0.75); border: 1px solid rgba(0,240,255,0.3); border-radius: 30px; padding: 6px 6px 6px 18px; backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+      .inbar input { flex: 1; background: none; border: none; outline: none; color: #eaf2ff; font-family: var(--mono); font-size: 14px; }
+      .inbar input::placeholder { color: rgba(234,242,255,0.35); }
+      .inbar button { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; background: linear-gradient(135deg, #7df9ff, #00f0ff); color: #020613; display: grid; place-items: center; }
+
+      #tip { position: fixed; z-index: 13; pointer-events: none; opacity: 0; transform: translate(-50%, -140%); transition: opacity 0.15s; background: rgba(6,12,26,0.92); border: 1px solid rgba(0,240,255,0.4); border-radius: 10px; padding: 8px 12px; min-width: 120px; backdrop-filter: blur(10px); }
+      #tip .cat { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; } #tip .lbl { font-size: 14px; font-weight: 700; } #tip .val { font-family: var(--mono); font-size: 11px; color: rgba(234,242,255,0.7); }
+      .flash { position: fixed; left: 50%; top: 40%; transform: translate(-50%,-50%); z-index: 11; font-size: 28px; font-weight: 700; letter-spacing: 2px; opacity: 0; pointer-events: none; text-shadow: 0 0 24px currentColor; }
+      .hint { position: fixed; bottom: 128px; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: rgba(234,242,255,0.35); text-transform: uppercase; z-index: 9; opacity: 0; transition: opacity 1s; }
+      .hint.show { opacity: 1; animation: fade 3s ease-in-out infinite; } @keyframes fade { 0%,100%{opacity:0.3} 50%{opacity:0.6} }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <div class="fx grid"></div><div class="fx scan"></div><div class="fx vig"></div>
+
+    <div class="hud top-left" id="tl"><div class="brand"><span class="omega">Ω</span><div><div class="t">Ómicron · Núcleo</div><div class="s">Gemelo Digital 3D · Confianza Cero</div></div></div></div>
+    <div class="hud top-right" id="tr"><div class="rep"><div class="n" id="rep">94</div><div class="k">Reputación</div></div><div class="toggle" id="mute"></div></div>
+
+    <div class="hint" id="hint">Arrastra para girar tu universo · pregúntale al Oráculo</div>
+    <div id="tip"><div class="cat" id="tc"></div><div class="lbl" id="tlbl"></div><div class="val" id="tv"></div></div>
+    <div class="flash" id="flash"></div>
+
+    <div class="console" id="console">
+      <div class="oracle-msg" id="omsg"></div>
+      <div class="chips" id="chips"></div>
+      <div class="inbar">
+        <input id="cin" placeholder="Pregúntale al Oráculo: habilidades, reputación, evolucionar…" autocomplete="off" />
+        <button id="csend" aria-label="Enviar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+      </div>
+    </div>
+
+    <div id="gate">
+      <div class="omega-big">Ω</div>
+      <div><h1>Sistema Ómicron</h1><div class="tag">Núcleo · Gemelo Digital 3D</div></div>
+      <button class="enter" id="enter">▶ Despertar el Núcleo</button>
+      <div class="tag" style="opacity:0.5;font-size:9px">Con voz y sonido · usa audífonos</div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
+      let W, H, DPR, CX, CY;
+      function resize() { DPR = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight; canvas.width = W*DPR; canvas.height = H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); CX = W/2; CY = H/2; }
+      addEventListener("resize", resize); resize();
+      const hexA = (hex, a) => { if (hex[0] !== "#") return hex; const n = parseInt(hex.slice(1),16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${Math.max(0,Math.min(1,a))})`; };
+      const rand = (a,b) => a + Math.random()*(b-a);
+
+      // ══ Audio ══
+      const Snd = {
+        ctx:null, master:null, analyser:null, data:null, on:false,
+        init(){ try{ const AC=window.AudioContext||window.webkitAudioContext; this.ctx=new AC(); this.master=this.ctx.createGain(); this.master.gain.value=0; this.analyser=this.ctx.createAnalyser(); this.analyser.fftSize=256; this.data=new Uint8Array(this.analyser.frequencyBinCount); this.master.connect(this.analyser); this.analyser.connect(this.ctx.destination); this.drone(); this.on=true; this.master.gain.linearRampToValueAtTime(0.45, this.ctx.currentTime+2.5);}catch(e){this.on=false;} },
+        drone(){ const now=this.ctx.currentTime; [55,82.41,110,164.81].forEach((f,i)=>{ const o=this.ctx.createOscillator(); o.type=i%2?"sine":"triangle"; o.frequency.value=f; const g=this.ctx.createGain(); g.gain.value=0.12/(i+1); const lp=this.ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=700; const lfo=this.ctx.createOscillator(); lfo.frequency.value=0.06+i*0.017; const lg=this.ctx.createGain(); lg.gain.value=0.06/(i+1); lfo.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(lp); lp.connect(this.master); o.start(now); lfo.start(now); }); const s=this.ctx.createOscillator(); s.type="sine"; s.frequency.value=1320; const sg=this.ctx.createGain(); sg.gain.value=0.014; const tr=this.ctx.createOscillator(); tr.frequency.value=0.3; const tg=this.ctx.createGain(); tg.gain.value=0.014; tr.connect(tg); tg.connect(sg.gain); s.connect(sg); sg.connect(this.master); s.start(now); tr.start(now); },
+        note(f,d=0.18,type="sine",v=0.2){ if(!this.on)return; const now=this.ctx.currentTime; const o=this.ctx.createOscillator(); o.type=type; o.frequency.value=f; const g=this.ctx.createGain(); g.gain.setValueAtTime(0,now); g.gain.linearRampToValueAtTime(v,now+0.008); g.gain.exponentialRampToValueAtTime(0.0001,now+d); o.connect(g); g.connect(this.master); o.start(now); o.stop(now+d+0.05); },
+        blip(){ this.note(860+Math.random()*140,0.08,"sine",0.08); },
+        chime(){ [523.25,659.25,783.99].forEach((f,i)=>setTimeout(()=>this.note(f,0.5,"triangle",0.13),i*70)); },
+        sweep(){ if(!this.on)return; const now=this.ctx.currentTime; const o=this.ctx.createOscillator(); o.type="sawtooth"; o.frequency.setValueAtTime(180,now); o.frequency.exponentialRampToValueAtTime(1400,now+0.7); const g=this.ctx.createGain(); g.gain.setValueAtTime(0.0001,now); g.gain.linearRampToValueAtTime(0.16,now+0.08); g.gain.exponentialRampToValueAtTime(0.0001,now+0.8); const bp=this.ctx.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=900; bp.Q.value=2; o.connect(bp); bp.connect(g); g.connect(this.master); o.start(now); o.stop(now+0.85); },
+        energy(){ if(!this.on||!this.analyser)return 0; this.analyser.getByteFrequencyData(this.data); let s=0; for(let i=0;i<24;i++)s+=this.data[i]; return s/(24*255); },
+        toggle(){ if(!this.ctx)return this.on; if(this.on){ this.master.gain.linearRampToValueAtTime(0,this.ctx.currentTime+0.4); this.on=false; } else { this.on=true; this.master.gain.linearRampToValueAtTime(0.45,this.ctx.currentTime+0.4);} return this.on; },
+      };
+
+      // ══ Voz ══
+      const Voice = {
+        v: null, ready: false,
+        pick(){ try{ const vs=speechSynthesis.getVoices(); this.v=vs.find(x=>/es(-|_)/i.test(x.lang))||vs.find(x=>x.lang.startsWith("es"))||vs[0]||null; this.ready=true; }catch(e){} },
+        say(text){ try{ if(!("speechSynthesis" in window))return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); if(this.v)u.voice=this.v; u.lang=(this.v&&this.v.lang)||"es-ES"; u.rate=1.02; u.pitch=1.0; speechSynthesis.speak(u);}catch(e){} },
+      };
+      if ("speechSynthesis" in window) { Voice.pick(); speechSynthesis.onvoiceschanged = () => Voice.pick(); }
+
+      // ══ Datos (galaxia) ══
+      const CATS = { skill:{name:"Habilidad",color:"#00F0FF"}, cred:{name:"Credencial",color:"#F59E0B"}, red:{name:"Red / Confianza",color:"#38BDF8"}, token:{name:"Economía",color:"#39FF14"}, gob:{name:"Gobernanza",color:"#FF3D57"} };
+      const RAW = [
+        ["skill","Frontend","Nivel 88"],["skill","Backend","Nivel 72"],["skill","Arquitectura","Nivel 64"],["skill","Datos","Nivel 58"],["skill","UX","Nivel 79"],["skill","Liderazgo","Nivel 70"],
+        ["cred","React Pro","Validada"],["cred","System Design","Validada"],["cred","Cloud Security","Validada"],["cred","Data Engineer","En revisión"],
+        ["red","128 conexiones","Red activa"],["red","Sello de Confianza","Verificado"],["red","Mentor ×3","Reputación +"],["red","Pasaporte","Verificable"],
+        ["token","2,480 tokens","Nodo Core"],["token","Escrow 1,100","En custodia"],["token","Comisión 10%","Nodo Core"],
+        ["gob","2 votos activos","Cámara de nodos"],["gob","Árbitro","Rol asignado"],["gob","Propuesta #14","Abierta"],
+      ];
+      const N = RAW.length;
+      const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+      const nodes = RAW.map(([cat,label,val], i) => {
+        const y = 1 - (i / (N - 1)) * 2;
+        const rad = Math.sqrt(1 - y*y);
+        const th = GOLDEN * i;
+        return { cat, label, val, color: CATS[cat].color,
+          bx: Math.cos(th)*rad, by: y, bz: Math.sin(th)*rad,
+          baseR: 4.5 + (cat==="token"?2:0) + rand(0,1.5),
+          sx:0, sy:0, sc:1, zz:0, pulse:0, born: -1 };
+      });
+      const edges = [[0,6],[1,7],[2,7],[6,14],[10,11],[11,13],[14,16],[17,18],[2,8],[3,9],[12,13],[18,19]];
+      const dust = Array.from({length:90}, () => ({ x:Math.random(), y:Math.random(), r:rand(0.4,1.7), a:rand(0.05,0.4), vx:rand(-0.02,0.02), vy:rand(-0.02,0.02), tw:rand(0,6.28) }));
+      const pulses = nodes.map(()=>Math.random());
+      const shocks = [];
+
+      // ══ Estado 3D ══
+      let scene = "gate";
+      let yaw = 0.3, pitch = -0.25, autoYaw = 0.0016;
+      let dragging = false, moved = false, lastX = 0, lastY = 0, velY = 0, velX = 0;
+      const mouse = { x: CX, y: CY, has: false, down: false };
+      let hovered = -1, hoverPrev = -1;
+      let highlight = null, highlightUntil = 0;
+      let rep = 94, tier = 2, born = 0;
+
+      canvas.addEventListener("pointerdown", (e) => { if (scene!=="nexus") return; dragging=true; moved=false; mouse.down=true; lastX=e.clientX; lastY=e.clientY; });
+      addEventListener("pointermove", (e) => { mouse.x=e.clientX; mouse.y=e.clientY; mouse.has=true; if (dragging){ const dx=e.clientX-lastX, dy=e.clientY-lastY; if(Math.abs(dx)+Math.abs(dy)>3) moved=true; yaw+=dx*0.006; pitch+=dy*0.006; pitch=Math.max(-1.2,Math.min(1.2,pitch)); velY=dx*0.006; velX=dy*0.006; lastX=e.clientX; lastY=e.clientY; } });
+      addEventListener("pointerup", () => { if (scene==="nexus" && !moved && hovered>=0){ nodes[hovered].pulse=1; Snd.chime(); oracle(`nodo:${hovered}`); } dragging=false; mouse.down=false; });
+
+      // ══ Proyección 3D ══
+      function project(x, y, z) {
+        const cy1 = Math.cos(yaw), sy1 = Math.sin(yaw);
+        let x1 = x*cy1 - z*sy1, z1 = x*sy1 + z*cy1, y1 = y;
+        const cx1 = Math.cos(pitch), sx1 = Math.sin(pitch);
+        let y2 = y1*cx1 - z1*sx1, z2 = y1*sx1 + z1*cx1, x2 = x1;
+        const FOV = 900, R = Math.min(W,H) * 0.34;
+        const persp = FOV / (FOV + z2 * R);
+        return { sx: CX + x2 * R * persp, sy: CY + y2 * R * persp, sc: persp, zz: z2 };
+      }
+
+      // ══ HUD / gate ══
+      const flashEl = document.getElementById("flash");
+      function flash(txt, col){ flashEl.textContent=txt; flashEl.style.color=col; flashEl.animate([{opacity:0,transform:"translate(-50%,-50%) scale(0.8)"},{opacity:1,transform:"translate(-50%,-50%) scale(1)"},{opacity:0,transform:"translate(-50%,-50%) scale(1.1)"}],{duration:1600,easing:"ease-out"}); }
+      const muteBtn = document.getElementById("mute");
+      const spk = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>';
+      const spkOff = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>';
+      muteBtn.innerHTML = spk;
+      muteBtn.onclick = () => { const on=Snd.toggle(); muteBtn.innerHTML=on?spk:spkOff; muteBtn.classList.toggle("off",!on); if(!on){try{speechSynthesis.cancel();}catch(e){}} };
+
+      // ══ Oráculo ══
+      const omsg = document.getElementById("omsg");
+      let typeTimer = null;
+      function oracleType(text, speak=true){
+        clearInterval(typeTimer); let i=0;
+        omsg.innerHTML='<span class="who">ORÁCULO ▸ </span>';
+        const head = omsg.innerHTML;
+        typeTimer = setInterval(()=>{ i++; omsg.innerHTML = head + text.slice(0,i); if(i>=text.length) clearInterval(typeTimer); }, 16);
+        if (speak) Voice.say(text);
+      }
+      function setHighlight(cat){ highlight=cat; highlightUntil=performance.now()+6000; }
+      function evolveMsg(){
+        rep = Math.min(99, rep+1);
+        document.getElementById("rep").textContent = rep;
+        shocks.push({ t:0, color:"#F59E0B" });
+        Snd.sweep(); flash("NÚCLEO REFORZADO", "#F59E0B");
+      }
+      const COMMANDS = [
+        { k:["hola","hey","buenas","saludos"], cat:null, r:()=>"Hola, Matías. Soy tu Gemelo Digital. Arrastra para girar tu universo o pregúntame por tus habilidades, tu reputación o tu economía." },
+        { k:["habilidad","skill","competenc"], cat:"skill", r:()=>"Tus habilidades dominantes: Frontend 88 y UX 79. Arquitectura es tu mayor oportunidad de crecimiento." },
+        { k:["reputac","confianz","sello"], cat:"red", r:()=>"Tu reputación es 94 sobre 100, respaldada por tu Sello de Confianza y 128 conexiones verificadas." },
+        { k:["token","ganancia","billeter","econom","dinero"], cat:"token", r:()=>"Tienes 2.480 tokens disponibles y 1.100 en escrow. Como Nodo Core, tu comisión de red es 10 por ciento." },
+        { k:["credencial","pasaporte","verific"], cat:"cred", r:()=>"Posees cuatro credenciales; tres validadas y una en revisión. Tu Pasaporte es verificable públicamente sin exponer tus datos." },
+        { k:["gobern","voto","arbitr","propuesta"], cat:"gob", r:()=>"En gobernanza tienes 2 votos activos y el rol de Árbitro. La propuesta 14 sigue abierta en la Cámara de nodos." },
+        { k:["red","conexion","network"], cat:"red", r:()=>"Tu red de confianza tiene 128 conexiones activas y has mentoreado a tres nodos." },
+        { k:["evolucion","subir","crecer","nodo","nivel","arquitecto"], cat:null, r:()=>{ evolveMsg(); return "Reforzando tu núcleo. Tu capital intelectual crece y tu reputación asciende hacia el Nodo Arquitecto."; }, hi:"amber" },
+        { k:["ayuda","help","comando","que puedo"], cat:null, r:()=>"Puedes preguntarme por: habilidades, reputación, tokens, credenciales, gobernanza, red, o pedirme evolucionar." },
+      ];
+      function oracle(raw){
+        if (raw.startsWith("nodo:")) { const n = nodes[+raw.split(":")[1]]; if(n){ setHighlight(n.cat); oracleType(`${n.label} — ${CATS[n.cat].name}. ${n.val}.`); } return; }
+        const q = raw.toLowerCase().trim();
+        if (!q) return;
+        let cmd = COMMANDS.find(c => c.k.some(k => q.includes(k)));
+        if (!cmd) { oracleType("Analizando tu capital intelectual… reformula tu consulta o escribe \"ayuda\" para ver qué puedo responder."); setHighlight(null); return; }
+        if (cmd.cat) setHighlight(cmd.cat); else if (!cmd.hi) setHighlight(null);
+        oracleType(cmd.r());
+      }
+      document.getElementById("csend").onclick = send;
+      document.getElementById("cin").addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
+      function send(){ const el=document.getElementById("cin"); const v=el.value; el.value=""; Snd.blip(); oracle(v); }
+      const CHIPS = ["Habilidades","Reputación","Tokens","Credenciales","Gobernanza","Evolucionar"];
+      const chipsEl = document.getElementById("chips");
+      CHIPS.forEach(c => { const b=document.createElement("div"); b.className="chip"; b.textContent=c; b.onclick=()=>{ Snd.blip(); oracle(c); }; chipsEl.appendChild(b); });
+
+      // ══ Entrada ══
+      document.getElementById("enter").onclick = () => {
+        Snd.init();
+        const g=document.getElementById("gate"); g.style.opacity="0"; setTimeout(()=>g.style.display="none",800);
+        scene="nexus"; born=performance.now()/1000;
+        ["tl","tr","console","hint"].forEach(id=>document.getElementById(id).classList.add("show"));
+        Snd.chime();
+        setTimeout(()=>oracleType("Núcleo despierto. Bienvenido de vuelta, Matías. Este es tu Gemelo Digital: gíralo, explóralo, pregúntame lo que quieras."), 700);
+      };
+
+      // ══ Dibujo ══
+      const tip = document.getElementById("tip");
+      function glow(x,y,r,color,alpha){ const g=ctx.createRadialGradient(x,y,0,x,y,r*3.4); g.addColorStop(0,hexA(color,0.9*alpha)); g.addColorStop(0.4,hexA(color,0.28*alpha)); g.addColorStop(1,hexA(color,0)); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*3.4,0,6.2832); ctx.fill(); ctx.fillStyle=hexA("#ffffff",0.9*alpha); ctx.beginPath(); ctx.arc(x,y,r*0.55,0,6.2832); ctx.fill(); ctx.fillStyle=hexA(color,alpha); ctx.beginPath(); ctx.arc(x,y,r,0,6.2832); ctx.fill(); }
+      function drawCore(t, energy){
+        const p = project(0,0,0);
+        const R = Math.min(W,H) * 0.07 * (1 + energy*0.18);
+        const px=p.sx, py=p.sy;
+        const halo=ctx.createRadialGradient(px,py,R*0.6,px,py,R*2.8); halo.addColorStop(0,hexA("#22D3EE",0.3+energy*0.25)); halo.addColorStop(1,"rgba(34,211,238,0)"); ctx.fillStyle=halo; ctx.beginPath(); ctx.arc(px,py,R*2.8,0,6.2832); ctx.fill();
+        const core=ctx.createRadialGradient(px-R*0.3,py-R*0.35,R*0.1,px,py,R); core.addColorStop(0,"#CFFAFE"); core.addColorStop(0.34,"#22D3EE"); core.addColorStop(0.68,"#1E40AF"); core.addColorStop(0.95,"#1E1B4B"); ctx.fillStyle=core; ctx.beginPath(); ctx.arc(px,py,R,0,6.2832); ctx.fill();
+        ctx.save(); ctx.translate(px,py); for(let i=0;i<3;i++){ ctx.save(); ctx.rotate(t*0.25+(i*Math.PI)/3); ctx.strokeStyle=hexA("#E0F7FF",0.5-i*0.12); ctx.lineWidth=1; ctx.beginPath(); ctx.ellipse(0,0,R*1.35,R*0.48,0,0,6.2832); ctx.stroke(); ctx.restore(); } ctx.restore();
+        ctx.fillStyle="rgba(255,255,255,0.4)"; ctx.beginPath(); ctx.ellipse(px-R*0.28,py-R*0.34,R*0.28,R*0.16,-0.5,0,6.2832); ctx.fill();
+        ctx.textAlign="center"; ctx.fillStyle="#fff"; ctx.font=`700 ${R*0.6}px Rajdhani, sans-serif`; ctx.fillText(String(rep),px,py+R*0.12); ctx.fillStyle="rgba(234,247,255,0.85)"; ctx.font=`${R*0.16}px 'Share Tech Mono', monospace`; ctx.fillText("NÚCLEO",px,py+R*0.44);
+        return { px, py };
+      }
+
+      function frame(now){
+        const t=now/1000;
+        ctx.clearRect(0,0,W,H);
+        for(const d of dust){ d.x+=d.vx*0.0016; d.y+=d.vy*0.0016; if(d.x<0)d.x=1; if(d.x>1)d.x=0; if(d.y<0)d.y=1; if(d.y>1)d.y=0; const tw=0.5+0.5*Math.sin(t*1.5+d.tw); ctx.fillStyle=hexA("#9fdcff",d.a*tw); ctx.beginPath(); ctx.arc(d.x*W,d.y*H,d.r,0,6.2832); ctx.fill(); }
+        const energy=Snd.energy();
+        if(scene!=="nexus"){ requestAnimationFrame(frame); return; }
+
+        // rotación
+        if(!dragging){ yaw += autoYaw + velY*0.9; pitch += velX*0.9; velY*=0.92; velX*=0.92; pitch=Math.max(-1.2,Math.min(1.2,pitch)); }
+        if(highlight && performance.now()>highlightUntil) highlight=null;
+
+        // proyectar nodos
+        const mx=mouse.x, my=mouse.y;
+        for(const n of nodes){ const p=project(n.bx,n.by,n.bz); n.sx=p.sx; n.sy=p.sy; n.sc=p.sc; n.zz=p.zz; if(n.pulse>0)n.pulse=Math.max(0,n.pulse-0.012); }
+
+        // hover (solo si no arrastra)
+        hovered=-1;
+        if(!dragging){ let hd=22; nodes.forEach((n,i)=>{ const rr=n.baseR*n.sc; const d=Math.hypot(mx-n.sx,my-n.sy); if(d<hd+rr){ hd=d; hovered=i; } }); }
+        if(hovered!==hoverPrev && hovered>=0) Snd.blip(); hoverPrev=hovered;
+
+        // orden por profundidad (lejos primero: zz mayor = más lejos)
+        const order=nodes.map((_,i)=>i).sort((a,b)=>nodes[b].zz-nodes[a].zz);
+
+        // conexiones (constelación)
+        ctx.lineWidth=1;
+        for(const [a,b] of edges){ const na=nodes[a], nb=nodes[b]; const al=0.06+0.06*((na.sc+nb.sc)/2); ctx.strokeStyle=hexA("#7fdfff",al); ctx.beginPath(); ctx.moveTo(na.sx,na.sy); ctx.lineTo(nb.sx,nb.sy); ctx.stroke(); }
+
+        // nodos detrás (zz>0)
+        drawSet(order.filter(i=>nodes[i].zz>0), t);
+        const core=drawCore(t, energy);
+        // líneas núcleo→nodo + nodos delante
+        drawSet(order.filter(i=>nodes[i].zz<=0), t, core);
+
+        // shockwaves
+        for(let i=shocks.length-1;i>=0;i--){ const s=shocks[i]; s.t+=0.02; const rr=s.t*Math.min(W,H)*0.7; ctx.strokeStyle=hexA(s.color,Math.max(0,0.6*(1-s.t))); ctx.lineWidth=2+(1-s.t)*3; ctx.beginPath(); ctx.arc(core.px,core.py,rr,0,6.2832); ctx.stroke(); if(s.t>=1)shocks.splice(i,1); }
+
+        // tooltip
+        if(hovered>=0){ const n=nodes[hovered]; tip.style.left=n.sx+"px"; tip.style.top=(n.sy-n.baseR*n.sc)+"px"; tip.style.opacity="1"; tip.style.borderColor=hexA(n.color,0.6); document.getElementById("tc").textContent=CATS[n.cat].name; document.getElementById("tc").style.color=n.color; document.getElementById("tlbl").textContent=n.label; document.getElementById("tv").textContent=n.val; canvas.style.cursor="pointer"; }
+        else { tip.style.opacity="0"; canvas.style.cursor = dragging?"grabbing":"grab"; }
+
+        requestAnimationFrame(frame);
+      }
+
+      function drawSet(idxs, t, core){
+        for(const i of idxs){
+          const n=nodes[i];
+          const dim = highlight && n.cat!==highlight ? 0.18 : 1;
+          const isHover = i===hovered;
+          const alpha = (0.5 + n.sc*0.5) * dim;
+          if(core){ const la=(0.10+n.sc*0.12)*dim*(isHover?2:1); const grad=ctx.createLinearGradient(core.px,core.py,n.sx,n.sy); grad.addColorStop(0,hexA(n.color,0)); grad.addColorStop(1,hexA(n.color,la)); ctx.strokeStyle=grad; ctx.lineWidth=isHover?1.6:1; ctx.beginPath(); ctx.moveTo(core.px,core.py); ctx.lineTo(n.sx,n.sy); ctx.stroke(); let p=(pulses[i]+t*0.28)%1; ctx.fillStyle=hexA(n.color,(1-p)*alpha*0.9); ctx.beginPath(); ctx.arc(core.px+(n.sx-core.px)*p, core.py+(n.sy-core.py)*p,1.8,0,6.2832); ctx.fill(); }
+          const rr=n.baseR*n.sc*(isHover?1.6:1)+(n.pulse>0?n.pulse*6:0);
+          glow(n.sx,n.sy,rr,n.color,alpha);
+          if(n.pulse>0){ ctx.strokeStyle=hexA(n.color,n.pulse*0.8); ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(n.sx,n.sy,rr+(1-n.pulse)*22,0,6.2832); ctx.stroke(); }
+          if((isHover || (n.sc>1.05 && dim>0.5))){ ctx.textAlign="center"; ctx.fillStyle=hexA("#eaf2ff",isHover?0.95:0.55*alpha); ctx.font=`${isHover?12:10}px 'Share Tech Mono', monospace`; ctx.fillText(n.label,n.sx,n.sy-rr-8); }
+        }
+      }
+
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>
