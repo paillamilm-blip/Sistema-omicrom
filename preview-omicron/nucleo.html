@@ -66,6 +66,13 @@
       .proj-stats b { color: #7df9ff; font-family: var(--mono); }
       .proj button { margin-top: 12px; width: 100%; padding: 9px; border-radius: 9px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #eaf2ff; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
       @media (max-width: 720px) { .proj { left: 10px; right: 10px; width: auto; bottom: 250px; } }
+      /* Historial y racha */
+      #histStreak { font-family: var(--mono); font-size: 13px; color: #F59E0B; margin-bottom: 8px; text-shadow: 0 0 10px rgba(245,158,11,0.4); }
+      .hist-list { max-height: 180px; overflow-y: auto; }
+      .hist-row { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+      .hist-d { color: rgba(234,242,255,0.45); font-family: var(--mono); font-size: 9px; white-space: nowrap; }
+      .conv-reset { margin-top: 8px; width: 100%; padding: 9px; border-radius: 10px; background: rgba(255,61,87,0.08); border: 1px solid rgba(255,61,87,0.3); color: #ff9db0; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+      .conv-reset:hover { border-color: rgba(255,61,87,0.6); }
       .toggle { width: 38px; height: 38px; border-radius: 10px; background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.3); color: var(--cyan); display: grid; place-items: center; cursor: pointer; }
       .toggle.off { color: rgba(234,242,255,0.35); border-color: rgba(255,255,255,0.12); }
       .toggle.live { color: #ff3d57; border-color: rgba(255,61,87,0.6); animation: micpulse 1s ease-in-out infinite; }
@@ -170,8 +177,16 @@
           <button class="conv-act" id="cyr"><span class="t">⏱️ + Experiencia</span><span class="g">+ nodo · trayectoria</span></button>
           <button class="conv-act" id="cvo"><span class="t">📚 Aporte a Bóveda</span><span class="g">+ nodo · Trascendencia</span></button>
         </div>
+        <button class="conv-reset" id="convReset">↺ Reiniciar mi Gemelo</button>
         <button class="conv-close" id="convClose">Cerrar</button>
       </div>
+    </div>
+
+    <div class="proj" id="histPanel">
+      <div class="proj-h">📜 Historial de tu Gemelo</div>
+      <div id="histStreak">🔥 0 días de racha</div>
+      <div class="hist-list" id="histList"></div>
+      <button id="histClose">Cerrar historial</button>
     </div>
 
     <div class="console" id="console">
@@ -298,8 +313,10 @@
       let quest = null, questUntil = 0;          // ruta/quest activa (items {idx,btn,label,done})
       let questPts = [];                          // posiciones en pantalla de los pasos (para tocarlos)
       const ghost = new Set();                    // nodos "futuros" a proyectar
+      let lastInteract = 0, nudgeIdx = 0;         // Oráculo proactivo (inactividad)
+      let hist = [];                              // historial de convalidaciones
 
-      canvas.addEventListener("pointerdown", (e) => { if (scene!=="nexus") return; stopPresentation(); dragging=true; moved=false; mouse.down=true; lastX=e.clientX; lastY=e.clientY; });
+      canvas.addEventListener("pointerdown", (e) => { if (scene!=="nexus") return; lastInteract=performance.now(); stopPresentation(); dragging=true; moved=false; mouse.down=true; lastX=e.clientX; lastY=e.clientY; });
       addEventListener("pointermove", (e) => { mouse.x=e.clientX; mouse.y=e.clientY; mouse.has=true; if (dragging){ const dx=e.clientX-lastX, dy=e.clientY-lastY; if(Math.abs(dx)+Math.abs(dy)>3) moved=true; yaw+=dx*0.006; pitch+=dy*0.006; pitch=Math.max(-1.2,Math.min(1.2,pitch)); velY=dx*0.006; velX=dy*0.006; lastX=e.clientX; lastY=e.clientY; } });
       addEventListener("pointerup", () => {
         if (scene==="nexus" && !moved){
@@ -334,6 +351,7 @@
       const omsg = document.getElementById("omsg");
       let typeTimer = null;
       function oracleType(text, speak=true){
+        lastInteract = performance.now();
         clearInterval(typeTimer); let i=0;
         omsg.innerHTML='<span class="who">ORÁCULO ▸ </span>';
         const head = omsg.innerHTML;
@@ -661,6 +679,7 @@
           const skTxt = found.length? `, ${found.length} habilidades (${found.slice(0,3).join(", ")})` : "";
           const verb = already? "CV actualizado" : "CV convalidado";
           commit(`${verb}: detecté ${years} ${years===1?"año":"años"} de experiencia${skTxt}. Tu reputación sube a ${prof.rep} y tu PE a ${prof.pe}.`, "#00F0FF", okCv?LATENT_START+0:(prof.years>=1?LATENT_START+3:-1));
+          logHist(verb + " (" + years + (years===1?" año":" años") + ")");
         };
         try{
           const isText = (file.type&&file.type.startsWith("text")) || /\.(txt|md|csv|json|rtf)$/i.test(file.name||"");
@@ -683,9 +702,9 @@
       if(_g("convClose")) _g("convClose").onclick = ()=> convOv.classList.remove("open");
       if(convOv) convOv.onclick = (e)=>{ if(e.target===convOv) convOv.classList.remove("open"); };
       if(_g("cvf")) _g("cvf").addEventListener("change",(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; e.target.value=""; analyzeCV(f); });
-      if(_g("cti")) _g("cti").onclick = ()=>{ if(prof.titles>=5) return; const slot = prof.titles<2 ? (LATENT_START+1+prof.titles) : -1; prof.titles++; const ok = slot>=0 ? ignite(slot) : false; if(prof.titles>=2)_g("cti").classList.add("done"); flash("TÍTULO VALIDADO","#F59E0B"); commit("Título validado y verificable en tu Pasaporte. Suma a tu Fundamento.","#F59E0B", ok?slot:-1); convOv.classList.remove("open"); };
-      if(_g("cyr")) _g("cyr").onclick = ()=>{ if(prof.years>=15) return; prof.years++; const ok = prof.years===1 ? ignite(LATENT_START+3) : false; _g("cyr").classList.add("done"); flash("EXPERIENCIA +","#22d3ee"); commit("Experiencia acreditada. Tu trayectoria fortalece el núcleo.","#22d3ee", ok?LATENT_START+3:-1); convOv.classList.remove("open"); };
-      if(_g("cvo")) _g("cvo").onclick = ()=>{ prof.vault++; const ok = prof.vault===1 ? ignite(LATENT_START+4) : false; _g("cvo").classList.add("done"); flash("APORTE REGISTRADO","#39FF14"); commit("Aporte a la Bóveda registrado. Tu Trascendencia crece.","#39FF14", ok?LATENT_START+4:-1); convOv.classList.remove("open"); };
+      if(_g("cti")) _g("cti").onclick = ()=>{ if(prof.titles>=5) return; const slot = prof.titles<2 ? (LATENT_START+1+prof.titles) : -1; prof.titles++; const ok = slot>=0 ? ignite(slot) : false; if(prof.titles>=2)_g("cti").classList.add("done"); flash("TÍTULO VALIDADO","#F59E0B"); commit("Título validado y verificable en tu Pasaporte. Suma a tu Fundamento.","#F59E0B", ok?slot:-1); logHist("Título validado"); convOv.classList.remove("open"); };
+      if(_g("cyr")) _g("cyr").onclick = ()=>{ if(prof.years>=15) return; prof.years++; const ok = prof.years===1 ? ignite(LATENT_START+3) : false; _g("cyr").classList.add("done"); flash("EXPERIENCIA +","#22d3ee"); commit("Experiencia acreditada. Tu trayectoria fortalece el núcleo.","#22d3ee", ok?LATENT_START+3:-1); logHist("Experiencia +1 año"); convOv.classList.remove("open"); };
+      if(_g("cvo")) _g("cvo").onclick = ()=>{ prof.vault++; const ok = prof.vault===1 ? ignite(LATENT_START+4) : false; _g("cvo").classList.add("done"); flash("APORTE REGISTRADO","#39FF14"); commit("Aporte a la Bóveda registrado. Tu Trascendencia crece.","#39FF14", ok?LATENT_START+4:-1); logHist("Aporte a la Bóveda"); convOv.classList.remove("open"); };
 
       // ── Mejora = acción real del ecosistema (Academia/Bóveda/Market) ──
       function doEcosystemAction(act){
@@ -694,6 +713,7 @@
         else if(act==="year"){ if(prof.years<15){ prof.years++; if(prof.years===1)ignite(LATENT_START+3); _g("cyr")&&_g("cyr").classList.add("done"); } }
         else if(act==="vault"){ prof.vault++; if(prof.vault===1)ignite(LATENT_START+4); _g("cvo")&&_g("cvo").classList.add("done"); }
         omiRecompute(prof); setRep(prof.rep, true); setPE(prof.pe, true); updateTier(true); omiSave(prof);
+        logHist({cv:"CV convalidado",title:"Título validado",year:"Experiencia +1 año",vault:"Aporte a la Bóveda"}[act]||"Acción del ecosistema");
       }
       // ── Cada nodo tiene una ACCIÓN concreta: a dónde ir y qué ejecutas ──
       function nodeAction(n){
@@ -786,7 +806,7 @@
       // ── INNOVACIÓN 2 · Proyección temporal ──
       function projectFuture(weeks){ const p=JSON.parse(JSON.stringify(prof)); ghost.clear(); for(let k=0;k<weeks;k++){ const btn=bestBtn(p); if(!btn)break; const b=stepApply(p,btn); if(b>=0)ghost.add(b); } omiRecompute(p); return {rep:p.rep,pe:p.pe,tier:tierInfo(p.pe).cur.n}; }
       function updateProj(){ const w=+_g("projRange").value; _g("projWk").textContent=w+(w===1?" semana":" semanas"); const f=projectFuture(w); const dRep=f.rep-prof.rep, dPe=f.pe-prof.pe; _g("projStats").innerHTML=`Reputación <b>${f.rep}</b> <span style="color:#39FF14">(+${dRep})</span><br>PE <b>${f.pe.toLocaleString("es")}</b> <span style="color:#39FF14">(+${dPe})</span><br>Nodo <b>${f.tier}</b>`; }
-      function openProj(){ _g("projPanel")&&_g("projPanel").classList.add("open"); updateProj(); }
+      function openProj(){ _g("projPanel")&&_g("projPanel").classList.add("open"); _g("histPanel")&&_g("histPanel").classList.remove("open"); updateProj(); }
       function closeProj(){ _g("projPanel")&&_g("projPanel").classList.remove("open"); ghost.clear(); }
       if(_g("projRange")) _g("projRange").addEventListener("input",updateProj);
       if(_g("projClose")) _g("projClose").onclick=closeProj;
@@ -809,6 +829,41 @@
         { k:["futuro","proyect","en cuánto","en cuanto","en x semanas","cómo estaré","como estare","adónde llego","adonde llego"], cat:null, hi:"noclear", r:()=>{ openProj(); return "Proyectando tu futuro. Mueve el control para ver semanas hacia adelante y a qué Nodo llegarías."; } },
         { k:["ruta","camino","quest","plan","cómo llego","como llego","secuencia","misión","mision"], cat:null, hi:"noclear", r:()=>runQuest() }
       );
+
+      // ═══════════ MÁXIMA POTENCIA · historial, racha, reinicio y Oráculo proactivo ═══════════
+      const HKEY="omicron_hist";
+      hist = (function(){ try{ return JSON.parse(localStorage.getItem(HKEY)||"[]"); }catch(e){ return []; } })();
+      function saveHist(){ try{ localStorage.setItem(HKEY, JSON.stringify(hist.slice(-60))); }catch(e){} }
+      function streakDays(){ if(!hist.length) return 0; const set=new Set(hist.map(h=>new Date(h.d).toDateString())); let cur=new Date(); cur.setHours(0,0,0,0); if(!set.has(cur.toDateString())){ cur.setDate(cur.getDate()-1); if(!set.has(cur.toDateString())) return 0; } let s=0; while(set.has(cur.toDateString())){ s++; cur.setDate(cur.getDate()-1); } return s; }
+      function renderHist(){ const el=_g("histList"); if(!el) return; const s=streakDays(); if(_g("histStreak")) _g("histStreak").textContent="🔥 "+s+(s===1?" día de racha":" días de racha"); if(!hist.length){ el.innerHTML='<div style="opacity:0.5;font-size:11px">Aún sin actividad. Convalida algo para empezar tu racha.</div>'; return; } el.innerHTML=hist.slice(-10).reverse().map(h=>{ const d=new Date(h.d); const dd=d.toLocaleDateString("es",{day:"2-digit",month:"short"})+" "+d.toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"}); return `<div class="hist-row"><span>▸ ${h.t}</span><span class="hist-d">${dd}</span></div>`; }).join(""); }
+      function logHist(label){ hist.push({t:label, d:Date.now()}); saveHist(); renderHist(); }
+      function openHist(){ _g("histPanel")&&_g("histPanel").classList.add("open"); _g("projPanel")&&_g("projPanel").classList.remove("open"); renderHist(); }
+      if(_g("histClose")) _g("histClose").onclick=()=>_g("histPanel").classList.remove("open");
+      renderHist();
+
+      // Reinicio total del Gemelo (para ver todo nacer desde cero)
+      function resetGemelo(){ if(!confirm("¿Reiniciar tu Gemelo? Se borrarán tus datos convalidados y el historial.")) return; try{ localStorage.removeItem("omicron_gemelo"); localStorage.removeItem(HKEY); }catch(e){} Object.assign(prof, omiDefault()); omiRecompute(prof); for(let i=LATENT_START;i<nodes.length;i++){ nodes[i].locked=true; nodes[i].born=-1; } ["cv","cti","cyr","cvo"].forEach(id=>_g(id)&&_g(id).classList.remove("done")); quest=null; questPts.length=0; ghost.clear(); hist=[]; renderHist(); lastTier=-1; setRep(prof.rep,true); setPE(prof.pe,true); updateTier(false); flash("GEMELO REINICIADO","#F59E0B"); oracleType("Tu Gemelo se reinició. Empieza a convalidar y verás nacer tu universo desde cero."); if(convOv)convOv.classList.remove("open"); }
+      if(_g("convReset")) _g("convReset").onclick=resetGemelo;
+
+      // Chip historial
+      const histChip=document.createElement("div"); histChip.className="chip"; histChip.style.borderColor="rgba(245,158,11,0.5)"; histChip.style.color="#F59E0B"; histChip.textContent="📜 Historial"; histChip.onclick=()=>{ Snd.blip(); openHist(); }; chipsEl.appendChild(histChip);
+
+      // Comandos de voz (historial / reinicio)
+      COMMANDS.push(
+        { k:["historial","racha","qué he hecho","que he hecho","mi actividad","progreso acumulado"], cat:null, hi:"noclear", r:()=>{ openHist(); const s=streakDays(); return `Aquí está tu historial. Llevas una racha de ${s} ${s===1?"día":"días"}. Cada convalidación queda registrada.`; } },
+        { k:["reiniciar","reinicia","empezar de cero","borrar todo","resetear","reset"], cat:null, hi:"noclear", r:()=>{ resetGemelo(); return "Reiniciando tu Gemelo…"; } }
+      );
+
+      // Oráculo proactivo: si estás inactivo, te sugiere el siguiente paso
+      lastInteract = performance.now();
+      const NUDGES = [
+        ()=>{ const w=weakestSkill(); return w>=0? `Un consejo: tu eje más débil es ${nodes[w].label}. Dime "mi brecha" y te ayudo a cerrarla.` : "Sigue explorando tu universo; cada nodo tiene una acción."; },
+        ()=>"¿Quieres ver tu futuro? Toca 🔮 Futuro y proyecta tus próximas semanas.",
+        ()=>"Puedo trazarte una ruta al siguiente Nodo. Di \"mi ruta\" y tócala paso a paso.",
+        ()=>"Comparte tu Gemelo: toca 🎫 Pasaporte para descargar tu tarjeta verificable.",
+        ()=>`Vas en reputación ${rep} y ${prof.pe} PE. Convalida algo nuevo para seguir subiendo.`
+      ];
+      setInterval(()=>{ if(scene!=="nexus") return; if(typeof speaking!=="undefined" && speaking) return; if(performance.now()-lastInteract > 32000){ oracleType(NUDGES[nudgeIdx % NUDGES.length]()); nudgeIdx++; } }, 4000);
 
       requestAnimationFrame(frame);
     </script>
