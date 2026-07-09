@@ -77,6 +77,16 @@
       .conv-act.done { border-color: rgba(57,255,20,0.4); background: rgba(57,255,20,0.06); }
       .conv-act .t { font-weight: 700; font-size: 14px; } .conv-act .g { font-family: var(--mono); font-size: 9.5px; color: var(--amber); }
       .conv-close { margin-top: 14px; width: 100%; padding: 11px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #eaf2ff; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+      .actcard { position: fixed; right: 22px; top: 50%; transform: translate(24px,-50%); z-index: 16; width: 252px; opacity: 0; pointer-events: none; transition: all .25s; background: rgba(6,12,26,0.96); border: 1px solid rgba(0,240,255,0.4); border-radius: 15px; padding: 16px; backdrop-filter: blur(10px); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+      .actcard.show { opacity: 1; transform: translate(0,-50%); pointer-events: auto; }
+      .ac-x { position: absolute; top: 7px; right: 11px; background: none; border: none; color: rgba(234,242,255,0.5); font-size: 19px; cursor: pointer; line-height: 1; }
+      .ac-cat { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; }
+      .ac-lbl { font-size: 18px; font-weight: 700; margin-top: 2px; }
+      .ac-mej { font-size: 12.5px; color: rgba(234,242,255,0.82); margin-top: 8px; line-height: 1.4; }
+      .ac-opt { font-size: 12px; color: #ffdd9e; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); line-height: 1.4; }
+      .ac-opt b { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--amber); text-transform: uppercase; display: block; margin-bottom: 3px; }
+      .ac-btn { margin-top: 12px; width: 100%; padding: 11px; border-radius: 10px; border: none; cursor: pointer; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; color: #020613; background: linear-gradient(135deg,#7df9ff,#00f0ff); }
+      @media (max-width: 720px) { .actcard { right: 10px; left: 10px; width: auto; top: auto; bottom: 210px; transform: translateY(12px); } .actcard.show { transform: none; } }
       .hint { position: fixed; bottom: 128px; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: rgba(234,242,255,0.35); text-transform: uppercase; z-index: 9; opacity: 0; transition: opacity 1s; }
       .hint.show { opacity: 1; animation: fade 3s ease-in-out infinite; } @keyframes fade { 0%,100%{opacity:0.3} 50%{opacity:0.6} }
     </style>
@@ -91,6 +101,15 @@
     <div class="hint" id="hint">Arrastra para girar tu universo · pregúntale al Oráculo</div>
     <div id="tip"><div class="cat" id="tc"></div><div class="lbl" id="tlbl"></div><div class="val" id="tv"></div><div class="det" id="tdet"></div><div class="mej" id="tmej"></div></div>
     <div class="flash" id="flash"></div>
+
+    <div class="actcard" id="actCard">
+      <button class="ac-x" id="acX">×</button>
+      <div class="ac-cat" id="acCat"></div>
+      <div class="ac-lbl" id="acLbl"></div>
+      <div class="ac-mej" id="acMej"></div>
+      <div class="ac-opt" id="acOpt"></div>
+      <button class="ac-btn" id="acBtn"></button>
+    </div>
 
     <button class="conv-fab" id="convBtn">＋ Aportar datos</button>
     <div class="conv-ov" id="convOv">
@@ -154,6 +173,16 @@
 
       // ══ Datos (galaxia) ══
       const CATS = { skill:{name:"Habilidad",color:"#00F0FF"}, cred:{name:"Credencial",color:"#F59E0B"}, red:{name:"Red / Confianza",color:"#38BDF8"}, token:{name:"Economía",color:"#39FF14"}, gob:{name:"Gobernanza",color:"#FF3D57"} };
+      // Qué eje refuerza cada categoría (0=EJEcución,1=CALidad,2=TRAscendencia,3=FUNdamento)
+      const CAT_EJE = { skill:0, token:0, red:1, cred:3, gob:2 };
+      // La mejora es una ACCIÓN dentro del sistema + a qué puedes optar
+      const CAT_ACTION = {
+        skill: { label:"Rendir Examen IA · Academia", act:"title", opt:"Al validarlo optas a contratos senior en el Market." },
+        cred:  { label:"Publicar credencial · Pasaporte", act:"title", opt:"Con tus credenciales optas a ofertas verificadas en Empleos." },
+        red:   { label:"Mentorear · Bóveda", act:"vault", opt:"Mentoreando optas a más reputación y al rol de Árbitro." },
+        token: { label:"Tomar un contrato · Market", act:"year", opt:"Con más contratos optas a bajar tu comisión de nodo." },
+        gob:   { label:"Aportar · Gobernanza/Bóveda", act:"vault", opt:"Participando optas a incidir en la red y ganar reputación." },
+      };
       const RAW = [
         ["skill","Frontend","Nivel 88","Interfaces y experiencia de usuario.","Toma un contrato frontend de hito corto en el Market."],
         ["skill","Backend","Nivel 72","Lógica, APIs y datos del servidor.","Valida un nodo backend en la Academia."],
@@ -282,7 +311,7 @@
         { k:["ayuda","help","comando","que puedo"], cat:null, r:()=>"Puedes preguntarme por: habilidades, reputación, tokens, credenciales, gobernanza, tu brecha, o pedirme evolucionar." },
       ];
       function oracle(raw){
-        if (raw.startsWith("nodo:")) { const idx=+raw.split(":")[1]; const n = nodes[idx]; if(n){ focusNode(idx); oracleType(`${n.label}. ${n.detail} Para mejorar: ${n.mejora}`); } return; }
+        if (raw.startsWith("nodo:")) { const idx=+raw.split(":")[1]; const n = nodes[idx]; if(n){ focusNode(idx); oracleType(`${n.label}. ${n.detail} Para mejorar: ${n.mejora}`); showActionCard(idx); } return; }
         const q = raw.toLowerCase().trim();
         if (!q) return;
         let cmd = COMMANDS.find(c => c.k.some(k => q.includes(k)));
@@ -364,6 +393,7 @@
         ["tl","tr","console","hint","convBtn"].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("show");});
         Snd.chime();
         setTimeout(()=>oracleType(`Núcleo despierto. Tu reputación es ${rep}. Pulsa "Aportar datos" para convalidar tu CV y títulos: verás nacer nodos en tu galaxia.`), 700);
+        try{ if(!localStorage.getItem("omicron_tour")){ localStorage.setItem("omicron_tour","1"); setTimeout(runGuidedTour, 2600); } }catch(e){}
       };
 
       // ══ Dibujo ══
@@ -434,6 +464,18 @@
         // líneas núcleo→nodo + nodos delante
         drawSet(order.filter(i=>nodes[i].zz<=0), t, core);
 
+        // Enlace del nodo activo con el EJE que refuerza
+        const linkIdx = hovered>=0 ? hovered : spotlight;
+        if(linkIdx>=0 && nodes[linkIdx] && !nodes[linkIdx].locked){
+          const n=nodes[linkIdx], ei=CAT_EJE[n.cat];
+          if(ei!=null){ const seg=Math.PI/2, mid=-Math.PI/2+ei*seg+seg/2, arcR=Math.min(W,H)*0.185;
+            const ex=core.px+Math.cos(mid)*arcR, ey=core.py+Math.sin(mid)*arcR;
+            ctx.setLineDash([2,3]); ctx.strokeStyle=hexA(n.color,0.7); ctx.lineWidth=1.5;
+            ctx.beginPath(); ctx.moveTo(n.sx,n.sy); ctx.lineTo(ex,ey); ctx.stroke(); ctx.setLineDash([]);
+            ctx.beginPath(); ctx.arc(ex,ey,4.5,0,6.2832); ctx.fillStyle=hexA(n.color,0.95); ctx.fill();
+          }
+        }
+
         // shockwaves
         for(let i=shocks.length-1;i>=0;i--){ const s=shocks[i]; s.t+=0.02; const rr=s.t*Math.min(W,H)*0.7; ctx.strokeStyle=hexA(s.color,Math.max(0,0.6*(1-s.t))); ctx.lineWidth=2+(1-s.t)*3; ctx.beginPath(); ctx.arc(core.px,core.py,rr,0,6.2832); ctx.stroke(); if(s.t>=1)shocks.splice(i,1); }
 
@@ -483,6 +525,39 @@
       if(_g("cti")) _g("cti").onclick = ()=>{ if(prof.titles>=5) return; const slot = prof.titles<2 ? (LATENT_START+1+prof.titles) : -1; prof.titles++; const ok = slot>=0 ? ignite(slot) : false; if(prof.titles>=2)_g("cti").classList.add("done"); flash("TÍTULO VALIDADO","#F59E0B"); commit("Título validado y verificable en tu Pasaporte. Suma a tu Fundamento.","#F59E0B", ok?slot:-1); convOv.classList.remove("open"); };
       if(_g("cyr")) _g("cyr").onclick = ()=>{ if(prof.years>=15) return; prof.years++; const ok = prof.years===1 ? ignite(LATENT_START+3) : false; _g("cyr").classList.add("done"); flash("EXPERIENCIA +","#22d3ee"); commit("Experiencia acreditada. Tu trayectoria fortalece el núcleo.","#22d3ee", ok?LATENT_START+3:-1); convOv.classList.remove("open"); };
       if(_g("cvo")) _g("cvo").onclick = ()=>{ prof.vault++; const ok = prof.vault===1 ? ignite(LATENT_START+4) : false; _g("cvo").classList.add("done"); flash("APORTE REGISTRADO","#39FF14"); commit("Aporte a la Bóveda registrado. Tu Trascendencia crece.","#39FF14", ok?LATENT_START+4:-1); convOv.classList.remove("open"); };
+
+      // ── Mejora = acción real del ecosistema (Academia/Bóveda/Market) ──
+      function doEcosystemAction(act){
+        if(act==="cv"){ if(prof.cv)return; prof.cv=true; _g("cv")&&_g("cv").classList.add("done"); ignite(LATENT_START+0); }
+        else if(act==="title"){ if(prof.titles<5){ const slot=prof.titles<2?LATENT_START+1+prof.titles:-1; prof.titles++; if(slot>=0)ignite(slot); if(prof.titles>=2)_g("cti")&&_g("cti").classList.add("done"); } }
+        else if(act==="year"){ if(prof.years<15){ prof.years++; if(prof.years===1)ignite(LATENT_START+3); _g("cyr")&&_g("cyr").classList.add("done"); } }
+        else if(act==="vault"){ prof.vault++; if(prof.vault===1)ignite(LATENT_START+4); _g("cvo")&&_g("cvo").classList.add("done"); }
+        omiRecompute(prof); rep=prof.rep; omiSave(prof);
+      }
+      let currentActNode = -1;
+      function showActionCard(idx){
+        const n=nodes[idx]; if(!n)return; currentActNode=idx;
+        const a=CAT_ACTION[n.cat]||CAT_ACTION.skill;
+        _g("acCat").textContent=CATS[n.cat].name; _g("acCat").style.color=n.color;
+        _g("acLbl").textContent=n.label;
+        _g("acMej").innerHTML="▲ "+n.mejora;
+        _g("acOpt").innerHTML="<b>A qué puedes optar</b>"+a.opt;
+        const btn=_g("acBtn"); if(btn){ btn.textContent="▶ "+a.label; btn.style.background=`linear-gradient(135deg, ${n.color}, #7df9ff)`; }
+        _g("actCard").classList.add("show");
+      }
+      if(_g("acX")) _g("acX").onclick=()=>_g("actCard").classList.remove("show");
+      if(_g("acBtn")) _g("acBtn").onclick=()=>{ const n=nodes[currentActNode]; if(!n)return; const a=CAT_ACTION[n.cat]||CAT_ACTION.skill; doEcosystemAction(a.act); try{Snd.chime();}catch(e){} shocks.push({t:0,color:n.color}); flash("ACCIÓN REALIZADA", n.color); oracleType(`Hecho. ${a.opt} Tu reputación ahora es ${rep}.`); _g("actCard").classList.remove("show"); };
+
+      // ── Tour guiado ──
+      function runGuidedTour(){
+        camActive=false; try{Snd.init();}catch(e){}
+        oracleType("Bienvenido. Te muestro cómo funciona tu Gemelo en 20 segundos.");
+        setTimeout(()=>{ convOv.classList.add("open"); oracleType("Aquí CONVALIDAS tus datos: CV, títulos, experiencia y aportes."); },4500);
+        setTimeout(()=>{ convOv.classList.remove("open"); if(prof.years<15){ prof.years++; if(prof.years===1)ignite(LATENT_START+3); omiRecompute(prof); rep=prof.rep; omiSave(prof); shocks.push({t:0,color:"#22d3ee"}); focusNode(LATENT_START+3);} flash("NODO NACIDO","#22d3ee"); oracleType("Cada dato ENCIENDE un nodo y hace crecer un eje. Mira tus arcos alrededor del núcleo."); },9000);
+        setTimeout(()=>{ showActionCard(LATENT_START+3); oracleType("Cada punto te da una MEJORA que es una ACCIÓN real: Academia, Bóveda, Market. Ahí ejecutas tu crecimiento y ves a qué puedes optar."); },13500);
+        setTimeout(()=>{ _g("actCard").classList.remove("show"); oracleType("Y puedes pedirme lo que quieras por voz. Gíralo, explóralo. Este es tu Gemelo Digital."); },18800);
+      }
+      const tourChip=document.createElement("div"); tourChip.className="chip"; tourChip.style.borderColor="rgba(57,255,20,0.5)"; tourChip.style.color="#39FF14"; tourChip.textContent="▶ Tour guiado"; tourChip.onclick=()=>runGuidedTour(); chipsEl.appendChild(tourChip);
 
       requestAnimationFrame(frame);
     </script>
