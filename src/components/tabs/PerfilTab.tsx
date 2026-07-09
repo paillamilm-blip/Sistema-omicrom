@@ -17,6 +17,7 @@ import { CredentialReview } from '../perfil/CredentialReview';
 import { ShareCredentialModal, RedPanel } from '../perfil/RedSocial';
 import { ProgressRadar } from '../shared/ProgressRadar';
 import { HoloNucleo3D } from '../HoloNucleo3D';
+import { ConvalidaGemelo } from '../perfil/ConvalidaGemelo';
 // 🧪 MVP PILOTO CONTROLADO: Dossier de Evidencia y Carta de Competencias
 // dependen del Examinador IA / carta-ia (Edge Functions de IA). Se ocultan
 // para el piloto (no se elimina el código, solo se comenta su uso).
@@ -644,6 +645,7 @@ export function PerfilTab() {
 
         {/* Contenido de la sección activa */}
         <div key={section} style={{ animation: 'sectionIn 0.35s cubic-bezier(0.22,1,0.36,1) both' }}>
+          {section === 'gemelo' && <ConvalidaGemelo />}
           {section === 'gemelo' && gemelo && <EjesPanel gemelo={gemelo} />}
           {/* 🧪 MVP PILOTO CONTROLADO: Carta de Competencias IA y Dossier de
               Evidencia (Examinador IA) deshabilitados para el piloto. */}
