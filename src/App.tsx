@@ -9,6 +9,7 @@ import { BottomNav } from './components/shared/BottomNav';
 import { HubSubNav } from './components/shared/HubSubNav';
 import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
+import { OraculoBar } from './components/OraculoBar';
 import { Onboarding, shouldShowOnboarding } from './components/shared/Onboarding';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
@@ -132,6 +133,9 @@ function AppShell() {
       <BottomNav />
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
       <PublicProfileGate />
+      <ErrorBoundary section="Oráculo">
+        <OraculoBar />
+      </ErrorBoundary>
     </div>
   );
 }

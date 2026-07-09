@@ -62,6 +62,10 @@
       #gate h1 { font-size:24px; font-weight:700; } #gate .tag { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:rgba(0,240,255,0.6); text-transform:uppercase; }
       .enter { font-family:var(--mono); font-size:12px; letter-spacing:2px; text-transform:uppercase; padding:12px 26px; border-radius:26px; cursor:pointer; color:#020613; font-weight:700; background:linear-gradient(135deg,#7df9ff,#00f0ff); border:none; box-shadow:0 0 30px rgba(0,240,255,0.5); }
       .hint { text-align:center; font-family:var(--mono); font-size:9px; letter-spacing:1px; color:rgba(234,242,255,0.4); padding:6px 0 2px; }
+      .toast { position:absolute; left:50%; top:64px; transform:translateX(-50%) translateY(-12px); z-index:9; background:rgba(6,12,26,0.95); border:1px solid rgba(0,240,255,0.5); border-radius:12px; padding:9px 16px; text-align:center; opacity:0; transition:all 0.3s; pointer-events:none; box-shadow:0 8px 30px rgba(0,0,0,0.5); }
+      .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+      .toast .tt { font-family:var(--mono); font-size:10px; letter-spacing:1.5px; color:var(--cyan); text-transform:uppercase; }
+      .toast .ts { font-size:13px; margin-top:2px; }
     </style>
   </head>
   <body>
@@ -71,7 +75,7 @@
       <header>
         <div class="brand"><span class="omega">Ω</span><span class="title" id="title">Inicio</span></div>
         <div class="hdr-actions">
-          <span class="token">🪙 2,480</span>
+          <span class="token" id="hdrtoken">🪙 2,480</span>
           <button class="icon-btn" id="mic" title="Hablar" aria-label="Hablar"></button>
           <button class="icon-btn" id="mute" aria-label="Sonido"></button>
         </div>
@@ -141,6 +145,7 @@
       </div>
 
       <!-- Oráculo -->
+      <div class="toast" id="toast"></div>
       <div class="oraclebar" id="oraclebar"><div class="obubble" id="obubble"></div></div>
 
       <!-- Bottom nav -->
@@ -212,13 +217,45 @@
         {k:["cuanto","cuánto","cuant"],a:"Tienes 2.480 tokens y 1.240 puntos de experiencia."},
         {k:["quien","quién","hola","ayuda","puedo"],a:"Soy tu Gemelo Digital. Dime: abre mi billetera, muéstrame la academia, o ve a gobernanza."},
       ];
+      // Toast de acción
+      const toastEl=document.getElementById("toast");let toastTimer=null;
+      function toast(title,sub){toastEl.innerHTML=`<div class="tt">${title}</div><div class="ts">${sub}</div>`;toastEl.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),3400);Snd.blip();}
+
+      // Acciones por voz (hacen cosas, no solo navegan)
+      const ACTIONS=[
+        {k:["publica","publicar","ofrec","crear servicio","nuevo servicio"],run:()=>{go("servicios");toast("Nuevo servicio","Formulario de publicación listo");return "Abriendo el mercado para publicar tu servicio.";}},
+        {k:["transfier","envía token","envia token","manda token","paga"],run:(q)=>{const m=q.match(/(\d+)/);const amt=m?+m[1]:100;go("billetera");const bal=Math.max(0,2480-amt);const ht=document.getElementById("hdrtoken");if(ht)ht.textContent="🪙 "+bal.toLocaleString();toast("Transferencia","−"+amt+" tokens en escrow");return `Preparando transferencia de ${amt} tokens en escrow.`;}},
+        {k:["vota","votar","apruebo","rechazo","aprobar"],run:(q)=>{go("gobernanza");const fav=!/(contra|rechaz|\bno\b)/.test(q);toast("Voto registrado",fav?"A favor · Propuesta #14":"En contra · Propuesta #14");return fav?"Voto a favor registrado en la propuesta catorce.":"Voto en contra registrado.";}},
+        {k:["verifica","pasaporte","verificar credencial","comparte credencial"],run:()=>{toast("Pasaporte","Enlace de verificación pública generado");return "Generé un enlace público para verificar tu Pasaporte, sin exponer tus datos.";}},
+      ];
+
+      // Modo tour (recorrido automático narrado)
+      let touring=false,tourT=[];
+      function stopTour(){touring=false;tourT.forEach(clearTimeout);tourT=[];}
+      function runTour(){
+        stopTour();touring=true;
+        const seq=[
+          ["inicio","Este es tu Gemelo Digital: reputación noventa y cuatro y tu capital orbitando tu núcleo."],
+          ["habilidades","Tus habilidades validadas, lideradas por Frontend."],
+          ["academia","La Academia: tu Sistema Solar del Aprendizaje."],
+          ["servicios","El mercado, con Sello de Confianza en cada servicio."],
+          ["billetera","Tu economía de tokens, con escrow y comisiones por nodo."],
+          ["gobernanza","Y la gobernanza: votas y arbitras la red."],
+          ["inicio","Esto es Ómicron. Capital intelectual, con confianza cero."],
+        ];
+        seq.forEach((s,i)=>tourT.push(setTimeout(()=>{if(!touring)return;go(s[0]);speakOracle(s[1]);if(i===seq.length-1)touring=false;},i*5200)));
+      }
+
       function route(raw){
         const q=(raw||"").toLowerCase().trim(); if(!q)return;
         obub.innerHTML=`<span class="who" style="color:#00F0FF">TÚ ▸ </span>${raw}`;obar.classList.add("show");
+        if(/(tour|presentaci|demo|recorrido|mu[eé]strame todo|ens[eé]ñame todo)/.test(q)){ Snd.chime(); setTimeout(()=>{speakOracle("Iniciando recorrido por Ómicron.");runTour();},150); return; }
+        const act=ACTIONS.find(a=>a.k.some(k=>q.includes(k)));
+        if(act){ Snd.chime(); const r=act.run(q); setTimeout(()=>speakOracle(r),150); return; }
         const nav=NAVWORDS.find(n=>n.k.some(k=>q.includes(k)));
         if(nav){ Snd.chime(); const t=TITLES[nav.id]; go(nav.id); setTimeout(()=>speakOracle(`Abriendo ${t}.`),150); return; }
         const ans=ANSWERS.find(a=>a.k.some(k=>q.includes(k)));
-        setTimeout(()=>speakOracle(ans?ans.a:"No reconocí ese comando. Prueba: abre mi billetera, o muéstrame mis habilidades."),150);
+        setTimeout(()=>speakOracle(ans?ans.a:"No reconocí ese comando. Prueba: abre mi billetera, publica un servicio, vota la propuesta, o hazme un tour."),150);
       }
 
       // ── Voz (reconocimiento) ──
