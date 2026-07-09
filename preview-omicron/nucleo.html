@@ -535,9 +535,13 @@
       const prof = omiLoad(); omiRecompute(prof); rep = prof.rep;
 
       const _g = (id)=>document.getElementById(id);
+      // Sincroniza el número visible de Reputación con un pulso (antes NO se actualizaba → "no pasaba nada")
+      const repEl = _g("rep");
+      function setRep(v, animate){ rep = v; if(repEl){ repEl.textContent = v; if(animate) repEl.animate([{transform:"scale(1)"},{transform:"scale(1.45)",color:"#7df9ff"},{transform:"scale(1)"}],{duration:650,easing:"ease-out"}); } }
+      setRep(prof.rep, false); // refleja el estado real al cargar (no se queda pegado en 94)
       const convOv = _g("convOv");
       function ignite(idx, instant){ const n=nodes[idx]; if(!n||!n.locked) return false; n.locked=false; n.born=instant?-1:performance.now(); if(!instant)n.pulse=1; return true; }
-      function commit(narr, col, idx){ omiRecompute(prof); rep=prof.rep; omiSave(prof); if(idx>=0){ shocks.push({t:0,color:col||nodes[idx].color}); focusNode(idx); } try{Snd.sweep();}catch(e){} if(narr) oracleType(narr); }
+      function commit(narr, col, idx){ omiRecompute(prof); setRep(prof.rep, true); omiSave(prof); if(idx>=0){ shocks.push({t:0,color:col||nodes[idx].color}); focusNode(idx); } try{Snd.sweep();}catch(e){} if(narr) oracleType(narr); }
       // Reflejar lo ya convalidado (persistencia entre pantallas/sesiones)
       (function reflect(){ if(prof.cv) ignite(LATENT_START+0,true); if(prof.titles>=1) ignite(LATENT_START+1,true); if(prof.titles>=2) ignite(LATENT_START+2,true); if(prof.years>=1) ignite(LATENT_START+3,true); if(prof.vault>=1) ignite(LATENT_START+4,true);
         if(prof.cv)_g("cv")&&_g("cv").classList.add("done"); if(prof.titles>=2)_g("cti")&&_g("cti").classList.add("done"); if(prof.years>=1)_g("cyr")&&_g("cyr").classList.add("done"); if(prof.vault>=1)_g("cvo")&&_g("cvo").classList.add("done"); })();
@@ -545,7 +549,9 @@
       if(_g("convBtn")) _g("convBtn").onclick = ()=>{ try{Snd.init();}catch(e){} convOv.classList.add("open"); };
       if(_g("convClose")) _g("convClose").onclick = ()=> convOv.classList.remove("open");
       if(convOv) convOv.onclick = (e)=>{ if(e.target===convOv) convOv.classList.remove("open"); };
-      if(_g("cvf")) _g("cvf").addEventListener("change",(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f||prof.cv)return; prof.cv=true; const ok=ignite(LATENT_START+0); _g("cv").classList.add("done"); flash("CV CONVALIDADO","#00F0FF"); commit("CV convalidado. Tu experiencia laboral ya orbita tu núcleo y refuerza tu Ejecución.","#00F0FF", ok?LATENT_START+0:-1); convOv.classList.remove("open"); });
+      if(_g("cvf")) _g("cvf").addEventListener("change",(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; e.target.value=""; convOv.classList.remove("open");
+        if(prof.cv){ focusNode(LATENT_START+0); flash("CV ACTUALIZADO","#00F0FF"); oracleType("Tu CV ya está convalidado y orbita tu núcleo. Suma títulos o experiencia para seguir subiendo tu reputación."); return; }
+        prof.cv=true; omiRecompute(prof); const ok=ignite(LATENT_START+0); _g("cv").classList.add("done"); flash("CV CONVALIDADO","#00F0FF"); commit(`CV convalidado. Tu experiencia ya orbita tu núcleo y tu reputación sube a ${prof.rep}. Reforzaste tu eje de Ejecución.`,"#00F0FF", ok?LATENT_START+0:-1); });
       if(_g("cti")) _g("cti").onclick = ()=>{ if(prof.titles>=5) return; const slot = prof.titles<2 ? (LATENT_START+1+prof.titles) : -1; prof.titles++; const ok = slot>=0 ? ignite(slot) : false; if(prof.titles>=2)_g("cti").classList.add("done"); flash("TÍTULO VALIDADO","#F59E0B"); commit("Título validado y verificable en tu Pasaporte. Suma a tu Fundamento.","#F59E0B", ok?slot:-1); convOv.classList.remove("open"); };
       if(_g("cyr")) _g("cyr").onclick = ()=>{ if(prof.years>=15) return; prof.years++; const ok = prof.years===1 ? ignite(LATENT_START+3) : false; _g("cyr").classList.add("done"); flash("EXPERIENCIA +","#22d3ee"); commit("Experiencia acreditada. Tu trayectoria fortalece el núcleo.","#22d3ee", ok?LATENT_START+3:-1); convOv.classList.remove("open"); };
       if(_g("cvo")) _g("cvo").onclick = ()=>{ prof.vault++; const ok = prof.vault===1 ? ignite(LATENT_START+4) : false; _g("cvo").classList.add("done"); flash("APORTE REGISTRADO","#39FF14"); commit("Aporte a la Bóveda registrado. Tu Trascendencia crece.","#39FF14", ok?LATENT_START+4:-1); convOv.classList.remove("open"); };
@@ -556,7 +562,7 @@
         else if(act==="title"){ if(prof.titles<5){ const slot=prof.titles<2?LATENT_START+1+prof.titles:-1; prof.titles++; if(slot>=0)ignite(slot); if(prof.titles>=2)_g("cti")&&_g("cti").classList.add("done"); } }
         else if(act==="year"){ if(prof.years<15){ prof.years++; if(prof.years===1)ignite(LATENT_START+3); _g("cyr")&&_g("cyr").classList.add("done"); } }
         else if(act==="vault"){ prof.vault++; if(prof.vault===1)ignite(LATENT_START+4); _g("cvo")&&_g("cvo").classList.add("done"); }
-        omiRecompute(prof); rep=prof.rep; omiSave(prof);
+        omiRecompute(prof); setRep(prof.rep, true); omiSave(prof);
       }
       let currentActNode = -1;
       function showActionCard(idx){
@@ -577,7 +583,7 @@
         camActive=false; try{Snd.init();}catch(e){}
         oracleType("Bienvenido. Te muestro cómo funciona tu Gemelo en 20 segundos.");
         setTimeout(()=>{ convOv.classList.add("open"); oracleType("Aquí CONVALIDAS tus datos: CV, títulos, experiencia y aportes."); },4500);
-        setTimeout(()=>{ convOv.classList.remove("open"); if(prof.years<15){ prof.years++; if(prof.years===1)ignite(LATENT_START+3); omiRecompute(prof); rep=prof.rep; omiSave(prof); shocks.push({t:0,color:"#22d3ee"}); focusNode(LATENT_START+3);} flash("NODO NACIDO","#22d3ee"); oracleType("Cada dato ENCIENDE un nodo y hace crecer un eje. Mira tus arcos alrededor del núcleo."); },9000);
+        setTimeout(()=>{ convOv.classList.remove("open"); if(prof.years<15){ prof.years++; if(prof.years===1)ignite(LATENT_START+3); omiRecompute(prof); setRep(prof.rep, true); omiSave(prof); shocks.push({t:0,color:"#22d3ee"}); focusNode(LATENT_START+3);} flash("NODO NACIDO","#22d3ee"); oracleType("Cada dato ENCIENDE un nodo y hace crecer un eje. Mira tus arcos alrededor del núcleo."); },9000);
         setTimeout(()=>{ showActionCard(LATENT_START+3); oracleType("Cada punto te da una MEJORA que es una ACCIÓN real: Academia, Bóveda, Market. Ahí ejecutas tu crecimiento y ves a qué puedes optar."); },13500);
         setTimeout(()=>{ _g("actCard").classList.remove("show"); oracleType("Y puedes pedirme lo que quieras por voz. Gíralo, explóralo. Este es tu Gemelo Digital."); },18800);
       }
