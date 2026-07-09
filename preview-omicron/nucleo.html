@@ -237,6 +237,15 @@
       <button id="histClose">Cerrar historial</button>
     </div>
 
+    <div class="proj" id="quizPanel">
+      <div class="proj-h">🧠 Medir conocimiento · en vivo</div>
+      <div style="height:8px;border-radius:5px;background:rgba(255,255,255,0.1);overflow:hidden;margin-bottom:12px">
+        <div id="quizMeter" style="height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,#7df9ff,#00f0ff);box-shadow:0 0 10px rgba(0,240,255,0.6);transition:width .4s"></div>
+      </div>
+      <div id="quizBody"></div>
+      <button id="quizClose">Cerrar</button>
+    </div>
+
     <div class="console" id="console">
       <div class="oracle-msg" id="omsg"></div>
       <div class="dock" id="dock"></div>
@@ -520,7 +529,7 @@
           }
           if (interim) omsg.innerHTML = '<span class="who" style="color:#00F0FF">TÚ ▸ </span>' + interim;
         };
-        recog.onerror = () => { listening = false; if (!convoMode) micBtn.classList.remove("live"); };
+        recog.onerror = (e) => { listening = false; if (!convoMode) micBtn.classList.remove("live"); if (e && (e.error === "not-allowed" || e.error === "service-not-allowed")) { convoMode = false; micBtn.classList.remove("live"); oracleType("Necesito permiso de micrófono. Actívalo en tu navegador o escríbeme por el chat de aquí abajo.", false); } };
         recog.onend = () => { listening = false; if (convoMode && !speaking) { try { recog.start(); listening = true; } catch (err) {} } else if (!convoMode) micBtn.classList.remove("live"); };
         micBtn.onclick = () => {
           convoMode = !convoMode;
@@ -557,6 +566,10 @@
         oracleType(greetText());  // habla de inmediato: texto + voz
         setTimeout(()=>{ try{ if(window.speechSynthesis && speechSynthesis.speaking) spokenConfirmed = true; }catch(e){} }, 500);
         try{ if(!localStorage.getItem("omicron_tour") && !(prof.cv||prof.titles||prof.years||prof.vault)){ localStorage.setItem("omicron_tour","1"); setTimeout(runGuidedTour, 5200); } }catch(e){}
+        // Empuje a EJECUTAR la mejora (a quien ya tiene datos): el Oráculo propone y resalta la acción.
+        if(prof.cv||prof.titles||prof.years||prof.vault){
+          setTimeout(()=>{ if(!awoken) return; try{ const b=bestNextStep(); if(b){ oracleType(`Para avanzar hoy: ${b.label}. Sumaría +${b.drep} de reputación y +${b.dpe} PE. Toca "Aportar datos" y lo hacemos juntos.`); if(typeof aportarChip!=="undefined" && aportarChip) aportarChip.animate([{boxShadow:"0 0 0 rgba(0,240,255,0)"},{boxShadow:"0 0 24px rgba(0,240,255,0.95)"},{boxShadow:"0 0 0 rgba(0,240,255,0)"}],{duration:1500,iterations:3}); } }catch(e){} }, 4600);
+        }
       }
       // Se puede entrar tocando el botón O la tarjeta… pero además entra SOLA tras un instante.
       const enterBtn = document.getElementById("enter"); if(enterBtn) enterBtn.onclick = awaken;
@@ -947,6 +960,36 @@
 
       // Chip historial
       const histChip=document.createElement("div"); histChip.className="chip"; histChip.style.borderColor="rgba(245,158,11,0.5)"; histChip.style.color="#F59E0B"; histChip.textContent="📜 Historial"; histChip.onclick=()=>{ Snd.blip(); openHist(); }; dockEl.appendChild(histChip);
+
+      // ── INNOVACIÓN · Medir conocimiento en TIEMPO REAL (feed al ecosistema) ──
+      const QUIZ=[
+        { q:"¿Qué asegura mejor la CALIDAD de tu trabajo?", o:["Ir más rápido sin revisar","Pruebas y revisión de pares","Evitar documentar"], a:1 },
+        { q:"Ante un cliente, ¿qué demuestra tu experiencia?", o:["Años sin evidencia","Credenciales verificables","Solo promesas"], a:1 },
+        { q:"Para subir tu reputación en la red conviene…", o:["Aislarte","Mentorear y aportar a la Bóveda","No colaborar"], a:1 },
+        { q:"¿Qué es tu capital intelectual?", o:["Solo dinero","Conocimiento y experiencia verificables","Un diploma en la pared"], a:1 },
+      ];
+      let quizIdx=0, quizScore=0;
+      function openQuiz(){ quizIdx=0; quizScore=0; _g("projPanel")&&_g("projPanel").classList.remove("open"); _g("histPanel")&&_g("histPanel").classList.remove("open"); _g("quizPanel").classList.add("open"); renderQuiz(); oracleType("Midamos tu conocimiento en tiempo real. Responde y verás tu índice subir al instante."); }
+      function closeQuiz(){ _g("quizPanel").classList.remove("open"); }
+      function renderQuiz(){
+        const body=_g("quizBody"), meter=_g("quizMeter"); if(!body) return;
+        if(meter) meter.style.width=Math.round((quizIdx/QUIZ.length)*100)+"%";
+        if(quizIdx>=QUIZ.length){ finishQuiz(); return; }
+        const it=QUIZ[quizIdx];
+        body.innerHTML='<div style="font-family:var(--display);font-size:14px;font-weight:600;line-height:1.4;margin-bottom:10px">'+(quizIdx+1)+' / '+QUIZ.length+' · '+it.q+'</div>';
+        it.o.forEach((opt,i)=>{ const b=document.createElement("button"); b.className="chip"; b.style.cssText="display:block;width:100%;text-align:left;margin:6px 0;text-transform:none;letter-spacing:0;font-size:12.5px;padding:11px 13px"; b.textContent=opt; b.onclick=()=>answerQuiz(i); body.appendChild(b); });
+      }
+      function answerQuiz(i){ const it=QUIZ[quizIdx]; const ok=(i===it.a); if(ok){ quizScore++; try{Snd.chime();}catch(e){} } else { try{Snd.blip();}catch(e){} } flash(ok?"CORRECTO":"CASI", ok?"#39FF14":"#F59E0B"); quizIdx++; renderQuiz(); }
+      function finishQuiz(){
+        const pct=Math.round((quizScore/QUIZ.length)*100); const meter=_g("quizMeter"); if(meter) meter.style.width="100%";
+        _g("quizBody").innerHTML='<div style="text-align:center;padding:6px 0"><div style="font-family:var(--display);font-size:44px;font-weight:700;color:#7df9ff;line-height:1">'+pct+'%</div><div style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:rgba(234,242,255,0.7);margin-top:4px;text-transform:uppercase">Índice de conocimiento</div></div>';
+        logHist("Conocimiento medido "+pct+"%");
+        if(pct>=60){ prof.vault++; omiRecompute(prof); setRep(prof.rep,true); setPE(prof.pe,true); updateTier(true); omiSave(prof); ignite(LATENT_START+4); shocks.push({t:0,color:"#39FF14"}); flash("CONOCIMIENTO VALIDADO","#39FF14"); oracleType("Excelente. Demostraste "+pct+" por ciento. Lo registré como aporte verificado a tu Bóveda: tu reputación es "+rep+" y tu PE "+prof.pe+"."); }
+        else { oracleType("Mediste "+pct+" por ciento. Refuérzalo en la Academia y repite para validar tu conocimiento."); }
+      }
+      if(_g("quizClose")) _g("quizClose").onclick=closeQuiz;
+      const quizChip=document.createElement("div"); quizChip.className="chip"; quizChip.style.borderColor="rgba(125,249,255,0.5)"; quizChip.style.color="#7df9ff"; quizChip.textContent="🧠 Medir"; quizChip.onclick=()=>{ try{Snd.blip();}catch(e){} openQuiz(); }; dockEl.appendChild(quizChip);
+      COMMANDS.push({ k:["medir","conocimiento","examen","evalua","evalúa","test","cuánto sé","cuanto se","quiz"], cat:null, hi:"noclear", r:()=>{ openQuiz(); return "Midamos tu conocimiento en tiempo real. Elige la respuesta correcta."; } });
       // Botón para mostrar/ocultar las preguntas rápidas (mantiene el dock limpio)
       const askToggle=document.createElement("div"); askToggle.className="chip ask-toggle"; askToggle.textContent="💬 Preguntar"; askToggle.onclick=()=>{ Snd.blip(); const open=chipsEl.classList.toggle("open"); askToggle.classList.toggle("on",open); askToggle.textContent=open?"💬 Ocultar preguntas":"💬 Preguntar"; }; dockEl.appendChild(askToggle);
 
