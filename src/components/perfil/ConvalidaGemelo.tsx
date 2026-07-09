@@ -8,6 +8,7 @@ import {
   BookOpen, Clock, FileText, GraduationCap, RotateCcw, Sparkles, TrendingUp,
 } from 'lucide-react';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
+import { recompute, type GemeloProfile } from '../../lib/gemeloProfile';
 import { C, FONT, RADIUS } from '../../theme';
 
 const EJES: { key: 'execution' | 'quality' | 'transcendence' | 'foundation'; label: string; color: string }[] = [
@@ -18,8 +19,17 @@ const EJES: { key: 'execution' | 'quality' | 'transcendence' | 'foundation'; lab
 ];
 
 export function ConvalidaGemelo() {
-  const { profile, actions, tier } = useGemeloProfile();
+  const { profile, actions, tier, next } = useGemeloProfile();
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Impacto en vivo (+PE/+rep) y resaltado del recomendado
+  const imp = (patch: Partial<GemeloProfile>) => {
+    const base = recompute({ ...profile });
+    const c = recompute({ ...profile, ...patch });
+    return `+${c.pe - base.pe} PE · +${c.rep - base.rep} rep`;
+  };
+  const reco = (a: string): React.CSSProperties =>
+    next && next.action === a ? { borderColor: 'rgba(245,158,11,0.65)', boxShadow: '0 0 14px rgba(245,158,11,0.35)' } : {};
 
   const cardBtn: React.CSSProperties = {
     display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'left',
@@ -84,41 +94,44 @@ export function ConvalidaGemelo() {
 
       {/* Acciones */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <label style={{ ...cardBtn, ...(profile.cv ? done : {}) }}>
+        <label style={{ ...cardBtn, ...(profile.cv ? done : reco('cv')) }}>
           <input
             ref={fileRef} type="file" accept=".pdf,.doc,.docx,image/*" style={{ display: 'none' }}
             onChange={(e) => { if (e.target.files && e.target.files[0]) actions.addCV(); e.currentTarget.value = ''; }}
           />
           <FileText size={18} style={{ color: profile.cv ? C.green : C.cyan }} />
-          <span style={{ fontWeight: 700, fontSize: 14 }}>Subir CV</span>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>Subir CV {next && next.action === 'cv' && !profile.cv ? '★' : ''}</span>
           <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
-            {profile.cv ? '✔ convalidado' : '+200 PE · Ejecución'}
+            {profile.cv ? '✔ convalidado' : imp({ cv: true })}
           </span>
         </label>
 
-        <button style={{ ...cardBtn, ...(profile.titles > 0 ? done : {}) }} onClick={() => actions.addTitle()}>
+        <button style={{ ...cardBtn, ...(profile.titles > 0 ? done : {}), ...reco('title') }} onClick={() => actions.addTitle()}>
           <GraduationCap size={18} style={{ color: profile.titles > 0 ? C.green : C.cyan }} />
-          <span style={{ fontWeight: 700, fontSize: 14 }}>Validar título</span>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>Validar título {next && next.action === 'title' ? '★' : ''}</span>
           <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
-            {profile.titles > 0 ? `${profile.titles} validado(s) · +otro` : '+250 PE · Fundamento'}
+            {profile.titles >= 10 ? '✓ al máximo' : imp({ titles: profile.titles + 1 })}
           </span>
         </button>
 
-        <div style={{ ...cardBtn, ...(profile.years > 0 ? done : {}) }}>
+        <div style={{ ...cardBtn, ...(profile.years > 0 ? done : {}), ...reco('year') }}>
           <Clock size={18} style={{ color: profile.years > 0 ? C.green : C.cyan }} />
-          <span style={{ fontWeight: 700, fontSize: 14 }}>Experiencia</span>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>Experiencia {next && next.action === 'year' ? '★' : ''}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button onClick={() => actions.removeYear()} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(0,240,255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>−</button>
             <span style={{ fontWeight: 700, fontSize: 18, minWidth: 44, textAlign: 'center' }}>{profile.years} añ.</span>
             <button onClick={() => actions.addYear()} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(0,240,255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>+</button>
           </div>
+          <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
+            {profile.years >= 15 ? '✓ al máximo' : imp({ years: profile.years + 1 })}
+          </span>
         </div>
 
-        <button style={{ ...cardBtn, ...(profile.vault > 0 ? done : {}) }} onClick={() => actions.addVault()}>
+        <button style={{ ...cardBtn, ...(profile.vault > 0 ? done : {}), ...reco('vault') }} onClick={() => actions.addVault()}>
           <BookOpen size={18} style={{ color: profile.vault > 0 ? C.green : C.cyan }} />
-          <span style={{ fontWeight: 700, fontSize: 14 }}>Aporte a la Bóveda</span>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>Aporte a la Bóveda {next && next.action === 'vault' ? '★' : ''}</span>
           <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
-            {profile.vault > 0 ? `${profile.vault} aporte(s) · +otro` : '+150 PE · Trascendencia'}
+            {imp({ vault: profile.vault + 1 })}
           </span>
         </button>
       </div>
