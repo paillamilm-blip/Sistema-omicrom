@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Omicron · Demo interactiva</title>
+    <meta
+      name="description"
+      content="Demo interactiva de Omicron — plataforma de crecimiento profesional."
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
+            colors: {
+              omiblue: "#3b82f6",
+              omipurple: "#a855f7",
+              bg: "#070b16",
+              card: "#0e1424",
+              muted: "#1b2337",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        background: #070b16;
+        font-family: "Inter", system-ui, sans-serif;
+      }
+      .omi-gradient {
+        background-image: linear-gradient(135deg, #3b82f6 0%, #a855f7 100%);
+      }
+      .omi-radial {
+        background-image:
+          radial-gradient(
+            circle at 25% 15%,
+            rgba(168, 85, 247, 0.16),
+            transparent 42%
+          ),
+          radial-gradient(
+            circle at 82% 0%,
+            rgba(59, 130, 246, 0.16),
+            transparent 46%
+          );
+      }
+      .text-gradient {
+        background-image: linear-gradient(135deg, #60a5fa 0%, #c084fc 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .glass {
+        background: rgba(14, 20, 36, 0.7);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
+      .glow {
+        box-shadow: 0 0 45px -12px rgba(168, 85, 247, 0.6);
+      }
+      .glow-blue {
+        box-shadow: 0 0 45px -12px rgba(59, 130, 246, 0.6);
+      }
+      .border-grad {
+        background:
+          linear-gradient(#0e1424, #0e1424) padding-box,
+          linear-gradient(135deg, #3b82f6, #a855f7) border-box;
+        border: 1px solid transparent;
+      }
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #070b16;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1b2337;
+        border-radius: 9999px;
+        border: 2px solid #070b16;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(168, 85, 247, 0.6);
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fade-up {
+        animation: fadeUp 0.5s ease-out both;
+      }
+      .screen {
+        display: none;
+      }
+      .screen.active {
+        display: block;
+      }
+      .nav-item.active {
+        background: rgba(59, 130, 246, 0.12);
+        color: #fff;
+      }
+      .nav-item.active .nav-ico {
+        color: #60a5fa;
+      }
+      .nav-item.active .nav-bar {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body class="text-slate-100">
+    <!-- Aviso demo -->
+    <div
+      class="omi-gradient flex items-center justify-center gap-2 px-4 py-1.5 text-center text-xs font-medium text-white"
+    >
+      <span>✨ Demo interactiva de Omicron — navega por las 5 pantallas en el menú lateral</span>
+    </div>
+
+    <div class="flex min-h-screen">
+      <!-- Sidebar -->
+      <aside
+        class="fixed inset-y-0 left-0 top-0 z-30 hidden w-64 flex-col border-r border-white/10 bg-card/40 lg:flex"
+      >
+        <div class="flex h-16 items-center gap-2.5 border-b border-white/10 px-6">
+          <span class="omi-gradient glow grid h-9 w-9 place-items-center rounded-xl">
+            <span class="grid h-4 w-4 place-items-center rounded-full border-2 border-white/90">
+              <span class="h-1 w-1 rounded-full bg-white"></span>
+            </span>
+          </span>
+          <span class="text-lg font-bold tracking-tight"
+            >Omi<span class="text-gradient">cron</span></span
+          >
+        </div>
+        <nav id="nav" class="flex flex-1 flex-col gap-1 px-3 py-4"></nav>
+        <div class="omi-radial m-3 rounded-xl border border-white/10 p-4">
+          <div class="flex items-center gap-2 text-sm font-semibold">
+            <span class="text-omipurple">✦</span> Sube de nodo
+          </div>
+          <p class="mt-1 text-xs text-slate-400">
+            Completa oportunidades y gana XP para alcanzar el Nodo Arquitecto.
+          </p>
+        </div>
+      </aside>
+
+      <!-- Contenido -->
+      <div class="flex-1 lg:pl-64">
+        <!-- Topbar -->
+        <header
+          class="glass sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-white/10 px-4 sm:px-6"
+        >
+          <div class="relative hidden max-w-md flex-1 sm:block">
+            <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">⌕</span>
+            <input
+              placeholder="Buscar oportunidades, personas..."
+              class="h-10 w-full rounded-md border border-white/10 bg-bg/60 pl-9 pr-3 text-sm outline-none placeholder:text-slate-500 focus:ring-2 focus:ring-omiblue/50"
+            />
+          </div>
+          <div class="flex flex-1 items-center justify-end gap-2">
+            <button
+              class="relative grid h-10 w-10 place-items-center rounded-md text-slate-400 hover:bg-white/5"
+            >
+              <span>🔔</span>
+              <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-omipurple ring-2 ring-bg"></span>
+            </button>
+            <div
+              class="flex items-center gap-3 rounded-full border border-white/10 bg-card/50 py-1 pl-1 pr-3"
+            >
+              <img
+                src="https://i.pravatar.cc/80?img=13"
+                alt="Matías"
+                class="h-8 w-8 rounded-full ring-2 ring-omiblue/40"
+              />
+              <div class="hidden leading-tight sm:block">
+                <p class="text-sm font-medium">Matías Paillamil</p>
+                <p class="text-xs text-slate-400">@matias</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <!-- ============ DASHBOARD ============ -->
+          <section id="s-dashboard" class="screen active space-y-8">
+            <div class="fade-up flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-400">Hola de nuevo,</p>
+                <h1 class="text-2xl font-bold tracking-tight">Matías 👋</h1>
+              </div>
+              <button
+                class="omi-gradient glow hidden items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white sm:inline-flex"
+              >
+                Explorar oportunidades →
+              </button>
+            </div>
+
+            <!-- Stat cards -->
+            <div
+              id="stats"
+              class="fade-up grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+              style="animation-delay: 40ms"
+            ></div>
+
+            <!-- Level overview -->
+            <div
+              class="fade-up omi-radial relative overflow-hidden rounded-2xl border border-white/10 bg-card p-6 sm:p-8"
+              style="animation-delay: 80ms"
+            >
+              <div
+                class="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-omipurple/10 blur-3xl"
+              ></div>
+              <div class="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+                <div class="space-y-5">
+                  <div class="flex items-center gap-2">
+                    <span class="omi-gradient rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                      >✦ Nivel actual</span
+                    >
+                    <span class="text-sm text-slate-400">Nodo 7</span>
+                  </div>
+                  <div>
+                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Nodo Catalizador</h2>
+                    <p class="mt-1 text-sm text-slate-400">
+                      Próximo destino:
+                      <span class="font-medium text-slate-100">Nodo Arquitecto</span>
+                    </p>
+                  </div>
+                  <div class="flex items-end gap-3">
+                    <div class="grid h-11 w-11 place-items-center rounded-xl bg-omiblue/15 text-omiblue">⚡</div>
+                    <div class="leading-none">
+                      <p class="text-xs uppercase tracking-wider text-slate-400">Puntaje de experiencia</p>
+                      <p class="mt-1 text-5xl font-extrabold tracking-tight text-gradient sm:text-6xl">
+                        <span data-count="12840">0</span>
+                        <span class="ml-2 align-baseline text-base font-semibold text-slate-400">XP</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-400"
+                  >
+                    ↗ Te faltan <span class="font-semibold">3,160 XP</span> para el siguiente nodo
+                  </div>
+                </div>
+                <div class="flex shrink-0 flex-col items-center gap-3">
+                  <div id="ring" class="relative grid place-items-center"></div>
+                  <div class="flex w-[200px] items-center justify-between text-xs text-slate-400">
+                    <span>10,000</span><span>16,000</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Skill map + earnings -->
+            <div class="fade-up grid gap-6 lg:grid-cols-2" style="animation-delay: 120ms">
+              <div class="rounded-2xl border border-white/10 bg-card p-6">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-lg font-semibold">Mapa de habilidades</h3>
+                  <span class="text-sm text-slate-400">Promedio <span class="text-gradient font-semibold">72</span></span>
+                </div>
+                <div id="radar" class="mt-2 flex justify-center"></div>
+              </div>
+              <div class="rounded-2xl border border-white/10 bg-card p-6">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-lg font-semibold">Ganancias este mes</h3>
+                  <span class="grid h-9 w-9 place-items-center rounded-lg bg-omipurple/15 text-omipurple">₩</span>
+                </div>
+                <div class="mt-4 flex items-end justify-between gap-3">
+                  <p class="text-4xl font-bold tracking-tight">$<span data-count="4820">0</span></p>
+                  <span class="mb-1 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-sm font-medium text-emerald-400">↗ 18.4%</span>
+                </div>
+                <p class="mt-1 text-sm text-slate-400">Vas por encima del mes anterior</p>
+                <div id="bars" class="mt-4 flex h-24 items-end gap-1.5"></div>
+              </div>
+            </div>
+
+            <!-- Opportunities + activity -->
+            <div class="fade-up grid gap-6 lg:grid-cols-3" style="animation-delay: 160ms">
+              <div class="lg:col-span-2">
+                <div class="mb-4 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="grid h-8 w-8 place-items-center rounded-lg bg-omiblue/15 text-omiblue">◎</span>
+                    <h3 class="text-lg font-semibold">Oportunidades recomendadas</h3>
+                  </div>
+                  <button class="text-sm text-omiblue hover:underline" data-goto="oportunidades">Ver todas</button>
+                </div>
+                <div id="opps-dash" class="grid gap-4 sm:grid-cols-2"></div>
+              </div>
+              <div class="rounded-2xl border border-white/10 bg-card p-6">
+                <h3 class="mb-4 text-lg font-semibold">Actividad reciente</h3>
+                <ol id="activity" class="space-y-5"></ol>
+              </div>
+            </div>
+          </section>
+
+          <!-- ============ OPORTUNIDADES ============ -->
+          <section id="s-oportunidades" class="screen space-y-6">
+            <div>
+              <h1 class="text-2xl font-bold tracking-tight">Oportunidades</h1>
+              <p class="text-sm text-slate-400">Proyectos, mentorías y cursos según tu perfil y nodo actual.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5" id="filters"></div>
+            <div id="opps-all" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+          </section>
+
+          <!-- ============ RANKING ============ -->
+          <section id="s-ranking" class="screen space-y-8">
+            <div class="flex items-center justify-between">
+              <div>
+                <h1 class="text-2xl font-bold tracking-tight">Ranking de nodos</h1>
+                <p class="text-sm text-slate-400">Los miembros con mayor experiencia de la comunidad.</p>
+              </div>
+              <span class="omi-gradient rounded-full px-3 py-1 text-sm font-medium text-white">Tu posición: #5</span>
+            </div>
+            <div id="podium" class="grid grid-cols-3 items-end gap-3 sm:gap-4"></div>
+            <div id="board" class="divide-y divide-white/10 rounded-2xl border border-white/10 bg-card"></div>
+          </section>
+
+          <!-- ============ GANANCIAS ============ -->
+          <section id="s-ganancias" class="screen space-y-8">
+            <div>
+              <h1 class="text-2xl font-bold tracking-tight">Ganancias</h1>
+              <p class="text-sm text-slate-400">Tus ingresos en la plataforma, por período y fuente.</p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-3">
+              <div class="rounded-2xl border border-white/10 bg-card p-5">
+                <p class="flex items-center gap-2 text-sm text-slate-400"><span class="text-omipurple">₩</span> Este mes</p>
+                <p class="mt-2 text-3xl font-bold">$4,820</p>
+                <p class="mt-1 text-sm text-emerald-400">↗ 18.4% vs. mes anterior</p>
+              </div>
+              <div class="rounded-2xl border border-white/10 bg-card p-5">
+                <p class="text-sm text-slate-400">Total histórico</p>
+                <p class="mt-2 text-3xl font-bold text-gradient">$34,870</p>
+                <p class="mt-1 text-sm text-slate-400">Desde tu ingreso a Omicron</p>
+              </div>
+              <div class="rounded-2xl border border-white/10 bg-card p-5">
+                <p class="text-sm text-slate-400">Por cobrar</p>
+                <p class="mt-2 text-3xl font-bold">$1,900</p>
+                <p class="mt-1 text-sm text-slate-400">Pagos pendientes o en proceso</p>
+              </div>
+            </div>
+            <div class="grid gap-6 lg:grid-cols-3">
+              <div class="rounded-2xl border border-white/10 bg-card p-6 lg:col-span-2">
+                <h3 class="mb-4 text-lg font-semibold">Ingresos por mes</h3>
+                <div id="bars-big" class="flex h-56 items-end gap-3"></div>
+              </div>
+              <div class="rounded-2xl border border-white/10 bg-card p-6">
+                <h3 class="mb-4 text-lg font-semibold">Desglose por fuente</h3>
+                <div class="flex h-3 overflow-hidden rounded-full">
+                  <div class="bg-omiblue" style="width: 64%"></div>
+                  <div class="bg-omipurple" style="width: 23%"></div>
+                  <div class="bg-emerald-400" style="width: 13%"></div>
+                </div>
+                <ul class="mt-4 space-y-3 text-sm" id="breakdown"></ul>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-card">
+              <h3 class="border-b border-white/10 px-6 py-4 text-lg font-semibold">Pagos recientes</h3>
+              <div id="payments" class="divide-y divide-white/10"></div>
+            </div>
+          </section>
+
+          <!-- ============ PERFIL ============ -->
+          <section id="s-perfil" class="screen space-y-6">
+            <h1 class="text-2xl font-bold tracking-tight">Mi perfil</h1>
+            <div class="overflow-hidden rounded-2xl border border-white/10 bg-card">
+              <div class="omi-gradient h-28 sm:h-32"></div>
+              <div class="p-6">
+                <div class="-mt-16 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
+                    <img src="https://i.pravatar.cc/160?img=13" class="h-24 w-24 rounded-full ring-4 ring-card" />
+                    <div class="space-y-1 pb-1">
+                      <div class="flex items-center gap-2">
+                        <h2 class="text-2xl font-bold tracking-tight">Matías Paillamil</h2>
+                        <span class="omi-gradient rounded-full px-2.5 py-0.5 text-xs font-medium text-white">✦ Nodo 7</span>
+                      </div>
+                      <p class="text-sm text-slate-400">@matias</p>
+                      <p class="text-sm font-medium">Full Stack Developer</p>
+                    </div>
+                  </div>
+                  <button class="shrink-0 rounded-md border border-white/10 px-4 py-2 text-sm hover:bg-white/5">Editar perfil</button>
+                </div>
+                <p class="mt-4 max-w-2xl text-sm text-slate-400">
+                  Construyo productos web con foco en experiencia de usuario y arquitectura escalable. Aprendiendo cada nodo.
+                </p>
+                <div class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400">
+                  <span>📍 Santiago, Chile</span>
+                  <span>📅 Se unió el 11 feb 2024</span>
+                  <span class="text-amber-400">🔥 23 días de racha</span>
+                  <span class="text-omiblue">✦ 12,840 XP</span>
+                </div>
+              </div>
+            </div>
+            <div class="grid gap-6 lg:grid-cols-2">
+              <div class="rounded-2xl border border-white/10 bg-card p-6">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-lg font-semibold">Mapa de habilidades</h3>
+                </div>
+                <div id="radar2" class="mt-2 flex justify-center"></div>
+              </div>
+              <div class="rounded-2xl border border-white/10 bg-card p-6">
+                <div class="mb-4 flex items-center justify-between">
+                  <h3 class="text-lg font-semibold">Insignias</h3>
+                  <span class="text-sm text-slate-400"><span class="text-gradient font-semibold">4</span> / 6</span>
+                </div>
+                <div id="badges" class="grid grid-cols-2 gap-3 sm:grid-cols-3"></div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // ---------- Datos ----------
+      const NAV = [
+        ["dashboard", "Dashboard", "▤"],
+        ["oportunidades", "Oportunidades", "◎"],
+        ["ranking", "Ranking", "🏆"],
+        ["ganancias", "Ganancias", "₩"],
+        ["perfil", "Perfil", "👤"],
+      ];
+      const STATS = [
+        ["⚡", "XP este mes", "3,480", "+24.5%"],
+        ["💼", "Proyectos activos", "3", ""],
+        ["🔥", "Racha", "23 días", "+15%"],
+        ["🏆", "Ranking", "#5", "+3"],
+      ];
+      const SKILLS = [
+        ["Frontend", 88],["Backend", 72],["Diseño", 64],
+        ["Producto", 79],["Datos", 58],["Liderazgo", 70],
+      ];
+      const TREND = [1200, 1850, 1600, 2400, 2100, 3200, 4820];
+      const MONTHS = ["Ene","Feb","Mar","Abr","May","Jun","Jul"];
+      const OPPS = [
+        { t: "Rediseño de panel analítico", d: "Startup fintech busca refactorizar su dashboard con Next.js y visualizaciones en tiempo real.", type:"Proyecto", tag:["Next.js","TypeScript","Charts"], xp:1500, pay:"$2,200", match:94, color:"text-omiblue bg-omiblue/15" },
+        { t: "Mentoría: Arquitectura de microservicios", d:"Acompaña a un equipo junior en el diseño de una arquitectura escalable orientada a eventos.", type:"Mentoría", tag:["Arquitectura","Node.js","Mentoring"], xp:900, pay:"$600", match:87, color:"text-omipurple bg-omipurple/15" },
+        { t: "Curso: Diseño de sistemas a escala", d:"Completa el track avanzado y desbloquea el siguiente nodo con un proyecto final evaluado.", type:"Curso", tag:["System Design","Caching","Colas"], xp:1200, pay:"", match:81, color:"text-emerald-400 bg-emerald-500/15" },
+        { t: "Feature de colaboración en tiempo real", d:"Implementa edición colaborativa con CRDTs para una herramienta de documentación.", type:"Proyecto", tag:["WebSockets","CRDT","React"], xp:1800, pay:"$3,100", match:76, color:"text-omiblue bg-omiblue/15" },
+        { t: "Mentoría: Primeros pasos en TypeScript", d:"Guía a nuevos desarrolladores en el paso de JavaScript a TypeScript.", type:"Mentoría", tag:["TypeScript","Mentoring"], xp:700, pay:"$400", match:90, color:"text-omipurple bg-omipurple/15" },
+        { t: "Curso: Testing moderno en React", d:"Aprende testing con Vitest, Testing Library y estrategias de cobertura.", type:"Curso", tag:["Testing","Vitest","React"], xp:1000, pay:"", match:84, color:"text-emerald-400 bg-emerald-500/15" },
+      ];
+      const ACT = [
+        ["⚡","Ganaste 320 XP","Completaste la tarea 'Refactor de autenticación'.","hace 2 h"],
+        ["🏅","Insignia desbloqueada","'Racha de 3 semanas' por tu constancia.","hace 5 h"],
+        ["💼","Postulación aceptada","Fuiste seleccionado para 'Rediseño de panel'.","hace 1 d"],
+        ["₩","Pago recibido","USD 1.200 por el proyecto 'Landing Nébula'.","hace 3 d"],
+        ["↑","¡Subiste al Nodo 7!","Alcanzaste el Nodo Catalizador.","hace 1 sem"],
+      ];
+      const RANK = [
+        [1,"Valentina Rojas","Nodo 9",28450,47],
+        [2,"Diego Fuentes","Nodo 9",25120,12],
+        [3,"Camila Soto","Nodo 8",21980,32],
+        [4,"Ignacio Bravo","Nodo 8",18740,15],
+        [5,"Matías Paillamil","Nodo 7",12840,13,true],
+        [6,"Fernanda Lagos","Nodo 7",11200,45],
+        [7,"Tomás Herrera","Nodo 6",9320,8],
+        [8,"Josefa Núñez","Nodo 6",8010,41],
+      ];
+      const BADGES = [
+        ["🚀","Primer proyecto",true],["🔥","Racha de 3 semanas",true],
+        ["👥","Mentor",true],["⚡","10.000 XP",true],
+        ["🏛️","Arquitecto",false],["🏆","Top 10 del ranking",false],
+      ];
+      const PAYMENTS = [
+        ["Landing Nébula","Proyecto · 6 jul 2026","$1,200","pagado","bg-emerald-500/15 text-emerald-400"],
+        ["Mentoría TypeScript · Junio","Mentoría · 2 jul 2026","$400","pagado","bg-emerald-500/15 text-emerald-400"],
+        ["Rediseño panel · Hito 1","Proyecto · 9 jul 2026","$1,100","procesando","bg-omiblue/15 text-omiblue"],
+        ["Bono por racha","Bono · 1 jul 2026","$600","pagado","bg-emerald-500/15 text-emerald-400"],
+        ["Feature colaboración · Anticipo","Proyecto · 10 jul 2026","$800","pendiente","bg-amber-500/15 text-amber-400"],
+      ];
+      const nf = (n) => n.toLocaleString("en-US");
+
+      // ---------- Navegación ----------
+      const nav = document.getElementById("nav");
+      NAV.forEach(([id, label, ico]) => {
+        const a = document.createElement("button");
+        a.className = "nav-item group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-100";
+        a.dataset.screen = id;
+        a.innerHTML = `<span class="nav-bar absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full omi-gradient opacity-0"></span><span class="nav-ico">${ico}</span>${label}`;
+        a.onclick = () => go(id);
+        nav.appendChild(a);
+      });
+      function go(id) {
+        document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+        document.getElementById("s-" + id).classList.add("active");
+        document.querySelectorAll(".nav-item").forEach((n) =>
+          n.classList.toggle("active", n.dataset.screen === id)
+        );
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      document.querySelectorAll("[data-goto]").forEach((b) => (b.onclick = () => go(b.dataset.goto)));
+      go("dashboard");
+
+      // ---------- Stat cards ----------
+      document.getElementById("stats").innerHTML = STATS.map(([ico, label, val, chg]) => `
+        <div class="rounded-2xl border border-white/10 bg-card p-4 transition-colors hover:border-omiblue/30">
+          <div class="flex items-center justify-between">
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-omiblue/10 text-omiblue">${ico}</span>
+            ${chg ? `<span class="text-xs font-medium text-emerald-400">↗ ${chg}</span>` : ""}
+          </div>
+          <p class="mt-3 text-2xl font-bold tracking-tight">${val}</p>
+          <p class="text-xs text-slate-400">${label}</p>
+        </div>`).join("");
+
+      // ---------- Progress ring ----------
+      (function ring() {
+        const pct = 47, size = 200, sw = 14, r = (size - sw) / 2, c = 2 * Math.PI * r;
+        document.getElementById("ring").innerHTML = `
+          <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="-rotate-90">
+            <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs>
+            <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#1b2337" stroke-width="${sw}"/>
+            <circle id="rp" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="url(#rg)" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" style="transition: stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-4xl font-bold text-gradient">${pct}%</span>
+            <span class="mt-1 text-xs text-slate-400">hacia Nodo 8</span>
+          </div>`;
+        setTimeout(() => { document.getElementById("rp").style.strokeDashoffset = c - (pct / 100) * c; }, 300);
+      })();
+
+      // ---------- Radar ----------
+      function radar(el) {
+        const SZ = 260, C = SZ / 2, R = 92, N = SKILLS.length, RINGS = 4;
+        const pt = (i, v) => { const a = (2 * Math.PI * i) / N - Math.PI / 2; const rr = (v / 100) * R; return [C + rr * Math.cos(a), C + rr * Math.sin(a)]; };
+        const poly = SKILLS.map((s, i) => pt(i, s[1]).join(",")).join(" ");
+        let rings = "";
+        for (let k = 1; k <= RINGS; k++) rings += `<circle cx="${C}" cy="${C}" r="${(R*k)/RINGS}" fill="none" stroke="#1b2337"/>`;
+        let axes = "", dots = "", labels = "";
+        SKILLS.forEach((s, i) => {
+          const [x, y] = pt(i, 100); axes += `<line x1="${C}" y1="${C}" x2="${x}" y2="${y}" stroke="#1b2337"/>`;
+          const [dx, dy] = pt(i, s[1]); dots += `<circle cx="${dx}" cy="${dy}" r="3.5" fill="#070b16" stroke="url(#sg)" stroke-width="2"/>`;
+          const [lx, ly] = pt(i, 118); const anc = Math.abs(lx - C) < 8 ? "middle" : lx > C ? "start" : "end";
+          labels += `<text x="${lx}" y="${ly}" dy="0.32em" text-anchor="${anc}" fill="#94a3b8" font-size="10" font-weight="500">${s[0]}</text>`;
+        });
+        el.innerHTML = `<svg width="100%" viewBox="0 0 ${SZ} ${SZ}" class="max-w-[280px]">
+          <defs>
+            <linearGradient id="sf" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".55"/><stop offset="100%" stop-color="#a855f7" stop-opacity=".55"/></linearGradient>
+            <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient>
+          </defs>${rings}${axes}
+          <polygon points="${poly}" fill="url(#sf)" stroke="url(#sg)" stroke-width="2" stroke-linejoin="round"/>${dots}${labels}</svg>`;
+      }
+      radar(document.getElementById("radar"));
+      radar(document.getElementById("radar2"));
+
+      // ---------- Bars ----------
+      function bars(el, big) {
+        const max = Math.max(...TREND);
+        el.innerHTML = TREND.map((v, i) => {
+          const last = i === TREND.length - 1;
+          return `<div class="group relative flex flex-1 flex-col items-center gap-2" style="height:100%">
+            <div class="relative flex w-full flex-1 items-end">
+              <div class="w-full rounded-t-md ${last ? "omi-gradient glow" : "bg-muted group-hover:bg-omiblue/40"}" style="height:${(v/max)*100}%; transition:height 1s ease ${i*80}ms"></div>
+            </div>${big ? `<span class="text-xs text-slate-400">${MONTHS[i]}</span>` : ""}</div>`;
+        }).join("");
+      }
+      bars(document.getElementById("bars"), false);
+      bars(document.getElementById("bars-big"), true);
+
+      // ---------- Opportunity card ----------
+      function oppCard(o) {
+        return `<div class="group flex flex-col rounded-2xl border border-white/10 bg-card p-5 transition-all hover:-translate-y-1 hover:border-omiblue/40 hover:glow-blue">
+          <div class="flex items-center justify-between">
+            <span class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium ${o.color}">${o.type}</span>
+            <span class="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400">${o.match}% match</span>
+          </div>
+          <h4 class="mt-4 font-semibold leading-tight">${o.t}</h4>
+          <p class="mt-1.5 text-sm text-slate-400">${o.d}</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">${o.tag.map(t=>`<span class="rounded-md bg-muted/60 px-2 py-0.5 text-xs text-slate-400">${t}</span>`).join("")}</div>
+          <div class="mt-auto flex items-center justify-between border-t border-white/10 pt-4">
+            <div class="flex items-center gap-3 text-sm">
+              <span class="inline-flex items-center gap-1 font-medium text-omiblue">⚡ +${nf(o.xp)} XP</span>
+              ${o.pay ? `<span class="text-slate-400">${o.pay}</span>` : ""}
+            </div>
+            <span class="text-slate-500 transition-colors group-hover:text-omiblue">→</span>
+          </div>
+        </div>`;
+      }
+      document.getElementById("opps-dash").innerHTML = OPPS.slice(0, 3).map(oppCard).join("");
+      document.getElementById("opps-all").innerHTML = OPPS.map(oppCard).join("");
+
+      // ---------- Filters (visual) ----------
+      const FILT = ["Todas","Proyectos","Mentorías","Cursos"];
+      document.getElementById("filters").innerHTML = FILT.map((f,i)=>`<button class="rounded-full px-3 py-1.5 text-sm font-medium ${i===0?"omi-gradient text-white":"bg-muted/60 text-slate-400 hover:text-slate-100"}">${f}</button>`).join("");
+
+      // ---------- Activity ----------
+      document.getElementById("activity").innerHTML = ACT.map(([ico,t,d,when])=>`
+        <li class="flex gap-3">
+          <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-omiblue/15 text-omiblue">${ico}</span>
+          <div class="flex-1">
+            <div class="flex items-start justify-between gap-2"><p class="text-sm font-medium">${t}</p><span class="shrink-0 text-xs text-slate-400">${when}</span></div>
+            <p class="text-sm text-slate-400">${d}</p>
+          </div>
+        </li>`).join("");
+
+      // ---------- Ranking ----------
+      const podium = [RANK[0], RANK[1], RANK[2]];
+      const order = [1, 0, 2]; // 2º, 1º, 3º
+      document.getElementById("podium").innerHTML = order.map((idx, pos) => {
+        const [p, name, node, xp] = podium[idx];
+        const lift = idx === 0 ? "sm:-translate-y-4 ring-amber-400/50" : idx === 1 ? "ring-slate-300/30" : "ring-orange-500/40";
+        const crown = idx === 0 ? `<span class="absolute -top-3 text-2xl">👑</span>` : "";
+        return `<div class="omi-radial relative flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-card p-4 text-center ring-1 ${lift}">
+          ${crown}<span class="text-xs font-bold text-slate-400">#${p}</span>
+          <img src="https://i.pravatar.cc/80?img=${20+idx*7}" class="h-14 w-14 rounded-full ring-2 ring-omiblue/40"/>
+          <div><p class="truncate text-sm font-semibold">${name}</p><p class="text-xs text-slate-400">${node}</p></div>
+          <p class="text-sm font-bold text-gradient">${nf(xp)} XP</p></div>`;
+      }).join("");
+      document.getElementById("board").innerHTML = RANK.slice(3).map((r) => {
+        const [p, name, node, xp, img, me] = r;
+        return `<div class="flex items-center gap-4 px-4 py-3 sm:px-6 ${me ? "bg-omiblue/5" : "hover:bg-white/5"}">
+          <span class="w-6 text-center text-sm font-semibold text-slate-400">${p}</span>
+          <img src="https://i.pravatar.cc/80?img=${img}" class="h-10 w-10 rounded-full"/>
+          <div class="min-w-0 flex-1"><div class="flex items-center gap-2"><p class="truncate text-sm font-medium">${name}</p>${me?`<span class="omi-gradient rounded-full px-2 py-0.5 text-xs font-medium text-white">Tú</span>`:""}</div><p class="text-xs text-slate-400">${node}</p></div>
+          <div class="hidden text-right sm:block"><p class="text-sm font-semibold">${nf(xp)}</p><p class="text-xs text-slate-400">XP</p></div>
+        </div>`;
+      }).join("");
+
+      // ---------- Ganancias ----------
+      document.getElementById("breakdown").innerHTML = [
+        ["bg-omiblue","Proyectos","$3,100","64%"],["bg-omipurple","Mentorías","$1,120","23%"],["bg-emerald-400","Bonos","$600","13%"],
+      ].map(([c,s,a,pc])=>`<li class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full ${c}"></span>${s}</span><span class="font-medium">${a}<span class="ml-2 text-xs text-slate-400">${pc}</span></span></li>`).join("");
+      document.getElementById("payments").innerHTML = PAYMENTS.map(([c,meta,amt,st,cls])=>`
+        <div class="flex items-center justify-between gap-4 px-6 py-3.5">
+          <div class="min-w-0"><p class="truncate text-sm font-medium">${c}</p><p class="text-xs text-slate-400">${meta}</p></div>
+          <div class="flex shrink-0 items-center gap-3"><span class="rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${cls}">${st}</span><span class="w-20 text-right text-sm font-semibold">${amt}</span></div>
+        </div>`).join("");
+
+      // ---------- Badges ----------
+      document.getElementById("badges").innerHTML = BADGES.map(([ico,t,on])=>`
+        <div class="flex flex-col items-center gap-2 rounded-xl border p-4 text-center ${on?"border-white/10 bg-muted/30":"border-dashed border-white/10 opacity-60"}">
+          <span class="grid h-11 w-11 place-items-center rounded-full ${on?"omi-gradient glow text-white":"bg-muted text-slate-500"}">${on?ico:"🔒"}</span>
+          <p class="text-sm font-medium leading-tight">${t}</p>
+        </div>`).join("");
+
+      // ---------- Count up ----------
+      function countUp(el) {
+        const target = +el.dataset.count; const dur = 1400; const start = performance.now();
+        function step(now) {
+          const p = Math.min((now - start) / dur, 1);
+          const eased = 1 - Math.pow(1 - p, 3);
+          el.textContent = Math.round(target * eased).toLocaleString("en-US");
+          if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+      document.querySelectorAll("[data-count]").forEach(countUp);
+    </script>
+  </body>
+</html>
