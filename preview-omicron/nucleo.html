@@ -363,7 +363,7 @@
         scene="nexus"; born=performance.now()/1000;
         ["tl","tr","console","hint","convBtn"].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("show");});
         Snd.chime();
-        setTimeout(()=>oracleType("Núcleo despierto. Bienvenido de vuelta, Matías. Este es tu Gemelo Digital: gíralo, explóralo, pregúntame lo que quieras."), 700);
+        setTimeout(()=>oracleType(`Núcleo despierto. Tu reputación es ${rep}. Pulsa "Aportar datos" para convalidar tu CV y títulos: verás nacer nodos en tu galaxia.`), 700);
       };
 
       // ══ Dibujo ══
@@ -441,32 +441,29 @@
         }
       }
 
-      // ═══ Ecosistema: convalida tus datos → nace un nodo + sube tu Gemelo ═══
+      // ═══ Ecosistema conectado · perfil compartido (localStorage) ═══
+      const OMI_KEY="omicron_gemelo";
+      function omiDefault(){ return {cv:false,titles:0,years:0,vault:0,pe:120,rep:34,axes:{execution:40,quality:30,transcendence:18,foundation:25}}; }
+      function omiRecompute(p){ const ax={execution:40,quality:30,transcendence:18,foundation:25}; let pe=120; if(p.cv){pe+=200;ax.execution+=10;ax.quality+=6;} pe+=p.titles*250; ax.foundation+=p.titles*12; pe+=p.years*60; ax.execution+=p.years*2; ax.quality+=p.years*2; pe+=p.vault*150; ax.transcendence+=p.vault*14; for(const k in ax)ax[k]=Math.min(100,ax[k]); const avg=(ax.execution+ax.quality+ax.transcendence+ax.foundation)/4; p.axes=ax; p.pe=pe; p.rep=Math.max(0,Math.min(99,Math.round(20+avg*0.72+p.titles*2+(p.cv?3:0)))); return p; }
+      function omiLoad(){ try{ return Object.assign(omiDefault(), JSON.parse(localStorage.getItem(OMI_KEY)||"{}")); }catch(e){ return omiDefault(); } }
+      function omiSave(p){ try{ localStorage.setItem(OMI_KEY, JSON.stringify(p)); }catch(e){} }
+      const prof = omiLoad(); omiRecompute(prof); rep = prof.rep;
+
       const _g = (id)=>document.getElementById(id);
       const convOv = _g("convOv");
-      let titleN = 0;
-      function unlock(idx, repGain, narr, col){
-        const n = nodes[idx]; if(!n || !n.locked) return false;
-        n.locked = false; n.born = performance.now(); n.pulse = 1;
-        rep = Math.min(99, rep + repGain);
-        shocks.push({ t:0, color: col || n.color });
-        focusNode(idx);
-        try{ Snd.sweep(); }catch(e){}
-        oracleType(narr);
-        saveProfile();
-        return true;
-      }
-      function saveProfile(){ try{ const unlocked = nodes.map((n,i)=>i).filter(i=>i>=LATENT_START && !nodes[i].locked); localStorage.setItem("omicron_gemelo", JSON.stringify({ rep, unlocked, titleN })); }catch(e){} }
-      function loadProfile(){ try{ const s=JSON.parse(localStorage.getItem("omicron_gemelo")||"null"); if(!s)return; if(typeof s.rep==="number") rep=s.rep; if(Array.isArray(s.unlocked)) s.unlocked.forEach(i=>{ if(nodes[i]){ nodes[i].locked=false; nodes[i].born=-1; } }); if(typeof s.titleN==="number") titleN=s.titleN; }catch(e){} }
-      loadProfile();
+      function ignite(idx, instant){ const n=nodes[idx]; if(!n||!n.locked) return false; n.locked=false; n.born=instant?-1:performance.now(); if(!instant)n.pulse=1; return true; }
+      function commit(narr, col, idx){ omiRecompute(prof); rep=prof.rep; omiSave(prof); if(idx>=0){ shocks.push({t:0,color:col||nodes[idx].color}); focusNode(idx); } try{Snd.sweep();}catch(e){} if(narr) oracleType(narr); }
+      // Reflejar lo ya convalidado (persistencia entre pantallas/sesiones)
+      (function reflect(){ if(prof.cv) ignite(LATENT_START+0,true); if(prof.titles>=1) ignite(LATENT_START+1,true); if(prof.titles>=2) ignite(LATENT_START+2,true); if(prof.years>=1) ignite(LATENT_START+3,true); if(prof.vault>=1) ignite(LATENT_START+4,true);
+        if(prof.cv)_g("cv")&&_g("cv").classList.add("done"); if(prof.titles>=2)_g("cti")&&_g("cti").classList.add("done"); if(prof.years>=1)_g("cyr")&&_g("cyr").classList.add("done"); if(prof.vault>=1)_g("cvo")&&_g("cvo").classList.add("done"); })();
 
       if(_g("convBtn")) _g("convBtn").onclick = ()=>{ try{Snd.init();}catch(e){} convOv.classList.add("open"); };
       if(_g("convClose")) _g("convClose").onclick = ()=> convOv.classList.remove("open");
       if(convOv) convOv.onclick = (e)=>{ if(e.target===convOv) convOv.classList.remove("open"); };
-      if(_g("cvf")) _g("cvf").addEventListener("change",(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f)return; if(unlock(LATENT_START+0,2,"CV convalidado. Tu experiencia laboral ya orbita tu núcleo y refuerza tu Ejecución.","#00F0FF")){ _g("cv").classList.add("done"); flash("CV CONVALIDADO","#00F0FF"); convOv.classList.remove("open"); } });
-      if(_g("cti")) _g("cti").onclick = ()=>{ const idx=LATENT_START+1+titleN; if(titleN<2 && unlock(idx,2,"Título validado y verificable en tu Pasaporte. Suma a tu Fundamento.","#F59E0B")){ titleN++; if(titleN>=2)_g("cti").classList.add("done"); flash("TÍTULO VALIDADO","#F59E0B"); convOv.classList.remove("open"); } };
-      if(_g("cyr")) _g("cyr").onclick = ()=>{ if(unlock(LATENT_START+3,2,"Experiencia acreditada. Tu trayectoria fortalece el núcleo.","#22d3ee")){ _g("cyr").classList.add("done"); flash("EXPERIENCIA +","#22d3ee"); convOv.classList.remove("open"); } };
-      if(_g("cvo")) _g("cvo").onclick = ()=>{ if(unlock(LATENT_START+4,2,"Aporte a la Bóveda registrado. Tu Trascendencia crece.","#39FF14")){ _g("cvo").classList.add("done"); flash("APORTE REGISTRADO","#39FF14"); convOv.classList.remove("open"); } };
+      if(_g("cvf")) _g("cvf").addEventListener("change",(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f||prof.cv)return; prof.cv=true; const ok=ignite(LATENT_START+0); _g("cv").classList.add("done"); flash("CV CONVALIDADO","#00F0FF"); commit("CV convalidado. Tu experiencia laboral ya orbita tu núcleo y refuerza tu Ejecución.","#00F0FF", ok?LATENT_START+0:-1); convOv.classList.remove("open"); });
+      if(_g("cti")) _g("cti").onclick = ()=>{ if(prof.titles>=5) return; const slot = prof.titles<2 ? (LATENT_START+1+prof.titles) : -1; prof.titles++; const ok = slot>=0 ? ignite(slot) : false; if(prof.titles>=2)_g("cti").classList.add("done"); flash("TÍTULO VALIDADO","#F59E0B"); commit("Título validado y verificable en tu Pasaporte. Suma a tu Fundamento.","#F59E0B", ok?slot:-1); convOv.classList.remove("open"); };
+      if(_g("cyr")) _g("cyr").onclick = ()=>{ if(prof.years>=15) return; prof.years++; const ok = prof.years===1 ? ignite(LATENT_START+3) : false; _g("cyr").classList.add("done"); flash("EXPERIENCIA +","#22d3ee"); commit("Experiencia acreditada. Tu trayectoria fortalece el núcleo.","#22d3ee", ok?LATENT_START+3:-1); convOv.classList.remove("open"); };
+      if(_g("cvo")) _g("cvo").onclick = ()=>{ prof.vault++; const ok = prof.vault===1 ? ignite(LATENT_START+4) : false; _g("cvo").classList.add("done"); flash("APORTE REGISTRADO","#39FF14"); commit("Aporte a la Bóveda registrado. Tu Trascendencia crece.","#39FF14", ok?LATENT_START+4:-1); convOv.classList.remove("open"); };
 
       requestAnimationFrame(frame);
     </script>

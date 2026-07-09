@@ -407,6 +407,16 @@
         ["▲ Mejorar en Academia",()=>{go("academia");speakOracle("Abriendo Academia para mejorar tus ejes.");}],
         ["Compartir Pasaporte",()=>{toast("Pasaporte","Enlace de verificación generado");speakOracle("Enlace público de tu Pasaporte generado.");}],
       ]);
+
+      // ═══ Sincronización con el perfil convalidado (ecosistema compartido) ═══
+      (function syncProfile(){
+        try{
+          const p=JSON.parse(localStorage.getItem("omicron_gemelo")||"null"); if(!p)return;
+          if(typeof p.rep==="number"){ const big=document.querySelector(".nucleo-center .big"); if(big) big.textContent=p.rep; }
+          if(typeof p.pe==="number"){ const st=document.querySelector("#stats3 .stat .v"); if(st) st.textContent=Math.round(p.pe).toLocaleString(); }
+          if(p.pe!=null){ const t=p.pe>=2000?["Arquitecto","5%"]:p.pe>=500?["Core","10%"]:["Operativo","15%"]; const tips=document.querySelector("#tipExplore"); }
+        }catch(e){}
+      })();
       function placePlanets(){const box=document.querySelector(".solar");if(!box)return;const cx=box.clientWidth/2,cy=box.clientHeight/2;const set=(id,r,ang)=>{const el=document.getElementById(id);if(!el)return;el.style.left=cx+r*Math.cos(ang)-16+"px";el.style.top=cy+r*Math.sin(ang)-16+"px";};set("p1",65,-Math.PI/2);set("p2",65,Math.PI/2.2);set("p3",100,0.3);set("p4",100,Math.PI-0.5);}
 
       // ── Entrada ──
