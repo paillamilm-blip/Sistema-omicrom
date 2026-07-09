@@ -59,8 +59,11 @@
       .inbar input::placeholder { color: rgba(234,242,255,0.35); }
       .inbar button { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; background: linear-gradient(135deg, #7df9ff, #00f0ff); color: #020613; display: grid; place-items: center; }
 
-      #tip { position: fixed; z-index: 13; pointer-events: none; opacity: 0; transform: translate(-50%, -140%); transition: opacity 0.15s; background: rgba(6,12,26,0.92); border: 1px solid rgba(0,240,255,0.4); border-radius: 10px; padding: 8px 12px; min-width: 120px; backdrop-filter: blur(10px); }
-      #tip .cat { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; } #tip .lbl { font-size: 14px; font-weight: 700; } #tip .val { font-family: var(--mono); font-size: 11px; color: rgba(234,242,255,0.7); }
+      #tip { position: fixed; z-index: 13; pointer-events: none; opacity: 0; transform: translate(-50%, -140%); transition: opacity 0.15s; background: rgba(6,12,26,0.94); border: 1px solid rgba(0,240,255,0.4); border-radius: 10px; padding: 10px 13px; min-width: 150px; max-width: 260px; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.55); }
+      #tip .cat { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; } #tip .lbl { font-size: 15px; font-weight: 700; margin-top: 1px; } #tip .val { font-family: var(--mono); font-size: 11px; color: rgba(234,242,255,0.7); }
+      #tip .det { font-size: 12px; color: rgba(234,242,255,0.75); margin-top: 5px; line-height: 1.4; }
+      #tip .mej { font-size: 12px; color: #ffdd9e; margin-top: 7px; padding-top: 7px; border-top: 1px solid rgba(255,255,255,0.1); line-height: 1.4; }
+      #tip .mej b { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--amber); text-transform: uppercase; margin-right: 5px; }
       .flash { position: fixed; left: 50%; top: 40%; transform: translate(-50%,-50%); z-index: 11; font-size: 28px; font-weight: 700; letter-spacing: 2px; opacity: 0; pointer-events: none; text-shadow: 0 0 24px currentColor; }
       .hint { position: fixed; bottom: 128px; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: rgba(234,242,255,0.35); text-transform: uppercase; z-index: 9; opacity: 0; transition: opacity 1s; }
       .hint.show { opacity: 1; animation: fade 3s ease-in-out infinite; } @keyframes fade { 0%,100%{opacity:0.3} 50%{opacity:0.6} }
@@ -74,7 +77,7 @@
     <div class="hud top-right" id="tr"><div class="rep"><div class="n" id="rep">94</div><div class="k">Reputación</div></div><div class="toggle" id="mic" title="Hablar al Oráculo"></div><div class="toggle" id="mute"></div></div>
 
     <div class="hint" id="hint">Arrastra para girar tu universo · pregúntale al Oráculo</div>
-    <div id="tip"><div class="cat" id="tc"></div><div class="lbl" id="tlbl"></div><div class="val" id="tv"></div></div>
+    <div id="tip"><div class="cat" id="tc"></div><div class="lbl" id="tlbl"></div><div class="val" id="tv"></div><div class="det" id="tdet"></div><div class="mej" id="tmej"></div></div>
     <div class="flash" id="flash"></div>
 
     <div class="console" id="console">
@@ -125,19 +128,34 @@
       // ══ Datos (galaxia) ══
       const CATS = { skill:{name:"Habilidad",color:"#00F0FF"}, cred:{name:"Credencial",color:"#F59E0B"}, red:{name:"Red / Confianza",color:"#38BDF8"}, token:{name:"Economía",color:"#39FF14"}, gob:{name:"Gobernanza",color:"#FF3D57"} };
       const RAW = [
-        ["skill","Frontend","Nivel 88"],["skill","Backend","Nivel 72"],["skill","Arquitectura","Nivel 64"],["skill","Datos","Nivel 58"],["skill","UX","Nivel 79"],["skill","Liderazgo","Nivel 70"],
-        ["cred","React Pro","Validada"],["cred","System Design","Validada"],["cred","Cloud Security","Validada"],["cred","Data Engineer","En revisión"],
-        ["red","128 conexiones","Red activa"],["red","Sello de Confianza","Verificado"],["red","Mentor ×3","Reputación +"],["red","Pasaporte","Verificable"],
-        ["token","2,480 tokens","Nodo Core"],["token","Escrow 1,100","En custodia"],["token","Comisión 10%","Nodo Core"],
-        ["gob","2 votos activos","Cámara de nodos"],["gob","Árbitro","Rol asignado"],["gob","Propuesta #14","Abierta"],
+        ["skill","Frontend","Nivel 88","Interfaces y experiencia de usuario.","Toma un contrato frontend de hito corto en el Market."],
+        ["skill","Backend","Nivel 72","Lógica, APIs y datos del servidor.","Valida un nodo backend en la Academia."],
+        ["skill","Arquitectura","Nivel 64","Diseño de sistemas a escala.","Rinde el Examen IA de Arquitectura de Sistemas."],
+        ["skill","Datos","Nivel 58","Modelado y análisis de datos.","Completa el track de Datos en la Academia."],
+        ["skill","UX","Nivel 79","Investigación y usabilidad.","Publica un caso de UX en la Bóveda."],
+        ["skill","Liderazgo","Nivel 70","Coordinación y mentoría de equipos.","Mentorea a un nodo junior para subir este eje."],
+        ["cred","React Pro","Validada","Credencial verificada en tu Pasaporte.","Compártela por enlace público para atraer contratos."],
+        ["cred","System Design","Validada","Credencial verificada en tu Pasaporte.","Úsala para postular a contratos senior en Empleos."],
+        ["cred","Cloud Security","Validada","Credencial verificada.","Ofrécela como servicio en el Market."],
+        ["cred","Data Engineer","En revisión","Credencial en proceso de validación.","Adjunta evidencia para acelerar su revisión."],
+        ["red","128 conexiones","Red activa","Tu red de confianza en Ómicron.","Colabora en un contrato para ampliar tu red."],
+        ["red","Sello de Confianza","Verificado","Prueba pública de tu reputación.","Cierra contratos sin disputa para mantenerlo."],
+        ["red","Mentor ×3","Reputación +","Has guiado a 3 nodos de la red.","Mentorea a más nodos para subir tu Trascendencia."],
+        ["red","Pasaporte","Verificable","Credencial pública verificable sin exponer datos.","Compártelo con un cliente potencial."],
+        ["token","2,480 tokens","Nodo Core","Saldo disponible en tu billetera.","Bloquea en escrow y libera contratos para crecer."],
+        ["token","Escrow 1,100","En custodia","Fondos en custodia de contratos activos.","Aprueba la entrega del hito para liberarlos."],
+        ["token","Comisión 10%","Nodo Core","Tu comisión de red como Nodo Core.","Sube a Nodo Arquitecto para bajarla al 5%."],
+        ["gob","2 votos activos","Cámara de nodos","Tu poder de decisión en la Cámara.","Vota la Propuesta #14 antes del cierre."],
+        ["gob","Árbitro","Rol asignado","Resuelves disputas de la red.","Resuelve una disputa para ganar reputación."],
+        ["gob","Propuesta #14","Abierta","Ajuste de comisión para Nodo Core.","Emite tu voto para incidir en la red."],
       ];
       const N = RAW.length;
       const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-      const nodes = RAW.map(([cat,label,val], i) => {
+      const nodes = RAW.map(([cat,label,val,detail,mejora], i) => {
         const y = 1 - (i / (N - 1)) * 2;
         const rad = Math.sqrt(1 - y*y);
         const th = GOLDEN * i;
-        return { cat, label, val, color: CATS[cat].color,
+        return { cat, label, val, detail, mejora, color: CATS[cat].color,
           bx: Math.cos(th)*rad, by: y, bz: Math.sin(th)*rad,
           baseR: 4.5 + (cat==="token"?2:0) + rand(0,1.5),
           sx:0, sy:0, sc:1, zz:0, pulse:0, born: -1 };
@@ -346,7 +364,7 @@
         for(let i=shocks.length-1;i>=0;i--){ const s=shocks[i]; s.t+=0.02; const rr=s.t*Math.min(W,H)*0.7; ctx.strokeStyle=hexA(s.color,Math.max(0,0.6*(1-s.t))); ctx.lineWidth=2+(1-s.t)*3; ctx.beginPath(); ctx.arc(core.px,core.py,rr,0,6.2832); ctx.stroke(); if(s.t>=1)shocks.splice(i,1); }
 
         // tooltip
-        if(hovered>=0){ const n=nodes[hovered]; tip.style.left=n.sx+"px"; tip.style.top=(n.sy-n.baseR*n.sc)+"px"; tip.style.opacity="1"; tip.style.borderColor=hexA(n.color,0.6); document.getElementById("tc").textContent=CATS[n.cat].name; document.getElementById("tc").style.color=n.color; document.getElementById("tlbl").textContent=n.label; document.getElementById("tv").textContent=n.val; canvas.style.cursor="pointer"; }
+        if(hovered>=0){ const n=nodes[hovered]; tip.style.left=n.sx+"px"; tip.style.top=(n.sy-n.baseR*n.sc)+"px"; tip.style.opacity="1"; tip.style.borderColor=hexA(n.color,0.6); document.getElementById("tc").textContent=CATS[n.cat].name; document.getElementById("tc").style.color=n.color; document.getElementById("tlbl").textContent=n.label; document.getElementById("tv").textContent=n.val; document.getElementById("tdet").textContent=n.detail||""; document.getElementById("tmej").innerHTML=n.mejora?('<b>▲ Mejora</b> '+n.mejora):""; canvas.style.cursor="pointer"; }
         else { tip.style.opacity="0"; canvas.style.cursor = dragging?"grabbing":"grab"; }
 
         requestAnimationFrame(frame);
