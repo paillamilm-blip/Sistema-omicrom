@@ -117,6 +117,8 @@
       .conv-act { text-align: left; display: flex; flex-direction: column; gap: 5px; padding: 14px; border-radius: 12px; cursor: pointer; border: 1px solid rgba(0,240,255,0.2); background: rgba(0,240,255,0.05); color: #eaf2ff; transition: all .18s; }
       .conv-act:hover { transform: translateY(-2px); border-color: rgba(0,240,255,0.45); }
       .conv-act.done { border-color: rgba(57,255,20,0.4); background: rgba(57,255,20,0.06); }
+      .conv-act.reco { border-color: rgba(245,158,11,0.65); box-shadow: 0 0 16px rgba(245,158,11,0.35); }
+      .conv-act.reco .t::after { content: " ★"; color: #F59E0B; }
       .conv-act .t { font-weight: 700; font-size: 14px; } .conv-act .g { font-family: var(--mono); font-size: 9.5px; color: var(--amber); }
       .conv-close { margin-top: 14px; width: 100%; padding: 11px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #eaf2ff; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
       .actcard { position: fixed; right: 22px; top: 50%; transform: translate(24px,-50%); z-index: 30; width: 300px; max-height: 84vh; overflow-y: auto; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; background: rgba(6,12,26,0.97); border: 1px solid rgba(0,240,255,0.4); border-radius: 16px; padding: 18px; backdrop-filter: blur(12px); box-shadow: 0 20px 60px rgba(0,0,0,0.7); }
@@ -476,7 +478,7 @@
       const chipsEl = document.getElementById("chips");   // fila de PREGUNTAS (colapsable)
       const dockEl = document.getElementById("dock");     // fila de ACCIONES (siempre visible)
       // Acción primaria: Aportar datos (reemplaza el botón flotante que se superponía)
-      const aportarChip=document.createElement("div"); aportarChip.className="chip prime"; aportarChip.textContent="＋ Aportar datos"; aportarChip.onclick=()=>{ try{Snd.init();}catch(e){} if(convOv) convOv.classList.add("open"); }; dockEl.appendChild(aportarChip);
+      const aportarChip=document.createElement("div"); aportarChip.className="chip prime"; aportarChip.textContent="＋ Aportar datos"; aportarChip.onclick=()=>{ try{Snd.init();}catch(e){} if(typeof refreshConv==="function") refreshConv(); if(convOv) convOv.classList.add("open"); }; dockEl.appendChild(aportarChip);
       CHIPS.forEach(c => { const b=document.createElement("div"); b.className="chip"; b.textContent=c; b.onclick=()=>{ Snd.blip(); oracle(c); }; chipsEl.appendChild(b); });
 
       // ══ Modo presentación (recorrido cinematográfico) ══
@@ -735,6 +737,7 @@
         if(celebrate && lastTier>=0 && i>lastTier){ flash("NODO "+cur.n.toUpperCase()+" ALCANZADO","#F59E0B"); try{Snd.sweep();}catch(e){} shocks.push({t:0,color:"#F59E0B"}); setTimeout(()=>oracleType(`¡Ascendiste a Nodo ${cur.n}! Tu capital intelectual sube de categoría en el ecosistema.`),300); }
         lastTier = i;
         if(typeof refreshChips==="function") refreshChips();
+        if(typeof refreshConv==="function") refreshConv();
       }
 
       // ── INNOVACIÓN · Motor "Siguiente mejor paso" (recomendación por ROI) ──
@@ -829,7 +832,7 @@
         if(box){
           box.innerHTML="";
           const opts=[
-            { em:"▶", cls:"primary", title:"Iniciar la mejora", sub:ac.verb, fn:()=>{ doEcosystemAction(ac.act); try{Snd.chime();}catch(e){} shocks.push({t:0,color:n.color}); flash("EN "+ac.dest.toUpperCase(), n.color); oracleType(`Hecho. ${a.opt} Tu reputación es ${rep} y tu PE ${prof.pe}.`); } },
+            { em:"▶", cls:"primary", title:"Iniciar la mejora", sub:(()=>{ try{ const im=convImpact(ac.act); return ac.verb+" · +"+im.drep+" rep, +"+im.dpe+" PE"; }catch(e){ return ac.verb; } })(), fn:()=>{ doEcosystemAction(ac.act); try{Snd.chime();}catch(e){} shocks.push({t:0,color:n.color}); flash("EN "+ac.dest.toUpperCase(), n.color); oracleType(`Hecho. ${a.opt} Tu reputación es ${rep} y tu PE ${prof.pe}.`); } },
             { em:"🧭", title:"¿Cómo llego?", sub:"Trazar mi ruta al siguiente Nodo", fn:()=>{ oracleType(runQuest()); } },
             { em:"🔮", title:"Ver mi futuro", sub:"Proyectar mis próximas semanas", fn:()=>{ openProj(); oracleType("Proyectando tu futuro. Mueve el control para ver a dónde llegas."); } },
             { em:"💬", title:"Explícame este nodo", sub:"El Oráculo te lo cuenta", fn:()=>{ focusNode(idx); oracleType(`${n.label}. ${n.detail} Para mejorar: ${n.mejora}`); } },
@@ -1004,6 +1007,37 @@
         }catch(e){}
       }
       refreshChips();
+
+      // ── INNOVACIÓN · Botones de Convalidar con IMPACTO en vivo + recomendado ──
+      function convImpact(action){
+        const base = omiRecompute(JSON.parse(JSON.stringify(prof)));
+        const c = JSON.parse(JSON.stringify(prof));
+        if(action==="cv") c.cv=true; else if(action==="title") c.titles++; else if(action==="year") c.years++; else c.vault++;
+        omiRecompute(c);
+        return { drep: c.rep-base.rep, dpe: c.pe-base.pe };
+      }
+      function refreshConv(){
+        try{
+          const items=[
+            {id:"cv",  act:"cv",    maxed: !!prof.cv,        doneTxt:"✓ Convalidado"},
+            {id:"cti", act:"title", maxed: prof.titles>=10,  doneTxt:"✓ Al máximo"},
+            {id:"cyr", act:"year",  maxed: prof.years>=15,   doneTxt:"✓ Al máximo"},
+            {id:"cvo", act:"vault", maxed: false,            doneTxt:""},
+          ];
+          let best=null, bestScore=-1;
+          items.forEach(it=>{
+            const el=_g(it.id); if(!el) return; el.classList.remove("reco");
+            const g=el.querySelector(".g"); if(!g) return;
+            if(it.maxed){ g.textContent = it.doneTxt; return; }
+            const im=convImpact(it.act);
+            g.textContent = "+"+im.dpe+" PE · +"+im.drep+" rep";
+            const score=im.drep*12+im.dpe;
+            if(score>bestScore){ bestScore=score; best=it; }
+          });
+          if(best){ const el=_g(best.id); if(el) el.classList.add("reco"); }
+        }catch(e){}
+      }
+      refreshConv();
 
       // Comandos de voz (historial / reinicio)
       COMMANDS.push(
