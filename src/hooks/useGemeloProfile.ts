@@ -6,12 +6,24 @@ import { useSyncExternalStore } from 'react';
 import {
   subscribe,
   getProfile,
+  getHistory,
+  streakDays,
+  bestNextStep,
   gemeloActions,
   tierFor,
   type GemeloProfile,
+  type GemeloEvent,
 } from '../lib/gemeloProfile';
 
 export function useGemeloProfile() {
   const profile = useSyncExternalStore(subscribe, getProfile, getProfile) as GemeloProfile;
-  return { profile, actions: gemeloActions, tier: tierFor(profile.pe) };
+  const history = useSyncExternalStore(subscribe, getHistory, getHistory) as GemeloEvent[];
+  return {
+    profile,
+    actions: gemeloActions,
+    tier: tierFor(profile.pe),
+    history,
+    streak: streakDays(),
+    next: bestNextStep(profile),
+  };
 }

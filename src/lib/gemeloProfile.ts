@@ -104,16 +104,85 @@ function mutate(patch: Partial<GemeloProfile>) {
   void pushToSupabase(); // fire-and-forget; se ignora si no hay backend
 }
 
+// ── Historial de actividad y racha ──────────────────────────────────────
+const HKEY = 'omicron_hist';
+
+export interface GemeloEvent { t: string; d: number; }
+
+function loadHist(): GemeloEvent[] {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(HKEY) : null;
+    return raw ? (JSON.parse(raw) as GemeloEvent[]) : [];
+  } catch { return []; }
+}
+
+let history: GemeloEvent[] = loadHist();
+
+export function getHistory(): GemeloEvent[] { return history; }
+
+function persistHist() {
+  try { localStorage.setItem(HKEY, JSON.stringify(history.slice(-60))); } catch { /* noop */ }
+  listeners.forEach((l) => l());
+}
+
+function logEvent(label: string) {
+  history = [...history, { t: label, d: Date.now() }].slice(-60);
+  persistHist();
+}
+
+/** Racha de días consecutivos con actividad (termina hoy o ayer). */
+export function streakDays(): number {
+  if (!history.length) return 0;
+  const set = new Set(history.map((h) => new Date(h.d).toDateString()));
+  const cur = new Date(); cur.setHours(0, 0, 0, 0);
+  if (!set.has(cur.toDateString())) {
+    cur.setDate(cur.getDate() - 1);
+    if (!set.has(cur.toDateString())) return 0;
+  }
+  let s = 0;
+  while (set.has(cur.toDateString())) { s++; cur.setDate(cur.getDate() - 1); }
+  return s;
+}
+
+// ── Motor "Siguiente mejor paso" (recomendación por retorno) ────────────
+export type NextAction = 'cv' | 'title' | 'year' | 'vault';
+export interface NextStep { action: NextAction; label: string; dRep: number; dPe: number; }
+
+/** Simula cada acción posible y devuelve la de mayor retorno (reputación + PE). */
+export function bestNextStep(p: GemeloProfile = current): NextStep | null {
+  const b = recompute(p);
+  const opts: NextStep[] = [];
+  const trial = (action: NextAction, label: string, fn: (q: GemeloProfile) => GemeloProfile) => {
+    const c = recompute(fn({ ...p }));
+    opts.push({ action, label, dRep: c.rep - b.rep, dPe: c.pe - b.pe });
+  };
+  if (!p.cv) trial('cv', 'Sube tu CV', (q) => ({ ...q, cv: true }));
+  if (p.titles < 10) trial('title', 'Valida un título', (q) => ({ ...q, titles: q.titles + 1 }));
+  if (p.years < 15) trial('year', 'Acredita 1 año de experiencia', (q) => ({ ...q, years: q.years + 1 }));
+  trial('vault', 'Aporta a la Bóveda', (q) => ({ ...q, vault: q.vault + 1 }));
+  opts.sort((a, z) => (z.dRep * 12 + z.dPe) - (a.dRep * 12 + a.dPe));
+  return opts[0] ?? null;
+}
+
 export const gemeloActions = {
-  addCV() { if (!current.cv) mutate({ cv: true }); },
-  addTitle() { mutate({ titles: Math.min(10, current.titles + 1) }); },
-  addYear() { mutate({ years: Math.min(15, current.years + 1) }); },
+  addCV() { if (!current.cv) { mutate({ cv: true }); logEvent('CV convalidado'); } },
+  addTitle() { if (current.titles < 10) { mutate({ titles: current.titles + 1 }); logEvent('Título validado'); } },
+  addYear() { if (current.years < 15) { mutate({ years: current.years + 1 }); logEvent('Experiencia +1 año'); } },
   removeYear() { mutate({ years: Math.max(0, current.years - 1) }); },
-  addVault() { mutate({ vault: current.vault + 1 }); },
+  addVault() { mutate({ vault: current.vault + 1 }); logEvent('Aporte a la Bóveda'); },
+  /** Ejecuta una acción por su identificador (para el "Siguiente mejor paso"). */
+  run(action: NextAction) {
+    if (action === 'cv') this.addCV();
+    else if (action === 'title') this.addTitle();
+    else if (action === 'year') this.addYear();
+    else this.addVault();
+  },
   reset() {
     current = recompute(base());
-    try { localStorage.removeItem(KEY); } catch { /* noop */ }
+    history = [];
+    try { localStorage.removeItem(KEY); localStorage.removeItem(HKEY); } catch { /* noop */ }
     persist();
+    persistHist();
   },
 };
 
