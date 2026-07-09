@@ -132,7 +132,7 @@ function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: (
 function CredencialCard({
   initials, name, username, location, nodeType, nodeLevel, verified,
   reputacion, tokens, pe, contratos, nextPe, tierProgress,
-  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit, onShare,
+  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit, onShare, axes,
 }: {
   initials: string; name: string; username: string; location?: string;
   nodeType: string; nodeLevel: number; verified: boolean;
@@ -142,6 +142,7 @@ function CredencialCard({
   paused: boolean; onTogglePause: () => void;
   avatarUrl?: string; uploading: boolean; onPickFile: (f: File) => void;
   onEdit: () => void; onShare: () => void;
+  axes?: { execution?: number; quality?: number; transcendence?: number; foundation?: number };
 }) {
   const nodeColor = NODE_COLOR[nodeType] ?? C.cyan;
   const rango = getRango(reputacion);
@@ -309,6 +310,8 @@ function CredencialCard({
           orbState={paused ? 'error' : 'idle'}
           orbSize="md"
           height={318}
+          reputation={reputacion}
+          axes={axes}
           ariaLabel={`Tu reputación es ${reputacion.toFixed(1)} de 100`}
           center={
             <div style={{ textAlign: 'center', lineHeight: 1 }}>
@@ -603,6 +606,12 @@ export function PerfilTab() {
             onPickFile={handleAvatarUpload}
             onEdit={() => setShowEdit(true)}
             onShare={() => setShowShare(true)}
+            axes={{
+              execution: gemelo.execution,
+              quality: gemelo.quality,
+              transcendence: gemelo.transcendence,
+              foundation: gemelo.foundation,
+            }}
           />
         )}
 

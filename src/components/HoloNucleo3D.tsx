@@ -2,10 +2,14 @@
 // ═══════════════════════════════════════════════════════════════════════
 // ÓMICRON CORE · HoloNucleo3D
 // Evolución del HoloOrbField: tu Gemelo Digital como una GALAXIA 3D. Tu
-// capital intelectual (habilidades, credenciales, red, economía, gobernanza)
-// orbita tu núcleo en 3D real (proyección en perspectiva propia), con auto-
-// rotación, parallax suave según el cursor, líneas de confianza con pulsos y
-// polvo estelar. Dibujado en canvas puro (sin dependencias nuevas).
+// capital intelectual orbita tu núcleo en 3D real (proyección en perspectiva
+// propia), con autorrotación, parallax según el cursor, líneas de confianza
+// con pulsos y polvo estelar. Dibujado en canvas puro (sin dependencias).
+//
+// DATA-DRIVEN: si recibes `axes` (los 4 ejes del Gemelo) y `reputation`, los
+// 4 ejes se materializan como nodos prominentes cuyo tamaño y brillo reflejan
+// su valor real, y el núcleo intensifica su color hacia el ámbar según sube
+// tu reputación. Si no llegan datos, cae a una constelación decorativa.
 //
 // Drop-in: comparte la interfaz de props con HoloOrbField
 //   (variant, orbState, orbSize, height, ariaLabel, center, chips)
@@ -27,6 +31,13 @@ export interface NucleoChip {
   y: number;
 }
 
+export interface NucleoAxes {
+  execution?: number;
+  quality?: number;
+  transcendence?: number;
+  foundation?: number;
+}
+
 interface Props {
   variant?: OrbVariant;
   orbState?: OrbState;
@@ -35,35 +46,31 @@ interface Props {
   ariaLabel?: string;
   center?: React.ReactNode;
   chips?: NucleoChip[];
+  /** Reputación 0-100: intensifica el núcleo hacia el ámbar. */
+  reputation?: number;
+  /** Los 4 ejes del Gemelo Digital: materializan nodos prominentes. */
+  axes?: NucleoAxes;
   className?: string;
 }
 
 interface GNode {
-  cat: string;
   color: string;
+  label?: string;
   bx: number; by: number; bz: number;
   baseR: number;
   sx: number; sy: number; sc: number; zz: number;
 }
 
-// Categorías del capital intelectual con la paleta de la marca.
-const CATS: Record<string, string> = {
-  skill: C.cyan,
-  cred: C.gold,
-  red: C.purple,
-  token: C.green,
-  gob: C.red,
-};
-
-// Distribución de nodos (decorativa) del Gemelo Digital.
-const CAT_SEQUENCE = [
-  'skill', 'skill', 'skill', 'skill', 'skill',
-  'cred', 'cred', 'cred',
-  'red', 'red', 'red',
-  'token', 'token',
-  'gob', 'gob', 'gob',
+// Ejes del Gemelo con la paleta de PerfilTab (Ejecución/Calidad/Trascendencia/Fundamento).
+const AXES_DEF: { key: keyof NucleoAxes; label: string; color: string }[] = [
+  { key: 'execution', label: 'Ejecución', color: '#00F0FF' },
+  { key: 'quality', label: 'Calidad', color: '#0a8ba3' },
+  { key: 'transcendence', label: 'Trascendencia', color: '#F59E0B' },
+  { key: 'foundation', label: 'Fundamento', color: '#39FF14' },
 ];
 
+// Satélites decorativos (capital intelectual complementario).
+const SAT_COLORS = [C.cyan, C.gold, C.purple, C.green, C.cyan, C.gold, C.purple, C.green, C.cyan, C.gold, C.purple, C.green];
 const GOLDEN = Math.PI * (3 - Math.sqrt(5));
 
 function hexA(hex: string, a: number): string {
@@ -79,11 +86,14 @@ export function HoloNucleo3D({
   ariaLabel = 'Gemelo Digital',
   center,
   chips = [],
+  reputation = 0,
+  axes,
   className = '',
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
+  const axesKey = JSON.stringify(axes ?? {});
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -114,21 +124,39 @@ export function HoloNucleo3D({
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     if (ro) ro.observe(wrap);
 
-    // Nodos en esfera de Fibonacci.
-    const N = CAT_SEQUENCE.length;
-    const nodes: GNode[] = CAT_SEQUENCE.map((cat, i) => {
-      const y = 1 - (i / (N - 1)) * 2;
+    // ── Construir la galaxia ──
+    const nodes: GNode[] = [];
+    const parsed: NucleoAxes = axes ?? {};
+    const hasAxes = AXES_DEF.some((a) => typeof parsed[a.key] === 'number');
+
+    // 4 nodos-eje prominentes en el ecuador, tamaño ∝ valor real.
+    AXES_DEF.forEach((a, i) => {
+      const ang = (i / AXES_DEF.length) * Math.PI * 2 + 0.3;
+      const val = typeof parsed[a.key] === 'number' ? (parsed[a.key] as number) : 60;
+      nodes.push({
+        color: a.color, label: a.label,
+        bx: Math.cos(ang), by: 0.08 * Math.sin(ang * 2), bz: Math.sin(ang),
+        baseR: 4 + (Math.max(0, Math.min(100, val)) / 100) * 7,
+        sx: 0, sy: 0, sc: 1, zz: 0,
+      });
+    });
+
+    // Satélites decorativos en esfera de Fibonacci.
+    const S = 12;
+    for (let i = 0; i < S; i++) {
+      const y = 1 - (i / (S - 1)) * 2;
       const rad = Math.sqrt(Math.max(0, 1 - y * y));
       const th = GOLDEN * i;
-      return {
-        cat, color: CATS[cat] || C.cyan,
-        bx: Math.cos(th) * rad, by: y, bz: Math.sin(th) * rad,
-        baseR: 3 + (cat === 'token' ? 1.6 : 0) + (i % 3) * 0.5,
+      nodes.push({
+        color: SAT_COLORS[i % SAT_COLORS.length],
+        bx: Math.cos(th) * rad * 0.82, by: y * 0.82, bz: Math.sin(th) * rad * 0.82,
+        baseR: 2.4 + (i % 3) * 0.5,
         sx: 0, sy: 0, sc: 1, zz: 0,
-      };
-    });
+      });
+    }
+
     const edges: [number, number][] = [
-      [0, 5], [1, 6], [2, 6], [5, 11], [8, 9], [9, 10], [11, 12], [13, 14],
+      [0, 4], [1, 7], [2, 10], [3, 13], [0, 1], [1, 2], [2, 3], [3, 0],
     ];
     const dust = Array.from({ length: 46 }, () => ({
       x: Math.random(), y: Math.random(), r: 0.4 + Math.random() * 1.3,
@@ -138,8 +166,7 @@ export function HoloNucleo3D({
     const pulses = nodes.map(() => Math.random());
 
     let yaw = 0.4, pitch = -0.2;
-    let px = 0, py = 0; // parallax objetivo (-1..1)
-    let curPx = 0, curPy = 0;
+    let px = 0, py = 0, curPx = 0, curPy = 0;
 
     function onMove(e: PointerEvent) {
       const r = canvas.getBoundingClientRect();
@@ -151,6 +178,10 @@ export function HoloNucleo3D({
     canvas.addEventListener('pointerleave', onLeave);
 
     const errorTint = orbState === 'error';
+    // Reputación alta → núcleo tiende al ámbar (rango SENIOR).
+    const rep = Math.max(0, Math.min(100, reputation));
+    const highRep = rep >= 75;
+    const haloCore = errorTint ? C.red : highRep ? '#F59E0B' : '#22D3EE';
 
     function project(x: number, y: number, z: number) {
       const cy1 = Math.cos(yaw), sy1 = Math.sin(yaw);
@@ -166,16 +197,15 @@ export function HoloNucleo3D({
     function drawCore(t: number) {
       const p = project(0, 0, 0);
       const R = Math.min(W, H) * 0.135;
-      const baseCol = errorTint ? '#7f1d2e' : '#1E40AF';
       const halo = ctx!.createRadialGradient(p.sx, p.sy, R * 0.5, p.sx, p.sy, R * 2.6);
-      halo.addColorStop(0, hexA(errorTint ? C.red : '#22D3EE', 0.28));
+      halo.addColorStop(0, hexA(haloCore, 0.26 + (rep / 100) * 0.14));
       halo.addColorStop(1, 'rgba(34,211,238,0)');
       ctx!.fillStyle = halo;
       ctx!.beginPath(); ctx!.arc(p.sx, p.sy, R * 2.6, 0, 6.2832); ctx!.fill();
       const core = ctx!.createRadialGradient(p.sx - R * 0.3, p.sy - R * 0.35, R * 0.1, p.sx, p.sy, R);
       core.addColorStop(0, '#CFFAFE');
       core.addColorStop(0.34, errorTint ? '#f87171' : '#22D3EE');
-      core.addColorStop(0.68, baseCol);
+      core.addColorStop(0.68, errorTint ? '#7f1d2e' : highRep ? '#B45309' : '#1E40AF');
       core.addColorStop(0.95, '#1E1B4B');
       ctx!.fillStyle = core;
       ctx!.beginPath(); ctx!.arc(p.sx, p.sy, R, 0, 6.2832); ctx!.fill();
@@ -204,12 +234,11 @@ export function HoloNucleo3D({
       ctx!.beginPath(); ctx!.arc(x, y, r, 0, 6.2832); ctx!.fill();
     }
 
-    let start = performance.now();
+    const start = performance.now();
     function frame(now: number) {
       const t = (now - start) / 1000;
       ctx!.clearRect(0, 0, W, H);
 
-      // polvo
       for (const d of dust) {
         if (!reduce) { d.x += d.vx * 0.0016; d.y += d.vy * 0.0016; }
         if (d.x < 0) d.x = 1; if (d.x > 1) d.x = 0; if (d.y < 0) d.y = 1; if (d.y > 1) d.y = 0;
@@ -218,13 +247,12 @@ export function HoloNucleo3D({
         ctx!.beginPath(); ctx!.arc(d.x * W, d.y * H, d.r, 0, 6.2832); ctx!.fill();
       }
 
-      // cámara
       curPx += (px - curPx) * 0.05;
       curPy += (py - curPy) * 0.05;
       if (!reduce && orbState !== 'error') yaw += 0.0022;
       pitch = -0.2 + curPy * 0.25;
-      const effYaw = yaw + curPx * 0.3;
-      const savedYaw = yaw; yaw = effYaw;
+      const savedYaw = yaw;
+      yaw = yaw + curPx * 0.3;
 
       for (const n of nodes) {
         const p = project(n.bx, n.by, n.bz);
@@ -232,18 +260,16 @@ export function HoloNucleo3D({
       }
       const order = nodes.map((_, i) => i).sort((a, b) => nodes[b].zz - nodes[a].zz);
 
-      // aristas de constelación
       ctx!.lineWidth = 1;
       for (const [a, b] of edges) {
         const na = nodes[a], nb = nodes[b];
+        if (!na || !nb) continue;
         ctx!.strokeStyle = hexA('#7fdfff', 0.05 + 0.05 * ((na.sc + nb.sc) / 2));
         ctx!.beginPath(); ctx!.moveTo(na.sx, na.sy); ctx!.lineTo(nb.sx, nb.sy); ctx!.stroke();
       }
 
-      // detrás
       drawSet(order.filter((i) => nodes[i].zz > 0), t, null);
       const core = drawCore(t);
-      // delante + líneas al núcleo
       drawSet(order.filter((i) => nodes[i].zz <= 0), t, core);
 
       yaw = savedYaw;
@@ -268,6 +294,13 @@ export function HoloNucleo3D({
           ctx!.fill();
         }
         glow(n.sx, n.sy, n.baseR * n.sc, n.color, alpha);
+        // etiqueta del eje cuando está al frente
+        if (n.label && n.sc > 1.02 && n.zz <= 0.1) {
+          ctx!.textAlign = 'center';
+          ctx!.fillStyle = hexA('#eaf4ff', 0.85 * alpha);
+          ctx!.font = `9px ${FONT.mono}`;
+          ctx!.fillText(n.label, n.sx, n.sy - n.baseR * n.sc - 6);
+        }
       }
     }
 
@@ -279,7 +312,7 @@ export function HoloNucleo3D({
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerleave', onLeave);
     };
-  }, [orbState, height]);
+  }, [orbState, height, reputation, axesKey]);
 
   return (
     <div
@@ -291,7 +324,6 @@ export function HoloNucleo3D({
     >
       <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height }} />
 
-      {/* Núcleo central (reputación) */}
       {center != null && (
         <div
           style={{
@@ -304,7 +336,6 @@ export function HoloNucleo3D({
         </div>
       )}
 
-      {/* Chips orbitando (datos clave) */}
       {chips.map((chip, i) => (
         <div
           key={i}
