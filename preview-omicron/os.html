@@ -40,6 +40,11 @@
       .nucleo-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; }
       .nucleo-center .big { font-size:40px; font-weight:700; color:#fff; text-shadow:0 0 22px rgba(0,240,255,0.6); }
       .nucleo-center .cap { font-family:var(--mono); font-size:9px; letter-spacing:2px; color:rgba(255,255,255,0.85); text-transform:uppercase; margin-top:2px; }
+      .ninfo { position:absolute; left:10px; right:10px; bottom:6px; padding:9px 12px; border-radius:10px; background:rgba(6,12,26,0.92); border:1px solid rgba(0,240,255,0.4); opacity:0; transform:translateY(8px); transition:all 0.2s; pointer-events:none; backdrop-filter:blur(8px); }
+      .ninfo.show { opacity:1; transform:none; }
+      .ninfo .nc { font-family:var(--mono); font-size:9px; letter-spacing:1.2px; text-transform:uppercase; }
+      .ninfo .nl { font-weight:700; font-size:14px; margin-top:1px; }
+      .ninfo .nd { font-size:11px; color:rgba(234,242,255,0.7); margin-top:2px; line-height:1.4; }
       .stats3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:6px; }
       .stat { background:rgba(0,240,255,0.05); border:1px solid rgba(0,240,255,0.1); border-radius:8px; padding:9px 6px; text-align:center; }
       .stat .v { font-size:18px; font-weight:700; } .stat .v.a{color:var(--amber);} .stat .v.c{color:var(--cyan);} .stat .k { font-family:var(--mono); font-size:8px; letter-spacing:1px; color:rgba(234,242,255,0.5); text-transform:uppercase; margin-top:2px; }
@@ -98,7 +103,9 @@
           <div class="nucleo-wrap">
             <canvas id="nucleo"></canvas>
             <div class="nucleo-center"><span class="big">94</span><span class="cap">Reputación</span></div>
+            <div class="ninfo" id="ninfo"></div>
           </div>
+          <div class="hint" style="margin-top:2px">Acércate o toca un punto para ver su detalle</div>
           <div class="stats3">
             <div class="stat"><div class="v c">1,240</div><div class="k">Puntos exp.</div></div>
             <div class="stat"><div class="v">12</div><div class="k">Contratos</div></div>
@@ -189,16 +196,62 @@
 
       // ── Núcleo 3D (Inicio) ──
       const CATS={skill:"#00F0FF",cred:"#F59E0B",red:"#38BDF8",token:"#39FF14",gob:"#FF3D57"};
-      const SEQ=["skill","skill","skill","cred","cred","red","red","token","token","gob","gob","skill","cred","red"];
+      const CATNAME={skill:"Habilidad",cred:"Credencial",red:"Red / Confianza",token:"Economía",gob:"Gobernanza"};
+      const NDATA=[
+        ["skill","Frontend","88 / 100","Interfaces y experiencia de usuario."],
+        ["skill","Backend","72 / 100","Lógica, APIs y datos del servidor."],
+        ["skill","Arquitectura","64 / 100","Diseño de sistemas a escala."],
+        ["cred","React Pro","Validada","Credencial verificada en tu Pasaporte."],
+        ["cred","System Design","Validada","Credencial verificada en tu Pasaporte."],
+        ["red","128 conexiones","Red activa","Tu red de confianza en Ómicron."],
+        ["red","Sello de Confianza","Verificado","Prueba pública de tu reputación."],
+        ["token","2,480 tokens","Saldo","Disponible en tu billetera."],
+        ["token","Escrow 1,100","En custodia","Fondos bloqueados en contratos activos."],
+        ["gob","2 votos","Activos","Tu poder de decisión en la Cámara de nodos."],
+        ["gob","Árbitro","Rol asignado","Resuelves disputas en la red."],
+        ["skill","UX","79 / 100","Investigación y usabilidad."],
+        ["cred","Cloud Security","Validada","Credencial verificada."],
+        ["red","Mentor ×3","Reputación +","Has guiado a otros nodos de la red."],
+      ];
       const GOLDEN=Math.PI*(3-Math.sqrt(5));
-      const nk=SEQ.map((cat,i)=>{const y=1-(i/(SEQ.length-1))*2;const rad=Math.sqrt(Math.max(0,1-y*y));const th=GOLDEN*i;return{cat,color:CATS[cat],bx:Math.cos(th)*rad,by:y,bz:Math.sin(th)*rad,baseR:3+(cat==="token"?1.6:0)+(i%3)*0.5,sx:0,sy:0,sc:1,zz:0};});
+      const nk=NDATA.map(([cat,label,value,detail],i)=>{const y=1-(i/(NDATA.length-1))*2;const rad=Math.sqrt(Math.max(0,1-y*y));const th=GOLDEN*i;return{cat,label,value,detail,color:CATS[cat],bx:Math.cos(th)*rad,by:y,bz:Math.sin(th)*rad,baseR:3+(cat==="token"?1.6:0)+(i%3)*0.5,sx:0,sy:0,sc:1,zz:0};});
+      let nptrX=0,nptrY=0,nactive=false,nsel=-1,nTouch=false;
       const nedges=[[0,3],[1,5],[7,9],[3,12],[5,13]];
       let ncanvas,nctx,nW,nH,nDPR,yaw=0.4,pitch=-0.2;
       function nresize(){ncanvas=document.getElementById("nucleo");if(!ncanvas)return;nctx=ncanvas.getContext("2d");nDPR=Math.min(devicePixelRatio||1,2);const w=ncanvas.clientWidth||360;nW=w;nH=340;ncanvas.width=nW*nDPR;ncanvas.height=nH*nDPR;nctx.setTransform(nDPR,0,0,nDPR,0,0);}
       function nproj(x,y,z){const cy=Math.cos(yaw),sy=Math.sin(yaw);const x1=x*cy-z*sy,z1=x*sy+z*cy,y1=y;const cx=Math.cos(pitch),sx=Math.sin(pitch);const y2=y1*cx-z1*sx,z2=y1*sx+z1*cx,x2=x1;const R=Math.min(nW,nH)*0.44,F=900,p=F/(F+z2*R);return{sx:nW/2+x2*R*p,sy:nH/2+y2*R*p,sc:p,zz:z2};}
       function nglow(x,y,r,c,a){const g=nctx.createRadialGradient(x,y,0,x,y,r*3.2);g.addColorStop(0,hexA(c,0.9*a));g.addColorStop(0.4,hexA(c,0.26*a));g.addColorStop(1,hexA(c,0));nctx.fillStyle=g;nctx.beginPath();nctx.arc(x,y,r*3.2,0,6.2832);nctx.fill();nctx.fillStyle=hexA("#fff",0.85*a);nctx.beginPath();nctx.arc(x,y,r*0.5,0,6.2832);nctx.fill();nctx.fillStyle=hexA(c,a);nctx.beginPath();nctx.arc(x,y,r,0,6.2832);nctx.fill();}
       function ncore(t){const p=nproj(0,0,0);const R=Math.min(nW,nH)*0.12;const h=nctx.createRadialGradient(p.sx,p.sy,R*0.5,p.sx,p.sy,R*2.6);h.addColorStop(0,"rgba(34,211,238,0.3)");h.addColorStop(1,"rgba(34,211,238,0)");nctx.fillStyle=h;nctx.beginPath();nctx.arc(p.sx,p.sy,R*2.6,0,6.2832);nctx.fill();const c=nctx.createRadialGradient(p.sx-R*0.3,p.sy-R*0.35,R*0.1,p.sx,p.sy,R);c.addColorStop(0,"#CFFAFE");c.addColorStop(0.34,"#22D3EE");c.addColorStop(0.68,"#1E40AF");c.addColorStop(0.95,"#1E1B4B");nctx.fillStyle=c;nctx.beginPath();nctx.arc(p.sx,p.sy,R,0,6.2832);nctx.fill();nctx.save();nctx.translate(p.sx,p.sy);for(let i=0;i<3;i++){nctx.save();nctx.rotate(t*0.2+i*Math.PI/3);nctx.strokeStyle=hexA("#E0F7FF",0.4-i*0.1);nctx.lineWidth=1;nctx.beginPath();nctx.ellipse(0,0,R*1.3,R*0.46,0,0,6.2832);nctx.stroke();nctx.restore();}nctx.restore();return p;}
-      function nframe(now){ if(!nctx){requestAnimationFrame(nframe);return;} const t=now/1000; if(activeScreen!=="inicio"){requestAnimationFrame(nframe);return;} nctx.clearRect(0,0,nW,nH); yaw+=0.0024; for(const n of nk){const p=nproj(n.bx,n.by,n.bz);n.sx=p.sx;n.sy=p.sy;n.sc=p.sc;n.zz=p.zz;} const order=nk.map((_,i)=>i).sort((a,b)=>nk[b].zz-nk[a].zz); nctx.lineWidth=1; for(const[a,b]of nedges){const na=nk[a],nb=nk[b];nctx.strokeStyle=hexA("#7fdfff",0.06);nctx.beginPath();nctx.moveTo(na.sx,na.sy);nctx.lineTo(nb.sx,nb.sy);nctx.stroke();} const back=order.filter(i=>nk[i].zz>0),front=order.filter(i=>nk[i].zz<=0); const draw=(idxs,core)=>{for(const i of idxs){const n=nk[i];const a=0.5+n.sc*0.5;if(core){const g=nctx.createLinearGradient(core.sx,core.sy,n.sx,n.sy);g.addColorStop(0,hexA(n.color,0));g.addColorStop(1,hexA(n.color,0.08+n.sc*0.1));nctx.strokeStyle=g;nctx.beginPath();nctx.moveTo(core.sx,core.sy);nctx.lineTo(n.sx,n.sy);nctx.stroke();}nglow(n.sx,n.sy,n.baseR*n.sc,n.color,a);}}; draw(back,null); const core=ncore(t); draw(front,core); requestAnimationFrame(nframe); }
+      function nAttach(){ const cv=document.getElementById("nucleo"); if(!cv||cv._att)return; cv._att=true;
+        const upd=(e)=>{const r=cv.getBoundingClientRect();nptrX=e.clientX-r.left;nptrY=e.clientY-r.top;nactive=true;if(e.pointerType)nTouch=e.pointerType==="touch";};
+        cv.addEventListener("pointermove",upd); cv.addEventListener("pointerdown",upd);
+        cv.addEventListener("pointerleave",()=>{if(!nTouch)nactive=false;});
+      }
+      function nframe(now){
+        if(!nctx){requestAnimationFrame(nframe);return;}
+        const t=now/1000;
+        if(activeScreen!=="inicio"){requestAnimationFrame(nframe);return;}
+        nAttach();
+        nctx.clearRect(0,0,nW,nH);
+        if(nsel<0) yaw+=0.0024;
+        for(const n of nk){const p=nproj(n.bx,n.by,n.bz);n.sx=p.sx;n.sy=p.sy;n.sc=p.sc;n.zz=p.zz;}
+        // ¿a qué punto me acerco?
+        nsel=-1; if(nactive){let best=26;for(let i=0;i<nk.length;i++){const n=nk[i];const d=Math.hypot(nptrX-n.sx,nptrY-n.sy);if(d<best+n.baseR*n.sc){best=d;nsel=i;}}}
+        const order=nk.map((_,i)=>i).sort((a,b)=>nk[b].zz-nk[a].zz);
+        nctx.lineWidth=1;
+        for(const[a,b]of nedges){const na=nk[a],nb=nk[b];nctx.strokeStyle=hexA("#7fdfff",0.06);nctx.beginPath();nctx.moveTo(na.sx,na.sy);nctx.lineTo(nb.sx,nb.sy);nctx.stroke();}
+        const back=order.filter(i=>nk[i].zz>0),front=order.filter(i=>nk[i].zz<=0);
+        const draw=(idxs,core)=>{for(const i of idxs){const n=nk[i];const isSel=i===nsel;const dim=nsel>=0&&!isSel?0.3:1;const a=(0.5+n.sc*0.5)*dim;
+          if(core){const g=nctx.createLinearGradient(core.sx,core.sy,n.sx,n.sy);g.addColorStop(0,hexA(n.color,0));g.addColorStop(1,hexA(n.color,(0.08+n.sc*0.1)*dim*(isSel?2.4:1)));nctx.strokeStyle=g;nctx.lineWidth=isSel?1.8:1;nctx.beginPath();nctx.moveTo(core.sx,core.sy);nctx.lineTo(n.sx,n.sy);nctx.stroke();}
+          const rr=n.baseR*n.sc*(isSel?1.9:1); nglow(n.sx,n.sy,rr,n.color,a);
+          if(isSel){nctx.strokeStyle=hexA(n.color,0.9);nctx.lineWidth=1.5;nctx.beginPath();nctx.arc(n.sx,n.sy,rr+6,0,6.2832);nctx.stroke();nctx.textAlign="center";nctx.fillStyle=hexA("#eaf4ff",0.95);nctx.font="11px 'Share Tech Mono',monospace";nctx.fillText(n.label,n.sx,n.sy-rr-7);}
+        }};
+        draw(back,null); const core=ncore(t); draw(front,core);
+        // ficha
+        const ni=document.getElementById("ninfo");
+        if(ni){ if(nsel>=0){const n=nk[nsel];ni.style.borderColor=hexA(n.color,0.5);ni.innerHTML=`<div class="nc" style="color:${n.color}">${CATNAME[n.cat]} · ${n.value}</div><div class="nl">${n.label}</div><div class="nd">${n.detail}</div>`;ni.classList.add("show");} else ni.classList.remove("show"); }
+        requestAnimationFrame(nframe);
+      }
 
       // ── Navegación ──
       const NAV=[["inicio","Inicio","home"],["habilidades","Skills","target"],["academia","Academia","cap"],["servicios","Servicios","store"],["billetera","Billetera","wallet"]];
