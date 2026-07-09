@@ -9,6 +9,9 @@ import { BottomNav } from './components/shared/BottomNav';
 import { HubSubNav } from './components/shared/HubSubNav';
 import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
+import { OraculoBar } from './components/OraculoBar';
+import { GemeloBadge } from './components/shared/GemeloBadge';
+import { InstallPWA } from './components/shared/InstallPWA';
 import { Onboarding, shouldShowOnboarding } from './components/shared/Onboarding';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
@@ -57,6 +60,13 @@ function AppShell() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Atajos PWA (long-press del icono): /?tab=wallet abre ese hub directo.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('tab');
+    const valid: TabId[] = ['perfil', 'maxskill', 'academia', 'market', 'empleos', 'chat', 'wallet', 'gobernanza', 'vault'];
+    if (t && (valid as string[]).includes(t)) setActiveTab(t as TabId);
+  }, [setActiveTab]);
+
   if (authStatus === 'loading' || isLoadingProfile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
@@ -87,6 +97,7 @@ function AppShell() {
           <span style={{ fontFamily: FONT.display, fontSize: 17, letterSpacing: 0.3, color: '#eaf2ff', fontWeight: 700 }}>{TAB_TITLES[activeTab]}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <GemeloBadge />
           {profile && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 13, color: '#F59E0B', fontWeight: 700 }}>
               🪙 {(profile.token_balance ?? 0).toLocaleString()}
@@ -132,6 +143,12 @@ function AppShell() {
       <BottomNav />
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
       <PublicProfileGate />
+      <ErrorBoundary section="Oráculo">
+        <OraculoBar />
+      </ErrorBoundary>
+      <ErrorBoundary section="InstalarApp">
+        <InstallPWA />
+      </ErrorBoundary>
     </div>
   );
 }

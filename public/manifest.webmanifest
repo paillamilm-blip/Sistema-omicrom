@@ -1,14 +1,17 @@
 {
+  "id": "/",
   "name": "Sistema Ómicron",
   "short_name": "Ómicron",
   "description": "Marketplace de capital intelectual Industria 5.0: aprende, valida tu Gemelo Digital y monetiza tu talento.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
   "background_color": "#020613",
   "theme_color": "#020613",
   "lang": "es",
+  "dir": "ltr",
   "categories": ["education", "productivity", "business"],
   "icons": [
     {
@@ -16,6 +19,26 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Inicio · Gemelo Digital",
+      "short_name": "Inicio",
+      "description": "Tu credencial y reputación",
+      "url": "/?tab=perfil"
+    },
+    {
+      "name": "Billetera",
+      "short_name": "Billetera",
+      "description": "Tokens, escrow y comisiones",
+      "url": "/?tab=wallet"
+    },
+    {
+      "name": "Academia",
+      "short_name": "Academia",
+      "description": "Sistema Solar del Aprendizaje",
+      "url": "/?tab=academia"
     }
   ]
 }
