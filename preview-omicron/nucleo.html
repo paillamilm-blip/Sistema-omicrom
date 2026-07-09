@@ -65,6 +65,18 @@
       #tip .mej { font-size: 12px; color: #ffdd9e; margin-top: 7px; padding-top: 7px; border-top: 1px solid rgba(255,255,255,0.1); line-height: 1.4; }
       #tip .mej b { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--amber); text-transform: uppercase; margin-right: 5px; }
       .flash { position: fixed; left: 50%; top: 40%; transform: translate(-50%,-50%); z-index: 11; font-size: 28px; font-weight: 700; letter-spacing: 2px; opacity: 0; pointer-events: none; text-shadow: 0 0 24px currentColor; }
+      .conv-fab { position: fixed; left: 22px; bottom: 150px; z-index: 14; display: flex; align-items: center; gap: 7px; padding: 11px 16px; border-radius: 24px; cursor: pointer; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #020613; font-weight: 700; background: linear-gradient(135deg,#7df9ff,#00f0ff); border: none; box-shadow: 0 0 26px rgba(0,240,255,0.55); opacity: 0; transition: opacity 1s, transform .18s; }
+      .conv-fab.show { opacity: 1; } .conv-fab:hover { transform: translateY(-2px); }
+      .conv-ov { position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center; background: rgba(1,4,13,0.72); backdrop-filter: blur(6px); padding: 16px; }
+      .conv-ov.open { display: flex; }
+      .conv-card { width: min(430px,95vw); background: rgba(8,14,28,0.98); border: 1px solid rgba(0,240,255,0.3); border-radius: 18px; padding: 20px; box-shadow: 0 30px 80px rgba(0,0,0,0.7); }
+      .conv-card h3 { font-size: 20px; font-weight: 700; } .conv-card .cs { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: rgba(0,240,255,0.6); text-transform: uppercase; margin-bottom: 14px; }
+      .conv-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .conv-act { text-align: left; display: flex; flex-direction: column; gap: 5px; padding: 14px; border-radius: 12px; cursor: pointer; border: 1px solid rgba(0,240,255,0.2); background: rgba(0,240,255,0.05); color: #eaf2ff; transition: all .18s; }
+      .conv-act:hover { transform: translateY(-2px); border-color: rgba(0,240,255,0.45); }
+      .conv-act.done { border-color: rgba(57,255,20,0.4); background: rgba(57,255,20,0.06); }
+      .conv-act .t { font-weight: 700; font-size: 14px; } .conv-act .g { font-family: var(--mono); font-size: 9.5px; color: var(--amber); }
+      .conv-close { margin-top: 14px; width: 100%; padding: 11px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #eaf2ff; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
       .hint { position: fixed; bottom: 128px; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: rgba(234,242,255,0.35); text-transform: uppercase; z-index: 9; opacity: 0; transition: opacity 1s; }
       .hint.show { opacity: 1; animation: fade 3s ease-in-out infinite; } @keyframes fade { 0%,100%{opacity:0.3} 50%{opacity:0.6} }
     </style>
@@ -79,6 +91,21 @@
     <div class="hint" id="hint">Arrastra para girar tu universo · pregúntale al Oráculo</div>
     <div id="tip"><div class="cat" id="tc"></div><div class="lbl" id="tlbl"></div><div class="val" id="tv"></div><div class="det" id="tdet"></div><div class="mej" id="tmej"></div></div>
     <div class="flash" id="flash"></div>
+
+    <button class="conv-fab" id="convBtn">＋ Aportar datos</button>
+    <div class="conv-ov" id="convOv">
+      <div class="conv-card">
+        <h3>Convalida tu Gemelo</h3>
+        <div class="cs">Aporta datos reales · nacen en tu galaxia</div>
+        <div class="conv-acts">
+          <label class="conv-act" id="cv"><input type="file" id="cvf" accept=".pdf,.doc,.docx,image/*" style="display:none" /><span class="t">📄 Subir CV</span><span class="g">+ nodo · Ejecución</span></label>
+          <button class="conv-act" id="cti"><span class="t">🎓 Validar título</span><span class="g">+ nodo · Fundamento</span></button>
+          <button class="conv-act" id="cyr"><span class="t">⏱️ + Experiencia</span><span class="g">+ nodo · trayectoria</span></button>
+          <button class="conv-act" id="cvo"><span class="t">📚 Aporte a Bóveda</span><span class="g">+ nodo · Trascendencia</span></button>
+        </div>
+        <button class="conv-close" id="convClose">Cerrar</button>
+      </div>
+    </div>
 
     <div class="console" id="console">
       <div class="oracle-msg" id="omsg"></div>
@@ -149,16 +176,26 @@
         ["gob","Árbitro","Rol asignado","Resuelves disputas de la red.","Resuelve una disputa para ganar reputación."],
         ["gob","Propuesta #14","Abierta","Ajuste de comisión para Nodo Core.","Emite tu voto para incidir en la red."],
       ];
-      const N = RAW.length;
+      // Nodos latentes (ocultos) que NACEN cuando convalidas datos.
+      const LATENT = [
+        ["cred","CV verificado","Convalidado","Tu experiencia laboral, validada.","Mantén tu CV al día."],
+        ["cred","Título académico","Validado","Título verificable en tu Pasaporte.","Compártelo con clientes."],
+        ["cred","Certificación","Validada","Certificación técnica verificable.","Ofrécela como servicio."],
+        ["skill","Experiencia","Años acreditados","Tu trayectoria profesional acreditada.","Suma contratos para crecer."],
+        ["red","Aporte a la Bóveda","Compartido","Conocimiento compartido con la red.","Sigue aportando conocimiento."],
+      ];
+      const ALL = RAW.concat(LATENT);
+      const LATENT_START = RAW.length;
+      const N = ALL.length;
       const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-      const nodes = RAW.map(([cat,label,val,detail,mejora], i) => {
+      const nodes = ALL.map(([cat,label,val,detail,mejora], i) => {
         const y = 1 - (i / (N - 1)) * 2;
         const rad = Math.sqrt(1 - y*y);
         const th = GOLDEN * i;
         return { cat, label, val, detail, mejora, color: CATS[cat].color,
           bx: Math.cos(th)*rad, by: y, bz: Math.sin(th)*rad,
           baseR: 4.5 + (cat==="token"?2:0) + rand(0,1.5),
-          sx:0, sy:0, sc:1, zz:0, pulse:0, born: -1 };
+          sx:0, sy:0, sc:1, zz:0, pulse:0, born: -1, locked: i >= LATENT_START };
       });
       const edges = [[0,6],[1,7],[2,7],[6,14],[10,11],[11,13],[14,16],[17,18],[2,8],[3,9],[12,13],[18,19]];
       const dust = Array.from({length:90}, () => ({ x:Math.random(), y:Math.random(), r:rand(0.4,1.7), a:rand(0.05,0.4), vx:rand(-0.02,0.02), vy:rand(-0.02,0.02), tw:rand(0,6.28) }));
@@ -324,7 +361,7 @@
         Snd.init();
         const g=document.getElementById("gate"); g.style.opacity="0"; setTimeout(()=>g.style.display="none",800);
         scene="nexus"; born=performance.now()/1000;
-        ["tl","tr","console","hint"].forEach(id=>document.getElementById(id).classList.add("show"));
+        ["tl","tr","console","hint","convBtn"].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("show");});
         Snd.chime();
         setTimeout(()=>oracleType("Núcleo despierto. Bienvenido de vuelta, Matías. Este es tu Gemelo Digital: gíralo, explóralo, pregúntame lo que quieras."), 700);
       };
@@ -358,11 +395,11 @@
 
         // proyectar nodos
         const mx=mouse.x, my=mouse.y;
-        for(const n of nodes){ const p=project(n.bx,n.by,n.bz); n.sx=p.sx; n.sy=p.sy; n.sc=p.sc; n.zz=p.zz; if(n.pulse>0)n.pulse=Math.max(0,n.pulse-0.012); }
+        for(const n of nodes){ if(n.locked){continue;} const p=project(n.bx,n.by,n.bz); n.sx=p.sx; n.sy=p.sy; n.sc=p.sc; n.zz=p.zz; if(n.pulse>0)n.pulse=Math.max(0,n.pulse-0.012); }
 
         // hover (solo si no arrastra)
         hovered=-1;
-        if(!dragging){ let hd=22; nodes.forEach((n,i)=>{ const rr=n.baseR*n.sc; const d=Math.hypot(mx-n.sx,my-n.sy); if(d<hd+rr){ hd=d; hovered=i; } }); }
+        if(!dragging){ let hd=22; nodes.forEach((n,i)=>{ if(n.locked)return; const rr=n.baseR*n.sc; const d=Math.hypot(mx-n.sx,my-n.sy); if(d<hd+rr){ hd=d; hovered=i; } }); }
         if(hovered!==hoverPrev && hovered>=0) Snd.blip(); hoverPrev=hovered;
 
         // orden por profundidad (lejos primero: zz mayor = más lejos)
@@ -370,7 +407,7 @@
 
         // conexiones (constelación)
         ctx.lineWidth=1;
-        for(const [a,b] of edges){ const na=nodes[a], nb=nodes[b]; const al=0.06+0.06*((na.sc+nb.sc)/2); ctx.strokeStyle=hexA("#7fdfff",al); ctx.beginPath(); ctx.moveTo(na.sx,na.sy); ctx.lineTo(nb.sx,nb.sy); ctx.stroke(); }
+        for(const [a,b] of edges){ const na=nodes[a], nb=nodes[b]; if(na.locked||nb.locked)continue; const al=0.06+0.06*((na.sc+nb.sc)/2); ctx.strokeStyle=hexA("#7fdfff",al); ctx.beginPath(); ctx.moveTo(na.sx,na.sy); ctx.lineTo(nb.sx,nb.sy); ctx.stroke(); }
 
         // nodos detrás (zz>0)
         drawSet(order.filter(i=>nodes[i].zz>0), t);
@@ -391,9 +428,11 @@
       function drawSet(idxs, t, core){
         for(const i of idxs){
           const n=nodes[i];
+          if(n.locked) continue;
+          const ig = n.born<0 ? 1 : Math.min(1, (performance.now()-n.born)/700);
           const dim = spotlight>=0 ? (i===spotlight ? 1 : 0.14) : (highlight && n.cat!==highlight ? 0.18 : 1);
           const isHover = i===hovered;
-          const alpha = (0.5 + n.sc*0.5) * dim;
+          const alpha = (0.5 + n.sc*0.5) * dim * ig;
           if(core){ const la=(0.10+n.sc*0.12)*dim*(isHover?2:1); const grad=ctx.createLinearGradient(core.px,core.py,n.sx,n.sy); grad.addColorStop(0,hexA(n.color,0)); grad.addColorStop(1,hexA(n.color,la)); ctx.strokeStyle=grad; ctx.lineWidth=isHover?1.6:1; ctx.beginPath(); ctx.moveTo(core.px,core.py); ctx.lineTo(n.sx,n.sy); ctx.stroke(); let p=(pulses[i]+t*0.28)%1; ctx.fillStyle=hexA(n.color,(1-p)*alpha*0.9); ctx.beginPath(); ctx.arc(core.px+(n.sx-core.px)*p, core.py+(n.sy-core.py)*p,1.8,0,6.2832); ctx.fill(); }
           const rr=n.baseR*n.sc*(isHover?1.6:1)+(n.pulse>0?n.pulse*6:0);
           glow(n.sx,n.sy,rr,n.color,alpha);
@@ -401,6 +440,33 @@
           if((isHover || (n.sc>1.05 && dim>0.5))){ ctx.textAlign="center"; ctx.fillStyle=hexA("#eaf2ff",isHover?0.95:0.55*alpha); ctx.font=`${isHover?12:10}px 'Share Tech Mono', monospace`; ctx.fillText(n.label,n.sx,n.sy-rr-8); }
         }
       }
+
+      // ═══ Ecosistema: convalida tus datos → nace un nodo + sube tu Gemelo ═══
+      const _g = (id)=>document.getElementById(id);
+      const convOv = _g("convOv");
+      let titleN = 0;
+      function unlock(idx, repGain, narr, col){
+        const n = nodes[idx]; if(!n || !n.locked) return false;
+        n.locked = false; n.born = performance.now(); n.pulse = 1;
+        rep = Math.min(99, rep + repGain);
+        shocks.push({ t:0, color: col || n.color });
+        focusNode(idx);
+        try{ Snd.sweep(); }catch(e){}
+        oracleType(narr);
+        saveProfile();
+        return true;
+      }
+      function saveProfile(){ try{ const unlocked = nodes.map((n,i)=>i).filter(i=>i>=LATENT_START && !nodes[i].locked); localStorage.setItem("omicron_gemelo", JSON.stringify({ rep, unlocked, titleN })); }catch(e){} }
+      function loadProfile(){ try{ const s=JSON.parse(localStorage.getItem("omicron_gemelo")||"null"); if(!s)return; if(typeof s.rep==="number") rep=s.rep; if(Array.isArray(s.unlocked)) s.unlocked.forEach(i=>{ if(nodes[i]){ nodes[i].locked=false; nodes[i].born=-1; } }); if(typeof s.titleN==="number") titleN=s.titleN; }catch(e){} }
+      loadProfile();
+
+      if(_g("convBtn")) _g("convBtn").onclick = ()=>{ try{Snd.init();}catch(e){} convOv.classList.add("open"); };
+      if(_g("convClose")) _g("convClose").onclick = ()=> convOv.classList.remove("open");
+      if(convOv) convOv.onclick = (e)=>{ if(e.target===convOv) convOv.classList.remove("open"); };
+      if(_g("cvf")) _g("cvf").addEventListener("change",(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f)return; if(unlock(LATENT_START+0,2,"CV convalidado. Tu experiencia laboral ya orbita tu núcleo y refuerza tu Ejecución.","#00F0FF")){ _g("cv").classList.add("done"); flash("CV CONVALIDADO","#00F0FF"); convOv.classList.remove("open"); } });
+      if(_g("cti")) _g("cti").onclick = ()=>{ const idx=LATENT_START+1+titleN; if(titleN<2 && unlock(idx,2,"Título validado y verificable en tu Pasaporte. Suma a tu Fundamento.","#F59E0B")){ titleN++; if(titleN>=2)_g("cti").classList.add("done"); flash("TÍTULO VALIDADO","#F59E0B"); convOv.classList.remove("open"); } };
+      if(_g("cyr")) _g("cyr").onclick = ()=>{ if(unlock(LATENT_START+3,2,"Experiencia acreditada. Tu trayectoria fortalece el núcleo.","#22d3ee")){ _g("cyr").classList.add("done"); flash("EXPERIENCIA +","#22d3ee"); convOv.classList.remove("open"); } };
+      if(_g("cvo")) _g("cvo").onclick = ()=>{ if(unlock(LATENT_START+4,2,"Aporte a la Bóveda registrado. Tu Trascendencia crece.","#39FF14")){ _g("cvo").classList.add("done"); flash("APORTE REGISTRADO","#39FF14"); convOv.classList.remove("open"); } };
 
       requestAnimationFrame(frame);
     </script>
