@@ -157,11 +157,12 @@ export function HoloNucleo3D({
   const meta = useMemo(() => buildMeta(axes, chips), [axesKey, chipsKey]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const wrap = wrapRef.current;
-    if (!canvas || !wrap) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!canvasRef.current || !wrapRef.current) return;
+    const canvas: HTMLCanvasElement = canvasRef.current;
+    const wrap: HTMLDivElement = wrapRef.current;
+    const ctx2d = canvas.getContext('2d');
+    if (!ctx2d) return;
+    const ctx: CanvasRenderingContext2D = ctx2d;
 
     const reduce =
       typeof window !== 'undefined' && window.matchMedia &&

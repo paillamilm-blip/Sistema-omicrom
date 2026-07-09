@@ -45,7 +45,7 @@ export function OraculoBar() {
   const [listening, setListening] = useState(false);
   const [msg, setMsg] = useState<{ who: 'tu' | 'oraculo'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const recogRef = useRef<ReturnType<SpeechRecognitionCtor> | null>(null);
+  const recogRef = useRef<InstanceType<SpeechRecognitionCtor> | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const supported =
