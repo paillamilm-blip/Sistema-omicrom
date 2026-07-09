@@ -4,8 +4,8 @@
 // cuando no hay red. Esto da instalabilidad PWA + resiliencia offline básica
 // sin el riesgo de contenido obsoleto.
 
-const CACHE = 'omicron-v1';
-const SHELL = ['/', '/index.html', '/icon.svg', '/manifest.webmanifest'];
+const CACHE = 'omicron-v2';
+const SHELL = ['/', '/index.html', '/icon.svg', '/manifest.webmanifest', '/og-image.png'];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

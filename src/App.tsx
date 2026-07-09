@@ -58,6 +58,13 @@ function AppShell() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Atajos PWA (long-press del icono): /?tab=wallet abre ese hub directo.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('tab');
+    const valid: TabId[] = ['perfil', 'maxskill', 'academia', 'market', 'empleos', 'chat', 'wallet', 'gobernanza', 'vault'];
+    if (t && (valid as string[]).includes(t)) setActiveTab(t as TabId);
+  }, [setActiveTab]);
+
   if (authStatus === 'loading' || isLoadingProfile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>

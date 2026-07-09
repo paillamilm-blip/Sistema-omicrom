@@ -34,9 +34,24 @@ html {
 
 html, body, #root {
   height: 100%;
+  height: 100dvh; /* altura dinámica: respeta barras del navegador móvil */
   margin: 0;
   padding: 0;
   overflow: hidden;
+}
+
+/* ♿/📱 Áreas seguras: la app respeta notch y barra de gestos en cualquier
+   dispositivo (iPhone, Android con gestos, foldables). */
+#root {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Evita el "pull to refresh" y rebotes raros dentro de la PWA. */
+body {
+  overscroll-behavior: none;
 }
 
 body {
@@ -500,4 +515,46 @@ body::before {
 @keyframes cp-breathe {
   0%, 100% { opacity: 0.55; filter: brightness(1); }
   50%      { opacity: 1;    filter: brightness(1.55); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   ADAPTABLE A CUALQUIER DISPOSITIVO
+   En pantallas grandes (tablet / escritorio) la app se comporta como una
+   "cápsula" móvil centrada sobre el fondo holográfico, en vez de estirarse.
+   En móvil ocupa el 100% de la pantalla (con áreas seguras).
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 700px) {
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  #root {
+    width: min(460px, 100%);
+    height: min(920px, calc(100dvh - 48px));
+    border-radius: 30px;
+    overflow: hidden;
+    /* En escritorio no hay notch: neutraliza las áreas seguras. */
+    padding: 0;
+    box-shadow:
+      0 0 0 1px rgba(0, 240, 255, 0.22),
+      0 40px 90px -24px rgba(0, 0, 0, 0.9),
+      0 0 70px -14px rgba(0, 240, 255, 0.22);
+  }
+}
+
+/* Pantallas muy anchas: un poco más de aire alrededor de la cápsula. */
+@media (min-width: 1100px) {
+  #root { height: min(940px, calc(100dvh - 64px)); }
+}
+
+/* Respeta la preferencia de menos movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
