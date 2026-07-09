@@ -16,7 +16,7 @@ import { CredentialsPanel } from '../perfil/CredentialsPanel';
 import { CredentialReview } from '../perfil/CredentialReview';
 import { ShareCredentialModal, RedPanel } from '../perfil/RedSocial';
 import { ProgressRadar } from '../shared/ProgressRadar';
-import { HoloOrbField } from '../HoloOrbField';
+import { HoloNucleo3D } from '../HoloNucleo3D';
 // 🧪 MVP PILOTO CONTROLADO: Dossier de Evidencia y Carta de Competencias
 // dependen del Examinador IA / carta-ia (Edge Functions de IA). Se ocultan
 // para el piloto (no se elimina el código, solo se comenta su uso).
@@ -304,7 +304,7 @@ function CredencialCard({
           TU GEMELO DIGITAL · TÚ ERES EL ORBE
         </div>
 
-        <HoloOrbField
+        <HoloNucleo3D
           variant="identity"
           orbState={paused ? 'error' : 'idle'}
           orbSize="md"
