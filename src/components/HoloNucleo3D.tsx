@@ -170,11 +170,11 @@ export function HoloNucleo3D({
     let W = 0, H = 0, DPR = 1, CX = 0, CY = 0;
     function resize() {
       DPR = Math.min(window.devicePixelRatio || 1, 2);
-      W = wrap.clientWidth || 320;
+      W = wrap!.clientWidth || 320;
       H = height;
-      canvas.width = W * DPR; canvas.height = H * DPR;
-      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      canvas!.width = W * DPR; canvas!.height = H * DPR;
+      canvas!.style.width = W + 'px'; canvas!.style.height = H + 'px';
+      ctx!.setTransform(DPR, 0, 0, DPR, 0, 0);
       CX = W / 2; CY = H / 2;
     }
     resize();
@@ -203,7 +203,7 @@ export function HoloNucleo3D({
     let ptrX = CX, ptrY = CY, active = false, isTouch = false;
 
     function onMove(e: PointerEvent) {
-      const r = canvas.getBoundingClientRect();
+      const r = canvas!.getBoundingClientRect();
       ptrX = e.clientX - r.left; ptrY = e.clientY - r.top; active = true;
       if (e.pointerType) isTouch = e.pointerType === 'touch';
     }
