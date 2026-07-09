@@ -2,6 +2,7 @@ import type {
   Achievement,
   ActivityItem,
   DashboardData,
+  EarningsDetail,
   NodeDefinition,
   Opportunity,
   RankingEntry,
@@ -459,5 +460,79 @@ export function buildMockDashboard(): DashboardData {
       { id: "s4", label: "Ranking", value: "#5", change: 3, icon: "Trophy" },
     ],
     activity: mockActivity,
+  };
+}
+
+/** Datos completos de la pantalla de ganancias. */
+export function buildMockEarnings(): EarningsDetail {
+  return {
+    summary: {
+      amount: 4820,
+      changePercent: 18.4,
+      currency: "USD",
+      trend: [1200, 1850, 1600, 2400, 2100, 3200, 4820],
+      breakdown: [
+        { source: "Proyectos", amount: 3100 },
+        { source: "Mentorías", amount: 1120 },
+        { source: "Bonos", amount: 600 },
+      ],
+    },
+    months: [
+      { label: "Ene", amount: 1200 },
+      { label: "Feb", amount: 1850 },
+      { label: "Mar", amount: 1600 },
+      { label: "Abr", amount: 2400 },
+      { label: "May", amount: 2100 },
+      { label: "Jun", amount: 3200 },
+      { label: "Jul", amount: 4820 },
+    ],
+    totalLifetime: 34870,
+    payments: [
+      {
+        id: "pay_01",
+        concept: "Landing Nébula",
+        source: "Proyecto",
+        amount: 1200,
+        currency: "USD",
+        date: "2026-07-06T12:00:00.000Z",
+        status: "pagado",
+      },
+      {
+        id: "pay_02",
+        concept: "Mentoría TypeScript · Junio",
+        source: "Mentoría",
+        amount: 400,
+        currency: "USD",
+        date: "2026-07-02T12:00:00.000Z",
+        status: "pagado",
+      },
+      {
+        id: "pay_03",
+        concept: "Rediseño panel analítico · Hito 1",
+        source: "Proyecto",
+        amount: 1100,
+        currency: "USD",
+        date: "2026-07-09T12:00:00.000Z",
+        status: "procesando",
+      },
+      {
+        id: "pay_04",
+        concept: "Bono por racha",
+        source: "Bono",
+        amount: 600,
+        currency: "USD",
+        date: "2026-07-01T12:00:00.000Z",
+        status: "pagado",
+      },
+      {
+        id: "pay_05",
+        concept: "Feature colaboración · Anticipo",
+        source: "Proyecto",
+        amount: 800,
+        currency: "USD",
+        date: "2026-07-10T12:00:00.000Z",
+        status: "pendiente",
+      },
+    ],
   };
 }

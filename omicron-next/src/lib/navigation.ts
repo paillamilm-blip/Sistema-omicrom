@@ -4,6 +4,7 @@ import {
   type LucideIcon,
   Trophy,
   User,
+  Wallet,
 } from "lucide-react";
 
 export interface NavItem {
@@ -17,5 +18,6 @@ export const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Oportunidades", href: "/oportunidades", icon: Compass },
   { label: "Ranking", href: "/ranking", icon: Trophy },
+  { label: "Ganancias", href: "/ganancias", icon: Wallet },
   { label: "Perfil", href: "/perfil", icon: User },
 ];

@@ -22,13 +22,15 @@ redirige automáticamente a `/dashboard`.
 
 ### Scripts
 
-| Script              | Descripción                          |
-| ------------------- | ------------------------------------ |
-| `npm run dev`       | Servidor de desarrollo               |
-| `npm run build`     | Build de producción                  |
-| `npm run start`     | Sirve el build de producción         |
-| `npm run lint`      | ESLint (config de Next)              |
-| `npm run type-check`| Verificación de tipos con `tsc`      |
+| Script               | Descripción                     |
+| -------------------- | ------------------------------- |
+| `npm run dev`        | Servidor de desarrollo          |
+| `npm run build`      | Build de producción             |
+| `npm run start`      | Sirve el build de producción    |
+| `npm run lint`       | ESLint (config de Next)         |
+| `npm run type-check` | Verificación de tipos con `tsc` |
+| `npm run test`       | Tests con Vitest                |
+| `npm run test:watch` | Tests en modo watch             |
 
 ## Diseño
 
@@ -39,16 +41,47 @@ Dark mode profesional con acentos en **azul** (`hsl(217 91% 60%)`) y **morado**
 
 ## Rutas
 
-| Ruta                   | Descripción                                              |
-| ---------------------- | -------------------------------------------------------- |
-| `/`                    | Redirige a `/dashboard`                                  |
-| `/dashboard`           | Dashboard: nodo, XP, habilidades, ganancias, actividad   |
-| `/oportunidades`       | Listado con filtros (tipo + búsqueda)                    |
-| `/oportunidades/[id]`  | Detalle de una oportunidad                               |
-| `/ranking`             | Leaderboard de nodos con podio                           |
-| `/perfil`              | Perfil, insignias y progresión de nodos                  |
+| Ruta                  | Descripción                                            |
+| --------------------- | ------------------------------------------------------ |
+| `/`                   | Redirige a `/dashboard`                                |
+| `/login`, `/registro` | Autenticación (grupo `(auth)`)                         |
+| `/dashboard`          | Dashboard: nodo, XP, habilidades, ganancias, actividad |
+| `/oportunidades`      | Listado con filtros (tipo + búsqueda)                  |
+| `/oportunidades/[id]` | Detalle de una oportunidad                             |
+| `/ranking`            | Leaderboard de nodos con podio                         |
+| `/ganancias`          | Ingresos por mes, desglose y pagos                     |
+| `/perfil`             | Perfil, insignias y progresión de nodos                |
 
-Todas las rutas internas comparten el layout del grupo `(app)` (sidebar + topbar).
+Las rutas internas comparten el layout del grupo `(app)` (sidebar + topbar).
+
+## Autenticación
+
+Implementada con Supabase Auth (`@supabase/ssr`):
+
+- `src/middleware.ts` refresca la sesión y protege las rutas internas.
+- Server Actions en `src/lib/auth/actions.ts` (`signIn`, `signUp`, `signOut`).
+- **Degradación elegante**: si Supabase no está configurado, el middleware
+  deja pasar todo y las acciones entran directo al dashboard (modo demo).
+
+## Base de datos
+
+Migraciones y seed en `supabase/`:
+
+- `supabase/migrations/*.sql`: tablas (`profiles`, `skills`, `opportunities`,
+  `activity`, `achievements`, `earnings`), RLS y un trigger que crea el perfil
+  al registrarse un usuario.
+- `supabase/seed.sql`: oportunidades de ejemplo.
+
+```bash
+supabase start      # entorno local
+supabase db reset   # aplica migraciones + seed
+```
+
+## Tests y CI
+
+- **Vitest + Testing Library** (entorno jsdom). Tests en `src/**/*.test.ts(x)`.
+- CI en `.github/workflows/omicron-next-ci.yml`: lint, type-check, test y build
+  en cada push/PR que toque `omicron-next/`.
 
 ## Estructura
 

@@ -65,6 +65,36 @@ export interface EarningsBreakdownItem {
   amount: number;
 }
 
+export interface MonthlyEarning {
+  /** Etiqueta corta del mes (ej: "Ene"). */
+  label: string;
+  amount: number;
+}
+
+export type PaymentStatus = "pagado" | "pendiente" | "procesando";
+
+export interface Payment {
+  id: string;
+  concept: string;
+  source: string;
+  amount: number;
+  currency: string;
+  /** Fecha ISO. */
+  date: string;
+  status: PaymentStatus;
+}
+
+/** Datos completos para la pantalla de ganancias. */
+export interface EarningsDetail {
+  summary: EarningsSummary;
+  /** Serie mensual etiquetada para el gráfico. */
+  months: MonthlyEarning[];
+  /** Total acumulado histórico. */
+  totalLifetime: number;
+  /** Pagos recientes. */
+  payments: Payment[];
+}
+
 export type OpportunityType = "proyecto" | "mentoria" | "curso";
 
 export interface Opportunity {

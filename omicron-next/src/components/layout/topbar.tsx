@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { Logo } from "@/components/dashboard/logo";
+import { signOut } from "@/lib/auth/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -126,9 +127,19 @@ export function Topbar({ user }: TopbarProps) {
                 Configuración
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive">
-                <LogOut />
-                Cerrar sesión
+              <DropdownMenuItem
+                asChild
+                className="text-destructive focus:text-destructive"
+              >
+                <form action={signOut}>
+                  <button
+                    type="submit"
+                    className="flex w-full items-center gap-2"
+                  >
+                    <LogOut />
+                    Cerrar sesión
+                  </button>
+                </form>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
