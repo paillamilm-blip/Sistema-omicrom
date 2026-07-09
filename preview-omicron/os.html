@@ -45,6 +45,8 @@
       .ninfo .nc { font-family:var(--mono); font-size:9px; letter-spacing:1.2px; text-transform:uppercase; }
       .ninfo .nl { font-weight:700; font-size:14px; margin-top:1px; }
       .ninfo .nd { font-size:11px; color:rgba(234,242,255,0.7); margin-top:2px; line-height:1.4; }
+      .ninfo .nm { font-size:11px; color:#ffdd9e; margin-top:7px; padding-top:7px; border-top:1px solid rgba(255,255,255,0.08); line-height:1.4; }
+      .ninfo .nm b { font-family:var(--mono); font-size:9px; letter-spacing:1px; color:var(--amber); text-transform:uppercase; margin-right:5px; }
       .stats3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:6px; }
       .stat { background:rgba(0,240,255,0.05); border:1px solid rgba(0,240,255,0.1); border-radius:8px; padding:9px 6px; text-align:center; }
       .stat .v { font-size:18px; font-weight:700; } .stat .v.a{color:var(--amber);} .stat .v.c{color:var(--cyan);} .stat .k { font-family:var(--mono); font-size:8px; letter-spacing:1px; color:rgba(234,242,255,0.5); text-transform:uppercase; margin-top:2px; }
@@ -198,23 +200,23 @@
       const CATS={skill:"#00F0FF",cred:"#F59E0B",red:"#38BDF8",token:"#39FF14",gob:"#FF3D57"};
       const CATNAME={skill:"Habilidad",cred:"Credencial",red:"Red / Confianza",token:"Economía",gob:"Gobernanza"};
       const NDATA=[
-        ["skill","Frontend","88 / 100","Interfaces y experiencia de usuario."],
-        ["skill","Backend","72 / 100","Lógica, APIs y datos del servidor."],
-        ["skill","Arquitectura","64 / 100","Diseño de sistemas a escala."],
-        ["cred","React Pro","Validada","Credencial verificada en tu Pasaporte."],
-        ["cred","System Design","Validada","Credencial verificada en tu Pasaporte."],
-        ["red","128 conexiones","Red activa","Tu red de confianza en Ómicron."],
-        ["red","Sello de Confianza","Verificado","Prueba pública de tu reputación."],
-        ["token","2,480 tokens","Saldo","Disponible en tu billetera."],
-        ["token","Escrow 1,100","En custodia","Fondos bloqueados en contratos activos."],
-        ["gob","2 votos","Activos","Tu poder de decisión en la Cámara de nodos."],
-        ["gob","Árbitro","Rol asignado","Resuelves disputas en la red."],
-        ["skill","UX","79 / 100","Investigación y usabilidad."],
-        ["cred","Cloud Security","Validada","Credencial verificada."],
-        ["red","Mentor ×3","Reputación +","Has guiado a otros nodos de la red."],
+        ["skill","Frontend","88 / 100","Interfaces y experiencia de usuario.","Toma un contrato de hito corto en el Market para elevar tu ejecución."],
+        ["skill","Backend","72 / 100","Lógica, APIs y datos del servidor.","Valida un nodo backend en la Academia para subir tu fundamento."],
+        ["skill","Arquitectura","64 / 100","Diseño de sistemas a escala.","Rinde el Examen IA de Arquitectura de Sistemas."],
+        ["cred","React Pro","Validada","Credencial verificada en tu Pasaporte.","Compártela por enlace público para atraer contratos."],
+        ["cred","System Design","Validada","Credencial verificada en tu Pasaporte.","Úsala para postular a contratos senior en Empleos."],
+        ["red","128 conexiones","Red activa","Tu red de confianza en Ómicron.","Mentorea a un junior para ampliar tu red y tu reputación."],
+        ["red","Sello de Confianza","Verificado","Prueba pública de tu reputación.","Cierra contratos sin disputa para mantener tu sello."],
+        ["token","2,480 tokens","Saldo","Disponible en tu billetera.","Bloquea en escrow y libera contratos para crecer tu saldo."],
+        ["token","Escrow 1,100","En custodia","Fondos bloqueados en contratos activos.","Aprueba la entrega del hito para liberar estos fondos."],
+        ["gob","2 votos","Activos","Tu poder de decisión en la Cámara de nodos.","Vota la propuesta #14 para incidir en la red."],
+        ["gob","Árbitro","Rol asignado","Resuelves disputas en la red.","Resuelve una disputa abierta para ganar reputación."],
+        ["skill","UX","79 / 100","Investigación y usabilidad.","Comparte un caso de UX en la Bóveda (sube trascendencia)."],
+        ["cred","Cloud Security","Validada","Credencial verificada.","Ofrécela como servicio en el Market."],
+        ["red","Mentor ×3","Reputación +","Has guiado a otros nodos de la red.","Mentorea a más nodos para subir tu trascendencia."],
       ];
       const GOLDEN=Math.PI*(3-Math.sqrt(5));
-      const nk=NDATA.map(([cat,label,value,detail],i)=>{const y=1-(i/(NDATA.length-1))*2;const rad=Math.sqrt(Math.max(0,1-y*y));const th=GOLDEN*i;return{cat,label,value,detail,color:CATS[cat],bx:Math.cos(th)*rad,by:y,bz:Math.sin(th)*rad,baseR:3+(cat==="token"?1.6:0)+(i%3)*0.5,sx:0,sy:0,sc:1,zz:0};});
+      const nk=NDATA.map(([cat,label,value,detail,mejora],i)=>{const y=1-(i/(NDATA.length-1))*2;const rad=Math.sqrt(Math.max(0,1-y*y));const th=GOLDEN*i;return{cat,label,value,detail,mejora,color:CATS[cat],bx:Math.cos(th)*rad,by:y,bz:Math.sin(th)*rad,baseR:3+(cat==="token"?1.6:0)+(i%3)*0.5,sx:0,sy:0,sc:1,zz:0};});
       let nptrX=0,nptrY=0,nactive=false,nsel=-1,nTouch=false;
       const nedges=[[0,3],[1,5],[7,9],[3,12],[5,13]];
       let ncanvas,nctx,nW,nH,nDPR,yaw=0.4,pitch=-0.2;
@@ -249,7 +251,7 @@
         draw(back,null); const core=ncore(t); draw(front,core);
         // ficha
         const ni=document.getElementById("ninfo");
-        if(ni){ if(nsel>=0){const n=nk[nsel];ni.style.borderColor=hexA(n.color,0.5);ni.innerHTML=`<div class="nc" style="color:${n.color}">${CATNAME[n.cat]} · ${n.value}</div><div class="nl">${n.label}</div><div class="nd">${n.detail}</div>`;ni.classList.add("show");} else ni.classList.remove("show"); }
+        if(ni){ if(nsel>=0){const n=nk[nsel];ni.style.borderColor=hexA(n.color,0.5);ni.innerHTML=`<div class="nc" style="color:${n.color}">${CATNAME[n.cat]} · ${n.value}</div><div class="nl">${n.label}</div><div class="nd">${n.detail}</div><div class="nm"><b>▲ Mejora</b> ${n.mejora}</div>`;ni.classList.add("show");} else ni.classList.remove("show"); }
         requestAnimationFrame(nframe);
       }
 

@@ -48,6 +48,8 @@ interface NodeMeta {
   cat: string;
   value: string;
   detail: string;
+  /** Acción concreta para mejorar esta dimensión dentro del ecosistema. */
+  mejora: string;
   color: string;
   weight: number; // 0-1 → tamaño del punto
 }
@@ -58,11 +60,11 @@ interface GNode {
   sx: number; sy: number; sc: number; zz: number;
 }
 
-const AXES_DEF: { key: keyof NucleoAxes; label: string; color: string; detail: string }[] = [
-  { key: 'execution', label: 'Ejecución', color: '#00F0FF', detail: 'Qué tan rápido y bien entregas tus contratos.' },
-  { key: 'quality', label: 'Calidad', color: '#0a8ba3', detail: 'Las calificaciones con estrellas de tus clientes.' },
-  { key: 'transcendence', label: 'Trascendencia', color: '#F59E0B', detail: 'El conocimiento que compartes: Bóveda y mentorías.' },
-  { key: 'foundation', label: 'Fundamento', color: '#39FF14', detail: 'Tu dominio teórico y los cursos de la Academia.' },
+const AXES_DEF: { key: keyof NucleoAxes; label: string; color: string; detail: string; mejora: string }[] = [
+  { key: 'execution', label: 'Ejecución', color: '#00F0FF', detail: 'Qué tan rápido y bien entregas tus contratos.', mejora: 'Toma un contrato de hito corto en el Market para elevar tu velocidad de entrega.' },
+  { key: 'quality', label: 'Calidad', color: '#0a8ba3', detail: 'Las calificaciones con estrellas de tus clientes.', mejora: 'Pide reseña al cerrar cada contrato: más estrellas suben este eje.' },
+  { key: 'transcendence', label: 'Trascendencia', color: '#F59E0B', detail: 'El conocimiento que compartes: Bóveda y mentorías.', mejora: 'Publica un aporte en la Bóveda o mentorea a un nodo junior.' },
+  { key: 'foundation', label: 'Fundamento', color: '#39FF14', detail: 'Tu dominio teórico y los cursos de la Academia.', mejora: 'Rinde el Examen IA de un nodo pendiente en la Academia.' },
 ];
 
 const CHIP_DETAIL: Record<string, string> = {
@@ -70,6 +72,13 @@ const CHIP_DETAIL: Record<string, string> = {
   PE: 'Puntos de experiencia acumulados por tu trabajo y aprendizaje.',
   Contratos: 'Contratos completados con éxito en la red.',
 };
+
+const CHIP_MEJORA: Record<string, string> = {
+  Tokens: 'Cierra contratos con escrow para liberar pagos y hacer crecer tu saldo.',
+  PE: 'Completa cursos en la Academia para sumar PE y subir de nodo.',
+  Contratos: 'Postula a una oportunidad en Empleos para tu próximo contrato.',
+};
+const CHIP_MEJORA_DEFAULT = 'Acumula PE con contratos y cursos para subir de nodo y bajar tu comisión de red.';
 
 const GOLDEN = Math.PI * (3 - Math.sqrt(5));
 
@@ -85,7 +94,7 @@ function buildMeta(axes: NucleoAxes | undefined, chips: NucleoChip[]): NodeMeta[
     const raw = axes?.[a.key];
     const v = typeof raw === 'number' ? raw : null;
     out.push({
-      label: a.label, cat: 'Eje del Gemelo', color: a.color, detail: a.detail,
+      label: a.label, cat: 'Eje del Gemelo', color: a.color, detail: a.detail, mejora: a.mejora,
       value: v != null ? `${Math.round(v)} / 100` : 'sin datos',
       weight: v != null ? Math.max(0.25, v / 100) : 0.55,
     });
@@ -94,6 +103,7 @@ function buildMeta(axes: NucleoAxes | undefined, chips: NucleoChip[]): NodeMeta[
     out.push({
       label: c.label, cat: 'Métrica', color: c.color, value: c.value,
       detail: CHIP_DETAIL[c.label] || 'Tu nodo actual en la red Ómicron.',
+      mejora: CHIP_MEJORA[c.label] || CHIP_MEJORA_DEFAULT,
       weight: 0.7,
     });
   });
@@ -349,6 +359,14 @@ export function HoloNucleo3D({
           </div>
           <div style={{ fontFamily: FONT.body, fontSize: 12, color: 'rgba(234,242,255,0.75)', marginTop: 3, lineHeight: 1.4 }}>
             {info.detail}
+          </div>
+          <div style={{ display: 'flex', gap: 7, marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <span style={{ flexShrink: 0, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#F59E0B', textTransform: 'uppercase' }}>
+              ▲ Mejora
+            </span>
+            <span style={{ fontFamily: FONT.body, fontSize: 12, color: '#ffdd9e', lineHeight: 1.4 }}>
+              {info.mejora}
+            </span>
           </div>
         </div>
       ) : (
