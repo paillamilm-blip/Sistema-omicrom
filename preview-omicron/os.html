@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Ómicron OS · Navegable por voz</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -66,6 +66,16 @@
       .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
       .toast .tt { font-family:var(--mono); font-size:10px; letter-spacing:1.5px; color:var(--cyan); text-transform:uppercase; }
       .toast .ts { font-size:13px; margin-top:2px; }
+      /* En móvil / pantallas chicas: la app ocupa TODA la pantalla */
+      @media (max-width: 640px), (max-height: 760px) {
+        body { padding: 0; }
+        .intro { display: none; }
+        .phone {
+          max-width: 100%; width: 100%;
+          height: 100vh; height: 100dvh; max-height: none;
+          border: none; border-radius: 0; box-shadow: none;
+        }
+      }
     </style>
   </head>
   <body>
