@@ -30,6 +30,9 @@
       .go { margin-top:auto; font-family:var(--mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--cyan); }
       .foot { margin-top:24px; font-family:var(--mono); font-size:10px; letter-spacing:1px; color:rgba(57,255,20,0.7); }
       .foot .step { color:rgba(234,242,255,0.5); }
+      .status { display:none; max-width:520px; margin:0 auto 22px; font-family:var(--mono); font-size:12px; color:rgba(234,242,255,0.8); background:rgba(10,20,40,0.7); border:1px solid rgba(0,240,255,0.22); border-radius:14px; padding:12px 18px; line-height:1.6; }
+      .status .st-title { display:block; color:var(--cyans); font-size:10px; letter-spacing:1.6px; text-transform:uppercase; margin-bottom:4px; }
+      .status b { color:var(--amber); font-weight:700; }
     </style>
   </head>
   <body>
@@ -38,6 +41,8 @@
       <h1>Sistema Ómicron</h1>
       <div class="tag">Ecosistema conectado · Industria 5.0</div>
       <p class="lead">Todo se conecta con todo. Aportas datos en una pantalla y tu Gemelo se refleja en las demás (perfil compartido). Empieza por <b style="color:var(--cyans)">Convalidar</b>, luego mira tu <b style="color:var(--cyans)">Núcleo</b>.</p>
+
+      <div class="status" id="omiStatus"></div>
 
       <div class="grid">
         <a class="card" href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/convalida.html">
@@ -79,5 +84,21 @@
 
       <div class="foot">✔ Perfil compartido (localStorage) · lo que convalidas <span class="step">se refleja en todas las pantallas</span></div>
     </div>
+    <script>
+      // Reconoce al usuario: si ya convalidó datos, muestra su Nodo y reputación reales.
+      (function () {
+        try {
+          var p = JSON.parse(localStorage.getItem('omicron_gemelo') || 'null');
+          var el = document.getElementById('omiStatus');
+          if (!el || !p) return;
+          if (p.cv || p.titles > 0 || p.years > 0 || p.vault > 0) {
+            var tier = p.pe >= 2000 ? 'Arquitecto' : p.pe >= 500 ? 'Core' : 'Operativo';
+            var pe = Math.round(p.pe || 0).toLocaleString('es');
+            el.innerHTML = '<span class="st-title">Bienvenido de vuelta</span>Nodo <b>' + tier + '</b> · Reputación <b>' + (p.rep || 0) + '</b> · ' + pe + ' PE';
+            el.style.display = 'block';
+          }
+        } catch (e) {}
+      })();
+    </script>
   </body>
 </html>
