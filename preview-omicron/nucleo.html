@@ -529,16 +529,39 @@
         micBtn.style.opacity = "0.4";
       }
 
-      // ══ Entrada ══
-      document.getElementById("enter").onclick = () => {
-        Snd.init();
-        const g=document.getElementById("gate"); g.style.opacity="0"; setTimeout(()=>g.style.display="none",800);
+      // ══ Entrada · se CARGA y te HABLA de inmediato (sin ventana que obligue a pulsar) ══
+      let awoken = false, spokenConfirmed = false;
+      function greetText(){
+        const has = prof.cv || prof.titles>0 || prof.years>0 || prof.vault>0;
+        const ti = tierInfo(prof.pe);
+        if(has) return `Hola de nuevo. Eres Nodo ${ti.cur.n}, con reputación ${prof.rep} y ${prof.pe} puntos de experiencia. Dime qué construimos hoy, o toca un nodo de tu galaxia.`;
+        return `Bienvenido. Soy tu Oráculo, la voz de tu Gemelo Digital. Convalida tu CV, tus títulos y tu experiencia, y verás nacer tu universo.`;
+      }
+      function awaken(){
+        if(awoken) return; awoken = true;
+        try{ Snd.init(); }catch(e){}
+        const g=document.getElementById("gate"); if(g){ g.style.opacity="0"; setTimeout(()=>{ g.style.display="none"; }, 800); }
         scene="nexus"; born=performance.now()/1000;
-        ["tl","tr","console","hint","convBtn"].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("show");});
-        Snd.chime();
-        setTimeout(()=>oracleType(`Núcleo despierto. Tu reputación es ${rep}. Pulsa "Aportar datos" para convalidar tu CV y títulos: verás nacer nodos en tu galaxia.`), 700);
-        try{ if(!localStorage.getItem("omicron_tour")){ localStorage.setItem("omicron_tour","1"); setTimeout(runGuidedTour, 2600); } }catch(e){}
-      };
+        ["tl","tr","console","hint"].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("show");});
+        try{ Snd.chime(); }catch(e){}
+        oracleType(greetText());  // habla de inmediato: texto + voz
+        setTimeout(()=>{ try{ if(window.speechSynthesis && speechSynthesis.speaking) spokenConfirmed = true; }catch(e){} }, 500);
+        try{ if(!localStorage.getItem("omicron_tour") && !(prof.cv||prof.titles||prof.years||prof.vault)){ localStorage.setItem("omicron_tour","1"); setTimeout(runGuidedTour, 5200); } }catch(e){}
+      }
+      // Se puede entrar tocando el botón O la tarjeta… pero además entra SOLA tras un instante.
+      const enterBtn = document.getElementById("enter"); if(enterBtn) enterBtn.onclick = awaken;
+      const gateEl0 = document.getElementById("gate"); if(gateEl0) gateEl0.addEventListener("click", awaken);
+      setTimeout(awaken, 2200);
+      // Respaldo de voz: si el navegador bloquea el audio al cargar (típico en móvil),
+      // el PRIMER toque en cualquier lugar activa la voz del Oráculo.
+      function firstGesture(){
+        try{ Snd.init(); }catch(e){}
+        if(!spokenConfirmed){ try{ Voice.say(greetText()); spokenConfirmed = true; }catch(e){} }
+        window.removeEventListener("pointerdown", firstGesture, true);
+        window.removeEventListener("touchstart", firstGesture, true);
+      }
+      window.addEventListener("pointerdown", firstGesture, true);
+      window.addEventListener("touchstart", firstGesture, true);
 
       // ══ Dibujo ══
       const tip = document.getElementById("tip");
