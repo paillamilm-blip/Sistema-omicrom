@@ -88,6 +88,24 @@
       .flash { position:fixed; left:50%; top:34%; transform:translate(-50%,-50%); z-index:70; text-align:center; opacity:0; pointer-events:none; }
       .flash .big { font-size:28px; font-weight:700; color:var(--green); text-shadow:0 0 30px rgba(57,255,20,0.7); }
 
+      /* Panel de postulaciones activas */
+      .apps { margin-bottom:18px; }
+      .apps-h { font-family:var(--mono); font-size:10px; letter-spacing:1.5px; color:var(--green); text-transform:uppercase; margin:0 4px 10px; display:flex; align-items:center; gap:7px; }
+      .apps-h .pulse { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:blink 1.2s ease-in-out infinite; }
+      .app { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:13px; background:rgba(57,255,20,0.05); border:1px solid rgba(57,255,20,0.18); margin-bottom:9px; }
+      .app .ac { flex:1; min-width:0; }
+      .app .ac .at { font-weight:700; font-size:14px; }
+      .app .ac .as { font-family:var(--mono); font-size:10px; color:rgba(234,242,255,0.6); margin-top:2px; }
+      .app .ap { width:82px; flex-shrink:0; }
+      .app .ap .stg { font-family:var(--mono); font-size:8.5px; letter-spacing:.5px; color:var(--green); text-transform:uppercase; text-align:right; line-height:1.2; }
+      .app .ap .abar { height:5px; border-radius:3px; background:rgba(255,255,255,0.1); overflow:hidden; margin-top:5px; }
+      .app .ap .abar>i { display:block; height:100%; background:linear-gradient(90deg,#39ff14,#7df9ff); transition:width .6s; }
+      /* Entrenador de entrevista por voz */
+      .iqbtns { display:flex; gap:7px; margin-top:8px; flex-wrap:wrap; }
+      .iqbtn { font-family:var(--mono); font-size:9px; letter-spacing:.5px; text-transform:uppercase; padding:6px 10px; border-radius:10px; cursor:pointer; background:rgba(0,240,255,0.08); border:1px solid rgba(0,240,255,0.25); color:var(--cyan); }
+      .iqbtn.rec { background:rgba(255,61,87,0.1); border-color:rgba(255,61,87,0.35); color:#ff9db0; }
+      .iq .q .fb { display:none; font-family:var(--mono); font-size:10px; color:var(--green); margin-top:7px; line-height:1.45; }
+      .iq .q.answered .fb { display:block; }
       .omni-nav{position:fixed;top:9px;left:50%;transform:translateX(-50%);z-index:120;display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:96vw;padding:4px;border-radius:22px;background:rgba(6,12,26,0.72);border:1px solid rgba(0,240,255,0.22);backdrop-filter:blur(10px);box-shadow:0 6px 24px rgba(0,0,0,0.45);}
       .omni-nav a{font-family:"Share Tech Mono",monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:rgba(234,242,255,0.7);text-decoration:none;padding:5px 9px;border-radius:16px;transition:all .18s;white-space:nowrap;}
       .omni-nav a:hover{background:#00f0ff;color:#020613;}
@@ -126,6 +144,8 @@
 
       <div class="me" id="me"></div>
 
+      <div class="apps" id="appsWrap" style="display:none"></div>
+
       <div class="sectitle">▸ Oportunidades que te calzan (ordenadas por afinidad)</div>
       <div class="feed" id="feed"></div>
 
@@ -155,6 +175,36 @@
       function omiLoad(){ try{ return Object.assign(omiDefault(), JSON.parse(localStorage.getItem(OMI_KEY)||"{}")); }catch(e){ return omiDefault(); } }
       const prof = omiRecompute(omiLoad());
       const tierName = prof.pe>=2000?"Arquitecto":prof.pe>=500?"Core":"Operativo";
+
+      // ── Postulaciones activas (persistidas · avanzan con el tiempo) ──
+      const APP_KEY="omicron_apps";
+      function loadApps(){ try{ return JSON.parse(localStorage.getItem(APP_KEY)||"[]"); }catch(e){ return []; } }
+      let apps = loadApps();
+      function saveApps(){ try{ localStorage.setItem(APP_KEY, JSON.stringify(apps.slice(-12))); }catch(e){} }
+      const STAGES=["Enviada","En revisión","Entrevista","Oferta"];
+      function appStage(a){ return Math.min(STAGES.length-1, Math.floor((Date.now()-a.ts)/20000)); }
+      function renderApps(){
+        const w=$("appsWrap"); if(!w) return;
+        if(!apps.length){ w.style.display="none"; return; }
+        w.style.display="block";
+        w.innerHTML='<div class="apps-h"><span class="pulse"></span> Ómicron gestiona '+apps.length+' proceso(s) por ti</div>'+
+          apps.slice().reverse().map(a=>{ const s=appStage(a); const pct=Math.round(((s+1)/STAGES.length)*100); return '<div class="app"><div class="ac"><div class="at">'+a.title+'</div><div class="as">'+a.company+' · match '+a.fit+'%</div></div><div class="ap"><div class="stg">'+STAGES[s]+'</div><div class="abar"><i style="width:'+pct+'%"></i></div></div></div>'; }).join('');
+      }
+      setInterval(renderApps, 5000);
+
+      // ── Voz: leer la pregunta y practicar la respuesta ──
+      const TTS={ say(t){ try{ if(!("speechSynthesis" in window))return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="es-ES"; u.rate=1.02; speechSynthesis.speak(u);}catch(e){} } };
+      const SRc = window.SpeechRecognition||window.webkitSpeechRecognition;
+      function practice(idx){
+        const qEl=document.getElementById("iq"+idx); if(!qEl) return; const fb=qEl.querySelector(".fb"); qEl.classList.add("answered");
+        if(!SRc){ fb.textContent="🎙️ El micrófono no está disponible en el preview. En la app publicada practicas por voz."; return; }
+        fb.textContent="🎙️ Escuchando… responde en voz alta";
+        try{ const r=new SRc(); r.lang="es-ES"; r.interimResults=false; r.maxAlternatives=1;
+          r.onresult=(e)=>{ const t=(e.results[0][0].transcript||"").trim(); const words=t?t.split(/\s+/).length:0; const m=words<12?"Amplía con un ejemplo concreto (método STAR).":words>60?"Muy completo: sintetiza la idea clave al final.":"Buen largo: cierra con un resultado medible."; fb.textContent="✓ Respondiste ("+words+" palabras). "+m; };
+          r.onerror=()=>{ fb.textContent="No pude escuchar (permiso de micrófono). En la app publicada funcionará."; };
+          r.start();
+        }catch(e){ fb.textContent="No pude iniciar el micrófono aquí."; }
+      }
 
       // ═══ Puestos del mercado ═══
       const JOBS=[
@@ -221,7 +271,7 @@
 
       // Escaneo inicial
       setTimeout(()=>{ $("scanTitle").textContent = jobsScored[0].fit>=75 ? "Encontré "+jobsScored.length+" oportunidades para ti" : "Analizando… convalida más para mejores matches"; $("scanDesc").textContent = "Tu mejor match: "+jobsScored[0].fit+"% en "+jobsScored[0].job.company; render(); }, 1100);
-      render();
+      render(); renderApps();
 
       // ═══ Flujo de auto-postulación ═══
       const IQ=[
@@ -252,8 +302,8 @@
 
         activate(0); setP(0,"Ómicron adjuntó tu Pasaporte verificable (Nodo "+tierName+", reputación "+prof.rep+"). Sin formularios: tus datos ya están validados.");
         flowTimers.push(setTimeout(()=>{ activate(1); setP(1,'<div class="prop">"Candidato Nodo '+tierName+' con reputación '+prof.rep+'/100 y '+Math.round(prof.pe).toLocaleString()+' PE. Fortaleza principal: '+ejeName+'. '+(prof.titles>0?prof.titles+' título(s) verificable(s). ':'')+(prof.years>0?prof.years+' años de experiencia acreditada. ':'')+'Encaje con '+j.title+': '+computeFit(j)+'%."</div>'); }, 1400));
-        flowTimers.push(setTimeout(()=>{ activate(2); setP(2,'<div class="iq">'+IQ.map((it,k)=>'<div class="q" id="iq'+k+'"><div class="qt">'+(k+1)+'. '+it.q+'</div><span class="rev" data-iq="'+k+'">▸ Ver cómo responder</span><div class="tip">💡 '+it.tip+'</div></div>').join('')+'</div>'); document.querySelectorAll("[data-iq]").forEach(r=>r.onclick=()=>{ const q=document.getElementById("iq"+r.getAttribute("data-iq")); if(q) q.classList.toggle("show"); }); }, 3000));
-        flowTimers.push(setTimeout(()=>{ stps.forEach(s=>s.classList.remove("active")); stps.forEach(s=>s.classList.add("done")); flash("✓ POSTULADO"); $("flowClose").style.display="block"; render(); }, 4600));
+        flowTimers.push(setTimeout(()=>{ activate(2); setP(2,'<div class="iq">'+IQ.map((it,k)=>'<div class="q" id="iq'+k+'"><div class="qt">'+(k+1)+'. '+it.q+'</div><div class="iqbtns"><span class="iqbtn" data-say="'+k+'">🔊 Escuchar</span><span class="iqbtn rec" data-prac="'+k+'">🎙️ Practicar</span><span class="iqbtn" data-iq="'+k+'">💡 Cómo responder</span></div><div class="tip">'+it.tip+'</div><div class="fb"></div></div>').join('')+'</div>'); document.querySelectorAll("[data-iq]").forEach(r=>r.onclick=()=>{ const q=document.getElementById("iq"+r.getAttribute("data-iq")); if(q) q.classList.toggle("show"); }); document.querySelectorAll("[data-say]").forEach(r=>r.onclick=()=>TTS.say(IQ[+r.getAttribute("data-say")].q)); document.querySelectorAll("[data-prac]").forEach(r=>r.onclick=()=>practice(+r.getAttribute("data-prac"))); }, 3000));
+        flowTimers.push(setTimeout(()=>{ stps.forEach(s=>s.classList.remove("active")); stps.forEach(s=>s.classList.add("done")); flash("✓ POSTULADO"); $("flowClose").style.display="block"; if(!apps.some(a=>a.title===j.title)){ apps.push({title:j.title, company:j.company, fit:computeFit(j), ts:Date.now()}); saveApps(); } renderApps(); render(); }, 4600));
       }
       $("flowClose").onclick=()=>{ $("flowOv").classList.remove("open"); clearFlow(); };
       $("flowOv").onclick=(e)=>{ if(e.target===$("flowOv")){ $("flowOv").classList.remove("open"); clearFlow(); } };

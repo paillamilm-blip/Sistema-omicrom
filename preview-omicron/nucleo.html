@@ -143,6 +143,11 @@
       }
       .hint { position: fixed; bottom: 128px; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: rgba(234,242,255,0.35); text-transform: uppercase; z-index: 9; opacity: 0; transition: opacity 1s; }
       .hint.show { opacity: 1; animation: fade 3s ease-in-out infinite; } @keyframes fade { 0%,100%{opacity:0.3} 50%{opacity:0.6} }
+      .jobalert { position: fixed; left: 50%; bottom: 156px; transform: translateX(-50%) translateY(18px); z-index: 35; display: none; align-items: center; gap: 10px; max-width: 92vw; padding: 11px 16px; border-radius: 24px; background: rgba(6,12,26,0.96); border: 1px solid rgba(245,158,11,0.55); box-shadow: 0 0 28px rgba(245,158,11,0.35); cursor: pointer; opacity: 0; transition: opacity .4s, transform .4s; backdrop-filter: blur(10px); }
+      .jobalert.show { display: flex; opacity: 1; transform: translateX(-50%) translateY(0); }
+      .jobalert .ja-t { font-family: var(--display); font-size: 13px; font-weight: 600; color: #eaf2ff; } .jobalert .ja-t b { color: var(--amber); }
+      .jobalert .ja-x { color: var(--amber); font-size: 15px; font-weight: 700; }
+      @media (max-width: 620px){ .jobalert { bottom: auto; top: 54px; } }
     </style>
   </head>
   <body>
@@ -187,6 +192,7 @@
     <div class="hint" id="hint">Arrastra para girar tu universo · pregúntale al Oráculo</div>
     <div id="tip"><div class="cat" id="tc"></div><div class="lbl" id="tlbl"></div><div class="val" id="tv"></div><div class="det" id="tdet"></div><div class="mej" id="tmej"></div></div>
     <div class="flash" id="flash"></div>
+    <div class="jobalert" id="jobAlert"></div>
 
     <div class="actcard" id="actCard">
       <button class="ac-x" id="acX">×</button>
@@ -572,6 +578,7 @@
         // Empuje a EJECUTAR la mejora (a quien ya tiene datos): el Oráculo propone y resalta la acción.
         if(prof.cv||prof.titles||prof.years||prof.vault){
           setTimeout(()=>{ if(!awoken) return; try{ const b=bestNextStep(); if(b){ oracleType(`Para avanzar hoy: ${b.label}. Sumaría +${b.drep} de reputación y +${b.dpe} PE. Toca "Aportar datos" y lo hacemos juntos.`); if(typeof aportarChip!=="undefined" && aportarChip) aportarChip.animate([{boxShadow:"0 0 0 rgba(0,240,255,0)"},{boxShadow:"0 0 24px rgba(0,240,255,0.95)"},{boxShadow:"0 0 0 rgba(0,240,255,0)"}],{duration:1500,iterations:3}); } }catch(e){} }, 4600);
+          setTimeout(()=>{ if(scene==="nexus" && typeof showJobAlert==="function") showJobAlert(); }, 9500);
         }
       }
       // Se puede entrar tocando el botón O la tarjeta… pero además entra SOLA tras un instante.
@@ -1039,6 +1046,26 @@
         }catch(e){}
       }
       refreshConv();
+
+      // ── INNOVACIÓN · El trabajo te encuentra: notificación proactiva de empleo ──
+      const EMPLEOS_URL="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/empleos.html";
+      const JOB_POOL=[
+        {t:"Frontend Senior · React", c:"Nébula Labs", min:500, bias:9},
+        {t:"Full-Stack Developer", c:"Vortex", min:600, bias:5},
+        {t:"Product Designer", c:"Aurora Studio", min:300, bias:6},
+        {t:"Tech Lead", c:"Helix", min:1500, bias:1},
+        {t:"Mentor / Formador", c:"Academia Ómicron", min:200, bias:8},
+      ];
+      function bestJob(){ let best=null,bf=-1; JOB_POOL.forEach(j=>{ let fit=48+Math.round(prof.rep*0.42)+(prof.pe>=j.min?12:-12)+(prof.cv?4:0)+Math.min(9,prof.titles*3)+j.bias; fit=Math.max(34,Math.min(99,fit)); if(fit>bf){ bf=fit; best=Object.assign({fit},j); } }); return best; }
+      function showJobAlert(){
+        const b=bestJob(); if(!b) return; const el=_g("jobAlert"); if(!el) return;
+        el.innerHTML='<span style="font-size:18px">🎯</span><span class="ja-t">Encontré <b>'+b.t+'</b> · <b>'+b.fit+'%</b> para ti</span><span class="ja-x">→</span>';
+        el.onclick=()=>{ try{ location.href=EMPLEOS_URL; }catch(e){} };
+        el.classList.add("show");
+        oracleType("¡El trabajo te encuentra! Detecté "+b.t+" en "+b.c+", con "+b.fit+" por ciento de afinidad contigo. Toca la alerta y Ómicron postula por ti.");
+        setTimeout(()=>{ el.classList.remove("show"); }, 13000);
+      }
+      COMMANDS.push({ k:["trabajo","empleo","empleos","chamba","oportunidad","postula","vacante","pega"], cat:null, hi:"noclear", r:()=>{ showJobAlert(); const b=bestJob(); return b ? ("Tu mejor match es "+b.t+", "+b.fit+" por ciento. Toca la alerta y abro Empleos para postular por ti.") : "Convalida más datos y te encontraré mejores trabajos."; } });
 
       // Comandos de voz (historial / reinicio)
       COMMANDS.push(
