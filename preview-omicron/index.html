@@ -685,6 +685,12 @@
       .omni-nav a{font-family:"Share Tech Mono",monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:rgba(234,242,255,0.7);text-decoration:none;padding:5px 9px;border-radius:16px;transition:all .18s;white-space:nowrap;}
       .omni-nav a:hover{background:#00f0ff;color:#020613;}
       .omni-nav a.active{background:rgba(0,240,255,0.16);color:#7df9ff;}
+      @media (max-width: 620px){
+        .omni-nav{ top:0; left:0; right:0; transform:none; max-width:100%; border-radius:0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; -webkit-overflow-scrolling:touch; padding:5px 6px; }
+        .omni-nav::-webkit-scrollbar{ display:none; }
+        .omni-nav a{ flex:0 0 auto; }
+        body{ padding-top:50px; }
+      }
     </style>
     <nav class="omni-nav">
       <a href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/paillamilm-blip/Sistema-omicrom/feat/omicron-next-dashboard/preview-omicron/omicron.html">Ω</a>
