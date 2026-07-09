@@ -47,6 +47,8 @@
       .ninfo .nd { font-size:11px; color:rgba(234,242,255,0.7); margin-top:2px; line-height:1.4; }
       .ninfo .nm { font-size:11px; color:#ffdd9e; margin-top:7px; padding-top:7px; border-top:1px solid rgba(255,255,255,0.08); line-height:1.4; }
       .ninfo .nm b { font-family:var(--mono); font-size:9px; letter-spacing:1px; color:var(--amber); text-transform:uppercase; margin-right:5px; }
+      .ninfo.show { pointer-events:auto; cursor:pointer; }
+      .ninfo .ncta { margin-top:9px; text-align:center; padding:8px; border-radius:8px; border:1px solid rgba(0,240,255,0.5); font-family:var(--mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; }
       .stats3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:6px; }
       .stat { background:rgba(0,240,255,0.05); border:1px solid rgba(0,240,255,0.1); border-radius:8px; padding:9px 6px; text-align:center; }
       .stat .v { font-size:18px; font-weight:700; } .stat .v.a{color:var(--amber);} .stat .v.c{color:var(--cyan);} .stat .k { font-family:var(--mono); font-size:8px; letter-spacing:1px; color:rgba(234,242,255,0.5); text-transform:uppercase; margin-top:2px; }
@@ -200,23 +202,23 @@
       const CATS={skill:"#00F0FF",cred:"#F59E0B",red:"#38BDF8",token:"#39FF14",gob:"#FF3D57"};
       const CATNAME={skill:"Habilidad",cred:"Credencial",red:"Red / Confianza",token:"Economía",gob:"Gobernanza"};
       const NDATA=[
-        ["skill","Frontend","88 / 100","Interfaces y experiencia de usuario.","Toma un contrato de hito corto en el Market para elevar tu ejecución."],
-        ["skill","Backend","72 / 100","Lógica, APIs y datos del servidor.","Valida un nodo backend en la Academia para subir tu fundamento."],
-        ["skill","Arquitectura","64 / 100","Diseño de sistemas a escala.","Rinde el Examen IA de Arquitectura de Sistemas."],
-        ["cred","React Pro","Validada","Credencial verificada en tu Pasaporte.","Compártela por enlace público para atraer contratos."],
-        ["cred","System Design","Validada","Credencial verificada en tu Pasaporte.","Úsala para postular a contratos senior en Empleos."],
-        ["red","128 conexiones","Red activa","Tu red de confianza en Ómicron.","Mentorea a un junior para ampliar tu red y tu reputación."],
-        ["red","Sello de Confianza","Verificado","Prueba pública de tu reputación.","Cierra contratos sin disputa para mantener tu sello."],
-        ["token","2,480 tokens","Saldo","Disponible en tu billetera.","Bloquea en escrow y libera contratos para crecer tu saldo."],
-        ["token","Escrow 1,100","En custodia","Fondos bloqueados en contratos activos.","Aprueba la entrega del hito para liberar estos fondos."],
-        ["gob","2 votos","Activos","Tu poder de decisión en la Cámara de nodos.","Vota la propuesta #14 para incidir en la red."],
-        ["gob","Árbitro","Rol asignado","Resuelves disputas en la red.","Resuelve una disputa abierta para ganar reputación."],
-        ["skill","UX","79 / 100","Investigación y usabilidad.","Comparte un caso de UX en la Bóveda (sube trascendencia)."],
-        ["cred","Cloud Security","Validada","Credencial verificada.","Ofrécela como servicio en el Market."],
-        ["red","Mentor ×3","Reputación +","Has guiado a otros nodos de la red.","Mentorea a más nodos para subir tu trascendencia."],
+        ["skill","Frontend","88 / 100","Interfaces y experiencia de usuario.","Toma un contrato de hito corto en el Market para elevar tu ejecución.","habilidades"],
+        ["skill","Backend","72 / 100","Lógica, APIs y datos del servidor.","Valida un nodo backend en la Academia para subir tu fundamento.","academia"],
+        ["skill","Arquitectura","64 / 100","Diseño de sistemas a escala.","Rinde el Examen IA de Arquitectura de Sistemas.","academia"],
+        ["cred","React Pro","Validada","Credencial verificada en tu Pasaporte.","Compártela por enlace público para atraer contratos.","habilidades"],
+        ["cred","System Design","Validada","Credencial verificada en tu Pasaporte.","Úsala para postular a contratos senior.","servicios"],
+        ["red","128 conexiones","Red activa","Tu red de confianza en Ómicron.","Mentorea a un junior para ampliar tu red.","inicio"],
+        ["red","Sello de Confianza","Verificado","Prueba pública de tu reputación.","Cierra contratos sin disputa para mantenerlo.","inicio"],
+        ["token","2,480 tokens","Saldo","Disponible en tu billetera.","Bloquea en escrow y libera contratos para crecer.","billetera"],
+        ["token","Escrow 1,100","En custodia","Fondos bloqueados en contratos activos.","Aprueba la entrega del hito para liberarlos.","billetera"],
+        ["gob","2 votos","Activos","Tu poder de decisión en la Cámara de nodos.","Vota la propuesta #14 para incidir en la red.","gobernanza"],
+        ["gob","Árbitro","Rol asignado","Resuelves disputas en la red.","Resuelve una disputa para ganar reputación.","gobernanza"],
+        ["skill","UX","79 / 100","Investigación y usabilidad.","Comparte un caso de UX en la Bóveda.","habilidades"],
+        ["cred","Cloud Security","Validada","Credencial verificada.","Ofrécela como servicio en el Market.","servicios"],
+        ["red","Mentor ×3","Reputación +","Has guiado a otros nodos de la red.","Mentorea a más nodos para subir trascendencia.","academia"],
       ];
       const GOLDEN=Math.PI*(3-Math.sqrt(5));
-      const nk=NDATA.map(([cat,label,value,detail,mejora],i)=>{const y=1-(i/(NDATA.length-1))*2;const rad=Math.sqrt(Math.max(0,1-y*y));const th=GOLDEN*i;return{cat,label,value,detail,mejora,color:CATS[cat],bx:Math.cos(th)*rad,by:y,bz:Math.sin(th)*rad,baseR:3+(cat==="token"?1.6:0)+(i%3)*0.5,sx:0,sy:0,sc:1,zz:0};});
+      const nk=NDATA.map(([cat,label,value,detail,mejora,tab],i)=>{const y=1-(i/(NDATA.length-1))*2;const rad=Math.sqrt(Math.max(0,1-y*y));const th=GOLDEN*i;return{cat,label,value,detail,mejora,tab,color:CATS[cat],bx:Math.cos(th)*rad,by:y,bz:Math.sin(th)*rad,baseR:3+(cat==="token"?1.6:0)+(i%3)*0.5,sx:0,sy:0,sc:1,zz:0};});
       let nptrX=0,nptrY=0,nactive=false,nsel=-1,nTouch=false;
       const nedges=[[0,3],[1,5],[7,9],[3,12],[5,13]];
       let ncanvas,nctx,nW,nH,nDPR,yaw=0.4,pitch=-0.2;
@@ -224,7 +226,10 @@
       function nproj(x,y,z){const cy=Math.cos(yaw),sy=Math.sin(yaw);const x1=x*cy-z*sy,z1=x*sy+z*cy,y1=y;const cx=Math.cos(pitch),sx=Math.sin(pitch);const y2=y1*cx-z1*sx,z2=y1*sx+z1*cx,x2=x1;const R=Math.min(nW,nH)*0.44,F=900,p=F/(F+z2*R);return{sx:nW/2+x2*R*p,sy:nH/2+y2*R*p,sc:p,zz:z2};}
       function nglow(x,y,r,c,a){const g=nctx.createRadialGradient(x,y,0,x,y,r*3.2);g.addColorStop(0,hexA(c,0.9*a));g.addColorStop(0.4,hexA(c,0.26*a));g.addColorStop(1,hexA(c,0));nctx.fillStyle=g;nctx.beginPath();nctx.arc(x,y,r*3.2,0,6.2832);nctx.fill();nctx.fillStyle=hexA("#fff",0.85*a);nctx.beginPath();nctx.arc(x,y,r*0.5,0,6.2832);nctx.fill();nctx.fillStyle=hexA(c,a);nctx.beginPath();nctx.arc(x,y,r,0,6.2832);nctx.fill();}
       function ncore(t){const p=nproj(0,0,0);const R=Math.min(nW,nH)*0.12;const h=nctx.createRadialGradient(p.sx,p.sy,R*0.5,p.sx,p.sy,R*2.6);h.addColorStop(0,"rgba(34,211,238,0.3)");h.addColorStop(1,"rgba(34,211,238,0)");nctx.fillStyle=h;nctx.beginPath();nctx.arc(p.sx,p.sy,R*2.6,0,6.2832);nctx.fill();const c=nctx.createRadialGradient(p.sx-R*0.3,p.sy-R*0.35,R*0.1,p.sx,p.sy,R);c.addColorStop(0,"#CFFAFE");c.addColorStop(0.34,"#22D3EE");c.addColorStop(0.68,"#1E40AF");c.addColorStop(0.95,"#1E1B4B");nctx.fillStyle=c;nctx.beginPath();nctx.arc(p.sx,p.sy,R,0,6.2832);nctx.fill();nctx.save();nctx.translate(p.sx,p.sy);for(let i=0;i<3;i++){nctx.save();nctx.rotate(t*0.2+i*Math.PI/3);nctx.strokeStyle=hexA("#E0F7FF",0.4-i*0.1);nctx.lineWidth=1;nctx.beginPath();nctx.ellipse(0,0,R*1.3,R*0.46,0,0,6.2832);nctx.stroke();nctx.restore();}nctx.restore();return p;}
-      function nAttach(){ const cv=document.getElementById("nucleo"); if(!cv||cv._att)return; cv._att=true;
+      function nAttach(){
+        const ni=document.getElementById("ninfo");
+        if(ni && !ni._att){ ni._att=true; ni.addEventListener("click",()=>{ if(nsel>=0 && nk[nsel] && nk[nsel].tab){ Snd.chime(); const tb=nk[nsel].tab; go(tb); speakOracle(`Abriendo ${TITLES[tb]||tb}.`); } }); }
+        const cv=document.getElementById("nucleo"); if(!cv||cv._att)return; cv._att=true;
         const upd=(e)=>{const r=cv.getBoundingClientRect();nptrX=e.clientX-r.left;nptrY=e.clientY-r.top;nactive=true;if(e.pointerType)nTouch=e.pointerType==="touch";};
         cv.addEventListener("pointermove",upd); cv.addEventListener("pointerdown",upd);
         cv.addEventListener("pointerleave",()=>{if(!nTouch)nactive=false;});
@@ -251,7 +256,7 @@
         draw(back,null); const core=ncore(t); draw(front,core);
         // ficha
         const ni=document.getElementById("ninfo");
-        if(ni){ if(nsel>=0){const n=nk[nsel];ni.style.borderColor=hexA(n.color,0.5);ni.innerHTML=`<div class="nc" style="color:${n.color}">${CATNAME[n.cat]} · ${n.value}</div><div class="nl">${n.label}</div><div class="nd">${n.detail}</div><div class="nm"><b>▲ Mejora</b> ${n.mejora}</div>`;ni.classList.add("show");} else ni.classList.remove("show"); }
+        if(ni){ if(nsel>=0){const n=nk[nsel];ni.style.borderColor=hexA(n.color,0.5);ni.innerHTML=`<div class="nc" style="color:${n.color}">${CATNAME[n.cat]} · ${n.value}</div><div class="nl">${n.label}</div><div class="nd">${n.detail}</div><div class="nm"><b>▲ Mejora</b> ${n.mejora}</div><div class="ncta" style="border-color:${hexA(n.color,0.5)};color:${n.color}">→ Ir a ${TITLES[n.tab]||"sección"}</div>`;ni.classList.add("show");} else ni.classList.remove("show"); }
         requestAnimationFrame(nframe);
       }
 

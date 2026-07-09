@@ -28,7 +28,7 @@ import {
   CyberToast, ProgressBar,
 } from '../shared/CyberComponents';
 import { C, FONT, BASE, ANIM, GLOW, RADIUS, cx } from '../../theme';
-import type { SkillTest } from '../../types';
+import type { SkillTest, TabId } from '../../types';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 const NODE_COLOR: Record<string, string> = {
@@ -132,7 +132,7 @@ function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: (
 function CredencialCard({
   initials, name, username, location, nodeType, nodeLevel, verified,
   reputacion, tokens, pe, contratos, nextPe, tierProgress,
-  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit, onShare, axes,
+  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit, onShare, axes, onNavigate,
 }: {
   initials: string; name: string; username: string; location?: string;
   nodeType: string; nodeLevel: number; verified: boolean;
@@ -143,6 +143,7 @@ function CredencialCard({
   avatarUrl?: string; uploading: boolean; onPickFile: (f: File) => void;
   onEdit: () => void; onShare: () => void;
   axes?: { execution?: number; quality?: number; transcendence?: number; foundation?: number };
+  onNavigate?: (tab: string) => void;
 }) {
   const nodeColor = NODE_COLOR[nodeType] ?? C.cyan;
   const rango = getRango(reputacion);
@@ -312,6 +313,7 @@ function CredencialCard({
           height={318}
           reputation={reputacion}
           axes={axes}
+          onNavigate={onNavigate}
           ariaLabel={`Tu reputación es ${reputacion.toFixed(1)} de 100`}
           center={
             <div style={{ textAlign: 'center', lineHeight: 1 }}>
@@ -478,7 +480,7 @@ function CapabilidadesPanel({ userRank }: { userRank: number }) {
 interface Audit { id: string; reason: string; reputation_at_trigger: number | null; }
 
 export function PerfilTab() {
-  const { profile, refreshProfile } = useApp();
+  const { profile, refreshProfile, setActiveTab } = useApp();
   const gemelo = useGemeloDigital();
   const [paused,    setPaused]    = useState(false);
   const [showEdit,  setShowEdit]  = useState(false);
@@ -612,6 +614,7 @@ export function PerfilTab() {
               transcendence: gemelo.transcendence,
               foundation: gemelo.foundation,
             }}
+            onNavigate={(t) => setActiveTab(t as TabId)}
           />
         )}
 

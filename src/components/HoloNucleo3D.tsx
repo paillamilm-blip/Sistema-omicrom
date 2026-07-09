@@ -40,6 +40,8 @@ interface Props {
   chips?: NucleoChip[];
   reputation?: number;
   axes?: NucleoAxes;
+  /** Al tocar el CTA de un punto, navega al hub del ecosistema (TabId). */
+  onNavigate?: (tab: string) => void;
   className?: string;
 }
 
@@ -50,9 +52,24 @@ interface NodeMeta {
   detail: string;
   /** Acción concreta para mejorar esta dimensión dentro del ecosistema. */
   mejora: string;
+  /** Hub del ecosistema al que lleva la mejora (TabId). */
+  tab?: string;
   color: string;
   weight: number; // 0-1 → tamaño del punto
 }
+
+/** Nombres legibles de cada hub para el CTA. */
+const TAB_LABELS: Record<string, string> = {
+  perfil: 'Inicio',
+  maxskill: 'Habilidades',
+  academia: 'Academia',
+  market: 'Servicios',
+  empleos: 'Empleos',
+  chat: 'Mensajes',
+  wallet: 'Billetera',
+  gobernanza: 'Gobernanza',
+  vault: 'Bóveda',
+};
 
 interface GNode {
   bx: number; by: number; bz: number;
@@ -60,11 +77,11 @@ interface GNode {
   sx: number; sy: number; sc: number; zz: number;
 }
 
-const AXES_DEF: { key: keyof NucleoAxes; label: string; color: string; detail: string; mejora: string }[] = [
-  { key: 'execution', label: 'Ejecución', color: '#00F0FF', detail: 'Qué tan rápido y bien entregas tus contratos.', mejora: 'Toma un contrato de hito corto en el Market para elevar tu velocidad de entrega.' },
-  { key: 'quality', label: 'Calidad', color: '#0a8ba3', detail: 'Las calificaciones con estrellas de tus clientes.', mejora: 'Pide reseña al cerrar cada contrato: más estrellas suben este eje.' },
-  { key: 'transcendence', label: 'Trascendencia', color: '#F59E0B', detail: 'El conocimiento que compartes: Bóveda y mentorías.', mejora: 'Publica un aporte en la Bóveda o mentorea a un nodo junior.' },
-  { key: 'foundation', label: 'Fundamento', color: '#39FF14', detail: 'Tu dominio teórico y los cursos de la Academia.', mejora: 'Rinde el Examen IA de un nodo pendiente en la Academia.' },
+const AXES_DEF: { key: keyof NucleoAxes; label: string; color: string; detail: string; mejora: string; tab: string }[] = [
+  { key: 'execution', label: 'Ejecución', color: '#00F0FF', detail: 'Qué tan rápido y bien entregas tus contratos.', mejora: 'Toma un contrato de hito corto en el Market para elevar tu velocidad de entrega.', tab: 'market' },
+  { key: 'quality', label: 'Calidad', color: '#0a8ba3', detail: 'Las calificaciones con estrellas de tus clientes.', mejora: 'Pide reseña al cerrar cada contrato: más estrellas suben este eje.', tab: 'empleos' },
+  { key: 'transcendence', label: 'Trascendencia', color: '#F59E0B', detail: 'El conocimiento que compartes: Bóveda y mentorías.', mejora: 'Publica un aporte en la Bóveda o mentorea a un nodo junior.', tab: 'vault' },
+  { key: 'foundation', label: 'Fundamento', color: '#39FF14', detail: 'Tu dominio teórico y los cursos de la Academia.', mejora: 'Rinde el Examen IA de un nodo pendiente en la Academia.', tab: 'academia' },
 ];
 
 const CHIP_DETAIL: Record<string, string> = {
@@ -80,6 +97,13 @@ const CHIP_MEJORA: Record<string, string> = {
 };
 const CHIP_MEJORA_DEFAULT = 'Acumula PE con contratos y cursos para subir de nodo y bajar tu comisión de red.';
 
+const CHIP_TAB: Record<string, string> = {
+  Tokens: 'wallet',
+  PE: 'academia',
+  Contratos: 'empleos',
+};
+const CHIP_TAB_DEFAULT = 'wallet';
+
 const GOLDEN = Math.PI * (3 - Math.sqrt(5));
 
 function hexA(hex: string, a: number): string {
@@ -94,7 +118,7 @@ function buildMeta(axes: NucleoAxes | undefined, chips: NucleoChip[]): NodeMeta[
     const raw = axes?.[a.key];
     const v = typeof raw === 'number' ? raw : null;
     out.push({
-      label: a.label, cat: 'Eje del Gemelo', color: a.color, detail: a.detail, mejora: a.mejora,
+      label: a.label, cat: 'Eje del Gemelo', color: a.color, detail: a.detail, mejora: a.mejora, tab: a.tab,
       value: v != null ? `${Math.round(v)} / 100` : 'sin datos',
       weight: v != null ? Math.max(0.25, v / 100) : 0.55,
     });
@@ -104,6 +128,7 @@ function buildMeta(axes: NucleoAxes | undefined, chips: NucleoChip[]): NodeMeta[
       label: c.label, cat: 'Métrica', color: c.color, value: c.value,
       detail: CHIP_DETAIL[c.label] || 'Tu nodo actual en la red Ómicron.',
       mejora: CHIP_MEJORA[c.label] || CHIP_MEJORA_DEFAULT,
+      tab: CHIP_TAB[c.label] || CHIP_TAB_DEFAULT,
       weight: 0.7,
     });
   });
@@ -118,6 +143,7 @@ export function HoloNucleo3D({
   chips = [],
   reputation = 0,
   axes,
+  onNavigate,
   className = '',
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -368,6 +394,20 @@ export function HoloNucleo3D({
               {info.mejora}
             </span>
           </div>
+          {info.tab && onNavigate && (
+            <button
+              onClick={() => onNavigate(info.tab as string)}
+              style={{
+                pointerEvents: 'auto', marginTop: 10, width: '100%', padding: '9px',
+                borderRadius: 9, cursor: 'pointer',
+                border: `1px solid ${hexA(info.color, 0.55)}`,
+                background: hexA(info.color, 0.14), color: info.color,
+                fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase',
+              }}
+            >
+              → Ir a {TAB_LABELS[info.tab] || 'sección'}
+            </button>
+          )}
         </div>
       ) : (
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10, textAlign: 'center', pointerEvents: 'none', fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: 1, color: 'rgba(0,240,255,0.5)', textTransform: 'uppercase' }}>
