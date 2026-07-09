@@ -164,10 +164,16 @@
       };
 
       // ══ Voz ══
+      let recog = null, listening = false, convoMode = false, speaking = false;
       const Voice = {
         v: null, ready: false,
         pick(){ try{ const vs=speechSynthesis.getVoices(); this.v=vs.find(x=>/es(-|_)/i.test(x.lang))||vs.find(x=>x.lang.startsWith("es"))||vs[0]||null; this.ready=true; }catch(e){} },
-        say(text){ try{ if(!("speechSynthesis" in window))return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); if(this.v)u.voice=this.v; u.lang=(this.v&&this.v.lang)||"es-ES"; u.rate=1.02; u.pitch=1.0; speechSynthesis.speak(u);}catch(e){} },
+        say(text){ try{ if(!("speechSynthesis" in window))return; speechSynthesis.cancel();
+          const u=new SpeechSynthesisUtterance(text); if(this.v)u.voice=this.v; u.lang=(this.v&&this.v.lang)||"es-ES"; u.rate=1.02; u.pitch=1.0;
+          speaking=true; if(recog&&listening){ try{recog.stop();}catch(e){} }
+          u.onend=()=>{ speaking=false; if(recog&&convoMode){ try{ recog.start(); listening=true; }catch(e){} } };
+          u.onerror=u.onend;
+          speechSynthesis.speak(u);}catch(e){} },
       };
       if ("speechSynthesis" in window) { Voice.pick(); speechSynthesis.onvoiceschanged = () => Voice.pick(); }
 
@@ -309,13 +315,21 @@
         { k:["brecha","consejo","coach","diagnostico","diagnóstico","recomienda","mejorar","qué estudio","que estudio","orienta","oriénta"], cat:null, hi:"coach", r:()=>{ const w=weakestSkill(); if(w>=0){ focusNode(w); const n=nodes[w]; return `Tu eje más débil es ${n.label}, en ${n.val}. Para cerrar esa brecha: ${n.mejora}`; } return "Tu Gemelo está equilibrado. Sigue sumando experiencia en la Academia."; } },
         { k:["evolucion","subir","crecer","nivel","arquitecto"], cat:null, r:()=>{ evolveMsg(); return "Reforzando tu núcleo. Tu capital intelectual crece y tu reputación asciende hacia el Nodo Arquitecto."; }, hi:"amber" },
         { k:["ayuda","help","comando","que puedo"], cat:null, r:()=>"Puedes preguntarme por: habilidades, reputación, tokens, credenciales, gobernanza, tu brecha, o pedirme evolucionar." },
+        // ── Conversación espontánea (hi:"noclear" evita apagar el nodo iluminado) ──
+        { k:["gracias","genial","excelente","perfecto","increíble","increible","me encanta"], cat:null, hi:"noclear", r:()=>{ const o=["De nada. Sigo aquí, contigo.","Para eso estoy. Sigamos construyendo tu universo.","Me alegra. ¿Qué más quieres explorar?"]; return o[Math.floor(Math.random()*o.length)]; } },
+        { k:["cómo estás","como estas","quién eres","quien eres","qué eres","que eres","tu nombre"], cat:null, hi:"noclear", r:()=>"Soy el Oráculo de tu Gemelo Digital: la voz de tu capital intelectual dentro de Ómicron. Estoy para ayudarte a crecer." },
+        { k:["qué es esto","que es esto","qué es ómicron","que es omicron","qué es omicron","para qué sirve","para que sirve","de qué se trata","de que se trata","explícame","explicame"], cat:null, hi:"noclear", r:()=>"Ómicron es tu ecosistema de capital intelectual: convalidas tu experiencia real, se enciende un nodo por cada logro, subes de nivel y accedes a contratos, Academia y Bóveda." },
+        { k:["cómo voy","como voy","cómo estoy","como estoy","mi progreso","mi estado","mi nivel","voy bien"], cat:null, hi:"noclear", r:()=>`Vas bien: reputación ${rep} sobre 100 y avanzando hacia tu siguiente nodo. Convalida más datos y pídeme tu brecha para acelerar.` },
+        { k:["cansad","agotad","no puedo","difícil","dificil","frustrad","desanimad","estresad","abrumad"], cat:null, hi:"noclear", r:()=>"Respira. Cada nodo que enciendes es un paso real y ya has recorrido varios. Hoy convalida una sola cosa: yo te acompaño." },
+        { k:["mi familia","por mi familia","mis hijos","mi hija","mi hijo","mi esposa","mi señora"], cat:null, hi:"noclear", r:()=>"Ese propósito es tu mayor motor. Todo lo que construyes aquí queda registrado y verificable: es capital real para los tuyos." },
+        { k:["adiós","adios","chao","chau","hasta luego","nos vemos","me voy"], cat:null, hi:"noclear", r:()=>"Hasta pronto. Tu Gemelo sigue creciendo contigo, siempre." },
       ];
       function oracle(raw){
         if (raw.startsWith("nodo:")) { const idx=+raw.split(":")[1]; const n = nodes[idx]; if(n){ focusNode(idx); oracleType(`${n.label}. ${n.detail} Para mejorar: ${n.mejora}`); showActionCard(idx); } return; }
         const q = raw.toLowerCase().trim();
         if (!q) return;
         let cmd = COMMANDS.find(c => c.k.some(k => q.includes(k)));
-        if (!cmd) { oracleType("Analizando tu capital intelectual… reformula tu consulta o escribe \"ayuda\" para ver qué puedo responder."); setHighlight(null); return; }
+        if (!cmd) { const f=["Te escucho. Puedo ayudarte con tus habilidades, tu reputación, convalidar tus datos o darte un consejo. ¿Qué quieres hacer?","Interesante. Cuéntame más, o pídeme tu brecha, tus tokens o que convalidemos tu experiencia.","Estoy contigo. Dime en qué quieres avanzar hoy dentro de tu universo."]; oracleType(f[Math.floor(Math.random()*f.length)]); return; }
         if (cmd.cat) setHighlight(cmd.cat); else if (!cmd.hi) setHighlight(null);
         oracleType(cmd.r());
       }
@@ -363,22 +377,32 @@
       const micBtn = document.getElementById("mic");
       const micIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>';
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      let recog = null, listening = false;
       if (SR) {
         micBtn.innerHTML = micIcon;
         recog = new SR();
-        recog.lang = "es-ES"; recog.interimResults = true; recog.continuous = false; recog.maxAlternatives = 1;
+        recog.lang = "es-ES"; recog.interimResults = true; recog.continuous = true; recog.maxAlternatives = 1;
         recog.onresult = (e) => {
-          let txt = "";
-          for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
-          omsg.innerHTML = '<span class="who" style="color:#00F0FF">TÚ ▸ </span>' + txt;
-          if (e.results[e.results.length - 1].isFinal) setTimeout(() => oracle(txt), 200);
+          let interim = "";
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            const r = e.results[i];
+            if (r.isFinal) { const t = r[0].transcript.trim(); if (t) { omsg.innerHTML = '<span class="who" style="color:#00F0FF">TÚ ▸ </span>' + t; setTimeout(() => oracle(t), 120); } }
+            else interim += r[0].transcript;
+          }
+          if (interim) omsg.innerHTML = '<span class="who" style="color:#00F0FF">TÚ ▸ </span>' + interim;
         };
-        recog.onerror = () => { listening = false; micBtn.classList.remove("live"); };
-        recog.onend = () => { listening = false; micBtn.classList.remove("live"); };
+        recog.onerror = () => { listening = false; if (!convoMode) micBtn.classList.remove("live"); };
+        recog.onend = () => { listening = false; if (convoMode && !speaking) { try { recog.start(); listening = true; } catch (err) {} } else if (!convoMode) micBtn.classList.remove("live"); };
         micBtn.onclick = () => {
-          if (!listening) { try { recog.start(); listening = true; micBtn.classList.add("live"); oracleType("Te escucho…", false); } catch (err) {} }
-          else { try { recog.stop(); } catch (err) {} }
+          convoMode = !convoMode;
+          if (convoMode) {
+            micBtn.classList.add("live"); micBtn.title = "Conversación activa · toca para terminar";
+            try { recog.start(); listening = true; } catch (err) {}
+            oracleType("Conversación activa. Háblame cuando quieras, con naturalidad.");
+          } else {
+            micBtn.classList.remove("live"); micBtn.title = "Hablar con el Oráculo";
+            try { recog.stop(); } catch (err) {}
+            oracleType("Conversación en pausa. Toca el micrófono para retomar.", false);
+          }
         };
       } else {
         micBtn.title = "Voz no soportada en este navegador";
