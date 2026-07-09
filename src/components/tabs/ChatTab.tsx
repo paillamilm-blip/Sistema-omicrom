@@ -105,8 +105,9 @@ function NewMessagePicker({ onPick, onClose }: { onPick: (c: Conn) => void; onCl
   useEffect(() => {
     (async () => {
       const { data } = await supabase.rpc('my_connections');
-      setList(((data as any[]) ?? []).map(x => ({
-        id: x.user_id, name: x.full_name ?? x.username, username: x.username, avatar: x.avatar_url,
+      const rows = (data as { user_id: string; full_name?: string | null; username: string; avatar_url?: string | null }[]) ?? [];
+      setList(rows.map(x => ({
+        id: x.user_id, name: x.full_name ?? x.username, username: x.username, avatar: x.avatar_url ?? null,
       })));
       setLoading(false);
     })();

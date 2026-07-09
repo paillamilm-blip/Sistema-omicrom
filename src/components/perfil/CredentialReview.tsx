@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Check, X, FileText, ExternalLink, GraduationCap, Award, Briefcase, FileCheck, QrCode } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { useToast } from '../shared/Toast';
@@ -15,14 +16,15 @@ interface Pending {
   experience_years: number | null; created_at: string;
 }
 
-const TYPE_ICON: Record<string, any> = {
+const TYPE_ICON: Record<string, LucideIcon> = {
   DEGREE: GraduationCap, DIPLOMA: Award, CERTIFICATE_QR: QrCode, CERTIFICATE_DOC: FileCheck, EXPERIENCE: Briefcase,
 };
 
 export function CredentialReview() {
   const { profile } = useApp();
   const { toast } = useToast();
-  const isValidator = (profile as any)?.is_verified_professional === true;
+  const isValidator =
+    (profile as { is_verified_professional?: boolean } | null | undefined)?.is_verified_professional === true;
 
   const [items, setItems] = useState<Pending[]>([]);
   const [busy, setBusy] = useState<string | null>(null);

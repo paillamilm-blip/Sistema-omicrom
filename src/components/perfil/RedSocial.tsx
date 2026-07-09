@@ -497,6 +497,24 @@ export function PublicProfileGate() {
 // ════════════════════════════════════════════════════════════════════════════
 interface Req { connection_id: string; user_id: string; username: string; full_name: string; avatar_url: string | null; node_type: string; reputation_score: number; }
 
+// Filas crudas devueltas por las funciones RPC de Supabase (sin tipar por el schema).
+interface RawConnRow {
+  connection_id?: string;
+  user_id: string;
+  username: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  node_type?: string | null;
+  reputation_score?: number | string | null;
+}
+interface LeaderboardRow {
+  user_id: string;
+  username: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  reputation_score?: number | string | null;
+}
+
 function PersonRow({ name, username, avatar, rep, right }: {
   name: string; username: string; avatar: string | null; rep: number; right?: React.ReactNode;
 }) {
@@ -653,7 +671,7 @@ export function RedPanel() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [dmWith, setDmWith] = useState<Req | null>(null);
-  const [top, setTop] = useState<any[]>([]);
+  const [top, setTop] = useState<LeaderboardRow[]>([]);
   const [viewUser, setViewUser] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -663,18 +681,18 @@ export function RedPanel() {
       supabase.rpc('my_connections'),
       supabase.rpc('get_leaderboard', { p_limit: 10 }),
     ]);
-    setTop((lb.data as any[]) ?? []);
-    const norm = (rows: any[]): Req[] => (rows ?? []).map(x => ({
-      connection_id: x.connection_id,
+    setTop((lb.data as LeaderboardRow[]) ?? []);
+    const norm = (rows: RawConnRow[]): Req[] => (rows ?? []).map(x => ({
+      connection_id: x.connection_id ?? '',
       user_id: x.user_id,
       username: x.username,
       full_name: x.full_name ?? x.username,
-      avatar_url: x.avatar_url,
+      avatar_url: x.avatar_url ?? null,
       node_type: x.node_type ?? 'Nodo Operativo',
       reputation_score: Number(x.reputation_score ?? 0),
     }));
-    setRequests(norm(rq.data as any[]));
-    setContacts(norm(cn.data as any[]));
+    setRequests(norm(rq.data as RawConnRow[]));
+    setContacts(norm(cn.data as RawConnRow[]));
     setLoading(false);
   }, []);
 
