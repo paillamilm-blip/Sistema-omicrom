@@ -381,6 +381,24 @@
         return { px, py };
       }
 
+      // HUD de los 4 ejes del Gemelo alrededor del núcleo (refleja lo convalidado)
+      function drawEjes(px,py){
+        if(typeof prof==="undefined" || !prof || !prof.axes) return;
+        const arcR = Math.min(W,H)*0.185;
+        const EJ = [["execution","#00F0FF","EJE"],["quality","#0a8ba3","CAL"],["transcendence","#F59E0B","TRA"],["foundation","#39FF14","FUN"]];
+        const seg = (Math.PI*2)/4, gap = 0.24;
+        EJ.forEach(([k,col,lbl],i)=>{
+          const v = Math.min(100, prof.axes[k]||0)/100;
+          const start = -Math.PI/2 + i*seg + gap/2;
+          const end = start + (seg - gap);
+          ctx.lineCap="round";
+          ctx.beginPath(); ctx.strokeStyle="rgba(255,255,255,0.08)"; ctx.lineWidth=3; ctx.arc(px,py,arcR,start,end); ctx.stroke();
+          ctx.beginPath(); ctx.strokeStyle=hexA(col,0.95); ctx.lineWidth=3.5; ctx.arc(px,py,arcR,start,start+(end-start)*v); ctx.stroke();
+          const mid=(start+end)/2, lx=px+Math.cos(mid)*(arcR+13), ly=py+Math.sin(mid)*(arcR+13);
+          ctx.textAlign="center"; ctx.fillStyle=hexA(col,0.8); ctx.font="8px 'Share Tech Mono', monospace"; ctx.fillText(lbl,lx,ly+3);
+        });
+      }
+
       function frame(now){
         const t=now/1000;
         ctx.clearRect(0,0,W,H);
@@ -412,6 +430,7 @@
         // nodos detrás (zz>0)
         drawSet(order.filter(i=>nodes[i].zz>0), t);
         const core=drawCore(t, energy);
+        drawEjes(core.px, core.py);
         // líneas núcleo→nodo + nodos delante
         drawSet(order.filter(i=>nodes[i].zz<=0), t, core);
 
