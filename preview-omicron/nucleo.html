@@ -68,7 +68,7 @@
       .proj-stats { font-size: 13px; line-height: 1.7; }
       .proj-stats b { color: #7df9ff; font-family: var(--mono); }
       .proj button { margin-top: 12px; width: 100%; padding: 9px; border-radius: 9px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #eaf2ff; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
-      @media (max-width: 720px) { .proj { left: 10px; right: 10px; width: auto; bottom: 250px; } }
+      @media (max-width: 720px) { .proj { left: 0; right: 0; bottom: 0; width: auto; border-radius: 18px 18px 0 0; padding: 16px 16px 24px; box-shadow: 0 -18px 50px rgba(0,0,0,0.7); } }
       /* Historial y racha */
       #histStreak { font-family: var(--mono); font-size: 13px; color: #F59E0B; margin-bottom: 8px; text-shadow: 0 0 10px rgba(245,158,11,0.4); }
       .hist-list { max-height: 180px; overflow-y: auto; }
@@ -119,17 +119,26 @@
       .conv-act.done { border-color: rgba(57,255,20,0.4); background: rgba(57,255,20,0.06); }
       .conv-act .t { font-weight: 700; font-size: 14px; } .conv-act .g { font-family: var(--mono); font-size: 9.5px; color: var(--amber); }
       .conv-close { margin-top: 14px; width: 100%; padding: 11px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #eaf2ff; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
-      .actcard { position: fixed; right: 22px; top: 50%; transform: translate(24px,-50%); z-index: 16; width: 252px; opacity: 0; pointer-events: none; transition: all .25s; background: rgba(6,12,26,0.96); border: 1px solid rgba(0,240,255,0.4); border-radius: 15px; padding: 16px; backdrop-filter: blur(10px); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+      .actcard { position: fixed; right: 22px; top: 50%; transform: translate(24px,-50%); z-index: 30; width: 300px; max-height: 84vh; overflow-y: auto; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; background: rgba(6,12,26,0.97); border: 1px solid rgba(0,240,255,0.4); border-radius: 16px; padding: 18px; backdrop-filter: blur(12px); box-shadow: 0 20px 60px rgba(0,0,0,0.7); }
       .actcard.show { opacity: 1; transform: translate(0,-50%); pointer-events: auto; }
-      .ac-x { position: absolute; top: 7px; right: 11px; background: none; border: none; color: rgba(234,242,255,0.5); font-size: 19px; cursor: pointer; line-height: 1; }
+      .ac-x { position: absolute; top: 8px; right: 12px; background: none; border: none; color: rgba(234,242,255,0.5); font-size: 20px; cursor: pointer; line-height: 1; z-index: 2; }
       .ac-cat { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; }
-      .ac-lbl { font-size: 18px; font-weight: 700; margin-top: 2px; }
+      .ac-lbl { font-size: 19px; font-weight: 700; margin-top: 2px; }
       .ac-mej { font-size: 12.5px; color: rgba(234,242,255,0.82); margin-top: 8px; line-height: 1.4; }
       .ac-mej b { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--cyan); text-transform: uppercase; display: block; margin-bottom: 3px; }
       .ac-opt { font-size: 12px; color: #ffdd9e; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); line-height: 1.4; }
       .ac-opt b { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--amber); text-transform: uppercase; display: block; margin-bottom: 3px; }
-      .ac-btn { margin-top: 12px; width: 100%; padding: 11px; border-radius: 10px; border: none; cursor: pointer; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; color: #020613; background: linear-gradient(135deg,#7df9ff,#00f0ff); }
-      @media (max-width: 720px) { .actcard { right: 10px; left: 10px; width: auto; top: auto; bottom: 210px; transform: translateY(12px); } .actcard.show { transform: none; } }
+      .ac-ask { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--cyan); margin-bottom: 9px; }
+      .ac-options { display: flex; flex-direction: column; gap: 8px; }
+      .ac-opt-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 13px; border-radius: 12px; cursor: pointer; text-align: left; font-family: var(--display); font-size: 13.5px; font-weight: 600; color: #eaf2ff; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); transition: all .15s; }
+      .ac-opt-btn:hover { border-color: rgba(0,240,255,0.5); background: rgba(0,240,255,0.08); transform: translateX(2px); }
+      .ac-opt-btn.primary { background: linear-gradient(135deg,#7df9ff,#00f0ff); color: #020613; font-weight: 700; border: none; }
+      .ac-opt-btn .em { font-size: 17px; flex-shrink: 0; }
+      .ac-opt-btn .sub { display: block; font-family: var(--mono); font-size: 9px; font-weight: 400; letter-spacing: .5px; opacity: .7; margin-top: 2px; text-transform: none; }
+      @media (max-width: 720px) {
+        .actcard { right: 0; left: 0; bottom: 0; top: auto; width: auto; max-height: 80vh; border-radius: 20px 20px 0 0; border-bottom: none; padding: 18px 16px 26px; transform: translateY(105%); box-shadow: 0 -18px 50px rgba(0,0,0,0.7); }
+        .actcard.show { transform: translateY(0); }
+      }
       .hint { position: fixed; bottom: 128px; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: rgba(234,242,255,0.35); text-transform: uppercase; z-index: 9; opacity: 0; transition: opacity 1s; }
       .hint.show { opacity: 1; animation: fade 3s ease-in-out infinite; } @keyframes fade { 0%,100%{opacity:0.3} 50%{opacity:0.6} }
     </style>
@@ -182,7 +191,8 @@
       <div class="ac-lbl" id="acLbl"></div>
       <div class="ac-mej" id="acMej"></div>
       <div class="ac-opt" id="acOpt"></div>
-      <button class="ac-btn" id="acBtn"></button>
+      <div class="ac-ask">¿Qué te gustaría hacer?</div>
+      <div class="ac-options" id="acOptions"></div>
     </div>
 
     <div class="pass-ov" id="passOv">
@@ -442,7 +452,7 @@
         { k:["adiós","adios","chao","chau","hasta luego","nos vemos","me voy"], cat:null, hi:"noclear", r:()=>"Hasta pronto. Tu Gemelo sigue creciendo contigo, siempre." },
       ];
       function oracle(raw){
-        if (raw.startsWith("nodo:")) { const idx=+raw.split(":")[1]; const n = nodes[idx]; if(n){ focusNode(idx); const ac=nodeAction(n); oracleType(`${n.label}. ${n.detail} Qué hacer: ${n.mejora} Pulsa el botón para ir a ${ac.dest}.`); showActionCard(idx); } return; }
+        if (raw.startsWith("nodo:")) { const idx=+raw.split(":")[1]; const n = nodes[idx]; if(n){ focusNode(idx); oracleType(`${n.label}. ${n.detail} ¿Qué te gustaría hacer? Puedes iniciar la mejora, trazar tu ruta o proyectar tu futuro. Elige abajo.`); showActionCard(idx); } return; }
         const q = raw.toLowerCase().trim();
         if (!q) return;
         let cmd = COMMANDS.find(c => c.k.some(k => q.includes(k)));
@@ -793,18 +803,28 @@
         return {verb:"Ejecutar en el ecosistema",dest:"tu ecosistema",act:"vault"};
       }
       let currentActNode = -1;
+      function closeActCard(){ const c=_g("actCard"); if(c) c.classList.remove("show"); }
       function showActionCard(idx){
         const n=nodes[idx]; if(!n)return; currentActNode=idx;
         const a=CAT_ACTION[n.cat]||CAT_ACTION.skill; const ac=nodeAction(n);
         _g("acCat").textContent=CATS[n.cat].name; _g("acCat").style.color=n.color;
         _g("acLbl").textContent=n.label;
-        _g("acMej").innerHTML="<b>▸ Qué hacer ahora</b>"+n.mejora;
+        _g("acMej").innerHTML="<b>▸ Qué significa</b>"+(n.detail||n.mejora);
         _g("acOpt").innerHTML="<b>A qué puedes optar</b>"+a.opt;
-        const btn=_g("acBtn"); if(btn){ btn.textContent="▶ "+ac.verb; btn.style.background=`linear-gradient(135deg, ${n.color}, #7df9ff)`; }
+        const box=_g("acOptions");
+        if(box){
+          box.innerHTML="";
+          const opts=[
+            { em:"▶", cls:"primary", title:"Iniciar la mejora", sub:ac.verb, fn:()=>{ doEcosystemAction(ac.act); try{Snd.chime();}catch(e){} shocks.push({t:0,color:n.color}); flash("EN "+ac.dest.toUpperCase(), n.color); oracleType(`Hecho. ${a.opt} Tu reputación es ${rep} y tu PE ${prof.pe}.`); } },
+            { em:"🧭", title:"¿Cómo llego?", sub:"Trazar mi ruta al siguiente Nodo", fn:()=>{ oracleType(runQuest()); } },
+            { em:"🔮", title:"Ver mi futuro", sub:"Proyectar mis próximas semanas", fn:()=>{ openProj(); oracleType("Proyectando tu futuro. Mueve el control para ver a dónde llegas."); } },
+            { em:"💬", title:"Explícame este nodo", sub:"El Oráculo te lo cuenta", fn:()=>{ focusNode(idx); oracleType(`${n.label}. ${n.detail} Para mejorar: ${n.mejora}`); } },
+          ];
+          opts.forEach(o=>{ const b=document.createElement("button"); b.className="ac-opt-btn"+(o.cls?(" "+o.cls):""); b.innerHTML='<span class="em">'+o.em+'</span><span>'+o.title+'<span class="sub">'+o.sub+'</span></span>'; b.onclick=()=>{ try{Snd.blip();}catch(e){} closeActCard(); o.fn(); }; box.appendChild(b); });
+        }
         _g("actCard").classList.add("show");
       }
-      if(_g("acX")) _g("acX").onclick=()=>_g("actCard").classList.remove("show");
-      if(_g("acBtn")) _g("acBtn").onclick=()=>{ const n=nodes[currentActNode]; if(!n)return; const a=CAT_ACTION[n.cat]||CAT_ACTION.skill; const ac=nodeAction(n); doEcosystemAction(ac.act); try{Snd.chime();}catch(e){} shocks.push({t:0,color:n.color}); flash("EN "+ac.dest.toUpperCase(), n.color); oracleType(`Vamos a ${ac.dest}: ${n.mejora} ${a.opt} Tu reputación ahora es ${rep} y tu PE ${prof.pe}.`); _g("actCard").classList.remove("show"); };
+      if(_g("acX")) _g("acX").onclick=closeActCard;
 
       // ── Tour guiado ──
       function runGuidedTour(){
