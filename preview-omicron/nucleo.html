@@ -86,6 +86,13 @@
       .chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
       .chip { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 6px 12px; border-radius: 20px; cursor: pointer; border: 1px solid rgba(0,240,255,0.25); background: rgba(6,12,26,0.6); color: rgba(234,242,255,0.75); backdrop-filter: blur(6px); transition: all 0.2s; }
       .chip:hover { color: #020613; background: var(--cyan); border-color: var(--cyan); }
+      /* Dock de acciones (limpio) + preguntas colapsables */
+      .dock { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 8px; }
+      .chip.prime { background: linear-gradient(135deg,#7df9ff,#00f0ff); color: #020613; font-weight: 700; border: none; box-shadow: 0 0 18px rgba(0,240,255,0.35); }
+      .chip.prime:hover { filter: brightness(1.1); }
+      .chip.ask-toggle.on { background: rgba(0,240,255,0.14); color: var(--cyan); border-color: rgba(0,240,255,0.5); }
+      .chips.asks { max-height: 0; overflow: hidden; opacity: 0; margin: 0; transition: max-height .3s ease, opacity .3s ease, margin .3s ease; }
+      .chips.asks.open { max-height: 180px; opacity: 1; margin-bottom: 10px; }
       .inbar { display: flex; gap: 8px; background: rgba(6,12,26,0.75); border: 1px solid rgba(0,240,255,0.3); border-radius: 30px; padding: 6px 6px 6px 18px; backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(0,0,0,0.5); }
       .inbar input { flex: 1; background: none; border: none; outline: none; color: #eaf2ff; font-family: var(--mono); font-size: 14px; }
       .inbar input::placeholder { color: rgba(234,242,255,0.35); }
@@ -166,7 +173,6 @@
       <button id="projClose">Cerrar proyección</button>
     </div>
 
-    <button class="conv-fab" id="convBtn">＋ Aportar datos</button>
     <div class="conv-ov" id="convOv">
       <div class="conv-card">
         <h3>Convalida tu Gemelo</h3>
@@ -191,7 +197,8 @@
 
     <div class="console" id="console">
       <div class="oracle-msg" id="omsg"></div>
-      <div class="chips" id="chips"></div>
+      <div class="dock" id="dock"></div>
+      <div class="chips asks" id="chips"></div>
       <div class="inbar">
         <input id="cin" placeholder="Pregúntale al Oráculo: habilidades, reputación, evolucionar…" autocomplete="off" />
         <button id="csend" aria-label="Enviar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
@@ -414,7 +421,10 @@
       document.getElementById("cin").addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
       function send(){ const el=document.getElementById("cin"); const v=el.value; el.value=""; Snd.blip(); oracle(v); }
       const CHIPS = ["Habilidades","Reputación","Tokens","Credenciales","Gobernanza","✦ Mi brecha","Evolucionar"];
-      const chipsEl = document.getElementById("chips");
+      const chipsEl = document.getElementById("chips");   // fila de PREGUNTAS (colapsable)
+      const dockEl = document.getElementById("dock");     // fila de ACCIONES (siempre visible)
+      // Acción primaria: Aportar datos (reemplaza el botón flotante que se superponía)
+      const aportarChip=document.createElement("div"); aportarChip.className="chip prime"; aportarChip.textContent="＋ Aportar datos"; aportarChip.onclick=()=>{ try{Snd.init();}catch(e){} if(convOv) convOv.classList.add("open"); }; dockEl.appendChild(aportarChip);
       CHIPS.forEach(c => { const b=document.createElement("div"); b.className="chip"; b.textContent=c; b.onclick=()=>{ Snd.blip(); oracle(c); }; chipsEl.appendChild(b); });
 
       // ══ Modo presentación (recorrido cinematográfico) ══
@@ -750,7 +760,7 @@
         setTimeout(()=>{ _g("actCard").classList.remove("show"); oracleType("Y puedes pedirme lo que quieras por voz. Gíralo, explóralo. Este es tu Gemelo Digital."); },18800);
       }
       const tourChip=document.createElement("div"); tourChip.className="chip"; tourChip.style.borderColor="rgba(57,255,20,0.5)"; tourChip.style.color="#39FF14"; tourChip.textContent="▶ Tour guiado"; tourChip.onclick=()=>runGuidedTour(); chipsEl.appendChild(tourChip);
-      const recoChip=document.createElement("div"); recoChip.className="chip reco"; recoChip.textContent="✦ Siguiente mejor paso"; recoChip.onclick=()=>{ Snd.blip(); oracle("siguiente paso"); }; chipsEl.appendChild(recoChip);
+      const recoChip=document.createElement("div"); recoChip.className="chip reco"; recoChip.textContent="✦ Siguiente mejor paso"; recoChip.onclick=()=>{ Snd.blip(); oracle("siguiente paso"); }; dockEl.appendChild(recoChip);
 
       // ═══════════ INNOVACIONES · simulación compartida ═══════════
       // Aplica una acción sobre una copia del perfil y devuelve el nodo que nacería (o -1)
@@ -819,9 +829,9 @@
       function executeQuestStep(item){ if(!item||item.done) return; const actMap={cv:"cv",cti:"title",cyr:"year",cvo:"vault"}; doEcosystemAction(actMap[item.btn]||"vault"); item.done=true; try{Snd.chime();}catch(e){} flash("PASO COMPLETADO","#39FF14"); shocks.push({t:0,color:"#39FF14"}); focusNode(item.idx); questUntil=performance.now()+120000; const rem=quest?quest.filter(q=>!q.done):[]; if(!rem.length){ setTimeout(()=>{ oracleType(`¡Ruta completada! Tu reputación es ${rep} y tu PE ${prof.pe}. Pide otra ruta cuando quieras seguir subiendo.`); quest=null; questPts.length=0; },250); } else { const nextNo=quest.indexOf(rem[0])+1; oracleType(`Paso completado. Te quedan ${rem.length}. Toca el número ${nextNo} para seguir.`); } }
 
       // Chips nuevos
-      const passChip=document.createElement("div"); passChip.className="chip"; passChip.style.borderColor="rgba(0,240,255,0.5)"; passChip.textContent="🎫 Pasaporte"; passChip.onclick=()=>{ Snd.blip(); openPassport(); }; chipsEl.appendChild(passChip);
-      const projChip=document.createElement("div"); projChip.className="chip"; projChip.style.borderColor="rgba(125,249,255,0.5)"; projChip.style.color="#7df9ff"; projChip.textContent="🔮 Futuro"; projChip.onclick=()=>{ Snd.blip(); openProj(); }; chipsEl.appendChild(projChip);
-      const questChip=document.createElement("div"); questChip.className="chip"; questChip.style.borderColor="rgba(245,158,11,0.6)"; questChip.style.color="#F59E0B"; questChip.textContent="🧭 Mi ruta"; questChip.onclick=()=>{ Snd.chime(); oracleType(runQuest()); }; chipsEl.appendChild(questChip);
+      const passChip=document.createElement("div"); passChip.className="chip"; passChip.style.borderColor="rgba(0,240,255,0.5)"; passChip.textContent="🎫 Pasaporte"; passChip.onclick=()=>{ Snd.blip(); openPassport(); }; dockEl.appendChild(passChip);
+      const projChip=document.createElement("div"); projChip.className="chip"; projChip.style.borderColor="rgba(125,249,255,0.5)"; projChip.style.color="#7df9ff"; projChip.textContent="🔮 Futuro"; projChip.onclick=()=>{ Snd.blip(); openProj(); }; dockEl.appendChild(projChip);
+      const questChip=document.createElement("div"); questChip.className="chip"; questChip.style.borderColor="rgba(245,158,11,0.6)"; questChip.style.color="#F59E0B"; questChip.textContent="🧭 Mi ruta"; questChip.onclick=()=>{ Snd.chime(); oracleType(runQuest()); }; dockEl.appendChild(questChip);
 
       // Comandos de voz para las nuevas innovaciones
       COMMANDS.push(
@@ -846,7 +856,9 @@
       if(_g("convReset")) _g("convReset").onclick=resetGemelo;
 
       // Chip historial
-      const histChip=document.createElement("div"); histChip.className="chip"; histChip.style.borderColor="rgba(245,158,11,0.5)"; histChip.style.color="#F59E0B"; histChip.textContent="📜 Historial"; histChip.onclick=()=>{ Snd.blip(); openHist(); }; chipsEl.appendChild(histChip);
+      const histChip=document.createElement("div"); histChip.className="chip"; histChip.style.borderColor="rgba(245,158,11,0.5)"; histChip.style.color="#F59E0B"; histChip.textContent="📜 Historial"; histChip.onclick=()=>{ Snd.blip(); openHist(); }; dockEl.appendChild(histChip);
+      // Botón para mostrar/ocultar las preguntas rápidas (mantiene el dock limpio)
+      const askToggle=document.createElement("div"); askToggle.className="chip ask-toggle"; askToggle.textContent="💬 Preguntar"; askToggle.onclick=()=>{ Snd.blip(); const open=chipsEl.classList.toggle("open"); askToggle.classList.toggle("on",open); askToggle.textContent=open?"💬 Ocultar preguntas":"💬 Preguntar"; }; dockEl.appendChild(askToggle);
 
       // Comandos de voz (historial / reinicio)
       COMMANDS.push(
