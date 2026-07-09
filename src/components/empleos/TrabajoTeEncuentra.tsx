@@ -257,7 +257,7 @@ function miniBtn(color: string): React.CSSProperties {
 }
 
 // Tipos mínimos para SpeechRecognition (evita depender de libs de tipos del navegador)
-interface SpeechResultLike { results: { 0: { 0: { transcript: string } } }[]; }
+interface SpeechResultLike { results: { 0: { transcript: string } }[]; }
 interface SpeechRecognitionLike {
   lang: string; interimResults: boolean;
   onresult: (e: SpeechResultLike) => void; onerror: () => void; start: () => void;

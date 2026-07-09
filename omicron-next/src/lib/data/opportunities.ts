@@ -36,7 +36,8 @@ export async function getOpportunities(): Promise<Opportunity[]> {
   const { data, error } = await supabase
     .from("opportunities")
     .select("*")
-    .order("match", { ascending: false });
+    .order("match", { ascending: false })
+    .returns<OpportunityRow[]>();
 
   if (error || !data) return mockOpportunities;
   return data.map(mapRow);
@@ -55,7 +56,7 @@ export async function getOpportunityById(
     .from("opportunities")
     .select("*")
     .eq("id", id)
-    .maybeSingle();
+    .maybeSingle<OpportunityRow>();
 
   if (error || !data) {
     return mockOpportunities.find((o) => o.id === id) ?? null;

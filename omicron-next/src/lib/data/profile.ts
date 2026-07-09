@@ -5,7 +5,10 @@ import {
   nodeProgression,
 } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/database.types";
 import type { Achievement, NodeDefinition, Skill, UserProfile } from "@/types";
+
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
 /** Perfil del usuario actual. */
 export async function getProfile(): Promise<UserProfile> {
@@ -21,7 +24,7 @@ export async function getProfile(): Promise<UserProfile> {
     .from("profiles")
     .select("*")
     .eq("id", user.id)
-    .maybeSingle();
+    .maybeSingle<ProfileRow>();
 
   if (error || !data) return mockUser;
 

@@ -1,6 +1,12 @@
 import { mockRanking } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/database.types";
 import type { RankingEntry } from "@/types";
+
+type RankingRow = Pick<
+  Database["public"]["Tables"]["profiles"]["Row"],
+  "id" | "name" | "handle" | "avatar_url" | "node" | "experience"
+>;
 
 /**
  * Obtiene el ranking (leaderboard) de nodos ordenado por experiencia.
@@ -14,7 +20,8 @@ export async function getRanking(): Promise<RankingEntry[]> {
     .from("profiles")
     .select("id, name, handle, avatar_url, node, experience")
     .order("experience", { ascending: false })
-    .limit(50);
+    .limit(50)
+    .returns<RankingRow[]>();
 
   if (error || !data) return mockRanking;
 

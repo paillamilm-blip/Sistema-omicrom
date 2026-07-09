@@ -34,7 +34,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       # Se usa `npm install` porque el package-lock.json se genera en la
       # máquina del usuario (el sandbox de generación no tiene acceso al
