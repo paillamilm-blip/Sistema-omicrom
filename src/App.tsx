@@ -11,6 +11,7 @@ import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { OraculoBar } from './components/OraculoBar';
 import { GemeloBadge } from './components/shared/GemeloBadge';
+import { InstallPWA } from './components/shared/InstallPWA';
 import { Onboarding, shouldShowOnboarding } from './components/shared/Onboarding';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
@@ -144,6 +145,9 @@ function AppShell() {
       <PublicProfileGate />
       <ErrorBoundary section="Oráculo">
         <OraculoBar />
+      </ErrorBoundary>
+      <ErrorBoundary section="InstalarApp">
+        <InstallPWA />
       </ErrorBoundary>
     </div>
   );
