@@ -52,6 +52,10 @@
       .info .dec{margin-top:14px;font-size:11px;color:var(--mut);letter-spacing:.3px;}
       .info .act{margin-top:8px;width:100%;padding:14px;border-radius:14px;border:none;cursor:pointer;font-family:var(--font);font-size:15px;font-weight:600;color:#05060f;background:linear-gradient(135deg,#8fe0ff,var(--sky));box-shadow:0 10px 26px rgba(92,200,255,.35);}
       .info .cls{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--mut);cursor:pointer;font-size:15px;}
+      .rl-lab{font-size:10px;color:var(--mut);letter-spacing:.5px;text-transform:uppercase;margin-top:14px;}
+      .rel{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
+      .rel .rc{font-size:11.5px;padding:6px 11px;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+      .rel .rc .rd{width:6px;height:6px;border-radius:50%;}
 
       .oracle{position:relative;z-index:6;margin:0 12px calc(10px + env(safe-area-inset-bottom,0px));border-radius:26px;padding:15px;background:linear-gradient(180deg,rgba(18,21,38,.78),rgba(8,10,20,.88));border:1px solid var(--line);backdrop-filter:blur(30px) saturate(150%);-webkit-backdrop-filter:blur(30px) saturate(150%);box-shadow:0 -10px 40px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.1);}
       .o-top{display:flex;gap:12px;align-items:center;}
@@ -103,6 +107,8 @@
         <div class="cat" id="info-cat"></div>
         <h3 id="info-l">Nodo</h3><div class="big" id="info-v">—</div><p id="info-p"></p>
         <div class="dec" id="info-dec"></div>
+        <div class="rl-lab" id="info-rel-lab" style="display:none">Todo está conectado · toca para ir</div>
+        <div class="rel" id="info-rel"></div>
         <button class="act" id="info-act" style="display:none"></button>
       </div>
 
@@ -188,6 +194,8 @@
         (function centers(){function nz(v){var m=Math.hypot(v[0],v[1],v[2])||1;return [v[0]/m,v[1]/m,v[2]/m];}Object.keys(CATS).forEach(function(ck){var m=N.filter(function(n){return n.cat===ck;});var s=[0,0,0];m.forEach(function(n){s[0]+=n.vx;s[1]+=n.vy;s[2]+=n.vz;});CATS[ck].cen=nz(s);});})();
         function nById(id){for(var i=0;i<N.length;i++)if(N[i].id===id)return N[i];return null;}
         function fmt(v){return typeof v==="number"?v.toLocaleString("es"):v;}
+        // GRAFO DE SINERGIA: todo está relacionado con todo (hacia dónde ir a mejorar)
+        var REL={exec:["academia","empleos","qual","fund"],qual:["empleos","exec"],trans:["boveda","tok"],fund:["academia","gob","exec"],pe:["nodo","academia","empleos","boveda"],tok:["empleos","boveda","trans"],nodo:["pe"],academia:["exec","fund","pe"],empleos:["qual","exec","tok"],boveda:["trans","tok","pe"],gob:["fund"]};
 
         // leyenda interactiva (filtro por categoría)
         var activeCat=null;
@@ -195,12 +203,17 @@
           b.onclick=function(){activeCat=activeCat===ck?null:ck;document.querySelectorAll(".lg").forEach(function(x,i){x.classList.toggle("on",Object.keys(CATS)[i]===activeCat);});if(activeCat){var d=CATS[ck].cen;var L=Math.hypot(d[0],d[2]);fay=Math.atan2(-d[0],d[2]);fax=clamp(Math.atan2(d[1],L),-1,1);focus=true;zoomT=1.14;say(c.name+": "+catDesc(ck));}else{focus=false;zoomT=1;}};lg.appendChild(b);});})();
         function catDesc(ck){return ck==="desemp"?"tus 4 ejes de desempeño real; el 80% de tu reputación.":ck==="econ"?"tu progreso y tu economía interna: experiencia, tokens y nivel.":"donde conviertes tu conocimiento en activos: aprende, ejecuta, capitaliza y gobierna.";}
 
-        function openInfo(n){var c=CATS[n.cat];el("info-ic").textContent=n.ic;el("info-ic").style.background="linear-gradient(135deg,"+c.c+"55,"+c.c+"18)";el("info-ic").style.color=c.c;
+        function openInfo(n){sel=n.id;var c=CATS[n.cat];el("info-ic").textContent=n.ic;el("info-ic").style.background="linear-gradient(135deg,"+c.c+"55,"+c.c+"18)";el("info-ic").style.color=c.c;
           el("info-cat").textContent=c.name;el("info-cat").style.color=c.c;el("info-l").textContent=n.l;var v=n.get();el("info-v").textContent=n.fmt?fmt(v):v;el("info-v").style.color=c.c;
           el("info-p").textContent=n.info;el("info-dec").textContent=n.dec||"";
+          // relaciones: hacia dónde ir (todo conectado)
+          var rl=el("info-rel");rl.innerHTML="";var rels=REL[n.id]||[];el("info-rel-lab").style.display=rels.length?"block":"none";
+          rels.forEach(function(id){var m=nById(id);if(!m)return;var c2=CATS[m.cat].c;var b=document.createElement("button");b.className="rc";b.innerHTML='<span class="rd" style="background:'+c2+';box-shadow:0 0 6px '+c2+'"></span>'+m.l;b.onclick=function(){openInfo(m);};rl.appendChild(b);});
+          var relNames=rels.map(function(id){var m=nById(id);return m?m.l:"";}).filter(Boolean);
           var ab=el("info-act");if(n.act){ab.style.display="block";ab.textContent=(n.cat==="crec"?"Ejecutar → ":"Mejorar → ")+ACT[n.act].name;ab.style.background="linear-gradient(135deg,"+c.c+","+c.c+"aa)";ab.style.color="#05060f";ab.onclick=function(){closeInfo();run(n.act);};}else ab.style.display="none";
-          el("info").classList.add("on");say(n.l+". "+n.info);}
-        function closeInfo(){el("info").classList.remove("on");}
+          el("info").classList.add("on");
+          say(n.l+". "+n.info+(relNames.length?(" Se conecta con "+relNames.slice(0,3).join(", ")+"."):"")+(n.act?(" Tu oportunidad ahora: "+ACT[n.act].name+"."):""));}
+        function closeInfo(){el("info").classList.remove("on");sel=null;}
         el("info-x").onclick=closeInfo;el("info").addEventListener("click",function(e){e.stopPropagation();});
 
         function bump(e,d){st.ejes[e]=cap(st.ejes[e]+d);var n=nById(e);if(n)n.flash=1;}
@@ -225,14 +238,14 @@
         // ══ CANVAS 3D ══
         var cv=el("cv"),ctx=cv.getContext("2d");
         var W=0,H=0,DPR=1,cx=0,cy=0,orbR=0,R3=0,dust=[],pulses=[];
-        var ay=0.4,ax=-0.22,ayv=0,axv=0,drag=false,lx=0,ly=0,moved=0,zoom=1,zoomT=1,focus=false,fay=0,fax=0;
+        var ay=0.4,ax=-0.22,ayv=0,axv=0,drag=false,lx=0,ly=0,moved=0,zoom=1,zoomT=1,focus=false,fay=0,fax=0,sel=null;
         function layout(){DPR=Math.min(window.devicePixelRatio||1,2);var r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);orbR=Math.min(W,H)*0.108;R3=Math.min(W,H)*0.35;dust=[];for(var i=0;i<90;i++){var u=Math.random()*2-1,th=Math.random()*6.28,rr=Math.sqrt(1-u*u);dust.push({vx:Math.cos(th)*rr,vy:u,vz:Math.sin(th)*rr,s:Math.random()*1.2+.3});}}
         function sr(){var s=el("stage").getBoundingClientRect(),a=el("app").getBoundingClientRect();return {cx:s.left-a.left+s.width/2,cy:s.top-a.top+s.height*0.45};}
         function hx(h,al){h=h.replace("#","");var n=parseInt(h,16);return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+al+")";}
         function pulseCore(){pulses.push({r:orbR,max:orbR*3.6,w:2.5});}
         function project(vx,vy,vz){var x1=vx*Math.cos(ay)+vz*Math.sin(ay),z1=-vx*Math.sin(ay)+vz*Math.cos(ay),y1=vy;var y2=y1*Math.cos(ax)-z1*Math.sin(ax),z2=y1*Math.sin(ax)+z1*Math.cos(ax);var persp=2.5/(2.5-z2*0.92);return {x:cx+x1*R3*zoom*persp,y:cy+y2*R3*zoom*persp,z:z2,p:persp};}
         var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches,t0=performance.now();
-        function dim(n){return activeCat&&n.cat!==activeCat?0.18:1;}
+        function dim(n){if(sel){return (sel===n.id||(REL[sel]&&REL[sel].indexOf(n.id)>-1))?1:0.1;}return activeCat&&n.cat!==activeCat?0.18:1;}
         function frame(now){var t=now-t0;var s=sr();cx=s.cx;cy=s.cy;ctx.clearRect(0,0,W,H);
           if(drag){}else if(focus){var dd=fay-ay;dd=Math.atan2(Math.sin(dd),Math.cos(dd));ay+=dd*0.09;ax+=(fax-ax)*0.09;}else{ay+=ayv+(reduce?0:0.0015);ax=clamp(ax+axv,-1.1,1.1);ayv*=0.95;axv*=0.95;}
           zoom+=(zoomT-zoom)*0.08;
@@ -242,6 +255,8 @@
           // conexiones intra-categoría (clasificadas + conectadas)
           Object.keys(CATS).forEach(function(ck){var mem=N.filter(function(n){return n.cat===ck;});var c=CATS[ck].c;
             for(var a2=0;a2<mem.length;a2++)for(var b2=a2+1;b2<mem.length;b2++){var m1=mem[a2],m2=mem[b2];var al=clamp(((m1.sz+m2.sz)/2+1)/2,0,1)*0.5*Math.min(dim(m1),dim(m2));ctx.strokeStyle=hx(c,al*0.5);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(m1.sx,m1.sy);ctx.lineTo(m2.sx,m2.sy);ctx.stroke();}});
+          // sinergia: conexiones iluminadas del nodo seleccionado hacia sus relacionados
+          if(sel){var sN=nById(sel);if(sN&&REL[sel]){var pw=0.55+0.45*Math.sin(t*0.006);REL[sel].forEach(function(rid){var m=nById(rid);if(!m)return;var cc=CATS[m.cat].c;ctx.strokeStyle=hx(cc,pw*0.75);ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(sN.sx,sN.sy);ctx.lineTo(m.sx,m.sy);ctx.stroke();var mp=(t*0.0009)%1;ctx.fillStyle=hx(cc,0.95);ctx.beginPath();ctx.arc(sN.sx+(m.sx-sN.sx)*mp,sN.sy+(m.sy-sN.sy)*mp,2,0,6.28);ctx.fill();});}}
           var order=N.slice().sort(function(a,b){return a.sz-b.sz;});
           for(var i=0;i<order.length;i++) if(order[i].sz<0) drawNode(order[i],t);
           drawCore(t);
