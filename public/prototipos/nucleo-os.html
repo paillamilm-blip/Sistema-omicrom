@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Ómicron · Núcleo-Oráculo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --cyan:#00f0ff; --amber:#f59e0b; --green:#39ff14; --blue:#38bdf8; --red:#ff3d57;
+        --ink:#eaf2ff; --mut:#9fb3cc; --bg:#01040d;
+        --mono:"Share Tech Mono",monospace; --disp:"Rajdhani",sans-serif;
+      }
+      *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+      html,body{height:100%;background:var(--bg);overflow:hidden;font-family:var(--disp);color:var(--ink);}
+      #app{position:fixed;inset:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
+        background:radial-gradient(120% 85% at 50% 8%, #06152e 0%, #01040d 62%);box-shadow:0 0 60px rgba(0,0,0,.6);}
+      canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+      .fx.grid{position:absolute;inset:0;z-index:1;pointer-events:none;
+        background-image:linear-gradient(rgba(0,240,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.03) 1px,transparent 1px);
+        background-size:42px 42px;mask-image:radial-gradient(circle at 50% 42%,#000 22%,transparent 74%);
+        -webkit-mask-image:radial-gradient(circle at 50% 42%,#000 22%,transparent 74%);}
+
+      header{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;
+        padding:max(14px,env(safe-area-inset-top,0px)) 16px 8px;background:linear-gradient(180deg,rgba(6,16,38,.85),transparent);}
+      .brand{display:flex;align-items:center;gap:9px;}
+      .omega{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(135deg,#7df9ff,#00f0ff);color:#020613;font-weight:700;font-size:16px;box-shadow:0 0 16px rgba(0,240,255,.6);}
+      .brand b{font-size:16px;letter-spacing:.3px;}
+      .brand small{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:rgba(0,240,255,.6);display:block;margin-top:-2px;text-transform:uppercase;}
+      .stats{display:flex;gap:13px;text-align:right;}
+      .stat b{display:block;font-size:15px;line-height:1;}
+      .stat span{font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--mut);text-transform:uppercase;}
+      .stat.rep b{color:var(--amber);} .stat.pe b{color:var(--cyan);} .stat.tok b{color:var(--green);}
+      .tier{position:relative;z-index:3;margin:2px 16px;align-self:flex-start;display:inline-flex;align-items:center;gap:7px;
+        padding:5px 12px;border-radius:20px;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+        border:1px solid rgba(0,240,255,.3);background:rgba(0,240,255,.07);color:var(--cyan);}
+      .tier .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+
+      .stage{flex:1;position:relative;z-index:2;}
+      .hint{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:2px;color:rgba(159,179,204,.45);text-transform:uppercase;pointer-events:none;}
+
+      /* Oráculo bar */
+      .oracle{position:relative;z-index:3;margin:0 12px calc(12px + env(safe-area-inset-bottom,0px));border-radius:20px;
+        border:1px solid rgba(0,240,255,.24);background:linear-gradient(160deg,rgba(8,18,40,.92),rgba(2,6,19,.96));
+        backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 -6px 30px rgba(0,0,0,.5),0 0 24px rgba(0,240,255,.08);padding:12px 12px 10px;}
+      .o-say-row{display:flex;gap:10px;align-items:flex-start;}
+      .o-orb{flex:0 0 auto;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:rgba(0,240,255,.12);
+        border:1px solid rgba(0,240,255,.4);color:var(--cyan);box-shadow:0 0 16px rgba(0,240,255,.4);animation:pulse 2.4s ease-in-out infinite;font-size:15px;}
+      @keyframes pulse{0%,100%{transform:scale(1);opacity:.85;}50%{transform:scale(1.09);opacity:1;}}
+      .o-say{flex:1;min-width:0;font-size:14px;line-height:1.45;min-height:38px;color:var(--ink);}
+      .o-name{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;}
+      .o-input{display:flex;gap:8px;margin-top:9px;}
+      .o-input input{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:10px;
+        padding:10px 12px;color:var(--ink);font-family:var(--disp);font-size:14px;outline:none;}
+      .o-input input:focus{border-color:rgba(0,240,255,.5);}
+      .o-btn{flex:0 0 auto;width:42px;border:none;border-radius:10px;cursor:pointer;display:grid;place-items:center;font-size:17px;
+        background:linear-gradient(135deg,#7df9ff,#00f0ff);color:#020613;box-shadow:0 0 14px rgba(0,240,255,.4);}
+      .o-btn.mic.listening{background:linear-gradient(135deg,#ff8a9c,#ff3d57);box-shadow:0 0 16px rgba(255,61,87,.6);animation:pulse 1s infinite;}
+      .chips{display:flex;gap:6px;margin-top:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+      .chips::-webkit-scrollbar{display:none;}
+      .chip{flex:0 0 auto;font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;padding:6px 11px;border-radius:16px;
+        border:1px solid rgba(0,240,255,.25);background:rgba(0,240,255,.06);color:var(--cyan);cursor:pointer;white-space:nowrap;}
+      .chip:active{background:var(--cyan);color:#020613;}
+
+      /* Sheet */
+      .scrim{position:fixed;inset:0;z-index:8;background:rgba(1,4,13,.55);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s;}
+      .scrim.on{opacity:1;pointer-events:auto;}
+      .sheet{position:fixed;left:50%;transform:translateX(-50%) translateY(102%);bottom:0;width:100%;max-width:480px;z-index:9;
+        max-height:82vh;overflow:hidden;display:flex;flex-direction:column;border-radius:22px 22px 0 0;
+        background:linear-gradient(180deg,rgba(10,20,42,.98),rgba(3,8,20,.99));border:1px solid rgba(0,240,255,.22);border-bottom:none;
+        box-shadow:0 -12px 44px rgba(0,0,0,.6);transition:transform .34s cubic-bezier(.2,.8,.2,1);}
+      .sheet.on{transform:translateX(-50%) translateY(0);}
+      .sheet-h{display:flex;align-items:center;gap:10px;padding:16px 16px 10px;flex-shrink:0;}
+      .sheet-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:19px;}
+      .sheet-t b{font-size:19px;letter-spacing:.3px;display:block;}
+      .sheet-t span{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--mut);text-transform:uppercase;}
+      .sheet-x{margin-left:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--mut);
+        width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:16px;}
+      .sheet-body{padding:4px 16px 22px;overflow-y:auto;}
+      .grab{width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:8px auto 0;}
+
+      .card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:13px;margin-bottom:10px;}
+      .row{display:flex;align-items:center;gap:10px;}
+      .row + .row{margin-top:9px;}
+      .muted{color:var(--mut);font-size:13px;line-height:1.5;}
+      .h3{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--cyan);text-transform:uppercase;margin:2px 0 8px;}
+      .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 15px;border-radius:11px;border:none;cursor:pointer;
+        font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.3px;}
+      .btn.p{background:linear-gradient(90deg,#7df9ff,#00f0ff);color:#020613;box-shadow:0 0 16px rgba(0,240,255,.35);}
+      .btn.a{background:linear-gradient(90deg,#f59e0b,#ffb84d);color:#020613;box-shadow:0 0 16px rgba(245,158,11,.35);}
+      .btn.g{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:var(--ink);}
+      .btn.full{width:100%;}
+      .pill{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:12px;letter-spacing:.5px;}
+      .bar{height:8px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;}
+      .bar > i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#00f0ff,#7df9ff);}
+      input.f,select.f{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 12px;color:var(--ink);font-family:var(--disp);font-size:14px;outline:none;margin-bottom:9px;}
+      .opt{text-align:left;width:100%;padding:11px 13px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:var(--ink);font-family:var(--disp);font-size:14px;cursor:pointer;margin-bottom:8px;}
+      .opt.ok{border-color:var(--green);background:rgba(57,255,20,.12);}
+      .opt.no{border-color:var(--red);background:rgba(255,61,87,.12);}
+
+      .toast{position:fixed;left:50%;top:16%;transform:translateX(-50%) translateY(-10px);z-index:30;padding:9px 16px;border-radius:24px;
+        font-family:var(--mono);font-size:12px;letter-spacing:1px;background:rgba(2,6,19,.92);border:1px solid var(--green);color:var(--green);
+        opacity:0;transition:all .3s;pointer-events:none;text-transform:uppercase;box-shadow:0 0 20px rgba(57,255,20,.3);}
+      .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="nucleo"></canvas>
+      <div class="fx grid"></div>
+
+      <header>
+        <div class="brand"><div class="omega">Ω</div><div><b>ÓMICRON</b><small>Núcleo-Oráculo</small></div></div>
+        <div class="stats">
+          <div class="stat rep"><b id="s-rep">34</b><span>Rep</span></div>
+          <div class="stat pe"><b id="s-pe">120</b><span>PE</span></div>
+          <div class="stat tok"><b id="s-tok">2480</b><span>Tok</span></div>
+        </div>
+      </header>
+      <div class="tier"><span class="dot"></span><span id="s-tier">Nodo Operativo</span></div>
+
+      <div class="stage"><div class="hint">Toca un orbe · o pídele al Oráculo</div></div>
+
+      <div class="oracle">
+        <div class="o-say-row">
+          <div class="o-orb">◈</div>
+          <div style="flex:1;min-width:0;"><div class="o-name">EL ORÁCULO</div><div class="o-say" id="o-say">Inicializando tu Gemelo…</div></div>
+        </div>
+        <div class="o-input">
+          <input id="o-in" placeholder="Habla o escribe: 'abre mi billetera'…" autocomplete="off" />
+          <button class="o-btn mic" id="o-mic" title="Hablar">🎙️</button>
+          <button class="o-btn" id="o-send" title="Enviar">➤</button>
+        </div>
+        <div class="chips" id="o-chips"></div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <div class="scrim" id="scrim"></div>
+    <div class="sheet" id="sheet">
+      <div class="grab"></div>
+      <div class="sheet-h">
+        <div class="sheet-ic" id="sh-ic">◈</div>
+        <div class="sheet-t"><b id="sh-t">Hub</b><span id="sh-s">Ómicron</span></div>
+        <button class="sheet-x" id="sh-x">✕</button>
+      </div>
+      <div class="sheet-body" id="sh-body"></div>
+    </div>
+
+    <script>
+      (function(){
+        "use strict";
+        var $=function(s){return document.querySelector(s);};
+        var el=function(id){return document.getElementById(id);};
+
+        // ── Estado unificado (persistido) ──
+        var KEY="omicron_nucleo_os";
+        var state=load();
+        function load(){
+          try{var r=localStorage.getItem(KEY);if(r){var p=JSON.parse(r);p.mastered=p.mastered||[];p.applied=p.applied||[];p.services=p.services||[];return p;}}catch(e){}
+          return {rep:34,pe:120,tokens:2480,mastered:[],applied:[],services:[],vault:0,gov:{fav:58}};
+        }
+        function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+        function tierOf(pe){return pe>=2000?"Nodo Arquitecto":pe>=500?"Nodo Core":"Nodo Operativo";}
+        function hud(){el("s-rep").textContent=state.rep;el("s-pe").textContent=state.pe.toLocaleString("es");el("s-tok").textContent=state.tokens.toLocaleString("es");el("s-tier").textContent=tierOf(state.pe);}
+
+        // ── Recompensas → el Gemelo crece ──
+        function grow(dPe,dRep,dTok,msg){
+          state.pe+=dPe||0; state.rep=Math.min(99,state.rep+(dRep||0)); state.tokens+=dTok||0; save(); hud();
+          var n=nodeById(activeHub); if(n) shockwave(n.x,n.y,n.color); else shockwave(cx,cy,"#00f0ff");
+          if(msg) toast(msg);
+        }
+
+        // ── Voz ──
+        var muted=false,typeTimer=null;
+        function say(t){var e=el("o-say");e.textContent="";clearInterval(typeTimer);var i=0;
+          typeTimer=setInterval(function(){i+=2;e.textContent=t.slice(0,i);if(i>=t.length){e.textContent=t;clearInterval(typeTimer);}},20);
+          try{if(!muted&&"speechSynthesis"in window){speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang="es-ES";u.rate=1.03;speechSynthesis.speak(u);}}catch(e2){}}
+        function toast(m){var t=el("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},1700);}
+
+        // ── HUBS (todas las pestañas integradas) ──
+        var HUBS=[
+          {id:"skills",   name:"Habilidades", sub:"Domina y crece", ic:"🧠", color:"#00f0ff"},
+          {id:"academia", name:"Academia",    sub:"Rutas de aprendizaje", ic:"🎓", color:"#38bdf8"},
+          {id:"market",   name:"Servicios",   sub:"Ofrece tu talento", ic:"🛠️", color:"#39ff14"},
+          {id:"empleos",  name:"Empleos",      sub:"El trabajo te encuentra", ic:"💼", color:"#f59e0b"},
+          {id:"chat",     name:"Mensajes",     sub:"Tu red", ic:"💬", color:"#7df9ff"},
+          {id:"wallet",   name:"Billetera",    sub:"Tus tokens", ic:"🪙", color:"#39ff14"},
+          {id:"gov",      name:"Gobernanza",   sub:"Vota el futuro", ic:"⚖️", color:"#ff3d57"},
+          {id:"vault",    name:"Bóveda",       sub:"Conocimiento colectivo", ic:"🔐", color:"#f59e0b"}
+        ];
+        function hubById(id){for(var i=0;i<HUBS.length;i++)if(HUBS[i].id===id)return HUBS[i];return null;}
+
+        // Micro-reto para Habilidades (aprendizaje continuo)
+        var CHAL=[
+          {q:"En la Industria 5.0, la colaboración humano–IA rinde más con…",o:["Instrucciones vagas","Contexto claro + iterar","El modelo más caro"],ok:1},
+          {q:"Un dato es confiable ante todo si…",o:["Se ve bonito","Verificas fuente y frescura","Lo dice una autoridad"],ok:1},
+          {q:"El corazón de la mejora continua es…",o:["Cambios anuales","Pequeños avances medidos","No cambiar nada"],ok:1}
+        ];
+
+        // ── Contenido de cada hub ──
+        function sheetContent(id){
+          var t=tierOf(state.pe);
+          if(id==="skills"){
+            var done=state.mastered.length,total=CHAL.length;
+            return '<div class="h3">Tu mapa de competencias</div>'+
+              '<div class="card"><div class="row" style="justify-content:space-between"><span class="muted">Dominadas</span><b>'+done+' / '+total+'</b></div>'+
+              '<div class="bar" style="margin-top:8px"><i style="width:'+Math.round(done/total*100)+'%"></i></div></div>'+
+              '<div class="h3">Demuestra ahora (+PE, +reputación)</div><div id="chal"></div>';
+          }
+          if(id==="academia"){
+            return '<div class="h3">Rutas activas</div>'+
+              route("Fundamentos de IA aplicada",72)+route("Pensamiento sistémico",40)+route("Ética y gobernanza de datos",15)+
+              '<button class="btn a full" data-act="acad">▶ Continuar mi ruta (+120 PE)</button>';
+          }
+          if(id==="market"){
+            var list=state.services.map(function(s){return '<div class="card"><div class="row" style="justify-content:space-between"><b>'+esc(s.n)+'</b><span class="pill" style="background:rgba(57,255,20,.14);color:#39ff14">'+s.p+' tok</span></div></div>';}).join("")||'<div class="muted" style="margin-bottom:10px">Aún no publicas servicios. Tu Gemelo certifica tu calidad.</div>';
+            return '<div class="h3">Publica un servicio</div>'+
+              '<input class="f" id="svc-n" placeholder="Ej: Auditoría de datos" />'+
+              '<input class="f" id="svc-p" type="number" placeholder="Precio en tokens" />'+
+              '<button class="btn p full" data-act="pub" style="margin-bottom:14px">Publicar servicio</button>'+
+              '<div class="h3">Tus servicios</div>'+list;
+          }
+          if(id==="empleos"){
+            return '<div class="h3">Ómicron postula por ti — matches</div>'+
+              job("j1","Ingeniero de Datos · Remoto","92% afinidad","#39ff14")+
+              job("j2","Especialista IA · Híbrido","81% afinidad","#f59e0b")+
+              job("j3","Analista de Calidad","68% afinidad","#38bdf8");
+          }
+          if(id==="chat"){
+            return '<div class="h3">Tu red</div>'+
+              dm("Valentina · Nodo Core","Te compartí el brief del proyecto ✦")+
+              dm("Diego Fuentes","¿Coordinamos el escrow?")+
+              dm("Oráculo","Detecté una oportunidad para ti →")+
+              '<div class="muted" style="margin-top:6px">Toca a alguien para abrir el chat (demo).</div>';
+          }
+          if(id==="wallet"){
+            return '<div class="card" style="text-align:center;padding:18px"><span class="o-name">SALDO</span>'+
+              '<div style="font-size:38px;font-weight:700;color:#39ff14;line-height:1.1">'+state.tokens.toLocaleString("es")+'</div><span class="muted">tokens Ω · comisión '+(t==="Nodo Arquitecto"?5:t==="Nodo Core"?10:15)+'%</span></div>'+
+              '<div class="row"><button class="btn p" style="flex:1" data-act="dep">↓ Depositar</button><button class="btn a" style="flex:1" data-act="wd">↑ Transferir</button></div>';
+          }
+          if(id==="gov"){
+            var f=state.gov.fav;
+            return '<div class="h3">Propuesta abierta</div>'+
+              '<div class="card"><b>Reducir comisión Core al 8%</b><div class="muted" style="margin:6px 0 10px">La comunidad decide la economía del ecosistema.</div>'+
+              '<div class="row" style="justify-content:space-between;font-family:var(--mono);font-size:11px"><span style="color:#39ff14">A favor '+f+'%</span><span style="color:#ff3d57">En contra '+(100-f)+'%</span></div>'+
+              '<div class="bar" style="margin-top:6px"><i style="width:'+f+'%;background:linear-gradient(90deg,#39ff14,#7dffa0)"></i></div></div>'+
+              '<div class="row"><button class="btn p" style="flex:1" data-act="vfav">Votar a favor</button><button class="btn g" style="flex:1" data-act="vcon">En contra</button></div>';
+          }
+          if(id==="vault"){
+            return '<div class="h3">Bóveda de conocimiento</div>'+
+              '<div class="card"><div class="row" style="justify-content:space-between"><span class="muted">Tus aportes</span><b>'+state.vault+'</b></div>'+
+              '<div class="muted" style="margin-top:8px">Aportar a la Bóveda eleva tu eje de Trascendencia y tu reputación en la red.</div></div>'+
+              '<button class="btn a full" data-act="vault">🔐 Aportar conocimiento (+reputación)</button>';
+          }
+          return '<div class="muted">Próximamente.</div>';
+        }
+        function route(n,p){return '<div class="card"><div class="row" style="justify-content:space-between"><b style="font-size:14px">'+n+'</b><span class="muted">'+p+'%</span></div><div class="bar" style="margin-top:7px"><i style="width:'+p+'%"></i></div></div>';}
+        function job(id,n,m,c){return '<div class="card"><div class="row" style="justify-content:space-between"><div><b style="font-size:14px">'+n+'</b><div class="pill" style="background:'+hexA(c,.14)+';color:'+c+';display:inline-block;margin-top:5px">'+m+'</div></div></div><button class="btn a full" data-act="apply:'+id+'" style="margin-top:10px">'+(state.applied.indexOf(id)>-1?'✓ Postulado':'Sí, me interesa')+'</button></div>';}
+        function dm(n,m){return '<div class="card"><div class="row"><div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#00f0ff,#39ff14);display:grid;place-items:center;color:#020613;font-weight:700">'+n.slice(0,1)+'</div><div style="flex:1;min-width:0"><b style="font-size:14px">'+n+'</b><div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+m+'</div></div></div></div>';}
+        function esc(s){return String(s).replace(/[<>&"]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c];});}
+
+        // ── Abrir / cerrar sheet ──
+        var activeHub=null;
+        function openHub(id){
+          var h=hubById(id); if(!h) return;
+          activeHub=id;
+          el("sh-ic").textContent=h.ic; el("sh-ic").style.background=hexA(h.color,.14); el("sh-ic").style.color=h.color;
+          el("sh-t").textContent=h.name; el("sh-s").textContent=h.sub;
+          el("sh-body").innerHTML=sheetContent(id);
+          el("scrim").classList.add("on"); el("sheet").classList.add("on");
+          if(id==="skills") mountChallenge();
+          say(oracleForHub(h));
+        }
+        function closeHub(){el("scrim").classList.remove("on");el("sheet").classList.remove("on");activeHub=null;}
+        el("sh-x").onclick=closeHub; el("scrim").onclick=closeHub;
+
+        function oracleForHub(h){
+          var map={
+            skills:"Habilidades: cada reto que superas enciende un nodo de tu Gemelo. Demuestra lo que sabes.",
+            academia:"Academia: tus rutas de aprendizaje. Continúa donde lo dejaste y suma experiencia.",
+            market:"Servicios: publica tu talento. Tu Gemelo certifica tu calidad ante la red.",
+            empleos:"Empleos: yo postulo por ti. Estos son tus mejores matches ahora mismo.",
+            chat:"Mensajes: tu red de nodos. La confianza se construye conversando.",
+            wallet:"Billetera: tus tokens Ω. Tu comisión baja conforme evoluciona tu Nodo.",
+            gov:"Gobernanza: tu voz decide la economía del ecosistema. Vota la propuesta.",
+            vault:"Bóveda: aporta conocimiento y eleva tu Trascendencia y tu reputación."
+          };
+          return map[h.id]||h.name;
+        }
+
+        // Acciones dentro del sheet (delegación)
+        el("sh-body").addEventListener("click",function(e){
+          var b=e.target.closest("[data-act]"); if(!b) return;
+          var act=b.getAttribute("data-act");
+          if(act==="acad"){grow(120,2,0,"+120 PE · ruta avanzada");say("¡Avanzaste tu ruta! Tu Fundamento crece. Sigo trazando tu camino.");refresh("academia");}
+          else if(act==="pub"){var n=el("svc-n").value.trim();var p=parseInt(el("svc-p").value,10)||50;if(!n){toast("Pon un nombre");return;}state.services.push({n:n,p:p});grow(60,1,0,"Servicio publicado");say("Servicio publicado. Tu Gemelo lo respalda con tu reputación verificable.");refresh("market");}
+          else if(act.indexOf("apply:")===0){var id=act.split(":")[1];if(state.applied.indexOf(id)===-1){state.applied.push(id);}grow(40,1,0,"Postulación enviada");say("Listo, postulé por ti y adjunté tu propuesta. Te preparo para la entrevista cuando quieras.");refresh("empleos");}
+          else if(act==="dep"){grow(0,0,150,"+150 tokens");say("Depósito confirmado. Tu saldo en la red está actualizado.");refresh("wallet");}
+          else if(act==="wd"){grow(0,0,-100,"-100 tokens");say("Transferencia realizada mediante escrow seguro.");refresh("wallet");}
+          else if(act==="vfav"){state.gov.fav=Math.min(96,state.gov.fav+3);grow(0,1,0,"Voto a favor");say("Tu voto pesa según tu reputación. La comunidad avanza contigo.");refresh("gov");}
+          else if(act==="vcon"){state.gov.fav=Math.max(4,state.gov.fav-3);grow(0,1,0,"Voto en contra");say("Voto registrado. La deliberación es la fuerza del ecosistema.");refresh("gov");}
+          else if(act==="vault"){state.vault+=1;grow(150,3,0,"Aporte a la Bóveda");say("Aporte sellado en la Bóveda. Tu Trascendencia y tu reputación suben.");refresh("vault");}
+        });
+        function refresh(id){el("sh-body").innerHTML=sheetContent(id);if(id==="skills")mountChallenge();}
+
+        // Micro-reto de Habilidades
+        function mountChallenge(){
+          var host=el("chal"); if(!host) return;
+          var c=CHAL[Math.floor(Math.random()*CHAL.length)];
+          var answered=false;
+          host.innerHTML='<div class="card"><div style="font-weight:600;margin-bottom:9px">'+c.q+'</div>'+c.o.map(function(o,i){return '<button class="opt" data-i="'+i+'">'+o+'</button>';}).join("")+'</div>';
+          host.querySelectorAll(".opt").forEach(function(btn){
+            btn.onclick=function(){
+              if(answered)return;answered=true;
+              var i=parseInt(btn.getAttribute("data-i"),10);
+              var opts=host.querySelectorAll(".opt");opts.forEach(function(o){o.disabled=true;});
+              if(i===c.ok){btn.classList.add("ok");if(state.mastered.length<CHAL.length)state.mastered.push("m"+state.mastered.length);grow(220,4,3,"¡Validado! +220 PE");say("¡Exacto! Nodo encendido. Tu Gemelo creció. ¿Otro reto?");setTimeout(function(){refresh("skills");},1400);}
+              else{btn.classList.add("no");opts[c.ok].classList.add("ok");say("Casi. Observa la respuesta correcta y reintenta. Así se aprende.");setTimeout(function(){refresh("skills");},1900);}
+            };
+          });
+        }
+
+        // ── Oráculo: intención por texto/voz ──
+        function handle(text){
+          var q=(text||"").toLowerCase().trim(); if(!q)return;
+          if(/habilidad|aprend|reto|competenc/.test(q))return openHub("skills");
+          if(/academ|curso|ruta|estudi/.test(q))return openHub("academia");
+          if(/servicio|mercado|market|publica|vender/.test(q))return openHub("market");
+          if(/empleo|trabajo|postul|vacante/.test(q))return openHub("empleos");
+          if(/mensaje|chat|red|contacto/.test(q))return openHub("chat");
+          if(/billetera|token|saldo|wallet|dinero|pago/.test(q))return openHub("wallet");
+          if(/gobernanza|votar|voto|propuesta/.test(q))return openHub("gov");
+          if(/boveda|bóveda|conocimiento|aporta/.test(q))return openHub("vault");
+          if(/reputaci/.test(q))return say("Tu reputación es "+state.rep+" sobre 100. Sube validando competencias y aportando a la red.");
+          if(/nodo|nivel|tier/.test(q))return say("Eres "+tierOf(state.pe)+" con "+state.pe.toLocaleString("es")+" puntos de experiencia.");
+          if(/hola|hey|buenas|ayuda|puedes/.test(q))return say("Soy tu Oráculo. Puedo abrir cualquier área o guiarte: di 'empleos', 'billetera', 'aprender'…");
+          say("Te escucho. Prueba: 'muéstrame empleos', 'abre mi billetera' o 'quiero aprender'.");
+        }
+        function send(){var v=el("o-in").value;el("o-in").value="";handle(v);}
+        el("o-send").onclick=send;
+        el("o-in").addEventListener("keydown",function(e){if(e.key==="Enter")send();});
+
+        // chips de sugerencia
+        var CHIPS=[["🧠 Aprender","skills"],["💼 Empleos","empleos"],["🪙 Billetera","wallet"],["🛠️ Servicios","market"],["⚖️ Gobernanza","gov"],["🔐 Bóveda","vault"]];
+        el("o-chips").innerHTML=CHIPS.map(function(c){return '<button class="chip" data-h="'+c[1]+'">'+c[0]+'</button>';}).join("");
+        el("o-chips").addEventListener("click",function(e){var b=e.target.closest(".chip");if(b)openHub(b.getAttribute("data-h"));});
+
+        // voz (reconocimiento) — Chrome/Edge
+        var SR=window.SpeechRecognition||window.webkitSpeechRecognition, recog=null, listening=false;
+        el("o-mic").onclick=function(){
+          if(!SR){toast("Voz no soportada aquí");say("Tu navegador no soporta reconocimiento de voz. Usa Chrome, o escríbeme.");return;}
+          if(listening){try{recog.stop();}catch(e){}return;}
+          recog=new SR();recog.lang="es-ES";recog.interimResults=false;
+          recog.onstart=function(){listening=true;el("o-mic").classList.add("listening");say("Te escucho…");};
+          recog.onend=function(){listening=false;el("o-mic").classList.remove("listening");};
+          recog.onerror=function(){listening=false;el("o-mic").classList.remove("listening");};
+          recog.onresult=function(ev){var txt=ev.results[0][0].transcript;el("o-in").value=txt;handle(txt);};
+          try{recog.start();}catch(e){}
+        };
+
+        // ═══ NÚCLEO (canvas) ═══
+        var cv=el("nucleo"),ctx=cv.getContext("2d");
+        var W=0,H=0,DPR=1,cx=0,cy=0,R=0,shocks=[];
+        var nodes=HUBS.map(function(h,i){return {id:h.id,color:h.color,ic:h.ic,name:h.name,baseA:(i/HUBS.length)*Math.PI*2,x:0,y:0,depth:0};});
+        function layout(){
+          DPR=Math.min(window.devicePixelRatio||1,2);
+          var r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+          cx=W/2;cy=H*0.46;R=Math.min(W,H)*0.34;
+        }
+        function nodeById(id){for(var i=0;i<nodes.length;i++)if(nodes[i].id===id)return nodes[i];return null;}
+        function shockwave(x,y,c){shocks.push({x:x,y:y,r:6,max:R*1.5,color:c,w:3});}
+        function hexA(hex,a){var h=hex.replace("#","");var n=parseInt(h,16);return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";}
+        var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var t0=performance.now();
+        function frame(now){
+          var t=now-t0;ctx.clearRect(0,0,W,H);var rot=reduce?0:t*0.00013;
+          for(var i=0;i<nodes.length;i++){var nd=nodes[i];var a=nd.baseA+rot;nd.x=cx+Math.cos(a)*R;nd.y=cy+Math.sin(a)*R*0.66;nd.depth=(Math.sin(a)+1)/2;}
+          // líneas
+          for(var i=0;i<nodes.length;i++){var nd=nodes[i];ctx.strokeStyle=hexA(nd.color,0.10+nd.depth*0.16);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(nd.x,nd.y);ctx.lineTo(cx,cy);ctx.stroke();}
+          drawNodes(false);
+          // core
+          var pulse=reduce?1:1+Math.sin(t*0.003)*0.05;var coreR=R*0.36*pulse;var high=state.rep>=66;
+          var g=ctx.createRadialGradient(cx,cy-coreR*0.3,coreR*0.1,cx,cy,coreR);
+          g.addColorStop(0,high?"#ffe6b0":"#bff6ff");g.addColorStop(0.5,high?"#f59e0b":"#00f0ff");g.addColorStop(1,high?"rgba(245,158,11,0.05)":"rgba(0,120,160,0.05)");
+          ctx.save();ctx.shadowBlur=42;ctx.shadowColor=high?"rgba(245,158,11,0.6)":"rgba(0,240,255,0.6)";ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,coreR,0,Math.PI*2);ctx.fill();ctx.restore();
+          ctx.lineWidth=3;ctx.strokeStyle="rgba(255,255,255,0.08)";ctx.beginPath();ctx.arc(cx,cy,coreR+11,0,Math.PI*2);ctx.stroke();
+          ctx.strokeStyle=high?"#f59e0b":"#00f0ff";ctx.beginPath();ctx.arc(cx,cy,coreR+11,-Math.PI/2,-Math.PI/2+(state.rep/100)*Math.PI*2);ctx.stroke();
+          ctx.fillStyle="#eaf2ff";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="700 "+Math.round(coreR*0.6)+"px Rajdhani, sans-serif";ctx.fillText(state.rep,cx,cy-2);
+          ctx.fillStyle="rgba(234,242,255,0.6)";ctx.font="9px 'Share Tech Mono', monospace";ctx.fillText("TU GEMELO",cx,cy+coreR*0.44);
+          drawNodes(true);
+          for(var s=shocks.length-1;s>=0;s--){var sh=shocks[s];sh.r+=(sh.max-sh.r)*0.06+1.6;var al=Math.max(0,1-sh.r/sh.max);ctx.strokeStyle=hexA(sh.color,al*0.8);ctx.lineWidth=sh.w;ctx.beginPath();ctx.arc(sh.x,sh.y,sh.r,0,Math.PI*2);ctx.stroke();if(sh.r>=sh.max-2)shocks.splice(s,1);}
+          requestAnimationFrame(frame);
+        }
+        function drawNodes(front){
+          for(var i=0;i<nodes.length;i++){var nd=nodes[i];var isF=nd.depth>=0.5;if(isF!==front)continue;
+            var size=13+nd.depth*7;var a=0.55+nd.depth*0.45;
+            ctx.save();ctx.shadowBlur=16;ctx.shadowColor=nd.color;
+            ctx.fillStyle=hexA(nd.color,0.14+nd.depth*0.12);ctx.strokeStyle=hexA(nd.color,a);ctx.lineWidth=1.6;
+            ctx.beginPath();ctx.arc(nd.x,nd.y,size,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+            ctx.font=(size)+"px 'Rajdhani'";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(nd.ic,nd.x,nd.y+1);
+            if(nd.depth>0.55){ctx.fillStyle=hexA(nd.color,nd.depth);ctx.font="9px 'Share Tech Mono', monospace";ctx.fillText(nd.name.toUpperCase(),nd.x,nd.y+size+9);}
+          }
+        }
+        cv.addEventListener("click",function(e){
+          var r=cv.getBoundingClientRect();var mx=e.clientX-r.left,my=e.clientY-r.top;
+          for(var i=0;i<nodes.length;i++){if(Math.hypot(mx-nodes[i].x,my-nodes[i].y)<26){openHub(nodes[i].id);return;}}
+          if(Math.hypot(mx-cx,my-cy)<R*0.4){say("Eres "+tierOf(state.pe)+", reputación "+state.rep+", "+state.pe.toLocaleString("es")+" PE. Todo tu ecosistema orbita tu Gemelo. ¿Qué exploramos?");}
+        });
+        window.addEventListener("resize",layout);
+
+        // ── Arranque ──
+        layout();requestAnimationFrame(frame);hud();
+        setTimeout(function(){say("Bienvenido a Ómicron. Yo soy tu Oráculo y esto es tu Núcleo: todo el ecosistema orbita tu Gemelo. Toca un orbe o pídeme lo que necesites — 'quiero aprender', 'muéstrame empleos', 'abre mi billetera'.");},500);
+        document.body.addEventListener("pointerdown",function once(){try{if("speechSynthesis"in window){speechSynthesis.speak(new SpeechSynthesisUtterance(" "));}}catch(e){}document.body.removeEventListener("pointerdown",once);},{once:true});
+      })();
+    </script>
+  </body>
+</html>
