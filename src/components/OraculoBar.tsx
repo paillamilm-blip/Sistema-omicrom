@@ -88,8 +88,7 @@ export function OraculoBar() {
       const ns = bestNextStep(getProfile());
       if (ns) {
         gemeloActions.run(ns.action);
-        const p = getProfile();
-        const t = `Hecho: ${ns.label}. Tu reputación ahora es ${p.rep} y sumas ${Math.round(p.pe)} puntos de experiencia. ¿Seguimos con el siguiente paso?`;
+        const t = `Hecho: registré ${ns.label} en tu Gemelo. Convalídalo para verlo reflejado en tu reputación.`;
         flash('oraculo', t);
         speak(t);
       } else {
@@ -110,18 +109,17 @@ export function OraculoBar() {
     if (intent.kind === 'convalidate') {
       const act = { cv: gemeloActions.addCV, title: gemeloActions.addTitle, year: gemeloActions.addYear, vault: gemeloActions.addVault };
       act[intent.item]();
-      const p = getProfile();
       const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia', vault: 'un aporte a la Bóveda' };
-      const t = `Convalidé ${names[intent.item]}. Tu reputación ahora es ${p.rep} y sumas ${Math.round(p.pe)} puntos de experiencia.`;
+      const t = `Registré ${names[intent.item]} en tu Gemelo convalidado. Se reflejará en tu reputación del ecosistema.`;
       flash('oraculo', t);
       speak(t);
       return;
     }
     if (intent.kind === 'fact') {
       let t = '';
-      if (intent.topic === 'reputacion') t = `Tu reputación es ${getProfile().rep} sobre 100.`;
+      if (intent.topic === 'reputacion') t = `Tu reputación es ${Math.round(profile?.reputation_score ?? 0)} sobre 100.`;
       else if (intent.topic === 'tokens') t = `Tienes ${(profile?.token_balance ?? 0).toLocaleString()} tokens.`;
-      else if (intent.topic === 'pe') t = `Acumulas ${Math.round(getProfile().pe).toLocaleString()} puntos de experiencia.`;
+      else if (intent.topic === 'pe') t = `Acumulas ${(profile?.pe_points ?? 0).toLocaleString()} puntos de experiencia.`;
       else t = 'Soy tu Oráculo. Dime: abre mi billetera, ve a la academia, cuánta reputación tengo, o pídeme un consejo.';
       flash('oraculo', t);
       speak(t);
