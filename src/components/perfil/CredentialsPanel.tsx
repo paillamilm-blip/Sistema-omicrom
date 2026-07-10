@@ -7,6 +7,7 @@ import {
   GraduationCap, Award, Briefcase, FileCheck, QrCode,
   Plus, Clock, CheckCircle2, XCircle, Trash2, FileText, ExternalLink,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, RADIUS } from '../../theme';
@@ -30,7 +31,7 @@ interface Credential {
   created_at: string;
 }
 
-const CRED_TYPES: { value: CredType; label: string; pts: string; icon: any; needsDoc?: boolean; needsUrl?: boolean; needsYears?: boolean; }[] = [
+const CRED_TYPES: { value: CredType; label: string; pts: string; icon: LucideIcon; needsDoc?: boolean; needsUrl?: boolean; needsYears?: boolean; }[] = [
   { value: 'DEGREE',          label: 'Título universitario',      pts: '+30', icon: GraduationCap, needsDoc: true },
   { value: 'DIPLOMA',         label: 'Diplomado / Posgrado',      pts: '+15', icon: Award,         needsDoc: true },
   { value: 'CERTIFICATE_QR',  label: 'Certificado con QR / link', pts: '+10', icon: QrCode,        needsUrl: true },
@@ -38,7 +39,7 @@ const CRED_TYPES: { value: CredType; label: string; pts: string; icon: any; need
   { value: 'EXPERIENCE',      label: 'Experiencia laboral',       pts: '+5/año', icon: Briefcase,  needsYears: true },
 ];
 
-const STATUS_META: Record<CredStatus, { label: string; color: string; icon: any }> = {
+const STATUS_META: Record<CredStatus, { label: string; color: string; icon: LucideIcon }> = {
   PENDING:  { label: 'PENDIENTE',  color: C.gold,  icon: Clock },
   VERIFIED: { label: 'VERIFICADO', color: C.green, icon: CheckCircle2 },
   REJECTED: { label: 'RECHAZADO',  color: C.red,   icon: XCircle },
@@ -127,8 +128,8 @@ export function CredentialsPanel() {
       await load();
       await refreshProfile(); // por si el QR se auto-verificó y subió la reputación
       resetForm();
-    } catch (e: any) {
-      setErr(e.message || 'Error al guardar la credencial.');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Error al guardar la credencial.');
     } finally {
       setSaving(false);
     }

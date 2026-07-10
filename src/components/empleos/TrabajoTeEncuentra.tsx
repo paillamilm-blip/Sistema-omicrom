@@ -166,10 +166,11 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
-    timers.current.push(window.setTimeout(() => setStep(1), 1400));
-    timers.current.push(window.setTimeout(() => setStep(2), 3000));
-    timers.current.push(window.setTimeout(() => { setStep(3); onApplied(); }, 4600));
-    return () => { timers.current.forEach(clearTimeout); };
+    const scheduled = timers.current;
+    scheduled.push(window.setTimeout(() => setStep(1), 1400));
+    scheduled.push(window.setTimeout(() => setStep(2), 3000));
+    scheduled.push(window.setTimeout(() => { setStep(3); onApplied(); }, 4600));
+    return () => { scheduled.forEach(clearTimeout); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
