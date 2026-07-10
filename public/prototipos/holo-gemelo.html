@@ -45,8 +45,11 @@
       .glyph{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:600;font-size:16px;color:#fff;background:linear-gradient(135deg,var(--sky),var(--indigo));box-shadow:0 4px 16px rgba(94,92,230,.5);}
       .b-l b{font-size:15px;font-weight:600;}
       .b-l span{display:block;font-size:9px;color:var(--mut);letter-spacing:.4px;margin-top:-1px;}
-      .vtoggle{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:var(--ink);cursor:pointer;font-size:15px;display:grid;place-items:center;}
-      .vtoggle.off{color:var(--mut);opacity:.55;}
+      .vtoggle{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.03);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);color:var(--mut);cursor:pointer;font-size:15px;display:grid;place-items:center;transition:.2s;}
+      .vtoggle:active{transform:scale(.92);}
+      .vtoggle.off{color:var(--mut);opacity:.5;}
+      .vtoggle.lit{color:#fff;border-color:rgba(92,200,255,.6);background:rgba(92,200,255,.16);box-shadow:0 0 16px rgba(92,200,255,.4),inset 0 0 12px rgba(92,200,255,.14);}
+      .vtoggle.lit.gold{border-color:rgba(255,176,46,.6);background:rgba(255,176,46,.16);box-shadow:0 0 16px rgba(255,176,46,.4),inset 0 0 12px rgba(255,176,46,.14);}
 
       /* leyenda / clasificación interactiva */
       .legend{position:relative;z-index:5;display:flex;gap:7px;justify-content:center;padding:6px 12px 2px;flex-wrap:wrap;}
@@ -193,10 +196,14 @@
       .pchips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px;}
       .pbtn{margin-top:18px;width:100%;padding:14px;border-radius:15px;border:none;cursor:pointer;font-family:var(--font);font-size:14.5px;font-weight:600;color:#05060f;background:linear-gradient(135deg,#ffd27a,var(--crec));box-shadow:0 12px 30px rgba(255,176,46,.3);}
 
-      /* "el trabajo te busca": oferta entrante */
-      .incoming{position:fixed;left:50%;transform:translateX(-50%) translateY(14px);bottom:calc(178px + env(safe-area-inset-bottom,0px));z-index:22;width:min(92%,420px);padding:14px 16px;border-radius:20px;opacity:0;pointer-events:none;transition:.34s cubic-bezier(.2,.9,.25,1);
-        background:linear-gradient(180deg,rgba(20,26,46,.95),rgba(9,12,24,.97));border:1px solid rgba(255,176,46,.4);box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 30px rgba(255,176,46,.12);}
-      .incoming.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}
+      /* Push en tiempo real (sobre el Oráculo) */
+      #pushes{position:fixed;top:calc(58px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:26;width:min(94%,430px);display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+      .push{pointer-events:auto;opacity:0;transform:translateY(-18px) scale(.98);transition:.34s cubic-bezier(.2,.9,.25,1);border-radius:18px;padding:12px 15px;
+        background:linear-gradient(180deg,rgba(15,19,36,.72),rgba(7,10,20,.82));border:1px solid var(--line);backdrop-filter:blur(26px) saturate(160%);-webkit-backdrop-filter:blur(26px) saturate(160%);box-shadow:0 16px 44px rgba(0,0,0,.55);}
+      .push.show{opacity:1;transform:translateY(0) scale(1);}
+      .push.offer{border-color:rgba(255,176,46,.5);box-shadow:0 16px 44px rgba(0,0,0,.55),0 0 26px rgba(255,176,46,.15);}
+      .push.act{border-color:rgba(92,200,255,.4);}
+      .push.sys{border-color:rgba(63,208,201,.4);}
       .inc-h{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1px;color:var(--crec);display:flex;align-items:center;gap:6px;}
       .inc-h .pip{width:7px;height:7px;border-radius:50%;background:var(--crec);box-shadow:0 0 8px var(--crec);animation:blink 1.2s infinite;}
       @keyframes blink{50%{opacity:.25}}
@@ -313,8 +320,8 @@
       <button class="pbtn" id="pOpps">Ver las oportunidades que te buscan →</button>
     </div>
 
-    <!-- El trabajo te busca -->
-    <div class="incoming" id="incoming"></div>
+    <!-- Pushes en tiempo real (sobre el Oráculo) -->
+    <div id="pushes"></div>
 
     <script>
       (function(){
@@ -335,7 +342,8 @@
         try{if("speechSynthesis"in window){speechSynthesis.onvoiceschanged=pickVoice;pickVoice();}}catch(e){}
         function say(t){var e=el("say");e.textContent="";clearInterval(tt);var i=0;tt=setInterval(function(){i+=2;e.textContent=t.slice(0,i);if(i>=t.length){e.textContent=t;clearInterval(tt);}},17);
           try{if(voiceOn&&"speechSynthesis"in window){speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang="es-ES";u.rate=1.0;u.pitch=1.02;if(esVoice)u.voice=esVoice;u.onstart=function(){el("orb").classList.add("speaking");};u.onend=function(){el("orb").classList.remove("speaking");};speechSynthesis.speak(u);}}catch(e2){}}
-        el("vt").onclick=function(){voiceOn=!voiceOn;el("vt").textContent=voiceOn?"🔊":"🔇";el("vt").classList.toggle("off",!voiceOn);if(!voiceOn){try{speechSynthesis.cancel();}catch(e){}el("orb").classList.remove("speaking");}else say("Voz activada.");};
+        el("vt").onclick=function(){voiceOn=!voiceOn;el("vt").textContent=voiceOn?"🔊":"🔇";el("vt").classList.toggle("off",!voiceOn);el("vt").classList.toggle("lit",voiceOn);if(!voiceOn){try{speechSynthesis.cancel();}catch(e){}el("orb").classList.remove("speaking");}else say("Voz activada.");};
+        el("vt").classList.add("lit");
         function toast(m){var t=el("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},1700);}
 
         // ── CLASIFICACIÓN: categorías (clusters en la esfera) ──
@@ -544,6 +552,7 @@
           else if(tab==="educarse"){gapSkills().forEach(function(x){h+='<div class="opp"><div class="ot">Domina '+(SKLAB[x]||x)+'</div><div class="otag">Academia · +Fundamento +Ejecución</div><div class="odesc">Suma '+(SKLAB[x]||x)+' a tu Gemelo, sube tu medidor de conocimiento y desbloquea trabajos con mayor tasa de éxito.</div><div class="orow"><div class="oside"><div class="opay">Recompensa: +180 PE</div></div><button class="obtn" data-edu="1">Empezar ahora</button></div></div>';});}
           else if(tab==="vender"){(st.profile.labels.slice(0,5)).forEach(function(l){h+='<div class="opp"><div class="ot">'+l+'</div><div class="otag">Bóveda · activo con regalías</div><div class="odesc">Publica tu conocimiento de '+l+' como curso o plantilla. Cobra regalías en Ω cada vez que alguien lo use.</div><div class="orow"><div class="oside"><div class="opay">+90 Ω + regalías</div></div><button class="obtn gold" data-sell="1">Publicar</button></div></div>';});}
           else if(tab==="comprar"){gapSkills().forEach(function(x,i){var price=400+i*140;h+='<div class="opp"><div class="ot">Pack '+(SKLAB[x]||x)+'</div><div class="otag">Marketplace · de un Nodo Pioneer</div><div class="odesc">Adquiere conocimiento verificado de '+(SKLAB[x]||x)+' y súbelo a tu Gemelo al instante. Sube tu Fundamento.</div><div class="orow"><div class="oside"><div class="opay">'+price+' Ω</div></div><button class="obtn" data-buy="'+price+'">Adquirir</button></div></div>';});}
+          if(!h)h='<div class="opp"><div class="ot">El sistema está conectando tu ecosistema</div><div class="odesc">Todo se relaciona con todo. Vuelve en un momento: aquí no queda nada vacío.</div><div class="orow"><div class="oside"></div><button class="obtn" data-edu="1">Mientras, aprende algo →</button></div></div>';
           body.innerHTML=h;
           Array.prototype.forEach.call(body.querySelectorAll("[data-postular]"),function(b){b.onclick=function(){var nm=b.getAttribute("data-postular");st.pe+=45;save();toast("✔ Postulación enviada");say("Postulé a "+nm+" por ti. Tu Gemelo respalda la candidatura con reputación "+rep()+". Ejecuta contratos para elevar tu Calidad y asegurar la oferta.");renderSheet(curTab);};});
           Array.prototype.forEach.call(body.querySelectorAll("[data-edu]"),function(b){b.onclick=function(){closeOpps();run("entrena");};});
@@ -552,8 +561,8 @@
           Array.prototype.forEach.call(body.querySelectorAll("[data-reto]"),function(b){b.onclick=function(){closeOpps();run("ejecuta");};});
           Array.prototype.forEach.call(body.querySelectorAll("[data-job]"),function(b){b.onclick=function(){renderSheet("practicas");};});
           Array.prototype.forEach.call(body.querySelectorAll("[data-comm]"),function(b){b.onclick=function(){toast("✔ Solicitud enviada");say("El sistema está buscando tu mejor match en la comunidad. Te avisaré en cuanto alguien conecte contigo.");};});}
-        function openOpps(tab){if(!st.profile){analyzeCV(DEMO_CV);save();}var keys=tabsFor().map(function(x){return x.k;});tab=tab||defaultTab();if(keys.indexOf(tab)<0)tab=defaultTab();curTab=tab;el("sheet").classList.add("on");el("shBack").classList.add("on");renderSheet(curTab);}
-        function closeOpps(){el("sheet").classList.remove("on");el("shBack").classList.remove("on");}
+        function openOpps(tab){if(!st.profile){analyzeCV(DEMO_CV);save();}var keys=tabsFor().map(function(x){return x.k;});tab=tab||defaultTab();if(keys.indexOf(tab)<0)tab=defaultTab();curTab=tab;el("sheet").classList.add("on");el("shBack").classList.add("on");el("opBtn").classList.add("lit","gold");renderSheet(curTab);}
+        function closeOpps(){el("sheet").classList.remove("on");el("shBack").classList.remove("on");el("opBtn").classList.remove("lit","gold");}
         el("opBtn").onclick=function(){openOpps("trabajos");};el("shX").onclick=closeOpps;el("shBack").onclick=closeOpps;
 
         // ── Avatar (elegido por el usuario) ──
@@ -598,27 +607,45 @@
             +'<div class="pstat"><b style="color:#3fd0c9">'+st.tokens.toLocaleString("es")+'</b><span>Tokens Ω</span></div>'
             +'<div class="pstat"><b style="color:#ffb02e">'+(tj?tj.r.succ+"%":"—")+'</b><span>Mejor match</span></div>';
           var pc=el("pChips");pc.innerHTML="";p.labels.slice(0,8).forEach(function(l){var s=document.createElement("span");s.className="chip k";s.textContent=l;pc.appendChild(s);});
-          el("profile").classList.add("on");el("profBack").classList.add("on");}
-        function closeProfile(){el("profile").classList.remove("on");el("profBack").classList.remove("on");}
+          el("profile").classList.add("on");el("profBack").classList.add("on");el("profBtn").classList.add("lit");}
+        function closeProfile(){el("profile").classList.remove("on");el("profBack").classList.remove("on");el("profBtn").classList.remove("lit");}
         el("profBtn").onclick=openProfile;el("profX").onclick=closeProfile;el("profBack").onclick=closeProfile;
         el("pOpps").onclick=function(){closeProfile();openOpps("trabajos");};
 
-        // ── Telemetría del sistema (feel de sistema) ──
-        function sysLine(){var e=el("sysLine");if(!e)return;var v=st.profile?(7+st.profile.skills.length):7;e.textContent="SYS·ONLINE · N"+levelN()+" · REP "+rep()+" · "+v+" VARS";}
-        setInterval(sysLine,1500);sysLine();
+        // ── Telemetría + presencia en vivo (usuarios en tiempo real, escalable) ──
+        var presence=1180+Math.floor(Math.random()*180);
+        function sysLine(){var e=el("sysLine");if(!e)return;e.innerHTML='<span style="color:#3fd0c9">●</span> '+presence.toLocaleString("es")+' nodos activos · N'+levelN()+' · REP '+rep();}
+        function updatePresence(){presence+=Math.floor(Math.random()*13)-5;if(presence<900)presence=920;sysLine();}
+        setInterval(sysLine,1600);setInterval(updatePresence,4200);sysLine();
 
-        // ── Motor proactivo: el trabajo te busca + baraja tus variables ──
-        var incTimer=null,incIdx=0,sysStarted=false;
+        // ── Push en tiempo real (sobre el Oráculo) ──
+        function busy(){return el("sheet").classList.contains("on")||el("profile").classList.contains("on")||!el("wake").classList.contains("hide")||document.hidden;}
+        function pushMsg(cls,html,life){var wrap=el("pushes");if(!wrap)return null;var d=document.createElement("div");d.className="push "+cls;d.innerHTML=html;wrap.appendChild(d);
+          while(wrap.children.length>3)wrap.removeChild(wrap.firstChild);
+          requestAnimationFrame(function(){requestAnimationFrame(function(){d.classList.add("show");});});
+          d._t=setTimeout(function(){dismiss(d);},life||6000);return d;}
+        function dismiss(d){if(!d)return;clearTimeout(d._t);d.classList.remove("show");setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},360);}
+
+        // ── Motor proactivo: el trabajo te busca + red en vivo + mejora continua ──
+        var incIdx=0,sysStarted=false;
+        var ACTIVITY=["Un Nodo Core capitalizó su conocimiento","Una empresa publicó 3 contratos nuevos","Un aprendiz validó su primer reto","Un Nodo Arquitecto abrió una mentoría","Nueva credencial verificada en la red","Un contrato se cerró con Escrow","Un nodo evolucionó a Pioneer","2 nodos se conectaron para un proyecto"];
         function startSystem(){if(sysStarted)return;sysStarted=true;
-          setTimeout(surfaceIncoming,7000);
-          incTimer=setInterval(function(){if(document.hidden)return;if(el("sheet").classList.contains("on")||el("profile").classList.contains("on")||!el("wake").classList.contains("hide"))return;
-            if(Math.random()<0.62)surfaceIncoming();else nudge();},19000);}
-        function surfaceIncoming(){var list=topJobs(6);if(!list.length)return;var o=list[incIdx%list.length];incIdx++;var j=o.j,r=o.r;
+          setTimeout(surfaceIncoming,6500);
+          setInterval(function(){pushActivity();},8500);
+          setInterval(function(){if(Math.random()<0.6)surfaceIncoming();else nudge();},20000);
+          setInterval(function(){pushImprovement();},33000);}
+        function surfaceIncoming(){if(busy())return;var list=topJobs(6);if(!list.length)return;var o=list[incIdx%list.length];incIdx++;var j=o.j,r=o.r;
           var stu=st.profile&&st.profile.arch==="estudiante";var head=stu?"UNA OPORTUNIDAD TE BUSCA":"UNA EMPRESA TE BUSCA";
-          var box=el("incoming");box.innerHTML='<div class="inc-h"><span class="pip"></span>'+head+'</div><div class="inc-t">'+j.t+'</div><div class="inc-s">'+r.succ+'% de afinidad · '+j.pay+' · '+typeLabel(j.type)+'</div><div class="inc-row"><button id="incView">Ver</button><button id="incLater" class="ghost">Después</button></div>';
-          box.classList.add("show");if(voiceOn)say((stu?"Algo encaja contigo: ":"El trabajo te busca. ")+j.t+", con "+r.succ+" por ciento de afinidad. El sistema te lo acerca.");
-          el("incView").onclick=function(){box.classList.remove("show");openOpps(stu?"practicas":"trabajos");};el("incLater").onclick=function(){box.classList.remove("show");};
-          clearTimeout(box._t);box._t=setTimeout(function(){box.classList.remove("show");},10000);}
+          var d=pushMsg("offer",'<div class="inc-h"><span class="pip"></span>'+head+'</div><div class="inc-t">'+j.t+'</div><div class="inc-s">'+r.succ+'% de afinidad · '+j.pay+' · '+typeLabel(j.type)+'</div><div class="inc-row"><button data-pv>Ver</button><button data-px class="ghost">Después</button></div>',12000);
+          if(!d)return;if(voiceOn)say((stu?"Algo encaja contigo: ":"El trabajo te busca. ")+j.t+", con "+r.succ+" por ciento de afinidad.");
+          d.querySelector("[data-pv]").onclick=function(){dismiss(d);openOpps(stu?"practicas":"trabajos");};
+          d.querySelector("[data-px]").onclick=function(){dismiss(d);};}
+        function pushActivity(){if(busy())return;var m=ACTIVITY[Math.floor(Math.random()*ACTIVITY.length)];
+          pushMsg("act",'<div class="inc-h" style="color:#5cc8ff"><span class="pip" style="background:#5cc8ff;box-shadow:0 0 8px #5cc8ff"></span>RED EN VIVO · '+presence.toLocaleString("es")+' NODOS</div><div class="inc-t" style="font-size:13px;font-weight:600;margin-top:4px">'+m+'</div>',5200);}
+        function pushImprovement(){if(busy())return;var g=gapSkills()[0];var lab=SKLAB[g]||g;var boost=6+Math.floor(Math.random()*8);var stu=st.profile&&st.profile.arch==="estudiante";
+          var d=pushMsg("sys",'<div class="inc-h" style="color:#3fd0c9"><span class="pip" style="background:#3fd0c9;box-shadow:0 0 8px #3fd0c9"></span>MEJORA CONTINUA</div><div class="inc-t" style="font-size:13px;margin-top:4px">Dominar '+lab+' subiría tu match ~'+boost+'%</div><div class="inc-row"><button data-pi>Aprender</button><button data-px class="ghost">Luego</button></div>',9000);
+          if(!d)return;d.querySelector("[data-pi]").onclick=function(){dismiss(d);openOpps(stu?"ruta":"educarse");};
+          d.querySelector("[data-px]").onclick=function(){dismiss(d);};}
         function nudge(){var g=nextGoal(),r=reco();renderOpts(r);var tp=topJobs(1)[0];
           say("El sistema barajó tu estado actual. Tu mejor jugada ahora: "+ACT[r].name+". Te acerca a "+(tp?tp.j.t:"tu meta")+(g?(" y a "+g.name):"")+".");}
         function dealBestMove(){var nv=7+(st.profile?st.profile.skills.length:0);var box=el("opts");renderOpts(null);
