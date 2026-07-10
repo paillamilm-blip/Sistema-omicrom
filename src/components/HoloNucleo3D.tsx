@@ -40,6 +40,8 @@ interface Props {
   chips?: NucleoChip[];
   reputation?: number;
   axes?: NucleoAxes;
+  /** Nº de OTROS nodos en línea ahora → se dibujan orbitando el núcleo (presencia real). */
+  livePeers?: number;
   /** Al tocar el CTA de un punto, navega al hub del ecosistema (TabId). */
   onNavigate?: (tab: string) => void;
   className?: string;
@@ -143,6 +145,7 @@ export function HoloNucleo3D({
   chips = [],
   reputation = 0,
   axes,
+  livePeers = 0,
   onNavigate,
   className = '',
 }: Props) {
@@ -150,7 +153,10 @@ export function HoloNucleo3D({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const selRef = useRef<number>(-1);
+  const peersRef = useRef<number>(0);
   const [sel, setSel] = useState<number | null>(null);
+  // Presencia real → satélites orbitando (leído por ref para no reiniciar la animación).
+  peersRef.current = Math.max(0, Math.min(Math.floor(livePeers) || 0, 36));
 
   const chipsKey = JSON.stringify(chips);
   const axesKey = JSON.stringify(axes ?? {});
@@ -329,6 +335,20 @@ export function HoloNucleo3D({
       };
       draw(order.filter((i) => nodes[i].zz > 0), null);
       const core = drawCore(t);
+      // Satélites: OTROS nodos en línea AHORA orbitando tu núcleo (presencia real).
+      const peers = peersRef.current;
+      if (peers > 0 && !errorTint) {
+        for (let i = 0; i < peers; i++) {
+          const a = (i / peers) * 6.2832 + t * 0.12;
+          const bob = Math.sin(t * 0.6 + i * 1.7) * 0.14;
+          const pp = project(Math.cos(a) * 1.62, bob, Math.sin(a) * 1.62);
+          const depth = 0.35 + (pp.zz + 1) * 0.32;
+          ctx!.strokeStyle = hexA('#39FF14', 0.045 * depth);
+          ctx!.lineWidth = 1;
+          ctx!.beginPath(); ctx!.moveTo(core.sx, core.sy); ctx!.lineTo(pp.sx, pp.sy); ctx!.stroke();
+          glow(pp.sx, pp.sy, 1.5 * pp.sc, '#39FF14', 0.5 * depth);
+        }
+      }
       draw(order.filter((i) => nodes[i].zz <= 0), core);
 
       yaw = savedYaw;

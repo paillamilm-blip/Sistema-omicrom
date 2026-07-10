@@ -22,6 +22,8 @@ import { MotorGemelo } from '../perfil/MotorGemelo';
 import { RutaGemelo } from '../perfil/RutaGemelo';
 import { PasaporteGemelo } from '../perfil/PasaporteGemelo';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
+import { useRealtime } from '../../store/RealtimeContext';
+import { LivePeersStrip } from '../shared/LivePresence';
 // 🧪 MVP PILOTO CONTROLADO: Dossier de Evidencia y Carta de Competencias
 // dependen del Examinador IA / carta-ia (Edge Functions de IA). Se ocultan
 // para el piloto (no se elimina el código, solo se comenta su uso).
@@ -153,6 +155,7 @@ function CredencialCard({
 }) {
   const nodeColor = NODE_COLOR[nodeType] ?? C.cyan;
   const rango = getRango(reputacion);
+  const { onlineCount } = useRealtime();
 
   return (
     <div style={{
@@ -319,6 +322,7 @@ function CredencialCard({
           height={318}
           reputation={galaxyRep ?? reputacion}
           axes={axes}
+          livePeers={Math.max(0, onlineCount - 1)}
           onNavigate={onNavigate}
           ariaLabel={`Tu reputación es ${reputacion.toFixed(1)} de 100`}
           center={
@@ -348,6 +352,8 @@ function CredencialCard({
             {rango.emoji} {rango.label}
           </span>
         </div>
+
+        <LivePeersStrip />
       </div>
 
       {/* Progreso de rango */}
