@@ -22,7 +22,7 @@
       html,body{height:100%;overflow:hidden;font-family:var(--font);color:var(--ink);
         background:#000206;}
       #app{position:fixed;inset:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;
-        background:radial-gradient(130% 95% at 50% 30%, #070c1a 0%, #03050e 48%, #000104 100%);}
+        background:radial-gradient(130% 95% at 50% 28%, #050813 0%, #02030a 46%, #000003 100%);}
       canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;touch-action:none;}
       /* capas de sistema (rejilla + escaneo + viñeta) */
       .fx{position:absolute;inset:0;z-index:0;pointer-events:none;}
@@ -74,7 +74,7 @@
       .rel .rc{font-size:11.5px;padding:6px 11px;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
       .rel .rc .rd{width:6px;height:6px;border-radius:50%;}
 
-      .oracle{position:relative;z-index:6;margin:0 12px calc(10px + env(safe-area-inset-bottom,0px));border-radius:26px;padding:15px;background:linear-gradient(180deg,rgba(18,21,38,.78),rgba(8,10,20,.88));border:1px solid var(--line);backdrop-filter:blur(30px) saturate(150%);-webkit-backdrop-filter:blur(30px) saturate(150%);box-shadow:0 -10px 40px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.1);}
+      .oracle{position:relative;z-index:6;margin:0 12px calc(10px + env(safe-area-inset-bottom,0px));border-radius:24px;padding:12px 13px 13px;background:linear-gradient(180deg,rgba(11,14,26,.9),rgba(3,5,12,.95));border:1px solid var(--line);backdrop-filter:blur(30px) saturate(150%);-webkit-backdrop-filter:blur(30px) saturate(150%);box-shadow:0 -10px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(140,180,255,.1);}
       .o-top{display:flex;gap:12px;align-items:center;}
       .o-orb{position:relative;flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#eaf3ff,var(--sky) 55%,var(--indigo));box-shadow:0 0 20px rgba(92,200,255,.55);}
       .wave{position:absolute;inset:-6px;display:none;align-items:center;justify-content:center;gap:2.5px;}
@@ -83,20 +83,21 @@
       .wave i:nth-child(2){animation-delay:.12s}.wave i:nth-child(3){animation-delay:.24s}.wave i:nth-child(4){animation-delay:.36s}.wave i:nth-child(5){animation-delay:.48s}
       @keyframes wv{0%,100%{height:6px;opacity:.6}50%{height:19px;opacity:1}}
       .o-name{font-size:9.5px;font-weight:600;letter-spacing:1px;color:var(--sky);text-transform:uppercase;}
-      .o-say{font-size:14px;line-height:1.5;color:var(--ink);margin-top:2px;min-height:40px;}
-      .o-opts{display:flex;gap:8px;overflow-x:auto;margin-top:12px;padding-bottom:2px;}
-      .o-opts::-webkit-scrollbar{display:none;}
-      .opt{flex:0 0 auto;padding:10px 14px;border-radius:14px;cursor:pointer;border:1px solid var(--line);background:var(--glass);color:var(--ink);font-family:var(--font);font-weight:500;font-size:13px;display:flex;flex-direction:column;gap:1px;white-space:nowrap;}
-      .opt .od{font-size:9px;color:var(--mut);}
-      .opt.reco{border-color:rgba(255,176,46,.5);background:rgba(255,176,46,.1);}
-      .opt.reco .od{color:var(--crec);}
+      .o-say{font-size:13.5px;line-height:1.45;color:var(--ink);margin-top:2px;min-height:32px;}
+      .o-opts{display:flex;gap:6px;margin-top:10px;}
+      .opt{flex:1 1 0;min-width:0;padding:9px 3px;border-radius:15px;cursor:pointer;border:1px solid var(--line);background:var(--glass);color:var(--ink);font-family:var(--font);display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;transition:.15s;}
+      .opt .oi{font-size:21px;line-height:1;}
+      .opt .on{font-size:9px;font-weight:600;letter-spacing:.2px;color:var(--mut);}
+      .opt.reco{border-color:rgba(255,176,46,.6);background:rgba(255,176,46,.12);box-shadow:0 0 18px rgba(255,176,46,.16);}
+      .opt.reco .on{color:var(--crec);}
+      .opt.reco .oi{filter:drop-shadow(0 0 6px rgba(255,176,46,.5));}
       .o-foot{display:flex;gap:9px;margin-top:11px;}
       .o-in{flex:1;background:var(--glass);border:1px solid var(--line);border-radius:13px;padding:11px 14px;color:var(--ink);font-family:var(--font);font-size:14px;outline:none;-webkit-user-select:text;user-select:text;}
       .o-in::placeholder{color:var(--mut);}.o-in:focus{border-color:rgba(92,200,255,.5);}
       .o-mic{flex:0 0 auto;width:44px;border:none;border-radius:13px;cursor:pointer;font-size:16px;color:#fff;background:linear-gradient(135deg,var(--sky),var(--indigo));}
       .o-mic.on{background:linear-gradient(135deg,#ff8fb0,#ff375f);}
 
-      .wake{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:radial-gradient(120% 90% at 50% 38%, #0d1226 0%, #010207 72%);text-align:center;padding:30px;transition:opacity .6s;}
+      .wake{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:radial-gradient(120% 90% at 50% 36%, #080c1c 0%, #010104 74%);text-align:center;padding:30px;transition:opacity .6s;}
       .wake.hide{opacity:0;pointer-events:none;}
       .wake .wg{width:108px;height:108px;border-radius:36px;display:grid;place-items:center;font-size:52px;color:#fff;background:linear-gradient(140deg,var(--sky),var(--indigo));box-shadow:0 22px 66px rgba(94,92,230,.55);animation:fl 4s ease-in-out infinite;}
       @keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
@@ -408,7 +409,7 @@
         function run(k){var a=ACT[k];if(!a)return;var lb=levelName();a.run();save();pulseCore();var extra=levelName()!==lb?(" ¡Evolucionaste a "+levelName()+"!"):(" Reputación "+rep()+".");if(levelName()!==lb)toast("⬆ "+levelName());say(a.msg+extra);setTimeout(guide,1400);}
         function reco(){var best=null,bs=-1;Object.keys(ACT).forEach(function(k){var s=JSON.stringify(st);var r0=rep(),p0=st.pe;ACT[k].run();var sc=(rep()-r0)*10+(st.pe-p0)*0.05;st=JSON.parse(s);if(sc>bs){bs=sc;best=k;}});return best;}
         function guide(){var g=nextGoal(),r=reco();renderOpts(r);if(g)say("Eres "+levelName()+", reputación "+rep()+". Para "+g.name+" te faltan "+g.need.toLocaleString("es")+" PE. La decisión más rentable ahora: "+ACT[r].name+".");else say("Nivel máximo. Sigue capitalizando en la Bóveda: tu conocimiento paga en cadena.");}
-        function renderOpts(rk){var box=el("opts");box.innerHTML="";Object.keys(ACT).forEach(function(k){var a=ACT[k];var b=document.createElement("button");b.className="opt"+(k===rk?" reco":"");b.innerHTML='<span>'+a.ic+' '+a.name+(k===rk?' ★':'')+'</span><span class="od">'+a.d+'</span>';b.onclick=function(){run(k);};box.appendChild(b);});}
+        function renderOpts(rk){var box=el("opts");box.innerHTML="";Object.keys(ACT).forEach(function(k){var a=ACT[k];var b=document.createElement("button");b.className="opt"+(k===rk?" reco":"");b.innerHTML='<span class="oi">'+a.ic+'</span><span class="on">'+a.name+'</span>';b.onclick=function(){run(k);};box.appendChild(b);});}
         function handle(q){q=(q||"").toLowerCase().trim();if(!q)return;
           if(/oportunidad|postul|opciones de trabajo|qu[eé] trabajos|mejores trabajo|busco trabajo|mejor opci[oó]n|mejores opcion|que me ofrec/.test(q)){openOpps("trabajos");return say("Estas son tus 3 oportunidades con mayor tasa de éxito. Puedes postular desde aquí.");}
           if(/vender|publicar|monetiz|regal[ií]a/.test(q)){openOpps("vender");return say("Vende tu conocimiento: publícalo como activo y cobra regalías cada vez que alguien lo use.");}
@@ -464,7 +465,10 @@
           {t:"UI Engineer · Design Systems",tag:"Design Systems",type:"empresa",need:["frontend","design","react"],creative:0.9,seniorMin:3,pay:"3.600–5.400 Ω/mes",desc:"El puente entre diseño e ingeniería: componentes, tokens y consistencia. Alta creatividad."},
           {t:"Full-Stack Engineer",tag:"React · Node",type:"empresa",need:["react","node","backend"],creative:0.4,seniorMin:2,pay:"3.400–5.200 Ω/mes",desc:"Trabaja features completas de punta a punta, front y back."},
           {t:"Mentor Senior de Frontend",tag:"Enseñanza · 1:1",type:"mentoria",need:["react","teaching"],creative:0.5,seniorMin:4,pay:"70–120 Ω/sesión",desc:"Convierte tu experiencia en ingreso recurrente enseñando a otros devs."},
-          {t:"Backend Engineer",tag:"Node · Python · APIs",type:"empresa",need:["node","python","backend","sql"],creative:0.3,seniorMin:2,pay:"3.400–5.000 Ω/mes",desc:"Diseña servicios y APIs robustas y escalables."}
+          {t:"Backend Engineer",tag:"Node · Python · APIs",type:"empresa",need:["node","python","backend","sql"],creative:0.3,seniorMin:2,pay:"3.400–5.000 Ω/mes",desc:"Diseña servicios y APIs robustas y escalables."},
+          {t:"Práctica profesional (Trainee)",tag:"Primer paso real",type:"empresa",need:["frontend","javascript"],creative:0.4,seniorMin:1,pay:"800–1.400 Ω/mes",desc:"Tu primera experiencia en un equipo, con acompañamiento y mentoría de seniors."},
+          {t:"Junior Frontend Developer",tag:"React · Junior",type:"empresa",need:["react","frontend","javascript"],creative:0.5,seniorMin:1,pay:"1.500–2.600 Ω/mes",desc:"Primer rol formal: construye interfaces reales con guía cercana."},
+          {t:"Reto remunerado (Bounty)",tag:"Tarea corta",type:"freelance",need:["frontend","javascript"],creative:0.5,seniorMin:1,pay:"40–90 Ω/reto",desc:"Gana experiencia y tokens resolviendo retos acotados de código."}
         ];
         function typeLabel(t){return t==="empresa"?"Contrato de empresa":t==="freelance"?"Freelance":t==="mentoria"?"Mentoría":t;}
         function analyzeCV(text){
@@ -485,21 +489,28 @@
           st.ejes.qual=clamp(Math.round(28+seniorLevel*7+(found.indexOf("testing")>-1?7:0)+(found.indexOf("architecture")>-1?5:0)),20,95);
           st.ejes.trans=clamp(Math.round(12+(found.indexOf("teaching")>-1?20:0)+creativity*14+(found.indexOf("3d")>-1?5:0)+(found.indexOf("product")>-1?6:0)),8,92);
           st.ejes.fund=clamp(Math.round(26+sc*3.4+edu),20,97);
+          var arch="pro";
+          if(/estudiante|student|cursando|aprendiendo|practican|becari|trainee|sin experiencia|reci[eé]n egres/.test(t)||(years<1&&sc<3)){arch="estudiante";seniorLevel=1;seniorLabel="Estudiante · Aprendiz";st.ejes.fund=clamp(st.ejes.fund,20,60);}
+          else if(seniorLevel>=5)arch="lead";else if(seniorLevel>=4)arch="senior";else if(seniorLevel<=1||years<2)arch="junior";else arch="mid";
           var prevAv=st.profile&&st.profile.avatar;
-          st.profile={name:name,seniorLabel:seniorLabel,seniorLevel:seniorLevel,years:years,skills:found,labels:labels,creativity:creativity,avatar:prevAv||{type:"grad",v:0}};
+          st.profile={name:name,seniorLabel:seniorLabel,seniorLevel:seniorLevel,years:years,skills:found,labels:labels,creativity:creativity,arch:arch,avatar:prevAv||{type:"grad",v:0}};
         }
         function jobScore(j){var p=st.profile;if(!p)return{succ:50,match:0};var sk=p.skills;
           var match=j.need.filter(function(x){return sk.indexOf(x)>-1;}).length;var ratio=j.need.length?match/j.need.length:0;
           var senFit=p.seniorLevel>=j.seniorMin?1:Math.max(0.3,p.seniorLevel/(j.seniorMin||1));
           var crFit=1-Math.abs(p.creativity-j.creative)*0.55;
           var s=ratio*0.52+senFit*0.24+crFit*0.14+(rep()/100)*0.10;
-          return {succ:clamp(Math.round(s*100),38,98),match:match};}
+          var over=p.seniorLevel-j.seniorMin;if(over>=3)s*=0.45;
+          return {succ:clamp(Math.round(s*100),34,98),match:match};}
         function topJobs(n){return JOBS.map(function(j){return {j:j,r:jobScore(j)};}).sort(function(a,b){return b.r.succ-a.r.succ;}).slice(0,n||3);}
         function gapSkills(){var owned=st.profile?st.profile.skills:[];var pool=["typescript","testing","architecture","3d","node","python","design","product","devops"];var g=pool.filter(function(x){return owned.indexOf(x)<0;});if(g.length<3)g=g.concat(["architecture","testing","product"].filter(function(x){return g.indexOf(x)<0;}));return g.slice(0,5);}
 
         var curTab="trabajos";
         var TABS=[{k:"trabajos",n:"⭐ Trabajos"},{k:"empresa",n:"Empresa"},{k:"freelance",n:"Freelance"},{k:"mentoria",n:"Mentorías"},{k:"educarse",n:"Educarme"},{k:"vender",n:"Vender"},{k:"comprar",n:"Comprar"}];
-        var SUBS={trabajos:"Los 3 con mayor tasa de éxito para ti",empresa:"Contratos por empresa alineados a tu perfil",freelance:"Contratos freelance de alto valor",mentoria:"Monetiza tu experiencia senior",educarse:"Aprende esto para desbloquear mejores trabajos",vender:"Convierte tu conocimiento en un activo",comprar:"Adquiere conocimiento y sube tu medidor"};
+        var TABS_STU=[{k:"ruta",n:"🧭 Mi ruta"},{k:"retos",n:"Retos"},{k:"practicas",n:"Prácticas"},{k:"educarse",n:"Aprender"},{k:"mentoria",n:"Mentores"},{k:"comunidad",n:"Comunidad"}];
+        function tabsFor(){return (st.profile&&st.profile.arch==="estudiante")?TABS_STU:TABS;}
+        function defaultTab(){return (st.profile&&st.profile.arch==="estudiante")?"ruta":"trabajos";}
+        var SUBS={trabajos:"Los 3 con mayor tasa de éxito para ti",empresa:"Contratos por empresa alineados a tu perfil",freelance:"Contratos freelance de alto valor",mentoria:"Conecta con un mentor que te impulse",educarse:"Aprende esto para desbloquear tu siguiente paso",vender:"Convierte tu conocimiento en un activo",comprar:"Adquiere conocimiento y sube tu medidor",ruta:"Tu camino de aprendiz a profesional validado",retos:"Practica, gana tokens y sube tu reputación",practicas:"Prácticas y primeros empleos para ti",comunidad:"Aprende acompañado y crece más rápido"};
         function jobCardHTML(j,isTop){var r=jobScore(j);var col=r.succ>=75?"#ffb02e":r.succ>=55?"#5cc8ff":"#7d879b";
           var ml=j.need.filter(function(x){return st.profile.skills.indexOf(x)>-1;}).map(function(x){return SKLAB[x]||x;});
           return '<div class="opp'+(isTop?" top":"")+'"><div class="ot">'+j.t+'</div><div class="otag">'+j.tag+' · '+typeLabel(j.type)+'</div>'
@@ -509,10 +520,27 @@
             +'<div class="oside"><div class="opay">'+j.pay+'</div></div>'
             +'<button class="obtn'+(isTop?" gold":"")+'" data-postular="'+j.t+'">Postular</button></div></div>';}
         function renderSheet(tab){curTab=tab;el("shSub").textContent=SUBS[tab]||"";
-          var tb=el("shTabs");tb.innerHTML="";TABS.forEach(function(x){var b=document.createElement("div");b.className="sh-tab"+(x.k===tab?" on":"");b.textContent=x.n;b.onclick=function(){renderSheet(x.k);};tb.appendChild(b);});
+          var tb=el("shTabs");tb.innerHTML="";tabsFor().forEach(function(x){var b=document.createElement("div");b.className="sh-tab"+(x.k===tab?" on":"");b.textContent=x.n;b.onclick=function(){renderSheet(x.k);};tb.appendChild(b);});
           var body=el("shBody"),h="";
           if(tab==="trabajos"){var tj=topJobs(3);tj.forEach(function(o,i){h+=jobCardHTML(o.j,i===0);});}
-          else if(tab==="empresa"||tab==="freelance"||tab==="mentoria"){var list=JOBS.filter(function(j){return j.type===tab;}).map(function(j){return{j:j,r:jobScore(j)};}).sort(function(a,b){return b.r.succ-a.r.succ;});if(!list.length)h='<div class="opp"><div class="odesc">Pronto habrá más aquí.</div></div>';list.forEach(function(o,i){h+=jobCardHTML(o.j,i===0);});}
+          else if(tab==="empresa"||tab==="freelance"){var list=JOBS.filter(function(j){return j.type===tab;}).map(function(j){return{j:j,r:jobScore(j)};}).sort(function(a,b){return b.r.succ-a.r.succ;});if(!list.length)h='<div class="opp"><div class="odesc">Pronto habrá más aquí.</div></div>';list.forEach(function(o,i){h+=jobCardHTML(o.j,i===0);});}
+          else if(tab==="mentoria"){if(st.profile.arch==="estudiante"){h+='<div class="opp top"><div class="ot">🤝 Encuentra tu mentor</div><div class="otag">Nodos senior validados de la red</div><div class="odesc">El sistema te empareja con un profesional senior afín a tu ruta para acelerar tu crecimiento y validar tu nodo.</div><div class="orow"><div class="oside"><div class="opay">Desde 40 Ω / sesión</div></div><button class="obtn gold" data-comm="mentor">Buscar mentor</button></div></div>';}
+            else{var lm=JOBS.filter(function(j){return j.type==="mentoria";}).map(function(j){return{j:j,r:jobScore(j)};}).sort(function(a,b){return b.r.succ-a.r.succ;});if(!lm.length)h='<div class="opp"><div class="odesc">Pronto habrá más aquí.</div></div>';lm.forEach(function(o,i){h+=jobCardHTML(o.j,i===0);});}}
+          else if(tab==="ruta"){var g=gapSkills();var chain=[
+              {ic:"📚",tg:"PASO 1 · Habilidad",t:"Aprende "+(SKLAB[g[0]]||g[0]),s:"Tu base para todo lo demás.",b:"Empezar",act:"edu"},
+              {ic:"🧩",tg:"PASO 2 · Reto",t:"Reto guiado con "+(SKLAB[g[0]]||g[0]),s:"Aplica lo aprendido y gana tokens Ω.",b:"Ir al reto",act:"reto"},
+              {ic:"🏅",tg:"PASO 3 · Validación",t:"Certifícate en "+(SKLAB[g[1]||g[0]]||"tu skill"),s:"El Tribunal de Pares valida tu nodo.",b:"Validar",act:"edu"},
+              {ic:"💼",tg:"PASO 4 · Primer empleo",t:"Prácticas y roles Junior",s:"El sistema te presenta a empresas que buscan tu perfil.",b:"Ver prácticas",act:"job"}];
+            h+='<div class="opp"><div class="odesc" style="margin-top:0">🔗 Todo se conecta: cada paso desbloquea el siguiente. Esta es tu ruta de aprendiz a profesional validado.</div></div>';
+            chain.forEach(function(c){h+='<div class="opp"><div class="otag" style="color:var(--sky)">'+c.tg+'</div><div class="ot">'+c.ic+' '+c.t+'</div><div class="odesc">'+c.s+'</div><div class="orow"><div class="oside"></div><button class="obtn" data-'+c.act+'="1">'+c.b+'</button></div></div>';});}
+          else if(tab==="retos"){var gr=gapSkills();var retos=[
+              {t:"Clona una landing con "+(SKLAB[gr[0]]||"HTML/CSS"),d:"Reto · 2-3 h",pay:"+60 Ω · +Ejecución"},
+              {t:"Componente interactivo en "+(SKLAB[gr[0]]||"JavaScript"),d:"Reto · medio día",pay:"+90 Ω · +Calidad"},
+              {t:"Mini-proyecto validado por pares",d:"Reto · 1 semana",pay:"+150 Ω · +Reputación"}];
+            retos.forEach(function(x){h+='<div class="opp"><div class="ot">🧩 '+x.t+'</div><div class="otag">'+x.d+'</div><div class="orow"><div class="oside"><div class="opay">'+x.pay+'</div></div><button class="obtn" data-reto="1">Aceptar reto</button></div></div>';});}
+          else if(tab==="practicas"){var lp=JOBS.filter(function(j){return j.seniorMin<=1;}).map(function(j){return{j:j,r:jobScore(j)};}).sort(function(a,b){return b.r.succ-a.r.succ;});lp.forEach(function(o,i){h+=jobCardHTML(o.j,i===0);});}
+          else if(tab==="comunidad"){h+='<div class="opp"><div class="ot">🤝 Encuentra un mentor</div><div class="otag">Nodos senior de la red</div><div class="odesc">Conéctate con un profesional validado que te guíe en tu ruta.</div><div class="orow"><div class="oside"></div><button class="obtn" data-comm="mentor">Buscar mentor</button></div></div>'
+              +'<div class="opp"><div class="ot">💬 Únete a un grupo de estudio</div><div class="otag">Aprende con pares</div><div class="odesc">Resuelve retos en comunidad y sube tu reputación más rápido.</div><div class="orow"><div class="oside"></div><button class="obtn" data-comm="grupo">Unirme</button></div></div>';}
           else if(tab==="educarse"){gapSkills().forEach(function(x){h+='<div class="opp"><div class="ot">Domina '+(SKLAB[x]||x)+'</div><div class="otag">Academia · +Fundamento +Ejecución</div><div class="odesc">Suma '+(SKLAB[x]||x)+' a tu Gemelo, sube tu medidor de conocimiento y desbloquea trabajos con mayor tasa de éxito.</div><div class="orow"><div class="oside"><div class="opay">Recompensa: +180 PE</div></div><button class="obtn" data-edu="1">Empezar ahora</button></div></div>';});}
           else if(tab==="vender"){(st.profile.labels.slice(0,5)).forEach(function(l){h+='<div class="opp"><div class="ot">'+l+'</div><div class="otag">Bóveda · activo con regalías</div><div class="odesc">Publica tu conocimiento de '+l+' como curso o plantilla. Cobra regalías en Ω cada vez que alguien lo use.</div><div class="orow"><div class="oside"><div class="opay">+90 Ω + regalías</div></div><button class="obtn gold" data-sell="1">Publicar</button></div></div>';});}
           else if(tab==="comprar"){gapSkills().forEach(function(x,i){var price=400+i*140;h+='<div class="opp"><div class="ot">Pack '+(SKLAB[x]||x)+'</div><div class="otag">Marketplace · de un Nodo Pioneer</div><div class="odesc">Adquiere conocimiento verificado de '+(SKLAB[x]||x)+' y súbelo a tu Gemelo al instante. Sube tu Fundamento.</div><div class="orow"><div class="oside"><div class="opay">'+price+' Ω</div></div><button class="obtn" data-buy="'+price+'">Adquirir</button></div></div>';});}
@@ -520,8 +548,11 @@
           Array.prototype.forEach.call(body.querySelectorAll("[data-postular]"),function(b){b.onclick=function(){var nm=b.getAttribute("data-postular");st.pe+=45;save();toast("✔ Postulación enviada");say("Postulé a "+nm+" por ti. Tu Gemelo respalda la candidatura con reputación "+rep()+". Ejecuta contratos para elevar tu Calidad y asegurar la oferta.");renderSheet(curTab);};});
           Array.prototype.forEach.call(body.querySelectorAll("[data-edu]"),function(b){b.onclick=function(){closeOpps();run("entrena");};});
           Array.prototype.forEach.call(body.querySelectorAll("[data-sell]"),function(b){b.onclick=function(){closeOpps();run("capitaliza");};});
-          Array.prototype.forEach.call(body.querySelectorAll("[data-buy]"),function(b){b.onclick=function(){var price=parseInt(b.getAttribute("data-buy"),10);if(st.tokens>=price){st.tokens-=price;bump("fund",6);st.pe+=60;save();pulseCore();toast("✔ Conocimiento adquirido");say("Adquiriste el pack por "+price+" tokens. Tu Fundamento subió y tu medidor refleja "+rep()+". Ahora ejecútalo en un contrato.");renderSheet(curTab);}else{say("Te faltan tokens Ω. Ejecuta un contrato para ganarlos y luego adquiere este conocimiento.");toast("Necesitas más Ω");}};});}
-        function openOpps(tab){if(!st.profile){analyzeCV(DEMO_CV);save();}curTab=tab||"trabajos";el("sheet").classList.add("on");el("shBack").classList.add("on");renderSheet(curTab);}
+          Array.prototype.forEach.call(body.querySelectorAll("[data-buy]"),function(b){b.onclick=function(){var price=parseInt(b.getAttribute("data-buy"),10);if(st.tokens>=price){st.tokens-=price;bump("fund",6);st.pe+=60;save();pulseCore();toast("✔ Conocimiento adquirido");say("Adquiriste el pack por "+price+" tokens. Tu Fundamento subió y tu medidor refleja "+rep()+". Ahora ejecútalo en un contrato.");renderSheet(curTab);}else{say("Te faltan tokens Ω. Ejecuta un contrato para ganarlos y luego adquiere este conocimiento.");toast("Necesitas más Ω");}};});
+          Array.prototype.forEach.call(body.querySelectorAll("[data-reto]"),function(b){b.onclick=function(){closeOpps();run("ejecuta");};});
+          Array.prototype.forEach.call(body.querySelectorAll("[data-job]"),function(b){b.onclick=function(){renderSheet("practicas");};});
+          Array.prototype.forEach.call(body.querySelectorAll("[data-comm]"),function(b){b.onclick=function(){toast("✔ Solicitud enviada");say("El sistema está buscando tu mejor match en la comunidad. Te avisaré en cuanto alguien conecte contigo.");};});}
+        function openOpps(tab){if(!st.profile){analyzeCV(DEMO_CV);save();}var keys=tabsFor().map(function(x){return x.k;});tab=tab||defaultTab();if(keys.indexOf(tab)<0)tab=defaultTab();curTab=tab;el("sheet").classList.add("on");el("shBack").classList.add("on");renderSheet(curTab);}
         function closeOpps(){el("sheet").classList.remove("on");el("shBack").classList.remove("on");}
         el("opBtn").onclick=function(){openOpps("trabajos");};el("shX").onclick=closeOpps;el("shBack").onclick=closeOpps;
 
@@ -538,7 +569,10 @@
           var up=el("avUpBtn");if(av&&av.type==="img"){up.style.cssText="background-image:url("+av.v+");background-size:cover;background-position:center;";up.textContent="";up.classList.add("on");}else{up.style.cssText="";up.textContent="＋";up.classList.remove("on");}}
 
         // ── Posicionamiento (resumen de lo que eres) ──
-        function positioning(){var p=st.profile;if(!p)return "";var top=topJobs(1)[0];var pct=top?top.r.succ:60;var tp=clamp(Math.round(102-rep()-pct*0.15),2,55);
+        function positioning(){var p=st.profile;if(!p)return "";
+          if(p.arch==="estudiante"){var g=gapSkills();var next=g.length?(SKLAB[g[0]]||g[0]):"tu próxima habilidad";var base=p.labels.slice(0,2).join(" y ")||"tus primeras bases";
+            return "Estás en modo aprendizaje. El sistema conecta tus habilidades, retos y prácticas en una sola ruta que te lleva de aprendiz a nodo profesional validado. Hoy sumas "+base+"; tu siguiente salto es "+next+". Cada paso desbloquea el siguiente.";}
+          var top=topJobs(1)[0];var pct=top?top.r.succ:60;var tp=clamp(Math.round(102-rep()-pct*0.15),2,55);
           var area=p.labels.slice(0,3).join(", ")||"tu especialidad";
           return "Eres "+p.seniorLabel+(p.years?(" con "+p.years+" años de trayectoria"):"")+", especializado en "+area+". El sistema te posiciona en el top "+tp+"% de la red para "+(top?top.j.t:"tu rol")+", con "+pct+"% de afinidad. "+(p.creativity>=0.6?"Perfil de alta creatividad y visión de producto.":"Perfil técnico sólido y confiable.");}
 
@@ -580,9 +614,10 @@
           incTimer=setInterval(function(){if(document.hidden)return;if(el("sheet").classList.contains("on")||el("profile").classList.contains("on")||!el("wake").classList.contains("hide"))return;
             if(Math.random()<0.62)surfaceIncoming();else nudge();},19000);}
         function surfaceIncoming(){var list=topJobs(6);if(!list.length)return;var o=list[incIdx%list.length];incIdx++;var j=o.j,r=o.r;
-          var box=el("incoming");box.innerHTML='<div class="inc-h"><span class="pip"></span>UNA EMPRESA TE BUSCA</div><div class="inc-t">'+j.t+'</div><div class="inc-s">'+r.succ+'% de afinidad · '+j.pay+' · '+typeLabel(j.type)+'</div><div class="inc-row"><button id="incView">Ver oferta</button><button id="incLater" class="ghost">Después</button></div>';
-          box.classList.add("show");if(voiceOn)say("El trabajo te busca. "+j.t+", con "+r.succ+" por ciento de afinidad para tu perfil.");
-          el("incView").onclick=function(){box.classList.remove("show");openOpps("trabajos");};el("incLater").onclick=function(){box.classList.remove("show");};
+          var stu=st.profile&&st.profile.arch==="estudiante";var head=stu?"UNA OPORTUNIDAD TE BUSCA":"UNA EMPRESA TE BUSCA";
+          var box=el("incoming");box.innerHTML='<div class="inc-h"><span class="pip"></span>'+head+'</div><div class="inc-t">'+j.t+'</div><div class="inc-s">'+r.succ+'% de afinidad · '+j.pay+' · '+typeLabel(j.type)+'</div><div class="inc-row"><button id="incView">Ver</button><button id="incLater" class="ghost">Después</button></div>';
+          box.classList.add("show");if(voiceOn)say((stu?"Algo encaja contigo: ":"El trabajo te busca. ")+j.t+", con "+r.succ+" por ciento de afinidad. El sistema te lo acerca.");
+          el("incView").onclick=function(){box.classList.remove("show");openOpps(stu?"practicas":"trabajos");};el("incLater").onclick=function(){box.classList.remove("show");};
           clearTimeout(box._t);box._t=setTimeout(function(){box.classList.remove("show");},10000);}
         function nudge(){var g=nextGoal(),r=reco();renderOpts(r);var tp=topJobs(1)[0];
           say("El sistema barajó tu estado actual. Tu mejor jugada ahora: "+ACT[r].name+". Te acerca a "+(tp?tp.j.t:"tu meta")+(g?(" y a "+g.name):"")+".");}
