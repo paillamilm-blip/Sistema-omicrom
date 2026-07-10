@@ -51,7 +51,7 @@ export function TrabajoTeEncuentra() {
   useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 5000); return () => clearInterval(t); }, []);
 
   const fit = (j: JobDef) => {
-    let f = 48 + Math.round(profile.rep * 0.42) + (profile.pe >= j.minPe ? 12 : -12) + (profile.cv ? 4 : 0)
+    const f = 48 + Math.round(profile.rep * 0.42) + (profile.pe >= j.minPe ? 12 : -12) + (profile.cv ? 4 : 0)
       + Math.min(9, profile.titles * 3) + Math.round(((profile.axes[j.eje] || 0) - 40) * 0.12) + j.bias;
     return Math.max(34, Math.min(99, f));
   };
@@ -166,10 +166,11 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
-    timers.current.push(window.setTimeout(() => setStep(1), 1400));
-    timers.current.push(window.setTimeout(() => setStep(2), 3000));
-    timers.current.push(window.setTimeout(() => { setStep(3); onApplied(); }, 4600));
-    return () => { timers.current.forEach(clearTimeout); };
+    const scheduled = timers.current;
+    scheduled.push(window.setTimeout(() => setStep(1), 1400));
+    scheduled.push(window.setTimeout(() => setStep(2), 3000));
+    scheduled.push(window.setTimeout(() => { setStep(3); onApplied(); }, 4600));
+    return () => { scheduled.forEach(clearTimeout); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

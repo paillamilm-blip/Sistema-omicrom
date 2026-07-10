@@ -501,7 +501,7 @@ export function PerfilTab() {
 
   const initials  = (profile?.full_name ?? profile?.username ?? 'U')
     .split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
-  const avatarUrl = (profile as any)?.avatar_url as string | undefined;
+  const avatarUrl = (profile as { avatar_url?: string } | null | undefined)?.avatar_url;
   const pe = profile?.pe_points ?? 0;
   const userRank = (profile?.node_type === 'Nodo Arquitecto' || profile?.node_type === 'Nodo Fundador') ? 3
     : profile?.node_type === 'Nodo Core' ? 2 : 1;
@@ -548,7 +548,7 @@ export function PerfilTab() {
 
       await refreshProfile();
       showToast('FOTO DE PERFIL ACTUALIZADA');
-    } catch (e: any) {
+    } catch (e) {
       showToast('ERROR AL SUBIR LA FOTO');
       console.error('avatar upload', e);
     } finally {

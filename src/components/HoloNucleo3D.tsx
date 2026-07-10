@@ -154,6 +154,9 @@ export function HoloNucleo3D({
 
   const chipsKey = JSON.stringify(chips);
   const axesKey = JSON.stringify(axes ?? {});
+  // Se depende de las claves serializadas (axesKey/chipsKey) para memoizar por
+  // valor y no por referencia (axes/chips son objetos nuevos en cada render).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const meta = useMemo(() => buildMeta(axes, chips), [axesKey, chipsKey]);
 
   useEffect(() => {
