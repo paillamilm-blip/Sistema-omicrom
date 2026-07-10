@@ -8,8 +8,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, Sparkles, X } from 'lucide-react';
 import { useApp } from '../store/AppContext';
+import { useRealtime } from '../store/RealtimeContext';
 import { interpret, askCoach } from '../lib/oraculo';
-import { gemeloActions, getProfile } from '../lib/gemeloProfile';
+import { gemeloActions, getProfile, bestNextStep } from '../lib/gemeloProfile';
 import { C, FONT } from '../theme';
 
 type SpeechRecognitionCtor = new () => {
@@ -41,6 +42,7 @@ function speak(text: string) {
 
 export function OraculoBar() {
   const { setActiveTab, profile } = useApp();
+  const { onlineCount } = useRealtime();
   const [open, setOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [msg, setMsg] = useState<{ who: 'tu' | 'oraculo'; text: string } | null>(null);
@@ -59,8 +61,44 @@ export function OraculoBar() {
     hideTimer.current = setTimeout(() => setMsg(null), ms);
   }
 
+  // Saludo proactivo: usa la red en vivo + tu mejor próximo paso para guiarte.
+  function proactiveGreet() {
+    const ns = bestNextStep(getProfile());
+    const net = onlineCount > 0 ? `Hay ${onlineCount} ${onlineCount === 1 ? 'nodo' : 'nodos'} en línea. ` : '';
+    const step = ns ? `Tu mejor próximo paso: ${ns.label}.` : 'Tu Gemelo está optimizado; sigue capitalizando en la Bóveda.';
+    const t = `${net}${step} Dime "hazlo" y lo ejecuto, o pídeme un consejo.`;
+    flash('oraculo', t, 10000);
+    speak(t);
+  }
+
   async function handle(text: string) {
     flash('tu', text);
+    const low = text.toLowerCase();
+    // Proactivo: estado de la red en vivo.
+    if (/\bred\b|en l[ií]nea|conectad|nodos|qui[eé]n hay|en vivo/.test(low)) {
+      const t = onlineCount > 0
+        ? `Ahora hay ${onlineCount} ${onlineCount === 1 ? 'nodo' : 'nodos'} en línea en la red. Toca el indicador verde de arriba para ver quiénes son.`
+        : 'Estoy midiendo la red en vivo; en un momento verás los nodos conectados.';
+      flash('oraculo', t);
+      speak(t);
+      return;
+    }
+    // Proactivo: ejecuta tu mejor próximo paso (empújame a mejorar).
+    if (/mejor paso|pr[oó]ximo paso|qu[eé] hago|me conviene|siguiente paso|mejorar|h[aá]zlo|hacelo|dale/.test(low)) {
+      const ns = bestNextStep(getProfile());
+      if (ns) {
+        gemeloActions.run(ns.action);
+        const p = getProfile();
+        const t = `Hecho: ${ns.label}. Tu reputación ahora es ${p.rep} y sumas ${Math.round(p.pe)} puntos de experiencia. ¿Seguimos con el siguiente paso?`;
+        flash('oraculo', t);
+        speak(t);
+      } else {
+        const t = 'Tu Gemelo está optimizado. Sigue capitalizando en la Bóveda para dejar tu conocimiento como activo.';
+        flash('oraculo', t);
+        speak(t);
+      }
+      return;
+    }
     const intent = interpret(text);
     if (intent.kind === 'navigate') {
       setActiveTab(intent.tab);
@@ -194,7 +232,7 @@ export function OraculoBar() {
       {/* FAB para abrir */}
       {!open && (
         <button
-          onClick={() => { setOpen(true); flash('oraculo', 'Toca el micrófono y háblame: "abre mi billetera" o "dame un consejo".', 9000); }}
+          onClick={() => { setOpen(true); proactiveGreet(); }}
           aria-label="Abrir Oráculo"
           style={{
             width: 52, height: 52, borderRadius: '50%', cursor: 'pointer',
