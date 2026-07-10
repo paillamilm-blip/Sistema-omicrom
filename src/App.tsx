@@ -15,6 +15,8 @@ import { InstallPWA } from './components/shared/InstallPWA';
 import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
+import { RealtimeProvider } from './store/RealtimeContext';
+import { LiveBadge, LiveNetworkFeed } from './components/shared/LivePresence';
 import { PublicProfileGate } from './components/perfil/RedSocial';
 import { VerifyCredentialView } from './components/perfil/VerifyCredential';
 import { C, FONT } from './theme';
@@ -104,6 +106,7 @@ function AppShell() {
           <span style={{ fontFamily: FONT.display, fontSize: 17, letterSpacing: 0.3, color: '#eaf2ff', fontWeight: 700 }}>{TAB_TITLES[activeTab]}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <LiveBadge />
           <GemeloBadge />
           {profile && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 13, color: '#F59E0B', fontWeight: 700 }}>
@@ -148,6 +151,7 @@ function AppShell() {
       </div>
 
       <BottomNav />
+      <LiveNetworkFeed />
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
       <PublicProfileGate />
       <ErrorBoundary section="Oráculo">
@@ -170,8 +174,10 @@ export default function App() {
   return (
     <AppProvider>
       <ToastProvider>
-        <ConnectionBanner />
-        <AppShell />
+        <RealtimeProvider>
+          <ConnectionBanner />
+          <AppShell />
+        </RealtimeProvider>
       </ToastProvider>
     </AppProvider>
   );
