@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRealtime } from '../../store/RealtimeContext';
 import { useApp } from '../../store/AppContext';
+import { PublicCredentialModal } from '../perfil/RedSocial';
 import type { LiveEvent, LiveEventKind } from '../../hooks/useRealtimeNetwork';
 import { C, FONT } from '../../theme';
 
@@ -51,77 +52,95 @@ export function LiveBadge() {
 export function LivePeersStrip() {
   const { nodes } = useRealtime();
   const { profile } = useApp();
+  const [viewUser, setViewUser] = useState<string | null>(null);
   const peers = nodes.filter((n) => n.id !== profile?.id);
-  if (peers.length === 0) return null;
+  if (peers.length === 0 && !viewUser) return null;
 
   return (
-    <div style={{ marginTop: 8, padding: '0 4px' }}>
-      <div style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1.2, color: C.greenDim, textAlign: 'center', marginBottom: 6 }}>
-        ◉ {peers.length} {peers.length === 1 ? 'NODO' : 'NODOS'} EN LÍNEA AHORA
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-          overflowX: 'auto',
-          paddingBottom: 2,
-          justifyContent: peers.length <= 4 ? 'center' : 'flex-start',
-        }}
-      >
-        {peers.slice(0, 24).map((p) => (
-          <div
-            key={p.id}
-            title={`${p.username} · ${p.node_type}`}
-            style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, width: 52 }}
-          >
-            <div
-              style={{
-                position: 'relative',
-                width: 34,
-                height: 34,
-                borderRadius: '50%',
-                display: 'grid',
-                placeItems: 'center',
-                background: 'rgba(57,255,20,0.1)',
-                border: `1px solid ${C.greenDim}`,
-                color: '#c9ffd0',
-                fontFamily: FONT.display,
-                fontWeight: 700,
-                fontSize: 14,
-              }}
-            >
-              {(p.username || 'N').charAt(0).toUpperCase()}
-              <span
-                style={{
-                  position: 'absolute',
-                  bottom: -2,
-                  right: -2,
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: C.green,
-                  boxShadow: `0 0 6px ${C.green}`,
-                  border: '1px solid #04121a',
-                }}
-              />
-            </div>
-            <span
-              style={{
-                fontFamily: FONT.body,
-                fontSize: 9,
-                color: 'rgba(234,242,255,0.7)',
-                maxWidth: 52,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {p.username}
-            </span>
+    <>
+      {peers.length > 0 && (
+        <div style={{ marginTop: 8, padding: '0 4px' }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1.2, color: C.greenDim, textAlign: 'center', marginBottom: 6 }}>
+            ◉ {peers.length} {peers.length === 1 ? 'NODO' : 'NODOS'} EN LÍNEA AHORA · toca para ver
           </div>
-        ))}
-      </div>
-    </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              overflowX: 'auto',
+              paddingBottom: 2,
+              justifyContent: peers.length <= 4 ? 'center' : 'flex-start',
+            }}
+          >
+            {peers.slice(0, 24).map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setViewUser(p.username)}
+                title={`${p.username} · ${p.node_type}`}
+                style={{
+                  flex: '0 0 auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 3,
+                  width: 52,
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'relative',
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    display: 'grid',
+                    placeItems: 'center',
+                    background: 'rgba(57,255,20,0.1)',
+                    border: `1px solid ${C.greenDim}`,
+                    color: '#c9ffd0',
+                    fontFamily: FONT.display,
+                    fontWeight: 700,
+                    fontSize: 14,
+                  }}
+                >
+                  {(p.username || 'N').charAt(0).toUpperCase()}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: -2,
+                      right: -2,
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: C.green,
+                      boxShadow: `0 0 6px ${C.green}`,
+                      border: '1px solid #04121a',
+                    }}
+                  />
+                </div>
+                <span
+                  style={{
+                    fontFamily: FONT.body,
+                    fontSize: 9,
+                    color: 'rgba(234,242,255,0.7)',
+                    maxWidth: 52,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {p.username}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {viewUser && <PublicCredentialModal username={viewUser} onClose={() => setViewUser(null)} />}
+    </>
   );
 }
 
