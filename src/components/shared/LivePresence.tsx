@@ -7,7 +7,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRealtime } from '../../store/RealtimeContext';
 import { useApp } from '../../store/AppContext';
-import { PublicCredentialModal } from '../perfil/RedSocial';
+import { PublicCredentialModal, DirectChatModal } from '../perfil/RedSocial';
+import { LiveRanking } from './LiveRanking';
 import type { LiveEvent, LiveEventKind } from '../../hooks/useRealtimeNetwork';
 import { C, FONT } from '../../theme';
 
@@ -59,6 +60,7 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
   const { nodes, events, onlineCount } = useRealtime();
   const { profile } = useApp();
   const [viewUser, setViewUser] = useState<string | null>(null);
+  const [dmWith, setDmWith] = useState<{ id: string; name: string; username: string; avatar: string | null } | null>(null);
   if (!open) return null;
 
   return (
@@ -74,28 +76,40 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
           <button onClick={onClose} aria-label="Cerrar" style={{ width: 30, height: 30, borderRadius: '50%', border: `1px solid ${C.cyanDim}`, background: 'rgba(255,255,255,0.05)', color: 'rgba(234,242,255,0.55)', cursor: 'pointer' }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: '0 16px 24px' }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.cyanDim, textTransform: 'uppercase', margin: '6px 0' }}>En línea ahora</div>
+          <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.cyanDim, textTransform: 'uppercase', margin: '6px 0' }}>En línea ahora · toca para ver o mensajear</div>
           {nodes.map((n) => {
             const isSelf = n.id === profile?.id;
             return (
-              <button
-                key={n.id}
-                disabled={isSelf}
-                onClick={() => { if (!isSelf) setViewUser(n.username); }}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 4px', background: 'none', border: 'none', borderBottom: `1px solid ${C.cyanFaint}`, cursor: isSelf ? 'default' : 'pointer', textAlign: 'left', opacity: isSelf ? 0.7 : 1 }}
-              >
-                <span style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(57,255,20,0.1)', border: `1px solid ${C.greenDim}`, color: '#c9ffd0', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, flex: '0 0 auto' }}>
-                  {(n.username || 'N').charAt(0).toUpperCase()}
-                  <span style={{ position: 'absolute', bottom: -2, right: -2, width: 8, height: 8, borderRadius: '50%', background: C.green, boxShadow: `0 0 6px ${C.green}`, border: '1px solid #04121a' }} />
-                </span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.username}{isSelf ? ' (tú)' : ''}</span>
-                  <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>{n.node_type} · N{n.node_level}</span>
-                </span>
-                {!isSelf && <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.gold }}>ver →</span>}
-              </button>
+              <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 6, borderBottom: `1px solid ${C.cyanFaint}` }}>
+                <button
+                  disabled={isSelf}
+                  onClick={() => { if (!isSelf) setViewUser(n.username); }}
+                  style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 4px', background: 'none', border: 'none', cursor: isSelf ? 'default' : 'pointer', textAlign: 'left', opacity: isSelf ? 0.7 : 1 }}
+                >
+                  <span style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(57,255,20,0.1)', border: `1px solid ${C.greenDim}`, color: '#c9ffd0', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, flex: '0 0 auto' }}>
+                    {(n.username || 'N').charAt(0).toUpperCase()}
+                    <span style={{ position: 'absolute', bottom: -2, right: -2, width: 8, height: 8, borderRadius: '50%', background: C.green, boxShadow: `0 0 6px ${C.green}`, border: '1px solid #04121a' }} />
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.username}{isSelf ? ' (tú)' : ''}</span>
+                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>{n.node_type} · N{n.node_level}</span>
+                  </span>
+                </button>
+                {!isSelf && (
+                  <button
+                    onClick={() => setDmWith({ id: n.id, name: n.username, username: n.username, avatar: null })}
+                    aria-label={`Mensaje a ${n.username}`}
+                    style={{ flex: '0 0 auto', width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'rgba(0,214,230,0.1)', border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', fontSize: 15 }}
+                  >
+                    💬
+                  </button>
+                )}
+              </div>
             );
           })}
+
+          <LiveRanking />
+
           <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.cyanDim, textTransform: 'uppercase', margin: '14px 0 6px' }}>Actividad en vivo</div>
           {events.length === 0 ? (
             <div style={{ fontFamily: FONT.body, fontSize: 12, color: 'rgba(234,242,255,0.55)', padding: '6px 4px' }}>Aún no hay actividad. Cuando alguien entre o mejore su nodo, aparecerá aquí.</div>
@@ -110,6 +124,7 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
         </div>
       </div>
       {viewUser && <PublicCredentialModal username={viewUser} onClose={() => setViewUser(null)} />}
+      {dmWith && <DirectChatModal other={dmWith} onClose={() => setDmWith(null)} />}
     </>
   );
 }
