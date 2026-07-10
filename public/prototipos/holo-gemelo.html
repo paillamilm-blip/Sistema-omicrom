@@ -2,112 +2,77 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Ómicron · Gemelo Digital</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <title>Ómicron · Gemelo Digital 3D</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
       :root{
         --blue:#0a84ff; --indigo:#5e5ce6; --sky:#64d2ff; --teal:#40cbe0; --mint:#66d4cf;
-        --amber:#ffd60a; --pink:#ff77e9; --ink:#f5f6fa; --mut:#9aa3b2;
-        --glass:rgba(255,255,255,0.06); --glass2:rgba(255,255,255,0.09); --line:rgba(255,255,255,0.14);
+        --amber:#ffd60a; --pink:#ff77e9; --violet:#a78bfa; --ink:#f5f6fa; --mut:#96a0b4;
+        --glass:rgba(255,255,255,0.06); --glass2:rgba(255,255,255,0.1); --line:rgba(255,255,255,0.14);
         --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif;
       }
-      *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+      *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
       html,body{height:100%;overflow:hidden;font-family:var(--font);color:var(--ink);
-        background:radial-gradient(130% 100% at 50% 0%, #171a2b 0%, #0b0d18 45%, #06070e 100%);}
+        background:radial-gradient(140% 105% at 50% -5%, #1a1f3a 0%, #0c0f1e 42%, #05060d 100%);}
       #app{position:fixed;inset:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;}
-      canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+      canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;touch-action:none;}
 
-      /* top bar minimal Apple */
-      .bar{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;
-        padding:max(16px,env(safe-area-inset-top,0px)) 20px 6px;}
+      .bar{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:max(16px,env(safe-area-inset-top,0px)) 20px 6px;}
       .b-l{display:flex;align-items:center;gap:10px;}
-      .glyph{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:600;font-size:16px;color:#fff;
-        background:linear-gradient(135deg,var(--sky),var(--indigo));box-shadow:0 4px 16px rgba(94,92,230,.5);}
+      .glyph{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:600;font-size:16px;color:#fff;background:linear-gradient(135deg,var(--sky),var(--indigo));box-shadow:0 4px 16px rgba(94,92,230,.5);}
       .b-l b{font-size:16px;font-weight:600;letter-spacing:.2px;}
       .b-l span{display:block;font-size:10px;color:var(--mut);letter-spacing:.4px;margin-top:-2px;}
-      .vtoggle{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--glass);
-        backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:var(--ink);cursor:pointer;font-size:16px;
-        display:grid;place-items:center;transition:.2s;}
+      .vtoggle{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:var(--ink);cursor:pointer;font-size:16px;display:grid;place-items:center;transition:.2s;}
       .vtoggle.off{color:var(--mut);opacity:.6;}
-
       .stage{flex:1;position:relative;z-index:2;min-height:0;}
-      /* nodos-etiqueta (frosted, estilo visionOS) */
-      .node{position:absolute;left:0;top:0;z-index:4;cursor:pointer;padding:9px 14px;border-radius:16px;min-width:78px;
-        background:var(--glass);border:1px solid var(--line);
-        backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);
-        box-shadow:0 8px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.16);
-        transition:box-shadow .25s, border-color .25s, background .25s; will-change:transform;}
-      .node:hover{background:var(--glass2);}
-      .node .nl{display:block;font-size:9.5px;font-weight:500;letter-spacing:.6px;color:var(--mut);text-transform:uppercase;}
-      .node .nv{display:block;font-size:20px;font-weight:600;line-height:1.05;margin-top:2px;letter-spacing:.2px;}
-      .node.pulse{animation:np .6s ease;}
-      @keyframes np{0%{filter:brightness(1)}35%{filter:brightness(1.7)}100%{filter:brightness(1)}}
+      .spin-hint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:11px;color:rgba(150,160,180,.55);letter-spacing:.3px;z-index:3;pointer-events:none;transition:opacity .5s;}
 
-      /* tarjeta de info del nodo */
-      .info{position:absolute;left:50%;top:50%;transform:translate(-50%,-46%) scale(.9);z-index:8;width:min(84%,320px);
-        padding:20px;border-radius:26px;opacity:0;pointer-events:none;transition:.28s cubic-bezier(.2,.9,.25,1);
-        background:linear-gradient(180deg,rgba(30,34,54,.86),rgba(16,18,32,.92));border:1px solid var(--line);
-        backdrop-filter:blur(30px) saturate(160%);-webkit-backdrop-filter:blur(30px) saturate(160%);
-        box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.14);}
+      .info{position:absolute;left:50%;top:50%;transform:translate(-50%,-46%) scale(.9);z-index:8;width:min(84%,320px);padding:20px;border-radius:26px;opacity:0;pointer-events:none;transition:.28s cubic-bezier(.2,.9,.25,1);
+        background:linear-gradient(180deg,rgba(30,34,54,.86),rgba(16,18,32,.93));border:1px solid var(--line);backdrop-filter:blur(30px) saturate(160%);-webkit-backdrop-filter:blur(30px) saturate(160%);box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.14);}
       .info.on{opacity:1;pointer-events:auto;transform:translate(-50%,-52%) scale(1);}
       .info .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:22px;margin-bottom:12px;}
-      .info h3{font-size:13px;font-weight:500;letter-spacing:.5px;color:var(--mut);text-transform:uppercase;}
-      .info .big{font-size:40px;font-weight:700;letter-spacing:-.5px;margin:2px 0 8px;}
+      .info h3{font-size:12px;font-weight:600;letter-spacing:.6px;color:var(--mut);text-transform:uppercase;}
+      .info .big{font-size:40px;font-weight:800;letter-spacing:-.5px;margin:2px 0 8px;}
       .info p{font-size:14px;line-height:1.55;color:#c9d0dc;}
-      .info .act{margin-top:16px;width:100%;padding:13px;border-radius:14px;border:none;cursor:pointer;font-family:var(--font);
-        font-size:15px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--blue),var(--indigo));box-shadow:0 8px 24px rgba(10,132,255,.4);}
-      .info .cls{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);
-        background:rgba(255,255,255,.06);color:var(--mut);cursor:pointer;font-size:15px;}
+      .info .act{margin-top:16px;width:100%;padding:13px;border-radius:14px;border:none;cursor:pointer;font-family:var(--font);font-size:15px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--blue),var(--indigo));box-shadow:0 8px 24px rgba(10,132,255,.4);}
+      .info .cls{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--mut);cursor:pointer;font-size:15px;}
 
-      /* Oráculo — panel inferior Apple glass */
-      .oracle{position:relative;z-index:6;margin:0 12px calc(12px + env(safe-area-inset-bottom,0px));border-radius:28px;padding:16px;
-        background:linear-gradient(180deg,rgba(28,32,52,.72),rgba(14,16,30,.82));border:1px solid var(--line);
-        backdrop-filter:blur(30px) saturate(160%);-webkit-backdrop-filter:blur(30px) saturate(160%);
-        box-shadow:0 -10px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12);}
+      .oracle{position:relative;z-index:6;margin:0 12px calc(12px + env(safe-area-inset-bottom,0px));border-radius:28px;padding:16px;background:linear-gradient(180deg,rgba(28,32,52,.72),rgba(14,16,30,.84));border:1px solid var(--line);backdrop-filter:blur(30px) saturate(160%);-webkit-backdrop-filter:blur(30px) saturate(160%);box-shadow:0 -10px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12);}
       .o-top{display:flex;gap:12px;align-items:center;}
-      .o-orb{position:relative;flex:0 0 auto;width:40px;height:40px;border-radius:50%;
-        background:radial-gradient(circle at 38% 32%,#eaf3ff,var(--sky) 55%,var(--indigo));box-shadow:0 0 22px rgba(100,210,255,.6);}
+      .o-orb{position:relative;flex:0 0 auto;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#eaf3ff,var(--sky) 55%,var(--indigo));box-shadow:0 0 22px rgba(100,210,255,.6);}
       .wave{position:absolute;inset:-6px;display:none;align-items:center;justify-content:center;gap:2.5px;}
       .o-orb.speaking .wave{display:flex;}
       .wave i{width:2.5px;height:8px;border-radius:2px;background:#eaf3ff;animation:wv .7s ease-in-out infinite;}
-      .wave i:nth-child(2){animation-delay:.12s} .wave i:nth-child(3){animation-delay:.24s} .wave i:nth-child(4){animation-delay:.36s} .wave i:nth-child(5){animation-delay:.48s}
+      .wave i:nth-child(2){animation-delay:.12s}.wave i:nth-child(3){animation-delay:.24s}.wave i:nth-child(4){animation-delay:.36s}.wave i:nth-child(5){animation-delay:.48s}
       @keyframes wv{0%,100%{height:6px;opacity:.6}50%{height:20px;opacity:1}}
       .o-name{font-size:10px;font-weight:600;letter-spacing:1px;color:var(--sky);text-transform:uppercase;}
       .o-say{font-size:14.5px;line-height:1.5;color:var(--ink);margin-top:2px;min-height:42px;}
       .o-opts{display:flex;gap:8px;overflow-x:auto;margin-top:13px;padding-bottom:2px;}
       .o-opts::-webkit-scrollbar{display:none;}
-      .opt{flex:0 0 auto;padding:11px 15px;border-radius:15px;cursor:pointer;border:1px solid var(--line);background:var(--glass);
-        color:var(--ink);font-family:var(--font);font-weight:500;font-size:13.5px;display:flex;flex-direction:column;gap:1px;white-space:nowrap;transition:.16s;}
+      .opt{flex:0 0 auto;padding:11px 15px;border-radius:15px;cursor:pointer;border:1px solid var(--line);background:var(--glass);color:var(--ink);font-family:var(--font);font-weight:500;font-size:13.5px;display:flex;flex-direction:column;gap:1px;white-space:nowrap;transition:.16s;}
       .opt:hover{background:var(--glass2);}
       .opt .od{font-size:9px;color:var(--mut);letter-spacing:.3px;}
       .opt.reco{border-color:rgba(255,214,10,.5);background:rgba(255,214,10,.1);}
       .opt.reco .od{color:var(--amber);}
       .o-foot{display:flex;gap:9px;margin-top:12px;}
-      .o-in{flex:1;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:11px 14px;color:var(--ink);font-family:var(--font);font-size:14px;outline:none;}
+      .o-in{flex:1;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:11px 14px;color:var(--ink);font-family:var(--font);font-size:14px;outline:none;-webkit-user-select:text;user-select:text;}
       .o-in::placeholder{color:var(--mut);}
       .o-in:focus{border-color:rgba(100,210,255,.5);}
-      .o-mic{flex:0 0 auto;width:44px;border:none;border-radius:14px;cursor:pointer;font-size:17px;color:#fff;
-        background:linear-gradient(135deg,var(--sky),var(--indigo));box-shadow:0 6px 18px rgba(94,92,230,.4);}
+      .o-mic{flex:0 0 auto;width:44px;border:none;border-radius:14px;cursor:pointer;font-size:17px;color:#fff;background:linear-gradient(135deg,var(--sky),var(--indigo));box-shadow:0 6px 18px rgba(94,92,230,.4);}
       .o-mic.on{background:linear-gradient(135deg,#ff8fb0,#ff375f);}
 
-      /* wake overlay (arranca la voz con un gesto → estilo Apple) */
-      .wake{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
-        background:radial-gradient(120% 90% at 50% 40%, #1a1e33 0%, #06070e 70%);text-align:center;padding:30px;transition:opacity .6s;}
+      .wake{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:radial-gradient(120% 90% at 50% 38%, #1c2140 0%, #06070e 70%);text-align:center;padding:30px;transition:opacity .6s;}
       .wake.hide{opacity:0;pointer-events:none;}
-      .wake .wg{width:104px;height:104px;border-radius:34px;display:grid;place-items:center;font-size:52px;color:#fff;
-        background:linear-gradient(140deg,var(--sky),var(--indigo));box-shadow:0 20px 60px rgba(94,92,230,.55);animation:fl 4s ease-in-out infinite;}
-      @keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
-      .wake h1{font-size:27px;font-weight:600;letter-spacing:-.3px;}
-      .wake p{font-size:15px;color:var(--mut);max-width:300px;line-height:1.5;}
-      .wake button{margin-top:6px;padding:15px 30px;border:none;border-radius:18px;cursor:pointer;font-family:var(--font);font-size:16px;font-weight:600;color:#fff;
-        background:linear-gradient(135deg,var(--sky),var(--indigo));box-shadow:0 12px 34px rgba(10,132,255,.5);display:inline-flex;align-items:center;gap:9px;}
+      .wake .wg{width:110px;height:110px;border-radius:36px;display:grid;place-items:center;font-size:54px;color:#fff;background:linear-gradient(140deg,var(--sky),var(--indigo));box-shadow:0 22px 66px rgba(94,92,230,.6);animation:fl 4s ease-in-out infinite;}
+      @keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+      .wake h1{font-size:28px;font-weight:700;letter-spacing:-.4px;}
+      .wake p{font-size:15px;color:var(--mut);max-width:300px;line-height:1.55;}
+      .wake button{margin-top:4px;padding:16px 32px;border:none;border-radius:18px;cursor:pointer;font-family:var(--font);font-size:16px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--sky),var(--indigo));box-shadow:0 14px 38px rgba(10,132,255,.55);}
 
-      .toast{position:fixed;left:50%;top:13%;transform:translateX(-50%) translateY(-8px);z-index:30;padding:10px 18px;border-radius:20px;
-        font-size:13px;font-weight:500;background:rgba(20,24,40,.88);border:1px solid var(--line);color:var(--ink);
-        backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);opacity:0;transition:.3s;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.4);}
+      .toast{position:fixed;left:50%;top:13%;transform:translateX(-50%) translateY(-8px);z-index:30;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;background:rgba(20,24,40,.9);border:1px solid var(--line);color:var(--ink);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);opacity:0;transition:.3s;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.4);}
       .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
     </style>
   </head>
@@ -115,17 +80,15 @@
     <div id="app">
       <canvas id="cv"></canvas>
       <div class="bar">
-        <div class="b-l"><div class="glyph">Ω</div><div><b>Ómicron</b><span>Gemelo Digital</span></div></div>
+        <div class="b-l"><div class="glyph">Ω</div><div><b>Ómicron</b><span>Gemelo Digital · 3D</span></div></div>
         <button class="vtoggle" id="vt" title="Voz">🔊</button>
       </div>
-      <div class="stage" id="stage"></div>
+      <div class="stage" id="stage"><div class="spin-hint" id="hint">Arrastra para girar tu Gemelo · toca un nodo</div></div>
 
       <div class="info" id="info">
         <button class="cls" id="info-x">✕</button>
         <div class="ic" id="info-ic">◈</div>
-        <h3 id="info-l">Nodo</h3>
-        <div class="big" id="info-v">—</div>
-        <p id="info-p"></p>
+        <h3 id="info-l">Nodo</h3><div class="big" id="info-v">—</div><p id="info-p"></p>
         <button class="act" id="info-act" style="display:none"></button>
       </div>
 
@@ -135,10 +98,7 @@
           <div style="flex:1;min-width:0"><div class="o-name">Oráculo</div><div class="o-say" id="say">Toca "Despertar" para comenzar.</div></div>
         </div>
         <div class="o-opts" id="opts"></div>
-        <div class="o-foot">
-          <input class="o-in" id="in" placeholder="Escribe o pregunta: ¿qué me conviene?" autocomplete="off" />
-          <button class="o-mic" id="mic" title="Hablar">🎙️</button>
-        </div>
+        <div class="o-foot"><input class="o-in" id="in" placeholder="¿Qué me conviene?" autocomplete="off" /><button class="o-mic" id="mic" title="Hablar">🎙️</button></div>
       </div>
       <div class="toast" id="toast"></div>
     </div>
@@ -146,7 +106,7 @@
     <div class="wake" id="wake">
       <div class="wg">Ω</div>
       <h1>Tu Gemelo Digital</h1>
-      <p>Un núcleo vivo conectado a todo lo que eres. El Oráculo te guiará por voz.</p>
+      <p>Un núcleo 3D vivo con todo lo que eres orbitando en el espacio. Gíralo con el dedo. El Oráculo te guía por voz.</p>
       <button id="wakeBtn">✨ Despertar el Oráculo</button>
     </div>
 
@@ -154,8 +114,6 @@
       (function(){
         "use strict";
         var el=function(id){return document.getElementById(id);};
-
-        // ── Estado (sinergia real de Ómicron) ──
         var KEY="omicron_holo",BASE={exec:40,qual:30,trans:18,fund:25};
         var st=load();
         function load(){try{var r=localStorage.getItem(KEY);if(r)return JSON.parse(r);}catch(e){}return {ejes:Object.assign({},BASE),pe:120,tokens:2480,contracts:0,vault:0,gov:0};}
@@ -165,141 +123,153 @@
         function levelN(){var p=st.pe;return p>=5000?6:p>=2000?4:p>=500?2:1;}
         function nextGoal(){var p=st.pe;if(p<500)return{name:"Nodo Core",need:500-p};if(p<2000)return{name:"Nodo Arquitecto",need:2000-p};if(p<5000)return{name:"Nodo Pioneer",need:5000-p};return null;}
         function cap(v){return Math.min(100,v);}
+        function clamp(v,a,b){return v<a?a:v>b?b:v;}
 
-        // ── Voz robusta (Apple/Chrome) ──
+        // voz
         var voiceOn=true,esVoice=null,tt=null;
         function pickVoice(){try{var vs=speechSynthesis.getVoices();esVoice=vs.filter(function(v){return /es[-_]/i.test(v.lang);})[0]||vs.filter(function(v){return /span|españ/i.test(v.name);})[0]||null;}catch(e){}}
         try{if("speechSynthesis"in window){speechSynthesis.onvoiceschanged=pickVoice;pickVoice();}}catch(e){}
-        function say(t){
-          var e=el("say");e.textContent="";clearInterval(tt);var i=0;tt=setInterval(function(){i+=2;e.textContent=t.slice(0,i);if(i>=t.length){e.textContent=t;clearInterval(tt);}},18);
-          try{
-            if(voiceOn&&"speechSynthesis"in window){
-              speechSynthesis.cancel();
-              var u=new SpeechSynthesisUtterance(t);u.lang="es-ES";u.rate=1.0;u.pitch=1.02;if(esVoice)u.voice=esVoice;
-              u.onstart=function(){el("orb").classList.add("speaking");};
-              u.onend=function(){el("orb").classList.remove("speaking");};
-              speechSynthesis.speak(u);
-            }
-          }catch(e2){}
-        }
-        el("vt").onclick=function(){voiceOn=!voiceOn;el("vt").textContent=voiceOn?"🔊":"🔇";el("vt").classList.toggle("off",!voiceOn);if(!voiceOn){try{speechSynthesis.cancel();}catch(e){}el("orb").classList.remove("speaking");}else{say("Voz activada. Te escucho y te hablo.");}};
+        function say(t){var e=el("say");e.textContent="";clearInterval(tt);var i=0;tt=setInterval(function(){i+=2;e.textContent=t.slice(0,i);if(i>=t.length){e.textContent=t;clearInterval(tt);}},18);
+          try{if(voiceOn&&"speechSynthesis"in window){speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang="es-ES";u.rate=1.0;u.pitch=1.02;if(esVoice)u.voice=esVoice;u.onstart=function(){el("orb").classList.add("speaking");};u.onend=function(){el("orb").classList.remove("speaking");};speechSynthesis.speak(u);}}catch(e2){}}
+        el("vt").onclick=function(){voiceOn=!voiceOn;el("vt").textContent=voiceOn?"🔊":"🔇";el("vt").classList.toggle("off",!voiceOn);if(!voiceOn){try{speechSynthesis.cancel();}catch(e){}el("orb").classList.remove("speaking");}else say("Voz activada.");};
         function toast(m){var t=el("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},1700);}
 
-        // ── Nodos (métricas reales que ENTREGAN info) ──
+        // ── Nodos en ESFERA 3D (distribución Fibonacci) ──
         var N=[
-          {id:"rep",  l:"Reputación", ic:"✦", c:"#ffd60a", a:-1.15,rf:.6, ph:0, get:function(){return rep();},
-            info:function(){return "Tu Gemelo Digital: 80% desempeño real (tus 4 ejes) + 20% credenciales. Imposible de falsear.";}},
-          {id:"pe",   l:"Experiencia",ic:"◆", c:"#64d2ff", a:-.35,rf:1.02,ph:1.1,get:function(){return st.pe;},fmt:1,
-            info:function(){var g=nextGoal();return "Puntos de experiencia. "+(g?("Te faltan "+g.need.toLocaleString("es")+" para "+g.name+"."):"Nivel máximo alcanzado.");}},
-          {id:"tok",  l:"Tokens Ω",   ic:"●", c:"#66d4cf", a:.35, rf:.66,ph:2.0,get:function(){return st.tokens;},fmt:1,
-            info:function(){return "Utilidad interna del ecosistema (no es dinero). Desbloquea conocimiento y destaca tu perfil.";}},
-          {id:"exec", l:"Ejecución",  ic:"⟐", c:"#0a84ff", a:1.15,rf:1.0, ph:.6, get:function(){return st.ejes.exec;}, act:"entrena",
-            info:function(){return "Tu capacidad de entregar. Sube dominando habilidades (Academia) y completando contratos.";}},
-          {id:"qual", l:"Calidad",    ic:"◈", c:"#5e5ce6", a:1.9, rf:.7, ph:2.6,get:function(){return st.ejes.qual;}, act:"ejecuta",
-            info:function(){return "La excelencia de tus entregas, validada entre pares. Sube ejecutando contratos con Escrow.";}},
-          {id:"trans",l:"Trascendencia",ic:"✧",c:"#ff77e9", a:2.55,rf:1.02,ph:1.7,get:function(){return st.ejes.trans;},act:"capitaliza",
-            info:function(){return "El valor que dejas a la red. Sube capitalizando soluciones en la Bóveda (regalías encadenadas).";}},
-          {id:"fund", l:"Fundamento", ic:"⬡", c:"#a78bfa", a:3.3, rf:.72,ph:3.1,get:function(){return st.ejes.fund;}, act:"entrena",
-            info:function(){return "Tu base de conocimiento verificable. Sube con la Academia y credenciales validadas.";}},
-          {id:"nodo", l:"Nodo",       ic:"◉", c:"#64d2ff", a:-2.05,rf:1.0,ph:.3, get:function(){return "N"+levelN();},
-            info:function(){return "Tu nivel: "+levelName()+". Evolucionas Operativo → Core → Arquitecto → Pioneer con PE y reputación.";}}
+          {id:"rep",  l:"Reputación",  ic:"✦", c:"#ffd60a", get:function(){return rep();},
+            info:function(){return "Tu Gemelo Digital: 80% desempeño real (4 ejes) + 20% credenciales. Imposible de falsear.";}},
+          {id:"pe",   l:"Experiencia", ic:"◆", c:"#64d2ff", get:function(){return st.pe;},fmt:1,
+            info:function(){var g=nextGoal();return "Puntos de experiencia. "+(g?("Te faltan "+g.need.toLocaleString("es")+" para "+g.name+"."):"Nivel máximo.");}},
+          {id:"tok",  l:"Tokens Ω",    ic:"●", c:"#66d4cf", get:function(){return st.tokens;},fmt:1,
+            info:function(){return "Utilidad interna (no es dinero): desbloquea conocimiento y destaca tu perfil.";}},
+          {id:"exec", l:"Ejecución",   ic:"⟐", c:"#0a84ff", get:function(){return st.ejes.exec;},act:"entrena",
+            info:function(){return "Tu capacidad de entregar. Sube dominando habilidades y completando contratos.";}},
+          {id:"qual", l:"Calidad",     ic:"◈", c:"#5e5ce6", get:function(){return st.ejes.qual;},act:"ejecuta",
+            info:function(){return "La excelencia de tus entregas, validada entre pares (Escrow).";}},
+          {id:"trans",l:"Trascend.",   ic:"✧", c:"#ff77e9", get:function(){return st.ejes.trans;},act:"capitaliza",
+            info:function(){return "El valor que dejas a la red. Sube capitalizando en la Bóveda (regalías).";}},
+          {id:"fund", l:"Fundamento",  ic:"⬡", c:"#a78bfa", get:function(){return st.ejes.fund;},act:"entrena",
+            info:function(){return "Tu base de conocimiento verificable. Sube con la Academia y credenciales.";}},
+          {id:"nodo", l:"Nodo",        ic:"◉", c:"#40cbe0", get:function(){return "N"+levelN();},
+            info:function(){return "Tu nivel: "+levelName()+". Evolucionas Operativo → Core → Arquitecto → Pioneer.";}}
         ];
-        var stage=el("stage");
-        N.forEach(function(n){var d=document.createElement("div");d.className="node";d.innerHTML='<span class="nl">'+n.l+'</span><b class="nv" style="color:'+n.c+'"></b>';
-          d.onclick=function(ev){ev.stopPropagation();openInfo(n);};n.dom=d;n.vEl=d.querySelector(".nv");stage.appendChild(d);});
-        function fmt(v){return typeof v==="number"?v.toLocaleString("es"):v;}
-        function paint(){N.forEach(function(n){var v=n.get();n.vEl.textContent=n.fmt?fmt(v):v;});}
+        (function sphere(){var n=N.length;for(var i=0;i<n;i++){var y=1-(i/(n-1))*2;var r=Math.sqrt(Math.max(0,1-y*y));var th=i*2.399963;N[i].vx=Math.cos(th)*r;N[i].vy=y;N[i].vz=Math.sin(th)*r;}})();
         function nById(id){for(var i=0;i<N.length;i++)if(N[i].id===id)return N[i];return null;}
+        function fmt(v){return typeof v==="number"?v.toLocaleString("es"):v;}
 
-        // ── Info card (el nodo entrega información) ──
-        function openInfo(n){
-          el("info-ic").textContent=n.ic;el("info-ic").style.background="linear-gradient(135deg,"+n.c+"55,"+n.c+"18)";el("info-ic").style.color=n.c;
-          el("info-l").textContent=n.l;var v=n.get();el("info-v").textContent=n.fmt?fmt(v):v;el("info-v").style.color=n.c;
-          el("info-p").textContent=n.info();
-          var ab=el("info-act");
-          if(n.act){ab.style.display="block";ab.textContent="Mejorar → "+ACT[n.act].name;ab.onclick=function(){closeInfo();run(n.act);};}
-          else ab.style.display="none";
-          el("info").classList.add("on");
-          say(n.l+". "+n.info());
-          n.dom.classList.remove("pulse");void n.dom.offsetWidth;n.dom.classList.add("pulse");
-        }
+        // info card
+        function openInfo(n){el("info-ic").textContent=n.ic;el("info-ic").style.background="linear-gradient(135deg,"+n.c+"55,"+n.c+"18)";el("info-ic").style.color=n.c;el("info-l").textContent=n.l;var v=n.get();el("info-v").textContent=n.fmt?fmt(v):v;el("info-v").style.color=n.c;el("info-p").textContent=n.info();var ab=el("info-act");if(n.act){ab.style.display="block";ab.textContent="Mejorar → "+ACT[n.act].name;ab.onclick=function(){closeInfo();run(n.act);};}else ab.style.display="none";el("info").classList.add("on");say(n.l+". "+n.info());}
         function closeInfo(){el("info").classList.remove("on");}
-        el("info-x").onclick=closeInfo;
+        el("info-x").onclick=closeInfo;el("info").addEventListener("click",function(e){e.stopPropagation();});
 
-        // ── Acciones (flujo real: Entrena→Ejecuta→Capitaliza→Gobierna) ──
+        // acciones (flujo real)
         var ACT={
-          entrena:{ic:"🧠",name:"Entrena",d:"Academia",run:function(){bump("exec",6);bump("fund",8);st.ejes.qual=cap(st.ejes.qual+2);st.pe+=180;},msg:"Dominaste una habilidad en la Academia. Tu Ejecución y Fundamento suben."},
-          ejecuta:{ic:"💼",name:"Ejecuta",d:"Contrato + Escrow",run:function(){bump("qual",7);st.ejes.exec=cap(st.ejes.exec+4);st.tokens+=120;st.contracts++;st.pe+=150;},msg:"Completaste un contrato con pago protegido. Tu Calidad crece y con ella tu reputación."},
-          capitaliza:{ic:"🔐",name:"Capitaliza",d:"Bóveda",run:function(){bump("trans",10);st.tokens+=90;st.vault++;st.pe+=120;},msg:"Publicaste en la Bóveda. Ahora genera regalías encadenadas: el conocimiento te paga."},
-          gobierna:{ic:"⚖️",name:"Gobierna",d:"Tribunal de Pares",run:function(){bump("fund",3);st.gov++;st.pe+=60;},msg:"Validaste como Tribunal de Pares. Sostienes la confianza cero del ecosistema."}
+          entrena:{ic:"🧠",name:"Entrena",d:"Academia",run:function(){bump("exec",6);bump("fund",8);st.ejes.qual=cap(st.ejes.qual+2);st.pe+=180;},msg:"Dominaste una habilidad. Tu Ejecución y Fundamento suben."},
+          ejecuta:{ic:"💼",name:"Ejecuta",d:"Contrato + Escrow",run:function(){bump("qual",7);st.ejes.exec=cap(st.ejes.exec+4);st.tokens+=120;st.contracts++;st.pe+=150;},msg:"Completaste un contrato con Escrow. Tu Calidad crece y con ella tu reputación."},
+          capitaliza:{ic:"🔐",name:"Capitaliza",d:"Bóveda",run:function(){bump("trans",10);st.tokens+=90;st.vault++;st.pe+=120;},msg:"Publicaste en la Bóveda. Genera regalías encadenadas: el conocimiento te paga."},
+          gobierna:{ic:"⚖️",name:"Gobierna",d:"Tribunal de Pares",run:function(){bump("fund",3);st.gov++;st.pe+=60;},msg:"Validaste como Tribunal de Pares. Sostienes la confianza cero."}
         };
-        function bump(e,d){st.ejes[e]=cap(st.ejes[e]+d);var n=nById(e);if(n){n.dom.classList.remove("pulse");void n.dom.offsetWidth;n.dom.classList.add("pulse");}}
-        function run(k){var a=ACT[k];if(!a)return;var lb=levelName();a.run();save();paint();pulseCore();var extra="";if(levelName()!==lb){extra=" ¡Evolucionaste a "+levelName()+"!";toast("⬆ "+levelName());}else{extra=" Reputación "+rep()+".";}say(a.msg+extra);setTimeout(guide,1400);}
-        function reco(){var best=null,bs=-1;Object.keys(ACT).forEach(function(k){var snap=JSON.stringify(st);var r0=rep(),p0=st.pe;ACT[k].run();var s=(rep()-r0)*10+(st.pe-p0)*0.05;st=JSON.parse(snap);if(s>bs){bs=s;best=k;}});return best;}
-        function guide(){var g=nextGoal(),r=reco();renderOpts(r);if(g)say("Eres "+levelName()+", reputación "+rep()+". Para llegar a "+g.name+" te faltan "+g.need.toLocaleString("es")+" PE. Lo más rentable ahora: "+ACT[r].name+". Tú decides.");else say("Nivel máximo. Sigue capitalizando: tu conocimiento paga en cadena.");}
+        function bump(e,d){st.ejes[e]=cap(st.ejes[e]+d);var n=nById(e);if(n){n.flash=1;}}
+        function run(k){var a=ACT[k];if(!a)return;var lb=levelName();a.run();save();pulseCore();var extra="";if(levelName()!==lb){extra=" ¡Evolucionaste a "+levelName()+"!";toast("⬆ "+levelName());}else extra=" Reputación "+rep()+".";say(a.msg+extra);setTimeout(guide,1400);}
+        function reco(){var best=null,bs=-1;Object.keys(ACT).forEach(function(k){var s=JSON.stringify(st);var r0=rep(),p0=st.pe;ACT[k].run();var sc=(rep()-r0)*10+(st.pe-p0)*0.05;st=JSON.parse(s);if(sc>bs){bs=sc;best=k;}});return best;}
+        function guide(){var g=nextGoal(),r=reco();renderOpts(r);if(g)say("Eres "+levelName()+", reputación "+rep()+". Para llegar a "+g.name+" te faltan "+g.need.toLocaleString("es")+" PE. Lo más rentable ahora: "+ACT[r].name+".");else say("Nivel máximo. Sigue capitalizando: tu conocimiento paga en cadena.");}
         function renderOpts(rk){var box=el("opts");box.innerHTML="";Object.keys(ACT).forEach(function(k){var a=ACT[k];var b=document.createElement("button");b.className="opt"+(k===rk?" reco":"");b.innerHTML='<span>'+a.ic+' '+a.name+(k===rk?' ★':'')+'</span><span class="od">'+a.d+'</span>';b.onclick=function(){run(k);};box.appendChild(b);});}
-
-        // ── Conversacional ──
         function handle(q){q=(q||"").toLowerCase().trim();if(!q)return;
-          if(/convien|recomien|que hago|qué hago|siguiente|necesito|mejor/.test(q)){var r=reco();renderOpts(r);return say("Lo más rentable ahora es "+ACT[r].name+" ("+ACT[r].d+"). Te lo dejo destacado.");}
+          if(/convien|recomien|que hago|qué hago|siguiente|necesito|mejor/.test(q)){var r=reco();renderOpts(r);return say("Lo más rentable ahora es "+ACT[r].name+" ("+ACT[r].d+").");}
           if(/entren|aprend|academ|habilidad/.test(q))return run("entrena");
           if(/ejecut|contrat|trabaj|escrow/.test(q))return run("ejecuta");
           if(/capitaliz|boveda|bóveda|regal/.test(q))return run("capitaliza");
           if(/gobern|tribunal|arbitr|vota/.test(q))return run("gobierna");
-          if(/reputaci/.test(q))return openInfo(nById("rep"));
-          if(/nivel|nodo/.test(q))return openInfo(nById("nodo"));
-          if(/token/.test(q))return openInfo(nById("tok"));
-          if(/hola|hey|ayuda|gracias/.test(q))return say("Soy tu Oráculo. Toca cualquier nodo para conocerlo, o dime qué te conviene y lo hacemos crecer.");
-          say("Te escucho. Prueba: ¿qué me conviene?, entrena, ejecuta un contrato, o toca un nodo del Gemelo.");}
+          if(/reputaci/.test(q))return openInfo(nById("rep"));if(/nivel|nodo/.test(q))return openInfo(nById("nodo"));if(/token/.test(q))return openInfo(nById("tok"));
+          if(/hola|hey|ayuda|gracias/.test(q))return say("Soy tu Oráculo. Gira tu Gemelo, toca un nodo para conocerlo, o dime qué te conviene.");
+          say("Prueba: ¿qué me conviene?, entrena, ejecuta un contrato, o toca un nodo.");}
         el("in").addEventListener("keydown",function(e){if(e.key==="Enter"){var v=e.target.value;e.target.value="";handle(v);}});
-        var SR=window.SpeechRecognition||window.webkitSpeechRecognition,rc=null,lis=false;
-        el("mic").onclick=function(){if(!SR){toast("Voz no soportada aquí");return;}if(lis){try{rc.stop();}catch(e){}return;}rc=new SR();rc.lang="es-ES";rc.interimResults=false;rc.onstart=function(){lis=true;el("mic").classList.add("on");};rc.onend=function(){lis=false;el("mic").classList.remove("on");};rc.onerror=function(){lis=false;el("mic").classList.remove("on");};rc.onresult=function(ev){var t=ev.results[0][0].transcript;el("in").value=t;handle(t);};try{rc.start();}catch(e){}};
+        var SR=window.SpeechRecognition||window.webkitSpeechRecognition,rc=null,lisn=false;
+        el("mic").onclick=function(){if(!SR){toast("Voz no soportada");return;}if(lisn){try{rc.stop();}catch(e){}return;}rc=new SR();rc.lang="es-ES";rc.interimResults=false;rc.onstart=function(){lisn=true;el("mic").classList.add("on");};rc.onend=function(){lisn=false;el("mic").classList.remove("on");};rc.onerror=function(){lisn=false;el("mic").classList.remove("on");};rc.onresult=function(ev){var t=ev.results[0][0].transcript;el("in").value=t;handle(t);};try{rc.start();}catch(e){}};
 
-        // ── CANVAS: núcleo + nodos + líneas (estética Apple, suave) ──
+        // ══ CANVAS 3D ══
         var cv=el("cv"),ctx=cv.getContext("2d");
-        var W=0,H=0,DPR=1,cx=0,cy=0,orbR=0,stars=[],pulses=[];
-        function layout(){DPR=Math.min(window.devicePixelRatio||1,2);var r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);orbR=Math.min(W,H)*0.125;stars=[];for(var i=0;i<60;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.2,t:Math.random()*6.28});}
-        function sr(){var s=stage.getBoundingClientRect(),a=el("app").getBoundingClientRect();return {cx:s.left-a.left+s.width/2,cy:s.top-a.top+s.height*0.44,w:s.width,h:s.height};}
+        var W=0,H=0,DPR=1,cx=0,cy=0,orbR=0,R3=0,dust=[],pulses=[];
+        var ay=0.5,ax=-0.25,ayv=0,axv=0,drag=false,lx=0,ly=0,moved=0;
+        function layout(){DPR=Math.min(window.devicePixelRatio||1,2);var r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+          var s=sr();orbR=Math.min(W,H)*0.115;R3=Math.min(W,H)*0.34;
+          dust=[];for(var i=0;i<90;i++){var u=Math.random()*2-1,th=Math.random()*6.28,rr=Math.sqrt(1-u*u);dust.push({vx:Math.cos(th)*rr,vy:u,vz:Math.sin(th)*rr,s:Math.random()*1.2+.3});}}
+        function sr(){var s=el("stage").getBoundingClientRect(),a=el("app").getBoundingClientRect();return {cx:s.left-a.left+s.width/2,cy:s.top-a.top+s.height*0.44};}
         function hx(h,al){h=h.replace("#","");var n=parseInt(h,16);return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+al+")";}
-        function pulseCore(){pulses.push({r:orbR,max:orbR*3.4,w:2.5});}
-        var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches,t0=performance.now();
-        function frame(now){var t=now-t0;ctx.clearRect(0,0,W,H);
-          for(var i=0;i<stars.length;i++){var s=stars[i];var tw=reduce?.5:.4+.4*Math.sin(t*.001+s.t);ctx.fillStyle="rgba(220,230,255,"+(.1+tw*.3)+")";ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,6.28);ctx.fill();}
-          var sc=sr();cx=sc.cx;cy=sc.cy;var rx=sc.w*.40,ry=sc.h*.30;
-          // nodos + líneas
-          N.forEach(function(n){var fl=reduce?0:Math.sin(t*.0006+n.ph)*5;var x=cx+Math.cos(n.a)*rx*n.rf,y=cy+Math.sin(n.a)*ry*n.rf+fl;n.x=x;n.y=y;
-            n.dom.style.transform="translate("+x+"px,"+y+"px) translate(-50%,-50%)";
-            var ang=Math.atan2(y-cy,x-cx);var sx=cx+Math.cos(ang)*orbR*.98,sy=cy+Math.sin(ang)*orbR*.98,ex=x-Math.cos(ang)*44,ey=y-Math.sin(ang)*26;
-            var g=ctx.createLinearGradient(sx,sy,ex,ey);g.addColorStop(0,hx(n.c,.04));g.addColorStop(1,hx(n.c,.32));ctx.strokeStyle=g;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-            if(!reduce){var pp=(t*.0004+n.ph*.2)%1;ctx.fillStyle=hx(n.c,.85);ctx.beginPath();ctx.arc(sx+(ex-sx)*pp,sy+(ey-sy)*pp,1.5,0,6.28);ctx.fill();}
-            ctx.save();ctx.shadowBlur=9;ctx.shadowColor=n.c;ctx.fillStyle=n.c;ctx.beginPath();ctx.arc(ex,ey,2.6,0,6.28);ctx.fill();ctx.restore();
-          });
-          // núcleo (suave, Apple)
-          var pulse=reduce?1:1+Math.sin(t*.0022)*.04,R=orbR*pulse;
-          var halo=ctx.createRadialGradient(cx,cy,orbR*.2,cx,cy,orbR*2.2);halo.addColorStop(0,"rgba(94,92,230,.2)");halo.addColorStop(.5,"rgba(100,210,255,.08)");halo.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=halo;ctx.beginPath();ctx.arc(cx,cy,orbR*2.2,0,6.28);ctx.fill();
-          var rot=reduce?0:t*.00025;for(var k=0;k<2;k++){ctx.save();ctx.translate(cx,cy);ctx.rotate(rot*(k?-1:1)+k*1.1);ctx.strokeStyle="rgba(180,205,255,"+(.16-k*.05)+")";ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(0,0,orbR*(1.35+k*.22),orbR*(.52+k*.14),0,0,6.28);ctx.stroke();ctx.restore();}
-          var g=ctx.createRadialGradient(cx-R*.3,cy-R*.35,R*.05,cx,cy,R);g.addColorStop(0,"#ffffff");g.addColorStop(.35,"#bfe4ff");g.addColorStop(.7,"#6b8cff");g.addColorStop(1,"rgba(94,92,230,.12)");
-          ctx.save();ctx.shadowBlur=42;ctx.shadowColor="rgba(100,150,255,.6)";ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,R,0,6.28);ctx.fill();ctx.restore();
-          var cg=ctx.createRadialGradient(cx,cy,0,cx,cy,R*.55);cg.addColorStop(0,"rgba(255,255,255,.95)");cg.addColorStop(1,"rgba(255,255,255,0)");ctx.globalCompositeOperation="screen";ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy,R*.55,0,6.28);ctx.fill();ctx.globalCompositeOperation="source-over";
-          ctx.lineWidth=2.5;ctx.strokeStyle="rgba(255,255,255,.1)";ctx.beginPath();ctx.arc(cx,cy,R+9,0,6.28);ctx.stroke();ctx.strokeStyle="#64d2ff";ctx.lineCap="round";ctx.beginPath();ctx.arc(cx,cy,R+9,-Math.PI/2,-Math.PI/2+(rep()/100)*6.28);ctx.stroke();ctx.lineCap="butt";
-          ctx.fillStyle="#0a0f22";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="700 "+Math.round(R*.7)+"px "+"-apple-system,Inter,sans-serif";ctx.fillText(rep(),cx,cy-R*.02);
-          ctx.fillStyle="rgba(10,15,34,.6)";ctx.font="600 9px -apple-system,Inter,sans-serif";ctx.fillText("REPUTACIÓN",cx,cy+R*.45);
-          for(var p=pulses.length-1;p>=0;p--){var pu=pulses[p];pu.r+=(pu.max-pu.r)*.05+1.4;var al=Math.max(0,1-pu.r/pu.max);ctx.strokeStyle="rgba(100,210,255,"+(al*.6)+")";ctx.lineWidth=pu.w;ctx.beginPath();ctx.arc(cx,cy,pu.r,0,6.28);ctx.stroke();if(pu.r>=pu.max-2)pulses.splice(p,1);}
+        function pulseCore(){pulses.push({r:orbR,max:orbR*3.6,w:2.5});}
+        function project(vx,vy,vz){
+          // rotación yaw (ay) + pitch (ax)
+          var x1=vx*Math.cos(ay)+vz*Math.sin(ay), z1=-vx*Math.sin(ay)+vz*Math.cos(ay), y1=vy;
+          var y2=y1*Math.cos(ax)-z1*Math.sin(ax), z2=y1*Math.sin(ax)+z1*Math.cos(ax), x2=x1;
+          var persp=2.4/(2.4-z2*0.92);
+          return {x:cx+x2*R3*persp, y:cy+y2*R3*persp, z:z2, p:persp};
+        }
+        var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches,t0=performance.now(),proj=[];
+        function frame(now){
+          var t=now-t0;var s=sr();cx=s.cx;cy=s.cy;ctx.clearRect(0,0,W,H);
+          if(!drag){ay+=ayv+(reduce?0:0.0016);ax=clamp(ax+axv,-1.1,1.1);ayv*=0.95;axv*=0.95;}
+          // halo/nebulosa
+          var halo=ctx.createRadialGradient(cx,cy,orbR*.2,cx,cy,orbR*3);halo.addColorStop(0,"rgba(94,92,230,.18)");halo.addColorStop(.5,"rgba(100,210,255,.06)");halo.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=halo;ctx.beginPath();ctx.arc(cx,cy,orbR*3,0,6.28);ctx.fill();
+          // polvo estelar 3D
+          for(var i=0;i<dust.length;i++){var d=dust[i];var q=project(d.vx*1.9,d.vy*1.9,d.vz*1.9);var al=clamp((q.z+1)/2,0,1);ctx.fillStyle="rgba(200,220,255,"+(0.05+al*0.35)+")";ctx.beginPath();ctx.arc(q.x,q.y,d.s*q.p*0.6,0,6.28);ctx.fill();}
+          // proyectar nodos y ordenar por profundidad
+          proj.length=0;for(var i=0;i<N.length;i++){var n=N[i];var q=project(n.vx,n.vy,n.vz);n.sx=q.x;n.sy=q.y;n.sz=q.z;n.sp=q.p;proj.push(n);}
+          proj.sort(function(a,b){return a.sz-b.sz;});
+          // dibujar nodos detrás del núcleo
+          for(var i=0;i<proj.length;i++) if(proj[i].sz<0) drawNode(proj[i],t);
+          drawCore(t);
+          for(var i=0;i<proj.length;i++) if(proj[i].sz>=0) drawNode(proj[i],t);
+          // pulsos
+          for(var p=pulses.length-1;p>=0;p--){var pu=pulses[p];pu.r+=(pu.max-pu.r)*.05+1.5;var al=Math.max(0,1-pu.r/pu.max);ctx.strokeStyle="rgba(100,210,255,"+(al*.6)+")";ctx.lineWidth=pu.w;ctx.beginPath();ctx.arc(cx,cy,pu.r,0,6.28);ctx.stroke();if(pu.r>=pu.max-2)pulses.splice(p,1);}
           requestAnimationFrame(frame);
         }
-        el("cv").addEventListener("click",function(e){var r=cv.getBoundingClientRect();if(Math.hypot(e.clientX-r.left-cx,e.clientY-r.top-cy)<orbR*1.1){closeInfo();say("Yo soy tu Gemelo Digital: reputación "+rep()+", "+levelName()+". Cada nodo a mi alrededor eres tú. Tócalos para conocerte.");}});
-        el("info").addEventListener("click",function(e){e.stopPropagation();});
+        function drawNode(n,t){
+          var d01=clamp((n.sz+1)/2,0,1);var al=0.32+d01*0.68;
+          // línea al núcleo
+          var ang=Math.atan2(n.sy-cy,n.sx-cx);var sx=cx+Math.cos(ang)*orbR*.95,sy=cy+Math.sin(ang)*orbR*.95;
+          var g=ctx.createLinearGradient(sx,sy,n.sx,n.sy);g.addColorStop(0,hx(n.c,.03*al));g.addColorStop(1,hx(n.c,.4*al));ctx.strokeStyle=g;ctx.lineWidth=1*n.sp;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(n.sx,n.sy);ctx.stroke();
+          if(!reduce){var pp=(t*.0004+n.vx)%1;if(pp<0)pp+=1;ctx.fillStyle=hx(n.c,.8*al);ctx.beginPath();ctx.arc(sx+(n.sx-sx)*pp,sy+(n.sy-sy)*pp,1.4*n.sp,0,6.28);ctx.fill();}
+          // punto
+          var fl=n.flash?(n.flash*=0.9):0;var dotR=(2.4+d01*3)*n.sp+(fl>0.05?fl*6:0);
+          ctx.save();ctx.shadowBlur=(10+d01*10);ctx.shadowColor=n.c;ctx.fillStyle=hx(n.c,al);ctx.beginPath();ctx.arc(n.sx,n.sy,dotR,0,6.28);ctx.fill();ctx.restore();
+          // etiqueta (valor + nombre) hacia afuera
+          var lx2=n.sx+Math.cos(ang)*(14*n.sp+8), ly2=n.sy+Math.sin(ang)*(14*n.sp+8);
+          var v=n.get();var val=n.fmt?fmt(v):(""+v);
+          ctx.textAlign=(n.sx<cx)?"right":"left";ctx.textBaseline="middle";
+          ctx.fillStyle="rgba(255,255,255,"+al+")";ctx.font="700 "+Math.round(15*clamp(n.sp,.7,1.5))+"px "+"-apple-system,Inter,sans-serif";ctx.fillText(val,lx2,ly2-6);
+          ctx.fillStyle=hx(n.c,al*.9);ctx.font="600 9px -apple-system,Inter,sans-serif";ctx.fillText(n.l.toUpperCase(),lx2,ly2+8);
+        }
+        function drawCore(t){
+          var pulse=reduce?1:1+Math.sin(t*.0022)*.045,R=orbR*pulse,high=rep()>=66;
+          var rot=reduce?0:t*.0003;
+          for(var k=0;k<2;k++){ctx.save();ctx.translate(cx,cy);ctx.rotate(rot*(k?-1:1)+k*1.1+ay*0.4);ctx.strokeStyle="rgba(180,205,255,"+(.14-k*.04)+")";ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(0,0,R*(1.5+k*.28),R*(.55+k*.16),0,0,6.28);ctx.stroke();ctx.restore();}
+          var g=ctx.createRadialGradient(cx-R*.32,cy-R*.36,R*.05,cx,cy,R);g.addColorStop(0,"#ffffff");g.addColorStop(.32,"#c9ecff");g.addColorStop(.66,"#6b8cff");g.addColorStop(1,"rgba(94,92,230,.15)");
+          ctx.save();ctx.shadowBlur=46;ctx.shadowColor=high?"rgba(255,214,10,.5)":"rgba(100,150,255,.65)";ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,R,0,6.28);ctx.fill();ctx.restore();
+          // brillo especular
+          var sg=ctx.createRadialGradient(cx-R*.35,cy-R*.4,0,cx-R*.35,cy-R*.4,R*.6);sg.addColorStop(0,"rgba(255,255,255,.95)");sg.addColorStop(1,"rgba(255,255,255,0)");ctx.globalCompositeOperation="screen";ctx.fillStyle=sg;ctx.beginPath();ctx.arc(cx-R*.35,cy-R*.4,R*.6,0,6.28);ctx.fill();ctx.globalCompositeOperation="source-over";
+          // anillo reputación
+          ctx.lineWidth=2.5;ctx.strokeStyle="rgba(255,255,255,.1)";ctx.beginPath();ctx.arc(cx,cy,R+9,0,6.28);ctx.stroke();ctx.strokeStyle=high?"#ffd60a":"#64d2ff";ctx.lineCap="round";ctx.beginPath();ctx.arc(cx,cy,R+9,-Math.PI/2,-Math.PI/2+(rep()/100)*6.28);ctx.stroke();ctx.lineCap="butt";
+          ctx.fillStyle="#0a0f22";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="800 "+Math.round(R*.72)+"px -apple-system,Inter,sans-serif";ctx.fillText(rep(),cx,cy-R*.02);
+          ctx.fillStyle="rgba(10,15,34,.6)";ctx.font="700 8.5px -apple-system,Inter,sans-serif";ctx.fillText("REPUTACIÓN",cx,cy+R*.46);
+        }
+
+        // ── Interacción: arrastrar para girar + tap en nodo ──
+        function pt(e){var r=cv.getBoundingClientRect();var t=e.touches?e.touches[0]:e;return {x:(t?t.clientX:e.clientX)-r.left,y:(t?t.clientY:e.clientY)-r.top};}
+        cv.addEventListener("pointerdown",function(e){drag=true;moved=0;var p=pt(e);lx=p.x;ly=p.y;ayv=0;axv=0;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
+        cv.addEventListener("pointermove",function(e){if(!drag)return;var p=pt(e);var dx=p.x-lx,dy=p.y-ly;lx=p.x;ly=p.y;moved+=Math.abs(dx)+Math.abs(dy);ay+=dx*0.007;ax=clamp(ax-dy*0.007,-1.1,1.1);ayv=dx*0.007;axv=-dy*0.007;if(moved>10)el("hint").style.opacity=0;});
+        function endDrag(e){if(!drag)return;drag=false;
+          if(moved<8){ // tap → nodo o núcleo
+            var p=pt(e);var best=null,bd=1e9;for(var i=0;i<N.length;i++){var n=N[i];var dd=Math.hypot(p.x-n.sx,p.y-n.sy);if(dd<34&&dd<bd&&(!best||n.sz>best.sz)){bd=dd;best=n;}}
+            if(best)openInfo(best);
+            else if(Math.hypot(p.x-cx,p.y-cy)<orbR*1.15){closeInfo();say("Yo soy tu Gemelo Digital: reputación "+rep()+", "+levelName()+". Gírame y toca cada nodo para conocerte.");}
+          }}
+        cv.addEventListener("pointerup",endDrag);cv.addEventListener("pointercancel",function(){drag=false;});
         window.addEventListener("resize",layout);
 
-        // ── Arranque con gesto (voz garantizada) ──
-        layout();requestAnimationFrame(frame);paint();
-        el("wakeBtn").onclick=function(){
-          el("wake").classList.add("hide");
-          // desbloqueo de audio + primer habla DENTRO del gesto
-          try{if("speechSynthesis"in window){speechSynthesis.cancel();pickVoice();}}catch(e){}
-          say("Bienvenido. Soy tu Oráculo. Esto es tu Gemelo Digital: tu reputación al centro y todo lo que eres orbitando alrededor. Toca cualquier nodo para conocerlo, o dime qué te conviene. Empecemos a crecer.");
-          setTimeout(guide,4200);
-        };
+        // arranque
+        layout();requestAnimationFrame(frame);
+        el("wakeBtn").onclick=function(){el("wake").classList.add("hide");try{if("speechSynthesis"in window){speechSynthesis.cancel();pickVoice();}}catch(e){}
+          say("Bienvenido. Soy tu Oráculo. Este es tu Gemelo Digital en 3D: tu reputación al centro y todo lo que eres orbitando. Gírame con el dedo y toca un nodo para conocerlo. Empecemos a crecer.");setTimeout(guide,4600);};
       })();
     </script>
   </body>
