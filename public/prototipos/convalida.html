@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Ómicron · Convalida tu Gemelo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <style>
+      :root { --cyan:#00f0ff; --cyans:#7df9ff; --amber:#f59e0b; --green:#39ff14; --blue:#22d3ee; --red:#ff3d57; --bg:#020613; --mono:"Share Tech Mono",monospace; --display:"Rajdhani",sans-serif; }
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { font-family:var(--display); background:radial-gradient(circle at 50% -10%,rgba(0,240,255,0.08),transparent 55%),#01040d; color:#eaf2ff; min-height:100vh; min-height:100dvh; padding:22px 14px 60px; }
+      body::before { content:""; position:fixed; inset:0; background-image:linear-gradient(rgba(0,240,255,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,0.035) 1px,transparent 1px); background-size:42px 42px; pointer-events:none; -webkit-mask-image:radial-gradient(circle at 50% 30%,#000 40%,transparent 85%); mask-image:radial-gradient(circle at 50% 30%,#000 40%,transparent 85%); }
+      .wrap { position:relative; z-index:1; max-width:640px; margin:0 auto; }
+      .brand { display:flex; align-items:center; gap:11px; justify-content:center; margin-bottom:4px; }
+      .omega { width:36px; height:36px; border-radius:9px; display:grid; place-items:center; background:linear-gradient(135deg,#7df9ff,#00f0ff); box-shadow:0 0 18px rgba(0,240,255,0.6); color:#020613; font-weight:700; font-size:19px; }
+      h1 { font-size:22px; font-weight:700; text-align:center; }
+      .sub { text-align:center; font-family:var(--mono); font-size:11px; letter-spacing:1.5px; color:rgba(0,240,255,0.55); text-transform:uppercase; margin-bottom:18px; }
+      .card { background:rgba(10,20,40,0.9); border:1px solid rgba(0,240,255,0.14); border-radius:16px; padding:18px; }
+      .nodecard { position:relative; overflow:hidden; text-align:center; background:radial-gradient(circle at 50% 0%,rgba(0,240,255,0.08),rgba(245,158,11,0.05) 60%,transparent 75%); }
+      .ring-wrap { position:relative; width:190px; height:190px; margin:2px auto 8px; }
+      .ring-wrap .center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+      .rep-num { font-size:44px; font-weight:700; line-height:1; color:#fff; text-shadow:0 0 20px rgba(0,240,255,0.5); }
+      .rep-lbl { font-family:var(--mono); font-size:9px; letter-spacing:2px; color:rgba(234,242,255,0.7); text-transform:uppercase; margin-top:3px; }
+      .node-name { font-size:22px; font-weight:700; }
+      .node-name .em { background:linear-gradient(135deg,#7df9ff,#f59e0b); -webkit-background-clip:text; background-clip:text; color:transparent; }
+      .pe-line { font-family:var(--mono); font-size:11px; color:rgba(234,242,255,0.6); margin-top:2px; }
+      .pbar { height:8px; border-radius:5px; background:rgba(255,255,255,0.08); overflow:hidden; margin-top:12px; }
+      .pbar > i { display:block; height:100%; border-radius:5px; background:linear-gradient(90deg,var(--cyan),var(--amber)); box-shadow:0 0 12px rgba(0,240,255,0.5); transition:width .6s cubic-bezier(.2,.8,.2,1); }
+      .node-meta { display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:rgba(234,242,255,0.5); margin-top:6px; text-transform:uppercase; letter-spacing:1px; }
+      .ejes { display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; margin-top:14px; }
+      .eje .top { display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; }
+      .eje .top b { font-family:var(--mono); }
+      .ebar { height:6px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden; }
+      .ebar > i { display:block; height:100%; border-radius:4px; transition:width .5s ease; }
+      .sectitle { font-family:var(--mono); font-size:10px; letter-spacing:1.5px; color:rgba(0,240,255,0.6); text-transform:uppercase; margin:20px 4px 10px; display:flex; justify-content:space-between; align-items:center; }
+      .reset { font-family:var(--mono); font-size:9px; letter-spacing:1px; color:rgba(255,61,87,0.7); cursor:pointer; text-transform:uppercase; border:1px solid rgba(255,61,87,0.3); border-radius:14px; padding:4px 10px; background:none; }
+      .acts { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+      .act { position:relative; display:flex; flex-direction:column; gap:6px; padding:16px 14px; border-radius:14px; cursor:pointer; text-align:left; border:1px solid rgba(0,240,255,0.18); background:rgba(0,240,255,0.04); transition:transform .18s,border-color .18s,background .18s; -webkit-tap-highlight-color:transparent; }
+      .act:hover { transform:translateY(-3px); border-color:rgba(0,240,255,0.45); background:rgba(0,240,255,0.08); }
+      .act:active { transform:translateY(-1px) scale(0.99); }
+      .act.done { border-color:rgba(57,255,20,0.4); background:rgba(57,255,20,0.06); }
+      .act .ico { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; background:rgba(0,240,255,0.12); color:var(--cyan); }
+      .act.done .ico { background:rgba(57,255,20,0.15); color:var(--green); }
+      .act .t { font-weight:700; font-size:15px; }
+      .act .d { font-size:11.5px; color:rgba(234,242,255,0.6); line-height:1.35; }
+      .act .gain { font-family:var(--mono); font-size:10px; letter-spacing:.5px; color:var(--amber); }
+      .act.reco { border-color:rgba(245,158,11,0.65); box-shadow:0 0 16px rgba(245,158,11,0.35); }
+      .act.reco .t::after { content:" ★"; color:var(--amber); }
+      .act .chk { position:absolute; top:12px; right:12px; color:var(--green); opacity:0; transition:opacity .2s; }
+      .act.done .chk { opacity:1; }
+      .yrs { display:flex; align-items:center; gap:10px; margin-top:2px; }
+      .step { width:30px; height:30px; border-radius:8px; border:1px solid rgba(0,240,255,0.35); background:rgba(0,240,255,0.06); color:var(--cyan); font-size:18px; cursor:pointer; display:grid; place-items:center; }
+      .yrs .num { font-size:22px; font-weight:700; min-width:34px; text-align:center; }
+      .log { margin-top:8px; display:flex; flex-direction:column; gap:7px; }
+      .logi { display:flex; gap:9px; align-items:flex-start; font-size:12.5px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); animation:logIn .3s ease both; }
+      @keyframes logIn { from{opacity:0;transform:translateX(-8px);} to{opacity:1;transform:none;} }
+      .logi .dot { width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; box-shadow:0 0 8px currentColor; }
+      .logi .g { font-family:var(--mono); font-size:10px; color:var(--amber); margin-top:2px; }
+      .empty { font-family:var(--mono); font-size:11px; color:rgba(234,242,255,0.4); text-align:center; padding:14px; }
+      .synced { text-align:center; font-family:var(--mono); font-size:10px; letter-spacing:1px; color:rgba(57,255,20,0.7); margin-top:14px; }
+      .flash { position:fixed; left:50%; top:38%; transform:translate(-50%,-50%); z-index:30; text-align:center; opacity:0; pointer-events:none; }
+      .flash .big { font-size:30px; font-weight:700; color:var(--amber); text-shadow:0 0 30px rgba(245,158,11,0.7); }
+      .filepill { font-family:var(--mono); font-size:10px; color:var(--green); }
+    </style>
+  </head>
+  <body>
+    <style>
+      .omni-nav{position:fixed;top:9px;left:50%;transform:translateX(-50%);z-index:120;display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:96vw;padding:4px;border-radius:22px;background:rgba(6,12,26,0.72);border:1px solid rgba(0,240,255,0.22);backdrop-filter:blur(10px);box-shadow:0 6px 24px rgba(0,0,0,0.45);}
+      .omni-nav a{font-family:"Share Tech Mono",monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:rgba(234,242,255,0.7);text-decoration:none;padding:5px 9px;border-radius:16px;transition:all .18s;white-space:nowrap;}
+      .omni-nav a:hover{background:#00f0ff;color:#020613;}
+      .omni-nav a.active{background:rgba(0,240,255,0.16);color:#7df9ff;}
+      @media (max-width: 620px){
+        .omni-nav{ top:0; left:0; right:0; transform:none; max-width:100%; border-radius:0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; -webkit-overflow-scrolling:touch; padding:5px 6px; }
+        .omni-nav::-webkit-scrollbar{ display:none; }
+        .omni-nav a{ flex:0 0 auto; }
+        body{ padding-top:50px; }
+      }
+    </style>
+    <nav class="omni-nav">
+      <a href="./omicron.html">Ω</a>
+      <a class="active" href="./convalida.html">Convalida</a>
+      <a href="./nucleo.html">Núcleo</a>
+      <a href="./empleos.html">Empleos</a>
+      <a href="./os.html">OS</a>
+      <a href="./gemelo-vivo.html">Gemelo</a>
+      <a href="./nexus.html">Nexus</a>
+    </nav>
+    <div class="wrap">
+      <div class="brand"><span class="omega">Ω</span><h1>Convalida tu Gemelo</h1></div>
+      <div class="sub">Carga tus datos · se convalidan · sube de nodo</div>
+
+      <div class="card nodecard">
+        <div class="ring-wrap">
+          <div id="ring"></div>
+          <div class="center"><span class="rep-num" id="rep">34</span><span class="rep-lbl">Reputación</span></div>
+        </div>
+        <div class="node-name">Nodo <span class="em" id="nodeName">Operativo</span></div>
+        <div class="pe-line"><span id="pe">120</span> / <span id="peNext">500</span> PE · comisión <span id="com">15%</span></div>
+        <div class="pbar"><i id="pbar" style="width:24%"></i></div>
+        <div class="node-meta"><span id="tierA">Operativo</span><span id="tierB">Core</span></div>
+        <div class="ejes" id="ejes"></div>
+      </div>
+
+      <div class="sectitle"><span>▸ Aporta tus datos para convalidar</span><button class="reset" id="reset">Reiniciar</button></div>
+      <div class="acts">
+        <label class="act" id="a-cv">
+          <input type="file" accept=".pdf,.doc,.docx,image/*" style="display:none" id="cvfile" />
+          <span class="chk" data-ic="check"></span>
+          <span class="ico" data-ic="file"></span>
+          <span class="t">Subir CV</span>
+          <span class="d" id="cvd">Sube tu currículum para convalidar tu experiencia.</span>
+          <span class="gain">+200 PE · Ejecución</span>
+        </label>
+        <button class="act" id="a-title">
+          <span class="chk" data-ic="check"></span>
+          <span class="ico" data-ic="cap"></span>
+          <span class="t">Validar título</span>
+          <span class="d" id="titled">Añade un título o certificación verificable.</span>
+          <span class="gain">+250 PE · Fundamento</span>
+        </button>
+        <div class="act" id="a-years">
+          <span class="ico" data-ic="clock"></span>
+          <span class="t">Años de experiencia</span>
+          <div class="yrs"><button class="step" id="yminus">−</button><span class="num" id="ynum">0</span><button class="step" id="yplus">+</button></div>
+          <span class="gain">+60 PE por año</span>
+        </div>
+        <button class="act" id="a-vault">
+          <span class="chk" data-ic="check"></span>
+          <span class="ico" data-ic="book"></span>
+          <span class="t">Aporte a la Bóveda</span>
+          <span class="d">Comparte conocimiento o mentorea a un nodo.</span>
+          <span class="gain">+150 PE · Trascendencia</span>
+        </button>
+      </div>
+
+      <div class="sectitle"><span>▸ Mejoras aplicadas en vivo</span></div>
+      <div class="log" id="log"><div class="empty">Aún no has aportado datos. Empieza por tu CV o un título ✦</div></div>
+      <div class="synced">✔ Sincronizado con tu Núcleo · lo que convalidas se refleja en tu galaxia</div>
+    </div>
+
+    <div class="flash" id="flash"><div class="big" id="flashBig"></div></div>
+
+    <script>
+      const $=(id)=>document.getElementById(id);
+      const P={file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',cap:'<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',check:'<path d="M20 6 9 17l-5-5"/>'};
+      const svg=(n,w=18)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[n]||""}</svg>`;
+      document.querySelectorAll("[data-ic]").forEach(e=>e.innerHTML=svg(e.dataset.ic, e.classList.contains("chk")?16:18));
+
+      // Audio lazy
+      const Snd={ctx:null,on:false,init(){if(this.ctx)return;try{this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.on=true;}catch(e){}},
+        note(f,d=0.18,type="sine",v=0.16){if(!this.on)return;const now=this.ctx.currentTime;const o=this.ctx.createOscillator();o.type=type;o.frequency.value=f;const g=this.ctx.createGain();g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(v,now+0.008);g.gain.exponentialRampToValueAtTime(0.0001,now+d);o.connect(g);g.connect(this.ctx.destination);o.start(now);o.stop(now+d+0.05);},
+        ding(){this.note(880,0.14,"triangle",0.12);this.note(1320,0.18,"sine",0.06);},
+        up(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>this.note(f,0.5,"triangle",0.13),i*90));}};
+
+      // ═══ Perfil compartido (mismo que el Núcleo) ═══
+      const OMI_KEY="omicron_gemelo";
+      function omiDefault(){ return {cv:false,titles:0,years:0,vault:0,pe:120,rep:34,axes:{execution:40,quality:30,transcendence:18,foundation:25}}; }
+      function omiRecompute(p){ const ax={execution:40,quality:30,transcendence:18,foundation:25}; let pe=120; if(p.cv){pe+=200;ax.execution+=10;ax.quality+=6;} pe+=p.titles*250; ax.foundation+=p.titles*12; pe+=p.years*60; ax.execution+=p.years*2; ax.quality+=p.years*2; pe+=p.vault*150; ax.transcendence+=p.vault*14; for(const k in ax)ax[k]=Math.min(100,ax[k]); const avg=(ax.execution+ax.quality+ax.transcendence+ax.foundation)/4; p.axes=ax; p.pe=pe; p.rep=Math.max(0,Math.min(99,Math.round(20+avg*0.72+p.titles*2+(p.cv?3:0)))); return p; }
+      function omiLoad(){ try{ return Object.assign(omiDefault(), JSON.parse(localStorage.getItem(OMI_KEY)||"{}")); }catch(e){ return omiDefault(); } }
+      function omiSave(p){ try{ localStorage.setItem(OMI_KEY, JSON.stringify(p)); }catch(e){} }
+      const TIERS=[{name:"Operativo",min:0,com:"15%"},{name:"Core",min:500,com:"10%"},{name:"Arquitecto",min:2000,com:"5%"}];
+      function tierIdx(pe){let i=0;for(let k=0;k<TIERS.length;k++)if(pe>=TIERS[k].min)i=k;return i;}
+      const EJES=[["execution","Ejecución","#00F0FF"],["quality","Calidad","#0a8ba3"],["transcendence","Trascendencia","#F59E0B"],["foundation","Fundamento","#39FF14"]];
+      const TITLES=["Ingeniería Informática","Certificación Cloud (AWS)","Diplomado en UX","Magíster en Ciencia de Datos","Scrum Master"];
+
+      let prof = omiLoad(); omiRecompute(prof);
+      let repShown = prof.rep;
+
+      // Ring
+      (function(){const size=190,sw=12,r=(size-sw)/2,c=2*Math.PI*r;
+        $("ring").innerHTML=`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#12203a" stroke-width="${sw}"/><circle id="ringp" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="url(#rg)" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" style="transition:stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1)"/></svg>`;
+        $("ring")._c=c;})();
+      $("ejes").innerHTML=EJES.map(([k,l,col])=>`<div class="eje"><div class="top"><span>${l}</span><b id="e-${k}" style="color:${col}">0</b></div><div class="ebar"><i id="eb-${k}" style="background:${col};width:0%"></i></div></div>`).join("");
+
+      function render(){
+        const idx=tierIdx(prof.pe); const tier=TIERS[idx]; const next=TIERS[idx+1];
+        const curMin=tier.min, nextMin=next?next.min:tier.min;
+        const prog=next?Math.min(100,((prof.pe-curMin)/(nextMin-curMin))*100):100;
+        $("nodeName").textContent=tier.name;
+        $("pe").textContent=Math.round(prof.pe).toLocaleString();
+        $("peNext").textContent=next?nextMin.toLocaleString():"MÁX";
+        $("com").textContent=tier.com;
+        $("pbar").style.width=prog+"%";
+        $("tierA").textContent="Nodo "+tier.name;
+        $("tierB").textContent=next?"Nodo "+next.name:"Máximo";
+        const rp=$("ringp"); if(rp) rp.style.strokeDashoffset=$("ring")._c*(1-prog/100);
+        EJES.forEach(([k])=>{const v=Math.round(prof.axes[k]);$("e-"+k).textContent=v;$("eb-"+k).style.width=Math.min(100,v)+"%";});
+        animRep(prof.rep);
+        refreshActs();
+      }
+      // ── INNOVACIÓN · impacto en vivo (+PE/+rep) por botón y recomendado ★ ──
+      function convImpact(action){
+        const clone=(o)=>JSON.parse(JSON.stringify(o));
+        const base=omiRecompute(clone(prof));
+        const c=clone(prof);
+        if(action==="cv")c.cv=true; else if(action==="title")c.titles++; else if(action==="year")c.years++; else c.vault++;
+        omiRecompute(c);
+        return { drep:c.rep-base.rep, dpe:c.pe-base.pe };
+      }
+      function refreshActs(){
+        try{
+          const defs=[
+            {id:"a-cv",   act:"cv",    maxed:!!prof.cv},
+            {id:"a-title",act:"title", maxed:prof.titles>=TITLES.length},
+            {id:"a-years",act:"year",  maxed:prof.years>=15},
+            {id:"a-vault",act:"vault", maxed:false},
+          ];
+          let best=null,bestScore=-1;
+          defs.forEach(d=>{
+            const el=$(d.id); if(!el)return; el.classList.remove("reco");
+            const g=el.querySelector(".gain"); if(!g)return;
+            if(d.maxed){ g.textContent=(d.act==="cv"?"✓ Convalidado":"✓ Al máximo"); return; }
+            const im=convImpact(d.act);
+            g.textContent="+"+im.dpe+" PE · +"+im.drep+" rep";
+            const score=im.drep*12+im.dpe;
+            if(score>bestScore){ bestScore=score; best=d; }
+          });
+          if(best){ const el=$(best.id); if(el) el.classList.add("reco"); }
+        }catch(e){}
+      }
+      let repRAF=0;
+      function animRep(target){cancelAnimationFrame(repRAF);const step=()=>{repShown+=(target-repShown)*0.15;if(Math.abs(target-repShown)<0.5)repShown=target;$("rep").textContent=Math.round(repShown);if(repShown!==target)repRAF=requestAnimationFrame(step);};step();}
+      function addLog(color,title,gain){const log=$("log");const empty=log.querySelector(".empty");if(empty)empty.remove();const el=document.createElement("div");el.className="logi";el.innerHTML=`<span class="dot" style="color:${color};background:${color}"></span><div><div>${title}</div><div class="g">${gain}</div></div>`;log.prepend(el);while(log.children.length>6)log.removeChild(log.lastChild);}
+      function flash(big){$("flashBig").textContent=big;$("flash").animate([{opacity:0,transform:"translate(-50%,-50%) scale(.8)"},{opacity:1,transform:"translate(-50%,-50%) scale(1)"},{opacity:0,transform:"translate(-50%,-50%) scale(1.1)"}],{duration:1700,easing:"ease-out"});}
+
+      function commit(color,title,gain,celebrateBig){
+        Snd.init(); Snd.ding();
+        const before=tierIdx(prof.pe);
+        omiRecompute(prof); omiSave(prof);
+        addLog(color,title,gain); render();
+        const after=tierIdx(prof.pe);
+        if(celebrateBig) flash(celebrateBig);
+        if(after>before){ Snd.up(); flash("¡Subiste a Nodo "+TIERS[after].name+"!"); }
+      }
+
+      // Reflejar estado guardado (done states, años)
+      function reflect(){
+        if(prof.cv){ $("a-cv").classList.add("done"); $("cvd").textContent="CV convalidado ✔"; }
+        if(prof.titles>0){ $("a-title").classList.add("done"); $("titled").textContent=prof.titles+" título(s) validado(s) · toca para añadir"; }
+        $("ynum").textContent=prof.years;
+        if(prof.vault>0) $("a-vault").classList.add("done");
+      }
+      reflect(); render();
+
+      // Acciones
+      let ti=Math.min(prof.titles, TITLES.length);
+      $("cvfile").addEventListener("change",(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f||prof.cv)return; prof.cv=true; $("a-cv").classList.add("done"); $("cvd").innerHTML='CV convalidado: <span class="filepill">'+f.name.slice(0,26)+'</span>'; commit("#00F0FF","CV convalidado","▲ +200 PE · Ejecución +10","CV CONVALIDADO"); });
+      $("a-title").addEventListener("click",()=>{ if(prof.titles>=TITLES.length){ $("titled").textContent="Todos tus títulos ya están validados ✔"; return; } const name=TITLES[ti++]; prof.titles++; $("a-title").classList.add("done"); $("titled").innerHTML='Validado: <span class="filepill">'+name+'</span> · toca para añadir otro'; commit("#F59E0B","Título validado: "+name,"▲ +250 PE · Fundamento +12","TÍTULO VALIDADO"); });
+      $("yplus").addEventListener("click",()=>{ if(prof.years>=15)return; prof.years++; $("ynum").textContent=prof.years; commit("#22d3ee",prof.years+" año(s) de experiencia","▲ +60 PE · Ejecución +2"); });
+      $("yminus").addEventListener("click",()=>{ if(prof.years<=0)return; prof.years--; $("ynum").textContent=prof.years; omiRecompute(prof); omiSave(prof); render(); });
+      $("a-vault").addEventListener("click",()=>{ prof.vault++; $("a-vault").classList.add("done"); commit("#39FF14","Aporte a la Bóveda #"+prof.vault,"▲ +150 PE · Trascendencia +14"); });
+      $("reset").addEventListener("click",()=>{ if(!confirm("¿Reiniciar tu perfil convalidado?"))return; localStorage.removeItem(OMI_KEY); prof=omiDefault(); omiRecompute(prof); ti=0; document.querySelectorAll(".act.done").forEach(a=>a.classList.remove("done")); $("cvd").textContent="Sube tu currículum para convalidar tu experiencia."; $("titled").textContent="Añade un título o certificación verificable."; $("ynum").textContent="0"; $("log").innerHTML='<div class="empty">Perfil reiniciado. Aporta datos ✦</div>'; render(); });
+    </script>
+  </body>
+</html>
