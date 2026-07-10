@@ -12,7 +12,7 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { OraculoBar } from './components/OraculoBar';
 import { GemeloBadge } from './components/shared/GemeloBadge';
 import { InstallPWA } from './components/shared/InstallPWA';
-import { Onboarding, shouldShowOnboarding } from './components/shared/Onboarding';
+import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { PublicProfileGate } from './components/perfil/RedSocial';
@@ -51,7 +51,7 @@ function AppShell() {
   const { authStatus, isLoadingProfile, activeTab, setActiveTab, profile, unreadCount } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding());
+  const [showIniciacion, setShowIniciacion] = useState(() => shouldShowIniciacion());
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -88,7 +88,14 @@ function AppShell() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
+      {showIniciacion && (
+        <ErrorBoundary section="Iniciación">
+          <IniciacionGemelo
+            userName={profile?.full_name || profile?.username}
+            onClose={() => setShowIniciacion(false)}
+          />
+        </ErrorBoundary>
+      )}
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'linear-gradient(180deg, rgba(10,20,40,0.9), rgba(2,6,19,0.92))', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderBottom: '1px solid rgba(0,240,255,0.40)', boxShadow: '0 3px 18px rgba(0,0,0,0.55), 0 0 22px rgba(0,240,255,0.10), inset 0 -1px 0 rgba(0,240,255,0.30)', flexShrink: 0, position: 'relative', zIndex: 3 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #7df9ff, #00F0FF)', boxShadow: '0 0 16px rgba(0,240,255,0.6)' }}>
