@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Ómicron · Aprendizaje Continuo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --cyan: #00f0ff;
+        --amber: #f59e0b;
+        --green: #39ff14;
+        --blue: #38bdf8;
+        --red: #ff3d57;
+        --ink: #eaf2ff;
+        --mut: #9fb3cc;
+        --bg: #01040d;
+        --mono: "Share Tech Mono", monospace;
+        --disp: "Rajdhani", sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body { height: 100%; background: var(--bg); overflow: hidden; font-family: var(--disp); color: var(--ink); }
+      #app {
+        position: fixed; inset: 0; display: flex; flex-direction: column;
+        max-width: 480px; margin: 0 auto;
+        background: radial-gradient(120% 80% at 50% 0%, #06152e 0%, #01040d 60%);
+        box-shadow: 0 0 60px rgba(0,0,0,0.6);
+      }
+      canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+
+      .fx {
+        position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      }
+      .fx.grid {
+        background-image:
+          linear-gradient(rgba(0,240,255,0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,240,255,0.035) 1px, transparent 1px);
+        background-size: 42px 42px;
+        mask-image: radial-gradient(circle at 50% 40%, #000 25%, transparent 75%);
+        -webkit-mask-image: radial-gradient(circle at 50% 40%, #000 25%, transparent 75%);
+      }
+
+      /* ── HUD superior ── */
+      header {
+        position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 16px calc(10px + env(safe-area-inset-top, 0px));
+        padding-top: max(14px, env(safe-area-inset-top, 0px));
+        background: linear-gradient(180deg, rgba(6,16,38,0.9), transparent);
+      }
+      .brand { display: flex; align-items: center; gap: 9px; }
+      .omega {
+        width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+        background: linear-gradient(135deg, #7df9ff, #00f0ff); color: #020613; font-weight: 700; font-size: 16px;
+        box-shadow: 0 0 16px rgba(0,240,255,0.6);
+      }
+      .brand b { font-size: 16px; letter-spacing: .3px; }
+      .brand span { font-family: var(--mono); font-size: 8px; letter-spacing: 2px; color: rgba(0,240,255,0.6); display: block; text-transform: uppercase; margin-top: -2px; }
+      .stats { display: flex; gap: 12px; text-align: right; }
+      .stat b { display: block; font-size: 15px; line-height: 1; }
+      .stat span { font-family: var(--mono); font-size: 8px; letter-spacing: 1px; color: var(--mut); text-transform: uppercase; }
+      .stat.rep b { color: var(--amber); }
+      .stat.pe b { color: var(--cyan); }
+      .stat.tok b { color: var(--green); }
+
+      /* nodo/tier chip */
+      .tier {
+        position: relative; z-index: 3; margin: 2px 16px 0; align-self: flex-start;
+        display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 20px;
+        font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+        border: 1px solid rgba(0,240,255,0.3); background: rgba(0,240,255,0.07); color: var(--cyan);
+      }
+      .tier .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+
+      /* ── ciclo (4 fases) ── */
+      .ciclo {
+        position: relative; z-index: 3; display: flex; justify-content: center; gap: 6px;
+        margin: 12px auto 0; padding: 0 12px; flex-wrap: wrap;
+      }
+      .phase {
+        font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+        padding: 4px 9px; border-radius: 14px; color: var(--mut);
+        border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); transition: all .35s;
+      }
+      .phase.on { color: #020613; background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 14px rgba(0,240,255,0.5); }
+
+      /* spacer para el canvas del nucleo */
+      .stage-space { flex: 1; min-height: 150px; position: relative; z-index: 2; pointer-events: none; }
+      .coretag {
+        position: absolute; left: 0; right: 0; bottom: 8px; text-align: center;
+        font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: rgba(159,179,204,0.5); text-transform: uppercase;
+      }
+
+      /* ── panel del Oráculo + lección ── */
+      .panel {
+        position: relative; z-index: 3; margin: 0 12px calc(12px + env(safe-area-inset-bottom, 0px));
+        border-radius: 18px; border: 1px solid rgba(0,240,255,0.22);
+        background: linear-gradient(160deg, rgba(8,18,40,0.92), rgba(2,6,19,0.96));
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 -6px 30px rgba(0,0,0,0.5), 0 0 24px rgba(0,240,255,0.08);
+        padding: 14px; overflow: hidden;
+      }
+      .ora { display: flex; gap: 10px; align-items: flex-start; }
+      .ora-orb {
+        flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+        background: rgba(0,240,255,0.12); border: 1px solid rgba(0,240,255,0.4); color: var(--cyan);
+        box-shadow: 0 0 16px rgba(0,240,255,0.4); animation: pulse 2.4s ease-in-out infinite;
+      }
+      @keyframes pulse { 0%,100% { transform: scale(1); opacity: .85; } 50% { transform: scale(1.08); opacity: 1; } }
+      .ora-body { flex: 1; min-width: 0; }
+      .ora-name { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--cyan); text-transform: uppercase; }
+      .ora-say { font-size: 14.5px; line-height: 1.5; color: var(--ink); margin-top: 3px; min-height: 42px; }
+
+      .lesson-tag {
+        display: inline-flex; align-items: center; gap: 6px; margin: 12px 0 6px;
+        font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+        padding: 3px 9px; border-radius: 12px;
+      }
+      .lesson-q { font-size: 15px; font-weight: 600; line-height: 1.45; margin-bottom: 10px; }
+      .opts { display: flex; flex-direction: column; gap: 8px; }
+      .opt {
+        text-align: left; padding: 11px 13px; border-radius: 11px; cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03);
+        color: var(--ink); font-family: var(--disp); font-size: 14px; font-weight: 500; transition: all .18s;
+      }
+      .opt:hover { border-color: rgba(0,240,255,0.5); background: rgba(0,240,255,0.06); }
+      .opt.ok { border-color: var(--green); background: rgba(57,255,20,0.12); color: #d7ffce; }
+      .opt.no { border-color: var(--red); background: rgba(255,61,87,0.12); color: #ffd7dd; }
+      .opt:disabled { cursor: default; }
+
+      .next {
+        width: 100%; margin-top: 12px; padding: 13px 0; border: none; border-radius: 12px; cursor: pointer;
+        font-family: var(--disp); font-weight: 700; font-size: 16px; letter-spacing: .4px; color: #020613;
+        background: linear-gradient(90deg, #7df9ff, #00f0ff); box-shadow: 0 0 20px rgba(0,240,255,0.45);
+        display: none; align-items: center; justify-content: center; gap: 8px;
+      }
+      .next.grow { background: linear-gradient(90deg, #f59e0b, #ffb84d); box-shadow: 0 0 20px rgba(245,158,11,0.45); }
+
+      .toast {
+        position: fixed; left: 50%; top: 18%; transform: translateX(-50%) translateY(-10px);
+        z-index: 20; padding: 9px 16px; border-radius: 24px; font-family: var(--mono); font-size: 12px; letter-spacing: 1px;
+        background: rgba(2,6,19,0.9); border: 1px solid var(--green); color: var(--green);
+        opacity: 0; transition: all .3s; pointer-events: none; text-transform: uppercase; box-shadow: 0 0 20px rgba(57,255,20,0.3);
+      }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+      .mute {
+        position: absolute; top: 50%; right: 14px; transform: translateY(-50%); z-index: 3;
+        width: 30px; height: 30px; border-radius: 8px; display: none; place-items: center; cursor: pointer;
+        background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.25); color: var(--cyan); font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="nucleo"></canvas>
+      <div class="fx grid"></div>
+
+      <header>
+        <div class="brand">
+          <div class="omega">Ω</div>
+          <div><b>ÓMICRON</b><span>Aprendizaje Continuo</span></div>
+        </div>
+        <div class="stats">
+          <div class="stat rep"><b id="s-rep">34</b><span>Reput.</span></div>
+          <div class="stat pe"><b id="s-pe">120</b><span>PE</span></div>
+          <div class="stat tok"><b id="s-tok">0</b><span>Tokens</span></div>
+        </div>
+      </header>
+
+      <div class="tier"><span class="dot"></span><span id="s-tier">Nodo Operativo</span></div>
+
+      <div class="ciclo">
+        <div class="phase" data-p="0">Aprende</div>
+        <div class="phase" data-p="1">Demuestra</div>
+        <div class="phase" data-p="2">Valida</div>
+        <div class="phase" data-p="3">Crece</div>
+      </div>
+
+      <div class="stage-space">
+        <div class="coretag">Tu Gemelo Digital · toca un nodo encendido</div>
+      </div>
+
+      <div class="panel">
+        <div class="ora">
+          <div class="ora-orb">◈</div>
+          <div class="ora-body">
+            <div class="ora-name">EL ORÁCULO</div>
+            <div class="ora-say" id="ora-say">Despertando tu Gemelo…</div>
+          </div>
+        </div>
+
+        <div id="lesson">
+          <div class="lesson-tag" id="l-tag">COMPETENCIA</div>
+          <div class="lesson-q" id="l-q"></div>
+          <div class="opts" id="l-opts"></div>
+        </div>
+
+        <button class="next" id="next">Continuar</button>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+        var $ = function (s) { return document.querySelector(s); };
+
+        // ── Categorías (los 4 ejes del Gemelo) ──
+        var CATS = {
+          exec:  { name: "Ejecución",     color: "#00f0ff" },
+          qual:  { name: "Calidad",       color: "#39ff14" },
+          trans: { name: "Trascendencia", color: "#f59e0b" },
+          fund:  { name: "Fundamento",    color: "#38bdf8" }
+        };
+
+        // ── Currículo: cada nodo es una micro-lección con reto ──
+        var SKILLS = [
+          { id: "prompt",   cat: "exec",  name: "Ingeniería de Prompts",
+            q: "En la Industria 5.0, ¿qué hace más efectiva la colaboración humano–IA?",
+            opts: ["Dar instrucciones vagas y esperar", "Contexto claro + iterar sobre la respuesta", "Usar siempre el modelo más caro"], ok: 1,
+            hint: "La clave es el contexto y la iteración, no el costo." },
+          { id: "datos",    cat: "fund",  name: "Alfabetización de Datos",
+            q: "¿Cuál es el primer paso para confiar en un dato?",
+            opts: ["Verificar su fuente y frescura", "Que se vea bonito en un gráfico", "Que lo diga alguien con autoridad"], ok: 0,
+            hint: "Fuente y frescura: sin eso, el resto no importa." },
+          { id: "calidad",  cat: "qual",  name: "Mentalidad de Calidad",
+            q: "Un entregable de alta calidad ante todo debe…",
+            opts: ["Ser el más largo posible", "Resolver el problema real del usuario", "Usar la última tecnología"], ok: 1,
+            hint: "Calidad = resolver el problema real, con foco." },
+          { id: "sistemas", cat: "fund",  name: "Pensamiento Sistémico",
+            q: "Ante un problema complejo, un pensador sistémico busca…",
+            opts: ["La causa aislada más obvia", "Las relaciones y bucles entre las partes", "Culpar a una persona"], ok: 1,
+            hint: "Los sistemas se explican por sus relaciones y bucles." },
+          { id: "resiliencia", cat: "trans", name: "Resiliencia Adaptativa",
+            q: "Cuando un proyecto falla, el aprendizaje continuo consiste en…",
+            opts: ["Ocultar el error", "Extraer la lección y ajustar rápido", "Rendirse y empezar de cero siempre"], ok: 1,
+            hint: "Falla → lección → ajuste. Ese es el ciclo." },
+          { id: "colab",    cat: "exec",  name: "Colaboración en Red",
+            q: "En un ecosistema de nodos, tu reputación crece cuando…",
+            opts: ["Trabajas siempre en solitario", "Aportas valor verificable a otros", "Acumulas títulos sin usarlos"], ok: 1,
+            hint: "Valor verificable a la red = confianza = reputación." },
+          { id: "etica",    cat: "trans", name: "Ética de la IA",
+            q: "Un uso responsable de la IA exige, sobre todo…",
+            opts: ["Transparencia y responsabilidad humana", "Automatizar todo sin revisar", "Esconder cómo se tomó la decisión"], ok: 0,
+            hint: "Transparencia + un humano responsable al mando." },
+          { id: "mejora",   cat: "qual",  name: "Mejora Continua (Kaizen)",
+            q: "El corazón de la mejora continua es…",
+            opts: ["Grandes cambios una vez al año", "Pequeños avances constantes y medidos", "No cambiar lo que ya funciona"], ok: 1,
+            hint: "Pequeños pasos, medidos, todos los días." }
+        ];
+
+        // ── Estado (persistido) ──
+        var KEY = "omicron_ciclo";
+        var state = load();
+        function load() {
+          try {
+            var raw = localStorage.getItem(KEY);
+            if (raw) { var p = JSON.parse(raw); p.mastered = p.mastered || []; return p; }
+          } catch (e) {}
+          return { rep: 34, pe: 120, tokens: 0, mastered: [], ciclo: 1 };
+        }
+        function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+        function tierOf(pe) {
+          if (pe >= 2000) return "Nodo Arquitecto";
+          if (pe >= 500) return "Nodo Core";
+          return "Nodo Operativo";
+        }
+
+        // ── Voz (opcional) ──
+        var muted = false;
+        function say(text) {
+          $("#ora-say").textContent = "";
+          typeText($("#ora-say"), text);
+          try {
+            if (!muted && "speechSynthesis" in window) {
+              speechSynthesis.cancel();
+              var u = new SpeechSynthesisUtterance(text);
+              u.lang = "es-ES"; u.rate = 1.03; u.pitch = 1.0;
+              speechSynthesis.speak(u);
+            }
+          } catch (e) {}
+        }
+        var typeTimer = null;
+        function typeText(el, text) {
+          if (typeTimer) clearInterval(typeTimer);
+          var i = 0;
+          typeTimer = setInterval(function () {
+            i += 2; el.textContent = text.slice(0, i);
+            if (i >= text.length) { el.textContent = text; clearInterval(typeTimer); }
+          }, 22);
+        }
+
+        function toast(msg) {
+          var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+          setTimeout(function () { t.classList.remove("show"); }, 1600);
+        }
+
+        function setPhase(p) {
+          var ph = document.querySelectorAll(".phase");
+          for (var i = 0; i < ph.length; i++) ph[i].classList.toggle("on", i === p);
+        }
+
+        function updateHUD() {
+          $("#s-rep").textContent = state.rep;
+          $("#s-pe").textContent = state.pe.toLocaleString("es");
+          $("#s-tok").textContent = state.tokens;
+          $("#s-tier").textContent = tierOf(state.pe);
+        }
+
+        // ── Selección del siguiente nodo (aprendizaje infinito) ──
+        var current = null, refuerzo = false;
+        function pickNext() {
+          var pend = SKILLS.filter(function (s) { return state.mastered.indexOf(s.id) === -1; });
+          if (pend.length) { refuerzo = false; return pend[0]; }
+          // Todo dominado → refuerzo (repetición espaciada): ciclo continuo
+          refuerzo = true;
+          return SKILLS[Math.floor(Math.random() * SKILLS.length)];
+        }
+
+        function renderLesson() {
+          current = pickNext();
+          setPhase(0);
+          var c = CATS[current.cat];
+          var tag = $("#l-tag");
+          tag.textContent = c.name + (refuerzo ? " · REFUERZO" : "");
+          tag.style.color = c.color;
+          tag.style.background = hexA(c.color, 0.12);
+          tag.style.border = "1px solid " + hexA(c.color, 0.4);
+          $("#l-q").textContent = current.q;
+          var wrap = $("#l-opts"); wrap.innerHTML = "";
+          current.opts.forEach(function (o, i) {
+            var b = document.createElement("button");
+            b.className = "opt"; b.textContent = o;
+            b.onclick = function () { answer(i, b); };
+            wrap.appendChild(b);
+          });
+          $("#next").style.display = "none";
+          $("#lesson").style.display = "block";
+          if (refuerzo) say("Has dominado el mapa. El aprendizaje nunca termina: reforcemos " + current.name + " para mantener tu Gemelo afilado.");
+          else say("Nueva competencia: " + current.name + ". " + current.q);
+        }
+
+        var answered = false;
+        function answer(i, btn) {
+          if (answered) return;
+          answered = true;
+          setPhase(1);
+          var opts = document.querySelectorAll(".opt");
+          for (var k = 0; k < opts.length; k++) opts[k].disabled = true;
+          if (i === current.ok) {
+            btn.classList.add("ok");
+            setTimeout(function () { validate(); }, 550);
+          } else {
+            btn.classList.add("no");
+            opts[current.ok].classList.add("ok");
+            say("Casi. " + current.hint + " Reintenta cuando quieras.");
+            setTimeout(function () {
+              answered = false;
+              for (var k = 0; k < opts.length; k++) { opts[k].disabled = false; opts[k].classList.remove("no"); }
+              opts[current.ok].classList.remove("ok");
+              setPhase(0);
+            }, 2200);
+          }
+        }
+
+        function validate() {
+          setPhase(2);
+          // Validado → Crece: enciende el nodo y sube el Gemelo
+          var already = state.mastered.indexOf(current.id) !== -1;
+          var dPe = refuerzo ? 40 : 220;
+          var dRep = refuerzo ? 1 : 4;
+          var dTok = refuerzo ? 1 : 3;
+          state.pe += dPe;
+          state.rep = Math.min(99, state.rep + dRep);
+          state.tokens += dTok;
+          if (!already) state.mastered.push(current.id);
+          save();
+
+          var node = nodeById(current.id);
+          if (node) shockwave(node.x, node.y, CATS[current.cat].color);
+
+          setTimeout(function () {
+            setPhase(3);
+            updateHUD();
+            var prevTier = tierOf(state.pe - dPe), nowTier = tierOf(state.pe);
+            if (prevTier !== nowTier) {
+              bigShock();
+              toast("⬆ EVOLUCIÓN: " + nowTier);
+              say("¡Extraordinario! Tu Gemelo evolucionó a " + nowTier + ". Nuevas oportunidades se abren. Seguimos aprendiendo.");
+            } else {
+              toast("+" + dPe + " PE · +" + dRep + " REP");
+              say((refuerzo ? "Refuerzo consolidado. " : "¡Validado! Tu Gemelo creció. ") + "Siguiente mejor paso listo cuando tú lo estés.");
+            }
+            var nx = $("#next");
+            nx.style.display = "flex";
+            nx.className = "next grow";
+            nx.innerHTML = "Continuar el ciclo →";
+            $("#lesson").style.display = "none";
+            answered = false;
+          }, 650);
+        }
+
+        $("#next").onclick = function () { renderLesson(); };
+
+        // ═══════════════ NÚCLEO 3D (canvas) ═══════════════
+        var cv = $("#nucleo"), ctx = cv.getContext("2d");
+        var W = 0, H = 0, DPR = 1, cx = 0, cy = 0, R = 0;
+        var nodes = [];
+        var shocks = [];
+
+        function layout() {
+          DPR = Math.min(window.devicePixelRatio || 1, 2);
+          var r = cv.getBoundingClientRect();
+          W = r.width; H = r.height;
+          cv.width = W * DPR; cv.height = H * DPR;
+          ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+          cx = W / 2; cy = H * 0.40;
+          R = Math.min(W, H) * 0.30;
+          buildNodes();
+        }
+        function buildNodes() {
+          nodes = SKILLS.map(function (s, i) {
+            var a = (i / SKILLS.length) * Math.PI * 2;
+            return { id: s.id, cat: s.cat, baseA: a, x: cx, y: cy };
+          });
+        }
+        function nodeById(id) { for (var i = 0; i < nodes.length; i++) if (nodes[i].id === id) return nodes[i]; return null; }
+
+        function shockwave(x, y, color) { shocks.push({ x: x, y: y, r: 6, max: R * 1.4, color: color, w: 3 }); }
+        function bigShock() { shocks.push({ x: cx, y: cy, r: 8, max: R * 2.6, color: "#f59e0b", w: 4 }); }
+
+        function hexA(hex, a) {
+          var h = hex.replace("#", "");
+          var n = parseInt(h, 16);
+          var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+          return "rgba(" + r + "," + g + "," + b + "," + a + ")";
+        }
+
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var t0 = performance.now();
+        function frame(now) {
+          var t = now - t0;
+          ctx.clearRect(0, 0, W, H);
+          var rot = reduce ? 0 : t * 0.00016;
+
+          // posiciones
+          for (var i = 0; i < nodes.length; i++) {
+            var nd = nodes[i];
+            var a = nd.baseA + rot;
+            nd.x = cx + Math.cos(a) * R;
+            nd.y = cy + Math.sin(a) * R * 0.62;
+            nd.depth = (Math.sin(a) + 1) / 2; // 0 atrás, 1 adelante
+          }
+
+          // líneas de confianza (nodos dominados → núcleo)
+          for (var i = 0; i < nodes.length; i++) {
+            var nd = nodes[i];
+            if (state.mastered.indexOf(nd.id) === -1) continue;
+            var c = CATS[nd.cat].color;
+            ctx.strokeStyle = hexA(c, 0.18 + nd.depth * 0.22);
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(nd.x, nd.y); ctx.lineTo(cx, cy); ctx.stroke();
+          }
+
+          // nodos detrás del core
+          drawNodes(false);
+
+          // ── núcleo central ──
+          var pulse = reduce ? 1 : 1 + Math.sin(t * 0.003) * 0.05;
+          var coreR = R * 0.34 * pulse;
+          var high = state.rep >= 66;
+          var g = ctx.createRadialGradient(cx, cy - coreR * 0.3, coreR * 0.1, cx, cy, coreR);
+          g.addColorStop(0, high ? "#ffe6b0" : "#bff6ff");
+          g.addColorStop(0.5, high ? "#f59e0b" : "#00f0ff");
+          g.addColorStop(1, high ? "rgba(245,158,11,0.05)" : "rgba(0,120,160,0.05)");
+          ctx.save();
+          ctx.shadowBlur = 40; ctx.shadowColor = high ? "rgba(245,158,11,0.6)" : "rgba(0,240,255,0.6)";
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, coreR, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+
+          // anillo de reputación
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = "rgba(255,255,255,0.08)";
+          ctx.beginPath(); ctx.arc(cx, cy, coreR + 10, 0, Math.PI * 2); ctx.stroke();
+          ctx.strokeStyle = high ? "#f59e0b" : "#00f0ff";
+          ctx.beginPath(); ctx.arc(cx, cy, coreR + 10, -Math.PI / 2, -Math.PI / 2 + (state.rep / 100) * Math.PI * 2); ctx.stroke();
+
+          // reputación número
+          ctx.fillStyle = "#eaf2ff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.font = "700 " + Math.round(coreR * 0.62) + "px Rajdhani, sans-serif";
+          ctx.fillText(state.rep, cx, cy - 2);
+          ctx.fillStyle = "rgba(234,242,255,0.6)"; ctx.font = "10px 'Share Tech Mono', monospace";
+          ctx.fillText("REPUTACIÓN", cx, cy + coreR * 0.42);
+
+          // nodos delante del core
+          drawNodes(true);
+
+          // shockwaves
+          for (var s = shocks.length - 1; s >= 0; s--) {
+            var sh = shocks[s]; sh.r += (sh.max - sh.r) * 0.06 + 1.5;
+            var alpha = Math.max(0, 1 - sh.r / sh.max);
+            ctx.strokeStyle = hexA(sh.color, alpha * 0.8); ctx.lineWidth = sh.w;
+            ctx.beginPath(); ctx.arc(sh.x, sh.y, sh.r, 0, Math.PI * 2); ctx.stroke();
+            if (sh.r >= sh.max - 2) shocks.splice(s, 1);
+          }
+
+          requestAnimationFrame(frame);
+        }
+
+        function drawNodes(front) {
+          for (var i = 0; i < nodes.length; i++) {
+            var nd = nodes[i];
+            var isFront = nd.depth >= 0.5;
+            if (isFront !== front) continue;
+            var mastered = state.mastered.indexOf(nd.id) !== -1;
+            var isCur = current && current.id === nd.id;
+            var c = CATS[nd.cat].color;
+            var size = (mastered ? 6 : 4) + nd.depth * 4 + (isCur ? 3 : 0);
+            var a = 0.35 + nd.depth * 0.55;
+            if (mastered) {
+              ctx.save(); ctx.shadowBlur = 14; ctx.shadowColor = c;
+              ctx.fillStyle = hexA(c, a); ctx.beginPath(); ctx.arc(nd.x, nd.y, size, 0, Math.PI * 2); ctx.fill();
+              ctx.restore();
+            } else {
+              ctx.strokeStyle = hexA(c, a * 0.7); ctx.lineWidth = 1.4;
+              ctx.beginPath(); ctx.arc(nd.x, nd.y, size, 0, Math.PI * 2); ctx.stroke();
+            }
+            if (isCur) {
+              var rp = (performance.now() * 0.004) % 1;
+              ctx.strokeStyle = hexA(c, (1 - rp) * 0.9); ctx.lineWidth = 2;
+              ctx.beginPath(); ctx.arc(nd.x, nd.y, size + 3 + rp * 12, 0, Math.PI * 2); ctx.stroke();
+            }
+          }
+        }
+
+        // toca un nodo encendido → el Oráculo lo comenta
+        cv.addEventListener("click", function (e) {
+          var r = cv.getBoundingClientRect();
+          var mx = e.clientX - r.left, my = e.clientY - r.top;
+          for (var i = 0; i < nodes.length; i++) {
+            var nd = nodes[i];
+            if (Math.hypot(mx - nd.x, my - nd.y) < 18) {
+              var sk = SKILLS.filter(function (s) { return s.id === nd.id; })[0];
+              var mastered = state.mastered.indexOf(nd.id) !== -1;
+              say(sk.name + ": " + (mastered ? "dominada. Refuerza para no perder el filo." : "aún latente. Complétala para encenderla en tu Gemelo."));
+              return;
+            }
+          }
+        });
+
+        window.addEventListener("resize", layout);
+
+        // ── Arranque ──
+        layout();
+        requestAnimationFrame(frame);
+        updateHUD();
+        setTimeout(function () {
+          var t = tierOf(state.pe);
+          say("Bienvenido a Ómicron. Aquí el aprendizaje nunca se detiene: cada competencia que domines enciende un nodo de tu Gemelo y sube tu reputación. Eres " + t + ". Empecemos.");
+          setTimeout(renderLesson, 2600);
+        }, 500);
+
+        // primer toque desbloquea la voz en móvil
+        document.body.addEventListener("pointerdown", function once() {
+          try { if ("speechSynthesis" in window) { var u = new SpeechSynthesisUtterance(" "); speechSynthesis.speak(u); } } catch (e) {}
+          document.body.removeEventListener("pointerdown", once);
+        }, { once: true });
+      })();
+    </script>
+  </body>
+</html>
