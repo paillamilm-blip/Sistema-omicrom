@@ -23,6 +23,7 @@ import { RutaGemelo } from '../perfil/RutaGemelo';
 import { PasaporteGemelo } from '../perfil/PasaporteGemelo';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useRealtime } from '../../store/RealtimeContext';
+import { LivePeersStrip } from '../shared/LivePresence';
 // 🧪 MVP PILOTO CONTROLADO: Dossier de Evidencia y Carta de Competencias
 // dependen del Examinador IA / carta-ia (Edge Functions de IA). Se ocultan
 // para el piloto (no se elimina el código, solo se comenta su uso).
@@ -351,6 +352,8 @@ function CredencialCard({
             {rango.emoji} {rango.label}
           </span>
         </div>
+
+        <LivePeersStrip />
       </div>
 
       {/* Progreso de rango */}
