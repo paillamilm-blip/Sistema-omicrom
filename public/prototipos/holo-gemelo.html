@@ -14,14 +14,31 @@
     <style>
       :root{
         --desemp:#8b9dff; --econ:#3fd0c9; --crec:#ffb02e; --sky:#5cc8ff; --indigo:#5e5ce6;
-        --ink:#eef1f8; --mut:#7d879b; --glass:rgba(255,255,255,0.045); --glass2:rgba(255,255,255,0.08); --line:rgba(255,255,255,0.1);
+        --ink:#eaf0fb; --mut:#6b7590; --glass:rgba(255,255,255,0.04); --glass2:rgba(255,255,255,0.075); --line:rgba(150,180,255,0.12);
         --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif;
+        --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,monospace;
       }
       *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
       html,body{height:100%;overflow:hidden;font-family:var(--font);color:var(--ink);
-        background:radial-gradient(135% 100% at 50% 0%, #0a0e1c 0%, #05060f 45%, #010208 100%);}
-      #app{position:fixed;inset:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;}
-      canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;touch-action:none;}
+        background:#000206;}
+      #app{position:fixed;inset:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;
+        background:radial-gradient(130% 95% at 50% 30%, #070c1a 0%, #03050e 48%, #000104 100%);}
+      canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;touch-action:none;}
+      /* capas de sistema (rejilla + escaneo + viñeta) */
+      .fx{position:absolute;inset:0;z-index:0;pointer-events:none;}
+      .fx-grid{background-image:linear-gradient(rgba(92,140,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(92,140,255,.045) 1px,transparent 1px);background-size:38px 38px;mask-image:radial-gradient(100% 80% at 50% 42%,#000 0%,transparent 78%);-webkit-mask-image:radial-gradient(100% 80% at 50% 42%,#000 0%,transparent 78%);animation:gridpan 22s linear infinite;}
+      @keyframes gridpan{0%{background-position:0 0}100%{background-position:38px 76px}}
+      .fx-vig{box-shadow:inset 0 0 200px 40px rgba(0,1,4,.9);}
+      .fx-scan{background:linear-gradient(rgba(120,190,255,0) 0%,rgba(120,190,255,.05) 50%,rgba(120,190,255,0) 100%);height:180px;top:-180px;animation:scan 7s linear infinite;opacity:.6;}
+      @keyframes scan{0%{transform:translateY(0)}100%{transform:translateY(140vh)}}
+      /* marcos HUD en esquinas */
+      .hud{position:absolute;inset:0;z-index:6;pointer-events:none;}
+      .hud b{position:absolute;width:20px;height:20px;border:1.5px solid rgba(120,180,255,.3);}
+      .hud b.tl{top:10px;left:10px;border-right:none;border-bottom:none;}
+      .hud b.tr{top:10px;right:10px;border-left:none;border-bottom:none;}
+      .hud b.bl{bottom:10px;left:10px;border-right:none;border-top:none;}
+      .hud b.br{bottom:10px;right:10px;border-left:none;border-top:none;}
+      .mono{font-family:var(--mono);}
 
       .bar{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:max(16px,env(safe-area-inset-top,0px)) 20px 4px;}
       .b-l{display:flex;align-items:center;gap:10px;}
@@ -144,16 +161,65 @@
       .opp .oside{flex:1;min-width:0;}
       .opp .opay{font-size:12px;color:var(--econ);font-weight:600;margin-top:3px;}
 
+      .b-l span.mono{color:#5c8cff;font-size:8px;letter-spacing:.5px;}
+
+      /* selector de avatar (onboarding) */
+      .avpick{display:flex;gap:10px;width:100%;flex-wrap:wrap;align-items:center;}
+      .avslot{width:46px;height:46px;border-radius:50%;cursor:pointer;border:1.5px solid var(--line);background:var(--glass);display:grid;place-items:center;font-size:20px;color:var(--mut);background-size:cover;background-position:center;position:relative;transition:.15s;}
+      .avslot.on{border-color:var(--sky);box-shadow:0 0 0 3px rgba(92,200,255,.25);}
+      .avslot.up{border-style:dashed;font-size:22px;}
+
+      /* tarjeta de identidad / perfil (avatar flotante) */
+      .prof-back{position:fixed;inset:0;z-index:37;background:rgba(1,2,6,.72);opacity:0;pointer-events:none;transition:.3s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+      .prof-back.on{opacity:1;pointer-events:auto;}
+      .profile{position:fixed;left:50%;top:50%;transform:translate(-50%,-46%) scale(.94);z-index:38;width:min(90%,360px);max-height:88%;overflow-y:auto;padding:26px 22px 22px;border-radius:28px;opacity:0;pointer-events:none;transition:.3s cubic-bezier(.2,.9,.25,1);text-align:center;
+        background:linear-gradient(180deg,rgba(16,20,38,.96),rgba(6,8,18,.98));border:1px solid var(--line);box-shadow:0 40px 100px rgba(0,0,0,.75),inset 0 1px 0 rgba(140,180,255,.14);}
+      .profile.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+      .pcx{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--mut);cursor:pointer;font-size:15px;z-index:2;}
+      .pav-wrap{position:relative;width:112px;height:112px;margin:2px auto 8px;display:grid;place-items:center;}
+      .pav-ring{position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(120,180,255,.25);animation:spin 14s linear infinite;}
+      .pav-ring::before{content:"";position:absolute;top:-3px;left:50%;width:6px;height:6px;border-radius:50%;background:var(--sky);box-shadow:0 0 10px var(--sky);transform:translateX(-50%);}
+      @keyframes spin{to{transform:rotate(360deg)}}
+      .pav{width:100px;height:100px;border-radius:50%;background:linear-gradient(140deg,var(--sky),var(--indigo));background-size:cover;background-position:center;display:grid;place-items:center;font-size:44px;color:#fff;box-shadow:0 16px 46px rgba(92,120,255,.5),inset 0 2px 10px rgba(255,255,255,.25);animation:fl 5s ease-in-out infinite;}
+      .pvalid{display:inline-flex;align-items:center;gap:6px;margin:4px auto 6px;padding:5px 12px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.6px;color:#7fffd0;background:rgba(63,208,201,.12);border:1px solid rgba(63,208,201,.35);}
+      .profile h2{font-size:21px;font-weight:700;margin-top:4px;}
+      .prole{font-size:12px;color:var(--sky);font-weight:600;letter-spacing:.3px;margin-top:2px;}
+      .psum{font-size:13.5px;line-height:1.6;color:#c2cadd;margin-top:12px;}
+      .pstats{display:flex;gap:8px;margin-top:16px;}
+      .pstat{flex:1;padding:11px 6px;border-radius:14px;background:var(--glass);border:1px solid var(--line);}
+      .pstat b{display:block;font-size:19px;font-weight:800;letter-spacing:-.5px;}
+      .pstat span{font-size:8.5px;color:var(--mut);letter-spacing:.5px;text-transform:uppercase;}
+      .pchips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px;}
+      .pbtn{margin-top:18px;width:100%;padding:14px;border-radius:15px;border:none;cursor:pointer;font-family:var(--font);font-size:14.5px;font-weight:600;color:#05060f;background:linear-gradient(135deg,#ffd27a,var(--crec));box-shadow:0 12px 30px rgba(255,176,46,.3);}
+
+      /* "el trabajo te busca": oferta entrante */
+      .incoming{position:fixed;left:50%;transform:translateX(-50%) translateY(14px);bottom:calc(178px + env(safe-area-inset-bottom,0px));z-index:22;width:min(92%,420px);padding:14px 16px;border-radius:20px;opacity:0;pointer-events:none;transition:.34s cubic-bezier(.2,.9,.25,1);
+        background:linear-gradient(180deg,rgba(20,26,46,.95),rgba(9,12,24,.97));border:1px solid rgba(255,176,46,.4);box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 30px rgba(255,176,46,.12);}
+      .incoming.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}
+      .inc-h{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1px;color:var(--crec);display:flex;align-items:center;gap:6px;}
+      .inc-h .pip{width:7px;height:7px;border-radius:50%;background:var(--crec);box-shadow:0 0 8px var(--crec);animation:blink 1.2s infinite;}
+      @keyframes blink{50%{opacity:.25}}
+      .inc-t{font-size:15px;font-weight:700;margin-top:5px;}
+      .inc-s{font-size:11.5px;color:var(--mut);margin-top:2px;}
+      .inc-row{display:flex;gap:8px;margin-top:11px;}
+      .inc-row button{flex:1;padding:10px;border-radius:12px;border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;color:#05060f;background:linear-gradient(135deg,#ffd27a,var(--crec));}
+      .inc-row button.ghost{color:var(--mut);background:var(--glass);border:1px solid var(--line);}
+
       .toast{position:fixed;left:50%;top:12%;transform:translateX(-50%) translateY(-8px);z-index:30;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;background:rgba(14,17,30,.92);border:1px solid var(--line);color:var(--ink);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);opacity:0;transition:.3s;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.5);}
       .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
     </style>
   </head>
   <body>
     <div id="app">
+      <div class="fx fx-grid"></div>
+      <div class="fx fx-vig"></div>
+      <div class="fx fx-scan"></div>
       <canvas id="cv"></canvas>
+      <div class="hud"><b class="tl"></b><b class="tr"></b><b class="bl"></b><b class="br"></b></div>
       <div class="bar">
-        <div class="b-l"><div class="glyph">Ω</div><div><b>Ómicron</b><span>Tu conocimiento, tu activo</span></div></div>
+        <div class="b-l"><div class="glyph">Ω</div><div><b>Ómicron</b><span id="sysLine" class="mono">SYS · STANDBY</span></div></div>
         <div style="display:flex;gap:8px;align-items:center">
+          <button class="vtoggle" id="profBtn" title="Perfil">👤</button>
           <button class="vtoggle" id="opBtn" title="Oportunidades">🎯</button>
           <button class="vtoggle" id="vt" title="Voz">🔊</button>
         </div>
@@ -209,9 +275,14 @@
         </div>
         <div class="sect-l">Perfil detectado</div>
         <div class="chips" id="anChips"></div>
+        <div class="sect-l">Elige tu avatar</div>
+        <div class="avpick" id="avPick"><div class="avslot up" id="avUpBtn">＋</div></div>
+        <input type="file" id="avFile" accept="image/*" style="display:none" />
+        <div class="sect-l">Cómo te posiciona el sistema</div>
+        <div class="wnote" id="anPos" style="color:#c2cadd;font-weight:400;line-height:1.55"></div>
         <div class="sect-l">3 oportunidades con mayor tasa de éxito</div>
         <div id="anJobs" style="width:100%;display:flex;flex-direction:column;gap:8px"></div>
-        <button id="wakeBtn">✨ Despertar el Oráculo</button>
+        <button id="wakeBtn">✨ Entrar al sistema</button>
       </div>
     </div>
 
@@ -226,6 +297,23 @@
       <div class="sh-tabs" id="shTabs"></div>
       <div class="sh-body" id="shBody"></div>
     </div>
+
+    <!-- Tarjeta de identidad / perfil -->
+    <div class="prof-back" id="profBack"></div>
+    <div class="profile" id="profile">
+      <button class="pcx" id="profX">✕</button>
+      <div class="pav-wrap"><div class="pav-ring"></div><div class="pav" id="pAv">Ω</div></div>
+      <div class="pvalid" id="pValid">◎ NODO VALIDADO · N1</div>
+      <h2 id="pName">Tu Gemelo</h2>
+      <div class="prole" id="pRole"></div>
+      <p class="psum" id="pSum"></p>
+      <div class="pstats" id="pStats"></div>
+      <div class="pchips" id="pChips"></div>
+      <button class="pbtn" id="pOpps">Ver las oportunidades que te buscan →</button>
+    </div>
+
+    <!-- El trabajo te busca -->
+    <div class="incoming" id="incoming"></div>
 
     <script>
       (function(){
@@ -334,6 +422,8 @@
           if(/ejecut|contrat|empleo|trabaj|escrow/.test(q))return run("ejecuta");
           if(/capitaliz|boveda|bóveda|regal|activo|conocim/.test(q))return run("capitaliza");
           if(/gobern|tribunal|arbitr|vota/.test(q))return run("gobierna");
+          if(/perfil|qui[eé]n soy|mi identidad|avatar|posicion/.test(q)){openProfile();return say(positioning());}
+          if(/baraja|barajar|analiza mi estado|mejor jugada|qu[eé] hago ahora/.test(q))return dealBestMove();
           if(/reputaci/.test(q))return say("Tu reputación es "+rep()+" sobre 100: el 80% son tus 4 ejes de desempeño.");
           if(/nivel|nodo/.test(q))return openInfo(nById("nodo"));if(/token/.test(q))return openInfo(nById("tok"));
           if(/hola|hey|ayuda|gracias/.test(q))return say("Soy tu Oráculo. Gira tu Gemelo, toca un nodo para decidir, o dime qué te conviene.");
@@ -395,7 +485,8 @@
           st.ejes.qual=clamp(Math.round(28+seniorLevel*7+(found.indexOf("testing")>-1?7:0)+(found.indexOf("architecture")>-1?5:0)),20,95);
           st.ejes.trans=clamp(Math.round(12+(found.indexOf("teaching")>-1?20:0)+creativity*14+(found.indexOf("3d")>-1?5:0)+(found.indexOf("product")>-1?6:0)),8,92);
           st.ejes.fund=clamp(Math.round(26+sc*3.4+edu),20,97);
-          st.profile={name:name,seniorLabel:seniorLabel,seniorLevel:seniorLevel,years:years,skills:found,labels:labels,creativity:creativity};
+          var prevAv=st.profile&&st.profile.avatar;
+          st.profile={name:name,seniorLabel:seniorLabel,seniorLevel:seniorLevel,years:years,skills:found,labels:labels,creativity:creativity,avatar:prevAv||{type:"grad",v:0}};
         }
         function jobScore(j){var p=st.profile;if(!p)return{succ:50,match:0};var sk=p.skills;
           var match=j.need.filter(function(x){return sk.indexOf(x)>-1;}).length;var ratio=j.need.length?match/j.need.length:0;
@@ -434,12 +525,71 @@
         function closeOpps(){el("sheet").classList.remove("on");el("shBack").classList.remove("on");}
         el("opBtn").onclick=function(){openOpps("trabajos");};el("shX").onclick=closeOpps;el("shBack").onclick=closeOpps;
 
+        // ── Avatar (elegido por el usuario) ──
+        var AVPAL=[["#5cc8ff","#5e5ce6"],["#3fd0c9","#5cc8ff"],["#ffb02e","#ff6a3d"],["#b98bff","#5e5ce6"],["#ff8fb0","#ff375f"],["#8b9dff","#3fd0c9"]];
+        function avatarCSS(av){if(av&&av.type==="img")return "background-image:url("+av.v+");background-size:cover;background-position:center;";var g=AVPAL[(av&&av.type==="grad"?av.v:0)%AVPAL.length];return "background:linear-gradient(140deg,"+g[0]+","+g[1]+");";}
+        function avatarGlyph(av){return (av&&av.type==="img")?"":"Ω";}
+        function renderAvatarPicker(){var box=el("avPick");if(!box)return;
+          Array.prototype.slice.call(box.querySelectorAll(".avslot:not(.up)")).forEach(function(x){box.removeChild(x);});
+          AVPAL.forEach(function(g,i){var s=document.createElement("div");s.className="avslot"+(st.profile.avatar&&st.profile.avatar.type==="grad"&&st.profile.avatar.v===i?" on":"");s.style.cssText="background:linear-gradient(140deg,"+g[0]+","+g[1]+")";s.onclick=function(){st.profile.avatar={type:"grad",v:i};save();markAvatar();};box.appendChild(s);});
+          markAvatar();}
+        function markAvatar(){var box=el("avPick");if(!box)return;var slots=box.querySelectorAll(".avslot:not(.up)");var av=st.profile.avatar;
+          Array.prototype.forEach.call(slots,function(s,i){s.classList.toggle("on",!!(av&&av.type==="grad"&&av.v===i));});
+          var up=el("avUpBtn");if(av&&av.type==="img"){up.style.cssText="background-image:url("+av.v+");background-size:cover;background-position:center;";up.textContent="";up.classList.add("on");}else{up.style.cssText="";up.textContent="＋";up.classList.remove("on");}}
+
+        // ── Posicionamiento (resumen de lo que eres) ──
+        function positioning(){var p=st.profile;if(!p)return "";var top=topJobs(1)[0];var pct=top?top.r.succ:60;var tp=clamp(Math.round(102-rep()-pct*0.15),2,55);
+          var area=p.labels.slice(0,3).join(", ")||"tu especialidad";
+          return "Eres "+p.seniorLabel+(p.years?(" con "+p.years+" años de trayectoria"):"")+", especializado en "+area+". El sistema te posiciona en el top "+tp+"% de la red para "+(top?top.j.t:"tu rol")+", con "+pct+"% de afinidad. "+(p.creativity>=0.6?"Perfil de alta creatividad y visión de producto.":"Perfil técnico sólido y confiable.");}
+
         // ── Onboarding: pedir CV ──
         function goAnalysis(){if(!st.profile)return;el("step-cv").style.display="none";el("step-an").style.display="flex";
           var r=rep();el("anMv").textContent=r;setTimeout(function(){el("anBar").style.width=r+"%";},80);
           var p=st.profile;el("anLvl").textContent=p.seniorLabel+" · "+levelName()+(p.years?(" · "+p.years+" años"):"");
           var ch=el("anChips");ch.innerHTML="";p.labels.slice(0,10).forEach(function(l){var s=document.createElement("span");s.className="chip k";s.textContent=l;ch.appendChild(s);});
+          renderAvatarPicker();el("anPos").textContent=positioning();
           var jb=el("anJobs");jb.innerHTML="";topJobs(3).forEach(function(o){var j=o.j,rr=o.r;var col=rr.succ>=75?"#ffb02e":"#5cc8ff";var d=document.createElement("div");d.className="jprev";d.innerHTML='<div><div class="jt">'+j.t+'</div><div class="jtag">'+j.tag+' · '+j.pay+'</div></div><div class="js" style="color:'+col+'">'+rr.succ+'%<small>ÉXITO</small></div>';jb.appendChild(d);});}
+        el("avUpBtn").onclick=function(){el("avFile").click();};
+        el("avFile").onchange=function(e){var f=e.target.files&&e.target.files[0];if(!f)return;if(f.size>2200000){toast("Imagen muy grande (máx 2MB)");return;}var rd=new FileReader();rd.onload=function(){st.profile.avatar={type:"img",v:String(rd.result)};save();markAvatar();toast("Avatar listo");};rd.readAsDataURL(f);};
+
+        // ── Tarjeta de identidad / perfil ──
+        function openProfile(){if(!st.profile){analyzeCV(DEMO_CV);save();}var p=st.profile;
+          el("pAv").style.cssText=avatarCSS(p.avatar);el("pAv").textContent=avatarGlyph(p.avatar);
+          el("pValid").textContent="◎ NODO VALIDADO · N"+levelN()+" · "+levelName().replace("Nodo ","");
+          el("pName").textContent=p.name||"Tu Gemelo Digital";
+          el("pRole").textContent=p.seniorLabel+(p.years?(" · "+p.years+" años"):"");
+          el("pSum").textContent=positioning();
+          var tj=topJobs(1)[0];
+          el("pStats").innerHTML='<div class="pstat"><b style="color:#5cc8ff">'+rep()+'</b><span>Reputación</span></div>'
+            +'<div class="pstat"><b style="color:#3fd0c9">'+st.tokens.toLocaleString("es")+'</b><span>Tokens Ω</span></div>'
+            +'<div class="pstat"><b style="color:#ffb02e">'+(tj?tj.r.succ+"%":"—")+'</b><span>Mejor match</span></div>';
+          var pc=el("pChips");pc.innerHTML="";p.labels.slice(0,8).forEach(function(l){var s=document.createElement("span");s.className="chip k";s.textContent=l;pc.appendChild(s);});
+          el("profile").classList.add("on");el("profBack").classList.add("on");}
+        function closeProfile(){el("profile").classList.remove("on");el("profBack").classList.remove("on");}
+        el("profBtn").onclick=openProfile;el("profX").onclick=closeProfile;el("profBack").onclick=closeProfile;
+        el("pOpps").onclick=function(){closeProfile();openOpps("trabajos");};
+
+        // ── Telemetría del sistema (feel de sistema) ──
+        function sysLine(){var e=el("sysLine");if(!e)return;var v=st.profile?(7+st.profile.skills.length):7;e.textContent="SYS·ONLINE · N"+levelN()+" · REP "+rep()+" · "+v+" VARS";}
+        setInterval(sysLine,1500);sysLine();
+
+        // ── Motor proactivo: el trabajo te busca + baraja tus variables ──
+        var incTimer=null,incIdx=0,sysStarted=false;
+        function startSystem(){if(sysStarted)return;sysStarted=true;
+          setTimeout(surfaceIncoming,7000);
+          incTimer=setInterval(function(){if(document.hidden)return;if(el("sheet").classList.contains("on")||el("profile").classList.contains("on")||!el("wake").classList.contains("hide"))return;
+            if(Math.random()<0.62)surfaceIncoming();else nudge();},19000);}
+        function surfaceIncoming(){var list=topJobs(6);if(!list.length)return;var o=list[incIdx%list.length];incIdx++;var j=o.j,r=o.r;
+          var box=el("incoming");box.innerHTML='<div class="inc-h"><span class="pip"></span>UNA EMPRESA TE BUSCA</div><div class="inc-t">'+j.t+'</div><div class="inc-s">'+r.succ+'% de afinidad · '+j.pay+' · '+typeLabel(j.type)+'</div><div class="inc-row"><button id="incView">Ver oferta</button><button id="incLater" class="ghost">Después</button></div>';
+          box.classList.add("show");if(voiceOn)say("El trabajo te busca. "+j.t+", con "+r.succ+" por ciento de afinidad para tu perfil.");
+          el("incView").onclick=function(){box.classList.remove("show");openOpps("trabajos");};el("incLater").onclick=function(){box.classList.remove("show");};
+          clearTimeout(box._t);box._t=setTimeout(function(){box.classList.remove("show");},10000);}
+        function nudge(){var g=nextGoal(),r=reco();renderOpts(r);var tp=topJobs(1)[0];
+          say("El sistema barajó tu estado actual. Tu mejor jugada ahora: "+ACT[r].name+". Te acerca a "+(tp?tp.j.t:"tu meta")+(g?(" y a "+g.name):"")+".");}
+        function dealBestMove(){var nv=7+(st.profile?st.profile.skills.length:0);var box=el("opts");renderOpts(null);
+          var i=0,cyc=setInterval(function(){var kids=box.children;if(!kids.length)return;for(var j=0;j<kids.length;j++)kids[j].classList.toggle("reco",j===(i%kids.length));i++;},95);
+          el("say").textContent="Barajando "+nv+" variables de tu estado…";
+          setTimeout(function(){clearInterval(cyc);var r=reco();renderOpts(r);say("Barajé "+nv+" variables conectadas de tu Gemelo. Tu mejor jugada ahora: "+ACT[r].name+", en "+ACT[r].d+". Todo está conectado: esto es lo que más mueve tu reputación.");},1600);}
         el("cvUp").onclick=function(){el("cvFile").click();};
         el("cvFile").onchange=function(e){var f=e.target.files&&e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){el("cvText").value=String(rd.result||"").slice(0,8000);toast("Archivo cargado");};rd.readAsText(f);};
         el("cvDemo").onclick=function(){el("cvText").value=DEMO_CV;};
@@ -504,7 +654,10 @@
         layout();requestAnimationFrame(frame);
         el("wakeBtn").onclick=function(){el("wake").classList.add("hide");try{if("speechSynthesis"in window){speechSynthesis.cancel();pickVoice();}}catch(e){}
           var p=st.profile,tj=topJobs(1)[0];
-          say("Analicé tu CV. Eres "+(p?p.seniorLabel:"un profesional")+", con reputación "+rep()+" sobre 100. Detecté "+(p?p.labels.length:0)+" áreas de conocimiento. Tu mejor oportunidad ahora: "+(tj?tj.j.t+", con "+tj.r.succ+" por ciento de éxito":"explora tus opciones")+". Toca el nodo Oportunidades o el objetivo de arriba, o dime qué quieres hacer.");setTimeout(guide,6800);};
+          say("Sistema en línea. Eres "+(p?p.seniorLabel:"un profesional")+", nodo validado con reputación "+rep()+". Estoy barajando tus variables para acercarte tus mejores oportunidades. Tu mejor match ahora: "+(tj?tj.j.t+", "+tj.r.succ+" por ciento de afinidad":"explora tus opciones")+". Aquí el trabajo te busca a ti.");
+          setTimeout(function(){openProfile();},1200);
+          setTimeout(dealBestMove,7200);
+          startSystem();};
       })();
     </script>
   </body>
