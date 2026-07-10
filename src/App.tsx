@@ -17,6 +17,7 @@ import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
 import { LiveBadge, LiveNetworkFeed } from './components/shared/LivePresence';
+import { IncomingJobPush } from './components/shared/IncomingJobs';
 import { PublicProfileGate } from './components/perfil/RedSocial';
 import { VerifyCredentialView } from './components/perfil/VerifyCredential';
 import { C, FONT } from './theme';
@@ -152,6 +153,7 @@ function AppShell() {
 
       <BottomNav />
       <LiveNetworkFeed />
+      <IncomingJobPush />
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
       <PublicProfileGate />
       <ErrorBoundary section="Oráculo">
