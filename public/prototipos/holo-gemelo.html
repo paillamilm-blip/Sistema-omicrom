@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#05060f" />
     <title>Ómicron · Gemelo Digital</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -181,13 +185,14 @@
               p=nz(p);n.vx=p[0];n.vy=p[1];n.vz=p[2];});
           });
         })();
+        (function centers(){function nz(v){var m=Math.hypot(v[0],v[1],v[2])||1;return [v[0]/m,v[1]/m,v[2]/m];}Object.keys(CATS).forEach(function(ck){var m=N.filter(function(n){return n.cat===ck;});var s=[0,0,0];m.forEach(function(n){s[0]+=n.vx;s[1]+=n.vy;s[2]+=n.vz;});CATS[ck].cen=nz(s);});})();
         function nById(id){for(var i=0;i<N.length;i++)if(N[i].id===id)return N[i];return null;}
         function fmt(v){return typeof v==="number"?v.toLocaleString("es"):v;}
 
         // leyenda interactiva (filtro por categoría)
         var activeCat=null;
         (function(){var lg=el("legend");Object.keys(CATS).forEach(function(ck){var c=CATS[ck];var b=document.createElement("div");b.className="lg";b.innerHTML='<span class="dt" style="background:'+c.c+';box-shadow:0 0 8px '+c.c+'"></span>'+c.name;
-          b.onclick=function(){activeCat=activeCat===ck?null:ck;document.querySelectorAll(".lg").forEach(function(x,i){x.classList.toggle("on",Object.keys(CATS)[i]===activeCat);});if(activeCat)say(c.name+": "+catDesc(ck));};lg.appendChild(b);});})();
+          b.onclick=function(){activeCat=activeCat===ck?null:ck;document.querySelectorAll(".lg").forEach(function(x,i){x.classList.toggle("on",Object.keys(CATS)[i]===activeCat);});if(activeCat){var d=CATS[ck].cen;var L=Math.hypot(d[0],d[2]);fay=Math.atan2(-d[0],d[2]);fax=clamp(Math.atan2(d[1],L),-1,1);focus=true;zoomT=1.14;say(c.name+": "+catDesc(ck));}else{focus=false;zoomT=1;}};lg.appendChild(b);});})();
         function catDesc(ck){return ck==="desemp"?"tus 4 ejes de desempeño real; el 80% de tu reputación.":ck==="econ"?"tu progreso y tu economía interna: experiencia, tokens y nivel.":"donde conviertes tu conocimiento en activos: aprende, ejecuta, capitaliza y gobierna.";}
 
         function openInfo(n){var c=CATS[n.cat];el("info-ic").textContent=n.ic;el("info-ic").style.background="linear-gradient(135deg,"+c.c+"55,"+c.c+"18)";el("info-ic").style.color=c.c;
@@ -220,16 +225,17 @@
         // ══ CANVAS 3D ══
         var cv=el("cv"),ctx=cv.getContext("2d");
         var W=0,H=0,DPR=1,cx=0,cy=0,orbR=0,R3=0,dust=[],pulses=[];
-        var ay=0.4,ax=-0.22,ayv=0,axv=0,drag=false,lx=0,ly=0,moved=0;
+        var ay=0.4,ax=-0.22,ayv=0,axv=0,drag=false,lx=0,ly=0,moved=0,zoom=1,zoomT=1,focus=false,fay=0,fax=0;
         function layout(){DPR=Math.min(window.devicePixelRatio||1,2);var r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);orbR=Math.min(W,H)*0.108;R3=Math.min(W,H)*0.35;dust=[];for(var i=0;i<90;i++){var u=Math.random()*2-1,th=Math.random()*6.28,rr=Math.sqrt(1-u*u);dust.push({vx:Math.cos(th)*rr,vy:u,vz:Math.sin(th)*rr,s:Math.random()*1.2+.3});}}
         function sr(){var s=el("stage").getBoundingClientRect(),a=el("app").getBoundingClientRect();return {cx:s.left-a.left+s.width/2,cy:s.top-a.top+s.height*0.45};}
         function hx(h,al){h=h.replace("#","");var n=parseInt(h,16);return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+al+")";}
         function pulseCore(){pulses.push({r:orbR,max:orbR*3.6,w:2.5});}
-        function project(vx,vy,vz){var x1=vx*Math.cos(ay)+vz*Math.sin(ay),z1=-vx*Math.sin(ay)+vz*Math.cos(ay),y1=vy;var y2=y1*Math.cos(ax)-z1*Math.sin(ax),z2=y1*Math.sin(ax)+z1*Math.cos(ax);var persp=2.5/(2.5-z2*0.92);return {x:cx+x1*R3*persp,y:cy+y2*R3*persp,z:z2,p:persp};}
+        function project(vx,vy,vz){var x1=vx*Math.cos(ay)+vz*Math.sin(ay),z1=-vx*Math.sin(ay)+vz*Math.cos(ay),y1=vy;var y2=y1*Math.cos(ax)-z1*Math.sin(ax),z2=y1*Math.sin(ax)+z1*Math.cos(ax);var persp=2.5/(2.5-z2*0.92);return {x:cx+x1*R3*zoom*persp,y:cy+y2*R3*zoom*persp,z:z2,p:persp};}
         var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches,t0=performance.now();
         function dim(n){return activeCat&&n.cat!==activeCat?0.18:1;}
         function frame(now){var t=now-t0;var s=sr();cx=s.cx;cy=s.cy;ctx.clearRect(0,0,W,H);
-          if(!drag){ay+=ayv+(reduce?0:0.0015);ax=clamp(ax+axv,-1.1,1.1);ayv*=0.95;axv*=0.95;}
+          if(drag){}else if(focus){var dd=fay-ay;dd=Math.atan2(Math.sin(dd),Math.cos(dd));ay+=dd*0.09;ax+=(fax-ax)*0.09;}else{ay+=ayv+(reduce?0:0.0015);ax=clamp(ax+axv,-1.1,1.1);ayv*=0.95;axv*=0.95;}
+          zoom+=(zoomT-zoom)*0.08;
           var halo=ctx.createRadialGradient(cx,cy,orbR*.2,cx,cy,orbR*3.1);halo.addColorStop(0,"rgba(70,80,180,.15)");halo.addColorStop(.5,"rgba(60,140,200,.05)");halo.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=halo;ctx.beginPath();ctx.arc(cx,cy,orbR*3.1,0,6.28);ctx.fill();
           for(var i=0;i<dust.length;i++){var d=dust[i];var q=project(d.vx*1.95,d.vy*1.95,d.vz*1.95);var al=clamp((q.z+1)/2,0,1);ctx.fillStyle="rgba(180,200,255,"+(0.04+al*0.28)+")";ctx.beginPath();ctx.arc(q.x,q.y,d.s*q.p*0.55,0,6.28);ctx.fill();}
           for(var i=0;i<N.length;i++){var n=N[i];var q=project(n.vx,n.vy,n.vz);n.sx=q.x;n.sy=q.y;n.sz=q.z;n.sp=q.p;}
@@ -240,6 +246,7 @@
           for(var i=0;i<order.length;i++) if(order[i].sz<0) drawNode(order[i],t);
           drawCore(t);
           for(var i=0;i<order.length;i++) if(order[i].sz>=0) drawNode(order[i],t);
+          drawClusterLabels();
           for(var p=pulses.length-1;p>=0;p--){var pu=pulses[p];pu.r+=(pu.max-pu.r)*.05+1.5;var al=Math.max(0,1-pu.r/pu.max);ctx.strokeStyle="rgba(92,200,255,"+(al*.55)+")";ctx.lineWidth=pu.w;ctx.beginPath();ctx.arc(cx,cy,pu.r,0,6.28);ctx.stroke();if(pu.r>=pu.max-2)pulses.splice(p,1);}
           requestAnimationFrame(frame);}
         function drawNode(n,t){var c=CATS[n.cat].c;var d01=clamp((n.sz+1)/2,0,1);var al=(0.3+d01*0.7)*dim(n);
@@ -259,9 +266,10 @@
           ctx.lineWidth=2.5;ctx.strokeStyle="rgba(255,255,255,.09)";ctx.beginPath();ctx.arc(cx,cy,R+8,0,6.28);ctx.stroke();ctx.strokeStyle=high?"#ffb02e":"#5cc8ff";ctx.lineCap="round";ctx.beginPath();ctx.arc(cx,cy,R+8,-Math.PI/2,-Math.PI/2+(rep()/100)*6.28);ctx.stroke();ctx.lineCap="butt";
           ctx.fillStyle="#060814";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="800 "+Math.round(R*.72)+"px -apple-system,Inter,sans-serif";ctx.fillText(rep(),cx,cy-R*.02);
           ctx.fillStyle="rgba(6,8,20,.62)";ctx.font="700 8px -apple-system,Inter,sans-serif";ctx.fillText("REPUTACIÓN",cx,cy+R*.46);}
+        function drawClusterLabels(){Object.keys(CATS).forEach(function(ck){var c=CATS[ck];if(!c.cen)return;var q=project(c.cen[0]*1.28,c.cen[1]*1.28,c.cen[2]*1.28);var d01=clamp((q.z+1)/2,0,1);var al=(0.22+d01*0.62)*(activeCat?(activeCat===ck?1:0.14):1);ctx.textAlign="center";ctx.textBaseline="middle";ctx.save();ctx.shadowBlur=8;ctx.shadowColor=hx(c.c,al*0.6);ctx.fillStyle=hx(c.c,al);ctx.font="700 "+Math.round(11.5*clamp(q.p,.8,1.3))+"px -apple-system,Inter,sans-serif";ctx.fillText(c.name.toUpperCase(),q.x,q.y);ctx.restore();});}
 
         function pt(e){var r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
-        cv.addEventListener("pointerdown",function(e){drag=true;moved=0;var p=pt(e);lx=p.x;ly=p.y;ayv=0;axv=0;try{cv.setPointerCapture(e.pointerId);}catch(x){}});
+        cv.addEventListener("pointerdown",function(e){drag=true;moved=0;focus=false;zoomT=1;var p=pt(e);lx=p.x;ly=p.y;ayv=0;axv=0;try{cv.setPointerCapture(e.pointerId);}catch(x){}});
         cv.addEventListener("pointermove",function(e){if(!drag)return;var p=pt(e);var dx=p.x-lx,dy=p.y-ly;lx=p.x;ly=p.y;moved+=Math.abs(dx)+Math.abs(dy);ay+=dx*0.007;ax=clamp(ax-dy*0.007,-1.1,1.1);ayv=dx*0.007;axv=-dy*0.007;if(moved>10)el("hint").style.opacity=0;});
         function endDrag(e){if(!drag)return;drag=false;if(moved<8){var p=pt(e);var best=null,bd=1e9;for(var i=0;i<N.length;i++){var n=N[i];if(dim(n)<0.5)continue;var dd=Math.hypot(p.x-n.sx,p.y-n.sy);if(dd<36&&dd<bd&&(!best||n.sz>best.sz)){bd=dd;best=n;}}if(best)openInfo(best);else if(Math.hypot(p.x-cx,p.y-cy)<orbR*1.15){closeInfo();say("Yo soy tu Gemelo Digital: reputación "+rep()+", "+levelName()+". Gírame y toca cada nodo para decidir tu próximo paso.");}}}
         cv.addEventListener("pointerup",endDrag);cv.addEventListener("pointercancel",function(){drag=false;});
