@@ -272,24 +272,19 @@
         <input type="file" id="cvFile" accept=".txt,.md,.json,.text" style="display:none" />
         <button id="cvGo">Analizar mi conocimiento →</button>
       </div>
-      <!-- PASO 2: análisis + despertar -->
+      <!-- PASO 2: análisis + despertar (preciso) -->
       <div class="wstep" id="step-an" style="display:none">
-        <div class="wg sm">Ω</div>
-        <div class="meter">
-          <div class="mv" id="anMv">40</div>
-          <div class="ml">Medidor de conocimiento · reputación en tiempo real</div>
-          <div class="mbar"><i id="anBar"></i></div>
-          <div class="ml" id="anLvl" style="margin-top:6px"></div>
-        </div>
-        <div class="sect-l">Perfil detectado</div>
-        <div class="chips" id="anChips"></div>
-        <div class="sect-l">Elige tu avatar</div>
-        <div class="avpick" id="avPick"><div class="avslot up" id="avUpBtn">＋</div></div>
+        <div class="pav-wrap"><div class="pav-ring"></div><div class="pav" id="anAv">Ω</div></div>
+        <div class="avpick" id="avPick" style="justify-content:center"><div class="avslot up" id="avUpBtn">＋</div></div>
         <input type="file" id="avFile" accept="image/*" style="display:none" />
-        <div class="sect-l">Cómo te posiciona el sistema</div>
-        <div class="wnote" id="anPos" style="color:#c2cadd;font-weight:400;line-height:1.55"></div>
-        <div class="sect-l">3 oportunidades con mayor tasa de éxito</div>
-        <div id="anJobs" style="width:100%;display:flex;flex-direction:column;gap:8px"></div>
+        <div class="meter" style="text-align:center">
+          <div class="mv" id="anMv">40</div>
+          <div class="ml">Reputación · tu medidor de conocimiento</div>
+          <div class="mbar"><i id="anBar"></i></div>
+        </div>
+        <div id="anRole" style="font-size:14.5px;font-weight:700;text-align:center;margin-top:2px"></div>
+        <div id="anPos" style="font-size:12.5px;color:var(--mut);text-align:center;line-height:1.5"></div>
+        <div class="jprev" id="anTop" style="margin-top:4px"></div>
         <button id="wakeBtn">✨ Entrar al sistema</button>
       </div>
     </div>
@@ -575,7 +570,8 @@
           markAvatar();}
         function markAvatar(){var box=el("avPick");if(!box)return;var slots=box.querySelectorAll(".avslot:not(.up)");var av=st.profile.avatar;
           Array.prototype.forEach.call(slots,function(s,i){s.classList.toggle("on",!!(av&&av.type==="grad"&&av.v===i));});
-          var up=el("avUpBtn");if(av&&av.type==="img"){up.style.cssText="background-image:url("+av.v+");background-size:cover;background-position:center;";up.textContent="";up.classList.add("on");}else{up.style.cssText="";up.textContent="＋";up.classList.remove("on");}}
+          var up=el("avUpBtn");if(av&&av.type==="img"){up.style.cssText="background-image:url("+av.v+");background-size:cover;background-position:center;";up.textContent="";up.classList.add("on");}else{up.style.cssText="";up.textContent="＋";up.classList.remove("on");}
+          var pv=el("anAv");if(pv){pv.style.cssText=avatarCSS(av);pv.textContent=avatarGlyph(av);}}
 
         // ── Posicionamiento (resumen de lo que eres) ──
         function positioning(){var p=st.profile;if(!p)return "";
@@ -584,14 +580,18 @@
           var top=topJobs(1)[0];var pct=top?top.r.succ:60;var tp=clamp(Math.round(102-rep()-pct*0.15),2,55);
           var area=p.labels.slice(0,3).join(", ")||"tu especialidad";
           return "Eres "+p.seniorLabel+(p.years?(" con "+p.years+" años de trayectoria"):"")+", especializado en "+area+". El sistema te posiciona en el top "+tp+"% de la red para "+(top?top.j.t:"tu rol")+", con "+pct+"% de afinidad. "+(p.creativity>=0.6?"Perfil de alta creatividad y visión de producto.":"Perfil técnico sólido y confiable.");}
+        function positioningShort(){var p=st.profile;if(!p)return "";
+          if(p.arch==="estudiante"){var g=gapSkills();return "Modo aprendizaje · siguiente salto: "+(SKLAB[g[0]]||g[0]);}
+          var top=topJobs(1)[0];var pct=top?top.r.succ:60;var tp=clamp(Math.round(102-rep()-pct*0.15),2,55);
+          return "Top "+tp+"% de la red · "+(p.labels.slice(0,2).join(" · ")||"tu perfil");}
 
         // ── Onboarding: pedir CV ──
         function goAnalysis(){if(!st.profile)return;el("step-cv").style.display="none";el("step-an").style.display="flex";
           var r=rep();el("anMv").textContent=r;setTimeout(function(){el("anBar").style.width=r+"%";},80);
-          var p=st.profile;el("anLvl").textContent=p.seniorLabel+" · "+levelName()+(p.years?(" · "+p.years+" años"):"");
-          var ch=el("anChips");ch.innerHTML="";p.labels.slice(0,10).forEach(function(l){var s=document.createElement("span");s.className="chip k";s.textContent=l;ch.appendChild(s);});
-          renderAvatarPicker();el("anPos").textContent=positioning();
-          var jb=el("anJobs");jb.innerHTML="";topJobs(3).forEach(function(o){var j=o.j,rr=o.r;var col=rr.succ>=75?"#ffb02e":"#5cc8ff";var d=document.createElement("div");d.className="jprev";d.innerHTML='<div><div class="jt">'+j.t+'</div><div class="jtag">'+j.tag+' · '+j.pay+'</div></div><div class="js" style="color:'+col+'">'+rr.succ+'%<small>ÉXITO</small></div>';jb.appendChild(d);});}
+          var p=st.profile;el("anRole").textContent=p.seniorLabel+" · "+levelName();el("anPos").textContent=positioningShort();
+          renderAvatarPicker();
+          var tj=topJobs(1)[0];var col=tj&&tj.r.succ>=75?"#ffb02e":"#5cc8ff";
+          el("anTop").innerHTML=tj?('<div><div class="jt">'+tj.j.t+'</div><div class="jtag">Tu mejor match ahora</div></div><div class="js" style="color:'+col+'">'+tj.r.succ+'%<small>ÉXITO</small></div>'):"";}
         el("avUpBtn").onclick=function(){el("avFile").click();};
         el("avFile").onchange=function(e){var f=e.target.files&&e.target.files[0];if(!f)return;if(f.size>2200000){toast("Imagen muy grande (máx 2MB)");return;}var rd=new FileReader();rd.onload=function(){st.profile.avatar={type:"img",v:String(rd.result)};save();markAvatar();toast("Avatar listo");};rd.readAsDataURL(f);};
 
