@@ -8,6 +8,7 @@ import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
 import { TrabajoTeEncuentra } from '../empleos/TrabajoTeEncuentra';
+import { RutaCarrera } from '../empleos/RutaCarrera';
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
 // "muted" con más contraste para no forzar la vista.
@@ -161,6 +162,7 @@ export function EmpleosTab() {
       {/* Lista */}
       <div style={styles.scroll}>
         {view === 'list' && <TrabajoTeEncuentra />}
+        {view === 'list' && <RutaCarrera />}
         {view === 'radar' ? (
           <RadarView jobs={jobs} userPos={userPos} geoStatus={geoStatus} onRequestGeo={requestGeo} onPick={setRadarJob} />
         ) : loading ? (
