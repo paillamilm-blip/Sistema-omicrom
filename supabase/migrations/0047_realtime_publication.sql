@@ -15,28 +15,24 @@
 -- Idempotente: solo agrega la tabla a la publicación si aún no está.
 -- =====================================================================
 
-do $$
-begin
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'profiles'
-  ) then
-    alter publication supabase_realtime add table public.profiles;
-  end if;
+-- Cada tabla en su propio bloque con manejo de error: si la tabla no existe
+-- (schema-drift), se salta en vez de abortar toda la migración.
+do $$ begin
+  if not exists (select 1 from pg_publication_tables
+    where pubname='supabase_realtime' and schemaname='public' and tablename='profiles')
+  then alter publication supabase_realtime add table public.profiles; end if;
+exception when others then null; end $$;
 
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'job_postings'
-  ) then
-    alter publication supabase_realtime add table public.job_postings;
-  end if;
+do $$ begin
+  if not exists (select 1 from pg_publication_tables
+    where pubname='supabase_realtime' and schemaname='public' and tablename='job_postings')
+  then alter publication supabase_realtime add table public.job_postings; end if;
+exception when others then null; end $$;
 
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'job_matches'
-  ) then
-    alter publication supabase_realtime add table public.job_matches;
-  end if;
-end $$;
+do $$ begin
+  if not exists (select 1 from pg_publication_tables
+    where pubname='supabase_realtime' and schemaname='public' and tablename='job_matches')
+  then alter publication supabase_realtime add table public.job_matches; end if;
+exception when others then null; end $$;
 
 notify pgrst, 'reload schema';
