@@ -52,13 +52,18 @@ create trigger trg_ensure_unique_username before insert on public.profiles
   for each row execute function public.ensure_unique_username();
 
 -- ── 3) HALLAZGO #5: reputación fuente única (4 ejes del Gemelo) ───────
+-- CANÓNICO (ver 0050_reputacion_canonica.sql y DEFINICION_REPUTACION_OMICROM.md):
+--   experience_score := promedio de los 4 ejes  (columna DERIVADA)
+--   reputation_score := 0.20·traditional + 0.80·experience_score
+-- Se mantiene idéntico aquí porque 9999 corre al final y no debe revertir 0050.
 create or replace function public.recalc_reputation()
 returns trigger language plpgsql as $$
 declare v_exp numeric; v_rep numeric;
 begin
-  v_exp := (coalesce(new.execution_score,0)+coalesce(new.quality_score,0)
-          + coalesce(new.transcendence_score,0)+coalesce(new.foundation_score,0))/4.0;
-  v_rep := round(coalesce(new.traditional_score,0)*0.20 + v_exp*0.80, 2);
+  v_exp := round((coalesce(new.execution_score,0)+coalesce(new.quality_score,0)
+          + coalesce(new.transcendence_score,0)+coalesce(new.foundation_score,0))/4.0, 2);
+  new.experience_score := least(100, greatest(0, v_exp));
+  v_rep := round(coalesce(new.traditional_score,0)*0.20 + new.experience_score*0.80, 2);
   new.reputation_score := least(100, greatest(0, v_rep));
   new.reputation_updated_at := now();
   return new;
@@ -70,12 +75,11 @@ create trigger trg_recalc_reputation
   on public.profiles
   for each row execute function public.recalc_reputation();
 
+-- Backfill: normaliza experience_score (promedio de 4 ejes); el trigger recalcula reputación.
 update public.profiles
-set reputation_score = least(100, greatest(0, round(
-      coalesce(traditional_score,0)*0.20
-      + ((coalesce(execution_score,0)+coalesce(quality_score,0)
-         +coalesce(transcendence_score,0)+coalesce(foundation_score,0))/4.0)*0.80, 2))),
-    reputation_updated_at = now();
+set experience_score = least(100, greatest(0, round((
+      coalesce(execution_score,0)+coalesce(quality_score,0)
+      +coalesce(transcendence_score,0)+coalesce(foundation_score,0))/4.0, 2)));
 
 -- ── 4) Fuga RLS en messages ──────────────────────────────────────────
 drop policy if exists "messages_select" on public.messages;

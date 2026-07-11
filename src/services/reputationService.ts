@@ -19,9 +19,13 @@ export function calculateGemeloDigital(profile: Profile): GemeloDigital {
 }
 
 /**
- * Calcula la reputación total basado en la regla 80/20.
- * 20% = historial tradicional (títulos, portafolio)
- * 80% = experiencia interna (desempeño, PE)
+ * Calcula la reputación total basado en la regla 80/20 (modelo canónico).
+ * Ver DEFINICION_REPUTACION_OMICROM.md.
+ * 20% = historial tradicional (títulos, portafolio → traditional_score)
+ * 80% = experiencia demostrada (experience_score = PROMEDIO de los 4 ejes)
+ *
+ * IMPORTANTE: `experience` debe ser el promedio de los 4 ejes
+ * (ejecución, calidad, trascendencia, fundamento), no un acumulador de PE.
  */
 export function calculateFinalReputation(
   traditional: number,
@@ -178,8 +182,18 @@ export async function updateReputationScores(
 
 
 /**
- * OTORGAR PE Y RECALCULAR experience_score AUTOMÁTICAMENTE.
- * Cada 500 PE acumulados = +5 al experience_score.
+ * OTORGAR PE (Puntos de Experiencia) — SOLO gamificación / niveles.
+ *
+ * Modelo canónico (ver DEFINICION_REPUTACION_OMICROM.md):
+ *  - Los PE mueven el NIVEL del nodo, NO la reputación directamente.
+ *  - `experience_score` es una columna DERIVADA (promedio de los 4 ejes)
+ *    que mantiene el servidor; el cliente ya NO la escribe. La formación
+ *    impacta la reputación a través del eje Fundamento (nodos validados).
+ *
+ * Nota: la escritura directa de pe_points/experience_score desde el cliente
+ * la revierte el trigger `protect_profile_columns`. El otorgamiento real de
+ * PE debe hacerse vía RPC SECURITY DEFINER en el servidor (p. ej. exámenes,
+ * skill tests). Esta función queda como utilidad/no-op defensiva.
  */
 export async function awardPEPoints(
   userId: string,
@@ -188,33 +202,12 @@ export async function awardPEPoints(
 ): Promise<boolean> {
   // reason está disponible para logging futuro
   void reason;
+  void userId;
+  void peAmount;
 
-  try {
-    const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('pe_points, experience_score')
-      .eq('id', userId)
-      .single();
-
-    if (fetchError || !profile) return false;
-
-    const newPE = profile.pe_points + peAmount;
-    const experienceDelta =
-      Math.floor(newPE / 500) * 5 - Math.floor(profile.pe_points / 500) * 5;
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        pe_points: newPE,
-        experience_score: clamp(profile.experience_score + experienceDelta),
-      })
-      .eq('id', userId);
-
-    return !updateError;
-  } catch (err) {
-    console.error('Error in awardPEPoints:', err);
-    return false;
-  }
+  // Los PE se otorgan server-side (RPC SECURITY DEFINER). experience_score
+  // es derivado y no se toca desde el cliente. Ver definición canónica.
+  return true;
 }
 
 
@@ -254,7 +247,11 @@ export function shouldTriggerAudit(
 }
 
 /**
- * CALCULAR MATCH SCORE (regla 80/20) para empleos.
+ * CALCULAR MATCH SCORE (regla 80/20) para empleos ("el trabajo te busca").
+ *
+ * Modelo canónico: como experience_score = promedio de los 4 ejes,
+ * este match score es IDÉNTICO a reputation_score. Frontend y backend
+ * coinciden. Ver DEFINICION_REPUTACION_OMICROM.md §7.
  */
 export function calculateMatchScore(profile: Profile): number {
   return clamp(profile.traditional_score * 0.2 + profile.experience_score * 0.8);
