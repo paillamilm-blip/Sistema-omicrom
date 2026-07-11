@@ -66,7 +66,7 @@ begin
           + coalesce(new.transcendence_score,0)+coalesce(new.foundation_score,0))/4.0, 2);
   new.experience_score := least(100, greatest(0, v_exp));
   v_base := coalesce(new.traditional_score,0)*0.20 + new.experience_score*0.80;
-  v_momentum := least(15, round(sqrt(greatest(coalesce(new.pe_points,0),0)) / 4.0, 2));
+  v_momentum := least(15, round(sqrt(greatest(coalesce(new.pe_points,0),0)::numeric) / 4.0, 2));
   new.reputation_score := least(100, greatest(0, round(v_base + v_momentum, 2)));
   new.reputation_updated_at := now();
   return new;

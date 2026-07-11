@@ -42,7 +42,8 @@ begin
           + new.experience_score * 0.80;
 
   -- momentum por PE (potencial): bono acotado a +15, rendimientos decrecientes
-  v_momentum := least(15, round(sqrt(greatest(coalesce(new.pe_points, 0), 0)) / 4.0, 2));
+  -- (cast a numeric: sqrt() devuelve double precision y round(x,2) exige numeric)
+  v_momentum := least(15, round(sqrt(greatest(coalesce(new.pe_points, 0), 0)::numeric) / 4.0, 2));
 
   new.reputation_score := least(100, greatest(0, round(v_base + v_momentum, 2)));
   new.reputation_updated_at := now();
