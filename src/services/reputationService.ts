@@ -41,6 +41,31 @@ export function calculateGemeloAverage(gemelo: GemeloDigital): number {
   return (gemelo.execution + gemelo.quality + gemelo.transcendence + gemelo.foundation) / 4;
 }
 
+/**
+ * MOMENTUM POR PE — "lo que puedes conseguir".
+ * Bono de reputación por Puntos de Experiencia acumulados: acotado a +15,
+ * con rendimientos decrecientes (sqrt). Premia el aprendizaje y el potencial
+ * sin permitir inflar la reputación sin límite. Ver DEFINICION_REPUTACION_OMICROM.md.
+ */
+export function calculatePEMomentum(pePoints: number): number {
+  const pe = Math.max(pePoints ?? 0, 0);
+  return Math.min(15, Math.sqrt(pe) / 4);
+}
+
+/**
+ * REPUTACIÓN TOTAL UNIFICADA (modelo canónico, igual que el trigger SQL).
+ *   base     = 0.20·tradicional + 0.80·experiencia (promedio de 4 ejes)
+ *   momentum = bono acotado por PE
+ *   total    = clamp(base + momentum)
+ */
+export function calculateTotalReputation(
+  traditional: number,
+  experience: number,
+  pePoints: number
+): number {
+  return clamp(traditional * 0.2 + experience * 0.8 + calculatePEMomentum(pePoints));
+}
+
 
 /**
  * Determina el Node Level basado en reputación.
@@ -97,8 +122,14 @@ export async function updateReputationInDatabase(
     const newTranscendence = clamp(profile.transcendence_score + (input.transcendence_delta ?? 0));
     const newFoundation    = clamp(profile.foundation_score    + (input.foundation_delta    ?? 0));
 
-    // Reputación = promedio de los 4 ejes
-    const newReputationScore = (newExecution + newQuality + newTranscendence + newFoundation) / 4;
+    // experiencia = promedio de los 4 ejes; reputación = base(20/80) + momentum(PE).
+    // Nota: el trigger SQL recalcula estos campos server-side; esto es optimista/local.
+    const newExperience = (newExecution + newQuality + newTranscendence + newFoundation) / 4;
+    const newReputationScore = calculateTotalReputation(
+      profile.traditional_score,
+      newExperience,
+      profile.pe_points,
+    );
 
     const { error: updateError } = await supabase
       .from('profiles')
@@ -247,14 +278,19 @@ export function shouldTriggerAudit(
 }
 
 /**
- * CALCULAR MATCH SCORE (regla 80/20) para empleos ("el trabajo te busca").
+ * CALCULAR MATCH SCORE para empleos ("el trabajo te busca").
  *
- * Modelo canónico: como experience_score = promedio de los 4 ejes,
- * este match score es IDÉNTICO a reputation_score. Frontend y backend
- * coinciden. Ver DEFINICION_REPUTACION_OMICROM.md §7.
+ * Modelo canónico unificado: base (20/80) + momentum por PE. Como
+ * experience_score = promedio de los 4 ejes, este match score es IDÉNTICO
+ * a reputation_score. Frontend y backend coinciden.
+ * Ver DEFINICION_REPUTACION_OMICROM.md §7.
  */
 export function calculateMatchScore(profile: Profile): number {
-  return clamp(profile.traditional_score * 0.2 + profile.experience_score * 0.8);
+  return calculateTotalReputation(
+    profile.traditional_score,
+    profile.experience_score,
+    profile.pe_points,
+  );
 }
 
 
@@ -308,8 +344,10 @@ export function calculateProgressToNextLevel(
 // ===== SIMULACIONES (para testing/preview sin tocar la BD) =====
 
 /**
- * ✅ FIX: reputation_score ahora se recalcula correctamente como promedio de los 4 ejes.
- * Antes quedaba en 0 (comentario incorrecto).
+ * Simula el recálculo de reputación tras cambios en los ejes (modelo canónico):
+ *   experience_score = promedio de los 4 ejes
+ *   reputation_score = clamp( 0.20·tradicional + 0.80·experiencia + momentum(PE) )
+ * Espeja exactamente al trigger SQL.
  */
 export function simulateReputationUpdate(
   profile: Profile,
@@ -325,14 +363,20 @@ export function simulateReputationUpdate(
   const newTranscendence = clamp(profile.transcendence_score + (deltas.transcendence ?? 0));
   const newFoundation    = clamp(profile.foundation_score    + (deltas.foundation    ?? 0));
 
+  const newExperience = (newExecution + newQuality + newTranscendence + newFoundation) / 4;
+
   return {
     ...profile,
     execution_score:     newExecution,
     quality_score:       newQuality,
     transcendence_score: newTranscendence,
     foundation_score:    newFoundation,
-    // ✅ FIX: reputation_score calculado, no hardcodeado en 0
-    reputation_score: (newExecution + newQuality + newTranscendence + newFoundation) / 4,
+    experience_score:    newExperience,
+    reputation_score: calculateTotalReputation(
+      profile.traditional_score,
+      newExperience,
+      profile.pe_points,
+    ),
   };
 }
 

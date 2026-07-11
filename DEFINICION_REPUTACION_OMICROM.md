@@ -22,29 +22,39 @@ El frontend (`calculateMatchScore`) y el backend calculaban números distintos.
 
 **Decisión canónica (esta versión):**
 
-> `experience_score` **deja de ser un acumulador** y pasa a ser una **columna derivada**:
-> es **exactamente el promedio de los 4 ejes**. Así ambas fórmulas dan el mismo resultado
-> y el radar de 4 ejes **sí** determina la reputación.
-
-Los **PE (Puntos de Experiencia)** siguen existiendo, pero su rol es **gamificación y niveles**,
-no mover la reputación directamente (la mueven a través del eje Fundamento, ver §3).
+> La reputación se mide **en tiempo real con TODO sobre la mesa**: es la suma de
+> **lo que TIENES** (base demostrada 20/80 sobre los 4 ejes) **más lo que PUEDES conseguir**
+> (un bono de *momentum* por tus Puntos de Experiencia acumulados).
+>
+> - `experience_score` **deja de ser un acumulador** y pasa a ser una **columna derivada**:
+>   es **exactamente el promedio de los 4 ejes**. Así el radar de 4 ejes **sí** determina la base.
+> - Los **PE (Puntos de Experiencia)** **SÍ suman** a la reputación, como un bono acotado
+>   que representa tu potencial y tu ritmo de aprendizaje.
 
 ---
 
 ## 1. Fórmula maestra
 
 ```
-experience_score = promedio( Ejecución, Calidad, Trascendencia, Fundamento )   # 0–100
-reputation_score = 0.20 · traditional_score  +  0.80 · experience_score        # 0–100
+experience_score = promedio( Ejecución, Calidad, Trascendencia, Fundamento )        # 0–100
+
+base      = 0.20 · traditional_score  +  0.80 · experience_score        # lo que TIENES
+momentum  = min(15, sqrt(pe_points) / 4)                                # lo que PUEDES conseguir
+reputation_score = min(100, base + momentum)                            # 0–100  (tiempo real)
 ```
 
 - Todos los valores viven en escala **0–100**.
-- Se calculan **en el servidor** (trigger `recalc_reputation` sobre `public.profiles`).
+- Se calculan **en el servidor** (trigger `recalc_reputation` sobre `public.profiles`), que
+  se dispara ante **cualquier** cambio de las variables → reputación **siempre en tiempo real**.
 - El cliente **nunca** escribe estos campos (los revierte el trigger `protect_profile_columns`).
 - `traditional_score` = credenciales verificadas (20%). `experience_score` = desempeño real (80%).
 
 **Ponderación 20/80** = un título ayuda, pero **el 80% se gana demostrando**. Rompe el círculo
 "sin experiencia no me contratan".
+
+**El bono de momentum** (máx **+15**, con rendimientos decrecientes vía raíz cuadrada) hace que
+el aprendizaje y el esfuerzo **cuenten desde el día uno**, pero **sin permitir inflar** la
+reputación sin límite ni "comprarla": satura cerca del nivel máximo (~3.500 PE ≈ +15).
 
 ---
 
@@ -67,12 +77,15 @@ Ningún eje se auto-declara; todos derivan de evidencia en la base de datos.
 
 ## 3. Rol de los PE (Puntos de Experiencia) y los Niveles
 
-- **PE** = métrica de **progreso/gamificación**. Se acumulan al estudiar, aprobar exámenes,
-  cerrar operaciones de mercado, etc. Viven en `pe_points`.
-- Los PE **suben de nivel** al usuario (`node_level`), pero **no** inflan directamente la reputación.
-- La formación **sí** impacta la reputación **a través del eje Fundamento** (estudiar → validar
-  nodos → sube Fundamento → sube experience_score → sube reputación). El camino es indirecto y
-  a prueba de inflación.
+- **PE** = métrica de **progreso**. Se acumulan al estudiar, aprobar exámenes, cerrar operaciones
+  de mercado, etc. Viven en `pe_points`.
+- Los PE cumplen **dos funciones**:
+  1. **Suben de nivel** al usuario (`node_level`).
+  2. **Suman a la reputación** como bono de **momentum** (`min(15, sqrt(pe_points)/4)`),
+     representando tu potencial ("lo que puedes conseguir").
+- Además, la formación impacta la reputación **también** por el eje Fundamento (estudiar → validar
+  nodos → sube Fundamento → sube experiencia → sube base). Doble incentivo al aprendizaje, pero
+  el momentum está **acotado (+15)** para que nunca reemplace al desempeño demostrado.
 
 ### Niveles del nodo (evolución del usuario)
 
@@ -100,7 +113,7 @@ lo posiciona en tiempo real porque **cada acción real recae en un eje**.
 | 💼 **Completar contrato freelance (vendedor)** | Ejecución ↑ | Demuestra que entregas |
 | ⭐ **Recibir calificación del comprador** | Calidad ↑/↓ | Refleja satisfacción real |
 | 🏢 **Contrato con empresa (RELEASED)** | Ejecución ↑ (+ Calidad si califican) | Igual que freelance, mayor peso por volumen |
-| 🛒 **Comprar** en Market/Bóveda | PE ↑ (actividad) | No sube reputación directa (evita "comprar" reputación) |
+| 🛒 **Comprar** en Market/Bóveda | — (sin PE de reputación) | No otorga momentum: evita "comprar" reputación |
 | 🏪 **Publicar servicio en Market** | Trascendencia ↑ | Aportas oferta al ecosistema |
 | 📖 **Publicar doc validado en Bóveda** | Trascendencia ↑ | Capitalizas conocimiento |
 | 🧑‍🏫 **Completar mentoría** | Trascendencia ↑ | Elevar a otros cuenta |
@@ -141,11 +154,13 @@ La reputación **no es dinero**. Son planos separados:
 El puntaje que decide qué oportunidades se te ofrecen usa la **misma** reputación:
 
 ```
-matchScore = 0.20 · traditional_score + 0.80 · experience_score  ==  reputation_score
+matchScore = clamp( 0.20·traditional_score + 0.80·experience_score + momentum(pe_points) )
+           == reputation_score
 ```
 
-Como ahora `experience_score = promedio de los 4 ejes`, **el match score y la reputación son el
-mismo número**. Ya no hay dos verdades. (`calculateMatchScore()` en `reputationService.ts`.)
+Como `experience_score = promedio de los 4 ejes` y el momentum es el mismo bono por PE,
+**el match score y la reputación son el mismo número**. Ya no hay dos verdades.
+(`calculateMatchScore()` / `calculateTotalReputation()` en `reputationService.ts`.)
 
 ---
 
@@ -169,7 +184,8 @@ mismo número**. Ya no hay dos verdades. (`calculateMatchScore()` en `reputation
 
 1. **La reputación se calcula SOLO en el servidor.** El cliente lee, no escribe.
 2. **`experience_score` es derivado** = promedio de los 4 ejes. Nunca se acumula a mano.
-3. **Los PE mueven niveles, no reputación** (salvo vía Fundamento).
+3. **Los PE suman a la reputación como momentum acotado (+15)** y además suben de nivel.
+   El momentum nunca reemplaza al desempeño demostrado.
 4. **Todo eje deriva de evidencia real** (contratos, calificaciones, nodos, publicaciones).
 5. **20/80 es sagrado**: credenciales pesan 20%, desempeño demostrado 80%.
 6. Si agregas una fuente nueva (p. ej. certificación externa), **decide a qué eje pertenece**
