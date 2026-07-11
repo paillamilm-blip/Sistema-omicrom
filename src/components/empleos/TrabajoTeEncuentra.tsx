@@ -50,9 +50,12 @@ export function TrabajoTeEncuentra() {
 
   useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 5000); return () => clearInterval(t); }, []);
 
+  // Afinidad anclada a la reputación CANÓNICA (match ≈ reputación, §7 del modelo),
+  // ajustada por el eje relevante del puesto y el umbral de seniority (PE mínimo).
   const fit = (j: JobDef) => {
-    const f = 48 + Math.round(profile.rep * 0.42) + (profile.pe >= j.minPe ? 12 : -12) + (profile.cv ? 4 : 0)
-      + Math.min(9, profile.titles * 3) + Math.round(((profile.axes[j.eje] || 0) - 40) * 0.12) + j.bias;
+    const axisAlign = Math.round(((profile.axes[j.eje] ?? 50) - 50) * 0.25);
+    const seniority = profile.pe >= j.minPe ? 8 : -14;
+    const f = Math.round(profile.rep * 0.9 + axisAlign + seniority + j.bias);
     return Math.max(34, Math.min(99, f));
   };
   const scored = JOBS.map((j) => ({ j, f: fit(j) })).sort((a, b) => b.f - a.f);

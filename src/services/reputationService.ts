@@ -99,8 +99,13 @@ export function calculatePEThreshold(currentLevel: number): number {
 
 
 /**
- * ACTUALIZAR REPUTACIÓN EN SUPABASE.
- * Modifica los scores del perfil y crea un registro histórico.
+ * @deprecated Escritura de scores desde el CLIENTE. En el modelo canónico los
+ * 4 ejes y la reputación se calculan SERVER-SIDE (triggers 0015–0018 + 0050);
+ * el trigger `protect_profile_columns` (0007/9999) REVIERTE cualquier escritura
+ * del cliente a estas columnas. Por lo tanto este update de scores es un no-op
+ * efectivo (solo el log histórico podría persistir). Se conserva por compat.
+ * Para mover ejes reales, dispara el evento correspondiente (contrato, examen,
+ * calificación, nodo) que ejecuta el trigger server-side.
  */
 export async function updateReputationInDatabase(
   input: ReputationUpdateInput
@@ -181,8 +186,9 @@ export async function updateReputationInDatabase(
 
 
 /**
- * ACTUALIZAR SCORES PARCIALES sin recalcular reputación general.
- * Útil para ajustes rápidos antes de un contrato.
+ * @deprecated Igual que `updateReputationInDatabase`: el cliente NO puede
+ * escribir los ejes (el trigger `protect_profile_columns` los revierte).
+ * Los ejes se actualizan server-side a partir de eventos reales. No-op efectivo.
  */
 export async function updateReputationScores(
   userId: string,
