@@ -19,9 +19,13 @@ export function calculateGemeloDigital(profile: Profile): GemeloDigital {
 }
 
 /**
- * Calcula la reputación total basado en la regla 80/20.
- * 20% = historial tradicional (títulos, portafolio)
- * 80% = experiencia interna (desempeño, PE)
+ * Calcula la reputación total basado en la regla 80/20 (modelo canónico).
+ * Ver DEFINICION_REPUTACION_OMICROM.md.
+ * 20% = historial tradicional (títulos, portafolio → traditional_score)
+ * 80% = experiencia demostrada (experience_score = PROMEDIO de los 4 ejes)
+ *
+ * IMPORTANTE: `experience` debe ser el promedio de los 4 ejes
+ * (ejecución, calidad, trascendencia, fundamento), no un acumulador de PE.
  */
 export function calculateFinalReputation(
   traditional: number,
@@ -35,6 +39,31 @@ export function calculateFinalReputation(
  */
 export function calculateGemeloAverage(gemelo: GemeloDigital): number {
   return (gemelo.execution + gemelo.quality + gemelo.transcendence + gemelo.foundation) / 4;
+}
+
+/**
+ * MOMENTUM POR PE — "lo que puedes conseguir".
+ * Bono de reputación por Puntos de Experiencia acumulados: acotado a +15,
+ * con rendimientos decrecientes (sqrt). Premia el aprendizaje y el potencial
+ * sin permitir inflar la reputación sin límite. Ver DEFINICION_REPUTACION_OMICROM.md.
+ */
+export function calculatePEMomentum(pePoints: number): number {
+  const pe = Math.max(pePoints ?? 0, 0);
+  return Math.min(15, Math.sqrt(pe) / 4);
+}
+
+/**
+ * REPUTACIÓN TOTAL UNIFICADA (modelo canónico, igual que el trigger SQL).
+ *   base     = 0.20·tradicional + 0.80·experiencia (promedio de 4 ejes)
+ *   momentum = bono acotado por PE
+ *   total    = clamp(base + momentum)
+ */
+export function calculateTotalReputation(
+  traditional: number,
+  experience: number,
+  pePoints: number
+): number {
+  return clamp(traditional * 0.2 + experience * 0.8 + calculatePEMomentum(pePoints));
 }
 
 
@@ -93,8 +122,14 @@ export async function updateReputationInDatabase(
     const newTranscendence = clamp(profile.transcendence_score + (input.transcendence_delta ?? 0));
     const newFoundation    = clamp(profile.foundation_score    + (input.foundation_delta    ?? 0));
 
-    // Reputación = promedio de los 4 ejes
-    const newReputationScore = (newExecution + newQuality + newTranscendence + newFoundation) / 4;
+    // experiencia = promedio de los 4 ejes; reputación = base(20/80) + momentum(PE).
+    // Nota: el trigger SQL recalcula estos campos server-side; esto es optimista/local.
+    const newExperience = (newExecution + newQuality + newTranscendence + newFoundation) / 4;
+    const newReputationScore = calculateTotalReputation(
+      profile.traditional_score,
+      newExperience,
+      profile.pe_points,
+    );
 
     const { error: updateError } = await supabase
       .from('profiles')
@@ -178,8 +213,18 @@ export async function updateReputationScores(
 
 
 /**
- * OTORGAR PE Y RECALCULAR experience_score AUTOMÁTICAMENTE.
- * Cada 500 PE acumulados = +5 al experience_score.
+ * OTORGAR PE (Puntos de Experiencia) — SOLO gamificación / niveles.
+ *
+ * Modelo canónico (ver DEFINICION_REPUTACION_OMICROM.md):
+ *  - Los PE mueven el NIVEL del nodo, NO la reputación directamente.
+ *  - `experience_score` es una columna DERIVADA (promedio de los 4 ejes)
+ *    que mantiene el servidor; el cliente ya NO la escribe. La formación
+ *    impacta la reputación a través del eje Fundamento (nodos validados).
+ *
+ * Nota: la escritura directa de pe_points/experience_score desde el cliente
+ * la revierte el trigger `protect_profile_columns`. El otorgamiento real de
+ * PE debe hacerse vía RPC SECURITY DEFINER en el servidor (p. ej. exámenes,
+ * skill tests). Esta función queda como utilidad/no-op defensiva.
  */
 export async function awardPEPoints(
   userId: string,
@@ -188,33 +233,12 @@ export async function awardPEPoints(
 ): Promise<boolean> {
   // reason está disponible para logging futuro
   void reason;
+  void userId;
+  void peAmount;
 
-  try {
-    const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('pe_points, experience_score')
-      .eq('id', userId)
-      .single();
-
-    if (fetchError || !profile) return false;
-
-    const newPE = profile.pe_points + peAmount;
-    const experienceDelta =
-      Math.floor(newPE / 500) * 5 - Math.floor(profile.pe_points / 500) * 5;
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        pe_points: newPE,
-        experience_score: clamp(profile.experience_score + experienceDelta),
-      })
-      .eq('id', userId);
-
-    return !updateError;
-  } catch (err) {
-    console.error('Error in awardPEPoints:', err);
-    return false;
-  }
+  // Los PE se otorgan server-side (RPC SECURITY DEFINER). experience_score
+  // es derivado y no se toca desde el cliente. Ver definición canónica.
+  return true;
 }
 
 
@@ -254,10 +278,19 @@ export function shouldTriggerAudit(
 }
 
 /**
- * CALCULAR MATCH SCORE (regla 80/20) para empleos.
+ * CALCULAR MATCH SCORE para empleos ("el trabajo te busca").
+ *
+ * Modelo canónico unificado: base (20/80) + momentum por PE. Como
+ * experience_score = promedio de los 4 ejes, este match score es IDÉNTICO
+ * a reputation_score. Frontend y backend coinciden.
+ * Ver DEFINICION_REPUTACION_OMICROM.md §7.
  */
 export function calculateMatchScore(profile: Profile): number {
-  return clamp(profile.traditional_score * 0.2 + profile.experience_score * 0.8);
+  return calculateTotalReputation(
+    profile.traditional_score,
+    profile.experience_score,
+    profile.pe_points,
+  );
 }
 
 
@@ -311,8 +344,10 @@ export function calculateProgressToNextLevel(
 // ===== SIMULACIONES (para testing/preview sin tocar la BD) =====
 
 /**
- * ✅ FIX: reputation_score ahora se recalcula correctamente como promedio de los 4 ejes.
- * Antes quedaba en 0 (comentario incorrecto).
+ * Simula el recálculo de reputación tras cambios en los ejes (modelo canónico):
+ *   experience_score = promedio de los 4 ejes
+ *   reputation_score = clamp( 0.20·tradicional + 0.80·experiencia + momentum(PE) )
+ * Espeja exactamente al trigger SQL.
  */
 export function simulateReputationUpdate(
   profile: Profile,
@@ -328,14 +363,20 @@ export function simulateReputationUpdate(
   const newTranscendence = clamp(profile.transcendence_score + (deltas.transcendence ?? 0));
   const newFoundation    = clamp(profile.foundation_score    + (deltas.foundation    ?? 0));
 
+  const newExperience = (newExecution + newQuality + newTranscendence + newFoundation) / 4;
+
   return {
     ...profile,
     execution_score:     newExecution,
     quality_score:       newQuality,
     transcendence_score: newTranscendence,
     foundation_score:    newFoundation,
-    // ✅ FIX: reputation_score calculado, no hardcodeado en 0
-    reputation_score: (newExecution + newQuality + newTranscendence + newFoundation) / 4,
+    experience_score:    newExperience,
+    reputation_score: calculateTotalReputation(
+      profile.traditional_score,
+      newExperience,
+      profile.pe_points,
+    ),
   };
 }
 
