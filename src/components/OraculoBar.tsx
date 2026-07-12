@@ -215,9 +215,9 @@ export function OraculoBar() {
             style={{
               width: 56, height: 56, borderRadius: '50%', cursor: 'pointer',
               display: 'grid', placeItems: 'center',
-              background: listening ? `${C.red}22` : `linear-gradient(135deg, #7df9ff, ${R})`,
+              background: listening ? `${C.red}22` : 'linear-gradient(135deg, #5cc8ff, #5e5ce6)',
               border: `1px solid ${listening ? C.red : R}`,
-              color: listening ? C.red : '#020613',
+              color: listening ? C.red : '#fff',
               boxShadow: listening ? `0 0 22px ${C.red}88` : `0 0 22px ${R}66`,
               animation: (listening || busy) ? 'cp-pulse 1.2s ease-in-out infinite' : 'none',
             }}
@@ -235,8 +235,8 @@ export function OraculoBar() {
           style={{
             width: 52, height: 52, borderRadius: '50%', cursor: 'pointer',
             display: 'grid', placeItems: 'center',
-            background: `linear-gradient(135deg, #7df9ff, ${R})`, border: `1px solid ${R}`,
-            color: '#020613', boxShadow: `0 0 20px ${R}66`,
+            background: 'linear-gradient(135deg, #5cc8ff, #5e5ce6)', border: `1px solid ${R}`,
+            color: '#fff', boxShadow: '0 10px 28px rgba(94,92,230,0.5)',
           }}
         >
           <Sparkles size={22} />

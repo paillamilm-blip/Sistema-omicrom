@@ -42,7 +42,7 @@ const TAB_TITLES: Record<TabId, string> = {
 function TabLoader() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: C.bg }}>
-      <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(0,240,255,0.06)', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 18px rgba(0,240,255,0.18)' }}>
+      <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(92,200,255,0.06)', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(94,92,230,0.28)' }}>
         <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
       </div>
       <p style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase' }}>Cargando módulo...</p>
@@ -73,9 +73,9 @@ function AppShell() {
   if (authStatus === 'loading' || isLoadingProfile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(0,240,255,0.10), transparent 60%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', width: 88, height: 88, borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(125,249,255,0.18), rgba(0,240,255,0.06))', border: '1px solid rgba(0,240,255,0.4)', boxShadow: '0 0 38px rgba(0,240,255,0.35), inset 0 0 26px rgba(0,95,115,0.18)', animation: 'floatY 5s ease-in-out infinite' }}>
-          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 48, background: 'linear-gradient(135deg, #7df9ff, #00F0FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 0 10px rgba(0,240,255,0.6))' }}>Ω</span>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(94,92,230,0.14), transparent 60%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', width: 92, height: 92, borderRadius: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(140deg, #5cc8ff, #5e5ce6)', boxShadow: '0 22px 60px rgba(94,92,230,0.5)', animation: 'floatY 4s ease-in-out infinite' }}>
+          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 50, color: '#fff' }}>Ω</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
           <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
@@ -99,26 +99,26 @@ function AppShell() {
           />
         </ErrorBoundary>
       )}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'linear-gradient(180deg, rgba(10,20,40,0.9), rgba(2,6,19,0.92))', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderBottom: '1px solid rgba(0,240,255,0.40)', boxShadow: '0 3px 18px rgba(0,0,0,0.55), 0 0 22px rgba(0,240,255,0.10), inset 0 -1px 0 rgba(0,240,255,0.30)', flexShrink: 0, position: 'relative', zIndex: 3 }}>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', background: 'rgba(9,12,22,0.6)', backdropFilter: 'blur(22px) saturate(140%)', WebkitBackdropFilter: 'blur(22px) saturate(140%)', borderBottom: '1px solid rgba(150,180,255,0.12)', boxShadow: '0 6px 24px rgba(0,0,0,0.5)', flexShrink: 0, position: 'relative', zIndex: 3 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #7df9ff, #00F0FF)', boxShadow: '0 0 16px rgba(0,240,255,0.6)' }}>
-            <span style={{ color: '#020613', fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ω</span>
+          <div style={{ width: 32, height: 32, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #5cc8ff, #5e5ce6)', boxShadow: '0 6px 18px rgba(94,92,230,0.5)' }}>
+            <span style={{ color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 16 }}>Ω</span>
           </div>
-          <span style={{ fontFamily: FONT.display, fontSize: 17, letterSpacing: 0.3, color: '#eaf2ff', fontWeight: 700 }}>{TAB_TITLES[activeTab]}</span>
+          <span style={{ fontFamily: FONT.display, fontSize: 17.5, letterSpacing: -0.2, color: '#eaf0fb', fontWeight: 700 }}>{TAB_TITLES[activeTab]}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <LiveBadge />
           <GemeloBadge />
           {profile && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 13, color: '#F59E0B', fontWeight: 700 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 13, color: '#ffb02e', fontWeight: 700 }}>
               🪙 {(profile.token_balance ?? 0).toLocaleString()}
             </span>
           )}
           {/* Mensajería: reubicada desde el menú inferior para dejarlo limpio con solo las áreas principales */}
-          <button onClick={() => setActiveTab('chat')} aria-label="Mensajes" style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', color: '#7df9ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={() => setActiveTab('chat')} aria-label="Mensajes" style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(92,200,255,0.10)', border: '1px solid rgba(92,200,255,0.28)', color: '#5cc8ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <MessageCircle size={16} />
           </button>
-          <button onClick={() => setShowNotifications(true)} aria-label="Notificaciones" style={{ position: 'relative', width: 34, height: 34, borderRadius: 8, background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', color: '#7df9ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={() => setShowNotifications(true)} aria-label="Notificaciones" style={{ position: 'relative', width: 34, height: 34, borderRadius: 8, background: 'rgba(92,200,255,0.10)', border: '1px solid rgba(92,200,255,0.28)', color: '#5cc8ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Bell size={16} />
             {unreadCount > 0 && (
               <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, background: C.red, color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
@@ -127,7 +127,7 @@ function AppShell() {
             )}
           </button>
           {/* Cerrar sesión: reubicado desde PerfilTab para dejar el menú inferior enfocado en navegación */}
-          <button onClick={() => supabase.auth.signOut()} aria-label="Cerrar sesión" style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,77,109,0.1)', border: '1px solid rgba(255,77,109,0.3)', color: '#ff4d6d', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={() => supabase.auth.signOut()} aria-label="Cerrar sesión" style={{ width: 34, height: 34, borderRadius: 11, background: 'rgba(255,92,122,0.12)', border: '1px solid rgba(255,92,122,0.3)', color: '#ff5c7a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <LogOut size={16} />
           </button>
         </div>
