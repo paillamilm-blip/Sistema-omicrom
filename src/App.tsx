@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { Bell, MessageCircle, LogOut } from 'lucide-react';
+import { Bell, MessageCircle, LogOut, Sparkles } from 'lucide-react';
 import { AppProvider, useApp } from './store/AppContext';
 import { AuthOverlay } from './components/auth/AuthOverlay';
 import { ResetPasswordOverlay } from './components/auth/ResetPasswordOverlay';
@@ -13,6 +13,7 @@ import { OraculoBar } from './components/OraculoBar';
 import { GemeloBadge } from './components/shared/GemeloBadge';
 import { InstallPWA } from './components/shared/InstallPWA';
 import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
+import { HoloGemeloScreen } from './components/shared/HoloGemeloScreen';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
@@ -55,6 +56,7 @@ function AppShell() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showIniciacion, setShowIniciacion] = useState(() => shouldShowIniciacion());
+  const [showHolo, setShowHolo] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -107,6 +109,9 @@ function AppShell() {
           <span style={{ fontFamily: FONT.display, fontSize: 17.5, letterSpacing: -0.2, color: '#eaf0fb', fontWeight: 700 }}>{TAB_TITLES[activeTab]}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => setShowHolo(true)} aria-label="Modo Holo-Gemelo" title="Holo-Gemelo" style={{ width: 34, height: 34, borderRadius: 11, background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 16px rgba(94,92,230,0.45)' }}>
+            <Sparkles size={16} />
+          </button>
           <LiveBadge />
           <GemeloBadge />
           {profile && (
@@ -155,6 +160,11 @@ function AppShell() {
       <LiveNetworkFeed />
       <IncomingJobPush />
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
+      {showHolo && (
+        <ErrorBoundary section="Holo-Gemelo">
+          <HoloGemeloScreen onClose={() => setShowHolo(false)} />
+        </ErrorBoundary>
+      )}
       <PublicProfileGate />
       <ErrorBoundary section="Oráculo">
         <OraculoBar />

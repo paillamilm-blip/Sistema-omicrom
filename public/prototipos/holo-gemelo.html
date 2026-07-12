@@ -324,9 +324,11 @@
         var el=function(id){return document.getElementById(id);};
         var KEY="omicron_holo",BASE={exec:40,qual:30,trans:18,fund:25};
         var st=load();
+        // UNIFICACIÓN: hidrata desde el Gemelo REAL de la app (mismo origen → mismo localStorage).
+        (function hydrateFromApp(){try{var g=JSON.parse(localStorage.getItem("omicron_gemelo")||"null");if(g&&g.axes){st.ejes={exec:+g.axes.execution||0,qual:+g.axes.quality||0,trans:+g.axes.transcendence||0,fund:+g.axes.foundation||0};if(typeof g.pe==="number")st.pe=g.pe;save();}}catch(e){}})();
         function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(!("profile"in o))o.profile=null;return o;}}catch(e){}return {ejes:Object.assign({},BASE),pe:120,tokens:2480,contracts:0,vault:0,gov:0,profile:null};}
         function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
-        function rep(){var e=st.ejes;var a=(e.exec+e.qual+e.trans+e.fund)/4;return Math.max(0,Math.min(99,Math.round(20+a*0.72)));}
+        function rep(){var e=st.ejes;var a=(e.exec+e.qual+e.trans+e.fund)/4;var mom=Math.min(15,Math.sqrt(Math.max(st.pe,0))/4);return Math.max(0,Math.min(100,Math.round(a*0.8+mom)));} /* canónico: 80% experiencia + momentum PE (unificado con la app) */
         function levelName(){var p=st.pe;return p>=5000?"Nodo Pioneer":p>=2000?"Nodo Arquitecto":p>=500?"Nodo Core":"Nodo Operativo";}
         function levelN(){var p=st.pe;return p>=5000?6:p>=2000?4:p>=500?2:1;}
         function nextGoal(){var p=st.pe;if(p<500)return{name:"Nodo Core",need:500-p};if(p<2000)return{name:"Nodo Arquitecto",need:2000-p};if(p<5000)return{name:"Nodo Pioneer",need:5000-p};return null;}
