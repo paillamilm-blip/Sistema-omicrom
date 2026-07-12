@@ -14,6 +14,7 @@ import { GemeloBadge } from './components/shared/GemeloBadge';
 import { InstallPWA } from './components/shared/InstallPWA';
 import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
 import { HoloGemeloScreen } from './components/shared/HoloGemeloScreen';
+import { HoloGemeloHome } from './components/perfil/HoloGemeloHome';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
@@ -57,6 +58,7 @@ function AppShell() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showIniciacion, setShowIniciacion] = useState(() => shouldShowIniciacion());
   const [showHolo, setShowHolo] = useState(false);
+  const [perfilView, setPerfilView] = useState<'holo' | 'classic'>('holo');
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -143,7 +145,17 @@ function AppShell() {
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
         <ErrorBoundary section={TAB_TITLES[activeTab]} key={activeTab}>
           <Suspense fallback={<TabLoader />}>
-            {activeTab === 'perfil'     && <PerfilTab />}
+            {activeTab === 'perfil'     && (perfilView === 'holo'
+              ? <HoloGemeloHome onOpenPerfil={() => setPerfilView('classic')} />
+              : (
+                <>
+                  <button onClick={() => setPerfilView('holo')} aria-label="Volver al Núcleo"
+                    style={{ margin: '10px 16px 0', alignSelf: 'flex-start', padding: '8px 14px', borderRadius: 12, background: 'rgba(92,200,255,0.10)', border: '1px solid rgba(92,200,255,0.28)', color: '#5cc8ff', fontFamily: FONT.mono, fontSize: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    ← Núcleo
+                  </button>
+                  <PerfilTab />
+                </>
+              ))}
             {activeTab === 'maxskill'   && <MaxSkillTab />}
             {activeTab === 'academia'   && <AcademiaTab />}
             {activeTab === 'market'     && <MarketTab />}
