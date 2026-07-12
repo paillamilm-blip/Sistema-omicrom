@@ -13,6 +13,7 @@ import {
   // Sparkles, Bot, Loader2,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { C as T } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import type { SkillTest, SkillTestAttempt } from '../../types';
 
@@ -31,13 +32,14 @@ interface SimulatorChallengeProps {
   onSuccess: (peAwarded: number) => void;
 }
 
+// DERIVADO del tema (theme.ts) → un cambio de tema se propaga solo.
 const C = {
-  cyan: '#5cc8ff', cyanDim: 'rgba(92, 200, 255,0.42)', cyanFaint: 'rgba(92, 200, 255,0.12)',
-  gold: '#ffb02e', goldFaint: 'rgba(245,158,11,0.12)',
-  green: '#3fd0c9', greenFaint: 'rgba(57,255,20,0.10)',
-  red: '#ff5c7a', redFaint: 'rgba(255, 92, 122,0.10)',
-  bg: '#000206', panel: 'rgba(8,16,38,0.72)', card: 'rgba(13,22,46,0.85)',
-  text: '#e6f1fb', sub: 'rgba(92, 200, 255,0.5)', line: 'rgba(92, 200, 255,0.14)',
+  cyan: T.cyan, cyanDim: T.cyanDim, cyanFaint: T.cyanFaint,
+  gold: T.gold, goldFaint: T.goldFaint,
+  green: T.green, greenFaint: T.greenFaint,
+  red: T.red, redFaint: T.redFaint,
+  bg: T.bg, panel: 'rgba(8,16,38,0.72)', card: 'rgba(13,22,46,0.85)',
+  text: T.ink, sub: 'rgba(92,200,255,0.5)', line: T.line,
 } as const;
 const MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
 const DISP = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
@@ -358,15 +360,15 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
 //   return (
 //     <div style={{ borderRadius: 12, border: `1px solid ${C.gold}55`, overflow: 'hidden', background: C.goldFaint }}>
 //       <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 13px', borderBottom: (loading || text) ? `1px solid ${C.gold}33` : 'none' }}>
-//         <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(245,158,11,0.16)', border: `1px solid ${C.gold}55`, animation: loading ? 'cp-breathe 1s ease-in-out infinite' : undefined }}>
+//         <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 176, 46,0.16)', border: `1px solid ${C.gold}55`, animation: loading ? 'cp-breathe 1s ease-in-out infinite' : undefined }}>
 //           <Bot size={16} style={{ color: C.gold }} />
 //         </div>
 //         <div style={{ flex: 1, minWidth: 0 }}>
 //           <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 13.5, color: '#ffd98a' }}>Copiloto IA</div>
-//           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(245,158,11,0.7)', letterSpacing: 0.5 }}>Análisis neuronal en vivo</div>
+//           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255, 176, 46,0.7)', letterSpacing: 0.5 }}>Análisis neuronal en vivo</div>
 //         </div>
 //         {!loading && (
-//           <button onClick={onAsk} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 9, background: 'rgba(245,158,11,0.16)', border: `1px solid ${C.gold}55`, color: '#ffd98a', cursor: 'pointer', fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
+//           <button onClick={onAsk} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 9, background: 'rgba(255, 176, 46,0.16)', border: `1px solid ${C.gold}55`, color: '#ffd98a', cursor: 'pointer', fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
 //             <Sparkles size={13} /> {text ? 'RE-ANALIZAR' : 'ANALIZAR'}
 //           </button>
 //         )}
@@ -405,7 +407,7 @@ function ResultPanel({ result, passingScore, peAwarded }: { result: RunResult; p
           </div>
         </div>
         {peAwarded > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 9, background: 'rgba(245,158,11,0.2)', border: `1px solid ${C.gold}55` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 9, background: 'rgba(255, 176, 46,0.2)', border: `1px solid ${C.gold}55` }}>
             <Trophy size={14} style={{ color: C.gold }} />
             <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: C.gold }}>+{peAwarded} PE</span>
           </div>

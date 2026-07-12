@@ -482,7 +482,7 @@ export function ChatTab() {
       )}
 
       {gl !== null && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(245,158,11,0.08)', borderBottom: `1px solid ${C.cyanFaint}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(255, 176, 46,0.08)', borderBottom: `1px solid ${C.cyanFaint}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Timer size={14} style={{ color: C.gold }} />
             <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: '#dbeafe' }}>GHOST APPROVAL</span>
@@ -542,7 +542,7 @@ export function ChatTab() {
         <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()} placeholder="Mensaje cifrado..."
           style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, outline: 'none' }} />
         <button onClick={improveDraft} disabled={!input.trim() || aiAssisting} title={isPremium ? 'Mejorar redacción con IA' : 'Redactor IA · Premium'}
-          style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(245,158,11,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || aiAssisting ? 0.4 : 1 }}>
+          style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(255, 176, 46,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || aiAssisting ? 0.4 : 1 }}>
           {aiAssisting ? <Loader2 size={16} className="animate-spin" /> : isPremium ? <Sparkles size={16} /> : <Lock size={16} />}
         </button>
         <button onClick={send} disabled={!input.trim() || sending} style={{ width: 44, height: 44, borderRadius: 10, background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>

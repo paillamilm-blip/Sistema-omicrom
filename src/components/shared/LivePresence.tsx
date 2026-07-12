@@ -86,7 +86,7 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
                   onClick={() => { if (!isSelf) setViewUser(n.username); }}
                   style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 4px', background: 'none', border: 'none', cursor: isSelf ? 'default' : 'pointer', textAlign: 'left', opacity: isSelf ? 0.7 : 1 }}
                 >
-                  <span style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(57,255,20,0.1)', border: `1px solid ${C.greenDim}`, color: '#c9ffd0', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, flex: '0 0 auto' }}>
+                  <span style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(63, 208, 201,0.1)', border: `1px solid ${C.greenDim}`, color: '#c9ffd0', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, flex: '0 0 auto' }}>
                     {(n.username || 'N').charAt(0).toUpperCase()}
                     <span style={{ position: 'absolute', bottom: -2, right: -2, width: 8, height: 8, borderRadius: '50%', background: C.green, boxShadow: `0 0 6px ${C.green}`, border: '1px solid #04121a' }} />
                   </span>
@@ -179,7 +179,7 @@ export function LivePeersStrip() {
                     borderRadius: '50%',
                     display: 'grid',
                     placeItems: 'center',
-                    background: 'rgba(57,255,20,0.1)',
+                    background: 'rgba(63, 208, 201,0.1)',
                     border: `1px solid ${C.greenDim}`,
                     color: '#c9ffd0',
                     fontFamily: FONT.display,

@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ShoppingCart, Star, Plus, Cpu, ShieldCheck, TrendingUp, Sparkles, Loader2, Menu, X, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { C as T } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { ContractModal } from '../contracts/ContractModal';
@@ -17,14 +18,15 @@ type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
 // ── Paleta v5.0 "Neo-Académico Holográfico" — cyan eléctrico + ámbar energía ──
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
 // "muted" con más contraste para no forzar la vista.
+// Paleta DERIVADA del tema (theme.ts) → un cambio de tema se propaga solo.
 const C = {
-  bg: '#000206', bg2: '#02030a',
+  bg: T.bg, bg2: '#02030a',
   panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
-  blue: '#5cc8ff', blueHi: '#8bd4ff',
-  amber: '#ffb02e', amberHi: '#ffd27a',
-  steel: '#5e5ce6', steelHi: '#8a88f0',
-  line: 'rgba(94, 92, 230,0.35)', lineSoft: 'rgba(92, 200, 255,0.10)',
-  ink: '#eaf0fb', muted: '#6b7590',
+  blue: T.cyan, blueHi: '#8bd4ff',
+  amber: T.gold, amberHi: '#ffd27a',
+  steel: T.purple, steelHi: '#8a88f0',
+  line: T.line, lineSoft: T.cyanFaint,
+  ink: T.ink, muted: T.mut,
 } as const;
 const FONT_MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
 const FONT_RAJ  = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
@@ -404,13 +406,13 @@ const styles: Record<string, React.CSSProperties> = {
   trustVal: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 16, lineHeight: 1 },
   trustValSmall: { fontFamily: FONT_MONO, fontSize: 10, color: C.ink, lineHeight: 1.2 },
   trustDivider: { width: 1, height: 26, background: C.lineSoft, flexShrink: 0 },
-  advisorWrap: { flexShrink: 0, borderRadius: 10, border: `1px solid rgba(245,158,11,0.35)`, background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(2,6,19,0.5))', overflow: 'hidden' },
+  advisorWrap: { flexShrink: 0, borderRadius: 10, border: `1px solid rgba(255, 176, 46,0.35)`, background: 'linear-gradient(135deg, rgba(255, 176, 46,0.08), rgba(2,6,19,0.5))', overflow: 'hidden' },
   advisorToggle: { width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: '#ffd27a', fontWeight: 700 },
   advisorBody: { padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 },
   advisorHint: { margin: 0, fontFamily: FONT_MONO, fontSize: 10, color: C.muted, lineHeight: 1.45 },
   advisorInput: { width: '100%', minHeight: 64, boxSizing: 'border-box', padding: 10, borderRadius: 8, background: '#040a18', border: `1px solid ${C.lineSoft}`, color: C.ink, fontFamily: FONT_RAJ, fontSize: 14, lineHeight: 1.4, resize: 'vertical', outline: 'none' },
   advisorBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 0', borderRadius: 8, border: 'none', background: `linear-gradient(135deg, ${C.amberHi}, ${C.amber})`, color: '#04121f', fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 14, letterSpacing: 0.5 },
-  advisorErr: { padding: 10, borderRadius: 8, background: 'rgba(255,80,102,0.10)', border: '1px solid rgba(255,80,102,0.3)', fontFamily: FONT_RAJ, fontSize: 12.5, color: '#ffb3bf', lineHeight: 1.4 },
+  advisorErr: { padding: 10, borderRadius: 8, background: 'rgba(255, 92, 122,0.10)', border: '1px solid rgba(255, 92, 122,0.3)', fontFamily: FONT_RAJ, fontSize: 12.5, color: '#ffb3bf', lineHeight: 1.4 },
   advisorResult: { padding: 12, borderRadius: 8, background: 'rgba(92, 200, 255,0.06)', border: `1px solid rgba(92, 200, 255,0.25)` },
   advisorResultHead: { display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONT_MONO, fontSize: 9, letterSpacing: 1.5, color: C.blueHi, marginBottom: 8 },
   catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, whiteSpace: 'nowrap', transition: 'all .2s', textTransform: 'uppercase' },

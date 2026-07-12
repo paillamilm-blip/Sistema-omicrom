@@ -5,20 +5,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, Plus, Lock, Unlock, X, Coins, GitBranch, Search, Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { C as T, FONT as TF } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import { useToast } from '../shared/Toast';
 import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 
 // Paleta v5.0 "Neo-Académico Holográfico" — Bóveda = Cajas Negras (azul acero industrial)
+// Paleta DERIVADA del tema (theme.ts) → un cambio de tema se propaga solo.
 const C = {
-  bg: '#000206', panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
-  blue: '#5cc8ff', blueHi: '#8bd4ff', amber: '#ffb02e', amberHi: '#ffd27a',
-  steel: '#5e5ce6', steelHi: '#8a88f0',
-  line: 'rgba(94, 92, 230,0.30)', lineSoft: 'rgba(92, 200, 255,0.08)',
-  ink: '#eaf0fb', muted: '#6b7590', green: '#3fd0c9',
+  bg: T.bg, panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
+  blue: T.cyan, blueHi: '#8bd4ff', amber: T.gold, amberHi: '#ffd27a',
+  steel: T.purple, steelHi: '#8a88f0',
+  line: T.line, lineSoft: T.cyanFaint,
+  ink: T.ink, muted: T.mut, green: T.green,
 } as const;
-const FM = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
-const FR = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
+const FM = TF.mono;
+const FR = TF.display;
 
 // Detalle real del error que devuelve la Edge Function.
 async function vaultServerError(error: unknown, data: unknown, fallback: string): Promise<string> {
@@ -275,8 +277,8 @@ export function VaultTab() {
                   </div>
                 </div>
                 {unlocked
-                  ? <Unlock size={16} style={{ color: C.green, flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(57,255,20,0.8))' }} />
-                  : <Lock size={16} style={{ color: C.amber, flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(245,158,11,0.8))', animation: 'lockPulse 2.2s ease-in-out infinite' }} />}
+                  ? <Unlock size={16} style={{ color: C.green, flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(63, 208, 201,0.8))' }} />
+                  : <Lock size={16} style={{ color: C.amber, flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(255, 176, 46,0.8))', animation: 'lockPulse 2.2s ease-in-out infinite' }} />}
               </div>
 
               {d.competency_tags && <div style={{ marginTop: 8 }}><span style={styles.tag}>{d.competency_tags}</span></div>}
@@ -372,7 +374,7 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
 
         {similar ? (
           <>
-            <div style={{ fontFamily: FM, fontSize: 10, color: C.amber, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 6, padding: '10px 12px', lineHeight: 1.5, marginBottom: 10 }}>
+            <div style={{ fontFamily: FM, fontSize: 10, color: C.amber, background: 'rgba(255, 176, 46,0.08)', border: '1px solid rgba(255, 176, 46,0.3)', borderRadius: 6, padding: '10px 12px', lineHeight: 1.5, marginBottom: 10 }}>
               ⚠️ Esto es <b>{Math.round(similar.similarity * 100)}%</b> parecido a <b>"{similar.title}"</b>. Se publicará como <b>DERIVADO</b> (Linaje H-07): el <b>20%</b> de las regalías irá al autor original.
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -402,13 +404,13 @@ const styles: Record<string, React.CSSProperties> = {
   searchInput: { flex: 1, background: 'none', border: 'none', outline: 'none', color: C.ink, fontFamily: FR, fontSize: 14, padding: '10px 0' },
   searchBtn: { width: 44, borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: 'none', color: '#04121f', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   scroll: { flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
-  oracleWrap: { flexShrink: 0, borderRadius: 10, border: `1px solid rgba(245,158,11,0.35)`, background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(2,6,19,0.5))', overflow: 'hidden' },
+  oracleWrap: { flexShrink: 0, borderRadius: 10, border: `1px solid rgba(255, 176, 46,0.35)`, background: 'linear-gradient(135deg, rgba(255, 176, 46,0.08), rgba(2,6,19,0.5))', overflow: 'hidden' },
   oracleToggle: { width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FM, fontSize: 11, letterSpacing: 1, color: '#ffd27a', fontWeight: 700 },
   oracleBody: { padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 },
   oracleHint: { margin: 0, fontFamily: FM, fontSize: 10, color: C.muted, lineHeight: 1.45 },
   oracleInput: { width: '100%', minHeight: 62, boxSizing: 'border-box', padding: 10, borderRadius: 8, background: '#040a18', border: `1px solid ${C.lineSoft}`, color: C.ink, fontFamily: FR, fontSize: 14, lineHeight: 1.4, resize: 'vertical', outline: 'none' },
   oracleBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 0', borderRadius: 8, border: 'none', background: `linear-gradient(135deg, ${C.amberHi}, ${C.amber})`, color: '#04121f', fontFamily: FR, fontWeight: 700, fontSize: 14, letterSpacing: 0.5 },
-  oracleErr: { padding: 10, borderRadius: 8, background: 'rgba(255,80,102,0.10)', border: '1px solid rgba(255,80,102,0.3)', fontFamily: FR, fontSize: 12.5, color: '#ffb3bf', lineHeight: 1.4 },
+  oracleErr: { padding: 10, borderRadius: 8, background: 'rgba(255, 92, 122,0.10)', border: '1px solid rgba(255, 92, 122,0.3)', fontFamily: FR, fontSize: 12.5, color: '#ffb3bf', lineHeight: 1.4 },
   oracleResult: { padding: 12, borderRadius: 8, background: 'rgba(92, 200, 255,0.06)', border: `1px solid rgba(92, 200, 255,0.25)` },
   oracleResultHead: { display: 'flex', alignItems: 'center', gap: 6, fontFamily: FM, fontSize: 9, letterSpacing: 1.5, color: C.blueHi, marginBottom: 8 },
   muted: { fontFamily: FM, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
@@ -418,8 +420,8 @@ const styles: Record<string, React.CSSProperties> = {
   title: { fontFamily: FR, fontWeight: 700, fontSize: 17, color: C.ink, lineHeight: 1.15, paddingRight: 60 },
   author: { fontFamily: FM, fontSize: 10, color: C.muted, marginTop: 3 },
   tag: { fontFamily: FM, fontSize: 10, color: C.blueHi, background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3 },
-  content: { fontFamily: FR, fontSize: 14, color: '#b9d4e6', lineHeight: 1.5, marginTop: 10, whiteSpace: 'pre-wrap', background: 'rgba(57,255,20,0.05)', border: '1px solid rgba(57,255,20,0.2)', borderRadius: 6, padding: '10px 12px' },
-  locked: { fontFamily: FM, fontSize: 11, color: C.amber, marginTop: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 6, padding: '12px', textAlign: 'center' },
+  content: { fontFamily: FR, fontSize: 14, color: '#b9d4e6', lineHeight: 1.5, marginTop: 10, whiteSpace: 'pre-wrap', background: 'rgba(63, 208, 201,0.05)', border: '1px solid rgba(63, 208, 201,0.2)', borderRadius: 6, padding: '10px 12px' },
+  locked: { fontFamily: FM, fontSize: 11, color: C.amber, marginTop: 10, background: 'rgba(255, 176, 46,0.06)', border: '1px solid rgba(255, 176, 46,0.25)', borderRadius: 6, padding: '12px', textAlign: 'center' },
   footer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
   royalties: { display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: FM, fontSize: 10, color: C.amberHi },
   consultBtn: { padding: '8px 14px', borderRadius: 6, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: 'none', color: '#04121f', fontFamily: FM, fontSize: 11, letterSpacing: 0.5, fontWeight: 700 },

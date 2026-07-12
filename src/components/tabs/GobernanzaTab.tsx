@@ -386,7 +386,7 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
           <div style={{ marginTop: 10 }}>
             {!analysis && (
               <button onClick={analyze} disabled={aLoading}
-                style={{ width: '100%', padding: '8px', borderRadius: 6, background: 'rgba(245,158,11,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: aLoading ? 0.6 : 1 }}>
+                style={{ width: '100%', padding: '8px', borderRadius: 6, background: 'rgba(255, 176, 46,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: aLoading ? 0.6 : 1 }}>
                 {aLoading ? <><Loader2 size={13} className="animate-spin" /> ANALIZANDO…</> : <><Sparkles size={13} /> RELATOR IA · ANALIZAR CASO</>}
                 {!isPremium && !aLoading && <PremiumBadge />}
               </button>

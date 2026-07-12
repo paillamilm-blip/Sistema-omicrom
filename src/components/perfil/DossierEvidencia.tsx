@@ -75,7 +75,7 @@ export function DossierEvidencia() {
             const ok = a.veredicto === 'APROBADO';
             const accent = ok ? C.green : C.red;
             return (
-              <div key={a.id} style={{ borderRadius: RADIUS.lg, padding: 12, background: 'rgba(92, 200, 255,0.04)', border: `1px solid ${ok ? 'rgba(57,255,20,0.30)' : 'rgba(255,80,102,0.30)'}` }}>
+              <div key={a.id} style={{ borderRadius: RADIUS.lg, padding: 12, background: 'rgba(92, 200, 255,0.04)', border: `1px solid ${ok ? 'rgba(63, 208, 201,0.30)' : 'rgba(255, 92, 122,0.30)'}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <span style={{ flex: 1, minWidth: 0, fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {a.nodo?.title ?? 'Competencia'}

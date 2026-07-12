@@ -194,7 +194,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
         </p>
         {!passportUrl ? (
           <button onClick={generatePassport} disabled={issuing}
-            style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(57,255,20,0.12)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.display, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(63, 208, 201,0.12)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.display, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             {issuing ? <Loader2 size={16} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> : <ShieldCheck size={16} />}
             {issuing ? 'Firmando...' : 'Generar Pasaporte Verificable'}
           </button>

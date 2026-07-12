@@ -6,6 +6,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Play, Trophy, BookOpen, ArrowRight, Brain } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
+import { C as T } from '../../theme';
 import { useToast } from '../shared/Toast';
 import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import { ExamenChallenge } from '../shared/ExamenChallenge';
@@ -23,22 +24,23 @@ const CORE_CY = 78;
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original para
 // mejorar el contraste y no forzar la vista.
+// DERIVADO del tema (theme.ts) → un cambio de tema se propaga solo.
 const COLORS = {
-  cyan:       '#5cc8ff',
-  cyanDim:    'rgba(92, 200, 255,0.44)',
-  cyanFaint:  'rgba(92, 200, 255,0.14)',
-  gold:       '#ffb02e',
-  goldDim:    'rgba(224,138,0,0.48)',
-  purple:     '#8a88f0',
-  green:      '#3fd0c9',
-  greenDim:   'rgba(63, 208, 201,0.44)',
-  locked:     'rgba(255,255,255,0.04)',
+  cyan:       T.cyan,
+  cyanDim:    T.cyanDim,
+  cyanFaint:  T.cyanFaint,
+  gold:       T.gold,
+  goldDim:    T.goldDim,
+  purple:     T.purple,
+  green:      T.green,
+  greenDim:   T.greenDim,
+  locked:     T.lockedBg,
   lockedBorder: 'rgba(255,255,255,0.10)',
-  copper:     'rgba(92, 200, 255,0.15)',
+  copper:     T.cyanFaint,
   copperLock: 'rgba(255,255,255,0.06)',
-  bg:         '#000206',
+  bg:         T.bg,
   panel:      'rgba(8,16,38,0.65)',
-  grid:       'rgba(92, 200, 255,0.05)',
+  grid:       T.grid,
 } as const;
 
 function nodeColor(status: string, depth: number) {
@@ -532,7 +534,7 @@ export function MaxSkillTab() {
             );
           })()}
 
-          <div style={{ borderRadius: 10, padding: '12px 14px', marginBottom: 12, background: 'rgba(57,255,20,0.07)', border: `1px solid ${COLORS.greenDim}` }}>
+          <div style={{ borderRadius: 10, padding: '12px 14px', marginBottom: 12, background: 'rgba(63, 208, 201,0.07)', border: `1px solid ${COLORS.greenDim}` }}>
             <div style={{ fontFamily: "'SF Mono', monospace", fontSize: 9, letterSpacing: 1.5, color: COLORS.green, marginBottom: 8 }}>⬡ LO QUE GANAS AL COMPLETARLO</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#dbeafe' }}>
               <div>⚡ <strong style={{ color: COLORS.gold }}>+{selectedNode.pe_reward} PE</strong> de experiencia</div>
@@ -567,7 +569,7 @@ export function MaxSkillTab() {
           {courseByNode.get(selectedNode.id) && (
             <button onClick={() => setCourseNode(selectedNode.id)} style={{
               width: '100%', marginTop: 10, padding: '11px', borderRadius: 10, cursor: 'pointer',
-              background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.45)', color: '#ffb02e',
+              background: 'rgba(255, 176, 46,0.12)', border: '1px solid rgba(255, 176, 46,0.45)', color: '#ffb02e',
               fontFamily: "'SF Mono', monospace", fontSize: 11.5, fontWeight: 700, letterSpacing: 0.5,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
@@ -652,5 +654,5 @@ const styles: Record<string, React.CSSProperties> = {
   progressBg: { height: 4, background: 'rgba(92, 200, 255,0.1)', borderRadius: 2, overflow: 'hidden' },
   progressFill: { height: '100%', background: `linear-gradient(90deg, ${COLORS.cyan}, ${COLORS.purple})`, borderRadius: 2, transition: 'width 0.3s ease' },
   challengeBtn: { width: '100%', padding: '10px 0', background: 'rgba(92, 200, 255,0.10)', border: `1px solid ${COLORS.cyanDim}`, color: COLORS.cyan, borderRadius: 8, fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5, boxShadow: '0 0 15px rgba(92, 200, 255,0.25)', transition: 'box-shadow 0.3s ease, background 0.15s' },
-  peToast: { position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 12, background: COLORS.gold, color: COLORS.bg, fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 14, boxShadow: `0 4px 20px rgba(245,158,11,0.45)`, whiteSpace: 'nowrap', zIndex: 50 },
+  peToast: { position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 12, background: COLORS.gold, color: COLORS.bg, fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 14, boxShadow: `0 4px 20px rgba(255, 176, 46,0.45)`, whiteSpace: 'nowrap', zIndex: 50 },
 };

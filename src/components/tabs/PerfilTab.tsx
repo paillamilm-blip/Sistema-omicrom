@@ -112,7 +112,7 @@ function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: (
     <div style={{
       position: 'relative', borderRadius: RADIUS.lg,
       padding: 16, marginBottom: 14,
-      background: 'rgba(255,80,102,0.06)',
+      background: 'rgba(255, 92, 122,0.06)',
       border: `1px solid ${C.red}`,
       animation: ANIM.breathe,
     }}>

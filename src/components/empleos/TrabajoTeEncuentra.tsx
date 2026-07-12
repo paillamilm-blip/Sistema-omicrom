@@ -96,7 +96,7 @@ export function TrabajoTeEncuentra() {
           {apps.slice().reverse().map((a, i) => {
             const s = stageOf(a), pct = Math.round(((s + 1) / STAGES.length) * 100);
             return (
-              <div key={`${a.title}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: RADIUS.lg, background: 'rgba(57,255,20,0.05)', border: '1px solid rgba(57,255,20,0.18)', marginBottom: 7 }}>
+              <div key={`${a.title}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: RADIUS.lg, background: 'rgba(63, 208, 201,0.05)', border: '1px solid rgba(63, 208, 201,0.18)', marginBottom: 7 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 13, color: '#eaf4ff' }}>{a.title}</div>
                   <div style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.cyanDim }}>{a.company} · match {a.fit}%</div>
@@ -131,7 +131,7 @@ export function TrabajoTeEncuentra() {
                   <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: '#eaf4ff', lineHeight: 1.15 }}>{j.title}</div>
                   <div style={{ fontFamily: FONT.mono, fontSize: 10.5, color: C.cyanDim, marginTop: 2 }}>{j.company} · {j.mode}</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
-                    <span style={{ fontFamily: FONT.mono, fontSize: 9.5, padding: '3px 8px', borderRadius: 10, color: C.green, border: '1px solid rgba(57,255,20,0.3)' }}>{j.salary}</span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 9.5, padding: '3px 8px', borderRadius: 10, color: C.green, border: '1px solid rgba(63, 208, 201,0.3)' }}>{j.salary}</span>
                     {j.tags.map((t) => <span key={t} style={{ fontFamily: FONT.mono, fontSize: 9.5, padding: '3px 8px', borderRadius: 10, color: '#cfe', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>{t}</span>)}
                   </div>
                 </div>

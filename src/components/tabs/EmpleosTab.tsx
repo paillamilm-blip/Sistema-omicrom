@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Briefcase, Plus, Flame, Clock, CheckCircle2, X, Star, Send, Radar, MapPin, Navigation, Wifi, LocateFixed } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { C as T, FONT as TF } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
@@ -12,15 +13,16 @@ import { RutaCarrera } from '../empleos/RutaCarrera';
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
 // "muted" con más contraste para no forzar la vista.
+// Paleta DERIVADA del tema (theme.ts) → un cambio de tema se propaga solo.
 const C = {
-  bg: '#000206', panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
-  blue: '#5cc8ff', blueHi: '#8bd4ff', amber: '#ffb02e', amberHi: '#ffd27a',
-  steel: '#5e5ce6', steelHi: '#8a88f0',
-  line: 'rgba(94, 92, 230,0.35)', lineSoft: 'rgba(92, 200, 255,0.10)',
-  ink: '#eaf0fb', muted: '#6b7590', green: '#3fd0c9',
+  bg: T.bg, panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
+  blue: T.cyan, blueHi: '#8bd4ff', amber: T.gold, amberHi: '#ffd27a',
+  steel: T.purple, steelHi: '#8a88f0',
+  line: T.line, lineSoft: T.cyanFaint,
+  ink: T.ink, muted: T.mut, green: T.green,
 } as const;
-const FM = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
-const FR = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
+const FM = TF.mono;
+const FR = TF.display;
 
 interface Job {
   id: string; company_id: string; title: string; description: string; category: string;
@@ -150,7 +152,7 @@ export function EmpleosTab() {
           const active = view === k;
           return (
             <button key={k} onClick={() => { setView(k); if (k === 'radar' && !userPos && geoStatus !== 'loading') requestGeo(); }}
-              style={{ ...styles.viewPill, background: active ? 'rgba(57,255,20,0.14)' : 'transparent', border: `1px solid ${active ? C.green : C.lineSoft}`, color: active ? C.green : C.muted }}>
+              style={{ ...styles.viewPill, background: active ? 'rgba(63, 208, 201,0.14)' : 'transparent', border: `1px solid ${active ? C.green : C.lineSoft}`, color: active ? C.green : C.muted }}>
               {k === 'radar' ? <Radar size={12} /> : null}{label}
             </button>
           );
@@ -296,21 +298,21 @@ function RadarView({ jobs, userPos, geoStatus, onRequestGeo, onPick }: {
       <svg viewBox="0 0 300 300" width="100%" style={{ maxWidth: 340, display: 'block', margin: '0 auto', overflow: 'visible' }}>
         <defs>
           <radialGradient id="rad-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(57,255,20,0.10)" /><stop offset="100%" stopColor="rgba(57,255,20,0)" />
+            <stop offset="0%" stopColor="rgba(63, 208, 201,0.10)" /><stop offset="100%" stopColor="rgba(63, 208, 201,0)" />
           </radialGradient>
           <linearGradient id="rad-sweep" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="rgba(57,255,20,0)" /><stop offset="100%" stopColor="rgba(57,255,20,0.30)" />
+            <stop offset="0%" stopColor="rgba(63, 208, 201,0)" /><stop offset="100%" stopColor="rgba(63, 208, 201,0.30)" />
           </linearGradient>
         </defs>
         <circle cx={cx} cy={cy} r={R} fill="url(#rad-glow)" />
         {[R / 3, (2 * R) / 3, R].map((r, i) => (
           <g key={i}>
-            <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(57,255,20,0.18)" strokeWidth={1} />
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(63, 208, 201,0.18)" strokeWidth={1} />
             <text x={cx + 4} y={cy - r + 11} fontFamily={FM} fontSize="7" fill={C.muted}>{fmtDist(maxD * ((i + 1) / 3))}</text>
           </g>
         ))}
-        <line x1={cx} y1={cy - R} x2={cx} y2={cy + R} stroke="rgba(57,255,20,0.12)" />
-        <line x1={cx - R} y1={cy} x2={cx + R} y2={cy} stroke="rgba(57,255,20,0.12)" />
+        <line x1={cx} y1={cy - R} x2={cx} y2={cy + R} stroke="rgba(63, 208, 201,0.12)" />
+        <line x1={cx - R} y1={cy} x2={cx + R} y2={cy} stroke="rgba(63, 208, 201,0.12)" />
         <g>
           <line x1={cx} y1={cy} x2={cx} y2={cy - R} stroke={C.green} strokeWidth={1.5} opacity={0.85} />
           <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="4s" repeatCount="indefinite" />
@@ -349,7 +351,7 @@ function RadarView({ jobs, userPos, geoStatus, onRequestGeo, onPick }: {
           <div style={{ fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, margin: '6px 0' }}>🛰️ REMOTAS ({remote.length})</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {remote.map(j => (
-              <button key={j.id} onClick={() => onPick(j)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 20, cursor: 'pointer', background: 'rgba(57,255,20,0.08)', border: `1px solid ${C.green}44`, color: '#dbeafe', fontFamily: FR, fontSize: 12 }}>
+              <button key={j.id} onClick={() => onPick(j)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 20, cursor: 'pointer', background: 'rgba(63, 208, 201,0.08)', border: `1px solid ${C.green}44`, color: '#dbeafe', fontFamily: FR, fontSize: 12 }}>
                 <Wifi size={11} style={{ color: C.green }} /> {j.title}
               </button>
             ))}
@@ -440,7 +442,7 @@ function PublishJobModal({ onClose, onDone }: { onClose: () => void; onDone: () 
             onChange={e => setF({ ...f, location: e.target.value })} placeholder="Ej: Santiago, Maipú" />
           <button type="button" onClick={captureLocation} disabled={f.is_remote || locating}
             title="Usar mi ubicación"
-            style={{ flexShrink: 0, width: 42, borderRadius: 6, cursor: f.is_remote ? 'default' : 'pointer', background: coords ? 'rgba(57,255,20,0.14)' : 'rgba(92, 200, 255,0.08)', border: `1px solid ${coords ? C.green : C.line}`, color: coords ? C.green : C.blueHi, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: f.is_remote ? 0.4 : 1 }}>
+            style={{ flexShrink: 0, width: 42, borderRadius: 6, cursor: f.is_remote ? 'default' : 'pointer', background: coords ? 'rgba(63, 208, 201,0.14)' : 'rgba(92, 200, 255,0.08)', border: `1px solid ${coords ? C.green : C.line}`, color: coords ? C.green : C.blueHi, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: f.is_remote ? 0.4 : 1 }}>
             {locating ? '…' : <LocateFixed size={16} />}
           </button>
         </div>
@@ -474,7 +476,7 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { fontFamily: FM, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
   card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 10, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
   cardTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.steelHi}, ${C.blue}, transparent)` },
-  matchBadge: { position: 'absolute', top: 12, right: 14, display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FM, fontSize: 8, color: C.amber, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', padding: '2px 7px', borderRadius: 3 },
+  matchBadge: { position: 'absolute', top: 12, right: 14, display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FM, fontSize: 8, color: C.amber, background: 'rgba(255, 176, 46,0.1)', border: '1px solid rgba(255, 176, 46,0.3)', padding: '2px 7px', borderRadius: 3 },
   title: { fontFamily: FR, fontWeight: 700, fontSize: 18, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', paddingRight: 70 },
   company: { fontFamily: FM, fontSize: 10, color: C.muted, marginTop: 4 },
   desc: { fontFamily: FR, fontSize: 13, color: '#b9d4e6', lineHeight: 1.4, margin: '8px 0 0' },

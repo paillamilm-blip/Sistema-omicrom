@@ -16,10 +16,10 @@ export function PremiumBadge({ style }: { style?: React.CSSProperties }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 20,
-      background: 'linear-gradient(135deg, rgba(245,158,11,0.28), rgba(245,158,11,0.08))',
-      border: '1px solid rgba(245,158,11,0.65)', color: '#ffd27a',
+      background: 'linear-gradient(135deg, rgba(255, 176, 46,0.28), rgba(255, 176, 46,0.08))',
+      border: '1px solid rgba(255, 176, 46,0.65)', color: '#ffd27a',
       fontFamily: "'SF Mono', monospace", fontSize: 8.5, letterSpacing: 1, fontWeight: 700,
-      boxShadow: '0 0 10px rgba(245,158,11,0.35)', whiteSpace: 'nowrap', verticalAlign: 'middle',
+      boxShadow: '0 0 10px rgba(255, 176, 46,0.35)', whiteSpace: 'nowrap', verticalAlign: 'middle',
       ...style,
     }}>
       <Lock size={9} /> PREMIUM
@@ -34,19 +34,19 @@ export function PremiumLock({ feature, onClose }: { feature: string; onClose: ()
       <div onClick={e => e.stopPropagation()}
         style={{ width: '100%', maxWidth: 360, borderRadius: 16, padding: 24, textAlign: 'center', position: 'relative', background: 'linear-gradient(165deg, rgba(30,23,8,0.98), rgba(10,17,32,0.99))', border: `1px solid ${C.gold}66`, boxShadow: `0 0 44px ${C.gold}33` }}>
         <button onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: C.gold, cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
-        <div style={{ fontSize: 40, filter: 'drop-shadow(0 0 10px rgba(245,158,11,0.6))' }}>💎</div>
+        <div style={{ fontSize: 40, filter: 'drop-shadow(0 0 10px rgba(255, 176, 46,0.6))' }}>💎</div>
         <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: '#ffe6a8', margin: '8px 0 4px' }}>Función Premium</div>
         <p style={{ fontFamily: FONT.body, fontSize: 14, color: '#eadfc4', lineHeight: 1.5, margin: '0 0 4px' }}>
           <b style={{ color: C.gold }}>{feature}</b> es parte de <b>Ómicrom Premium</b>.
         </p>
-        <p style={{ fontFamily: FONT.mono, fontSize: 10, color: 'rgba(245,158,11,0.75)', letterSpacing: 0.5, margin: '0 0 20px' }}>
+        <p style={{ fontFamily: FONT.mono, fontSize: 10, color: 'rgba(255, 176, 46,0.75)', letterSpacing: 0.5, margin: '0 0 20px' }}>
           Potencia tu Gemelo con inteligencia artificial.
         </p>
         <button onClick={onClose}
           style={{ width: '100%', padding: '13px', borderRadius: 10, cursor: 'pointer', background: `linear-gradient(135deg, #ffd27a, ${C.gold})`, border: 'none', color: '#1a1205', fontFamily: FONT.display, fontWeight: 700, fontSize: 14 }}>
           Quiero Premium
         </button>
-        <p style={{ fontFamily: FONT.mono, fontSize: 9, color: 'rgba(245,158,11,0.55)', marginTop: 10, letterSpacing: 0.5 }}>Próximamente · activación de pago</p>
+        <p style={{ fontFamily: FONT.mono, fontSize: 9, color: 'rgba(255, 176, 46,0.55)', marginTop: 10, letterSpacing: 0.5 }}>Próximamente · activación de pago</p>
       </div>
     </div>
   );

@@ -37,7 +37,7 @@ export function ConvalidaGemelo() {
     vault: '+ Experiencia · reputación',
   };
   const reco = (a: string): React.CSSProperties =>
-    next && next.action === a ? { borderColor: 'rgba(245,158,11,0.65)', boxShadow: '0 0 14px rgba(245,158,11,0.35)' } : {};
+    next && next.action === a ? { borderColor: 'rgba(255, 176, 46,0.65)', boxShadow: '0 0 14px rgba(255, 176, 46,0.35)' } : {};
 
   const cardBtn: React.CSSProperties = {
     display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'left',
@@ -45,7 +45,7 @@ export function ConvalidaGemelo() {
     border: '1px solid rgba(92, 200, 255,0.2)', background: 'rgba(92, 200, 255,0.05)',
     color: '#eaf4ff', transition: 'all .18s',
   };
-  const done: React.CSSProperties = { borderColor: 'rgba(57,255,20,0.4)', background: 'rgba(57,255,20,0.06)' };
+  const done: React.CSSProperties = { borderColor: 'rgba(63, 208, 201,0.4)', background: 'rgba(63, 208, 201,0.06)' };
 
   return (
     <div style={{

@@ -84,7 +84,7 @@ export function CartaCompetencias() {
       )}
 
       {err && !loading && (
-        <div style={{ padding: 12, borderRadius: RADIUS.lg, background: 'rgba(255,80,102,0.08)', border: '1px solid rgba(255,80,102,0.3)' }}>
+        <div style={{ padding: 12, borderRadius: RADIUS.lg, background: 'rgba(255, 92, 122,0.08)', border: '1px solid rgba(255, 92, 122,0.3)' }}>
           <p style={{ margin: '0 0 10px', fontFamily: FONT.body, fontSize: 12.5, color: '#ffb3bf', lineHeight: 1.4 }}>{err}</p>
           <button onClick={generar} style={btn(C.cyan)}><RotateCcw size={14} /> Reintentar</button>
         </div>

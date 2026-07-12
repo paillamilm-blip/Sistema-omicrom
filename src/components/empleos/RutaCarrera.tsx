@@ -95,7 +95,7 @@ export function RutaCarrera() {
       </p>
 
       {/* Pivote sugerido según tu fortaleza actual */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', borderRadius: RADIUS.lg, background: 'rgba(224,138,0,0.08)', border: '1px solid rgba(224,138,0,0.25)', marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', borderRadius: RADIUS.lg, background: 'rgba(255, 176, 46,0.08)', border: '1px solid rgba(255, 176, 46,0.25)', marginBottom: 12 }}>
         <Target size={15} style={{ color: C.gold, flexShrink: 0, marginTop: 1 }} />
         <span style={{ fontFamily: FONT.body, fontSize: 12.5, color: '#ffdd9e', lineHeight: 1.45 }}>
           Tu fortaleza es <b>{EJE[strongest].label}</b>. Tu ruta más cercana ahora es{' '}
