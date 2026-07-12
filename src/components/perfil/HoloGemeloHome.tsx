@@ -7,7 +7,7 @@
 // SVG/CSS determinista (sin canvas) → fidelidad + cero riesgo de build.
 // ═══════════════════════════════════════════════════════════════════════
 import { useEffect, useRef, useState } from 'react';
-import { Brain, Briefcase, Lock, Scale, UserCircle, Target, Volume2, Send } from 'lucide-react';
+import { Brain, Briefcase, Lock, Scale, UserCircle, Target, Volume2, Send, Store, Boxes, Wallet, MessageCircle } from 'lucide-react';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';
@@ -178,6 +178,14 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
           <DockBtn Icon={Scale} label="Gobierna" color={C.green} onClick={() => setActiveTab('gobernanza')} />
         </div>
 
+        {/* Accesos secundarios: todo el ecosistema alcanzable sin menú inferior */}
+        <div style={S.chips}>
+          <Chip Icon={Store} label="Servicios" onClick={() => setActiveTab('market')} />
+          <Chip Icon={Boxes} label="Habilidades" onClick={() => setActiveTab('maxskill')} />
+          <Chip Icon={Wallet} label="Billetera" onClick={() => setActiveTab('wallet')} />
+          <Chip Icon={MessageCircle} label="Mensajes" onClick={() => setActiveTab('chat')} />
+        </div>
+
         <div style={S.inputBar}>
           <input
             value={q} onChange={(e) => setQ(e.target.value)}
@@ -232,6 +240,19 @@ function DockBtn({ Icon, label, color, active, onClick }: { Icon: typeof Brain; 
   );
 }
 
+function Chip({ Icon, label, onClick }: { Icon: typeof Brain; label: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{
+      flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '9px 4px',
+      borderRadius: 13, cursor: 'pointer', fontFamily: FONT.mono, fontSize: 9.5,
+      background: 'rgba(255,255,255,0.035)', border: `1px solid ${C.line}`, color: C.mut,
+    }}>
+      <Icon size={16} />
+      {label}
+    </button>
+  );
+}
+
 const S: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 14px 0' },
   top: { display: 'flex', alignItems: 'center', gap: 10 },
@@ -268,6 +289,7 @@ const S: Record<string, React.CSSProperties> = {
   btnGhost: { padding: '8px 14px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.line}`, color: C.mut, fontFamily: FONT.mono, fontSize: 12 },
   desc: { fontFamily: FONT.display, fontSize: 13, lineHeight: 1.5, color: C.mut, margin: 0, padding: '0 2px' },
   dock: { display: 'flex', gap: 8 },
+  chips: { display: 'flex', gap: 7 },
   inputBar: { display: 'flex', alignItems: 'center', gap: 8, padding: 6, borderRadius: 16, background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.line}` },
   input: { flex: 1, background: 'none', border: 'none', outline: 'none', color: C.ink, fontFamily: FONT.display, fontSize: 14, padding: '8px 10px' },
   sendBtn: { width: 40, height: 40, borderRadius: 13, flexShrink: 0, cursor: 'pointer', border: 'none', background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' },

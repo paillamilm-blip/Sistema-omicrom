@@ -1,24 +1,20 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { Bell, MessageCircle, LogOut, Sparkles } from 'lucide-react';
+import { Bell, LogOut } from 'lucide-react';
 import { AppProvider, useApp } from './store/AppContext';
 import { AuthOverlay } from './components/auth/AuthOverlay';
 import { ResetPasswordOverlay } from './components/auth/ResetPasswordOverlay';
 import { supabase } from './lib/supabase';
 import { NoAccess } from './components/shared/NoAccess';
-import { BottomNav } from './components/shared/BottomNav';
-import { HubSubNav } from './components/shared/HubSubNav';
 import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { OraculoBar } from './components/OraculoBar';
-import { GemeloBadge } from './components/shared/GemeloBadge';
 import { InstallPWA } from './components/shared/InstallPWA';
 import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
-import { HoloGemeloScreen } from './components/shared/HoloGemeloScreen';
 import { HoloGemeloHome } from './components/perfil/HoloGemeloHome';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
-import { LiveBadge, LiveNetworkFeed } from './components/shared/LivePresence';
+import { LiveNetworkFeed } from './components/shared/LivePresence';
 import { IncomingJobPush } from './components/shared/IncomingJobs';
 import { PublicProfileGate } from './components/perfil/RedSocial';
 import { VerifyCredentialView } from './components/perfil/VerifyCredential';
@@ -57,7 +53,6 @@ function AppShell() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showIniciacion, setShowIniciacion] = useState(() => shouldShowIniciacion());
-  const [showHolo, setShowHolo] = useState(false);
   const [perfilView, setPerfilView] = useState<'holo' | 'classic'>('holo');
 
   useEffect(() => {
@@ -103,80 +98,44 @@ function AppShell() {
           />
         </ErrorBoundary>
       )}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', background: 'rgba(9,12,22,0.6)', backdropFilter: 'blur(22px) saturate(140%)', WebkitBackdropFilter: 'blur(22px) saturate(140%)', borderBottom: '1px solid rgba(150,180,255,0.12)', boxShadow: '0 6px 24px rgba(0,0,0,0.5)', flexShrink: 0, position: 'relative', zIndex: 3 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #5cc8ff, #5e5ce6)', boxShadow: '0 6px 18px rgba(94,92,230,0.5)' }}>
-            <span style={{ color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 16 }}>Ω</span>
+      {activeTab === 'perfil' && perfilView === 'holo' ? (
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+          <ErrorBoundary section="Gemelo">
+            <HoloGemeloHome onOpenPerfil={() => setPerfilView('classic')} />
+          </ErrorBoundary>
+        </div>
+      ) : (
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+          {/* Barra de seccion (drill-down desde el Gemelo). Reemplaza al header/menu viejos. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', flexShrink: 0, borderBottom: '1px solid rgba(150,180,255,0.12)', background: 'rgba(9,12,22,0.6)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', position: 'relative', zIndex: 3 }}>
+            <button onClick={() => { setPerfilView('holo'); setActiveTab('perfil'); }} aria-label="Volver al Gemelo" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 12, background: 'rgba(92,200,255,0.10)', border: '1px solid rgba(92,200,255,0.28)', color: '#5cc8ff', fontFamily: FONT.mono, fontSize: 12.5, cursor: 'pointer' }}>← Gemelo</button>
+            <span style={{ flex: 1, fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: '#eaf0fb', letterSpacing: -0.2 }}>{TAB_TITLES[activeTab]}</span>
+            <button onClick={() => setShowNotifications(true)} aria-label="Notificaciones" style={{ position: 'relative', width: 34, height: 34, borderRadius: 11, background: 'rgba(92,200,255,0.10)', border: '1px solid rgba(92,200,255,0.28)', color: '#5cc8ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Bell size={16} />
+              {unreadCount > 0 && (<span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, background: C.red, color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{unreadCount > 9 ? '9+' : unreadCount}</span>)}
+            </button>
+            <button onClick={() => supabase.auth.signOut()} aria-label="Cerrar sesión" style={{ width: 34, height: 34, borderRadius: 11, background: 'rgba(255,92,122,0.12)', border: '1px solid rgba(255,92,122,0.3)', color: '#ff5c7a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <LogOut size={16} />
+            </button>
           </div>
-          <span style={{ fontFamily: FONT.display, fontSize: 17.5, letterSpacing: -0.2, color: '#eaf0fb', fontWeight: 700 }}>{TAB_TITLES[activeTab]}</span>
+          <ErrorBoundary section={TAB_TITLES[activeTab]} key={activeTab}>
+            <Suspense fallback={<TabLoader />}>
+              {activeTab === 'perfil'     && <PerfilTab />}
+              {activeTab === 'maxskill'   && <MaxSkillTab />}
+              {activeTab === 'academia'   && <AcademiaTab />}
+              {activeTab === 'market'     && <MarketTab />}
+              {activeTab === 'empleos'    && <EmpleosTab />}
+              {activeTab === 'chat'       && <ChatTab />}
+              {activeTab === 'wallet'     && <WalletTab />}
+              {activeTab === 'gobernanza' && <GobernanzaTab />}
+              {activeTab === 'vault'      && <VaultTab />}
+            </Suspense>
+          </ErrorBoundary>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={() => setShowHolo(true)} aria-label="Modo Holo-Gemelo" title="Holo-Gemelo" style={{ width: 34, height: 34, borderRadius: 11, background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 16px rgba(94,92,230,0.45)' }}>
-            <Sparkles size={16} />
-          </button>
-          <LiveBadge />
-          <GemeloBadge />
-          {profile && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 13, color: '#ffb02e', fontWeight: 700 }}>
-              🪙 {(profile.token_balance ?? 0).toLocaleString()}
-            </span>
-          )}
-          {/* Mensajería: reubicada desde el menú inferior para dejarlo limpio con solo las áreas principales */}
-          <button onClick={() => setActiveTab('chat')} aria-label="Mensajes" style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(92,200,255,0.10)', border: '1px solid rgba(92,200,255,0.28)', color: '#5cc8ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <MessageCircle size={16} />
-          </button>
-          <button onClick={() => setShowNotifications(true)} aria-label="Notificaciones" style={{ position: 'relative', width: 34, height: 34, borderRadius: 8, background: 'rgba(92,200,255,0.10)', border: '1px solid rgba(92,200,255,0.28)', color: '#5cc8ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Bell size={16} />
-            {unreadCount > 0 && (
-              <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, background: C.red, color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-          {/* Cerrar sesión: reubicado desde PerfilTab para dejar el menú inferior enfocado en navegación */}
-          <button onClick={() => supabase.auth.signOut()} aria-label="Cerrar sesión" style={{ width: 34, height: 34, borderRadius: 11, background: 'rgba(255,92,122,0.12)', border: '1px solid rgba(255,92,122,0.3)', color: '#ff5c7a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <LogOut size={16} />
-          </button>
-        </div>
-      </header>
-
-      <HubSubNav />
-
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-        <ErrorBoundary section={TAB_TITLES[activeTab]} key={activeTab}>
-          <Suspense fallback={<TabLoader />}>
-            {activeTab === 'perfil'     && (perfilView === 'holo'
-              ? <HoloGemeloHome onOpenPerfil={() => setPerfilView('classic')} />
-              : (
-                <>
-                  <button onClick={() => setPerfilView('holo')} aria-label="Volver al Núcleo"
-                    style={{ margin: '10px 16px 0', alignSelf: 'flex-start', padding: '8px 14px', borderRadius: 12, background: 'rgba(92,200,255,0.10)', border: '1px solid rgba(92,200,255,0.28)', color: '#5cc8ff', fontFamily: FONT.mono, fontSize: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    ← Núcleo
-                  </button>
-                  <PerfilTab />
-                </>
-              ))}
-            {activeTab === 'maxskill'   && <MaxSkillTab />}
-            {activeTab === 'academia'   && <AcademiaTab />}
-            {activeTab === 'market'     && <MarketTab />}
-            {activeTab === 'empleos'    && <EmpleosTab />}
-            {activeTab === 'chat'       && <ChatTab />}
-            {activeTab === 'wallet'     && <WalletTab />}
-            {activeTab === 'gobernanza' && <GobernanzaTab />}
-            {activeTab === 'vault'      && <VaultTab />}
-          </Suspense>
-        </ErrorBoundary>
-      </div>
-
-      <BottomNav />
+      )}
       <LiveNetworkFeed />
       <IncomingJobPush />
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
-      {showHolo && (
-        <ErrorBoundary section="Holo-Gemelo">
-          <HoloGemeloScreen onClose={() => setShowHolo(false)} />
-        </ErrorBoundary>
-      )}
       <PublicProfileGate />
       <ErrorBoundary section="Oráculo">
         <OraculoBar />
