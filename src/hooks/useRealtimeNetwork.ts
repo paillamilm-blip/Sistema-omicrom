@@ -97,6 +97,11 @@ export function useRealtimeNetwork(
     });
     channelRef.current = channel;
 
+    // Evita el "todos entraron" al conectar: ignora los eventos de join del
+    // burst inicial (los ya conectados) y solo anuncia llegadas reales después.
+    let joinReady = false;
+    let joinTimer: ReturnType<typeof setTimeout> | undefined;
+
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState() as unknown as Record<string, LiveNode[]>;
@@ -109,6 +114,7 @@ export function useRealtimeNetwork(
         setOnlineCount(list.length);
       })
       .on('presence', { event: 'join' }, (payload) => {
+        if (!joinReady) return; // ignora el burst inicial de presencias existentes
         const arrivals = payload.newPresences as unknown as LiveNode[];
         arrivals.forEach((n) => {
           if (n && n.id !== userId) pushEvent(`${n.username || 'Un nodo'} entró a la red`, 'join');
@@ -129,6 +135,8 @@ export function useRealtimeNetwork(
             node_level: m.node_level,
             online_at: new Date().toISOString(),
           });
+          // A partir de ~3s tras conectar, los joins ya son llegadas reales.
+          joinTimer = setTimeout(() => { joinReady = true; }, 3000);
         } else {
           setConnected(false);
         }
@@ -136,6 +144,7 @@ export function useRealtimeNetwork(
 
     return () => {
       setConnected(false);
+      if (joinTimer) clearTimeout(joinTimer);
       void supabase.removeChannel(channel);
       channelRef.current = null;
     };

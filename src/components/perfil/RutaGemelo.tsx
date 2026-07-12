@@ -53,7 +53,7 @@ export function RutaGemelo() {
                   flexShrink: 0, width: 24, height: 24, borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: i === 0 ? C.gold : 'rgba(255,255,255,0.1)',
-                  color: i === 0 ? '#020613' : '#9fb2c8',
+                  color: i === 0 ? '#000206' : '#9fb2c8',
                   fontFamily: FONT.mono, fontSize: 12, fontWeight: 700,
                 }}>{i + 1}</span>
                 <span style={{ flex: 1, fontFamily: FONT.body, fontSize: 13.5 }}>

@@ -74,27 +74,27 @@ export function InstallPWA() {
         display: 'flex', alignItems: 'center', gap: 12, maxWidth: '92vw',
         padding: '10px 12px 10px 16px', borderRadius: RADIUS.pill,
         background: 'rgba(6,12,26,0.94)', border: `1px solid ${C.cyanDim}`,
-        boxShadow: '0 12px 40px rgba(0,0,0,0.55), 0 0 22px rgba(0,240,255,0.18)',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.55), 0 0 22px rgba(92, 200, 255,0.18)',
         backdropFilter: 'blur(12px)',
       }}
     >
       <span style={{ fontSize: 20, lineHeight: 1 }}>Ω</span>
       {iosHint ? (
-        <span style={{ fontFamily: FONT.body, fontSize: 12.5, color: '#eaf2ff', lineHeight: 1.4 }}>
+        <span style={{ fontFamily: FONT.body, fontSize: 12.5, color: '#eaf0fb', lineHeight: 1.4 }}>
           Instala Ómicron: toca <Share size={13} style={{ verticalAlign: 'middle', color: C.cyan }} /> Compartir y
           {' '}<b style={{ color: C.cyan }}>Añadir a inicio</b>
         </span>
       ) : (
         <>
-          <span style={{ fontFamily: FONT.body, fontSize: 13, color: '#eaf2ff' }}>
+          <span style={{ fontFamily: FONT.body, fontSize: 13, color: '#eaf0fb' }}>
             Instala Ómicron como app
           </span>
           <button
             onClick={install}
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: RADIUS.pill,
-              cursor: 'pointer', background: `linear-gradient(135deg, #7df9ff, ${C.cyan})`, border: 'none',
-              color: '#020613', fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700,
+              cursor: 'pointer', background: `linear-gradient(135deg, #8bd4ff, ${C.cyan})`, border: 'none',
+              color: '#000206', fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700,
             }}
           >
             <Download size={14} /> Instalar

@@ -1,7 +1,34 @@
 # 🚀 Puesta en Marcha — Dejar Ómicrom VIVO
 
-Checklist para activar TODO lo construido (Coach, Tutor, Examinador, Carta, Asesor,
-Oráculo, Redactor, Relator, Radar, Pasaporte y Premium). Hazlo en orden.
+> **Guía rápida y consolidada en [`README.md`](./README.md).** Este documento detalla la
+> activación de la IA (Edge Functions) y el checklist de recorrido.
+
+---
+
+## 🟢 Estado actual (cierre) — qué hay que hacer para verla funcionando
+
+La app React completa está **mergeada en `main` y desplegada en Vercel**
+(auth, Inicio con núcleo 3D, Academia, Servicios, Empleos, Billetera, Gobernanza, Bóveda,
+Chat, PWA) + toda la **capa en tiempo real** (presencia, ranking en vivo, "el trabajo te
+busca", conexión/DM, Oráculo por voz) + **reputación unificada** (una sola fuente).
+
+**Para dejarla 100% viva:**
+
+1. **Variables en Vercel** (ya configuradas): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+2. **Migraciones Supabase** (`supabase db push` o SQL Editor). Las clave del cierre:
+   - `0046_gemelo_profiles.sql` — Gemelo convalidado (RLS por usuario).
+   - `0047_realtime_publication.sql` — **habilita Realtime** en `profiles`, `job_postings`,
+     `job_matches` (ranking en vivo + "el trabajo te busca").
+3. **Abrir producción:** `https://sistema-omicrom-git-main-tuprofendustrial-s-projects.vercel.app`
+   — para ver lo multiusuario, abrila en **2 sesiones/dispositivos**.
+
+> Presencia/actividad/DM funcionan sin la migración 0047; ranking y ofertas en vivo la necesitan.
+
+---
+
+## 🤖 Activación de la IA (Coach, Tutor, Examinador, Carta, Asesor, Oráculo, Redactor, Relator, Radar, Pasaporte y Premium)
+
+Hazlo en orden.
 
 ---
 

@@ -7,6 +7,8 @@ import {
   calculateFinalReputation,
   calculateGemeloAverage,
   calculateGemeloDigital,
+  calculatePEMomentum,
+  calculateTotalReputation,
   determineNodeLevel,
   calculatePEThreshold,
   shouldTriggerAudit,
@@ -90,9 +92,35 @@ describe('shouldTriggerAudit (caída de reputación)', () => {
   });
 });
 
-describe('calculateMatchScore (empleos, 80/20)', () => {
-  it('tradicional 0 + experiencia 50 = 40', () => {
+describe('calculateMatchScore (empleos, base 20/80 + momentum)', () => {
+  it('tradicional 0 + experiencia 50, sin PE = 40', () => {
     expect(calculateMatchScore(makeProfile({ traditional_score: 0, experience_score: 50 }))).toBe(40);
+  });
+  it('mismo perfil con PE suma momentum', () => {
+    // base 40 + momentum(1600 PE)= sqrt(1600)/4 = 10 → 50
+    expect(
+      calculateMatchScore(makeProfile({ traditional_score: 0, experience_score: 50, pe_points: 1600 })),
+    ).toBe(50);
+  });
+});
+
+describe('calculatePEMomentum (potencial acotado)', () => {
+  it('0 PE → 0', () => expect(calculatePEMomentum(0)).toBe(0));
+  it('1600 PE → 10', () => expect(calculatePEMomentum(1600)).toBe(10));
+  it('cap en +15 (mucho PE)', () => expect(calculatePEMomentum(1_000_000)).toBe(15));
+  it('valores negativos/undefined → 0', () => {
+    expect(calculatePEMomentum(-500)).toBe(0);
+    expect(calculatePEMomentum(undefined as unknown as number)).toBe(0);
+  });
+});
+
+describe('calculateTotalReputation (unificada)', () => {
+  it('base 20/80 + momentum', () => {
+    // 0.2·0 + 0.8·50 = 40 ; momentum(1600)=10 → 50
+    expect(calculateTotalReputation(0, 50, 1600)).toBe(50);
+  });
+  it('clamp a 100', () => {
+    expect(calculateTotalReputation(100, 100, 1_000_000)).toBe(100);
   });
 });
 
@@ -130,11 +158,13 @@ describe('calculateProgressToNextLevel', () => {
 });
 
 describe('simulateReputationUpdate', () => {
-  it('recalcula reputación como promedio (NO queda en 0)', () => {
+  it('recalcula reputación con el modelo canónico (base 20/80 + momentum)', () => {
     const updated = simulateReputationUpdate(makeProfile(), { execution: 50 });
-    // execution 50+50 = 100 (clamp), resto 50 → (100+50+50+50)/4 = 62.5
+    // execution 50+50 = 100 (clamp), resto 50 → experiencia = (100+50+50+50)/4 = 62.5
+    // base = 0.2·0 + 0.8·62.5 = 50 ; momentum(pe=0) = 0 → reputación = 50
     expect(updated.execution_score).toBe(100);
-    expect(updated.reputation_score).toBe(62.5);
+    expect(updated.experience_score).toBe(62.5);
+    expect(updated.reputation_score).toBe(50);
   });
   it('no excede 100 por eje (clamp)', () => {
     const updated = simulateReputationUpdate(makeProfile({ quality_score: 90 }), { quality: 50 });

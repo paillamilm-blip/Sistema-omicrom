@@ -18,28 +18,28 @@ const STEPS: Step[] = [
     tag: 'BIENVENIDO A LA RED',
     title: 'Sistema Ómicron',
     body: 'Un marketplace de capital intelectual de la Industria 5.0. Aquí tu conocimiento es un activo: lo aprendes, lo validas y lo monetizas. Confianza cero, mérito verificable.',
-    accent: '#00F0FF',
+    accent: '#5cc8ff',
   },
   {
     icon: <Radar size={34} />,
     tag: 'TU IDENTIDAD',
     title: 'El Gemelo Digital',
     body: 'Tu reputación verificable, calculada con 4 ejes: Ejecución, Calidad, Trascendencia y Fundamento. No es una opinión: se construye con cada nodo validado, contrato y aporte real.',
-    accent: '#39FF14',
+    accent: '#3fd0c9',
   },
   {
     icon: <Compass size={34} />,
     tag: 'CÓMO NAVEGAR',
     title: '5 hubs, una misión',
     body: 'APRENDER (árbol + academia), MERCADO (servicios + bóveda), EMPLEOS, GOBERNANZA (disputas + staking) y tu PERFIL. Usa las sub-pestañas superiores para moverte dentro de cada hub.',
-    accent: '#00F0FF',
+    accent: '#5cc8ff',
   },
   {
     icon: <Rocket size={34} />,
     tag: 'EMPIEZA AHORA',
     title: 'Valida tu primer nodo',
     body: 'Ve a APRENDER → Árbol de Habilidades, elige un nodo disponible y supera el Simulador para ganar PE y subir tu Fundamento. Cada reto fortalece tu Gemelo Digital.',
-    accent: '#F59E0B',
+    accent: '#ffb02e',
   },
 ];
 
@@ -93,8 +93,8 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
   );
 }
 
-const MONO = "'Share Tech Mono', monospace";
-const RAJ = "'Rajdhani', sans-serif";
+const MONO = "'SF Mono', monospace";
+const RAJ = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
 
 const S: Record<string, React.CSSProperties> = {
   overlay: {
@@ -114,10 +114,10 @@ const S: Record<string, React.CSSProperties> = {
   iconRing: {
     width: 78, height: 78, borderRadius: '50%', margin: '0 auto 18px',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    border: '1px solid', background: 'rgba(0,240,255,0.04)', animation: 'floatY 5s ease-in-out infinite',
+    border: '1px solid', background: 'rgba(92, 200, 255,0.04)', animation: 'floatY 5s ease-in-out infinite',
   },
   tag: { fontFamily: MONO, fontSize: 10, letterSpacing: 2.5, fontWeight: 700 },
-  title: { fontFamily: RAJ, fontWeight: 700, fontSize: 26, color: '#eaf2ff', margin: '6px 0 12px', letterSpacing: 0.5 },
+  title: { fontFamily: RAJ, fontWeight: 700, fontSize: 26, color: '#eaf0fb', margin: '6px 0 12px', letterSpacing: 0.5 },
   body: { fontFamily: 'Inter, system-ui, sans-serif', fontSize: 14, lineHeight: 1.6, color: '#9fb3cc', margin: '0 0 22px' },
   dots: { display: 'flex', justifyContent: 'center', gap: 7, marginBottom: 22 },
   dot: { height: 7, borderRadius: 4, transition: 'all .25s ease' },
@@ -129,6 +129,6 @@ const S: Record<string, React.CSSProperties> = {
   },
   btnPrimary: {
     flex: 1, padding: '12px 0', borderRadius: 10, cursor: 'pointer', border: 'none',
-    color: '#020613', fontFamily: RAJ, fontWeight: 700, fontSize: 15, letterSpacing: 0.5,
+    color: '#000206', fontFamily: RAJ, fontWeight: 700, fontSize: 15, letterSpacing: 0.5,
   },
 };

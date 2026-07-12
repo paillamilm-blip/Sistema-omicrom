@@ -80,10 +80,10 @@ interface GNode {
 }
 
 const AXES_DEF: { key: keyof NucleoAxes; label: string; color: string; detail: string; mejora: string; tab: string }[] = [
-  { key: 'execution', label: 'Ejecución', color: '#00F0FF', detail: 'Qué tan rápido y bien entregas tus contratos.', mejora: 'Toma un contrato de hito corto en el Market para elevar tu velocidad de entrega.', tab: 'market' },
-  { key: 'quality', label: 'Calidad', color: '#0a8ba3', detail: 'Las calificaciones con estrellas de tus clientes.', mejora: 'Pide reseña al cerrar cada contrato: más estrellas suben este eje.', tab: 'empleos' },
-  { key: 'transcendence', label: 'Trascendencia', color: '#F59E0B', detail: 'El conocimiento que compartes: Bóveda y mentorías.', mejora: 'Publica un aporte en la Bóveda o mentorea a un nodo junior.', tab: 'vault' },
-  { key: 'foundation', label: 'Fundamento', color: '#39FF14', detail: 'Tu dominio teórico y los cursos de la Academia.', mejora: 'Rinde el Examen IA de un nodo pendiente en la Academia.', tab: 'academia' },
+  { key: 'execution', label: 'Ejecución', color: '#5cc8ff', detail: 'Qué tan rápido y bien entregas tus contratos.', mejora: 'Toma un contrato de hito corto en el Market para elevar tu velocidad de entrega.', tab: 'market' },
+  { key: 'quality', label: 'Calidad', color: '#8a88f0', detail: 'Las calificaciones con estrellas de tus clientes.', mejora: 'Pide reseña al cerrar cada contrato: más estrellas suben este eje.', tab: 'empleos' },
+  { key: 'transcendence', label: 'Trascendencia', color: '#ffb02e', detail: 'El conocimiento que compartes: Bóveda y mentorías.', mejora: 'Publica un aporte en la Bóveda o mentorea a un nodo junior.', tab: 'vault' },
+  { key: 'foundation', label: 'Fundamento', color: '#3fd0c9', detail: 'Tu dominio teórico y los cursos de la Academia.', mejora: 'Rinde el Examen IA de un nodo pendiente en la Academia.', tab: 'academia' },
 ];
 
 const CHIP_DETAIL: Record<string, string> = {
@@ -239,7 +239,7 @@ export function HoloNucleo3D({
       const p = project(0, 0, 0);
       const R = Math.min(W, H) * 0.135;
       const halo = ctx!.createRadialGradient(p.sx, p.sy, R * 0.5, p.sx, p.sy, R * 2.6);
-      halo.addColorStop(0, hexA(errorTint ? C.red : highRep ? '#F59E0B' : '#22D3EE', 0.26 + (rep / 100) * 0.14));
+      halo.addColorStop(0, hexA(errorTint ? C.red : highRep ? '#ffb02e' : '#22D3EE', 0.26 + (rep / 100) * 0.14));
       halo.addColorStop(1, 'rgba(34,211,238,0)');
       ctx!.fillStyle = halo; ctx!.beginPath(); ctx!.arc(p.sx, p.sy, R * 2.6, 0, 6.2832); ctx!.fill();
       const core = ctx!.createRadialGradient(p.sx - R * 0.3, p.sy - R * 0.35, R * 0.1, p.sx, p.sy, R);
@@ -343,10 +343,10 @@ export function HoloNucleo3D({
           const bob = Math.sin(t * 0.6 + i * 1.7) * 0.14;
           const pp = project(Math.cos(a) * 1.62, bob, Math.sin(a) * 1.62);
           const depth = 0.35 + (pp.zz + 1) * 0.32;
-          ctx!.strokeStyle = hexA('#39FF14', 0.045 * depth);
+          ctx!.strokeStyle = hexA('#3fd0c9', 0.045 * depth);
           ctx!.lineWidth = 1;
           ctx!.beginPath(); ctx!.moveTo(core.sx, core.sy); ctx!.lineTo(pp.sx, pp.sy); ctx!.stroke();
-          glow(pp.sx, pp.sy, 1.5 * pp.sc, '#39FF14', 0.5 * depth);
+          glow(pp.sx, pp.sy, 1.5 * pp.sc, '#3fd0c9', 0.5 * depth);
         }
       }
       draw(order.filter((i) => nodes[i].zz <= 0), core);
@@ -411,7 +411,7 @@ export function HoloNucleo3D({
             {info.detail}
           </div>
           <div style={{ display: 'flex', gap: 7, marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <span style={{ flexShrink: 0, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#F59E0B', textTransform: 'uppercase' }}>
+            <span style={{ flexShrink: 0, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#ffb02e', textTransform: 'uppercase' }}>
               ▲ Mejora
             </span>
             <span style={{ fontFamily: FONT.body, fontSize: 12, color: '#ffdd9e', lineHeight: 1.4 }}>
@@ -434,7 +434,7 @@ export function HoloNucleo3D({
           )}
         </div>
       ) : (
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10, textAlign: 'center', pointerEvents: 'none', fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: 1, color: 'rgba(0,240,255,0.5)', textTransform: 'uppercase' }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10, textAlign: 'center', pointerEvents: 'none', fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: 1, color: 'rgba(92, 200, 255,0.5)', textTransform: 'uppercase' }}>
           Acércate o toca un punto para ver su detalle
         </div>
       )}

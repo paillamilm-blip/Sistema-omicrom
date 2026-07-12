@@ -216,9 +216,12 @@ Deno.serve(async (req) => {
         feedback: ev.feedback ?? null,
       };
 
-      // 3) Aplicar el acta (actualiza Gemelo, progreso y PE) usando la identidad del usuario.
-      const userClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
-      const { data: actaId, error: re } = await userClient.rpc('aplicar_acta', {
+      // 3) Aplicar el acta con el cliente ADMIN (service role). La nota la calcula
+      //    ESTA función (que tiene la clave de respuestas); el navegador NO puede
+      //    invocar aplicar_acta directamente (revocada de authenticated en 0051).
+      //    Pasamos el uid verificado del usuario.
+      const { data: actaId, error: re } = await admin.rpc('aplicar_acta', {
+        p_user_id: uid,
         p_node_id: sess.node_id,
         p_ejecucion: ejecucion,
         p_calidad: calidad,

@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ShoppingCart, Star, Plus, Cpu, ShieldCheck, TrendingUp, Sparkles, Loader2, Menu, X, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { C as T } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { ContractModal } from '../contracts/ContractModal';
@@ -17,17 +18,18 @@ type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
 // ── Paleta v5.0 "Neo-Académico Holográfico" — cyan eléctrico + ámbar energía ──
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
 // "muted" con más contraste para no forzar la vista.
+// Paleta DERIVADA del tema (theme.ts) → un cambio de tema se propaga solo.
 const C = {
-  bg: '#020613', bg2: '#030a1a',
+  bg: T.bg, bg2: '#02030a',
   panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
-  blue: '#00D6E6', blueHi: '#5ad6e6',
-  amber: '#E08A00', amberHi: '#f0b23d',
-  steel: '#045A68', steelHi: '#0977a3',
-  line: 'rgba(4,90,104,0.35)', lineSoft: 'rgba(0,214,230,0.10)',
-  ink: '#eaf2ff', muted: '#93a8c0',
+  blue: T.cyan, blueHi: '#8bd4ff',
+  amber: T.gold, amberHi: '#ffd27a',
+  steel: T.purple, steelHi: '#8a88f0',
+  line: T.line, lineSoft: T.cyanFaint,
+  ink: T.ink, muted: T.mut,
 } as const;
-const FONT_MONO = "'Share Tech Mono', 'Courier New', monospace";
-const FONT_RAJ  = "'Rajdhani', sans-serif";
+const FONT_MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
+const FONT_RAJ  = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
 
 // Extrae el detalle real del error que devuelve la Edge Function.
 async function marketServerError(error: unknown, data: unknown, fallback: string): Promise<string> {
@@ -226,10 +228,10 @@ export function MarketTab() {
                   return (
                     <button key={c.key} onClick={() => setCategory(c.key)} style={{
                       ...styles.catPillVertical,
-                      background: active ? 'rgba(0,214,230,0.16)' : 'rgba(255,255,255,0.02)',
+                      background: active ? 'rgba(92, 200, 255,0.16)' : 'rgba(255,255,255,0.02)',
                       border: `1px solid ${active ? C.blue : C.lineSoft}`,
                       color: active ? C.blueHi : C.muted,
-                      boxShadow: active ? `0 0 14px rgba(0,214,230,0.35)` : 'none',
+                      boxShadow: active ? `0 0 14px rgba(92, 200, 255,0.35)` : 'none',
                     }}>
                       {c.icon && <span>{c.icon}</span>}{c.label}
                     </button>
@@ -244,7 +246,7 @@ export function MarketTab() {
                   return (
                     <button key={key} onClick={() => setSortBy(key)} style={{
                       ...styles.catPillVertical,
-                      background: on ? 'rgba(0,214,230,0.16)' : 'transparent',
+                      background: on ? 'rgba(92, 200, 255,0.16)' : 'transparent',
                       border: `1px solid ${on ? C.blue : C.lineSoft}`,
                       color: on ? C.blueHi : C.muted,
                     }}>{label}</button>
@@ -330,7 +332,7 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
   const pe = service.seller?.pe_points ?? 0;
   const rep = Math.round(service.seller?.reputation_score ?? 0);
   const val = service.seller?.competencias_validadas ?? 0;
-  const repColor = rep >= 70 ? '#39FF14' : rep >= 50 ? C.amber : C.muted;
+  const repColor = rep >= 70 ? '#3fd0c9' : rep >= 50 ? C.amber : C.muted;
   const lvl = String(service.seller?.node_level ?? '1').replace(/^N/i, '');
   return (
     <div style={styles.card}>
@@ -366,7 +368,7 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
         background: canHire ? `linear-gradient(135deg, ${C.blue}, #008b9e)` : 'transparent',
         border: `1px solid ${canHire ? C.blue : C.lineSoft}`,
         color: canHire ? '#04121f' : C.muted,
-        boxShadow: canHire ? `0 0 18px rgba(0,240,255,0.4)` : 'none',
+        boxShadow: canHire ? `0 0 18px rgba(92, 200, 255,0.4)` : 'none',
         cursor: canHire ? 'pointer' : 'default',
       }}>
         {canHire ? '▸ CONTRATAR · ESCROW' : service.seller_id ? 'TU SERVICIO' : 'DEMO'}
@@ -380,8 +382,8 @@ const styles: Record<string, React.CSSProperties> = {
   grid: { position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `linear-gradient(${C.lineSoft} 1px, transparent 1px), linear-gradient(90deg, ${C.lineSoft} 1px, transparent 1px)`, backgroundSize: '28px 28px', maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 70%)', WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 70%)' },
   header: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.line}`, background: 'rgba(8,11,18,0.7)', flexShrink: 0 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 },
-  hamburgerBtn: { flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,214,230,0.08)', border: `1px solid ${C.lineSoft}`, cursor: 'pointer' },
-  activeFilterBar: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, margin: '10px 14px 4px', padding: '9px 12px', borderRadius: 8, background: 'rgba(0,214,230,0.05)', border: `1px solid ${C.lineSoft}`, color: C.muted, fontFamily: FONT_MONO, fontSize: 11, cursor: 'pointer', flexShrink: 0, textAlign: 'left' },
+  hamburgerBtn: { flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.lineSoft}`, cursor: 'pointer' },
+  activeFilterBar: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, margin: '10px 14px 4px', padding: '9px 12px', borderRadius: 8, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.lineSoft}`, color: C.muted, fontFamily: FONT_MONO, fontSize: 11, cursor: 'pointer', flexShrink: 0, textAlign: 'left' },
   drawerBg: { position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(2,5,11,0.72)', backdropFilter: 'blur(3px)' },
   drawerPanel: { position: 'absolute', top: 0, left: 0, bottom: 0, width: '82%', maxWidth: 320, display: 'flex', flexDirection: 'column', background: `linear-gradient(165deg, ${C.panelA}, ${C.panelB})`, borderRight: `1px solid ${C.blue}`, boxShadow: '4px 0 30px rgba(0,0,0,0.5)' },
   drawerHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 14px', borderBottom: `1px solid ${C.line}` },
@@ -389,29 +391,29 @@ const styles: Record<string, React.CSSProperties> = {
   drawerClose: { width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.lineSoft}`, color: C.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   drawerSectionTitle: { fontFamily: FONT_MONO, fontSize: 10, color: C.muted, letterSpacing: 1.5, marginBottom: 10, textTransform: 'uppercase' },
   catPillVertical: { display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', borderRadius: 8, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 12, letterSpacing: 0.5, textAlign: 'left', textTransform: 'uppercase' },
-  drawerApplyBtn: { width: '100%', padding: '13px 0', borderRadius: 8, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, color: '#04121f', fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 15, boxShadow: '0 0 16px rgba(0,214,230,0.4)' },
-  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: `0 0 14px rgba(0,240,255,0.5)` },
+  drawerApplyBtn: { width: '100%', padding: '13px 0', borderRadius: 8, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, color: '#04121f', fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 15, boxShadow: '0 0 16px rgba(92, 200, 255,0.4)' },
+  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: `0 0 14px rgba(92, 200, 255,0.5)` },
   headerTitle: { fontFamily: FONT_MONO, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   headerSub: { fontFamily: FONT_MONO, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
-  publishBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,240,255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 1 },
+  publishBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(92, 200, 255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 1 },
   catRow: { position: 'relative', zIndex: 2, display: 'flex', gap: 8, padding: '12px 14px', overflowX: 'auto', flexShrink: 0 },
   sortRow: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px 8px', flexShrink: 0 },
   sortLabel: { fontFamily: FONT_MONO, fontSize: 8.5, color: C.muted, letterSpacing: 1.5 },
   sortPill: { display: 'flex', alignItems: 'center', gap: 4, padding: '5px 11px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 10, letterSpacing: 0.5, whiteSpace: 'nowrap' },
-  trustSeal: { display: 'flex', alignItems: 'center', gap: 8, margin: '11px 0 2px', padding: '8px 10px', borderRadius: 6, background: 'rgba(0,240,255,0.05)', border: `1px solid ${C.lineSoft}` },
+  trustSeal: { display: 'flex', alignItems: 'center', gap: 8, margin: '11px 0 2px', padding: '8px 10px', borderRadius: 6, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.lineSoft}` },
   trustItem: { flex: 1, display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 },
   trustLabel: { fontFamily: FONT_MONO, fontSize: 7.5, color: C.muted, letterSpacing: 1 },
   trustVal: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 16, lineHeight: 1 },
   trustValSmall: { fontFamily: FONT_MONO, fontSize: 10, color: C.ink, lineHeight: 1.2 },
   trustDivider: { width: 1, height: 26, background: C.lineSoft, flexShrink: 0 },
-  advisorWrap: { flexShrink: 0, borderRadius: 10, border: `1px solid rgba(245,158,11,0.35)`, background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(2,6,19,0.5))', overflow: 'hidden' },
-  advisorToggle: { width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: '#ffcf6b', fontWeight: 700 },
+  advisorWrap: { flexShrink: 0, borderRadius: 10, border: `1px solid rgba(255, 176, 46,0.35)`, background: 'linear-gradient(135deg, rgba(255, 176, 46,0.08), rgba(2,6,19,0.5))', overflow: 'hidden' },
+  advisorToggle: { width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, color: '#ffd27a', fontWeight: 700 },
   advisorBody: { padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 },
   advisorHint: { margin: 0, fontFamily: FONT_MONO, fontSize: 10, color: C.muted, lineHeight: 1.45 },
   advisorInput: { width: '100%', minHeight: 64, boxSizing: 'border-box', padding: 10, borderRadius: 8, background: '#040a18', border: `1px solid ${C.lineSoft}`, color: C.ink, fontFamily: FONT_RAJ, fontSize: 14, lineHeight: 1.4, resize: 'vertical', outline: 'none' },
   advisorBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 0', borderRadius: 8, border: 'none', background: `linear-gradient(135deg, ${C.amberHi}, ${C.amber})`, color: '#04121f', fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 14, letterSpacing: 0.5 },
-  advisorErr: { padding: 10, borderRadius: 8, background: 'rgba(255,80,102,0.10)', border: '1px solid rgba(255,80,102,0.3)', fontFamily: FONT_RAJ, fontSize: 12.5, color: '#ffb3bf', lineHeight: 1.4 },
-  advisorResult: { padding: 12, borderRadius: 8, background: 'rgba(0,240,255,0.06)', border: `1px solid rgba(0,240,255,0.25)` },
+  advisorErr: { padding: 10, borderRadius: 8, background: 'rgba(255, 92, 122,0.10)', border: '1px solid rgba(255, 92, 122,0.3)', fontFamily: FONT_RAJ, fontSize: 12.5, color: '#ffb3bf', lineHeight: 1.4 },
+  advisorResult: { padding: 12, borderRadius: 8, background: 'rgba(92, 200, 255,0.06)', border: `1px solid rgba(92, 200, 255,0.25)` },
   advisorResultHead: { display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONT_MONO, fontSize: 9, letterSpacing: 1.5, color: C.blueHi, marginBottom: 8 },
   catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, whiteSpace: 'nowrap', transition: 'all .2s', textTransform: 'uppercase' },
   scroll: { position: 'relative', zIndex: 2, flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 10 },
@@ -423,16 +425,16 @@ const styles: Record<string, React.CSSProperties> = {
   metaLine: { display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontFamily: FONT_MONO, fontSize: 10, color: C.muted },
   priceTop: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 19, color: C.amberHi, lineHeight: 1 },
   idTagInline: { fontFamily: FONT_MONO, fontSize: 7.5, color: C.muted, letterSpacing: 1, marginTop: 3 },
-  trustSealCompact: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 7, margin: '10px 0', padding: '7px 10px', borderRadius: 6, background: 'rgba(0,240,255,0.05)', border: `1px solid ${C.lineSoft}`, fontFamily: FONT_MONO, fontSize: 10.5, color: C.ink },
+  trustSealCompact: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 7, margin: '10px 0', padding: '7px 10px', borderRadius: 6, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.lineSoft}`, fontFamily: FONT_MONO, fontSize: 10.5, color: C.ink },
   trustChip: { display: 'inline-flex', alignItems: 'center', gap: 3 },
   trustSep: { color: 'rgba(255,255,255,0.2)' },
   seller: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted },
-  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.blueHi, background: 'rgba(0,240,255,0.10)', border: '1px solid rgba(0,240,255,0.30)', padding: '1px 7px', borderRadius: 3 },
+  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.blueHi, background: 'rgba(92, 200, 255,0.10)', border: '1px solid rgba(92, 200, 255,0.30)', padding: '1px 7px', borderRadius: 3 },
   statRow: { display: 'flex', gap: 10, marginTop: 12 },
   statBox: { flex: 1, background: 'rgba(0,0,0,0.25)', border: `1px solid ${C.lineSoft}`, borderRadius: 4, padding: '7px 10px' },
   statLabel: { fontFamily: FONT_MONO, fontSize: 8, color: C.muted, letterSpacing: 1.5 },
   price: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 20, color: C.amberHi, marginTop: 1 },
   rating: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 18, color: C.ink, marginTop: 1 },
-  tag: { fontFamily: FONT_MONO, fontSize: 10, color: C.blueHi, background: 'rgba(0,240,255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3, letterSpacing: 0.5 },
+  tag: { fontFamily: FONT_MONO, fontSize: 10, color: C.blueHi, background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3, letterSpacing: 0.5 },
   hireBtn: { width: '100%', marginTop: 10, padding: '9px 0', borderRadius: 5, fontFamily: FONT_MONO, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, transition: 'all .15s' },
 };

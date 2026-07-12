@@ -88,8 +88,7 @@ export function OraculoBar() {
       const ns = bestNextStep(getProfile());
       if (ns) {
         gemeloActions.run(ns.action);
-        const p = getProfile();
-        const t = `Hecho: ${ns.label}. Tu reputación ahora es ${p.rep} y sumas ${Math.round(p.pe)} puntos de experiencia. ¿Seguimos con el siguiente paso?`;
+        const t = `Hecho: registré ${ns.label} en tu Gemelo. Convalídalo para verlo reflejado en tu reputación.`;
         flash('oraculo', t);
         speak(t);
       } else {
@@ -110,18 +109,17 @@ export function OraculoBar() {
     if (intent.kind === 'convalidate') {
       const act = { cv: gemeloActions.addCV, title: gemeloActions.addTitle, year: gemeloActions.addYear, vault: gemeloActions.addVault };
       act[intent.item]();
-      const p = getProfile();
       const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia', vault: 'un aporte a la Bóveda' };
-      const t = `Convalidé ${names[intent.item]}. Tu reputación ahora es ${p.rep} y sumas ${Math.round(p.pe)} puntos de experiencia.`;
+      const t = `Registré ${names[intent.item]} en tu Gemelo convalidado. Se reflejará en tu reputación del ecosistema.`;
       flash('oraculo', t);
       speak(t);
       return;
     }
     if (intent.kind === 'fact') {
       let t = '';
-      if (intent.topic === 'reputacion') t = `Tu reputación es ${getProfile().rep} sobre 100.`;
+      if (intent.topic === 'reputacion') t = `Tu reputación es ${Math.round(profile?.reputation_score ?? 0)} sobre 100.`;
       else if (intent.topic === 'tokens') t = `Tienes ${(profile?.token_balance ?? 0).toLocaleString()} tokens.`;
-      else if (intent.topic === 'pe') t = `Acumulas ${Math.round(getProfile().pe).toLocaleString()} puntos de experiencia.`;
+      else if (intent.topic === 'pe') t = `Acumulas ${(profile?.pe_points ?? 0).toLocaleString()} puntos de experiencia.`;
       else t = 'Soy tu Oráculo. Dime: abre mi billetera, ve a la academia, cuánta reputación tengo, o pídeme un consejo.';
       flash('oraculo', t);
       speak(t);
@@ -191,7 +189,7 @@ export function OraculoBar() {
           maxWidth: 300, padding: '10px 13px', borderRadius: 14,
           background: 'rgba(6,12,26,0.94)', border: `1px solid ${R}66`,
           boxShadow: '0 10px 34px rgba(0,0,0,0.55)', backdropFilter: 'blur(10px)',
-          fontFamily: FONT.body, fontSize: 13, color: '#eaf2ff', lineHeight: 1.5,
+          fontFamily: FONT.body, fontSize: 13, color: '#eaf0fb', lineHeight: 1.5,
         }}>
           <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: msg.who === 'tu' ? R : C.gold }}>
             {msg.who === 'tu' ? 'TÚ ▸ ' : 'ORÁCULO ▸ '}
@@ -206,7 +204,7 @@ export function OraculoBar() {
           <button
             onClick={() => { setOpen(false); setMsg(null); try { recogRef.current?.stop(); } catch { /* noop */ } }}
             aria-label="Cerrar Oráculo"
-            style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#eaf2ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
+            style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#eaf0fb', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
           >
             <X size={15} />
           </button>
@@ -217,9 +215,9 @@ export function OraculoBar() {
             style={{
               width: 56, height: 56, borderRadius: '50%', cursor: 'pointer',
               display: 'grid', placeItems: 'center',
-              background: listening ? `${C.red}22` : `linear-gradient(135deg, #7df9ff, ${R})`,
+              background: listening ? `${C.red}22` : 'linear-gradient(135deg, #5cc8ff, #5e5ce6)',
               border: `1px solid ${listening ? C.red : R}`,
-              color: listening ? C.red : '#020613',
+              color: listening ? C.red : '#fff',
               boxShadow: listening ? `0 0 22px ${C.red}88` : `0 0 22px ${R}66`,
               animation: (listening || busy) ? 'cp-pulse 1.2s ease-in-out infinite' : 'none',
             }}
@@ -237,8 +235,8 @@ export function OraculoBar() {
           style={{
             width: 52, height: 52, borderRadius: '50%', cursor: 'pointer',
             display: 'grid', placeItems: 'center',
-            background: `linear-gradient(135deg, #7df9ff, ${R})`, border: `1px solid ${R}`,
-            color: '#020613', boxShadow: `0 0 20px ${R}66`,
+            background: 'linear-gradient(135deg, #5cc8ff, #5e5ce6)', border: `1px solid ${R}`,
+            color: '#fff', boxShadow: '0 10px 28px rgba(94,92,230,0.5)',
           }}
         >
           <Sparkles size={22} />

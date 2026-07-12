@@ -10,7 +10,7 @@
 ![identidad](https://img.shields.io/badge/Identidad-Industria_5.0-ff9d2e?style=for-the-badge)
 ![piloto](https://img.shields.io/badge/MVP-PILOTO_CONTROLADO-e08a00?style=for-the-badge)
 
-_Última actualización: 7 de julio de 2026 (v7.1 — CI operativo + limpieza)_
+_Última actualización: 10 de julio de 2026 (v9 — Red en tiempo real + reputación unificada). Ver detalle al final._
 
 </div>
 
@@ -559,3 +559,39 @@ flowchart LR
 | 💰 **Wallet** | Enviar / Recibir | Transferencia de tokens entre nodos |
 
 > Cada transacción que mueve tokens queda registrada en el **Wallet**, y cada acción que demuestra valor **sube un eje del Gemelo Digital**.
+
+
+
+---
+
+## 🛰️ v9 — Red en tiempo real + Reputación unificada (Julio 2026)
+
+Actualización mayor tras los PRs #29–#33 (todos mergeados en `main`):
+
+### Tiempo real (multiusuario, Supabase Realtime)
+- **Presencia real** (`useRealtimeNetwork` / `RealtimeContext`): contador de nodos en línea,
+  **satélites orbitando** el núcleo, tira de conectados y **panel "Red Ómicron en vivo"**.
+- **Ranking en vivo** (`LiveRanking`): leaderboard que se re-sincroniza al cambiar reputaciones.
+- **Conexión social**: tocar un nodo → credencial pública → **Conectar** / **DM** (`DirectChatModal`).
+- **"El trabajo te busca"** (`IncomingJobPush`): push al publicarse una oferta (`job_postings`)
+  y **match personalizado** por usuario (`job_matches`).
+- **Oráculo proactivo** por voz: saluda con la red en vivo + tu mejor próximo paso.
+
+### Reputación unificada (una sola fuente de verdad)
+- Antes convivían la reputación local convalidada y la del ecosistema (`profiles`), y podían
+  contradecirse. Ahora **toda la app** (núcleo, header, ranking, presencia, Oráculo) muestra
+  **UN solo número**: el de `profiles` (promedio de los 4 ejes), vía `useGemeloProfile`.
+- **Convalidar** (CV/títulos/experiencia/aportes) ahora **sube la reputación real** (mapeo por eje
+  vía `reputationService`), reflejándose en el ranking.
+
+### Persistencia
+- El Gemelo **hidrata desde Supabase** al iniciar sesión (`syncFromSupabase`), no solo escribe.
+
+### Migraciones nuevas
+- `0046_gemelo_profiles.sql` · `0047_realtime_publication.sql`.
+
+### Cómo verla funcionando
+- Ver [`README.md`](./README.md) y la sección "Estado actual" de [`PUESTA_EN_MARCHA.md`](./PUESTA_EN_MARCHA.md).
+- Producción: `https://sistema-omicrom-git-main-tuprofendustrial-s-projects.vercel.app`
+
+_Actualización: 10 de julio de 2026 (v9 — Realtime + reputación unificada)_

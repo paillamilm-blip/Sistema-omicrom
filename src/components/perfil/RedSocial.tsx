@@ -194,7 +194,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
         </p>
         {!passportUrl ? (
           <button onClick={generatePassport} disabled={issuing}
-            style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(57,255,20,0.12)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.display, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(63, 208, 201,0.12)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.display, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             {issuing ? <Loader2 size={16} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> : <ShieldCheck size={16} />}
             {issuing ? 'Firmando...' : 'Generar Pasaporte Verificable'}
           </button>
@@ -621,7 +621,7 @@ export function DirectChatModal({ other, onClose }: {
               <div key={`${m.id}-${i}`} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
                 <div style={{
                   maxWidth: '82%', padding: '9px 13px', borderRadius: 12,
-                  background: own ? 'rgba(0,240,255,0.12)' : 'rgba(255,255,255,0.05)',
+                  background: own ? 'rgba(92, 200, 255,0.12)' : 'rgba(255,255,255,0.05)',
                   border: `1px solid ${own ? C.cyanDim : 'rgba(255,255,255,0.08)'}`,
                   borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3,
                 }}>
@@ -697,7 +697,7 @@ export function RedPanel() {
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl, padding: 16, marginBottom: 14,
-      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(0,240,255,0.14)',
+      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(92, 200, 255,0.14)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <Users size={16} style={{ color: C.cyan }} />

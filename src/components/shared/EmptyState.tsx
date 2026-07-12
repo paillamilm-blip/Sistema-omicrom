@@ -12,7 +12,7 @@ interface EmptyStateProps {
   accent?: string;        // color de acento (default cyan)
 }
 
-export function EmptyState({ icon, title, hint, ctaLabel, onCta, accent = '#00F0FF' }: EmptyStateProps) {
+export function EmptyState({ icon, title, hint, ctaLabel, onCta, accent = '#5cc8ff' }: EmptyStateProps) {
   return (
     <div style={S.wrap}>
       <div style={{ ...S.ring, borderColor: `${accent}66`, color: accent, boxShadow: `0 0 26px ${accent}33` }}>
@@ -32,8 +32,8 @@ export function EmptyState({ icon, title, hint, ctaLabel, onCta, accent = '#00F0
   );
 }
 
-const MONO = "'Share Tech Mono', monospace";
-const RAJ = "'Rajdhani', sans-serif";
+const MONO = "'SF Mono', monospace";
+const RAJ = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
 
 const S: Record<string, React.CSSProperties> = {
   wrap: {
@@ -43,13 +43,13 @@ const S: Record<string, React.CSSProperties> = {
   ring: {
     width: 72, height: 72, borderRadius: '50%', marginBottom: 14,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    border: '1px solid', background: 'rgba(0,240,255,0.04)',
+    border: '1px solid', background: 'rgba(92, 200, 255,0.04)',
     animation: 'floatY 5s ease-in-out infinite',
   },
-  title: { fontFamily: RAJ, fontWeight: 700, fontSize: 18, color: '#eaf2ff', letterSpacing: 0.5 },
-  hint: { fontFamily: MONO, fontSize: 11, lineHeight: 1.6, color: '#7d93b0', margin: '6px 0 0', maxWidth: 260 },
+  title: { fontFamily: RAJ, fontWeight: 700, fontSize: 18, color: '#eaf0fb', letterSpacing: 0.5 },
+  hint: { fontFamily: MONO, fontSize: 11, lineHeight: 1.6, color: '#6b7590', margin: '6px 0 0', maxWidth: 260 },
   cta: {
     marginTop: 18, padding: '11px 22px', borderRadius: 10, border: 'none', cursor: 'pointer',
-    color: '#020613', fontFamily: RAJ, fontWeight: 700, fontSize: 14, letterSpacing: 0.5,
+    color: '#000206', fontFamily: RAJ, fontWeight: 700, fontSize: 14, letterSpacing: 0.5,
   },
 };

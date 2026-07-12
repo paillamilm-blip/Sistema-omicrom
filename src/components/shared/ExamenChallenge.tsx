@@ -10,6 +10,7 @@ import {
   Loader2, ArrowRight, Send, RotateCcw,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { C as T } from '../../theme';
 import type { SkillTreeNode, ExamGenerated, ExamResultado } from '../../types';
 
 interface Props {
@@ -20,16 +21,17 @@ interface Props {
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original para
 // mejorar el contraste y no forzar la vista.
+// DERIVADO del tema (theme.ts) → un cambio de tema se propaga solo.
 const C = {
-  cyan: '#00D6E6', cyanDim: 'rgba(0,214,230,0.46)', cyanFaint: 'rgba(0,214,230,0.12)',
-  gold: '#E08A00', goldFaint: 'rgba(224,138,0,0.14)',
-  green: '#2FE014', greenFaint: 'rgba(47,224,20,0.12)',
-  red: '#FF3D57', redFaint: 'rgba(255,61,87,0.12)',
-  bg: '#020613', panel: 'rgba(8,16,38,0.72)', card: 'rgba(13,22,46,0.85)',
-  text: '#e6f1fb', sub: 'rgba(0,214,230,0.62)', line: 'rgba(0,214,230,0.16)',
+  cyan: T.cyan, cyanDim: T.cyanDim, cyanFaint: T.cyanFaint,
+  gold: T.gold, goldFaint: T.goldFaint,
+  green: T.green, greenFaint: T.greenFaint,
+  red: T.red, redFaint: T.redFaint,
+  bg: T.bg, panel: 'rgba(8,16,38,0.72)', card: 'rgba(13,22,46,0.85)',
+  text: T.ink, sub: 'rgba(92,200,255,0.62)', line: T.line,
 } as const;
-const MONO = "'Share Tech Mono', 'Courier New', monospace";
-const DISP = "'Rajdhani', sans-serif";
+const MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
+const DISP = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
 
 type Phase = 'cargando' | 'preguntas' | 'defensa' | 'evaluando' | 'resultado' | 'error';
 

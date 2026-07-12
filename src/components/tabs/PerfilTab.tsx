@@ -21,7 +21,6 @@ import { ConvalidaGemelo } from '../perfil/ConvalidaGemelo';
 import { MotorGemelo } from '../perfil/MotorGemelo';
 import { RutaGemelo } from '../perfil/RutaGemelo';
 import { PasaporteGemelo } from '../perfil/PasaporteGemelo';
-import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useRealtime } from '../../store/RealtimeContext';
 import { LivePeersStrip } from '../shared/LivePresence';
 // 🧪 MVP PILOTO CONTROLADO: Dossier de Evidencia y Carta de Competencias
@@ -57,10 +56,10 @@ const CAPABILITIES = [
 
 // Los 4 ejes explicados en lenguaje simple (anti-jerga)
 const EJES = [
-  { key: 'execution'    as const, label: 'Ejecución',    desc: 'Qué tan rápido y bien entregas tus contratos',          color: '#00F0FF' },
-  { key: 'quality'      as const, label: 'Calidad',      desc: 'Las calificaciones con estrellas de tus clientes',       color: '#0a8ba3' },
-  { key: 'transcendence'as const, label: 'Trascendencia',desc: 'El conocimiento que compartes (Bóveda y mentorías)',    color: '#F59E0B' },
-  { key: 'foundation'   as const, label: 'Fundamento',   desc: 'Tu dominio teórico y los cursos de la Academia',         color: '#39FF14' },
+  { key: 'execution'    as const, label: 'Ejecución',    desc: 'Qué tan rápido y bien entregas tus contratos',          color: '#5cc8ff' },
+  { key: 'quality'      as const, label: 'Calidad',      desc: 'Las calificaciones con estrellas de tus clientes',       color: '#8a88f0' },
+  { key: 'transcendence'as const, label: 'Trascendencia',desc: 'El conocimiento que compartes (Bóveda y mentorías)',    color: '#ffb02e' },
+  { key: 'foundation'   as const, label: 'Fundamento',   desc: 'Tu dominio teórico y los cursos de la Academia',         color: '#3fd0c9' },
 ];
 
 // ─── Rango + para qué contratos califica (la "certificación") ───────────────────
@@ -113,7 +112,7 @@ function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: (
     <div style={{
       position: 'relative', borderRadius: RADIUS.lg,
       padding: 16, marginBottom: 14,
-      background: 'rgba(255,80,102,0.06)',
+      background: 'rgba(255, 92, 122,0.06)',
       border: `1px solid ${C.red}`,
       animation: ANIM.breathe,
     }}>
@@ -139,7 +138,7 @@ function AuditBanner({ audit, onStart }: { audit: { reason: string }; onStart: (
 function CredencialCard({
   initials, name, username, location, nodeType, nodeLevel, verified,
   reputacion, tokens, pe, contratos, nextPe, tierProgress,
-  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit, onShare, axes, onNavigate, galaxyRep,
+  paused, onTogglePause, avatarUrl, uploading, onPickFile, onEdit, onShare, axes, onNavigate,
 }: {
   initials: string; name: string; username: string; location?: string;
   nodeType: string; nodeLevel: number; verified: boolean;
@@ -151,7 +150,6 @@ function CredencialCard({
   onEdit: () => void; onShare: () => void;
   axes?: { execution?: number; quality?: number; transcendence?: number; foundation?: number };
   onNavigate?: (tab: string) => void;
-  galaxyRep?: number;
 }) {
   const nodeColor = NODE_COLOR[nodeType] ?? C.cyan;
   const rango = getRango(reputacion);
@@ -320,7 +318,7 @@ function CredencialCard({
           orbState={paused ? 'error' : 'idle'}
           orbSize="md"
           height={318}
-          reputation={galaxyRep ?? reputacion}
+          reputation={reputacion}
           axes={axes}
           livePeers={Math.max(0, onlineCount - 1)}
           onNavigate={onNavigate}
@@ -383,7 +381,7 @@ function EjesPanel({ gemelo }: { gemelo: NonNullable<ReturnType<typeof useGemelo
       position: 'relative', borderRadius: RADIUS.xl,
       padding: 16, marginBottom: 14,
       background: 'rgba(12,20,38,0.95)',
-      border: '1px solid rgba(0,240,255,0.14)',
+      border: '1px solid rgba(92, 200, 255,0.14)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <TrendingUp size={16} style={{ color: C.cyan }} />
@@ -440,7 +438,7 @@ function CapabilidadesPanel({ userRank }: { userRank: number }) {
       position: 'relative', borderRadius: RADIUS.xl,
       padding: '14px 16px', marginBottom: 14,
       background: 'rgba(12,20,38,0.95)',
-      border: '1px solid rgba(0,240,255,0.12)',
+      border: '1px solid rgba(92, 200, 255,0.12)',
       overflow: 'hidden',
     }}>
       <div style={{ fontFamily: FONT.body, fontWeight: 700, fontSize: 13, color: '#eaf4ff', marginBottom: 4 }}>
@@ -494,7 +492,6 @@ interface Audit { id: string; reason: string; reputation_at_trigger: number | nu
 export function PerfilTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
   const gemelo = useGemeloDigital();
-  const { profile: gp } = useGemeloProfile(); // perfil compartido (convalidado)
   const [paused,    setPaused]    = useState(false);
   const [showEdit,  setShowEdit]  = useState(false);
   const [showShare, setShowShare] = useState(false);
@@ -621,8 +618,7 @@ export function PerfilTab() {
             onPickFile={handleAvatarUpload}
             onEdit={() => setShowEdit(true)}
             onShare={() => setShowShare(true)}
-            axes={gp.axes}
-            galaxyRep={gp.rep}
+            axes={{ execution: gemelo.execution, quality: gemelo.quality, transcendence: gemelo.transcendence, foundation: gemelo.foundation }}
             onNavigate={(t) => setActiveTab(t as TabId)}
           />
         )}
