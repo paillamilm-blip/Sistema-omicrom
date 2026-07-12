@@ -13,14 +13,14 @@ import { RutaCarrera } from '../empleos/RutaCarrera';
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
 // "muted" con más contraste para no forzar la vista.
 const C = {
-  bg: '#020613', panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
-  blue: '#00D6E6', blueHi: '#5ad6e6', amber: '#E08A00', amberHi: '#f0b23d',
-  steel: '#045A68', steelHi: '#0977a3',
-  line: 'rgba(4,90,104,0.35)', lineSoft: 'rgba(0,214,230,0.10)',
-  ink: '#eaf2ff', muted: '#93a8c0', green: '#2FE014',
+  bg: '#000206', panelA: 'rgba(8,16,38,0.60)', panelB: 'rgba(2,6,19,0.78)',
+  blue: '#5cc8ff', blueHi: '#8bd4ff', amber: '#ffb02e', amberHi: '#ffd27a',
+  steel: '#5e5ce6', steelHi: '#8a88f0',
+  line: 'rgba(94, 92, 230,0.35)', lineSoft: 'rgba(92, 200, 255,0.10)',
+  ink: '#eaf0fb', muted: '#6b7590', green: '#3fd0c9',
 } as const;
-const FM = "'Share Tech Mono', 'Courier New', monospace";
-const FR = "'Rajdhani', sans-serif";
+const FM = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
+const FR = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
 
 interface Job {
   id: string; company_id: string; title: string; description: string; category: string;
@@ -136,7 +136,7 @@ export function EmpleosTab() {
           return (
             <button key={k} onClick={() => setFilter(k)} style={{
               ...styles.fPill,
-              background: active ? 'rgba(0,240,255,0.16)' : 'transparent',
+              background: active ? 'rgba(92, 200, 255,0.16)' : 'transparent',
               border: `1px solid ${active ? C.blue : C.lineSoft}`,
               color: active ? C.blueHi : C.muted,
             }}>{k === 'matched' && <Flame size={11} />}{label}</button>
@@ -220,7 +220,7 @@ export function EmpleosTab() {
                   background: isApplied ? 'transparent' : mine ? 'transparent' : `linear-gradient(135deg, ${C.blue}, #008b9e)`,
                   border: `1px solid ${isApplied ? C.green : mine ? C.lineSoft : C.blue}`,
                   color: isApplied ? C.green : mine ? C.muted : '#04121f',
-                  boxShadow: (isApplied || mine) ? 'none' : '0 0 16px rgba(0,240,255,0.35)',
+                  boxShadow: (isApplied || mine) ? 'none' : '0 0 16px rgba(92, 200, 255,0.35)',
                   cursor: (isApplied || mine) ? 'default' : 'pointer',
                 }}>
                 {isApplied ? <><CheckCircle2 size={14} /> APLICADO</> : mine ? 'TU OFERTA' : <><Send size={13} /> APLICAR</>}
@@ -321,7 +321,7 @@ function RadarView({ jobs, userPos, geoStatus, onRequestGeo, onPick }: {
           const y = cy - rr * Math.cos(toRad(brg));
           return (
             <g key={j.id} style={{ cursor: 'pointer' }} onClick={() => onPick(j)}>
-              <circle cx={x} cy={y} r={7} fill="rgba(0,240,255,0.18)" />
+              <circle cx={x} cy={y} r={7} fill="rgba(92, 200, 255,0.18)" />
               <circle cx={x} cy={y} r={4} fill={C.blueHi}><animate attributeName="r" values="4;5.5;4" dur="2s" repeatCount="indefinite" /></circle>
             </g>
           );
@@ -404,7 +404,7 @@ function PublishJobModal({ onClose, onDone }: { onClose: () => void; onDone: () 
     finally { setSaving(false); }
   }
 
-  const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'rgba(0,240,255,0.05)', border: `1px solid ${C.line}`, borderRadius: 6, padding: '9px 11px', color: C.ink, fontFamily: FM, fontSize: 12, outline: 'none', marginBottom: 10 };
+  const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.line}`, borderRadius: 6, padding: '9px 11px', color: C.ink, fontFamily: FM, fontSize: 12, outline: 'none', marginBottom: 10 };
   const lbl: React.CSSProperties = { fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, display: 'block' };
 
   return (
@@ -426,7 +426,7 @@ function PublishJobModal({ onClose, onDone }: { onClose: () => void; onDone: () 
           {[1, 2, 3].map(lv => (
             <button key={lv} onClick={() => setF({ ...f, level: lv })} style={{
               flex: 1, padding: '8px', borderRadius: 6, cursor: 'pointer', fontFamily: FM, fontSize: 10,
-              background: f.level === lv ? 'rgba(0,240,255,0.16)' : 'transparent',
+              background: f.level === lv ? 'rgba(92, 200, 255,0.16)' : 'transparent',
               border: `1px solid ${f.level === lv ? C.blue : C.lineSoft}`, color: f.level === lv ? C.blueHi : C.muted,
             }}>{LEVEL_LABEL[lv]}</button>
           ))}
@@ -440,7 +440,7 @@ function PublishJobModal({ onClose, onDone }: { onClose: () => void; onDone: () 
             onChange={e => setF({ ...f, location: e.target.value })} placeholder="Ej: Santiago, Maipú" />
           <button type="button" onClick={captureLocation} disabled={f.is_remote || locating}
             title="Usar mi ubicación"
-            style={{ flexShrink: 0, width: 42, borderRadius: 6, cursor: f.is_remote ? 'default' : 'pointer', background: coords ? 'rgba(57,255,20,0.14)' : 'rgba(0,240,255,0.08)', border: `1px solid ${coords ? C.green : C.line}`, color: coords ? C.green : C.blueHi, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: f.is_remote ? 0.4 : 1 }}>
+            style={{ flexShrink: 0, width: 42, borderRadius: 6, cursor: f.is_remote ? 'default' : 'pointer', background: coords ? 'rgba(57,255,20,0.14)' : 'rgba(92, 200, 255,0.08)', border: `1px solid ${coords ? C.green : C.line}`, color: coords ? C.green : C.blueHi, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: f.is_remote ? 0.4 : 1 }}>
             {locating ? '…' : <LocateFixed size={16} />}
           </button>
         </div>
@@ -462,10 +462,10 @@ function PublishJobModal({ onClose, onDone }: { onClose: () => void; onDone: () 
 const styles: Record<string, React.CSSProperties> = {
   root: { display: 'flex', flexDirection: 'column', height: '100%', background: C.bg, overflow: 'hidden' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.line}`, background: 'rgba(8,11,18,0.7)', flexShrink: 0 },
-  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: '0 0 14px rgba(0,240,255,0.5)' },
+  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: '0 0 14px rgba(92, 200, 255,0.5)' },
   hTitle: { fontFamily: FM, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   hSub: { fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
-  pubBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,240,255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1 },
+  pubBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(92, 200, 255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1 },
   filterRow: { display: 'flex', gap: 8, padding: '12px 14px', overflowX: 'auto', flexShrink: 0 },
   viewRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px 10px', flexShrink: 0 },
   viewPill: { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 13px', borderRadius: 6, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1, whiteSpace: 'nowrap', textTransform: 'uppercase' },
@@ -483,8 +483,8 @@ const styles: Record<string, React.CSSProperties> = {
   statLabel: { fontFamily: FM, fontSize: 8, color: C.muted, letterSpacing: 1.5 },
   budget: { fontFamily: FR, fontWeight: 700, fontSize: 19, color: C.amberHi, marginTop: 1 },
   tlimit: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FR, fontWeight: 700, fontSize: 17, color: C.ink, marginTop: 1 },
-  tag: { fontFamily: FM, fontSize: 10, color: C.blueHi, background: 'rgba(0,240,255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3 },
+  tag: { fontFamily: FM, fontSize: 10, color: C.blueHi, background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3 },
   applyBtn: { width: '100%', marginTop: 12, padding: '11px 0', borderRadius: 6, fontFamily: FM, fontWeight: 700, fontSize: 12, letterSpacing: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 },
   modalBg: { position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(2,5,11,0.8)', backdropFilter: 'blur(4px)', padding: 20 },
-  modal: { width: '100%', maxWidth: 380, maxHeight: '85vh', overflowY: 'auto', borderRadius: 10, padding: 20, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.blue}`, boxShadow: '0 0 30px rgba(0,240,255,0.3)', position: 'relative' },
+  modal: { width: '100%', maxWidth: 380, maxHeight: '85vh', overflowY: 'auto', borderRadius: 10, padding: 20, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.blue}`, boxShadow: '0 0 30px rgba(92, 200, 255,0.3)', position: 'relative' },
 };

@@ -55,7 +55,7 @@ export function CartaCompetencias() {
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl, padding: 16, marginBottom: 14,
-      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(0,240,255,0.14)',
+      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(92, 200, 255,0.14)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}>
         <FileText size={18} style={{ color: C.cyan }} />
@@ -92,7 +92,7 @@ export function CartaCompetencias() {
 
       {carta && !loading && (
         <div>
-          <div style={{ padding: 14, borderRadius: RADIUS.lg, background: 'rgba(0,240,255,0.05)', border: '1px solid rgba(0,240,255,0.18)' }}>
+          <div style={{ padding: 14, borderRadius: RADIUS.lg, background: 'rgba(92, 200, 255,0.05)', border: '1px solid rgba(92, 200, 255,0.18)' }}>
             <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#eaf4ff', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{carta}</p>
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
@@ -112,6 +112,6 @@ export function CartaCompetencias() {
 }
 
 function btn(color: string): React.CSSProperties {
-  return { width: '100%', padding: '11px 0', borderRadius: 9, border: 'none', cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#020613', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 0 14px ${color}44` };
+  return { width: '100%', padding: '11px 0', borderRadius: 9, border: 'none', cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#000206', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 0 14px ${color}44` };
 }
-const btnGhost: React.CSSProperties = { padding: '10px 0', borderRadius: 9, background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.25)', color: C.cyan, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 };
+const btnGhost: React.CSSProperties = { padding: '10px 0', borderRadius: 9, background: 'rgba(92, 200, 255,0.08)', border: '1px solid rgba(92, 200, 255,0.25)', color: C.cyan, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 };

@@ -13,10 +13,10 @@ import { useApp } from '../../store/AppContext';
 import { C, FONT, RADIUS } from '../../theme';
 
 const EJES: { key: 'execution' | 'quality' | 'transcendence' | 'foundation'; label: string; color: string }[] = [
-  { key: 'execution', label: 'Ejecución', color: '#00F0FF' },
-  { key: 'quality', label: 'Calidad', color: '#0a8ba3' },
-  { key: 'transcendence', label: 'Trascendencia', color: '#F59E0B' },
-  { key: 'foundation', label: 'Fundamento', color: '#39FF14' },
+  { key: 'execution', label: 'Ejecución', color: '#5cc8ff' },
+  { key: 'quality', label: 'Calidad', color: '#8a88f0' },
+  { key: 'transcendence', label: 'Trascendencia', color: '#ffb02e' },
+  { key: 'foundation', label: 'Fundamento', color: '#3fd0c9' },
 ];
 
 export function ConvalidaGemelo() {
@@ -42,7 +42,7 @@ export function ConvalidaGemelo() {
   const cardBtn: React.CSSProperties = {
     display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'left',
     padding: '12px 13px', borderRadius: RADIUS.lg, cursor: 'pointer',
-    border: '1px solid rgba(0,240,255,0.2)', background: 'rgba(0,240,255,0.05)',
+    border: '1px solid rgba(92, 200, 255,0.2)', background: 'rgba(92, 200, 255,0.05)',
     color: '#eaf4ff', transition: 'all .18s',
   };
   const done: React.CSSProperties = { borderColor: 'rgba(57,255,20,0.4)', background: 'rgba(57,255,20,0.06)' };
@@ -50,7 +50,7 @@ export function ConvalidaGemelo() {
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl, padding: 16, marginBottom: 14,
-      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(0,240,255,0.14)',
+      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(92, 200, 255,0.14)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <Sparkles size={16} style={{ color: C.gold }} />
@@ -82,7 +82,7 @@ export function ConvalidaGemelo() {
           <span>comisión {tier.commission}%</span>
         </div>
         <div style={{ height: 7, borderRadius: 4, background: C.cyanFaint, overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${tier.progress}%`, background: `linear-gradient(90deg, ${C.cyan}, ${C.gold})`, boxShadow: '0 0 12px rgba(0,240,255,0.5)', transition: 'width .6s ease' }} />
+          <div style={{ height: '100%', width: `${tier.progress}%`, background: `linear-gradient(90deg, ${C.cyan}, ${C.gold})`, boxShadow: '0 0 12px rgba(92, 200, 255,0.5)', transition: 'width .6s ease' }} />
         </div>
         {/* Ejes */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 14px', marginTop: 12 }}>
@@ -126,9 +126,9 @@ export function ConvalidaGemelo() {
           <Clock size={18} style={{ color: profile.years > 0 ? C.green : C.cyan }} />
           <span style={{ fontWeight: 700, fontSize: 14 }}>Experiencia {next && next.action === 'year' ? '★' : ''}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => actions.removeYear()} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(0,240,255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>−</button>
+            <button onClick={() => actions.removeYear()} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(92, 200, 255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>−</button>
             <span style={{ fontWeight: 700, fontSize: 18, minWidth: 44, textAlign: 'center' }}>{profile.years} añ.</span>
-            <button onClick={() => { if (profile.years < 15) { actions.addYear(); convalidar('year'); } }} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(0,240,255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>+</button>
+            <button onClick={() => { if (profile.years < 15) { actions.addYear(); convalidar('year'); } }} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(92, 200, 255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>+</button>
           </div>
           <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
             {profile.years >= 15 ? '✓ al máximo' : BOOST.year}

@@ -56,10 +56,10 @@ const CAPABILITIES = [
 
 // Los 4 ejes explicados en lenguaje simple (anti-jerga)
 const EJES = [
-  { key: 'execution'    as const, label: 'Ejecución',    desc: 'Qué tan rápido y bien entregas tus contratos',          color: '#00F0FF' },
-  { key: 'quality'      as const, label: 'Calidad',      desc: 'Las calificaciones con estrellas de tus clientes',       color: '#0a8ba3' },
-  { key: 'transcendence'as const, label: 'Trascendencia',desc: 'El conocimiento que compartes (Bóveda y mentorías)',    color: '#F59E0B' },
-  { key: 'foundation'   as const, label: 'Fundamento',   desc: 'Tu dominio teórico y los cursos de la Academia',         color: '#39FF14' },
+  { key: 'execution'    as const, label: 'Ejecución',    desc: 'Qué tan rápido y bien entregas tus contratos',          color: '#5cc8ff' },
+  { key: 'quality'      as const, label: 'Calidad',      desc: 'Las calificaciones con estrellas de tus clientes',       color: '#8a88f0' },
+  { key: 'transcendence'as const, label: 'Trascendencia',desc: 'El conocimiento que compartes (Bóveda y mentorías)',    color: '#ffb02e' },
+  { key: 'foundation'   as const, label: 'Fundamento',   desc: 'Tu dominio teórico y los cursos de la Academia',         color: '#3fd0c9' },
 ];
 
 // ─── Rango + para qué contratos califica (la "certificación") ───────────────────
@@ -381,7 +381,7 @@ function EjesPanel({ gemelo }: { gemelo: NonNullable<ReturnType<typeof useGemelo
       position: 'relative', borderRadius: RADIUS.xl,
       padding: 16, marginBottom: 14,
       background: 'rgba(12,20,38,0.95)',
-      border: '1px solid rgba(0,240,255,0.14)',
+      border: '1px solid rgba(92, 200, 255,0.14)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <TrendingUp size={16} style={{ color: C.cyan }} />
@@ -438,7 +438,7 @@ function CapabilidadesPanel({ userRank }: { userRank: number }) {
       position: 'relative', borderRadius: RADIUS.xl,
       padding: '14px 16px', marginBottom: 14,
       background: 'rgba(12,20,38,0.95)',
-      border: '1px solid rgba(0,240,255,0.12)',
+      border: '1px solid rgba(92, 200, 255,0.12)',
       overflow: 'hidden',
     }}>
       <div style={{ fontFamily: FONT.body, fontWeight: 700, fontSize: 13, color: '#eaf4ff', marginBottom: 4 }}>

@@ -29,11 +29,11 @@ export function LiveBadge() {
           gap: 5,
           padding: '5px 9px',
           borderRadius: 14,
-          background: 'rgba(47,224,20,0.08)',
+          background: 'rgba(63, 208, 201,0.08)',
           border: `1px solid ${C.greenDim}`,
           fontFamily: FONT.mono,
           fontSize: 11,
-          color: '#eaf2ff',
+          color: '#eaf0fb',
           whiteSpace: 'nowrap',
           cursor: 'pointer',
         }}
@@ -70,7 +70,7 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
         <div style={{ width: 40, height: 4, borderRadius: 3, background: 'rgba(255,255,255,0.18)', margin: '10px auto 4px' }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 18px 10px' }}>
           <div>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: '#eaf2ff' }}>Red Ómicron en vivo</div>
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: '#eaf0fb' }}>Red Ómicron en vivo</div>
             <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.greenDim }}>◉ {onlineCount} {onlineCount === 1 ? 'nodo' : 'nodos'} en línea ahora</div>
           </div>
           <button onClick={onClose} aria-label="Cerrar" style={{ width: 30, height: 30, borderRadius: '50%', border: `1px solid ${C.cyanDim}`, background: 'rgba(255,255,255,0.05)', color: 'rgba(234,242,255,0.55)', cursor: 'pointer' }}>✕</button>
@@ -99,7 +99,7 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
                   <button
                     onClick={() => setDmWith({ id: n.id, name: n.username, username: n.username, avatar: null })}
                     aria-label={`Mensaje a ${n.username}`}
-                    style={{ flex: '0 0 auto', width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'rgba(0,214,230,0.1)', border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', fontSize: 15 }}
+                    style={{ flex: '0 0 auto', width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'rgba(92, 200, 255,0.1)', border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', fontSize: 15 }}
                   >
                     💬
                   </button>
@@ -293,7 +293,7 @@ export function LiveNetworkFeed() {
         />
         {ks.tag} · {onlineCount.toLocaleString()} NODOS
       </div>
-      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5, color: '#eaf2ff', marginTop: 3 }}>
+      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5, color: '#eaf0fb', marginTop: 3 }}>
         {current.text}
       </div>
     </div>

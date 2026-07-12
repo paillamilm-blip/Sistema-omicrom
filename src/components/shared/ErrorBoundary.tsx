@@ -51,13 +51,13 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-const MONO = "'Share Tech Mono', 'Courier New', monospace";
-const RAJ = "'Rajdhani', sans-serif";
+const MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
+const RAJ = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
 
 const styles: Record<string, React.CSSProperties> = {
   wrap: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    height: '100%', width: '100%', padding: 24, background: '#020613',
+    height: '100%', width: '100%', padding: 24, background: '#000206',
   },
   card: {
     width: '100%', maxWidth: 340, textAlign: 'center', padding: '28px 22px',
@@ -73,8 +73,8 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: '0 0 18px rgba(245,158,11,0.35)',
     animation: 'amberBreathe 2.8s ease-in-out infinite',
   },
-  icon: { fontSize: 26, color: '#F59E0B' },
-  title: { fontFamily: MONO, fontSize: 13, letterSpacing: 2, color: '#F59E0B', fontWeight: 700 },
+  icon: { fontSize: 26, color: '#ffb02e' },
+  title: { fontFamily: MONO, fontSize: 13, letterSpacing: 2, color: '#ffb02e', fontWeight: 700 },
   section: { fontFamily: MONO, fontSize: 10, letterSpacing: 1, color: 'rgba(245,158,11,0.6)', marginTop: 4, textTransform: 'uppercase' },
   msg: {
     fontFamily: MONO, fontSize: 11, color: '#9fb3cc', margin: '14px 0 20px',
@@ -83,14 +83,14 @@ const styles: Record<string, React.CSSProperties> = {
   btnRow: { display: 'flex', gap: 10 },
   btnGhost: {
     flex: 1, padding: '10px 0', borderRadius: 8, cursor: 'pointer',
-    background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.35)',
-    color: '#00F0FF', fontFamily: RAJ, fontWeight: 700, fontSize: 13,
+    background: 'rgba(92, 200, 255,0.08)', border: '1px solid rgba(92, 200, 255,0.35)',
+    color: '#5cc8ff', fontFamily: RAJ, fontWeight: 700, fontSize: 13,
   },
   btnPrimary: {
     flex: 1, padding: '10px 0', borderRadius: 8, cursor: 'pointer',
-    background: 'linear-gradient(90deg, #00F0FF, #008b9e)', border: 'none',
-    color: '#020613', fontFamily: RAJ, fontWeight: 700, fontSize: 13,
-    boxShadow: '0 0 15px rgba(0,240,255,0.35)',
+    background: 'linear-gradient(90deg, #5cc8ff, #008b9e)', border: 'none',
+    color: '#000206', fontFamily: RAJ, fontWeight: 700, fontSize: 13,
+    boxShadow: '0 0 15px rgba(92, 200, 255,0.35)',
   },
   hint: { fontFamily: MONO, fontSize: 9, color: 'rgba(159,179,204,0.5)', marginTop: 16, letterSpacing: 0.5 },
 };

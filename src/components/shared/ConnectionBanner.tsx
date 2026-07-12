@@ -36,8 +36,8 @@ export function ConnectionBanner() {
         ...S.bar,
         background: off
           ? 'linear-gradient(90deg, rgba(245,158,11,0.95), rgba(255,80,102,0.95))'
-          : 'linear-gradient(90deg, rgba(57,255,20,0.95), rgba(0,240,255,0.92))',
-        color: '#020613',
+          : 'linear-gradient(90deg, rgba(57,255,20,0.95), rgba(92, 200, 255,0.92))',
+        color: '#000206',
       }}
     >
       {off ? <WifiOff size={14} /> : <Wifi size={14} />}
@@ -54,7 +54,7 @@ const S: Record<string, React.CSSProperties> = {
     width: 'min(100%, 430px)', zIndex: 90,
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
     padding: '6px 12px',
-    fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 12.5, letterSpacing: 0.5,
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 700, fontSize: 12.5, letterSpacing: 0.5,
     boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
     animation: 'bannerDrop 0.3s ease-out',
   },

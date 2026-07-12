@@ -65,7 +65,7 @@ function TutorPanel({ lesson, onClose }: { lesson: { title: string; content: str
             const own = m.role === 'user';
             return (
               <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
-                <div style={{ maxWidth: '85%', padding: '10px 13px', borderRadius: 12, background: own ? 'rgba(0,240,255,0.12)' : `${C.gold}12`, border: `1px solid ${own ? C.cyanDim : C.gold + '40'}`, borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3 }}>
+                <div style={{ maxWidth: '85%', padding: '10px 13px', borderRadius: 12, background: own ? 'rgba(92, 200, 255,0.12)' : `${C.gold}12`, border: `1px solid ${own ? C.cyanDim : C.gold + '40'}`, borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3 }}>
                   <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#e6f1fb', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</p>
                 </div>
               </div>

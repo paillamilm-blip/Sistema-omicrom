@@ -155,7 +155,7 @@ export function GobernanzaTab() {
                   <Gavel size={14} style={{ color: C.purple }} />
                   <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.purple }}>CASO ASIGNADO · EMITE TU FALLO</span>
                 </div>
-                <p style={{ margin: '0 0 10px', fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: '#dbeafe', lineHeight: 1.4 }}>
+                <p style={{ margin: '0 0 10px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, color: '#dbeafe', lineHeight: 1.4 }}>
                   {a.dispute?.reason ?? 'Disputa sin descripción'}
                 </p>
 
@@ -187,7 +187,7 @@ export function GobernanzaTab() {
                   </span>
                   <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>{new Date(d.created_at).toLocaleDateString('es-CL')}</span>
                 </div>
-                <p style={{ margin: 0, fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: '#dbeafe' }}>{d.reason}</p>
+                <p style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, color: '#dbeafe' }}>{d.reason}</p>
               </CyberCard>
             ))}
           </>
@@ -266,7 +266,7 @@ export function GobernanzaTab() {
             ))}
           </div>
           <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Motivo de la disputa..." rows={3}
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "'Rajdhani', sans-serif", fontSize: 14, outline: 'none', resize: 'none', marginBottom: 12 }} />
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, outline: 'none', resize: 'none', marginBottom: 12 }} />
           <CyberButton variant="danger" onClick={submitDispute} disabled={!selContract || !reason.trim() || busy}>
             {busy ? 'ABRIENDO...' : 'CONFIRMAR DISPUTA'}
           </CyberButton>
@@ -291,7 +291,7 @@ export function GobernanzaTab() {
             ))}
           </div>
           <input type="number" min="1" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Monto a invertir (T)"
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "'Rajdhani', sans-serif", fontSize: 14, outline: 'none', marginBottom: 12 }} />
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, outline: 'none', marginBottom: 12 }} />
           <CyberButton variant="primary" onClick={submitStake} disabled={!selTarget || !amount || busy} style={{ borderColor: C.greenDim, color: C.green }}>
             {busy ? 'INVIRTIENDO...' : 'CONFIRMAR INVERSIÓN'}
           </CyberButton>
@@ -349,7 +349,7 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
 
       {!res?.unlocked && (
         <>
-          <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: C.cyanDim, margin: '0 0 8px' }}>
+          <p style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 12, color: C.cyanDim, margin: '0 0 8px' }}>
             La evidencia cifrada solo se abre con el voto de la mayoría de árbitros.
             {res && ` Votos: ${res.votes}/${res.threshold}.`}
           </p>
@@ -374,7 +374,7 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
                 <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyanDim }}>
                   @{m.sender?.username ?? 'nodo'} · {new Date(m.created_at).toLocaleString('es-CL')}
                 </div>
-                <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 13, color: '#dbeafe' }}>{m.content}</div>
+                <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#dbeafe' }}>{m.content}</div>
               </div>
             ))}
             {(res.transcript ?? []).length === 0 && (
@@ -393,11 +393,11 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
             )}
             {aErr && <p style={{ fontFamily: FONT.mono, fontSize: 9, color: C.red, marginTop: 6 }}>{aErr}</p>}
             {analysis && (
-              <div style={{ marginTop: 8, padding: 10, borderRadius: 8, background: 'rgba(0,240,255,0.06)', border: `1px solid ${C.cyanDim}` }}>
+              <div style={{ marginTop: 8, padding: 10, borderRadius: 8, background: 'rgba(92, 200, 255,0.06)', border: `1px solid ${C.cyanDim}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1.5, color: C.cyan }}>
                   <Sparkles size={11} /> ANÁLISIS NEUTRAL · RELATOR IA (no es veredicto)
                 </div>
-                <p style={{ margin: 0, fontFamily: "'Rajdhani', sans-serif", fontSize: 13.5, color: '#dbeafe', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{analysis}</p>
+                <p style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13.5, color: '#dbeafe', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{analysis}</p>
               </div>
             )}
           </div>

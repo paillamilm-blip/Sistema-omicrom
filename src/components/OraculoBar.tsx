@@ -189,7 +189,7 @@ export function OraculoBar() {
           maxWidth: 300, padding: '10px 13px', borderRadius: 14,
           background: 'rgba(6,12,26,0.94)', border: `1px solid ${R}66`,
           boxShadow: '0 10px 34px rgba(0,0,0,0.55)', backdropFilter: 'blur(10px)',
-          fontFamily: FONT.body, fontSize: 13, color: '#eaf2ff', lineHeight: 1.5,
+          fontFamily: FONT.body, fontSize: 13, color: '#eaf0fb', lineHeight: 1.5,
         }}>
           <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: msg.who === 'tu' ? R : C.gold }}>
             {msg.who === 'tu' ? 'TÚ ▸ ' : 'ORÁCULO ▸ '}
@@ -204,7 +204,7 @@ export function OraculoBar() {
           <button
             onClick={() => { setOpen(false); setMsg(null); try { recogRef.current?.stop(); } catch { /* noop */ } }}
             aria-label="Cerrar Oráculo"
-            style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#eaf2ff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
+            style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#eaf0fb', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
           >
             <X size={15} />
           </button>

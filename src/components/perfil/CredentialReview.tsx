@@ -93,7 +93,7 @@ export function CredentialReview() {
           return (
             <div key={c.id} style={{
               padding: '10px 12px', borderRadius: RADIUS.md,
-              background: 'rgba(0,240,255,0.04)', border: `1px solid ${C.cyanFaint}`,
+              background: 'rgba(92, 200, 255,0.04)', border: `1px solid ${C.cyanFaint}`,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                 <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.cyan}10`, border: `1px solid ${C.cyanFaint}` }}>

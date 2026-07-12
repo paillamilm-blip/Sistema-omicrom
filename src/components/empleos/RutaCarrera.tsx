@@ -17,10 +17,10 @@ import type { TabId } from '../../types';
 type EjeKey = 'execution' | 'quality' | 'foundation' | 'transcendence';
 
 const EJE: Record<EjeKey, { label: string; study: string; tab: TabId; color: string }> = {
-  execution:     { label: 'Ejecución',     study: 'Toma contratos cortos y retos para ganar velocidad de entrega.', tab: 'empleos',  color: '#00D6E6' },
-  quality:       { label: 'Calidad',       study: 'Cierra contratos pidiendo reseña de 5★: tu calidad sube.',        tab: 'empleos',  color: '#0a8ba3' },
-  foundation:    { label: 'Fundamento',    study: 'Estudia y certifícate en la Academia (bases y arquitectura).',    tab: 'academia', color: '#2FE014' },
-  transcendence: { label: 'Trascendencia', study: 'Publica en la Bóveda o mentorea a un nodo junior.',                tab: 'vault',    color: '#E08A00' },
+  execution:     { label: 'Ejecución',     study: 'Toma contratos cortos y retos para ganar velocidad de entrega.', tab: 'empleos',  color: '#5cc8ff' },
+  quality:       { label: 'Calidad',       study: 'Cierra contratos pidiendo reseña de 5★: tu calidad sube.',        tab: 'empleos',  color: '#8a88f0' },
+  foundation:    { label: 'Fundamento',    study: 'Estudia y certifícate en la Academia (bases y arquitectura).',    tab: 'academia', color: '#3fd0c9' },
+  transcendence: { label: 'Trascendencia', study: 'Publica en la Bóveda o mentorea a un nodo junior.',                tab: 'vault',    color: '#ffb02e' },
 };
 
 interface Track {
@@ -85,7 +85,7 @@ export function RutaCarrera() {
   const top = ranked[0];
 
   return (
-    <div style={{ margin: '14px 0', padding: 16, borderRadius: RADIUS.xl, background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(0,214,230,0.14)' }}>
+    <div style={{ margin: '14px 0', padding: 16, borderRadius: RADIUS.xl, background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(92, 200, 255,0.14)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <Compass size={16} style={{ color: C.gold }} />
         <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Ruta de Carrera</span>
@@ -110,7 +110,7 @@ export function RutaCarrera() {
           const eje = a.gapEje ? EJE[a.gapEje] : null;
           const col = a.readiness >= 80 ? C.green : a.readiness >= 55 ? C.cyan : C.gold;
           return (
-            <div key={a.track.id} style={{ padding: '11px 13px', borderRadius: RADIUS.lg, background: 'rgba(0,214,230,0.05)', border: `1px solid ${C.cyanFaint}` }}>
+            <div key={a.track.id} style={{ padding: '11px 13px', borderRadius: RADIUS.lg, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.cyanFaint}` }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
                 <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#eaf4ff' }}>{a.track.name}</span>
                 <span style={{ fontFamily: FONT.mono, fontSize: 13, fontWeight: 700, color: col }}>{a.readiness}%</span>

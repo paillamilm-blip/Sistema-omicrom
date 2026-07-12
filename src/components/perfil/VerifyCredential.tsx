@@ -36,10 +36,10 @@ export function VerifyCredentialView({ token }: { token: string }) {
   return (
     <div style={{ minHeight: '100vh', background: `radial-gradient(circle at 50% 0%, #061024, ${C.bg})`, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-        <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #7df9ff, #00F0FF)' }}>
-          <span style={{ color: '#020613', fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ω</span>
+        <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #8bd4ff, #5cc8ff)' }}>
+          <span style={{ color: '#000206', fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ω</span>
         </div>
-        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 17, color: '#eaf2ff' }}>Ómicrom · Verificación</span>
+        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 17, color: '#eaf0fb' }}>Ómicrom · Verificación</span>
       </div>
 
       <div style={{ width: '100%', maxWidth: 420, borderRadius: 18, padding: 22, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))', border: `1px solid ${C.cyanDim}`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
@@ -98,11 +98,11 @@ export function VerifyCredentialView({ token }: { token: string }) {
             </div>
 
             <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-              <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 8, background: 'rgba(0,240,255,0.05)', border: `1px solid ${C.cyanFaint}` }}>
+              <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 8, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.cyanFaint}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontFamily: FONT.display, fontWeight: 700, fontSize: 18, color: C.green }}><BadgeCheck size={15} /> {cred.cv}</div>
                 <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyanDim, letterSpacing: 1 }}>COMPETENCIAS VALIDADAS</div>
               </div>
-              <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 8, background: 'rgba(0,240,255,0.05)', border: `1px solid ${C.cyanFaint}` }}>
+              <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 8, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.cyanFaint}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontFamily: FONT.display, fontWeight: 700, fontSize: 18, color: C.cyan }}><TrendingUp size={15} /> {cred.pe}</div>
                 <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyanDim, letterSpacing: 1 }}>PUNTOS DE EXPERIENCIA</div>
               </div>
@@ -114,7 +114,7 @@ export function VerifyCredentialView({ token }: { token: string }) {
           </>
         )}
 
-        <button onClick={back} style={{ width: '100%', marginTop: 18, padding: '12px', borderRadius: 10, cursor: 'pointer', background: 'rgba(0,240,255,0.08)', border: `1px solid ${C.cyanDim}`, color: C.cyan, fontFamily: FONT.display, fontWeight: 700, fontSize: 14 }}>
+        <button onClick={back} style={{ width: '100%', marginTop: 18, padding: '12px', borderRadius: 10, cursor: 'pointer', background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.cyanDim}`, color: C.cyan, fontFamily: FONT.display, fontWeight: 700, fontSize: 14 }}>
           Ir a Ómicrom
         </button>
       </div>
