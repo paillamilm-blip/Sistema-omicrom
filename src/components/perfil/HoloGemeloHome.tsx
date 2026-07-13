@@ -25,6 +25,7 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
   const { onlineCount } = useRealtime();
   const [speaking, setSpeaking] = useState(false);
   const [q, setQ] = useState('');
+  const [filter, setFilter] = useState<'desempeno' | 'economia' | 'crecimiento'>('crecimiento');
   
   // ⭐ SISTEMA PROACTIVO: estado emocional + evento proactivo + audio reactivo
   const [emotion, setEmotion] = useState<OrbEmotion>('idle');
@@ -156,6 +157,28 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
         </IconBtn>
       </div>
 
+      {/* ── Filtros de dimensión ── */}
+      <div style={S.pills}>
+        {([
+          { id: 'desempeno', label: 'Desempeño', color: C.purple },
+          { id: 'economia', label: 'Economía', color: C.green },
+          { id: 'crecimiento', label: 'Crecimiento', color: C.gold },
+        ] as const).map((f) => {
+          const on = filter === f.id;
+          return (
+            <button key={f.id} onClick={() => setFilter(f.id)} style={{
+              ...S.pill,
+              background: on ? `${f.color}1f` : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${on ? f.color : C.line}`,
+              color: on ? f.color : C.mut,
+            }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: f.color, boxShadow: `0 0 8px ${f.color}` }} />
+              {f.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* ── GALAXIA 3D INTERACTIVA (HoloNucleo3D) ── */}
       <div style={S.galaxyWrap}>
         <HoloNucleo3D
@@ -184,6 +207,20 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
 
       {/* ── Hoja inferior: recomendaciones + accesos + Oráculo ── */}
       <div style={S.sheet}>
+        {/* ── Una empresa te busca (match de alto valor) ── */}
+        <div style={S.matchCard}>
+          <div style={S.matchTag}>
+            <span style={{ ...S.tagDot, background: C.gold, boxShadow: `0 0 8px ${C.gold}` }} />
+            UNA EMPRESA TE BUSCA
+          </div>
+          <div style={S.matchTitle}>Creative Technologist</div>
+          <div style={S.matchMeta}>96% de afinidad · 120–200 Ω/hora · Freelance</div>
+          <div style={S.matchActions}>
+            <button style={S.btnGold} onClick={() => setActiveTab('empleos')}>Ver</button>
+            <button style={S.btnGhost} onClick={() => { /* después */ }}>Después</button>
+          </div>
+        </div>
+
         <div style={S.card}>
           <div style={S.cardTag}><span style={S.tagDot} />MEJORA CONTINUA</div>
           <div style={S.cardRow}>
@@ -291,6 +328,13 @@ function Chip({ Icon, label, onClick }: { Icon: typeof Brain; label: string; onC
 
 const S: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 14px 0', background: C.bg },
+  pills: { display: 'flex', gap: 8, flexShrink: 0 },
+  pill: { display: 'flex', alignItems: 'center', gap: 7, padding: '7px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: FONT.display, fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' },
+  matchCard: { padding: '13px 15px', borderRadius: 18, background: 'linear-gradient(180deg, rgba(28,22,8,0.7), rgba(12,10,6,0.85))', border: '1px solid rgba(255,176,46,0.4)', boxShadow: '0 10px 30px rgba(255,176,46,0.14)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)' },
+  matchTag: { display: 'flex', alignItems: 'center', gap: 7, fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: 1.4, color: C.gold, textTransform: 'uppercase', marginBottom: 8 },
+  matchTitle: { fontFamily: FONT.display, fontSize: 18, fontWeight: 700, color: C.ink, letterSpacing: -0.3 },
+  matchMeta: { fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginTop: 4, marginBottom: 12 },
+  matchActions: { display: 'flex', gap: 8 },
   top: { display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 },
   omega: { width: 40, height: 40, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(140deg,#5cc8ff,#5e5ce6)', boxShadow: '0 8px 20px rgba(94,92,230,0.5)', flexShrink: 0 },
   omegaGlyph: { fontFamily: FONT.display, fontWeight: 700, fontSize: 21, color: '#fff' },
