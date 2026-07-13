@@ -191,7 +191,7 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
               {next ? `${next.label} subiría tu match ~${Math.max(3, Math.round(next.dRep))}%` : 'Consolida tus 4 ejes y toma un contrato'}
             </span>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button style={S.btnGold} onClick={() => next && actions.addTitle('Placeholder', 'Universidad', 2023)}>
+              <button style={S.btnGold} onClick={() => { if (next) actions.addTitle(); }}>
                 {next ? 'Ejecutar' : 'Academia'}
               </button>
               <button style={S.btnGhost} onClick={() => { /* luego */ }}>Luego</button>

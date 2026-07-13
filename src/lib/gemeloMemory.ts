@@ -14,6 +14,8 @@ interface Conversation {
     tab: string;
     reputation: number;
     mood?: 'curious' | 'urgent' | 'casual';
+    // Metadatos adicionales de contexto (targetTab, action, queryType, etc.)
+    [key: string]: unknown;
   };
 }
 
@@ -119,7 +121,7 @@ function getMemory(): GemeloMemory {
 export function remember(
   userQuery: string,
   gemeloResponse: string,
-  context: { tab: string; reputation: number; mood?: 'curious' | 'urgent' | 'casual' }
+  context: { tab: string; reputation: number; mood?: 'curious' | 'urgent' | 'casual'; [key: string]: unknown }
 ): void {
   const memory = getMemory();
   
