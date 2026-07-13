@@ -15,7 +15,7 @@ export function BottomNav() {
   // En su lugar se centran con un ancho máximo fijo por botón, para que
   // se vean proporcionados y agrupados en el centro de la barra.
   return (
-    <nav style={{ flexShrink: 0, background: C.surface, borderTop: `1px solid ${C.cyanFaint}`, position: 'relative', zIndex: 3 }}>
+    <nav style={{ flexShrink: 0, background: 'rgba(9,12,22,0.66)', backdropFilter: 'blur(22px) saturate(140%)', WebkitBackdropFilter: 'blur(22px) saturate(140%)', borderTop: `1px solid ${C.line}`, position: 'relative', zIndex: 3 }}>
       {/* Barra indicadora del hub activo */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         {HUBS.map(hub => (

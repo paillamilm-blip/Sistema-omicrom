@@ -15,34 +15,34 @@ function drawPassport(cv: HTMLCanvasElement, p: GemeloProfile, tierName: string)
   const g = x.createLinearGradient(0, 0, W, H);
   g.addColorStop(0, '#04122a'); g.addColorStop(0.5, '#02081a'); g.addColorStop(1, '#06122e');
   x.fillStyle = g; x.fillRect(0, 0, W, H);
-  x.strokeStyle = 'rgba(0,214,230,0.45)'; x.lineWidth = 3; x.strokeRect(16, 16, W - 32, H - 32);
+  x.strokeStyle = 'rgba(92, 200, 255,0.45)'; x.lineWidth = 3; x.strokeRect(16, 16, W - 32, H - 32);
   x.textAlign = 'center';
-  x.fillStyle = '#7df9ff'; x.font = 'bold 96px Georgia, serif'; x.fillText('\u03A9', W / 2, 135);
-  x.fillStyle = '#eaf4ff'; x.font = "bold 34px 'Rajdhani', sans-serif"; x.fillText('Sistema Ómicron', W / 2, 182);
-  x.fillStyle = 'rgba(0,214,230,0.75)'; x.font = "15px 'Share Tech Mono', monospace"; x.fillText('PASAPORTE · GEMELO DIGITAL', W / 2, 210);
-  x.fillStyle = '#E08A00'; x.font = "bold 26px 'Share Tech Mono', monospace"; x.fillText(tierName.toUpperCase(), W / 2, 268);
-  x.fillStyle = 'rgba(234,244,255,0.55)'; x.font = "14px 'Share Tech Mono', monospace";
+  x.fillStyle = '#8bd4ff'; x.font = 'bold 96px Georgia, serif'; x.fillText('\u03A9', W / 2, 135);
+  x.fillStyle = '#eaf4ff'; x.font = "bold 34px -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"; x.fillText('Sistema Ómicron', W / 2, 182);
+  x.fillStyle = 'rgba(92, 200, 255,0.75)'; x.font = "15px 'SF Mono', monospace"; x.fillText('PASAPORTE · GEMELO DIGITAL', W / 2, 210);
+  x.fillStyle = '#ffb02e'; x.font = "bold 26px 'SF Mono', monospace"; x.fillText(tierName.toUpperCase(), W / 2, 268);
+  x.fillStyle = 'rgba(234,244,255,0.55)'; x.font = "14px 'SF Mono', monospace";
   x.fillText('REPUTACIÓN', W / 2 - 130, 330); x.fillText('PUNTAJE PE', W / 2 + 130, 330);
-  x.fillStyle = '#E08A00'; x.font = "bold 74px 'Rajdhani', sans-serif"; x.fillText(String(p.rep), W / 2 - 130, 400);
-  x.fillStyle = '#7df9ff'; x.font = "bold 54px 'Rajdhani', sans-serif"; x.fillText(p.pe.toLocaleString('es'), W / 2 + 130, 398);
+  x.fillStyle = '#ffb02e'; x.font = "bold 74px -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"; x.fillText(String(p.rep), W / 2 - 130, 400);
+  x.fillStyle = '#8bd4ff'; x.font = "bold 54px -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"; x.fillText(p.pe.toLocaleString('es'), W / 2 + 130, 398);
   const EJ: [string, keyof GemeloAxes, string][] = [
-    ['Ejecución', 'execution', '#00D6E6'],
-    ['Calidad', 'quality', '#0977a3'],
-    ['Trascendencia', 'transcendence', '#E08A00'],
-    ['Fundamento', 'foundation', '#2FE014'],
+    ['Ejecución', 'execution', '#5cc8ff'],
+    ['Calidad', 'quality', '#8a88f0'],
+    ['Trascendencia', 'transcendence', '#ffb02e'],
+    ['Fundamento', 'foundation', '#3fd0c9'],
   ];
   let yy = 470;
   x.textAlign = 'left';
   EJ.forEach(([lbl, k, col]) => {
     const v = Math.min(100, p.axes[k] || 0);
-    x.fillStyle = 'rgba(234,244,255,0.8)'; x.font = "15px 'Share Tech Mono', monospace"; x.fillText(lbl, 50, yy - 8);
-    x.textAlign = 'right'; x.fillStyle = 'rgba(255,255,255,0.4)'; x.font = "13px 'Share Tech Mono', monospace"; x.fillText(v + '/100', W - 50, yy - 8);
+    x.fillStyle = 'rgba(234,244,255,0.8)'; x.font = "15px 'SF Mono', monospace"; x.fillText(lbl, 50, yy - 8);
+    x.textAlign = 'right'; x.fillStyle = 'rgba(255,255,255,0.4)'; x.font = "13px 'SF Mono', monospace"; x.fillText(v + '/100', W - 50, yy - 8);
     x.textAlign = 'left';
     x.fillStyle = 'rgba(255,255,255,0.1)'; x.fillRect(50, yy, W - 100, 11);
     x.fillStyle = col; x.fillRect(50, yy, ((W - 100) * v) / 100, 11);
     yy += 54;
   });
-  x.textAlign = 'center'; x.fillStyle = 'rgba(0,214,230,0.55)'; x.font = "12px 'Share Tech Mono', monospace";
+  x.textAlign = 'center'; x.fillStyle = 'rgba(92, 200, 255,0.55)'; x.font = "12px 'SF Mono', monospace";
   x.fillText('Verificable en Ómicron · Confianza Cero', W / 2, H - 40);
 }
 
@@ -73,7 +73,7 @@ export function PasaporteGemelo() {
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           padding: '11px 0', marginBottom: 14, borderRadius: RADIUS.lg, cursor: 'pointer',
-          background: 'rgba(0,214,230,0.08)', border: `1px solid ${C.cyanDim}`, color: C.cyan,
+          background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.cyanDim}`, color: C.cyan,
           fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
         }}
       >
@@ -100,7 +100,7 @@ export function PasaporteGemelo() {
                 onClick={download}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: RADIUS.lg,
-                  cursor: 'pointer', background: C.gold, border: 'none', color: '#020613',
+                  cursor: 'pointer', background: C.gold, border: 'none', color: '#000206',
                   fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700,
                 }}
               >
@@ -111,7 +111,7 @@ export function PasaporteGemelo() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: RADIUS.lg,
                   cursor: 'pointer', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)',
-                  color: '#eaf2ff', fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase',
+                  color: '#eaf0fb', fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase',
                 }}
               >
                 <X size={15} /> Cerrar

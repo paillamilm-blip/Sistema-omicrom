@@ -13,6 +13,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { supabase } from './supabase';
+import { calculateTotalReputation } from '../services/reputationService';
 
 export interface GemeloAxes {
   execution: number;
@@ -51,14 +52,20 @@ export function recompute(p: GemeloProfile): GemeloProfile {
   pe += p.vault * 150; ax.transcendence += p.vault * 14;
   (Object.keys(ax) as (keyof GemeloAxes)[]).forEach((k) => (ax[k] = Math.min(100, ax[k])));
   const avg = (ax.execution + ax.quality + ax.transcendence + ax.foundation) / 4;
-  const rep = Math.max(0, Math.min(99, Math.round(20 + avg * 0.72 + p.titles * 2 + (p.cv ? 3 : 0))));
+  // Reputación CANÓNICA: idéntica al trigger de Supabase (0050) y a reputationService.
+  //   base 20/80 (credenciales + experiencia) + momentum por PE.
+  // traditional = credenciales convalidadas (mismos pesos/tope que la RPC 0048).
+  const traditional = Math.min(60, (p.cv ? 6 : 0) + p.titles * 5 + p.years * 4);
+  const rep = Math.round(calculateTotalReputation(traditional, avg, pe));
   return { ...p, pe, rep, axes: ax };
 }
 
+// Tiers por PE, alineados a los umbrales de nivel de reputationService
+// (calculateProgressToNextLevel: N2=1000 PE, N3=3500 PE).
 const TIERS = [
   { name: 'Nodo Operativo', min: 0, commission: 15 },
-  { name: 'Nodo Core', min: 500, commission: 10 },
-  { name: 'Nodo Arquitecto', min: 2000, commission: 5 },
+  { name: 'Nodo Core', min: 1000, commission: 10 },
+  { name: 'Nodo Arquitecto', min: 3500, commission: 5 },
 ];
 
 export function tierFor(pe: number) {

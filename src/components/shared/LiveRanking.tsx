@@ -78,7 +78,7 @@ export function LiveRanking() {
               gap: 10,
               padding: '6px 6px',
               borderBottom: `1px solid ${C.cyanFaint}`,
-              background: isSelf ? 'rgba(224,138,0,0.08)' : 'transparent',
+              background: isSelf ? 'rgba(255, 176, 46,0.08)' : 'transparent',
               borderRadius: isSelf ? 8 : 0,
             }}
           >

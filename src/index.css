@@ -12,15 +12,15 @@
   /* ♿ Accesibilidad: tonos oscurecidos respecto a la versión original para
      mejorar el contraste sobre fondo oscuro y evitar que el usuario deba
      forzar la vista o hacer zoom. */
-  --neon-cyan:    #00d6e6;
-  --neon-magenta: #2fe014;
-  --neon-violet:  #045a68;
-  --neon-green:   #2fe014;
-  --neon-gold:    #e08a00;
-  --void:         #020613;
-  --glow-cyan:    0 0 12px rgba(0, 214, 230, 0.55);
-  --glow-magenta: 0 0 12px rgba(47, 224, 20, 0.5);
-  --glow-violet:  0 0 14px rgba(4, 90, 104, 0.6);
+  --neon-cyan:    #5cc8ff;   /* SKY premium */
+  --neon-magenta: #3fd0c9;   /* TEAL */
+  --neon-violet:  #5e5ce6;   /* INDIGO */
+  --neon-green:   #3fd0c9;   /* TEAL (OK) */
+  --neon-gold:    #ffb02e;   /* ÁMBAR */
+  --void:         #000206;   /* negro-azulado premium */
+  --glow-cyan:    0 0 16px rgba(92,200,255,0.50);
+  --glow-magenta: 0 0 16px rgba(63,208,201,0.45);
+  --glow-violet:  0 0 18px rgba(94,92,230,0.55);
 }
 
 * { box-sizing: border-box; }
@@ -56,10 +56,10 @@ body {
 
 body {
   background-color: var(--void);
-  color: var(--neon-cyan);
-  font-family: 'Inter', system-ui, sans-serif;
+  color: #eaf0fb;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 
@@ -71,8 +71,8 @@ body::after {
   z-index: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(0, 243, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 95, 115, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(92,140,255,0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(92,140,255,0.055) 1px, transparent 1px);
   background-size: 44px 44px;
   background-position: center;
   mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, #000 55%, transparent 100%);
@@ -101,12 +101,12 @@ body::before {
   margin: 0 auto;
   position: relative;
   z-index: 1;
-  border-left: 1px solid rgba(0, 243, 255, 0.15);
-  border-right: 1px solid rgba(0, 243, 255, 0.15);
-  box-shadow: 0 0 60px rgba(0, 243, 255, 0.08), 0 0 120px rgba(0, 95, 115, 0.06);
+  border-left: 1px solid rgba(150,180,255,0.12);
+  border-right: 1px solid rgba(150,180,255,0.12);
+  box-shadow: 0 0 80px rgba(94,92,230,0.10), 0 0 140px rgba(92,200,255,0.06);
   background:
-    radial-gradient(circle at 50% -10%, rgba(0, 95, 115, 0.18), transparent 60%),
-    radial-gradient(circle at 50% 110%, rgba(0, 243, 255, 0.1), transparent 55%);
+    radial-gradient(circle at 50% -10%, rgba(94,92,230,0.18), transparent 60%),
+    radial-gradient(circle at 50% 110%, rgba(92,200,255,0.10), transparent 55%);
 }
 
 
@@ -114,13 +114,14 @@ body::before {
 .bg-omicron-card {
   position: relative;
   background:
-    linear-gradient(135deg, rgba(11, 17, 36, 0.85) 0%, rgba(7, 11, 24, 0.92) 100%) !important;
-  border: 1px solid rgba(0, 243, 255, 0.35) !important;
+    linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%) !important;
+  border: 1px solid rgba(150,180,255,0.16) !important;
+  border-radius: 18px !important;
   box-shadow:
-    0 0 18px rgba(0, 243, 255, 0.12),
-    inset 0 0 24px rgba(0, 95, 115, 0.06) !important;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+    0 12px 34px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(150,180,255,0.10) !important;
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   overflow: hidden;
 }
 
@@ -275,12 +276,12 @@ body::before {
 /* Panel holográfico flotante (alternativa más marcada a bg-omicron-card) */
 .holo-panel {
   position: relative;
-  background: linear-gradient(135deg, rgba(11,17,36,0.7), rgba(7,11,24,0.85));
-  border: 1px solid rgba(0,243,255,0.3);
-  border-radius: 16px;
-  box-shadow: 0 0 24px rgba(0,243,255,0.1), inset 0 0 30px rgba(0,95,115,0.05);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: linear-gradient(135deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02));
+  border: 1px solid rgba(150,180,255,0.16);
+  border-radius: 22px;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(150,180,255,0.10);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
   animation: hologramFloat 6s ease-in-out infinite;
 }
 

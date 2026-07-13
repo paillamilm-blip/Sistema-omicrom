@@ -21,7 +21,7 @@ export function MotorGemelo() {
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl, padding: 16, marginBottom: 14,
-      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(0,240,255,0.14)',
+      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(92, 200, 255,0.14)',
     }}>
       {/* Siguiente mejor paso */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>

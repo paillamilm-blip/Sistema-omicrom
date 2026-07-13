@@ -29,10 +29,10 @@ const AXIS_LABELS = {
 } as const;
 
 const AXIS_COLORS = {
-  execution:    '#00F0FF',   // cyan — flujo de ejecución
-  quality:      '#0a8ba3',   // acero-cyan — calidad
-  transcendence:'#F59E0B',   // ámbar — trascendencia
-  foundation:   '#39FF14',   // esmeralda — fundamento
+  execution:    '#5cc8ff',   // cyan — flujo de ejecución
+  quality:      '#8a88f0',   // acero-cyan — calidad
+  transcendence:'#ffb02e',   // ámbar — trascendencia
+  foundation:   '#3fd0c9',   // esmeralda — fundamento
 } as const;
 
 // ✓ FIX: getReputationBadge devuelve el hex directamente para que el componente
@@ -41,7 +41,7 @@ const BADGE_BORDER_HEX: Record<string, string> = {
   gold:    '#fbbf24',
   emerald: '#10b981',
   blue:    '#3b82f6',
-  amber:   '#f59e0b',
+  amber:   '#ffb02e',
   slate:   '#64748b',
 };
 
@@ -161,8 +161,8 @@ export function ProgressRadar({
             position: 'relative',
             borderRadius: '50%',
             padding: 6,
-            background: 'radial-gradient(circle at 50% 45%, rgba(0,240,255,0.10), rgba(8,16,38,0.25) 60%, transparent 75%)',
-            boxShadow: '0 0 40px rgba(0,240,255,0.12), inset 0 0 40px rgba(0,95,115,0.10)',
+            background: 'radial-gradient(circle at 50% 45%, rgba(92, 200, 255,0.10), rgba(8,16,38,0.25) 60%, transparent 75%)',
+            boxShadow: '0 0 40px rgba(92, 200, 255,0.12), inset 0 0 40px rgba(94, 92, 230,0.10)',
             animation: animated ? 'floatY 6s ease-in-out infinite' : undefined,
           }}
         >
@@ -178,13 +178,13 @@ export function ProgressRadar({
               <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
             <radialGradient id="radar-fill" cx="50%" cy="50%" r="60%">
-              <stop offset="0%" stopColor="#00F0FF" stopOpacity="0.28" />
-              <stop offset="100%" stopColor="#005F73" stopOpacity="0.10" />
+              <stop offset="0%" stopColor="#5cc8ff" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="#5e5ce6" stopOpacity="0.10" />
             </radialGradient>
           </defs>
 
           {/* Grid (malla del poliedro) */}
-          <g stroke="rgba(0,240,255,0.22)" strokeWidth="1" opacity="0.55">
+          <g stroke="rgba(92, 200, 255,0.22)" strokeWidth="1" opacity="0.55">
             {gridLines.filter(l => l.type === 'concentric').map((line, i) => (
               <polygon key={`concentric-${i}`} points={line.points} fill="none" />
             ))}
@@ -198,7 +198,7 @@ export function ProgressRadar({
           <polygon
             points={polygonPoints}
             fill="url(#radar-fill)"
-            stroke="#00F0FF"
+            stroke="#5cc8ff"
             strokeWidth="2"
             strokeLinejoin="round"
             filter="url(#radar-glow)"
@@ -209,7 +209,7 @@ export function ProgressRadar({
           {points.map((p) => (
             <g key={p.key}>
               <circle cx={p.x} cy={p.y} r={glowRadius} fill={p.color} fillOpacity="0.25" stroke={p.color} strokeWidth="1" strokeOpacity="0.5" />
-              <circle cx={p.x} cy={p.y} r={dotRadius}  fill={p.color} stroke="#020613" strokeWidth="1.5" filter="url(#radar-glow)" />
+              <circle cx={p.x} cy={p.y} r={dotRadius}  fill={p.color} stroke="#000206" strokeWidth="1.5" filter="url(#radar-glow)" />
             </g>
           ))}
 
@@ -307,9 +307,9 @@ export function ScoreHistory({ history }: ScoreHistoryProps) {
 
   return (
     <div className="space-y-2">
-      {history.slice(0, 5).map((entry, i) => (
+      {history.slice(0, 5).map((entry) => (
         <div
-          key={i}
+          key={`${entry.date}-${entry.execution}`}
           className="flex items-center justify-between p-2 rounded-lg bg-omicron-card border border-omicron-border/50"
         >
           <p className="text-xs text-omicron-subtle">{new Date(entry.date).toLocaleDateString()}</p>

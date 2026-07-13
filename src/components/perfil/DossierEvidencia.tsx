@@ -43,7 +43,7 @@ export function DossierEvidencia() {
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl, padding: 16, marginBottom: 14,
-      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(0,240,255,0.14)',
+      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(92, 200, 255,0.14)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 4 }}>
         <FileCheck2 size={18} style={{ color: C.cyan }} />
@@ -64,7 +64,7 @@ export function DossierEvidencia() {
       {loading ? (
         <p style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, textAlign: 'center', padding: 16 }}>Cargando dossier...</p>
       ) : actas.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '18px 12px', borderRadius: RADIUS.lg, background: 'rgba(0,240,255,0.04)', border: '1px dashed rgba(0,240,255,0.18)' }}>
+        <div style={{ textAlign: 'center', padding: '18px 12px', borderRadius: RADIUS.lg, background: 'rgba(92, 200, 255,0.04)', border: '1px dashed rgba(92, 200, 255,0.18)' }}>
           <ShieldCheck size={24} style={{ color: C.cyanDim }} />
           <p style={{ margin: '8px 0 0', fontFamily: FONT.body, fontSize: 13, color: '#cfe6ff' }}>Aún no validas competencias.</p>
           <p style={{ margin: '4px 0 0', fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>Ve a Aprender → un nodo → "Rendir Examen IA".</p>
@@ -75,7 +75,7 @@ export function DossierEvidencia() {
             const ok = a.veredicto === 'APROBADO';
             const accent = ok ? C.green : C.red;
             return (
-              <div key={a.id} style={{ borderRadius: RADIUS.lg, padding: 12, background: 'rgba(0,240,255,0.04)', border: `1px solid ${ok ? 'rgba(57,255,20,0.30)' : 'rgba(255,80,102,0.30)'}` }}>
+              <div key={a.id} style={{ borderRadius: RADIUS.lg, padding: 12, background: 'rgba(92, 200, 255,0.04)', border: `1px solid ${ok ? 'rgba(63, 208, 201,0.30)' : 'rgba(255, 92, 122,0.30)'}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <span style={{ flex: 1, minWidth: 0, fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {a.nodo?.title ?? 'Competencia'}
@@ -87,7 +87,7 @@ export function DossierEvidencia() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: a.resumen ? 8 : 0 }}>
                   {EJES.map(e => (
-                    <div key={e.key} style={{ textAlign: 'center', padding: '5px 0', borderRadius: 6, background: 'rgba(0,240,255,0.05)' }}>
+                    <div key={e.key} style={{ textAlign: 'center', padding: '5px 0', borderRadius: 6, background: 'rgba(92, 200, 255,0.05)' }}>
                       <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyanDim, letterSpacing: 0.5 }}>{e.label}</div>
                       <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.cyan }}>{a[e.key] as number}</div>
                     </div>

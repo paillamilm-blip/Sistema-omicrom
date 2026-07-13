@@ -7,42 +7,50 @@ import { useRef } from 'react';
 import {
   BookOpen, Clock, FileText, GraduationCap, RotateCcw, Sparkles, TrendingUp,
 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
-import { recompute, type GemeloProfile } from '../../lib/gemeloProfile';
+import { useApp } from '../../store/AppContext';
 import { C, FONT, RADIUS } from '../../theme';
 
 const EJES: { key: 'execution' | 'quality' | 'transcendence' | 'foundation'; label: string; color: string }[] = [
-  { key: 'execution', label: 'Ejecución', color: '#00F0FF' },
-  { key: 'quality', label: 'Calidad', color: '#0a8ba3' },
-  { key: 'transcendence', label: 'Trascendencia', color: '#F59E0B' },
-  { key: 'foundation', label: 'Fundamento', color: '#39FF14' },
+  { key: 'execution', label: 'Ejecución', color: '#5cc8ff' },
+  { key: 'quality', label: 'Calidad', color: '#8a88f0' },
+  { key: 'transcendence', label: 'Trascendencia', color: '#ffb02e' },
+  { key: 'foundation', label: 'Fundamento', color: '#3fd0c9' },
 ];
 
 export function ConvalidaGemelo() {
   const { profile, actions, tier, next } = useGemeloProfile();
+  const { refreshProfile } = useApp();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Impacto en vivo (+PE/+rep) y resaltado del recomendado
-  const imp = (patch: Partial<GemeloProfile>) => {
-    const base = recompute({ ...profile });
-    const c = recompute({ ...profile, ...patch });
-    return `+${c.pe - base.pe} PE · +${c.rep - base.rep} rep`;
+  // La reputación se sube en el SERVIDOR (RPC segura `convalidar_credencial`):
+  // credenciales (CV/título) → 20% tradicional; experiencia (años/aportes) → 80%.
+  // El servidor valida, pone topes y audita; luego refrescamos el perfil.
+  const convalidar = (kind: 'cv' | 'title' | 'year' | 'vault') => {
+    void supabase.rpc('convalidar_credencial', { p_kind: kind }).then(() => { void refreshProfile(); });
+  };
+  const BOOST = {
+    cv: '+ Credenciales · reputación',
+    title: '+ Credenciales · reputación',
+    year: '+ Experiencia · reputación',
+    vault: '+ Experiencia · reputación',
   };
   const reco = (a: string): React.CSSProperties =>
-    next && next.action === a ? { borderColor: 'rgba(245,158,11,0.65)', boxShadow: '0 0 14px rgba(245,158,11,0.35)' } : {};
+    next && next.action === a ? { borderColor: 'rgba(255, 176, 46,0.65)', boxShadow: '0 0 14px rgba(255, 176, 46,0.35)' } : {};
 
   const cardBtn: React.CSSProperties = {
     display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'left',
     padding: '12px 13px', borderRadius: RADIUS.lg, cursor: 'pointer',
-    border: '1px solid rgba(0,240,255,0.2)', background: 'rgba(0,240,255,0.05)',
+    border: '1px solid rgba(92, 200, 255,0.2)', background: 'rgba(92, 200, 255,0.05)',
     color: '#eaf4ff', transition: 'all .18s',
   };
-  const done: React.CSSProperties = { borderColor: 'rgba(57,255,20,0.4)', background: 'rgba(57,255,20,0.06)' };
+  const done: React.CSSProperties = { borderColor: 'rgba(63, 208, 201,0.4)', background: 'rgba(63, 208, 201,0.06)' };
 
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl, padding: 16, marginBottom: 14,
-      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(0,240,255,0.14)',
+      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(92, 200, 255,0.14)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <Sparkles size={16} style={{ color: C.gold }} />
@@ -74,7 +82,7 @@ export function ConvalidaGemelo() {
           <span>comisión {tier.commission}%</span>
         </div>
         <div style={{ height: 7, borderRadius: 4, background: C.cyanFaint, overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${tier.progress}%`, background: `linear-gradient(90deg, ${C.cyan}, ${C.gold})`, boxShadow: '0 0 12px rgba(0,240,255,0.5)', transition: 'width .6s ease' }} />
+          <div style={{ height: '100%', width: `${tier.progress}%`, background: `linear-gradient(90deg, ${C.cyan}, ${C.gold})`, boxShadow: '0 0 12px rgba(92, 200, 255,0.5)', transition: 'width .6s ease' }} />
         </div>
         {/* Ejes */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 14px', marginTop: 12 }}>
@@ -97,20 +105,20 @@ export function ConvalidaGemelo() {
         <label style={{ ...cardBtn, ...(profile.cv ? done : reco('cv')) }}>
           <input
             ref={fileRef} type="file" accept=".pdf,.doc,.docx,image/*" style={{ display: 'none' }}
-            onChange={(e) => { if (e.target.files && e.target.files[0]) actions.addCV(); e.currentTarget.value = ''; }}
+            onChange={(e) => { if (e.target.files && e.target.files[0] && !profile.cv) { actions.addCV(); convalidar('cv'); } e.currentTarget.value = ''; }}
           />
           <FileText size={18} style={{ color: profile.cv ? C.green : C.cyan }} />
           <span style={{ fontWeight: 700, fontSize: 14 }}>Subir CV {next && next.action === 'cv' && !profile.cv ? '★' : ''}</span>
           <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
-            {profile.cv ? '✔ convalidado' : imp({ cv: true })}
+            {profile.cv ? '✔ convalidado' : BOOST.cv}
           </span>
         </label>
 
-        <button style={{ ...cardBtn, ...(profile.titles > 0 ? done : {}), ...reco('title') }} onClick={() => actions.addTitle()}>
+        <button style={{ ...cardBtn, ...(profile.titles > 0 ? done : {}), ...reco('title') }} onClick={() => { if (profile.titles < 10) { actions.addTitle(); convalidar('title'); } }}>
           <GraduationCap size={18} style={{ color: profile.titles > 0 ? C.green : C.cyan }} />
           <span style={{ fontWeight: 700, fontSize: 14 }}>Validar título {next && next.action === 'title' ? '★' : ''}</span>
           <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
-            {profile.titles >= 10 ? '✓ al máximo' : imp({ titles: profile.titles + 1 })}
+            {profile.titles >= 10 ? '✓ al máximo' : BOOST.title}
           </span>
         </button>
 
@@ -118,20 +126,20 @@ export function ConvalidaGemelo() {
           <Clock size={18} style={{ color: profile.years > 0 ? C.green : C.cyan }} />
           <span style={{ fontWeight: 700, fontSize: 14 }}>Experiencia {next && next.action === 'year' ? '★' : ''}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => actions.removeYear()} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(0,240,255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>−</button>
+            <button onClick={() => actions.removeYear()} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(92, 200, 255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>−</button>
             <span style={{ fontWeight: 700, fontSize: 18, minWidth: 44, textAlign: 'center' }}>{profile.years} añ.</span>
-            <button onClick={() => actions.addYear()} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(0,240,255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>+</button>
+            <button onClick={() => { if (profile.years < 15) { actions.addYear(); convalidar('year'); } }} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(92, 200, 255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>+</button>
           </div>
           <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
-            {profile.years >= 15 ? '✓ al máximo' : imp({ years: profile.years + 1 })}
+            {profile.years >= 15 ? '✓ al máximo' : BOOST.year}
           </span>
         </div>
 
-        <button style={{ ...cardBtn, ...(profile.vault > 0 ? done : {}), ...reco('vault') }} onClick={() => actions.addVault()}>
+        <button style={{ ...cardBtn, ...(profile.vault > 0 ? done : {}), ...reco('vault') }} onClick={() => { actions.addVault(); convalidar('vault'); }}>
           <BookOpen size={18} style={{ color: profile.vault > 0 ? C.green : C.cyan }} />
           <span style={{ fontWeight: 700, fontSize: 14 }}>Aporte a la Bóveda {next && next.action === 'vault' ? '★' : ''}</span>
           <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
-            {imp({ vault: profile.vault + 1 })}
+            {BOOST.vault}
           </span>
         </button>
       </div>

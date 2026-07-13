@@ -1,20 +1,15 @@
-// src/components/HoloNucleo3D.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON CORE · HoloNucleo3D (interactivo)
-// Tu Gemelo Digital como GALAXIA 3D. Cada punto es un dato REAL de tu perfil
-// (los 4 ejes con su descripción + tus métricas). Al ACERCAR el cursor o
-// TOCAR un punto, se resalta y despliega una ficha con información completa.
-// Autorrotación + parallax + profundidad real. Canvas puro, sin dependencias.
-//
-// Drop-in de HoloOrbField (variant, orbState, orbSize, height, ariaLabel,
-// center, chips) + data-driven (axes, reputation). Respeta reduced-motion.
+// ÓMICRON CORE · HoloNucleo3D — EXPERIENCIA 3D PREMIUM BRUTAL
+// Matching EXACTO del prototipo holo-gemelo.html: orbe ENORME brillante,
+// nodos con GLOWS pulsantes, líneas VIVAS con energía, métricas flotantes
+// con blur, rotación orbital suave, parallax, nodos tocables con fichas.
+// IMPACTO PREMIUM MÁXIMO: oscuro, tecnológico, moderno.
 // ═══════════════════════════════════════════════════════════════════════
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { C, FONT } from '../theme';
 
 export type OrbState = 'idle' | 'loading' | 'success' | 'celebration' | 'error';
-export type OrbSize = 'sm' | 'md' | 'lg';
-export type OrbVariant = 'digital-twin' | 'learning-system' | 'identity';
+export type OrbEmotion = 'idle' | 'thinking' | 'excited' | 'alert' | 'celebrating';
 
 export interface NucleoChip {
   label: string;
@@ -31,18 +26,15 @@ export interface NucleoAxes {
 }
 
 interface Props {
-  variant?: OrbVariant;
   orbState?: OrbState;
-  orbSize?: OrbSize;
+  emotion?: OrbEmotion; // ⭐ NUEVO: estado emocional del Gemelo
+  audioLevel?: number;   // ⭐ NUEVO: nivel de audio para partículas reactivas (0-1)
   height?: number;
   ariaLabel?: string;
-  center?: React.ReactNode;
   chips?: NucleoChip[];
   reputation?: number;
   axes?: NucleoAxes;
-  /** Nº de OTROS nodos en línea ahora → se dibujan orbitando el núcleo (presencia real). */
   livePeers?: number;
-  /** Al tocar el CTA de un punto, navega al hub del ecosistema (TabId). */
   onNavigate?: (tab: string) => void;
   className?: string;
 }
@@ -52,25 +44,15 @@ interface NodeMeta {
   cat: string;
   value: string;
   detail: string;
-  /** Acción concreta para mejorar esta dimensión dentro del ecosistema. */
   mejora: string;
-  /** Hub del ecosistema al que lleva la mejora (TabId). */
   tab?: string;
   color: string;
-  weight: number; // 0-1 → tamaño del punto
+  weight: number;
 }
 
-/** Nombres legibles de cada hub para el CTA. */
 const TAB_LABELS: Record<string, string> = {
-  perfil: 'Inicio',
-  maxskill: 'Habilidades',
-  academia: 'Academia',
-  market: 'Servicios',
-  empleos: 'Empleos',
-  chat: 'Mensajes',
-  wallet: 'Billetera',
-  gobernanza: 'Gobernanza',
-  vault: 'Bóveda',
+  perfil: 'Inicio', maxskill: 'Habilidades', academia: 'Academia', market: 'Servicios',
+  empleos: 'Empleos', chat: 'Mensajes', wallet: 'Billetera', gobernanza: 'Gobernanza', vault: 'Bóveda',
 };
 
 interface GNode {
@@ -80,34 +62,23 @@ interface GNode {
 }
 
 const AXES_DEF: { key: keyof NucleoAxes; label: string; color: string; detail: string; mejora: string; tab: string }[] = [
-  { key: 'execution', label: 'Ejecución', color: '#00F0FF', detail: 'Qué tan rápido y bien entregas tus contratos.', mejora: 'Toma un contrato de hito corto en el Market para elevar tu velocidad de entrega.', tab: 'market' },
-  { key: 'quality', label: 'Calidad', color: '#0a8ba3', detail: 'Las calificaciones con estrellas de tus clientes.', mejora: 'Pide reseña al cerrar cada contrato: más estrellas suben este eje.', tab: 'empleos' },
-  { key: 'transcendence', label: 'Trascendencia', color: '#F59E0B', detail: 'El conocimiento que compartes: Bóveda y mentorías.', mejora: 'Publica un aporte en la Bóveda o mentorea a un nodo junior.', tab: 'vault' },
-  { key: 'foundation', label: 'Fundamento', color: '#39FF14', detail: 'Tu dominio teórico y los cursos de la Academia.', mejora: 'Rinde el Examen IA de un nodo pendiente en la Academia.', tab: 'academia' },
+  { key: 'execution', label: 'Ejecuta', color: '#5cc8ff', detail: 'Rapidez y calidad de entrega en contratos.', mejora: 'Toma un contrato de hito corto en el Market.', tab: 'empleos' },
+  { key: 'quality', label: 'Calidad', color: '#8a88f0', detail: 'Calificaciones de tus clientes.', mejora: 'Pide reseña al cerrar cada contrato.', tab: 'empleos' },
+  { key: 'transcendence', label: 'Aprende', color: '#ffb02e', detail: 'Conocimiento compartido: Bóveda y mentorías.', mejora: 'Publica un aporte en la Bóveda.', tab: 'academia' },
+  { key: 'foundation', label: 'Gobierna', color: '#3fd0c9', detail: 'Dominio teórico y cursos de la Academia.', mejora: 'Rinde el Examen IA de un nodo pendiente.', tab: 'gobernanza' },
 ];
 
 const CHIP_DETAIL: Record<string, string> = {
-  Tokens: 'Saldo disponible en tu billetera Ómicron.',
-  PE: 'Puntos de experiencia acumulados por tu trabajo y aprendizaje.',
-  Contratos: 'Contratos completados con éxito en la red.',
+  Tokens: 'Saldo disponible en tu billetera.', PE: 'Puntos de experiencia acumulados.', Contratos: 'Contratos completados.', Nodo: 'Tu nodo actual en la red.',
 };
-
 const CHIP_MEJORA: Record<string, string> = {
-  Tokens: 'Cierra contratos con escrow para liberar pagos y hacer crecer tu saldo.',
-  PE: 'Completa cursos en la Academia para sumar PE y subir de nodo.',
-  Contratos: 'Postula a una oportunidad en Empleos para tu próximo contrato.',
+  Tokens: 'Cierra contratos con escrow.', PE: 'Completa cursos en la Academia.', Contratos: 'Postula a una oportunidad.', Nodo: 'Acumula PE para subir de nodo.',
 };
-const CHIP_MEJORA_DEFAULT = 'Acumula PE con contratos y cursos para subir de nodo y bajar tu comisión de red.';
-
 const CHIP_TAB: Record<string, string> = {
-  Tokens: 'wallet',
-  PE: 'academia',
-  Contratos: 'empleos',
+  Tokens: 'wallet', PE: 'academia', Contratos: 'empleos', Nodo: 'perfil',
 };
-const CHIP_TAB_DEFAULT = 'wallet';
 
 const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-
 function hexA(hex: string, a: number): string {
   if (hex[0] !== '#') return hex;
   const n = parseInt(hex.slice(1), 16);
@@ -120,18 +91,18 @@ function buildMeta(axes: NucleoAxes | undefined, chips: NucleoChip[]): NodeMeta[
     const raw = axes?.[a.key];
     const v = typeof raw === 'number' ? raw : null;
     out.push({
-      label: a.label, cat: 'Eje del Gemelo', color: a.color, detail: a.detail, mejora: a.mejora, tab: a.tab,
-      value: v != null ? `${Math.round(v)} / 100` : 'sin datos',
-      weight: v != null ? Math.max(0.25, v / 100) : 0.55,
+      label: a.label, cat: 'Ecosistema', color: a.color, detail: a.detail, mejora: a.mejora, tab: a.tab,
+      value: v != null ? `${Math.round(v)}` : '50',
+      weight: v != null ? Math.max(0.35, v / 100) : 0.5,
     });
   });
   chips.forEach((c) => {
     out.push({
       label: c.label, cat: 'Métrica', color: c.color, value: c.value,
-      detail: CHIP_DETAIL[c.label] || 'Tu nodo actual en la red Ómicron.',
-      mejora: CHIP_MEJORA[c.label] || CHIP_MEJORA_DEFAULT,
-      tab: CHIP_TAB[c.label] || CHIP_TAB_DEFAULT,
-      weight: 0.7,
+      detail: CHIP_DETAIL[c.label] || 'Tu nodo en la red.',
+      mejora: CHIP_MEJORA[c.label] || 'Acumula PE.',
+      tab: CHIP_TAB[c.label] || 'wallet',
+      weight: 0.6,
     });
   });
   return out;
@@ -139,9 +110,10 @@ function buildMeta(axes: NucleoAxes | undefined, chips: NucleoChip[]): NodeMeta[
 
 export function HoloNucleo3D({
   orbState = 'idle',
-  height = 318,
+  emotion = 'idle',      // ⭐ Emoción del orbe
+  audioLevel = 0,        // ⭐ Audio reactivo
+  height = 420,
   ariaLabel = 'Gemelo Digital',
-  center,
   chips = [],
   reputation = 0,
   axes,
@@ -153,15 +125,10 @@ export function HoloNucleo3D({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const selRef = useRef<number>(-1);
-  const peersRef = useRef<number>(0);
   const [sel, setSel] = useState<number | null>(null);
-  // Presencia real → satélites orbitando (leído por ref para no reiniciar la animación).
-  peersRef.current = Math.max(0, Math.min(Math.floor(livePeers) || 0, 36));
 
   const chipsKey = JSON.stringify(chips);
   const axesKey = JSON.stringify(axes ?? {});
-  // Se depende de las claves serializadas (axesKey/chipsKey) para memoizar por
-  // valor y no por referencia (axes/chips son objetos nuevos en cada render).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const meta = useMemo(() => buildMeta(axes, chips), [axesKey, chipsKey]);
 
@@ -191,7 +158,6 @@ export function HoloNucleo3D({
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     if (ro) ro.observe(wrap);
 
-    // Nodos (posiciones deterministas: mismo orden que `meta`).
     const N = Math.max(meta.length, 1);
     const nodes: GNode[] = meta.map((m, i) => {
       const y = 1 - (i / Math.max(N - 1, 1)) * 2;
@@ -199,14 +165,15 @@ export function HoloNucleo3D({
       const th = GOLDEN * i;
       return {
         bx: Math.cos(th) * rad, by: y, bz: Math.sin(th) * rad,
-        baseR: 4 + m.weight * 6,
+        baseR: 5 + m.weight * 8,
         sx: 0, sy: 0, sc: 1, zz: 0,
       };
     });
-    const dust = Array.from({ length: 40 }, () => ({
-      x: Math.random(), y: Math.random(), r: 0.4 + Math.random() * 1.2,
-      a: 0.05 + Math.random() * 0.3, vx: (Math.random() - 0.5) * 0.04,
-      vy: (Math.random() - 0.5) * 0.04, tw: Math.random() * 6.28,
+
+    const dust = Array.from({ length: 50 }, () => ({
+      x: Math.random(), y: Math.random(), r: 0.5 + Math.random() * 1.5,
+      a: 0.08 + Math.random() * 0.4, vx: (Math.random() - 0.5) * 0.05,
+      vy: (Math.random() - 0.5) * 0.05, tw: Math.random() * 6.28,
     }));
 
     let yaw = 0.4, pitch = -0.2;
@@ -226,74 +193,140 @@ export function HoloNucleo3D({
     const errorTint = orbState === 'error';
     const rep = Math.max(0, Math.min(100, reputation));
     const highRep = rep >= 75;
+    
+    // ⭐ COLORES EMOCIONALES DEL ORBE (cambian según emoción)
+    const emotionColors = {
+      idle: { core: '#06B6D4', halo: '#22D3EE', accent: '#0E7490' },
+      thinking: { core: '#8B5CF6', halo: '#A78BFA', accent: '#6D28D9' },
+      excited: { core: '#F59E0B', halo: '#FCD34D', accent: '#D97706' },
+      alert: { core: '#EF4444', halo: '#FCA5A5', accent: '#DC2626' },
+      celebrating: { core: '#10B981', halo: '#6EE7B7', accent: '#059669' },
+    };
+    const orbColors = emotionColors[emotion] || emotionColors.idle;
 
     function project(x: number, y: number, z: number) {
       const cy1 = Math.cos(yaw), sy1 = Math.sin(yaw);
       const x1 = x * cy1 - z * sy1, z1 = x * sy1 + z * cy1, y1 = y;
       const cx1 = Math.cos(pitch), sx1 = Math.sin(pitch);
       const y2 = y1 * cx1 - z1 * sx1, z2 = y1 * sx1 + z1 * cx1, x2 = x1;
-      const R = Math.min(W, H) * 0.4, FOV = 900, persp = FOV / (FOV + z2 * R);
+      const R = Math.min(W, H) * 0.42, FOV = 900, persp = FOV / (FOV + z2 * R);
       return { sx: CX + x2 * R * persp, sy: CY + y2 * R * persp, sc: persp, zz: z2 };
     }
+
+    // ⭐ ORBE EMOCIONAL con colores dinámicos + reactividad al audio
     function drawCore(t: number) {
       const p = project(0, 0, 0);
-      const R = Math.min(W, H) * 0.135;
-      const halo = ctx!.createRadialGradient(p.sx, p.sy, R * 0.5, p.sx, p.sy, R * 2.6);
-      halo.addColorStop(0, hexA(errorTint ? C.red : highRep ? '#F59E0B' : '#22D3EE', 0.26 + (rep / 100) * 0.14));
-      halo.addColorStop(1, 'rgba(34,211,238,0)');
-      ctx!.fillStyle = halo; ctx!.beginPath(); ctx!.arc(p.sx, p.sy, R * 2.6, 0, 6.2832); ctx!.fill();
-      const core = ctx!.createRadialGradient(p.sx - R * 0.3, p.sy - R * 0.35, R * 0.1, p.sx, p.sy, R);
-      core.addColorStop(0, '#CFFAFE'); core.addColorStop(0.34, errorTint ? '#f87171' : '#22D3EE');
-      core.addColorStop(0.68, errorTint ? '#7f1d2e' : highRep ? '#B45309' : '#1E40AF'); core.addColorStop(0.95, '#1E1B4B');
-      ctx!.fillStyle = core; ctx!.beginPath(); ctx!.arc(p.sx, p.sy, R, 0, 6.2832); ctx!.fill();
-      ctx!.save(); ctx!.translate(p.sx, p.sy);
-      for (let i = 0; i < 3; i++) {
-        ctx!.save(); ctx!.rotate(t * 0.2 + (i * Math.PI) / 3);
-        ctx!.strokeStyle = hexA('#E0F7FF', 0.4 - i * 0.1); ctx!.lineWidth = 1;
-        ctx!.beginPath(); ctx!.ellipse(0, 0, R * 1.3, R * 0.46, 0, 0, 6.2832); ctx!.stroke(); ctx!.restore();
+      const R = Math.min(W, H) * 0.16; // ENORME
+      
+      // ⭐ PULSO EMOCIONAL (diferente según emoción)
+      let pulseSpeed = 1.2;
+      let pulseIntensity = 0.08;
+      
+      if (emotion === 'excited') {
+        pulseSpeed = 2.4; // Late más rápido
+        pulseIntensity = 0.15;
+      } else if (emotion === 'thinking') {
+        pulseSpeed = 0.6; // Late más lento
+        pulseIntensity = 0.05;
+      } else if (emotion === 'alert') {
+        pulseSpeed = 3.0; // Late urgente
+        pulseIntensity = 0.2;
+      } else if (emotion === 'celebrating') {
+        pulseSpeed = 1.8;
+        pulseIntensity = 0.18;
       }
-      ctx!.restore();
-      ctx!.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx!.beginPath(); ctx!.ellipse(p.sx - R * 0.28, p.sy - R * 0.34, R * 0.26, R * 0.15, -0.5, 0, 6.2832); ctx!.fill();
+      
+      // ⭐ REACTIVIDAD AL AUDIO (partículas vibran con la voz)
+      const audioPulse = audioLevel > 0 ? audioLevel * 0.25 : 0;
+      const pulse = 1 + Math.sin(t * pulseSpeed) * pulseIntensity + audioPulse;
+
+      // ⭐ HALO EMOCIONAL (color cambia según emoción)
+      const halo = ctx.createRadialGradient(p.sx, p.sy, R * 0.4, p.sx, p.sy, R * 3.8);
+      halo.addColorStop(0, hexA(errorTint ? C.red : orbColors.halo, 0.5 * pulse));
+      halo.addColorStop(0.3, hexA(orbColors.halo, 0.28 * pulse));
+      halo.addColorStop(0.6, hexA(orbColors.accent, 0.12 * pulse));
+      halo.addColorStop(1, hexA(orbColors.halo, 0));
+      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(p.sx, p.sy, R * 3.8, 0, 6.2832); ctx.fill();
+
+      // ⭐ ORBE CORE EMOCIONAL
+      const core = ctx.createRadialGradient(p.sx - R * 0.32, p.sy - R * 0.38, R * 0.08, p.sx, p.sy, R * pulse);
+      core.addColorStop(0, '#E0F7FF'); // highlight siempre blanco
+      core.addColorStop(0.25, errorTint ? '#f87171' : orbColors.core);
+      core.addColorStop(0.55, errorTint ? '#7f1d2e' : highRep ? orbColors.accent : orbColors.core);
+      core.addColorStop(0.85, '#1E3A8A');
+      core.addColorStop(1, '#0F172A');
+      ctx.fillStyle = core; ctx.beginPath(); ctx.arc(p.sx, p.sy, R * pulse, 0, 6.2832); ctx.fill();
+
+      // Anillos orbitando (las 3 elipses del screenshot).
+      ctx.save(); ctx.translate(p.sx, p.sy);
+      for (let i = 0; i < 3; i++) {
+        ctx.save(); ctx.rotate(t * 0.25 + (i * Math.PI) / 3);
+        ctx.strokeStyle = hexA('#CFFAFE', 0.35 - i * 0.08); ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.ellipse(0, 0, R * 1.4, R * 0.5, 0, 0, 6.2832); ctx.stroke(); ctx.restore();
+      }
+      ctx.restore();
+
+      // Highlight interno (brillo blanco).
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.beginPath(); ctx.ellipse(p.sx - R * 0.3, p.sy - R * 0.36, R * 0.3, R * 0.18, -0.5, 0, 6.2832); ctx.fill();
+
       return p;
     }
-    function glow(x: number, y: number, r: number, color: string, alpha: number) {
-      const g = ctx!.createRadialGradient(x, y, 0, x, y, r * 3.2);
-      g.addColorStop(0, hexA(color, 0.9 * alpha)); g.addColorStop(0.4, hexA(color, 0.26 * alpha)); g.addColorStop(1, hexA(color, 0));
-      ctx!.fillStyle = g; ctx!.beginPath(); ctx!.arc(x, y, r * 3.2, 0, 6.2832); ctx!.fill();
-      ctx!.fillStyle = hexA('#ffffff', 0.85 * alpha); ctx!.beginPath(); ctx!.arc(x, y, r * 0.5, 0, 6.2832); ctx!.fill();
-      ctx!.fillStyle = hexA(color, alpha); ctx!.beginPath(); ctx!.arc(x, y, r, 0, 6.2832); ctx!.fill();
+
+    // NODOS con GLOW PULSANTE (matching screenshot).
+    function glow(x: number, y: number, r: number, color: string, alpha: number, pulse: number) {
+      const rr = r * (1 + pulse * 0.15);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, rr * 4);
+      g.addColorStop(0, hexA(color, 0.95 * alpha));
+      g.addColorStop(0.25, hexA(color, 0.6 * alpha));
+      g.addColorStop(0.5, hexA(color, 0.3 * alpha));
+      g.addColorStop(1, hexA(color, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rr * 4, 0, 6.2832); ctx.fill();
+      // Núcleo blanco brillante.
+      ctx.fillStyle = hexA('#ffffff', 0.9 * alpha); ctx.beginPath(); ctx.arc(x, y, rr * 0.4, 0, 6.2832); ctx.fill();
+      // Nodo de color.
+      ctx.fillStyle = hexA(color, alpha); ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.fill();
     }
 
     const start = performance.now();
     function frame(now: number) {
       const t = (now - start) / 1000;
-      ctx!.clearRect(0, 0, W, H);
+      ctx.clearRect(0, 0, W, H);
 
+      // ⭐ POLVO ESTELAR REACTIVO (partículas cambian con audio y emoción)
       for (const d of dust) {
-        if (!reduce) { d.x += d.vx * 0.0016; d.y += d.vy * 0.0016; }
+        if (!reduce) { 
+          // ⭐ Velocidad aumenta con audio y emoción excited
+          const speedMultiplier = emotion === 'excited' ? 2.0 : emotion === 'alert' ? 1.5 : 1.0;
+          const audioBoost = audioLevel * 0.005;
+          d.x += (d.vx * 0.002 * speedMultiplier) + audioBoost; 
+          d.y += (d.vy * 0.002 * speedMultiplier) + audioBoost; 
+        }
         if (d.x < 0) d.x = 1; if (d.x > 1) d.x = 0; if (d.y < 0) d.y = 1; if (d.y > 1) d.y = 0;
-        const tw = 0.5 + 0.5 * Math.sin(t * 1.5 + d.tw);
-        ctx!.fillStyle = hexA('#9fdcff', d.a * tw);
-        ctx!.beginPath(); ctx!.arc(d.x * W, d.y * H, d.r, 0, 6.2832); ctx!.fill();
+        
+        // ⭐ Brillo reactivo al audio
+        const tw = 0.4 + 0.6 * Math.sin(t * 1.8 + d.tw) + audioLevel * 0.3;
+        const particleColor = emotion === 'celebrating' ? orbColors.halo : '#9fdcff';
+        ctx.fillStyle = hexA(particleColor, d.a * tw);
+        ctx.beginPath(); ctx.arc(d.x * W, d.y * H, d.r, 0, 6.2832); ctx.fill();
       }
 
-      // Cámara: parallax suave + autorrotación (se frena si hay punto activo).
+      // Cámara: parallax + autorrotación suave.
       const nx = active ? (ptrX / W - 0.5) * 2 : 0;
       const ny = active ? (ptrY / H - 0.5) * 2 : 0;
-      if (!reduce && orbState !== 'error' && selRef.current < 0) yaw += 0.0022;
-      pitch = -0.2 + ny * 0.22;
-      const savedYaw = yaw; yaw = yaw + nx * 0.28;
+      if (!reduce && orbState !== 'error' && selRef.current < 0) yaw += 0.003;
+      pitch = -0.2 + ny * 0.25;
+      yaw = yaw + nx * 0.3;
 
       for (const n of nodes) {
         const p = project(n.bx, n.by, n.bz);
         n.sx = p.sx; n.sy = p.sy; n.sc = p.sc; n.zz = p.zz;
       }
 
-      // ¿A qué punto me estoy acercando?
+      // Detectar punto cercano.
       let hovered = -1;
       if (active) {
-        let best = 30; // umbral de proximidad (px)
+        let best = 40;
         nodes.forEach((n, i) => {
           const d = Math.hypot(ptrX - n.sx, ptrY - n.sy);
           if (d < best + n.baseR * n.sc) { best = d; hovered = i; }
@@ -304,146 +337,121 @@ export function HoloNucleo3D({
         setSel(hovered >= 0 ? hovered : null);
       }
 
-      const order = nodes.map((_, i) => i).sort((a, b) => nodes[b].zz - nodes[a].zz);
-      const draw = (idxs: number[], core: { sx: number; sy: number } | null) => {
-        for (const i of idxs) {
-          const n = nodes[i], m = meta[i];
-          const isSel = i === selRef.current;
-          const dim = selRef.current >= 0 && !isSel ? 0.28 : 1;
-          const alpha = (0.5 + n.sc * 0.5) * dim;
-          if (core) {
-            const la = (0.08 + n.sc * 0.1) * dim * (isSel ? 2.4 : 1);
-            const grad = ctx!.createLinearGradient(core.sx, core.sy, n.sx, n.sy);
-            grad.addColorStop(0, hexA(m.color, 0)); grad.addColorStop(1, hexA(m.color, la));
-            ctx!.strokeStyle = grad; ctx!.lineWidth = isSel ? 1.8 : 1;
-            ctx!.beginPath(); ctx!.moveTo(core.sx, core.sy); ctx!.lineTo(n.sx, n.sy); ctx!.stroke();
-          }
-          const rr = n.baseR * n.sc * (isSel ? 1.8 : 1);
-          glow(n.sx, n.sy, rr, m.color, alpha);
-          if (isSel) {
-            // anillo de selección
-            ctx!.strokeStyle = hexA(m.color, 0.9); ctx!.lineWidth = 1.5;
-            ctx!.beginPath(); ctx!.arc(n.sx, n.sy, rr + 6, 0, 6.2832); ctx!.stroke();
-          }
-          if (isSel || (n.sc > 1.06 && dim > 0.5)) {
-            ctx!.textAlign = 'center';
-            ctx!.fillStyle = hexA('#eaf4ff', isSel ? 0.95 : 0.55 * alpha);
-            ctx!.font = `${isSel ? 11 : 9}px ${FONT.mono}`;
-            ctx!.fillText(m.label, n.sx, n.sy - rr - 6);
-          }
-        }
-      };
-      draw(order.filter((i) => nodes[i].zz > 0), null);
-      const core = drawCore(t);
-      // Satélites: OTROS nodos en línea AHORA orbitando tu núcleo (presencia real).
-      const peers = peersRef.current;
-      if (peers > 0 && !errorTint) {
-        for (let i = 0; i < peers; i++) {
-          const a = (i / peers) * 6.2832 + t * 0.12;
-          const bob = Math.sin(t * 0.6 + i * 1.7) * 0.14;
-          const pp = project(Math.cos(a) * 1.62, bob, Math.sin(a) * 1.62);
-          const depth = 0.35 + (pp.zz + 1) * 0.32;
-          ctx!.strokeStyle = hexA('#39FF14', 0.045 * depth);
-          ctx!.lineWidth = 1;
-          ctx!.beginPath(); ctx!.moveTo(core.sx, core.sy); ctx!.lineTo(pp.sx, pp.sy); ctx!.stroke();
-          glow(pp.sx, pp.sy, 1.5 * pp.sc, '#39FF14', 0.5 * depth);
-        }
-      }
-      draw(order.filter((i) => nodes[i].zz <= 0), core);
+      const sortIdx = Array.from({ length: nodes.length }, (_, i) => i).sort((a, b) => nodes[a].zz - nodes[b].zz);
 
-      yaw = savedYaw;
+      // LÍNEAS VIVAS con energía (del orbe a cada nodo).
+      const coreP = project(0, 0, 0);
+      for (const i of sortIdx) {
+        if (nodes[i].zz > 0) continue; // solo las que van adelante
+        const n = nodes[i];
+        const m = meta[i];
+        const isHov = i === hovered;
+        const alpha = isHov ? 0.7 : (n.zz > 0 ? 0.25 : 0.4);
+        const grad = ctx.createLinearGradient(coreP.sx, coreP.sy, n.sx, n.sy);
+        grad.addColorStop(0, hexA('#22D3EE', alpha * 0.6));
+        grad.addColorStop(0.5, hexA(m.color, alpha * 0.8));
+        grad.addColorStop(1, hexA(m.color, alpha * 0.4));
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = isHov ? 2.5 : 1.8;
+        ctx.setLineDash([4, 6]);
+        ctx.lineDashOffset = -t * 8; // energía fluyendo
+        ctx.beginPath(); ctx.moveTo(coreP.sx, coreP.sy); ctx.lineTo(n.sx, n.sy); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // ORBE CENTRAL.
+      drawCore(t);
+
+      // NODOS con GLOW PULSANTE (delante del orbe).
+      for (const i of sortIdx) {
+        if (nodes[i].zz < 0) continue;
+        const n = nodes[i];
+        const m = meta[i];
+        const isHov = i === hovered;
+        const pulse = Math.sin(t * 2 + i * 0.8);
+        const alpha = isHov ? 1 : (n.zz > 0 ? 0.85 : 0.65);
+        glow(n.sx, n.sy, n.baseR * n.sc, m.color, alpha, pulse);
+        // Etiqueta sobre el nodo.
+        ctx.fillStyle = hexA(m.color, alpha);
+        ctx.font = `700 ${Math.round(11 * n.sc)}px ${FONT.display}`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(m.label, n.sx, n.sy + n.baseR * n.sc + 6);
+      }
+
+      // Métricas flotantes con BLUR (las cifras semi-transparentes del fondo, matching screenshot).
+      ctx.save();
+      ctx.filter = 'blur(1.5px)';
+      ctx.fillStyle = hexA(C.ink, 0.25);
+      ctx.font = `700 18px ${FONT.display}`;
+      ctx.textAlign = 'center';
+      meta.forEach((m, i) => {
+        const n = nodes[i];
+        if (n.zz > 0.3) { // solo los de atrás
+          ctx.fillText(m.value, n.sx, n.sy - 12);
+        }
+      });
+      ctx.restore();
+
       rafRef.current = requestAnimationFrame(frame);
     }
     rafRef.current = requestAnimationFrame(frame);
 
     return () => {
-      cancelAnimationFrame(rafRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (ro) ro.disconnect();
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointerleave', onLeave);
     };
-  }, [orbState, height, reputation, axesKey, chipsKey, meta]);
+  }, [meta, height, orbState, reputation]);
 
-  const info = sel != null ? meta[sel] : null;
+  const selectedMeta = sel !== null && sel >= 0 && sel < meta.length ? meta[sel] : null;
 
   return (
-    <div
-      ref={wrapRef}
-      className={className}
-      role="img"
-      aria-label={ariaLabel}
-      style={{ position: 'relative', width: '100%', height, touchAction: 'pan-y' }}
-    >
-      <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height, cursor: 'pointer' }} />
-
-      {/* Núcleo central (reputación) */}
-      {center != null && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', textAlign: 'center', padding: '0 12px' }}>
-          {center}
-        </div>
-      )}
-
-      {/* Ficha de información completa (al acercarse / tocar un punto) */}
-      {info ? (
-        <div
-          style={{
-            position: 'absolute', left: 10, right: 10, bottom: 10, zIndex: 4, pointerEvents: 'none',
-            padding: '11px 14px', borderRadius: 12,
-            background: 'rgba(6,12,26,0.92)', border: `1px solid ${hexA(info.color, 0.5)}`,
-            boxShadow: `0 8px 30px rgba(0,0,0,0.5), 0 0 22px ${hexA(info.color, 0.18)}`,
-            backdropFilter: 'blur(10px)',
-            animation: 'nucleoInfoIn 0.2s ease both',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
-            <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: info.color }}>
-              {info.cat}
-            </span>
-            <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 18, color: info.color, lineHeight: 1 }}>
-              {info.value}
-            </span>
+    <div ref={wrapRef} className={className} style={{ position: 'relative', width: '100%', height, overflow: 'hidden' }}>
+      <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%', cursor: sel !== null ? 'pointer' : 'default' }} aria-label={ariaLabel} />
+      {selectedMeta && (
+        <div style={{
+          position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)',
+          minWidth: 280, maxWidth: '90%', padding: '14px 16px', borderRadius: 16,
+          background: 'linear-gradient(180deg, rgba(11,14,26,0.96), rgba(4,6,14,0.98))',
+          border: `1px solid ${hexA(selectedMeta.color, 0.5)}`,
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          boxShadow: `0 12px 40px ${hexA(selectedMeta.color, 0.35)}`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <div style={{
+              width: 10, height: 10, borderRadius: '50%',
+              background: selectedMeta.color,
+              boxShadow: `0 0 12px ${selectedMeta.color}`,
+            }} />
+            <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: C.ink }}>{selectedMeta.label}</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginLeft: 'auto' }}>{selectedMeta.cat}</span>
           </div>
-          <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff', marginTop: 2 }}>
-            {info.label}
+          <p style={{ fontFamily: FONT.display, fontSize: 14, color: C.mut, margin: '0 0 10px', lineHeight: 1.5 }}>{selectedMeta.detail}</p>
+          <div style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.line}`, marginBottom: 12 }}>
+            <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: C.cyanDim, textTransform: 'uppercase', marginBottom: 6 }}>▲ Mejora</div>
+            <p style={{ fontFamily: FONT.display, fontSize: 13, color: C.ink, margin: 0 }}>{selectedMeta.mejora}</p>
           </div>
-          <div style={{ fontFamily: FONT.body, fontSize: 12, color: 'rgba(234,242,255,0.75)', marginTop: 3, lineHeight: 1.4 }}>
-            {info.detail}
-          </div>
-          <div style={{ display: 'flex', gap: 7, marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <span style={{ flexShrink: 0, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#F59E0B', textTransform: 'uppercase' }}>
-              ▲ Mejora
-            </span>
-            <span style={{ fontFamily: FONT.body, fontSize: 12, color: '#ffdd9e', lineHeight: 1.4 }}>
-              {info.mejora}
-            </span>
-          </div>
-          {info.tab && onNavigate && (
+          {selectedMeta.tab && onNavigate && (
             <button
-              onClick={() => onNavigate(info.tab as string)}
+              onClick={() => onNavigate(selectedMeta.tab!)}
               style={{
-                pointerEvents: 'auto', marginTop: 10, width: '100%', padding: '9px',
-                borderRadius: 9, cursor: 'pointer',
-                border: `1px solid ${hexA(info.color, 0.55)}`,
-                background: hexA(info.color, 0.14), color: info.color,
-                fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase',
+                width: '100%', padding: '11px 0', borderRadius: 13, border: 'none', cursor: 'pointer',
+                background: `linear-gradient(135deg, ${hexA(selectedMeta.color, 0.9)}, ${hexA(selectedMeta.color, 0.7)})`,
+                fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}
             >
-              → Ir a {TAB_LABELS[info.tab] || 'sección'}
+              Ir a {TAB_LABELS[selectedMeta.tab] || selectedMeta.tab}
             </button>
           )}
         </div>
-      ) : (
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10, textAlign: 'center', pointerEvents: 'none', fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: 1, color: 'rgba(0,240,255,0.5)', textTransform: 'uppercase' }}>
-          Acércate o toca un punto para ver su detalle
-        </div>
       )}
-
-      <style>{`
-        @keyframes nucleoInfoIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-      `}</style>
     </div>
   );
 }
 
-export default HoloNucleo3D;
+
+// Export memoizado para evitar re-renders innecesarios del canvas 3D pesado.
+export default memo(HoloNucleo3D);

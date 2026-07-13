@@ -350,7 +350,7 @@ const TIER_COLORS: Record<string, { bg: string; text: string; border: string }> 
   FOUNDATION:     { bg: 'rgba(0,245,255,0.08)',  text: C.cyan,   border: C.cyanDim },
   SPECIALIZATION: { bg: 'rgba(255,215,0,0.08)',  text: C.gold,   border: C.goldDim },
   MAESTRÍA:       { bg: 'rgba(180,79,255,0.08)', text: C.purple, border: C.purpleDim },
-  VALIDATED:      { bg: 'rgba(57,255,20,0.08)',  text: C.green,  border: C.greenDim },
+  VALIDATED:      { bg: 'rgba(63, 208, 201,0.08)',  text: C.green,  border: C.greenDim },
   LOCKED:         { bg: 'rgba(255,255,255,0.04)', text: 'rgba(255,255,255,0.3)', border: 'rgba(255,255,255,0.1)' },
 };
 

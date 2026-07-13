@@ -108,7 +108,7 @@ export function IncomingJobPush() {
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: accent, boxShadow: `0 0 8px ${accent}`, animation: 'cp-breathe 1.2s ease-in-out infinite' }} />
         {label}
       </div>
-      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf2ff', marginTop: 4 }}>
+      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf0fb', marginTop: 4 }}>
         {incoming.title}
       </div>
       <div style={{ fontFamily: FONT.body, fontSize: 11.5, color: 'rgba(234,242,255,0.7)', marginTop: 2 }}>

@@ -10,7 +10,7 @@ interface ToastItem { id: number; message: string; type: ToastType; }
 interface ToastCtx { toast: (message: string, type?: ToastType) => void; }
 const Ctx = createContext<ToastCtx | null>(null);
 
-const COLOR: Record<ToastType, string> = { success: '#39FF14', error: '#ff5066', info: '#00F0FF' };
+const COLOR: Record<ToastType, string> = { success: '#3fd0c9', error: '#ff5066', info: '#5cc8ff' };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
@@ -59,7 +59,7 @@ const S: Record<string, React.CSSProperties> = {
     animation: 'msgEnter 0.28s ease-out',
   },
   msg: {
-    fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: 13.5,
-    color: '#eaf2ff', lineHeight: 1.35,
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 600, fontSize: 13.5,
+    color: '#eaf0fb', lineHeight: 1.35,
   },
 };

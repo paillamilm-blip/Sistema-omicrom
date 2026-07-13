@@ -13,6 +13,7 @@ import {
   // Sparkles, Bot, Loader2,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { C as T } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import type { SkillTest, SkillTestAttempt } from '../../types';
 
@@ -31,16 +32,17 @@ interface SimulatorChallengeProps {
   onSuccess: (peAwarded: number) => void;
 }
 
+// DERIVADO del tema (theme.ts) → un cambio de tema se propaga solo.
 const C = {
-  cyan: '#00F0FF', cyanDim: 'rgba(0,240,255,0.42)', cyanFaint: 'rgba(0,240,255,0.12)',
-  gold: '#F59E0B', goldFaint: 'rgba(245,158,11,0.12)',
-  green: '#39FF14', greenFaint: 'rgba(57,255,20,0.10)',
-  red: '#ff4d6d', redFaint: 'rgba(255,77,109,0.10)',
-  bg: '#020613', panel: 'rgba(8,16,38,0.72)', card: 'rgba(13,22,46,0.85)',
-  text: '#e6f1fb', sub: 'rgba(0,240,255,0.5)', line: 'rgba(0,240,255,0.14)',
+  cyan: T.cyan, cyanDim: T.cyanDim, cyanFaint: T.cyanFaint,
+  gold: T.gold, goldFaint: T.goldFaint,
+  green: T.green, greenFaint: T.greenFaint,
+  red: T.red, redFaint: T.redFaint,
+  bg: T.bg, panel: 'rgba(8,16,38,0.72)', card: 'rgba(13,22,46,0.85)',
+  text: T.ink, sub: 'rgba(92,200,255,0.5)', line: T.line,
 } as const;
-const MONO = "'Share Tech Mono', 'Courier New', monospace";
-const DISP = "'Rajdhani', sans-serif";
+const MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
+const DISP = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -222,7 +224,7 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
     <div role="dialog" aria-modal="true" aria-label={`Simulador: ${test.test_name}`}
       style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(2,6,19,0.92)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column' }}>
 
-      <header style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: C.panel, borderBottom: `1px solid ${C.line}`, boxShadow: '0 4px 24px rgba(0,240,255,0.08)' }}>
+      <header style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: C.panel, borderBottom: `1px solid ${C.line}`, boxShadow: '0 4px 24px rgba(92, 200, 255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, boxShadow: `0 0 14px ${C.cyan}44`, animation: 'cp-breathe 1.8s ease-in-out infinite' }}>
             <Zap size={18} style={{ color: C.cyan }} />
@@ -275,8 +277,8 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
               </button>
               {showTests && (
                 <div>
-                  {test.test_cases.map((tc, i) => (
-                    <div key={i} style={{ padding: 13, background: C.bg, borderTop: `1px solid ${C.line}`, fontFamily: MONO, fontSize: 11.5, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {test.test_cases.map((tc) => (
+                    <div key={`${tc.input}-${tc.expected_output}`} style={{ padding: 13, background: C.bg, borderTop: `1px solid ${C.line}`, fontFamily: MONO, fontSize: 11.5, display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <div style={{ display: 'flex', gap: 8 }}><span style={{ color: C.sub, width: 72, flexShrink: 0 }}>Input:</span><span style={{ color: '#5ab2ff' }}>{tc.input}</span></div>
                       <div style={{ display: 'flex', gap: 8 }}><span style={{ color: C.sub, width: 72, flexShrink: 0 }}>Esperado:</span><span style={{ color: C.green }}>{tc.expected_output}</span></div>
                       {tc.explanation && <p style={{ margin: '2px 0 0', color: C.sub, fontStyle: 'italic' }}>{tc.explanation}</p>}
@@ -302,8 +304,8 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
 
         {activeView === 'editor' && (
           <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ position: 'relative', borderRadius: 12, border: `1px solid ${C.cyanDim}`, overflow: 'hidden', background: '#040a18', boxShadow: `inset 0 0 30px rgba(0,240,255,0.06)` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderBottom: `1px solid ${C.line}`, background: 'rgba(0,240,255,0.04)' }}>
+            <div style={{ position: 'relative', borderRadius: 12, border: `1px solid ${C.cyanDim}`, overflow: 'hidden', background: '#040a18', boxShadow: `inset 0 0 30px rgba(92, 200, 255,0.06)` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderBottom: `1px solid ${C.line}`, background: 'rgba(92, 200, 255,0.04)' }}>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <div style={{ width: 9, height: 9, borderRadius: '50%', background: C.red, opacity: 0.7 }} />
                   <div style={{ width: 9, height: 9, borderRadius: '50%', background: C.gold, opacity: 0.7 }} />
@@ -358,15 +360,15 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
 //   return (
 //     <div style={{ borderRadius: 12, border: `1px solid ${C.gold}55`, overflow: 'hidden', background: C.goldFaint }}>
 //       <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 13px', borderBottom: (loading || text) ? `1px solid ${C.gold}33` : 'none' }}>
-//         <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(245,158,11,0.16)', border: `1px solid ${C.gold}55`, animation: loading ? 'cp-breathe 1s ease-in-out infinite' : undefined }}>
+//         <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 176, 46,0.16)', border: `1px solid ${C.gold}55`, animation: loading ? 'cp-breathe 1s ease-in-out infinite' : undefined }}>
 //           <Bot size={16} style={{ color: C.gold }} />
 //         </div>
 //         <div style={{ flex: 1, minWidth: 0 }}>
 //           <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 13.5, color: '#ffd98a' }}>Copiloto IA</div>
-//           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(245,158,11,0.7)', letterSpacing: 0.5 }}>Análisis neuronal en vivo</div>
+//           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255, 176, 46,0.7)', letterSpacing: 0.5 }}>Análisis neuronal en vivo</div>
 //         </div>
 //         {!loading && (
-//           <button onClick={onAsk} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 9, background: 'rgba(245,158,11,0.16)', border: `1px solid ${C.gold}55`, color: '#ffd98a', cursor: 'pointer', fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
+//           <button onClick={onAsk} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 9, background: 'rgba(255, 176, 46,0.16)', border: `1px solid ${C.gold}55`, color: '#ffd98a', cursor: 'pointer', fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
 //             <Sparkles size={13} /> {text ? 'RE-ANALIZAR' : 'ANALIZAR'}
 //           </button>
 //         )}
@@ -405,7 +407,7 @@ function ResultPanel({ result, passingScore, peAwarded }: { result: RunResult; p
           </div>
         </div>
         {peAwarded > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 9, background: 'rgba(245,158,11,0.2)', border: `1px solid ${C.gold}55` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 9, background: 'rgba(255, 176, 46,0.2)', border: `1px solid ${C.gold}55` }}>
             <Trophy size={14} style={{ color: C.gold }} />
             <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: C.gold }}>+{peAwarded} PE</span>
           </div>
@@ -427,8 +429,8 @@ function ResultPanel({ result, passingScore, peAwarded }: { result: RunResult; p
           </button>
           {expanded && (
             <div>
-              {result.testCaseResults.map((tc, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 14px', borderTop: `1px solid ${C.line}` }}>
+              {result.testCaseResults.map((tc) => (
+                <div key={`${tc.input}-${tc.passed ? 'pass' : 'fail'}-${tc.actual}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 14px', borderTop: `1px solid ${C.line}` }}>
                   {tc.passed ? <CheckCircle size={13} style={{ color: C.green, flexShrink: 0, marginTop: 2 }} /> : <XCircle size={13} style={{ color: C.red, flexShrink: 0, marginTop: 2 }} />}
                   <div style={{ fontFamily: MONO, fontSize: 11, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <p style={{ margin: 0, color: C.sub }}>Input: <span style={{ color: '#5ab2ff' }}>{tc.input}</span></p>
