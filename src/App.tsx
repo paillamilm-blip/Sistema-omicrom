@@ -11,6 +11,7 @@ import { OraculoBar } from './components/OraculoBar';
 import { InstallPWA } from './components/shared/InstallPWA';
 import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
 import { HoloGemeloHome } from './components/perfil/HoloGemeloHome';
+import { HolographicHub } from './components/HolographicHub';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
@@ -98,7 +99,11 @@ function AppShell() {
           />
         </ErrorBoundary>
       )}
-      {activeTab === 'perfil' && perfilView === 'holo' ? (
+      {activeTab === 'perfil' ? (
+        <ErrorBoundary section="HolographicHub">
+          <HolographicHub />
+        </ErrorBoundary>
+      ) : activeTab === 'perfil' && perfilView === 'holo' ? (
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
           <ErrorBoundary section="Gemelo">
             <HoloGemeloHome onOpenPerfil={() => setPerfilView('classic')} />
