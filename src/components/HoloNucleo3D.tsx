@@ -5,7 +5,7 @@
 // con blur, rotación orbital suave, parallax, nodos tocables con fichas.
 // IMPACTO PREMIUM MÁXIMO: oscuro, tecnológico, moderno.
 // ═══════════════════════════════════════════════════════════════════════
-import { useEffect, useMemo, useRef, useState, memo } from 'react';
+import { useEffect, useMemo, useRef, useState, memo, type ReactNode } from 'react';
 import { C, FONT } from '../theme';
 
 export type OrbState = 'idle' | 'loading' | 'success' | 'celebration' | 'error';
@@ -37,6 +37,9 @@ interface Props {
   livePeers?: number;
   onNavigate?: (tab: string) => void;
   className?: string;
+  variant?: string;          // compat: PerfilTab pasa "identity"
+  orbSize?: string;          // compat: PerfilTab pasa "md"
+  center?: ReactNode;        // contenido central superpuesto (nº reputación)
 }
 
 interface NodeMeta {
@@ -117,9 +120,9 @@ export function HoloNucleo3D({
   chips = [],
   reputation = 0,
   axes,
-  livePeers = 0,
   onNavigate,
   className = '',
+  center,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -213,62 +216,76 @@ export function HoloNucleo3D({
       return { sx: CX + x2 * R * persp, sy: CY + y2 * R * persp, sc: persp, zz: z2 };
     }
 
-    // ⭐ ORBE EMOCIONAL con colores dinámicos + reactividad al audio
+    // ⭐ ORBE PREMIUM: esfera luminosa con volumen, bloom aditivo (neón real),
+    // anillo creciente azul y anillos orbitales. El número lo pinta el overlay `center`.
     function drawCore(t: number) {
       const p = project(0, 0, 0);
-      const R = Math.min(W, H) * 0.16; // ENORME
-      
-      // ⭐ PULSO EMOCIONAL (diferente según emoción)
-      let pulseSpeed = 1.2;
-      let pulseIntensity = 0.08;
-      
-      if (emotion === 'excited') {
-        pulseSpeed = 2.4; // Late más rápido
-        pulseIntensity = 0.15;
-      } else if (emotion === 'thinking') {
-        pulseSpeed = 0.6; // Late más lento
-        pulseIntensity = 0.05;
-      } else if (emotion === 'alert') {
-        pulseSpeed = 3.0; // Late urgente
-        pulseIntensity = 0.2;
-      } else if (emotion === 'celebrating') {
-        pulseSpeed = 1.8;
-        pulseIntensity = 0.18;
-      }
-      
-      // ⭐ REACTIVIDAD AL AUDIO (partículas vibran con la voz)
-      const audioPulse = audioLevel > 0 ? audioLevel * 0.25 : 0;
+      const R = Math.min(W, H) * 0.185; // ENORME y dominante
+
+      let pulseSpeed = 1.2, pulseIntensity = 0.06;
+      if (emotion === 'excited') { pulseSpeed = 2.4; pulseIntensity = 0.12; }
+      else if (emotion === 'thinking') { pulseSpeed = 0.6; pulseIntensity = 0.045; }
+      else if (emotion === 'alert') { pulseSpeed = 3.0; pulseIntensity = 0.16; }
+      else if (emotion === 'celebrating') { pulseSpeed = 1.8; pulseIntensity = 0.15; }
+
+      const audioPulse = audioLevel > 0 ? audioLevel * 0.22 : 0;
       const pulse = 1 + Math.sin(t * pulseSpeed) * pulseIntensity + audioPulse;
+      const Rp = R * pulse;
 
-      // ⭐ HALO EMOCIONAL (color cambia según emoción)
-      const halo = ctx.createRadialGradient(p.sx, p.sy, R * 0.4, p.sx, p.sy, R * 3.8);
-      halo.addColorStop(0, hexA(errorTint ? C.red : orbColors.halo, 0.5 * pulse));
-      halo.addColorStop(0.3, hexA(orbColors.halo, 0.28 * pulse));
-      halo.addColorStop(0.6, hexA(orbColors.accent, 0.12 * pulse));
+      // ── BLOOM multicapa (aditivo) → resplandor neón real ──
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const halo = ctx.createRadialGradient(p.sx, p.sy, Rp * 0.2, p.sx, p.sy, Rp * 4.4);
+      halo.addColorStop(0, hexA(errorTint ? C.red : orbColors.halo, 0.42));
+      halo.addColorStop(0.26, hexA(orbColors.halo, 0.20));
+      halo.addColorStop(0.58, hexA(orbColors.accent, 0.09));
       halo.addColorStop(1, hexA(orbColors.halo, 0));
-      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(p.sx, p.sy, R * 3.8, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp * 4.4, 0, 6.2832); ctx.fill();
 
-      // ⭐ ORBE CORE EMOCIONAL
-      const core = ctx.createRadialGradient(p.sx - R * 0.32, p.sy - R * 0.38, R * 0.08, p.sx, p.sy, R * pulse);
-      core.addColorStop(0, '#E0F7FF'); // highlight siempre blanco
-      core.addColorStop(0.25, errorTint ? '#f87171' : orbColors.core);
-      core.addColorStop(0.55, errorTint ? '#7f1d2e' : highRep ? orbColors.accent : orbColors.core);
-      core.addColorStop(0.85, '#1E3A8A');
-      core.addColorStop(1, '#0F172A');
-      ctx.fillStyle = core; ctx.beginPath(); ctx.arc(p.sx, p.sy, R * pulse, 0, 6.2832); ctx.fill();
-
-      // Anillos orbitando (las 3 elipses del screenshot).
-      ctx.save(); ctx.translate(p.sx, p.sy);
+      // Anillos orbitando (elipses) — aditivos, detrás del cuerpo
+      ctx.translate(p.sx, p.sy);
       for (let i = 0; i < 3; i++) {
-        ctx.save(); ctx.rotate(t * 0.25 + (i * Math.PI) / 3);
-        ctx.strokeStyle = hexA('#CFFAFE', 0.35 - i * 0.08); ctx.lineWidth = 1.2;
-        ctx.beginPath(); ctx.ellipse(0, 0, R * 1.4, R * 0.5, 0, 0, 6.2832); ctx.stroke(); ctx.restore();
+        ctx.save(); ctx.rotate(t * 0.22 + (i * Math.PI) / 3);
+        ctx.strokeStyle = hexA('#CFFAFE', 0.30 - i * 0.07); ctx.lineWidth = 1.3;
+        ctx.beginPath(); ctx.ellipse(0, 0, Rp * 1.52, Rp * 0.54, 0, 0, 6.2832); ctx.stroke(); ctx.restore();
       }
       ctx.restore();
 
-      // Highlight interno (brillo blanco).
-      ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.beginPath(); ctx.ellipse(p.sx - R * 0.3, p.sy - R * 0.36, R * 0.3, R * 0.18, -0.5, 0, 6.2832); ctx.fill();
+      // ── CUERPO de la esfera (highlight arriba-izquierda → sombra abajo-derecha) ──
+      const core = ctx.createRadialGradient(p.sx - Rp * 0.34, p.sy - Rp * 0.40, Rp * 0.04, p.sx, p.sy, Rp);
+      core.addColorStop(0, '#ffffff');
+      core.addColorStop(0.16, '#eafaff');
+      core.addColorStop(0.40, errorTint ? '#f87171' : orbColors.core);
+      core.addColorStop(0.70, errorTint ? '#7f1d2e' : highRep ? orbColors.accent : orbColors.core);
+      core.addColorStop(0.90, '#12275a');
+      core.addColorStop(1, '#091634');
+      ctx.fillStyle = core; ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp, 0, 6.2832); ctx.fill();
+
+      // Sombra interna (volumen 3D) abajo-derecha
+      const shade = ctx.createRadialGradient(p.sx + Rp * 0.42, p.sy + Rp * 0.5, Rp * 0.08, p.sx, p.sy, Rp);
+      shade.addColorStop(0, 'rgba(4,10,28,0.55)');
+      shade.addColorStop(0.55, 'rgba(4,10,28,0)');
+      shade.addColorStop(1, 'rgba(4,10,28,0)');
+      ctx.fillStyle = shade; ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp, 0, 6.2832); ctx.fill();
+
+      // ── ANILLO CRECIENTE azul (crescent moon ring) ──
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = Math.max(4, Rp * 0.13);
+      ctx.strokeStyle = hexA('#5cc8ff', 0.22);
+      ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp * 1.07, Math.PI * 1.12, Math.PI * 1.98); ctx.stroke();
+      ctx.lineWidth = Math.max(2, Rp * 0.045);
+      ctx.strokeStyle = hexA('#a9e6ff', 0.95);
+      ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp * 1.05, Math.PI * 1.12, Math.PI * 1.98); ctx.stroke();
+      ctx.restore();
+
+      // Highlight especular (brillo)
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.beginPath(); ctx.ellipse(p.sx - Rp * 0.32, p.sy - Rp * 0.38, Rp * 0.26, Rp * 0.15, -0.5, 0, 6.2832); ctx.fill();
+      ctx.restore();
 
       return p;
     }
@@ -292,6 +309,20 @@ export function HoloNucleo3D({
     function frame(now: number) {
       const t = (now - start) / 1000;
       ctx.clearRect(0, 0, W, H);
+
+      // ── Fondo: nebulosa + grid de constelación (profundidad) ──
+      const bg = ctx.createRadialGradient(CX, CY, 0, CX, CY, Math.max(W, H) * 0.72);
+      bg.addColorStop(0, 'rgba(22,44,88,0.30)');
+      bg.addColorStop(0.5, 'rgba(8,16,40,0.10)');
+      bg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(92,140,255,0.05)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const gstep = 42;
+      for (let gx = CX % gstep; gx < W; gx += gstep) { ctx.moveTo(gx, 0); ctx.lineTo(gx, H); }
+      for (let gy = CY % gstep; gy < H; gy += gstep) { ctx.moveTo(0, gy); ctx.lineTo(W, gy); }
+      ctx.stroke();
 
       // ⭐ POLVO ESTELAR REACTIVO (partículas cambian con audio y emoción)
       for (const d of dust) {
@@ -339,8 +370,10 @@ export function HoloNucleo3D({
 
       const sortIdx = Array.from({ length: nodes.length }, (_, i) => i).sort((a, b) => nodes[a].zz - nodes[b].zz);
 
-      // LÍNEAS VIVAS con energía (del orbe a cada nodo).
+      // LÍNEAS VIVAS con energía (del orbe a cada nodo). Aditivas → glow neón.
       const coreP = project(0, 0, 0);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
       for (const i of sortIdx) {
         if (nodes[i].zz > 0) continue; // solo las que van adelante
         const n = nodes[i];
@@ -358,6 +391,8 @@ export function HoloNucleo3D({
         ctx.beginPath(); ctx.moveTo(coreP.sx, coreP.sy); ctx.lineTo(n.sx, n.sy); ctx.stroke();
         ctx.setLineDash([]);
       }
+
+      ctx.restore();
 
       // ORBE CENTRAL.
       drawCore(t);
@@ -392,6 +427,12 @@ export function HoloNucleo3D({
       });
       ctx.restore();
 
+      // Viñeta cinematográfica (profundidad + foco al centro)
+      const vig = ctx.createRadialGradient(CX, CY, Math.min(W, H) * 0.34, CX, CY, Math.max(W, H) * 0.74);
+      vig.addColorStop(0, 'rgba(0,0,0,0)');
+      vig.addColorStop(1, 'rgba(0,0,4,0.55)');
+      ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+
       rafRef.current = requestAnimationFrame(frame);
     }
     rafRef.current = requestAnimationFrame(frame);
@@ -403,6 +444,7 @@ export function HoloNucleo3D({
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointerleave', onLeave);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meta, height, orbState, reputation]);
 
   const selectedMeta = sel !== null && sel >= 0 && sel < meta.length ? meta[sel] : null;
@@ -410,6 +452,11 @@ export function HoloNucleo3D({
   return (
     <div ref={wrapRef} className={className} style={{ position: 'relative', width: '100%', height, overflow: 'hidden' }}>
       <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%', cursor: sel !== null ? 'pointer' : 'default' }} aria-label={ariaLabel} />
+      {center && (
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
+          {center}
+        </div>
+      )}
       {selectedMeta && (
         <div style={{
           position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)',

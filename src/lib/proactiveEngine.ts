@@ -5,7 +5,7 @@
 // Contexto: hora, red en vivo, oportunidades, inactividad, logros.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { getMemory, getPatterns, getGoals, generateContextualGreeting } from './gemeloMemory';
+import { getPatterns, getGoals, generateContextualGreeting } from './gemeloMemory';
 import { getProfile, bestNextStep } from './gemeloProfile';
 
 export type ProactiveEventType = 
@@ -168,8 +168,6 @@ export function detectOpportunity(
  */
 export function detectMilestone(context: ProactiveContext): ProactiveEvent | null {
   try {
-    const profile = getProfile();
-    
     // Detectar si acabó de subir de nivel
     const previousRep = localStorage.getItem('omicron_previous_rep');
     const currentRep = context.reputation;

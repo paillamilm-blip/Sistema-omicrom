@@ -9,7 +9,7 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { OraculoBar } from './components/OraculoBar';
 import { InstallPWA } from './components/shared/InstallPWA';
 import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
-import { HubCentral } from './components/HubCentral';
+import { HoloGemeloHome } from './components/perfil/HoloGemeloHome';
 import { UnifiedLayout } from './components/UnifiedLayout';
 import { NavigationStack } from './components/NavigationStack';
 import { ToastProvider } from './components/shared/Toast';
@@ -50,10 +50,11 @@ function TabLoader() {
 }
 
 function AppShell() {
-  const { authStatus, isLoadingProfile, activeTab, profile, unreadCount } = useApp();
+  const { authStatus, isLoadingProfile, profile } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showIniciacion, setShowIniciacion] = useState(() => shouldShowIniciacion());
+  const [profileDetail, setProfileDetail] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -97,7 +98,15 @@ function AppShell() {
         {(currentTab) => (
           <ErrorBoundary section={TAB_TITLES[currentTab]} key={currentTab}>
             {currentTab === 'perfil' ? (
-              <HubCentral />
+              profileDetail ? (
+                <UnifiedLayout title="Mi Perfil" showBackButton onBack={() => setProfileDetail(false)}>
+                  <Suspense fallback={<TabLoader />}>
+                    <PerfilTab />
+                  </Suspense>
+                </UnifiedLayout>
+              ) : (
+                <HoloGemeloHome onOpenPerfil={() => setProfileDetail(true)} />
+              )
             ) : (
               <UnifiedLayout
                 title={TAB_TITLES[currentTab]}

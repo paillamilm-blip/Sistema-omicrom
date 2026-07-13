@@ -14,6 +14,8 @@ interface Conversation {
     tab: string;
     reputation: number;
     mood?: 'curious' | 'urgent' | 'casual';
+    // Metadatos adicionales de contexto (targetTab, action, queryType, etc.)
+    [key: string]: unknown;
   };
 }
 
@@ -119,7 +121,7 @@ function getMemory(): GemeloMemory {
 export function remember(
   userQuery: string,
   gemeloResponse: string,
-  context: { tab: string; reputation: number; mood?: 'curious' | 'urgent' | 'casual' }
+  context: { tab: string; reputation: number; mood?: 'curious' | 'urgent' | 'casual'; [key: string]: unknown }
 ): void {
   const memory = getMemory();
   
@@ -252,7 +254,7 @@ export function updateGoalProgress(goal: string, progress: number): void {
 /**
  * Obtiene el contexto completo para una consulta al Oráculo.
  */
-export function getContextForQuery(currentTab: string, reputation: number): {
+export function getContextForQuery(_currentTab: string, _reputation: number): {
   recentConversations: Conversation[];
   preferences: UserPreference[];
   patterns: UserPattern[];
@@ -281,7 +283,6 @@ export function generateContextualGreeting(
   reputation: number,
   daysSinceLastLogin: number
 ): string {
-  const memory = getMemory();
   const personality = inferPersonality();
   const goals = getGoals();
   const topGoal = goals[0];

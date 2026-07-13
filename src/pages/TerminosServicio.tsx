@@ -10,51 +10,6 @@ export function TerminosServicio() {
   return (
     <div style={S.page}>
       <div style={S.container}>
-        <button onClick={() => window.history.back()} style={S.backBtn}>
-          <ArrowLeft size={18} />
-          Volver
-        </button>
-
-        <h1 style={S.title}>Términos y Condiciones de Uso</h1>
-        <p style={S.updated}>Última actualización: 9 de julio de 2026</p>
-
-        <div style={S.content}>
-          {/* Contenido completo de términos */}
-          <section style={S.section}>
-            <h2 style={S.h2}>1. ACEPTACIÓN DE LOS TÉRMINOS</h2>
-            <p style={S.p}>
-              Al acceder y utilizar la plataforma Ómicron, usted acepta estar obligado por estos Términos.
-            </p>
-          </section>
-          
-          {/* ... resto del contenido ... */}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const S: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', background: C.bg, padding: '20px' },
-  container: { maxWidth: 800, margin: '0 auto', background: 'rgba(11,14,26,0.6)', borderRadius: 20, padding: '32px', border: `1px solid ${C.line}` },
-  backBtn: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.line}`, color: C.ink, fontFamily: FONT.display, fontSize: 14, cursor: 'pointer', marginBottom: 24 },
-  title: { fontFamily: FONT.display, fontSize: 32, fontWeight: 700, color: C.ink, marginBottom: 8 },
-  updated: { fontFamily: FONT.mono, fontSize: 12, color: C.mut, marginBottom: 32 },
-  content: { display: 'flex', flexDirection: 'column', gap: 24 },
-  section: { display: 'flex', flexDirection: 'column', gap: 12 },
-  h2: { fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.cyan, marginTop: 8, marginBottom: 8 },
-  h3: { fontFamily: FONT.display, fontSize: 16, fontWeight: 600, color: C.ink, marginTop: 8 },
-  p: { fontFamily: FONT.body, fontSize: 14, lineHeight: 1.7, color: C.mut, margin: 0 },
-  ul: { margin: '8px 0', paddingLeft: 24 },
-  li: { fontFamily: FONT.body, fontSize: 14, lineHeight: 1.7, color: C.mut, marginBottom: 6 },
-};
-
-export default TerminosServicio;
-
-export function TerminosServicio() {
-  return (
-    <div style={S.page}>
-      <div style={S.container}>
         <button
           onClick={() => window.history.back()}
           style={S.backBtn}
