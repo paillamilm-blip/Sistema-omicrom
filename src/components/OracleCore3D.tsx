@@ -1,293 +1,332 @@
 // src/components/OracleCore3D.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// 🔮 NÚCLEO 3D DEL ORÁCULO — Red neuronal WebGL pura
-// Tecnología oscura premium, no es juego, es herramienta de vida
+// 🔮 NÚCLEO 3D — Three.js real: esfera holográfica (fresnel), bloom aditivo,
+// partículas volumétricas, red de nodos orbitando en 3D. Premium, vivo.
 // ═══════════════════════════════════════════════════════════════════════
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import * as THREE from 'three';
 import { useGemeloProfile } from '../hooks/useGemeloProfile';
 import { useApp } from '../store/AppContext';
-import { useRealtime } from '../store/RealtimeContext';
+import type { TabId } from '../types';
 
-interface Node3D {
-  id: string;
-  label: string;
-  value: string | number;
-  x: number;
-  y: number;
-  z: number;
-  vx: number;
-  vy: number;
-  vz: number;
-  color: string;
-  size: number;
+const ORB_VERT = `
+varying vec3 vNormal;
+varying vec3 vView;
+void main(){
+  vNormal = normalize(normalMatrix * normal);
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  vView = normalize(-mv.xyz);
+  gl_Position = projectionMatrix * mv;
+}`;
+
+const ORB_FRAG = `
+uniform float uTime;
+uniform vec3 uCore;
+uniform vec3 uRim;
+uniform vec3 uDeep;
+varying vec3 vNormal;
+varying vec3 vView;
+void main(){
+  float fres = pow(1.0 - max(dot(vNormal, vView), 0.0), 2.3);
+  float band = 0.5 + 0.5 * sin(vNormal.y * 16.0 - uTime * 2.2);
+  band = smoothstep(0.55, 1.0, band) * 0.22;
+  float lit = pow(max(dot(vNormal, normalize(vec3(0.35,0.55,0.8))), 0.0), 0.7);
+  vec3 base = mix(uDeep, uCore, lit);
+  vec3 col = base + uRim * fres * 1.7 + uRim * band;
+  gl_FragColor = vec4(col, 0.92 + fres * 0.08);
+}`;
+
+const HALO_FRAG = `
+uniform vec3 uColor;
+varying vec3 vNormal;
+varying vec3 vView;
+void main(){
+  float f = pow(1.0 - max(dot(vNormal, vView), 0.0), 3.0);
+  gl_FragColor = vec4(uColor, f * 0.9);
+}`;
+
+
+// Textura radial suave (glow / partículas) generada en canvas
+function makeGlowTexture(): THREE.Texture {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d')!;
+  const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, 'rgba(255,255,255,1)');
+  grd.addColorStop(0.25, 'rgba(255,255,255,0.75)');
+  grd.addColorStop(0.6, 'rgba(255,255,255,0.18)');
+  grd.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }
 
+// Sprite de texto (título + subtítulo) que siempre mira a cámara
+function makeLabelSprite(title: string, sub: string, color: string): THREE.Sprite {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 256;
+  const g = c.getContext('2d')!;
+  g.clearRect(0, 0, 512, 256);
+  g.textAlign = 'center';
+  g.shadowColor = color;
+  g.shadowBlur = 22;
+  g.fillStyle = '#ffffff';
+  g.font = '700 72px -apple-system, system-ui, sans-serif';
+  g.fillText(title, 256, sub ? 108 : 148);
+  if (sub) {
+    g.shadowBlur = 0;
+    g.fillStyle = color;
+    g.font = '600 34px ui-monospace, monospace';
+    g.fillText(sub, 256, 168);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  const s = new THREE.Sprite(mat);
+  s.scale.set(150, 75, 1);
+  return s;
+}
+
+interface NodeDef {
+  id: string; title: string; sub: string; color: string;
+  angle: number; radius: number; z: number; r: number; tab: TabId | null;
+}
+
+
 export function OracleCore3D() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mountRef = useRef<HTMLDivElement>(null);
   const { profile } = useGemeloProfile();
   const { setActiveTab, profile: sb } = useApp();
-  const { onlineCount } = useRealtime();
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
-  const isDragging = useRef(false);
-  const lastMouse = useRef({ x: 0, y: 0 });
 
   const rep = profile.rep;
   const tokens = sb?.token_balance ?? 2480;
-  const experiencia = profile.axes.execution ?? 120;
+  const exp = profile.axes?.execution ?? 120;
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const mount = mountRef.current;
+    if (!mount) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const W = mount.clientWidth || window.innerWidth;
+    const H = mount.clientHeight || window.innerHeight;
 
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
-    canvas.style.width = `${window.innerWidth}px`;
-    canvas.style.height = `${window.innerHeight}px`;
-    ctx.scale(dpr, dpr);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(W, H);
+    renderer.setClearColor(0x000000, 0);
+    mount.appendChild(renderer.domElement);
+    renderer.domElement.style.touchAction = 'none';
+    renderer.domElement.style.cursor = 'grab';
 
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const centerX = w / 2;
-    const centerY = h / 2.2;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(48, W / H, 0.1, 3000);
+    camera.position.set(0, 0, 560);
 
-    // Nodos 3D en espacio
-    const nodes: Node3D[] = [
-      // Orbe central (REP)
-      { id: 'rep', label: String(rep), value: 'REPUTACIÓN', x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, color: '#5cc8ff', size: 100 },
-      
-      // Nodos orbitales nivel 1 (cerca)
-      { id: 'n1', label: 'N1', value: 'NODO', x: 0, y: -180, z: 50, vx: 0, vy: 0, vz: 0, color: '#5cc8ff', size: 16 },
-      { id: 'tokens', label: String(tokens), value: 'TOKENS', x: -200, y: 0, z: 30, vx: 0, vy: 0, vz: 0, color: '#ffd27a', size: 20 },
-      { id: 'exp', label: String(experiencia), value: 'EXPERIENCIA', x: 200, y: 0, z: 30, vx: 0, vy: 0, vz: 0, color: '#4ade80', size: 20 },
-      { id: 'g3', label: 'G3', value: '', x: 0, y: 180, z: 50, vx: 0, vy: 0, vz: 0, color: '#a78bfa', size: 16 },
-      
-      // Nodos orbitales nivel 2 (módulos)
-      { id: 'ejecuta', label: 'Ejecuta', value: 'EMPLEOS', x: 160, y: -120, z: -20, vx: 0, vy: 0, vz: 0, color: '#ff9500', size: 14 },
-      { id: 'aprende', label: 'Aprende', value: 'ACADEMIA', x: -160, y: -120, z: -20, vx: 0, vy: 0, vz: 0, color: '#ff5252', size: 14 },
-      { id: 'capitaliza', label: 'Capitaliza', value: 'BÓVEDA', x: 160, y: 120, z: -20, vx: 0, vy: 0, vz: 0, color: '#5cc8ff', size: 14 },
-      { id: 'gobierna', label: 'Gobierna', value: 'GOBERNANZA', x: -160, y: 120, z: -20, vx: 0, vy: 0, vz: 0, color: '#a78bfa', size: 14 },
+    const glowTex = makeGlowTexture();
+    const root = new THREE.Group();
+    scene.add(root);
+
+    // ── Núcleo holográfico (esfera con shader fresnel) ──
+    const orbMat = new THREE.ShaderMaterial({
+      vertexShader: ORB_VERT, fragmentShader: ORB_FRAG, transparent: true,
+      uniforms: {
+        uTime: { value: 0 },
+        uCore: { value: new THREE.Color('#bfe6ff') },
+        uRim: { value: new THREE.Color('#3aa0ff') },
+        uDeep: { value: new THREE.Color('#08243f') },
+      },
+    });
+    const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(78, 6), orbMat);
+    scene.add(orb);
+
+
+    // Halo interno (fresnel aditivo, backside) → aura viva
+    const haloMat = new THREE.ShaderMaterial({
+      vertexShader: ORB_VERT, fragmentShader: HALO_FRAG,
+      transparent: true, side: THREE.BackSide, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: { uColor: { value: new THREE.Color('#4db6ff') } },
+    });
+    const halo = new THREE.Mesh(new THREE.IcosahedronGeometry(96, 4), haloMat);
+    scene.add(halo);
+
+    // Bloom fake: sprite radial aditivo detrás del orbe
+    const bloom = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTex, color: new THREE.Color('#2f8fff'),
+      transparent: true, blending: THREE.AdditiveBlending, depthTest: false,
+    }));
+    bloom.scale.set(520, 520, 1);
+    bloom.position.z = -30;
+    scene.add(bloom);
+
+    // Número central REP (sprite crisp que mira a cámara)
+    const repSprite = makeLabelSprite(String(rep), 'REPUTACIÓN', '#8fd3ff');
+    repSprite.scale.set(220, 110, 1);
+    repSprite.renderOrder = 20;
+    scene.add(repSprite);
+
+    // ── Campo wireframe de profundidad ──
+    const field = new THREE.LineSegments(
+      new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(560, 1)),
+      new THREE.LineBasicMaterial({ color: 0x1b3a5c, transparent: true, opacity: 0.22 })
+    );
+    root.add(field);
+
+    // ── Partículas volumétricas ──
+    const pCount = 700;
+    const pPos = new Float32Array(pCount * 3);
+    for (let i = 0; i < pCount; i++) {
+      const rad = 260 + Math.random() * 620;
+      const th = Math.random() * Math.PI * 2;
+      const ph = Math.acos(2 * Math.random() - 1);
+      pPos[i * 3] = rad * Math.sin(ph) * Math.cos(th);
+      pPos[i * 3 + 1] = rad * Math.sin(ph) * Math.sin(th);
+      pPos[i * 3 + 2] = rad * Math.cos(ph);
+    }
+    const pGeo = new THREE.BufferGeometry();
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({
+      size: 3.2, map: glowTex, color: 0x6fc4ff, transparent: true,
+      opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+    }));
+    root.add(particles);
+
+
+    // ── Definición de nodos orbitales ──
+    const NODES: NodeDef[] = [
+      { id: 'exp', title: String(exp), sub: 'EXPERIENCIA', color: '#4ade80', angle: 0, radius: 215, z: -30, r: 9, tab: 'maxskill' },
+      { id: 'ejecuta', title: 'Ejecuta', sub: 'EMPLEOS', color: '#ff9f45', angle: 45, radius: 225, z: 15, r: 10, tab: 'empleos' },
+      { id: 'n1', title: 'N1', sub: 'NODO', color: '#5cc8ff', angle: 90, radius: 205, z: 45, r: 8, tab: null },
+      { id: 'aprende', title: 'Aprende', sub: 'ACADEMIA', color: '#ff6b6b', angle: 135, radius: 225, z: 15, r: 10, tab: 'academia' },
+      { id: 'tokens', title: tokens.toLocaleString(), sub: 'TOKENS Ω', color: '#ffd27a', angle: 180, radius: 215, z: -30, r: 9, tab: 'wallet' },
+      { id: 'capitaliza', title: 'Capitaliza', sub: 'BÓVEDA', color: '#5cc8ff', angle: 225, radius: 225, z: 15, r: 10, tab: 'vault' },
+      { id: 'g3', title: 'G3', sub: 'NIVEL', color: '#a78bfa', angle: 270, radius: 205, z: 45, r: 8, tab: null },
+      { id: 'gobierna', title: 'Gobierna', sub: 'GOBERNANZA', color: '#a78bfa', angle: 315, radius: 225, z: 15, r: 10, tab: 'gobernanza' },
     ];
 
-    // Partículas de fondo (estrellas profundas)
-    const particles: { x: number; y: number; z: number; opacity: number }[] = [];
-    for (let i = 0; i < 200; i++) {
-      particles.push({
-        x: (Math.random() - 0.5) * w * 2,
-        y: (Math.random() - 0.5) * h * 2,
-        z: Math.random() * 500 - 250,
-        opacity: Math.random() * 0.5 + 0.1,
-      });
-    }
+    const clickable: THREE.Object3D[] = [];
+    NODES.forEach(n => {
+      const a = (n.angle * Math.PI) / 180;
+      const pos = new THREE.Vector3(Math.cos(a) * n.radius, Math.sin(a) * n.radius, n.z);
+      const col = new THREE.Color(n.color);
 
-    let animFrame: number;
-    let time = 0;
+      // línea de energía nodo → centro
+      const lg = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), pos]);
+      root.add(new THREE.Line(lg, new THREE.LineBasicMaterial({
+        color: col, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending,
+      })));
 
-    const project3D = (x: number, y: number, z: number, rotX: number, rotY: number) => {
-      // Rotación Y (horizontal)
-      const cosY = Math.cos(rotY);
-      const sinY = Math.sin(rotY);
-      const xRot = x * cosY - z * sinY;
-      const zRot = x * sinY + z * cosY;
+      // esfera nodo
+      const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(n.r, 24, 24),
+        new THREE.MeshBasicMaterial({ color: col })
+      );
+      sphere.position.copy(pos);
+      sphere.userData.tab = n.tab;
+      clickable.push(sphere);
+      root.add(sphere);
 
-      // Rotación X (vertical)
-      const cosX = Math.cos(rotX);
-      const sinX = Math.sin(rotX);
-      const yRot = y * cosX - zRot * sinX;
-      const zFinal = y * sinX + zRot * cosX;
+      // glow del nodo
+      const ng = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: glowTex, color: col, transparent: true,
+        blending: THREE.AdditiveBlending, depthTest: false,
+      }));
+      ng.scale.set(n.r * 7, n.r * 7, 1);
+      ng.position.copy(pos);
+      root.add(ng);
 
-      // Proyección perspectiva
-      const perspective = 800;
-      const scale = perspective / (perspective + zFinal);
-      
-      return {
-        x: centerX + xRot * scale,
-        y: centerY + yRot * scale,
-        scale,
-        z: zFinal,
-      };
+      // etiqueta
+      const label = makeLabelSprite(n.title, n.sub, n.color);
+      label.position.copy(pos).add(new THREE.Vector3(0, n.r + 26, 0));
+      root.add(label);
+    });
+
+
+    // ── Interacción: arrastrar para rotar + auto-rotación ──
+    let targetY = 0, targetX = 0.18;
+    let dragging = false, moved = false, downX = 0, downY = 0;
+    const raycaster = new THREE.Raycaster();
+    const ptr = new THREE.Vector2();
+
+    const onDown = (e: PointerEvent) => {
+      dragging = true; moved = false; downX = e.clientX; downY = e.clientY;
+      renderer.domElement.style.cursor = 'grabbing';
     };
-
-    const render = () => {
-      time += 0.01;
-
-      // Fondo negro absoluto
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, w, h);
-
-      // Partículas de fondo (profundidad oscura)
-      particles.forEach(p => {
-        const proj = project3D(p.x, p.y, p.z, rotation.x, rotation.y);
-        if (proj.z < 0) return; // Detrás de la cámara
-        
-        ctx.fillStyle = `rgba(92, 200, 255, ${p.opacity * proj.scale * 0.3})`;
-        ctx.beginPath();
-        ctx.arc(proj.x, proj.y, 0.8 * proj.scale, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Ordenar nodos por Z (profundidad)
-      const sortedNodes = [...nodes].sort((a, b) => {
-        const pa = project3D(a.x, a.y, a.z, rotation.x, rotation.y);
-        const pb = project3D(b.x, b.y, b.z, rotation.x, rotation.y);
-        return pa.z - pb.z;
-      });
-
-      // Dibujar líneas de conexión (red neuronal)
-      ctx.strokeStyle = 'rgba(92, 200, 255, 0.15)';
-      ctx.lineWidth = 1;
-      sortedNodes.forEach((node, i) => {
-        if (node.id === 'rep') return; // Centro no conecta a sí mismo
-        const start = project3D(node.x, node.y, node.z, rotation.x, rotation.y);
-        const end = project3D(0, 0, 0, rotation.x, rotation.y);
-        
-        if (start.z > 0 && end.z > 0) {
-          ctx.beginPath();
-          ctx.moveTo(start.x, start.y);
-          ctx.lineTo(end.x, end.y);
-          ctx.stroke();
-        }
-      });
-
-      // Dibujar nodos
-      sortedNodes.forEach(node => {
-        const proj = project3D(node.x, node.y, node.z, rotation.x, rotation.y);
-        if (proj.z < 0) return;
-
-        const size = node.size * proj.scale;
-        
-        // Orbe central (especial)
-        if (node.id === 'rep') {
-          // Glow exterior
-          const gradient = ctx.createRadialGradient(proj.x, proj.y, 0, proj.x, proj.y, size);
-          gradient.addColorStop(0, 'rgba(180, 220, 255, 0.4)');
-          gradient.addColorStop(0.3, 'rgba(92, 200, 255, 0.3)');
-          gradient.addColorStop(0.7, 'rgba(30, 80, 140, 0.2)');
-          gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.arc(proj.x, proj.y, size * 1.5, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Esfera central
-          const coreGradient = ctx.createRadialGradient(
-            proj.x - size * 0.3,
-            proj.y - size * 0.3,
-            0,
-            proj.x,
-            proj.y,
-            size
-          );
-          coreGradient.addColorStop(0, 'rgba(220, 240, 255, 1)');
-          coreGradient.addColorStop(0.4, 'rgba(92, 200, 255, 0.9)');
-          coreGradient.addColorStop(1, 'rgba(30, 80, 140, 1)');
-          
-          ctx.fillStyle = coreGradient;
-          ctx.beginPath();
-          ctx.arc(proj.x, proj.y, size, 0, Math.PI * 2);
-          ctx.fill();
-
-          // REP número
-          ctx.fillStyle = '#000000';
-          ctx.font = `bold ${size * 0.7}px -apple-system, system-ui, sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(String(rep), proj.x, proj.y - size * 0.05);
-
-          // Label "REPUTACIÓN"
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-          ctx.font = `600 ${size * 0.12}px monospace`;
-          ctx.fillText('REPUTACIÓN', proj.x, proj.y + size * 0.35);
-        } 
-        // Nodos orbitales
-        else {
-          // Glow
-          ctx.shadowBlur = 20 * proj.scale;
-          ctx.shadowColor = node.color;
-          
-          // Círculo nodo
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-          ctx.strokeStyle = node.color;
-          ctx.lineWidth = 2 * proj.scale;
-          ctx.beginPath();
-          ctx.arc(proj.x, proj.y, size, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-          
-          ctx.shadowBlur = 0;
-
-          // Label
-          ctx.fillStyle = node.color;
-          ctx.font = `600 ${size * 1.1}px -apple-system, system-ui, sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(node.label, proj.x, proj.y);
-
-          // Sublabel
-          if (node.value) {
-            ctx.fillStyle = 'rgba(180, 180, 180, 0.7)';
-            ctx.font = `500 ${size * 0.5}px monospace`;
-            ctx.fillText(node.value, proj.x, proj.y + size * 1.8);
-          }
-        }
-      });
-
-      animFrame = requestAnimationFrame(render);
+    const onMove = (e: PointerEvent) => {
+      if (!dragging) return;
+      const dx = e.clientX - downX, dy = e.clientY - downY;
+      if (Math.abs(dx) + Math.abs(dy) > 5) moved = true;
+      targetY += dx * 0.006;
+      targetX = Math.max(-0.7, Math.min(0.7, targetX + dy * 0.005));
+      downX = e.clientX; downY = e.clientY;
     };
-
-    render();
-
-    // Rotación automática sutil
-    const autoRotate = setInterval(() => {
-      if (!isDragging.current) {
-        setRotation(r => ({ x: r.x, y: r.y + 0.002 }));
+    const onUp = (e: PointerEvent) => {
+      dragging = false;
+      renderer.domElement.style.cursor = 'grab';
+      if (!moved) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        ptr.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        ptr.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(ptr, camera);
+        const hit = raycaster.intersectObjects(clickable, false)[0];
+        const tab = hit?.object.userData.tab as TabId | undefined;
+        if (tab) setActiveTab(tab);
       }
-    }, 50);
-
-    return () => {
-      cancelAnimationFrame(animFrame);
-      clearInterval(autoRotate);
     };
-  }, [rep, tokens, experiencia, rotation]);
+    const el = renderer.domElement;
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointerleave', () => { dragging = false; });
 
-  // Interacción táctil/mouse para rotar
-  const handlePointerDown = (e: React.PointerEvent) => {
-    isDragging.current = true;
-    lastMouse.current = { x: e.clientX, y: e.clientY };
-  };
+    const onResize = () => {
+      const w = mount.clientWidth, h = mount.clientHeight;
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+    window.addEventListener('resize', onResize);
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging.current) return;
-    const dx = e.clientX - lastMouse.current.x;
-    const dy = e.clientY - lastMouse.current.y;
-    setRotation(r => ({
-      x: r.x + dy * 0.005,
-      y: r.y + dx * 0.005,
-    }));
-    lastMouse.current = { x: e.clientX, y: e.clientY };
-  };
 
-  const handlePointerUp = () => {
-    isDragging.current = false;
-  };
+    // ── Loop de render ──
+    const clock = new THREE.Clock();
+    let raf = 0;
+    const tick = () => {
+      const t = clock.getElapsedTime();
+      orbMat.uniforms.uTime.value = t;
+      orb.rotation.y = t * 0.15;
+      orb.rotation.x = t * 0.05;
+      if (!dragging) targetY += 0.0016;
+      root.rotation.y += (targetY - root.rotation.y) * 0.06;
+      root.rotation.x += (targetX - root.rotation.x) * 0.06;
+      field.rotation.y = -t * 0.03;
+      particles.rotation.y = t * 0.02;
+      const pulse = 1 + Math.sin(t * 1.6) * 0.04;
+      bloom.scale.set(520 * pulse, 520 * pulse, 1);
+      renderer.render(scene, camera);
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
 
-  return (
-    <canvas
-      ref={canvasRef}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        touchAction: 'none',
-        cursor: isDragging.current ? 'grabbing' : 'grab',
-      }}
-    />
-  );
+    // ── Cleanup ──
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerup', onUp);
+      renderer.dispose();
+      scene.traverse((o) => {
+        const any = o as unknown as { geometry?: THREE.BufferGeometry; material?: THREE.Material | THREE.Material[] };
+        any.geometry?.dispose?.();
+        const m = any.material;
+        if (Array.isArray(m)) m.forEach(mm => mm.dispose());
+        else m?.dispose?.();
+      });
+      glowTex.dispose();
+      if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
+    };
+  }, [rep, tokens, exp, setActiveTab]);
+
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0 }} />;
 }
