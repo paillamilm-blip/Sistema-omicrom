@@ -277,8 +277,8 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
               </button>
               {showTests && (
                 <div>
-                  {test.test_cases.map((tc, i) => (
-                    <div key={i} style={{ padding: 13, background: C.bg, borderTop: `1px solid ${C.line}`, fontFamily: MONO, fontSize: 11.5, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {test.test_cases.map((tc) => (
+                    <div key={`${tc.input}-${tc.expected_output}`} style={{ padding: 13, background: C.bg, borderTop: `1px solid ${C.line}`, fontFamily: MONO, fontSize: 11.5, display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <div style={{ display: 'flex', gap: 8 }}><span style={{ color: C.sub, width: 72, flexShrink: 0 }}>Input:</span><span style={{ color: '#5ab2ff' }}>{tc.input}</span></div>
                       <div style={{ display: 'flex', gap: 8 }}><span style={{ color: C.sub, width: 72, flexShrink: 0 }}>Esperado:</span><span style={{ color: C.green }}>{tc.expected_output}</span></div>
                       {tc.explanation && <p style={{ margin: '2px 0 0', color: C.sub, fontStyle: 'italic' }}>{tc.explanation}</p>}
@@ -429,8 +429,8 @@ function ResultPanel({ result, passingScore, peAwarded }: { result: RunResult; p
           </button>
           {expanded && (
             <div>
-              {result.testCaseResults.map((tc, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 14px', borderTop: `1px solid ${C.line}` }}>
+              {result.testCaseResults.map((tc) => (
+                <div key={`${tc.input}-${tc.passed ? 'pass' : 'fail'}-${tc.actual}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 14px', borderTop: `1px solid ${C.line}` }}>
                   {tc.passed ? <CheckCircle size={13} style={{ color: C.green, flexShrink: 0, marginTop: 2 }} /> : <XCircle size={13} style={{ color: C.red, flexShrink: 0, marginTop: 2 }} />}
                   <div style={{ fontFamily: MONO, fontSize: 11, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <p style={{ margin: 0, color: C.sub }}>Input: <span style={{ color: '#5ab2ff' }}>{tc.input}</span></p>

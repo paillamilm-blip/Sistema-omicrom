@@ -119,12 +119,12 @@ export function TrabajoTeEncuentra() {
         Oportunidades que te calzan
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-        {scored.slice(0, 4).map(({ j, f }, i) => {
+        {scored.slice(0, 4).map(({ j, f }) => {
           const col = f >= 85 ? C.green : f >= 70 ? C.cyan : C.gold;
           const done = apps.some((a) => a.title === j.title);
-          const top = i === 0 && f >= 75;
+          const top = f >= 75 && !scored.slice(0, scored.findIndex(x => x.j === j)).some(x => x.f >= 75);
           return (
-            <div key={j.title} style={{ position: 'relative', padding: 14, borderRadius: RADIUS.lg, background: 'rgba(6,12,26,0.6)', border: `1px solid ${top ? C.goldDim : 'rgba(255,255,255,0.1)'}`, opacity: done ? 0.6 : 1 }}>
+            <div key={`${j.title}-${j.company}`} style={{ position: 'relative', padding: 14, borderRadius: RADIUS.lg, background: 'rgba(6,12,26,0.6)', border: `1px solid ${top ? C.goldDim : 'rgba(255,255,255,0.1)'}`, opacity: done ? 0.6 : 1 }}>
               {top && <span style={{ position: 'absolute', top: -9, left: 12, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1, textTransform: 'uppercase', padding: '3px 8px', borderRadius: 8, background: C.gold, color: '#04121f', fontWeight: 700 }}>★ Mejor match</span>}
               <div style={{ display: 'flex', gap: 12 }}>
                 <FitRing pct={f} color={col} />
@@ -211,9 +211,10 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {steps.map((h, i) => {
+            const stepKey = `step-${i}-${h.slice(0, 20)}`;
             const active = i === step, doneS = i < step;
             return (
-              <div key={i} style={{ display: 'flex', gap: 12, opacity: active || doneS ? 1 : 0.4 }}>
+              <div key={stepKey} style={{ display: 'flex', gap: 12, opacity: active || doneS ? 1 : 0.4 }}>
                 <div style={{ flexShrink: 0, width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', background: doneS ? C.green : active ? 'rgba(92, 200, 255,0.15)' : 'rgba(255,255,255,0.08)', color: doneS ? '#04121f' : active ? C.cyan : C.cyanDim, border: active ? `1px solid ${C.cyan}` : 'none', fontFamily: FONT.mono, fontSize: 12 }}>
                   {doneS ? <Check size={15} /> : i === 3 ? '✓' : i + 1}
                 </div>

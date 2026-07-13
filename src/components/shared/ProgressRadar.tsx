@@ -307,9 +307,9 @@ export function ScoreHistory({ history }: ScoreHistoryProps) {
 
   return (
     <div className="space-y-2">
-      {history.slice(0, 5).map((entry, i) => (
+      {history.slice(0, 5).map((entry) => (
         <div
-          key={i}
+          key={`${entry.date}-${entry.execution}`}
           className="flex items-center justify-between p-2 rounded-lg bg-omicron-card border border-omicron-border/50"
         >
           <p className="text-xs text-omicron-subtle">{new Date(entry.date).toLocaleDateString()}</p>
