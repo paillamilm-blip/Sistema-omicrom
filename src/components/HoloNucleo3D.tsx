@@ -120,7 +120,6 @@ export function HoloNucleo3D({
   chips = [],
   reputation = 0,
   axes,
-  livePeers = 0,
   onNavigate,
   className = '',
   center,
@@ -407,6 +406,7 @@ export function HoloNucleo3D({
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointerleave', onLeave);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meta, height, orbState, reputation]);
 
   const selectedMeta = sel !== null && sel >= 0 && sel < meta.length ? meta[sel] : null;

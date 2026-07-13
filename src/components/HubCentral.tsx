@@ -6,8 +6,8 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect } from 'react';
 import { 
-  Brain, Briefcase, Lock, Scale, Target, TrendingUp, 
-  Users, Sparkles, Zap, Trophy, ArrowRight, MessageCircle,
+  Brain, Briefcase, Lock, Scale, TrendingUp, 
+  Users, Sparkles, ArrowRight, MessageCircle,
   Wallet, Store, Boxes
 } from 'lucide-react';
 import { useGemeloProfile } from '../hooks/useGemeloProfile';
@@ -22,7 +22,7 @@ import { C, FONT } from '../theme';
 import type { TabId } from '../types';
 
 export function HubCentral() {
-  const { profile, tier, next, actions } = useGemeloProfile();
+  const { profile, tier, next } = useGemeloProfile();
   const { setActiveTab, profile: sb } = useApp();
   const { onlineCount } = useRealtime();
   

@@ -26,7 +26,6 @@ const WalletTab     = lazy(() => import('./components/tabs/WalletTab').then(m =>
 const ChatTab       = lazy(() => import('./components/tabs/ChatTab').then(m => ({ default: m.ChatTab })));
 const EmpleosTab    = lazy(() => import('./components/tabs/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
 const MarketTab     = lazy(() => import('./components/tabs/MarketTab').then(m => ({ default: m.MarketTab })));
-const PerfilTab     = lazy(() => import('./components/tabs/PerfilTab').then(m => ({ default: m.PerfilTab })));
 const MaxSkillTab   = lazy(() => import('./components/tabs/MaxSkillTab').then(m => ({ default: m.MaxSkillTab })));
 const AcademiaTab   = lazy(() => import('./components/tabs/AcademiaTab').then(m => ({ default: m.AcademiaTab })));
 const GobernanzaTab = lazy(() => import('./components/tabs/GobernanzaTab').then(m => ({ default: m.GobernanzaTab })));
@@ -50,7 +49,7 @@ function TabLoader() {
 }
 
 function AppShell() {
-  const { authStatus, isLoadingProfile, activeTab, profile, unreadCount } = useApp();
+  const { authStatus, isLoadingProfile, profile } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showIniciacion, setShowIniciacion] = useState(() => shouldShowIniciacion());

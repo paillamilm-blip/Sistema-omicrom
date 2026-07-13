@@ -48,6 +48,7 @@ export function GemeloProactive({ event, onDismiss, onAction }: Props) {
     } else {
       setVisible(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event, dismissed]);
 
   const handleDismiss = () => {
