@@ -16,7 +16,7 @@ import { useRealtime } from '../store/RealtimeContext';
 import { HoloNucleo3D } from './HoloNucleo3D';
 import type { NucleoChip, OrbEmotion } from './HoloNucleo3D';
 import { speak } from '../lib/voiceEngine';
-import { evaluateProactiveEvents, getDaysSinceLastLogin } from '../lib/proactiveEngine';
+import { evaluateProactiveEvents, getDaysSinceLastLogin, type ProactiveEvent } from '../lib/proactiveEngine';
 import { GemeloProactive } from './GemeloProactive';
 import { C, FONT } from '../theme';
 import type { TabId } from '../types';
@@ -27,8 +27,8 @@ export function HubCentral() {
   const { onlineCount } = useRealtime();
   
   const [emotion, setEmotion] = useState<OrbEmotion>('idle');
-  const [audioLevel, setAudioLevel] = useState(0);
-  const [proactiveEvent, setProactiveEvent] = useState<any>(null);
+  const [audioLevel] = useState(0);
+  const [proactiveEvent, setProactiveEvent] = useState<ProactiveEvent | null>(null);
   const [lastOnlineCount, setLastOnlineCount] = useState(onlineCount);
 
   const rep = profile.rep;

@@ -28,7 +28,7 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
   
   // ⭐ SISTEMA PROACTIVO: estado emocional + evento proactivo + audio reactivo
   const [emotion, setEmotion] = useState<OrbEmotion>('idle');
-  const [audioLevel, setAudioLevel] = useState(0);
+  const [audioLevel] = useState(0);
   const [proactiveEvent, setProactiveEvent] = useState<ProactiveEvent | null>(null);
   const [lastOnlineCount, setLastOnlineCount] = useState(onlineCount);
 

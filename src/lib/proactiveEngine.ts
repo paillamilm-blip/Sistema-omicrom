@@ -168,8 +168,6 @@ export function detectOpportunity(
  */
 export function detectMilestone(context: ProactiveContext): ProactiveEvent | null {
   try {
-    const profile = getProfile();
-    
     // Detectar si acabó de subir de nivel
     const previousRep = localStorage.getItem('omicron_previous_rep');
     const currentRep = context.reputation;
