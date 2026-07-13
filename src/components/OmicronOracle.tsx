@@ -9,13 +9,12 @@ import { useGemeloProfile } from '../hooks/useGemeloProfile';
 import { useApp } from '../store/AppContext';
 import { useRealtime } from '../store/RealtimeContext';
 import { OracleCore3D } from './OracleCore3D';
-import { C, FONT } from '../theme';
-import type { TabId } from '../types';
+import { FONT } from '../theme';
 
 type ViewMode = 'desempeno' | 'economia' | 'crecimiento';
 
 export function OmicronOracle() {
-  const { profile, tier, next } = useGemeloProfile();
+  const { profile, next } = useGemeloProfile();
   const { setActiveTab, profile: sb } = useApp();
   const { onlineCount } = useRealtime();
   const [viewMode, setViewMode] = useState<ViewMode>('economia');
