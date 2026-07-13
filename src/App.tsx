@@ -1,5 +1,4 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { Bell, LogOut } from 'lucide-react';
 import { AppProvider, useApp } from './store/AppContext';
 import { AuthOverlay } from './components/auth/AuthOverlay';
 import { ResetPasswordOverlay } from './components/auth/ResetPasswordOverlay';
@@ -10,7 +9,9 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { OraculoBar } from './components/OraculoBar';
 import { InstallPWA } from './components/shared/InstallPWA';
 import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
-import { HoloGemeloHome } from './components/perfil/HoloGemeloHome';
+import { HubCentral } from './components/HubCentral';
+import { UnifiedLayout } from './components/UnifiedLayout';
+import { NavigationStack } from './components/NavigationStack';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
@@ -32,8 +33,8 @@ const GobernanzaTab = lazy(() => import('./components/tabs/GobernanzaTab').then(
 const VaultTab      = lazy(() => import('./components/tabs/VaultTab').then(m => ({ default: m.VaultTab })));
 
 const TAB_TITLES: Record<TabId, string> = {
-  perfil: 'Inicio', maxskill: 'Habilidades', academia: 'Academia', market: 'Servicios',
-  empleos: 'Empleos', chat: 'Mensajes', wallet: 'Billetera', gobernanza: 'Gobernanza',
+  perfil: 'Hub Central', maxskill: 'Habilidades', academia: 'Academia', market: 'Servicios',
+  empleos: 'Oportunidades', chat: 'Mensajes', wallet: 'Billetera', gobernanza: 'Gobernanza',
   vault: 'Bóveda',
 };
 
@@ -49,11 +50,10 @@ function TabLoader() {
 }
 
 function AppShell() {
-  const { authStatus, isLoadingProfile, activeTab, setActiveTab, profile, unreadCount } = useApp();
+  const { authStatus, isLoadingProfile, activeTab, profile, unreadCount } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showIniciacion, setShowIniciacion] = useState(() => shouldShowIniciacion());
-  const [perfilView, setPerfilView] = useState<'holo' | 'classic'>('holo');
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -61,13 +61,6 @@ function AppShell() {
     });
     return () => subscription.unsubscribe();
   }, []);
-
-  // Atajos PWA (long-press del icono): /?tab=wallet abre ese hub directo.
-  useEffect(() => {
-    const t = new URLSearchParams(window.location.search).get('tab');
-    const valid: TabId[] = ['perfil', 'maxskill', 'academia', 'market', 'empleos', 'chat', 'wallet', 'gobernanza', 'vault'];
-    if (t && (valid as string[]).includes(t)) setActiveTab(t as TabId);
-  }, [setActiveTab]);
 
   if (authStatus === 'loading' || isLoadingProfile) {
     return (
@@ -98,41 +91,35 @@ function AppShell() {
           />
         </ErrorBoundary>
       )}
-      {activeTab === 'perfil' && perfilView === 'holo' ? (
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-          <ErrorBoundary section="Gemelo">
-            <HoloGemeloHome onOpenPerfil={() => setPerfilView('classic')} />
+      
+      {/* Navegación fluida con stack */}
+      <NavigationStack>
+        {(currentTab) => (
+          <ErrorBoundary section={TAB_TITLES[currentTab]} key={currentTab}>
+            {currentTab === 'perfil' ? (
+              <HubCentral />
+            ) : (
+              <UnifiedLayout
+                title={TAB_TITLES[currentTab]}
+                showBackButton
+                fullHeight={currentTab === 'chat'}
+              >
+                <Suspense fallback={<TabLoader />}>
+                  {currentTab === 'maxskill'   && <MaxSkillTab />}
+                  {currentTab === 'academia'   && <AcademiaTab />}
+                  {currentTab === 'market'     && <MarketTab />}
+                  {currentTab === 'empleos'    && <EmpleosTab />}
+                  {currentTab === 'chat'       && <ChatTab />}
+                  {currentTab === 'wallet'     && <WalletTab />}
+                  {currentTab === 'gobernanza' && <GobernanzaTab />}
+                  {currentTab === 'vault'      && <VaultTab />}
+                </Suspense>
+              </UnifiedLayout>
+            )}
           </ErrorBoundary>
-        </div>
-      ) : (
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-          {/* Barra de seccion (drill-down desde el Gemelo). Reemplaza al header/menu viejos. */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', flexShrink: 0, borderBottom: '1px solid rgba(150,180,255,0.12)', background: 'rgba(9,12,22,0.6)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', position: 'relative', zIndex: 3 }}>
-            <button onClick={() => { setPerfilView('holo'); setActiveTab('perfil'); }} aria-label="Volver al Gemelo" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 12, background: 'rgba(92,200,255,0.10)', border: '1px solid rgba(92,200,255,0.28)', color: '#5cc8ff', fontFamily: FONT.mono, fontSize: 12.5, cursor: 'pointer' }}>← Gemelo</button>
-            <span style={{ flex: 1, fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: '#eaf0fb', letterSpacing: -0.2 }}>{TAB_TITLES[activeTab]}</span>
-            <button onClick={() => setShowNotifications(true)} aria-label="Notificaciones" style={{ position: 'relative', width: 34, height: 34, borderRadius: 11, background: 'rgba(92,200,255,0.10)', border: '1px solid rgba(92,200,255,0.28)', color: '#5cc8ff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Bell size={16} />
-              {unreadCount > 0 && (<span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, background: C.red, color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{unreadCount > 9 ? '9+' : unreadCount}</span>)}
-            </button>
-            <button onClick={() => supabase.auth.signOut()} aria-label="Cerrar sesión" style={{ width: 34, height: 34, borderRadius: 11, background: 'rgba(255,92,122,0.12)', border: '1px solid rgba(255,92,122,0.3)', color: '#ff5c7a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <LogOut size={16} />
-            </button>
-          </div>
-          <ErrorBoundary section={TAB_TITLES[activeTab]} key={activeTab}>
-            <Suspense fallback={<TabLoader />}>
-              {activeTab === 'perfil'     && <PerfilTab />}
-              {activeTab === 'maxskill'   && <MaxSkillTab />}
-              {activeTab === 'academia'   && <AcademiaTab />}
-              {activeTab === 'market'     && <MarketTab />}
-              {activeTab === 'empleos'    && <EmpleosTab />}
-              {activeTab === 'chat'       && <ChatTab />}
-              {activeTab === 'wallet'     && <WalletTab />}
-              {activeTab === 'gobernanza' && <GobernanzaTab />}
-              {activeTab === 'vault'      && <VaultTab />}
-            </Suspense>
-          </ErrorBoundary>
-        </div>
-      )}
+        )}
+      </NavigationStack>
+
       <LiveNetworkFeed />
       <IncomingJobPush />
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
