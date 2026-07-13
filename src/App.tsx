@@ -9,7 +9,7 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { OraculoBar } from './components/OraculoBar';
 import { InstallPWA } from './components/shared/InstallPWA';
 import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
-import { HubCentral } from './components/HubCentral';
+import { HoloGemeloHome } from './components/perfil/HoloGemeloHome';
 import { UnifiedLayout } from './components/UnifiedLayout';
 import { NavigationStack } from './components/NavigationStack';
 import { ToastProvider } from './components/shared/Toast';
@@ -26,6 +26,7 @@ const WalletTab     = lazy(() => import('./components/tabs/WalletTab').then(m =>
 const ChatTab       = lazy(() => import('./components/tabs/ChatTab').then(m => ({ default: m.ChatTab })));
 const EmpleosTab    = lazy(() => import('./components/tabs/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
 const MarketTab     = lazy(() => import('./components/tabs/MarketTab').then(m => ({ default: m.MarketTab })));
+const PerfilTab     = lazy(() => import('./components/tabs/PerfilTab').then(m => ({ default: m.PerfilTab })));
 const MaxSkillTab   = lazy(() => import('./components/tabs/MaxSkillTab').then(m => ({ default: m.MaxSkillTab })));
 const AcademiaTab   = lazy(() => import('./components/tabs/AcademiaTab').then(m => ({ default: m.AcademiaTab })));
 const GobernanzaTab = lazy(() => import('./components/tabs/GobernanzaTab').then(m => ({ default: m.GobernanzaTab })));
@@ -53,6 +54,7 @@ function AppShell() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showIniciacion, setShowIniciacion] = useState(() => shouldShowIniciacion());
+  const [profileDetail, setProfileDetail] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -96,7 +98,15 @@ function AppShell() {
         {(currentTab) => (
           <ErrorBoundary section={TAB_TITLES[currentTab]} key={currentTab}>
             {currentTab === 'perfil' ? (
-              <HubCentral />
+              profileDetail ? (
+                <UnifiedLayout title="Mi Perfil" showBackButton onBack={() => setProfileDetail(false)}>
+                  <Suspense fallback={<TabLoader />}>
+                    <PerfilTab />
+                  </Suspense>
+                </UnifiedLayout>
+              ) : (
+                <HoloGemeloHome onOpenPerfil={() => setProfileDetail(true)} />
+              )
             ) : (
               <UnifiedLayout
                 title={TAB_TITLES[currentTab]}
