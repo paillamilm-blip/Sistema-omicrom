@@ -405,3 +405,7 @@ export function HoloNucleo3D({
     </div>
   );
 }
+
+
+// Export memoizado para evitar re-renders innecesarios del canvas 3D pesado.
+export default memo(HoloNucleo3D);
