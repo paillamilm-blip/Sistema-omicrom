@@ -176,7 +176,7 @@ export function HubCentral() {
           label="Academia"
           description="Aprende y certifícate"
           color={C.gold}
-          metric={`${profile.courses ?? 0} cursos`}
+          metric={`${profile.titles ?? 0} títulos`}
           onClick={() => setActiveTab('academia')}
         />
         <ModuleCard

@@ -18,6 +18,7 @@ export interface Profile {
   email?: string;
   username: string;
   full_name: string;
+  display_name?: string;   // ✅ nombre para mostrar (opcional; cae a full_name)
   avatar_url?: string;
   bio?: string;
   location?: string;       // ✅ añadido: ubicación del nodo

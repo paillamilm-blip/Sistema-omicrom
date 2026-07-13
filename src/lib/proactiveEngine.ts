@@ -5,7 +5,7 @@
 // Contexto: hora, red en vivo, oportunidades, inactividad, logros.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { getMemory, getPatterns, getGoals, generateContextualGreeting } from './gemeloMemory';
+import { getPatterns, getGoals, generateContextualGreeting } from './gemeloMemory';
 import { getProfile, bestNextStep } from './gemeloProfile';
 
 export type ProactiveEventType = 

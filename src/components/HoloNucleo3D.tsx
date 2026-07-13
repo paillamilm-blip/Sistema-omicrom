@@ -5,7 +5,7 @@
 // con blur, rotación orbital suave, parallax, nodos tocables con fichas.
 // IMPACTO PREMIUM MÁXIMO: oscuro, tecnológico, moderno.
 // ═══════════════════════════════════════════════════════════════════════
-import { useEffect, useMemo, useRef, useState, memo } from 'react';
+import { useEffect, useMemo, useRef, useState, memo, type ReactNode } from 'react';
 import { C, FONT } from '../theme';
 
 export type OrbState = 'idle' | 'loading' | 'success' | 'celebration' | 'error';
@@ -37,6 +37,9 @@ interface Props {
   livePeers?: number;
   onNavigate?: (tab: string) => void;
   className?: string;
+  variant?: string;          // compat: PerfilTab pasa "identity"
+  orbSize?: string;          // compat: PerfilTab pasa "md"
+  center?: ReactNode;        // contenido central superpuesto (nº reputación)
 }
 
 interface NodeMeta {
@@ -120,6 +123,7 @@ export function HoloNucleo3D({
   livePeers = 0,
   onNavigate,
   className = '',
+  center,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -410,6 +414,11 @@ export function HoloNucleo3D({
   return (
     <div ref={wrapRef} className={className} style={{ position: 'relative', width: '100%', height, overflow: 'hidden' }}>
       <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%', cursor: sel !== null ? 'pointer' : 'default' }} aria-label={ariaLabel} />
+      {center && (
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
+          {center}
+        </div>
+      )}
       {selectedMeta && (
         <div style={{
           position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)',
