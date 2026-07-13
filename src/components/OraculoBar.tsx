@@ -11,6 +11,7 @@ import { useApp } from '../store/AppContext';
 import { useRealtime } from '../store/RealtimeContext';
 import { interpret, askCoach } from '../lib/oraculo';
 import { gemeloActions, getProfile, bestNextStep } from '../lib/gemeloProfile';
+import { speak } from '../lib/voiceEngine';
 import { C, FONT } from '../theme';
 
 type SpeechRecognitionCtor = new () => {
@@ -24,21 +25,7 @@ type SpeechRecognitionCtor = new () => {
   stop: () => void;
 };
 
-function speak(text: string) {
-  try {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    const vs = window.speechSynthesis.getVoices();
-    const v = vs.find((x) => /es(-|_)/i.test(x.lang)) || vs.find((x) => x.lang.startsWith('es'));
-    if (v) u.voice = v;
-    u.lang = v?.lang || 'es-ES';
-    u.rate = 1.03;
-    window.speechSynthesis.speak(u);
-  } catch {
-    /* noop */
-  }
-}
+
 
 export function OraculoBar() {
   const { setActiveTab, profile } = useApp();

@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Target, Radar, X, Check, Volume2, Mic } from 'lucide-react';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
+import { speak } from '../../lib/voiceEngine';
 import { C, FONT, RADIUS } from '../../theme';
 
 type Eje = 'execution' | 'quality' | 'transcendence' | 'foundation';
@@ -177,7 +178,6 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const say = (t: string) => { try { if (!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'es-ES'; u.rate = 1.02; speechSynthesis.speak(u); } catch { /* noop */ } };
   const practice = (idx: number) => {
     const SR = (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown });
     const Rec = (SR.SpeechRecognition || SR.webkitSpeechRecognition) as (new () => SpeechRecognitionLike) | undefined;
@@ -231,7 +231,7 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
                         <div key={k} style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 7 }}>
                           <div style={{ fontSize: 12.5, fontWeight: 600, color: '#eaf4ff' }}>{k + 1}. {it.q}</div>
                           <div style={{ display: 'flex', gap: 7, marginTop: 8, flexWrap: 'wrap' }}>
-                            <button onClick={() => say(it.q)} style={miniBtn(C.cyan)}><Volume2 size={12} /> Escuchar</button>
+                            <button onClick={() => speak(it.q)} style={miniBtn(C.cyan)}><Volume2 size={12} /> Escuchar</button>
                             <button onClick={() => practice(k)} style={miniBtn(C.gold)}><Mic size={12} /> Practicar</button>
                           </div>
                           <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold, marginTop: 7, lineHeight: 1.4 }}>💡 {it.tip}</div>

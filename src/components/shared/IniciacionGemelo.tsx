@@ -18,6 +18,7 @@ import {
   getProfile, subscribe, gemeloActions, bestNextStep, tierFor,
   type GemeloProfile,
 } from '../../lib/gemeloProfile';
+import { speak, stopSpeaking } from '../../lib/voiceEngine';
 
 const KEY = 'omicron_iniciacion_v1';
 
@@ -74,7 +75,7 @@ export function IniciacionGemelo({ userName, onClose }: { userName?: string; onC
     const bag = timers.current;
     return () => {
       bag.forEach((id) => { window.clearTimeout(id); window.clearInterval(id); });
-      try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+      stopSpeaking();
     };
   }, []);
 
@@ -123,22 +124,17 @@ export function IniciacionGemelo({ userName, onClose }: { userName?: string; onC
     }, 26);
     timers.current.push(type);
 
-    try {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(speech);
-        u.lang = 'es-ES'; u.rate = 1.02; u.pitch = 1.0;
-        u.onstart = () => setSpeaking(true);
-        u.onend = () => setSpeaking(false);
-        window.speechSynthesis.speak(u);
-      }
-    } catch { /* voz no disponible */ }
+    speak(
+      speech,
+      () => setSpeaking(true),
+      () => setSpeaking(false)
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [act]);
 
   function finish() {
     try { localStorage.setItem(KEY, '1'); } catch { /* noop */ }
-    try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+    stopSpeaking();
     onClose();
   }
 

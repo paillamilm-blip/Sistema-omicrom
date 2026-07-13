@@ -12,6 +12,7 @@ import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';
 import { HoloNucleo3D } from '../HoloNucleo3D';
 import type { NucleoChip } from '../HoloNucleo3D';
+import { speak } from '../../lib/voiceEngine';
 import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
 
@@ -30,22 +31,14 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
   const nodos = onlineCount > 0 ? onlineCount : 1;
   const contratos = profile.cv ? 12 : 0; // placeholder; luego desde el perfil real
 
-  function speak(text: string) {
-    try {
-      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'es-ES'; u.rate = 1.02;
-      u.onstart = () => setSpeaking(true);
-      u.onend = () => setSpeaking(false);
-      window.speechSynthesis.speak(u);
-    } catch { /* voz no disponible */ }
+  function speakOracle(text: string) {
+    speak(text, () => setSpeaking(true), () => setSpeaking(false));
   }
 
   function askOracle() {
     const base = `Para tu estado actual —${tier.name.replace('Nodo ', '')}, reputación ${rep}— `;
     const rec = next ? `te conviene: ${next.label}. Sube tu match y tu reputación.` : 'te conviene consolidar tus 4 ejes y tomar un contrato.';
-    speak(base + rec);
+    speakOracle(base + rec);
     setQ('');
   }
 
@@ -72,7 +65,7 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
         <IconBtn onClick={onOpenPerfil} label="Perfil"><UserCircle size={17} /></IconBtn>
         <IconBtn onClick={() => setActiveTab('empleos')} label="Red / oportunidades" color={C.gold}><Target size={17} /></IconBtn>
         <IconBtn
-          onClick={() => speak(`Hola. Eres ${tier.name.replace('Nodo ', '')}, reputación ${rep}, ${pe} PE.` + (next ? ` Tu mejor paso: ${next.label}.` : ''))}
+          onClick={() => speakOracle(`Hola. Eres ${tier.name.replace('Nodo ', '')}, reputación ${rep}, ${pe} PE.` + (next ? ` Tu mejor paso: ${next.label}.` : ''))}
           label="Hablar con el Oráculo"
           active={speaking}
         >

@@ -5,7 +5,7 @@
 // con blur, rotación orbital suave, parallax, nodos tocables con fichas.
 // IMPACTO PREMIUM MÁXIMO: oscuro, tecnológico, moderno.
 // ═══════════════════════════════════════════════════════════════════════
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { C, FONT } from '../theme';
 
 export type OrbState = 'idle' | 'loading' | 'success' | 'celebration' | 'error';
