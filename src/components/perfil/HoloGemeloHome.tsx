@@ -5,14 +5,17 @@
 // fichas), Oráculo con voz, panel inferior con recomendaciones y accesos
 // al ecosistema. Datos REALES del Gemelo: reputación, ejes, PE, tier.
 // ═══════════════════════════════════════════════════════════════════════
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Brain, Briefcase, Lock, Scale, UserCircle, Target, Volume2, Send, Store, Boxes, Wallet, MessageCircle } from 'lucide-react';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';
 import { HoloNucleo3D } from '../HoloNucleo3D';
-import type { NucleoChip } from '../HoloNucleo3D';
+import type { NucleoChip, OrbEmotion } from '../HoloNucleo3D';
 import { speak } from '../../lib/voiceEngine';
+import { evaluateProactiveEvents, getDaysSinceLastLogin } from '../../lib/proactiveEngine';
+import type { ProactiveEvent } from '../../lib/proactiveEngine';
+import { GemeloProactive } from '../GemeloProactive';
 import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
 
@@ -22,6 +25,12 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
   const { onlineCount } = useRealtime();
   const [speaking, setSpeaking] = useState(false);
   const [q, setQ] = useState('');
+  
+  // ⭐ SISTEMA PROACTIVO: estado emocional + evento proactivo + audio reactivo
+  const [emotion, setEmotion] = useState<OrbEmotion>('idle');
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [proactiveEvent, setProactiveEvent] = useState<ProactiveEvent | null>(null);
+  const [lastOnlineCount, setLastOnlineCount] = useState(onlineCount);
 
   const rep = profile.rep;
   const pe = profile.pe;
@@ -31,15 +40,89 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
   const nodos = onlineCount > 0 ? onlineCount : 1;
   const contratos = profile.cv ? 12 : 0; // placeholder; luego desde el perfil real
 
+  // ⭐ EVALUACIÓN PROACTIVA al montar (saludo contextual, milestone, etc)
+  useEffect(() => {
+    const daysSinceLastLogin = getDaysSinceLastLogin();
+    const now = new Date();
+    
+    const context = {
+      currentHour: now.getHours(),
+      dayOfWeek: now.getDay(),
+      reputation: rep,
+      pe,
+      onlineCount,
+      lastOnlineCount,
+      daysSinceLastLogin,
+      currentTab: 'perfil',
+      userName: sb?.display_name,
+    };
+    
+    // Evaluar eventos proactivos (greeting, milestone, etc)
+    const event = evaluateProactiveEvents(context);
+    
+    if (event) {
+      setProactiveEvent(event);
+      setEmotion(event.emotion);
+      
+      // Hablar el mensaje proactivo con voz
+      speak(event.message, () => {
+        setSpeaking(true);
+        setEmotion('thinking');
+      }, () => {
+        setSpeaking(false);
+        setEmotion('idle');
+      });
+    }
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo al montar
+  
+  // ⭐ DETECTAR CAMBIOS EN LA RED (network surge)
+  useEffect(() => {
+    if (onlineCount !== lastOnlineCount) {
+      const surge = onlineCount - lastOnlineCount;
+      
+      if (surge >= 3) {
+        const now = new Date();
+        const context = {
+          currentHour: now.getHours(),
+          dayOfWeek: now.getDay(),
+          reputation: rep,
+          pe,
+          onlineCount,
+          lastOnlineCount,
+          daysSinceLastLogin: 0,
+          currentTab: 'perfil',
+          userName: sb?.display_name,
+        };
+        
+        const event = evaluateProactiveEvents(context);
+        if (event && event.type === 'network_surge') {
+          setProactiveEvent(event);
+          setEmotion('excited');
+          speak(event.message);
+        }
+      }
+      
+      setLastOnlineCount(onlineCount);
+    }
+  }, [onlineCount, lastOnlineCount, rep, pe, sb?.display_name]);
+
   function speakOracle(text: string) {
-    speak(text, () => setSpeaking(true), () => setSpeaking(false));
+    setEmotion('thinking');
+    speak(text, () => setSpeaking(true), () => {
+      setSpeaking(false);
+      setEmotion('idle');
+    });
   }
 
   function askOracle() {
     const base = `Para tu estado actual —${tier.name.replace('Nodo ', '')}, reputación ${rep}— `;
     const rec = next ? `te conviene: ${next.label}. Sube tu match y tu reputación.` : 'te conviene consolidar tus 4 ejes y tomar un contrato.';
+    setEmotion('thinking');
     speakOracle(base + rec);
     setQ('');
+    setTimeout(() => setEmotion('idle'), 3000);
   }
 
   // Chips para el Núcleo 3D (métricas flotantes del Gemelo).
@@ -82,8 +165,22 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
           livePeers={Math.max(0, nodos - 1)}
           onNavigate={(tab) => setActiveTab(tab as TabId)}
           height={420}
+          emotion={emotion}
+          audioLevel={audioLevel}
         />
       </div>
+      
+      {/* ⭐ NOTIFICACIÓN PROACTIVA (toast holográfico) */}
+      <GemeloProactive
+        event={proactiveEvent}
+        onDismiss={() => setProactiveEvent(null)}
+        onAction={(index) => {
+          // Ejecutar acción del evento
+          if (proactiveEvent?.actions?.[index]) {
+            proactiveEvent.actions[index].action();
+          }
+        }}
+      />
 
       {/* ── Hoja inferior: recomendaciones + accesos + Oráculo ── */}
       <div style={S.sheet}>

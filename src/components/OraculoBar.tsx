@@ -12,6 +12,7 @@ import { useRealtime } from '../store/RealtimeContext';
 import { interpret, askCoach } from '../lib/oraculo';
 import { gemeloActions, getProfile, bestNextStep } from '../lib/gemeloProfile';
 import { speak } from '../lib/voiceEngine';
+import { remember, inferPersonality, generateContextualGreeting } from '../lib/gemeloMemory';
 import { C, FONT } from '../theme';
 
 type SpeechRecognitionCtor = new () => {
@@ -48,12 +49,20 @@ export function OraculoBar() {
     hideTimer.current = setTimeout(() => setMsg(null), ms);
   }
 
-  // Saludo proactivo: usa la red en vivo + tu mejor próximo paso para guiarte.
+  // ⭐ Saludo proactivo CON MEMORIA: personalizado según historial y hora.
   function proactiveGreet() {
+    const userName = profile?.display_name || 'operador';
+    const hour = new Date().getHours();
+    const reputation = profile?.reputation_score ?? 0;
+    const daysSinceLastLogin = 0; // Se calcula en HoloGemeloHome
+    
+    // ⭐ Usa el generador contextual de la memoria
+    const greeting = generateContextualGreeting(userName, hour, reputation, daysSinceLastLogin);
+    
     const ns = bestNextStep(getProfile());
     const net = onlineCount > 0 ? `Hay ${onlineCount} ${onlineCount === 1 ? 'nodo' : 'nodos'} en línea. ` : '';
     const step = ns ? `Tu mejor próximo paso: ${ns.label}.` : 'Tu Gemelo está optimizado; sigue capitalizando en la Bóveda.';
-    const t = `${net}${step} Dime "hazlo" y lo ejecuto, o pídeme un consejo.`;
+    const t = `${greeting} ${net}${step}`;
     flash('oraculo', t, 10000);
     speak(t);
   }
@@ -61,6 +70,16 @@ export function OraculoBar() {
   async function handle(text: string) {
     flash('tu', text);
     const low = text.toLowerCase();
+    
+    // ⭐ Contexto para memoria: inferir personalidad del usuario
+    const personality = inferPersonality();
+    const contextData = {
+      timestamp: Date.now(),
+      tab: 'oraculo',
+      reputation: profile?.reputation_score ?? 0,
+      onlineCount,
+      communicationStyle: personality.communicationStyle,
+    };
     // Proactivo: estado de la red en vivo.
     if (/\bred\b|en l[ií]nea|conectad|nodos|qui[eé]n hay|en vivo/.test(low)) {
       const t = onlineCount > 0
@@ -68,6 +87,8 @@ export function OraculoBar() {
         : 'Estoy midiendo la red en vivo; en un momento verás los nodos conectados.';
       flash('oraculo', t);
       speak(t);
+      // ⭐ Recordar conversación
+      remember(text, t, contextData);
       return;
     }
     // Proactivo: ejecuta tu mejor próximo paso (empújame a mejorar).
@@ -78,10 +99,13 @@ export function OraculoBar() {
         const t = `Hecho: registré ${ns.label} en tu Gemelo. Convalídalo para verlo reflejado en tu reputación.`;
         flash('oraculo', t);
         speak(t);
+        // ⭐ Recordar acción
+        remember(text, t, { ...contextData, action: ns.action });
       } else {
         const t = 'Tu Gemelo está optimizado. Sigue capitalizando en la Bóveda para dejar tu conocimiento como activo.';
         flash('oraculo', t);
         speak(t);
+        remember(text, t, contextData);
       }
       return;
     }
@@ -91,6 +115,8 @@ export function OraculoBar() {
       const t = `Abriendo ${intent.label}.`;
       flash('oraculo', t);
       speak(t);
+      // ⭐ Recordar navegación
+      remember(text, t, { ...contextData, targetTab: intent.tab });
       return;
     }
     if (intent.kind === 'convalidate') {
@@ -100,6 +126,8 @@ export function OraculoBar() {
       const t = `Registré ${names[intent.item]} en tu Gemelo convalidado. Se reflejará en tu reputación del ecosistema.`;
       flash('oraculo', t);
       speak(t);
+      // ⭐ Recordar convalidación
+      remember(text, t, { ...contextData, convalidationType: intent.item });
       return;
     }
     if (intent.kind === 'fact') {
@@ -110,6 +138,8 @@ export function OraculoBar() {
       else t = 'Soy tu Oráculo. Dime: abre mi billetera, ve a la academia, cuánta reputación tengo, o pídeme un consejo.';
       flash('oraculo', t);
       speak(t);
+      // ⭐ Recordar consulta de datos
+      remember(text, t, { ...contextData, queryType: intent.topic || 'help' });
       return;
     }
     if (intent.kind === 'coach') {
@@ -121,11 +151,15 @@ export function OraculoBar() {
       const t = r.advice || r.error || 'Sin respuesta.';
       flash('oraculo', t, 14000);
       speak(t.length > 320 ? t.slice(0, 320) : t);
+      // ⭐ Recordar consulta al coach (alto valor)
+      remember(text, t, { ...contextData, coachAdvice: true });
       return;
     }
     const t = 'No te entendí. Puedes decir: abre mi billetera, ve a gobernanza, o pídeme un consejo.';
     flash('oraculo', t);
     speak(t);
+    // ⭐ Recordar comandos no reconocidos (para aprender)
+    remember(text, t, { ...contextData, unrecognized: true });
   }
 
   function toggleListen() {

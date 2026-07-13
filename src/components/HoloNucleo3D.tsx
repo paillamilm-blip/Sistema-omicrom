@@ -9,6 +9,8 @@ import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { C, FONT } from '../theme';
 
 export type OrbState = 'idle' | 'loading' | 'success' | 'celebration' | 'error';
+export type OrbEmotion = 'idle' | 'thinking' | 'excited' | 'alert' | 'celebrating';
+
 export interface NucleoChip {
   label: string;
   value: string;
@@ -25,6 +27,8 @@ export interface NucleoAxes {
 
 interface Props {
   orbState?: OrbState;
+  emotion?: OrbEmotion; // ⭐ NUEVO: estado emocional del Gemelo
+  audioLevel?: number;   // ⭐ NUEVO: nivel de audio para partículas reactivas (0-1)
   height?: number;
   ariaLabel?: string;
   chips?: NucleoChip[];
@@ -106,6 +110,8 @@ function buildMeta(axes: NucleoAxes | undefined, chips: NucleoChip[]): NodeMeta[
 
 export function HoloNucleo3D({
   orbState = 'idle',
+  emotion = 'idle',      // ⭐ Emoción del orbe
+  audioLevel = 0,        // ⭐ Audio reactivo
   height = 420,
   ariaLabel = 'Gemelo Digital',
   chips = [],
@@ -187,6 +193,16 @@ export function HoloNucleo3D({
     const errorTint = orbState === 'error';
     const rep = Math.max(0, Math.min(100, reputation));
     const highRep = rep >= 75;
+    
+    // ⭐ COLORES EMOCIONALES DEL ORBE (cambian según emoción)
+    const emotionColors = {
+      idle: { core: '#06B6D4', halo: '#22D3EE', accent: '#0E7490' },
+      thinking: { core: '#8B5CF6', halo: '#A78BFA', accent: '#6D28D9' },
+      excited: { core: '#F59E0B', halo: '#FCD34D', accent: '#D97706' },
+      alert: { core: '#EF4444', halo: '#FCA5A5', accent: '#DC2626' },
+      celebrating: { core: '#10B981', halo: '#6EE7B7', accent: '#059669' },
+    };
+    const orbColors = emotionColors[emotion] || emotionColors.idle;
 
     function project(x: number, y: number, z: number) {
       const cy1 = Math.cos(yaw), sy1 = Math.sin(yaw);
@@ -197,25 +213,46 @@ export function HoloNucleo3D({
       return { sx: CX + x2 * R * persp, sy: CY + y2 * R * persp, sc: persp, zz: z2 };
     }
 
-    // ORBE CENTRAL ENORME con GLOW BRUTAL (matching prototipo).
+    // ⭐ ORBE EMOCIONAL con colores dinámicos + reactividad al audio
     function drawCore(t: number) {
       const p = project(0, 0, 0);
       const R = Math.min(W, H) * 0.16; // ENORME
-      const pulse = 1 + Math.sin(t * 1.2) * 0.08; // latido
+      
+      // ⭐ PULSO EMOCIONAL (diferente según emoción)
+      let pulseSpeed = 1.2;
+      let pulseIntensity = 0.08;
+      
+      if (emotion === 'excited') {
+        pulseSpeed = 2.4; // Late más rápido
+        pulseIntensity = 0.15;
+      } else if (emotion === 'thinking') {
+        pulseSpeed = 0.6; // Late más lento
+        pulseIntensity = 0.05;
+      } else if (emotion === 'alert') {
+        pulseSpeed = 3.0; // Late urgente
+        pulseIntensity = 0.2;
+      } else if (emotion === 'celebrating') {
+        pulseSpeed = 1.8;
+        pulseIntensity = 0.18;
+      }
+      
+      // ⭐ REACTIVIDAD AL AUDIO (partículas vibran con la voz)
+      const audioPulse = audioLevel > 0 ? audioLevel * 0.25 : 0;
+      const pulse = 1 + Math.sin(t * pulseSpeed) * pulseIntensity + audioPulse;
 
-      // HALO EXTERIOR masivo (el glow azul-cyan del screenshot).
+      // ⭐ HALO EMOCIONAL (color cambia según emoción)
       const halo = ctx.createRadialGradient(p.sx, p.sy, R * 0.4, p.sx, p.sy, R * 3.8);
-      halo.addColorStop(0, hexA(errorTint ? C.red : '#22D3EE', 0.5 * pulse));
-      halo.addColorStop(0.3, hexA('#22D3EE', 0.28 * pulse));
-      halo.addColorStop(0.6, hexA('#0891B2', 0.12 * pulse));
-      halo.addColorStop(1, 'rgba(34,211,238,0)');
+      halo.addColorStop(0, hexA(errorTint ? C.red : orbColors.halo, 0.5 * pulse));
+      halo.addColorStop(0.3, hexA(orbColors.halo, 0.28 * pulse));
+      halo.addColorStop(0.6, hexA(orbColors.accent, 0.12 * pulse));
+      halo.addColorStop(1, hexA(orbColors.halo, 0));
       ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(p.sx, p.sy, R * 3.8, 0, 6.2832); ctx.fill();
 
-      // ORBE: gradiente radial 3D con highlight (matching screenshot).
+      // ⭐ ORBE CORE EMOCIONAL
       const core = ctx.createRadialGradient(p.sx - R * 0.32, p.sy - R * 0.38, R * 0.08, p.sx, p.sy, R * pulse);
-      core.addColorStop(0, '#E0F7FF'); // highlight
-      core.addColorStop(0.25, errorTint ? '#f87171' : '#06B6D4');
-      core.addColorStop(0.55, errorTint ? '#7f1d2e' : highRep ? '#F59E0B' : '#0E7490');
+      core.addColorStop(0, '#E0F7FF'); // highlight siempre blanco
+      core.addColorStop(0.25, errorTint ? '#f87171' : orbColors.core);
+      core.addColorStop(0.55, errorTint ? '#7f1d2e' : highRep ? orbColors.accent : orbColors.core);
       core.addColorStop(0.85, '#1E3A8A');
       core.addColorStop(1, '#0F172A');
       ctx.fillStyle = core; ctx.beginPath(); ctx.arc(p.sx, p.sy, R * pulse, 0, 6.2832); ctx.fill();
@@ -256,12 +293,21 @@ export function HoloNucleo3D({
       const t = (now - start) / 1000;
       ctx.clearRect(0, 0, W, H);
 
-      // Polvo estelar (partículas flotantes del fondo).
+      // ⭐ POLVO ESTELAR REACTIVO (partículas cambian con audio y emoción)
       for (const d of dust) {
-        if (!reduce) { d.x += d.vx * 0.002; d.y += d.vy * 0.002; }
+        if (!reduce) { 
+          // ⭐ Velocidad aumenta con audio y emoción excited
+          const speedMultiplier = emotion === 'excited' ? 2.0 : emotion === 'alert' ? 1.5 : 1.0;
+          const audioBoost = audioLevel * 0.005;
+          d.x += (d.vx * 0.002 * speedMultiplier) + audioBoost; 
+          d.y += (d.vy * 0.002 * speedMultiplier) + audioBoost; 
+        }
         if (d.x < 0) d.x = 1; if (d.x > 1) d.x = 0; if (d.y < 0) d.y = 1; if (d.y > 1) d.y = 0;
-        const tw = 0.4 + 0.6 * Math.sin(t * 1.8 + d.tw);
-        ctx.fillStyle = hexA('#9fdcff', d.a * tw);
+        
+        // ⭐ Brillo reactivo al audio
+        const tw = 0.4 + 0.6 * Math.sin(t * 1.8 + d.tw) + audioLevel * 0.3;
+        const particleColor = emotion === 'celebrating' ? orbColors.halo : '#9fdcff';
+        ctx.fillStyle = hexA(particleColor, d.a * tw);
         ctx.beginPath(); ctx.arc(d.x * W, d.y * H, d.r, 0, 6.2832); ctx.fill();
       }
 
