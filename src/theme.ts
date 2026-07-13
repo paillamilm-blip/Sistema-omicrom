@@ -86,6 +86,7 @@ export const KEYFRAMES = `
 @keyframes cp-trail { 0% { stroke-dashoffset:30; } 100% { stroke-dashoffset:0; } }
 @keyframes cp-breathe { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
 @keyframes cp-toast-in { 0% { opacity:0; transform:translateX(-50%) translateY(12px); } 100% { opacity:1; transform:translateX(-50%) translateY(0); } }
+@keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 `;
 
 export const ANIM = {

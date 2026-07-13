@@ -4,6 +4,7 @@
 // Galaxia interactiva (canvas 3D, rotación, parallax, nodos tocables con
 // fichas), Oráculo con voz, panel inferior con recomendaciones y accesos
 // al ecosistema. Datos REALES del Gemelo: reputación, ejes, PE, tier.
+// INTEGRADO CON: CVOnboarding, OpportunitiesSheet, ProfileCard, ProactivePushes.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect } from 'react';
 import { Brain, Briefcase, Lock, Scale, UserCircle, Target, Volume2, Send, Store, Boxes, Wallet, MessageCircle } from 'lucide-react';
@@ -16,6 +17,12 @@ import { speak } from '../../lib/voiceEngine';
 import { evaluateProactiveEvents, getDaysSinceLastLogin } from '../../lib/proactiveEngine';
 import type { ProactiveEvent } from '../../lib/proactiveEngine';
 import { GemeloProactive } from '../GemeloProactive';
+import { CVOnboarding } from './CVOnboarding';
+import { OpportunitiesSheet } from './OpportunitiesSheet';
+import { ProfileCard } from './ProfileCard';
+import { ProactivePushes, usePushQueue } from './ProactivePushes';
+import { analyzeCV, type AnalyzedProfile } from '../../lib/cvAnalyzer';
+import { getTopJobs } from '../../lib/jobMatcher';
 import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
 
@@ -33,16 +40,108 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
   const [proactiveEvent, setProactiveEvent] = useState<ProactiveEvent | null>(null);
   const [lastOnlineCount, setLastOnlineCount] = useState(onlineCount);
 
+  // ⭐ NUEVAS CARACTERÍSTICAS INTEGRADAS DEL PROTOTIPO
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [analyzedProfile, setAnalyzedProfile] = useState<AnalyzedProfile | null>(null);
+  const [showOpportunities, setShowOpportunities] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const { pushes, addPush, dismissPush } = usePushQueue();
+
   const rep = profile.rep;
   const pe = profile.pe;
   const ax = profile.axes;
   const level = rep >= 80 ? 3 : rep >= 50 ? 2 : 1;
   const tokens = (sb?.token_balance ?? 0);
   const nodos = onlineCount > 0 ? onlineCount : 1;
-  const contratos = profile.cv ? 12 : 0; // placeholder; luego desde el perfil real
+  const contratos = profile.cv ? 12 : 0;
+
+  // Cargar perfil analizado desde localStorage si existe
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('omicron_analyzed_profile');
+      if (stored) {
+        setAnalyzedProfile(JSON.parse(stored));
+      } else {
+        // Si no hay perfil, mostrar onboarding
+        setShowOnboarding(true);
+      }
+    } catch (e) {
+      console.error('Error loading profile:', e);
+    }
+  }, []);
+
+  // ⭐ SISTEMA DE PUSHES PROACTIVOS AUTOMÁTICOS
+  useEffect(() => {
+    if (!analyzedProfile) return;
+
+    // Push inicial: empresa te busca (después de 6s)
+    const timer1 = setTimeout(() => {
+      const topJob = getTopJobs(analyzedProfile, rep, 1)[0];
+      if (topJob) {
+        addPush({
+          type: 'offer',
+          tag: analyzedProfile.arch === 'estudiante' ? 'UNA OPORTUNIDAD TE BUSCA' : 'UNA EMPRESA TE BUSCA',
+          title: topJob.job.title,
+          subtitle: `${topJob.success}% de afinidad · ${topJob.job.pay} · ${topJob.job.type}`,
+          actions: [
+            { label: 'Ver', onClick: () => setShowOpportunities(true), primary: true },
+            { label: 'Después', onClick: () => {} },
+          ],
+          duration: 12000,
+        });
+      }
+    }, 6500);
+
+    // Push periódico: actividad de la red (cada 8.5s)
+    const timer2 = setInterval(() => {
+      const activities = [
+        'Un Nodo Core capitalizó su conocimiento',
+        'Una empresa publicó 3 contratos nuevos',
+        'Un aprendiz validó su primer reto',
+        'Un Nodo Arquitecto abrió una mentoría',
+        'Nueva credencial verificada en la red',
+        'Un contrato se cerró con Escrow',
+        'Un nodo evolucionó a Pioneer',
+        '2 nodos se conectaron para un proyecto',
+      ];
+      const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+      
+      addPush({
+        type: 'activity',
+        tag: `RED EN VIVO · ${nodos.toLocaleString()} NODOS`,
+        title: randomActivity,
+        duration: 5200,
+      });
+    }, 8500);
+
+    // Push periódico: mejora continua (cada 33s)
+    const timer3 = setInterval(() => {
+      if (analyzedProfile && next) {
+        const boost = Math.max(3, Math.round(next.dRep));
+        addPush({
+          type: 'improvement',
+          tag: 'MEJORA CONTINUA',
+          title: `${next.label} subiría tu match ~${boost}%`,
+          actions: [
+            { label: 'Aprender', onClick: () => setActiveTab('academia'), primary: true },
+            { label: 'Luego', onClick: () => {} },
+          ],
+          duration: 9000,
+        });
+      }
+    }, 33000);
+
+    return () => {
+      clearTimeout(timer1);
+      clearInterval(timer2);
+      clearInterval(timer3);
+    };
+  }, [analyzedProfile, rep, nodos, next, addPush, setActiveTab]);
 
   // ⭐ EVALUACIÓN PROACTIVA al montar (saludo contextual, milestone, etc)
   useEffect(() => {
+    if (!analyzedProfile) return;
+
     const daysSinceLastLogin = getDaysSinceLastLogin();
     const now = new Date();
     
@@ -76,7 +175,7 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
     }
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Solo al montar
+  }, [analyzedProfile]); // Re-evaluar cuando cambie el perfil
   
   // ⭐ DETECTAR CAMBIOS EN LA RED (network surge)
   useEffect(() => {
@@ -109,6 +208,26 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
     }
   }, [onlineCount, lastOnlineCount, rep, pe, sb?.display_name]);
 
+  function handleOnboardingComplete(newProfile: AnalyzedProfile) {
+    setAnalyzedProfile(newProfile);
+    setShowOnboarding(false);
+    
+    // Guardar en localStorage
+    localStorage.setItem('omicron_analyzed_profile', JSON.stringify(newProfile));
+    
+    // Actualizar ejes del Gemelo en el profile global
+    profile.axes = newProfile.axes;
+    
+    // Mensaje de bienvenida
+    speak(`¡Bienvenido! Tu Gemelo Digital está activado. Reputación ${rep}, ${newProfile.seniorLabel}.`);
+  }
+
+  function handlePostulate(jobId: string) {
+    // Simulación: aumentar PE
+    profile.pe += 45;
+    speak('Postulación enviada. Tu Gemelo respalda la candidatura con tu reputación.');
+  }
+
   function speakOracle(text: string) {
     setEmotion('thinking');
     speak(text, () => setSpeaking(true), () => {
@@ -134,6 +253,16 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
     { label: 'Contratos', value: String(contratos), color: C.green, x: 0.82, y: 0.78 },
   ];
 
+  // Si no hay perfil analizado, mostrar onboarding
+  if (showOnboarding) {
+    return <CVOnboarding onComplete={handleOnboardingComplete} />;
+  }
+
+  // Si no hay perfil analizado y no está el onboarding, no renderizar nada
+  if (!analyzedProfile) {
+    return null;
+  }
+
   return (
     <div style={S.wrap}>
       {/* ── Barra superior ── */}
@@ -146,8 +275,8 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
             {nodos.toLocaleString()} nodos activos · N{level} · REP {rep}
           </div>
         </div>
-        <IconBtn onClick={onOpenPerfil} label="Perfil"><UserCircle size={17} /></IconBtn>
-        <IconBtn onClick={() => setActiveTab('empleos')} label="Red / oportunidades" color={C.gold}><Target size={17} /></IconBtn>
+        <IconBtn onClick={() => setShowProfile(true)} label="Perfil"><UserCircle size={17} /></IconBtn>
+        <IconBtn onClick={() => setShowOpportunities(true)} label="Red / oportunidades" color={C.gold}><Target size={17} /></IconBtn>
         <IconBtn
           onClick={() => speakOracle(`Hola. Eres ${tier.name.replace('Nodo ', '')}, reputación ${rep}, ${pe} PE.` + (next ? ` Tu mejor paso: ${next.label}.` : ''))}
           label="Hablar con el Oráculo"
@@ -288,6 +417,42 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
 
         <div style={{ height: 20 }} />
       </div>
+
+      {/* ⭐ COMPONENTES NUEVOS DEL PROTOTIPO */}
+      
+      {/* Pushes proactivos en tiempo real */}
+      <ProactivePushes pushes={pushes} onDismiss={dismissPush} />
+
+      {/* Sheet de oportunidades */}
+      <OpportunitiesSheet
+        isOpen={showOpportunities}
+        onClose={() => setShowOpportunities(false)}
+        profile={analyzedProfile}
+        reputation={rep}
+        onPostulate={handlePostulate}
+        onNavigate={(action) => {
+          setShowOpportunities(false);
+          if (action === 'academia') setActiveTab('academia');
+          else if (action === 'vault') setActiveTab('vault');
+          else if (action === 'market') setActiveTab('market');
+          else if (action === 'mentor' || action === 'chat') setActiveTab('chat');
+        }}
+      />
+
+      {/* Tarjeta de identidad / perfil */}
+      <ProfileCard
+        isOpen={showProfile}
+        onClose={() => setShowProfile(false)}
+        profile={analyzedProfile}
+        reputation={rep}
+        pe={pe}
+        tokens={tokens}
+        contracts={contratos}
+        onViewOpportunities={() => {
+          setShowProfile(false);
+          setShowOpportunities(true);
+        }}
+      />
     </div>
   );
 }
