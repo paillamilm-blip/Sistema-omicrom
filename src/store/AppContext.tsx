@@ -226,20 +226,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []); // Solo al montar; fetchProfile es estable (useCallback sin deps cambiantes)
 
 
-  // Notificaciones no leídas
+  // Notificaciones no leídas (con manejo de errores robusto)
   useEffect(() => {
     if (!profile?.id) return;
 
     let cancelled = false;
 
     const load = async () => {
-      const { count } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', profile.id)
-        .eq('is_read', false);
-      if (!cancelled && isMounted.current) {
-        setUnreadCount(count ?? 0);
+      try {
+        const { count, error } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', profile.id)
+          .eq('is_read', false);
+        if (!cancelled && isMounted.current) {
+          setUnreadCount(error ? 0 : (count ?? 0));
+        }
+      } catch {
+        // Red caída o sesión expirada — no romper la app
+        if (!cancelled && isMounted.current) setUnreadCount(0);
       }
     };
 
@@ -262,11 +267,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [profile?.id]);
 
 
-  // ✅ Canal real-time para cambios de reputación.
-  // Esto reemplaza el setTimeout en updateReputation: cuando la BD confirma el UPDATE,
-  // este canal actualiza el estado automáticamente sin polling manual.
+  // ✅ Canal real-time para cambios de reputación (con debounce para evitar flood).
   useEffect(() => {
     if (!profile?.id) return;
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let latestPayload: Profile | null = null;
 
     const channel = supabase
       .channel(`reputation-changes-${profile.id}`)
@@ -276,13 +282,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         table: 'profiles',
         filter: `id=eq.${profile.id}`,
       }, (payload) => {
-        if (isMounted.current && payload.new) {
-          setProfile(payload.new as Profile);
-        }
+        if (!isMounted.current || !payload.new) return;
+        latestPayload = payload.new as Profile;
+        // Debounce: esperar 300ms antes de actualizar el estado
+        // (evita flood de setProfile ante múltiples updates consecutivos)
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          if (isMounted.current && latestPayload) {
+            setProfile(latestPayload);
+            latestPayload = null;
+          }
+        }, 300);
       })
       .subscribe();
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [profile?.id]);
