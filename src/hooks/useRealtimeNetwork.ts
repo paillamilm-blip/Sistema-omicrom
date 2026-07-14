@@ -66,6 +66,8 @@ export function useRealtimeNetwork(
   // Mantiene el meta actualizado sin re-suscribir el canal en cada render.
   const metaRef = useRef<RealtimeMeta>(meta);
   metaRef.current = meta;
+  // Throttle para broadcasts (evita spam a la red)
+  const lastBroadcastRef = useRef<number>(0);
 
   const pushEvent = useCallback((text: string, kind: LiveEventKind) => {
     setEvents((prev) =>
@@ -80,10 +82,12 @@ export function useRealtimeNetwork(
     (text: string, kind: LiveEventKind = 'action') => {
       const ch = channelRef.current;
       if (ch) {
-        // no-floating: enviamos y no bloqueamos; el fire-and-forget es intencional.
+        // Throttle: máximo 1 broadcast cada 2 segundos para no colapsar la red
+        const now = Date.now();
+        if (now - lastBroadcastRef.current < 2000) return;
+        lastBroadcastRef.current = now;
         void ch.send({ type: 'broadcast', event: 'activity', payload: { text, kind } });
       }
-      // Feedback local inmediato (Broadcast no hace eco al emisor por defecto).
       pushEvent(text, kind);
     },
     [pushEvent],

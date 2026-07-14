@@ -21,7 +21,7 @@ import { CVOnboarding } from './CVOnboarding';
 import { OpportunitiesSheet } from './OpportunitiesSheet';
 import { ProfileCard } from './ProfileCard';
 import { ProactivePushes, usePushQueue } from './ProactivePushes';
-import { analyzeCV, type AnalyzedProfile } from '../../lib/cvAnalyzer';
+import { type AnalyzedProfile } from '../../lib/cvAnalyzer';
 import { getTopJobs } from '../../lib/jobMatcher';
 import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
