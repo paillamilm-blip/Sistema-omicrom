@@ -188,8 +188,6 @@ function TabContent({
   onPostulate: (jobId: string, jobTitle: string) => void;
   onNavigate?: (action: string) => void;
   onChangeTab?: (tab: TabId) => void;
-})
-  onNavigate?: (action: string) => void;
 }) {
   // Tab: Trabajos (top 3)
   if (tab === 'trabajos') {
