@@ -232,23 +232,19 @@ export function HoloNucleo3D({
       const pulse = 1 + Math.sin(t * pulseSpeed) * pulseIntensity + audioPulse;
       const Rp = R * pulse;
 
-      // ── BLOOM multicapa (aditivo) → resplandor neón real ──
+      // ── BLOOM sutil (profesional, sin neón exagerado) ──
       ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      const halo = ctx.createRadialGradient(p.sx, p.sy, Rp * 0.2, p.sx, p.sy, Rp * 4.4);
-      halo.addColorStop(0, hexA(errorTint ? C.red : orbColors.halo, 0.42));
-      halo.addColorStop(0.26, hexA(orbColors.halo, 0.20));
-      halo.addColorStop(0.58, hexA(orbColors.accent, 0.09));
-      halo.addColorStop(1, hexA(orbColors.halo, 0));
-      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp * 4.4, 0, 6.2832); ctx.fill();
+      const halo = ctx.createRadialGradient(p.sx, p.sy, Rp * 0.3, p.sx, p.sy, Rp * 2.8);
+      halo.addColorStop(0, hexA(orbColors.core, 0.18));
+      halo.addColorStop(0.4, hexA(orbColors.accent, 0.06));
+      halo.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp * 2.8, 0, 6.2832); ctx.fill();
 
-      // Anillos orbitando (elipses) — aditivos, detrás del cuerpo
+      // Un solo anillo orbital sutil
       ctx.translate(p.sx, p.sy);
-      for (let i = 0; i < 3; i++) {
-        ctx.save(); ctx.rotate(t * 0.22 + (i * Math.PI) / 3);
-        ctx.strokeStyle = hexA('#CFFAFE', 0.30 - i * 0.07); ctx.lineWidth = 1.3;
-        ctx.beginPath(); ctx.ellipse(0, 0, Rp * 1.52, Rp * 0.54, 0, 0, 6.2832); ctx.stroke(); ctx.restore();
-      }
+      ctx.save(); ctx.rotate(t * 0.15);
+      ctx.strokeStyle = hexA('#8aa0c0', 0.12); ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.ellipse(0, 0, Rp * 1.4, Rp * 0.5, 0, 0, 6.2832); ctx.stroke(); ctx.restore();
       ctx.restore();
 
       // ── CUERPO de la esfera (highlight arriba-izquierda → sombra abajo-derecha) ──
@@ -268,41 +264,39 @@ export function HoloNucleo3D({
       shade.addColorStop(1, 'rgba(4,10,28,0)');
       ctx.fillStyle = shade; ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp, 0, 6.2832); ctx.fill();
 
-      // ── ANILLO CRECIENTE azul (crescent moon ring) ──
+      // ── Arco de progreso (indicador profesional, no anillo lunar) ──
       ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
       ctx.lineCap = 'round';
-      ctx.lineWidth = Math.max(4, Rp * 0.13);
-      ctx.strokeStyle = hexA('#5cc8ff', 0.22);
-      ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp * 1.07, Math.PI * 1.12, Math.PI * 1.98); ctx.stroke();
-      ctx.lineWidth = Math.max(2, Rp * 0.045);
-      ctx.strokeStyle = hexA('#a9e6ff', 0.95);
-      ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp * 1.05, Math.PI * 1.12, Math.PI * 1.98); ctx.stroke();
+      ctx.lineWidth = Math.max(3, Rp * 0.06);
+      ctx.strokeStyle = hexA('#4a7090', 0.3);
+      ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp * 1.08, 0, 6.2832); ctx.stroke();
+      // Arco de progreso (porcentaje de reputación)
+      ctx.strokeStyle = hexA(orbColors.core, 0.7);
+      ctx.beginPath(); ctx.arc(p.sx, p.sy, Rp * 1.08, -Math.PI / 2, -Math.PI / 2 + (rep / 100) * 6.2832); ctx.stroke();
       ctx.restore();
 
-      // Highlight especular (brillo)
+      // Highlight interno sutil
       ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.beginPath(); ctx.ellipse(p.sx - Rp * 0.32, p.sy - Rp * 0.38, Rp * 0.26, Rp * 0.15, -0.5, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.beginPath(); ctx.ellipse(p.sx - Rp * 0.28, p.sy - Rp * 0.32, Rp * 0.18, Rp * 0.10, -0.5, 0, 6.2832); ctx.fill();
       ctx.restore();
 
       return p;
     }
 
-    // NODOS con GLOW PULSANTE (matching screenshot).
-    function glow(x: number, y: number, r: number, color: string, alpha: number, pulse: number) {
-      const rr = r * (1 + pulse * 0.15);
-      const g = ctx.createRadialGradient(x, y, 0, x, y, rr * 4);
-      g.addColorStop(0, hexA(color, 0.95 * alpha));
-      g.addColorStop(0.25, hexA(color, 0.6 * alpha));
-      g.addColorStop(0.5, hexA(color, 0.3 * alpha));
+    // NODOS PROFESIONALES (sin glow excesivo, sólidos y legibles)
+    function glow(x: number, y: number, r: number, color: string, alpha: number, _pulse: number) {
+      const rr = r;
+      // Halo sutil (no exagerado)
+      const g = ctx.createRadialGradient(x, y, 0, x, y, rr * 2.2);
+      g.addColorStop(0, hexA(color, 0.5 * alpha));
+      g.addColorStop(0.5, hexA(color, 0.15 * alpha));
       g.addColorStop(1, hexA(color, 0));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rr * 4, 0, 6.2832); ctx.fill();
-      // Núcleo blanco brillante.
-      ctx.fillStyle = hexA('#ffffff', 0.9 * alpha); ctx.beginPath(); ctx.arc(x, y, rr * 0.4, 0, 6.2832); ctx.fill();
-      // Nodo de color.
-      ctx.fillStyle = hexA(color, alpha); ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rr * 2.2, 0, 6.2832); ctx.fill();
+      // Nodo sólido con borde
+      ctx.fillStyle = hexA(color, 0.85 * alpha); ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.fill();
+      // Borde fino blanco
+      ctx.strokeStyle = hexA('#ffffff', 0.3 * alpha); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.stroke();
     }
 
     const start = performance.now();
@@ -310,36 +304,31 @@ export function HoloNucleo3D({
       const t = (now - start) / 1000;
       ctx.clearRect(0, 0, W, H);
 
-      // ── Fondo: nebulosa + grid de constelación (profundidad) ──
+      // ── Fondo: oscuro profesional con grid sutil ──
       const bg = ctx.createRadialGradient(CX, CY, 0, CX, CY, Math.max(W, H) * 0.72);
-      bg.addColorStop(0, 'rgba(22,44,88,0.30)');
-      bg.addColorStop(0.5, 'rgba(8,16,40,0.10)');
+      bg.addColorStop(0, 'rgba(12,20,40,0.18)');
+      bg.addColorStop(0.5, 'rgba(4,8,20,0.08)');
       bg.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-      ctx.strokeStyle = 'rgba(92,140,255,0.05)';
-      ctx.lineWidth = 1;
+      // Grid muy sutil (profesional, no sci-fi)
+      ctx.strokeStyle = 'rgba(60,80,120,0.03)';
+      ctx.lineWidth = 0.5;
       ctx.beginPath();
-      const gstep = 42;
+      const gstep = 50;
       for (let gx = CX % gstep; gx < W; gx += gstep) { ctx.moveTo(gx, 0); ctx.lineTo(gx, H); }
       for (let gy = CY % gstep; gy < H; gy += gstep) { ctx.moveTo(0, gy); ctx.lineTo(W, gy); }
       ctx.stroke();
 
-      // ⭐ POLVO ESTELAR REACTIVO (partículas cambian con audio y emoción)
+      // Partículas muy sutiles (datos en movimiento, no polvo estelar)
       for (const d of dust) {
         if (!reduce) { 
-          // ⭐ Velocidad aumenta con audio y emoción excited
-          const speedMultiplier = emotion === 'excited' ? 2.0 : emotion === 'alert' ? 1.5 : 1.0;
-          const audioBoost = audioLevel * 0.005;
-          d.x += (d.vx * 0.002 * speedMultiplier) + audioBoost; 
-          d.y += (d.vy * 0.002 * speedMultiplier) + audioBoost; 
+          d.x += d.vx * 0.001; 
+          d.y += d.vy * 0.001; 
         }
         if (d.x < 0) d.x = 1; if (d.x > 1) d.x = 0; if (d.y < 0) d.y = 1; if (d.y > 1) d.y = 0;
-        
-        // ⭐ Brillo reactivo al audio
-        const tw = 0.4 + 0.6 * Math.sin(t * 1.8 + d.tw) + audioLevel * 0.3;
-        const particleColor = emotion === 'celebrating' ? orbColors.halo : '#9fdcff';
-        ctx.fillStyle = hexA(particleColor, d.a * tw);
-        ctx.beginPath(); ctx.arc(d.x * W, d.y * H, d.r, 0, 6.2832); ctx.fill();
+        const tw = 0.3 + 0.3 * Math.sin(t * 0.8 + d.tw);
+        ctx.fillStyle = hexA('#6080a0', d.a * tw * 0.4);
+        ctx.beginPath(); ctx.arc(d.x * W, d.y * H, d.r * 0.6, 0, 6.2832); ctx.fill();
       }
 
       // Cámara: parallax + autorrotación suave.
@@ -370,28 +359,60 @@ export function HoloNucleo3D({
 
       const sortIdx = Array.from({ length: nodes.length }, (_, i) => i).sort((a, b) => nodes[a].zz - nodes[b].zz);
 
-      // LÍNEAS VIVAS con energía (del orbe a cada nodo). Aditivas → glow neón.
-      const coreP = project(0, 0, 0);
+      // ═══ SINERGIAS ENTRE NODOS (conexiones nodo↔nodo) ═══
+      // Cada nodo se conecta con sus vecinos más cercanos en la esfera (profesional, no solo centro)
       ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalCompositeOperation = 'source-over';
+      const synergyPairs: [number, number][] = [];
+      // Conectar nodos adyacentes (vecindad por distancia 3D) 
+      for (let a = 0; a < nodes.length; a++) {
+        for (let b = a + 1; b < nodes.length; b++) {
+          const dx = nodes[a].bx - nodes[b].bx;
+          const dy = nodes[a].by - nodes[b].by;
+          const dz = nodes[a].bz - nodes[b].bz;
+          const dist3d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          // Conectar si están relativamente cerca (< 1.1 en esfera unitaria)
+          if (dist3d < 1.1) synergyPairs.push([a, b]);
+        }
+      }
+      // Dibujar sinergias como líneas sutiles profesionales
+      for (const [a, b] of synergyPairs) {
+        const nA = nodes[a], nB = nodes[b];
+        const mA = meta[a], mB = meta[b];
+        const avgZ = (nA.zz + nB.zz) / 2;
+        const depthAlpha = Math.max(0.08, Math.min(0.35, 0.25 + avgZ * 0.15));
+        const isAnyHovered = a === hovered || b === hovered;
+        const lineAlpha = isAnyHovered ? 0.55 : depthAlpha;
+        
+        // Gradiente de color entre ambos nodos
+        const grad = ctx.createLinearGradient(nA.sx, nA.sy, nB.sx, nB.sy);
+        grad.addColorStop(0, hexA(mA.color, lineAlpha * 0.7));
+        grad.addColorStop(0.5, hexA('#8aa0c0', lineAlpha * 0.4));
+        grad.addColorStop(1, hexA(mB.color, lineAlpha * 0.7));
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = isAnyHovered ? 1.6 : 0.8;
+        ctx.beginPath();
+        ctx.moveTo(nA.sx, nA.sy);
+        // Curva suave (bezier) en vez de línea recta para look profesional
+        const cpx = (nA.sx + nB.sx) / 2 + (nA.sy - nB.sy) * 0.08;
+        const cpy = (nA.sy + nB.sy) / 2 + (nB.sx - nA.sx) * 0.08;
+        ctx.quadraticCurveTo(cpx, cpy, nB.sx, nB.sy);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // LÍNEAS del centro a cada nodo (profesional: sutiles, sin dash)
+      ctx.save();
       for (const i of sortIdx) {
-        if (nodes[i].zz > 0) continue; // solo las que van adelante
         const n = nodes[i];
         const m = meta[i];
         const isHov = i === hovered;
-        const alpha = isHov ? 0.7 : (n.zz > 0 ? 0.25 : 0.4);
-        const grad = ctx.createLinearGradient(coreP.sx, coreP.sy, n.sx, n.sy);
-        grad.addColorStop(0, hexA('#22D3EE', alpha * 0.6));
-        grad.addColorStop(0.5, hexA(m.color, alpha * 0.8));
-        grad.addColorStop(1, hexA(m.color, alpha * 0.4));
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = isHov ? 2.5 : 1.8;
-        ctx.setLineDash([4, 6]);
-        ctx.lineDashOffset = -t * 8; // energía fluyendo
+        const depthAlpha = n.zz > 0 ? 0.12 : 0.22;
+        const alpha = isHov ? 0.5 : depthAlpha;
+        ctx.strokeStyle = hexA(m.color, alpha);
+        ctx.lineWidth = isHov ? 1.5 : 0.7;
         ctx.beginPath(); ctx.moveTo(coreP.sx, coreP.sy); ctx.lineTo(n.sx, n.sy); ctx.stroke();
-        ctx.setLineDash([]);
       }
-
       ctx.restore();
 
       // ORBE CENTRAL.
