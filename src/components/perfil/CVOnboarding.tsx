@@ -1,15 +1,14 @@
 // components/perfil/CVOnboarding.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// ONBOARDING COMPLETO: analiza CV, mide conocimiento en tiempo real,
-// permite elegir avatar, muestra reputación y mejor match, luego despierta.
+// ONBOARDING PROFESIONAL: sube tu CV (PDF, Word, TXT) o pega tu
+// experiencia. Analiza, mide y posiciona. Diseño sobrio y profesional.
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useRef, useEffect } from 'react';
-import { Upload, Sparkles } from 'lucide-react';
+import { FileText, Upload, ArrowRight, CheckCircle, Briefcase } from 'lucide-react';
 import { analyzeCV, DEMO_CV, type AnalyzedProfile } from '../../lib/cvAnalyzer';
 import { getTopJobs } from '../../lib/jobMatcher';
-import { AvatarPicker } from './AvatarPicker';
-import { C, FONT, RADIUS } from '../../theme';
+import { FONT, RADIUS } from '../../theme';
 
 interface Props {
   onComplete: (profile: AnalyzedProfile) => void;
@@ -19,53 +18,94 @@ export function CVOnboarding({ onComplete }: Props) {
   const [step, setStep] = useState<'cv' | 'analysis'>('cv');
   const [cvText, setCvText] = useState('');
   const [cvNote, setCvNote] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
   const [profile, setProfile] = useState<AnalyzedProfile | null>(null);
   const [barWidth, setBarWidth] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Animar barra de reputación al entrar al paso 2
   useEffect(() => {
     if (step === 'analysis' && profile) {
       const rep = calculateReputation(profile);
-      setTimeout(() => setBarWidth(rep), 80);
+      setTimeout(() => setBarWidth(rep), 120);
     }
   }, [step, profile]);
 
   function calculateReputation(p: AnalyzedProfile): number {
     const { exec, qual, trans, fund } = p.axes;
     const avg = (exec + qual + trans + fund) / 4;
-    // Simplificado: 80% experiencia promedio
     return Math.max(0, Math.min(100, Math.round(avg * 0.8)));
   }
 
   function handleAnalyze() {
     const txt = cvText.trim();
     if (!txt) {
-      setCvNote('⚠️ Pega tu CV o toca "Usar ejemplo"');
+      setCvNote('Adjunta tu CV o describe tu experiencia profesional.');
       return;
     }
-
-    const analyzed = analyzeCV(txt);
-    setProfile(analyzed);
-    setStep('analysis');
+    setIsProcessing(true);
+    // Simular breve procesamiento (UX profesional)
+    setTimeout(() => {
+      const analyzed = analyzeCV(txt);
+      setProfile(analyzed);
+      setStep('analysis');
+      setIsProcessing(false);
+    }, 800);
   }
 
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const name = file.name.toLowerCase();
+    setFileName(file.name);
+    setCvNote('');
+
+    // PDF: extraer texto
+    if (name.endsWith('.pdf')) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const text = await extractTextFromPDF(arrayBuffer);
+        if (text.trim().length < 20) {
+          setCvNote('No se pudo extraer texto del PDF. Intenta con un PDF de texto (no escaneado) o pega tu experiencia manualmente.');
+          return;
+        }
+        setCvText(text.slice(0, 8000));
+        setCvNote(`Documento cargado: ${file.name}`);
+      } catch {
+        setCvNote('Error al leer el PDF. Intenta con otro formato o pega tu experiencia.');
+      }
+      return;
+    }
+
+    // Word (.docx): extraer texto básico
+    if (name.endsWith('.docx') || name.endsWith('.doc')) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const text = await extractTextFromDocx(arrayBuffer);
+        if (text.trim().length < 20) {
+          setCvNote('No se pudo extraer texto del documento. Intenta copiar y pegar tu CV directamente.');
+          return;
+        }
+        setCvText(text.slice(0, 8000));
+        setCvNote(`Documento cargado: ${file.name}`);
+      } catch {
+        setCvNote('Error al leer el documento. Intenta copiar y pegar tu CV directamente.');
+      }
+      return;
+    }
+
+    // Texto plano (.txt, .md, etc)
     const reader = new FileReader();
     reader.onload = () => {
       const text = String(reader.result || '').slice(0, 8000);
       setCvText(text);
-      setCvNote('✓ Archivo cargado');
+      setCvNote(`Documento cargado: ${file.name}`);
+    };
+    reader.onerror = () => {
+      setCvNote('Error al leer el archivo.');
     };
     reader.readAsText(file);
-  }
-
-  function handleDemo() {
-    setCvText(DEMO_CV);
-    setCvNote('');
   }
 
   function handleComplete() {
@@ -76,117 +116,149 @@ export function CVOnboarding({ onComplete }: Props) {
 
   const rep = profile ? calculateReputation(profile) : 0;
   const topJob = profile ? getTopJobs(profile, rep, 1)[0] : null;
-  const successColor = topJob && topJob.success >= 75 ? C.gold : C.cyan;
 
   return (
     <div style={S.overlay}>
       <div style={S.container}>
         {step === 'cv' && (
           <div style={S.step}>
-            <div style={S.icon}>Ω</div>
-            <h1 style={S.h1}>Activa tu Gemelo con tu CV</h1>
+            {/* Header profesional */}
+            <div style={S.logoRow}>
+              <div style={S.logoMark}>Ω</div>
+              <span style={S.logoText}>Ómicron</span>
+            </div>
+
+            <h1 style={S.h1}>Configura tu perfil profesional</h1>
             <p style={S.p}>
-              Pega tu CV o describe tu experiencia. Lo analizo, mido tu conocimiento en tiempo real y te posiciono para tus mejores oportunidades.
+              Sube tu CV en PDF o Word para que el sistema analice tu experiencia, identifique tus fortalezas y te conecte con oportunidades alineadas a tu perfil.
             </p>
 
-            <textarea
-              value={cvText}
-              onChange={(e) => setCvText(e.target.value)}
-              placeholder="Pega aquí tu CV o describe tu experiencia: rol, años, tecnologías (React, Node, Python…), proyectos, mentorías, certificaciones…"
-              style={S.textarea}
-            />
-
-            {cvNote && <div style={S.note}>{cvNote}</div>}
-
-            <div style={S.row}>
-              <button onClick={() => fileInputRef.current?.click()} style={S.btnSecondary}>
-                <Upload size={16} />
-                Subir archivo (.txt)
-              </button>
-              <button onClick={handleDemo} style={S.btnSecondary}>
-                Usar ejemplo
-              </button>
+            {/* Zona de upload principal */}
+            <div
+              style={S.dropZone}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload size={28} color="#5a7090" />
+              <div style={S.dropTitle}>
+                {fileName || 'Subir CV'}
+              </div>
+              <div style={S.dropSub}>
+                PDF, Word (.docx) o texto plano — máx. 5MB
+              </div>
             </div>
 
             <input
               ref={fileInputRef}
               type="file"
-              accept=".txt,.md,.json,.text"
+              accept=".pdf,.docx,.doc,.txt,.md,.json,.text,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={handleFileUpload}
               style={{ display: 'none' }}
             />
 
-            <button onClick={handleAnalyze} style={S.btnPrimary}>
-              Analizar mi conocimiento →
+            {/* Separador */}
+            <div style={S.separator}>
+              <div style={S.sepLine} />
+              <span style={S.sepText}>o describe tu experiencia</span>
+              <div style={S.sepLine} />
+            </div>
+
+            <textarea
+              value={cvText}
+              onChange={(e) => setCvText(e.target.value)}
+              placeholder="Describe tu experiencia profesional: rol actual, años de experiencia, tecnologías que dominas, proyectos relevantes, certificaciones..."
+              style={S.textarea}
+            />
+
+            {cvNote && (
+              <div style={{ ...S.note, color: cvNote.startsWith('Documento') ? '#4a9e7a' : '#a08050' }}>
+                {cvNote}
+              </div>
+            )}
+
+            <button
+              onClick={handleAnalyze}
+              disabled={isProcessing}
+              style={{ ...S.btnPrimary, opacity: isProcessing ? 0.7 : 1 }}
+            >
+              {isProcessing ? 'Analizando...' : 'Analizar perfil'}
+              {!isProcessing && <ArrowRight size={16} />}
+            </button>
+
+            <button onClick={() => { setCvText(DEMO_CV); setCvNote(''); }} style={S.linkBtn}>
+              Usar perfil de ejemplo para explorar
             </button>
           </div>
         )}
 
         {step === 'analysis' && profile && (
           <div style={S.step}>
-            {/* Avatar giratorio con anillo */}
-            <div style={S.avatarWrap}>
-              <div style={S.avatarRing} />
-              <div
-                style={{
-                  ...S.avatar,
-                  ...(profile.avatar?.type === 'img'
-                    ? {
-                        backgroundImage: `url(${profile.avatar.v})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }
-                    : {
-                        background: getAvatarGradient(profile.avatar?.v as number),
-                      }),
-                }}
-              >
-                {profile.avatar?.type !== 'img' && (
-                  <span style={{ fontFamily: FONT.display, fontSize: 44, fontWeight: 700, color: '#fff' }}>
-                    Ω
-                  </span>
-                )}
-              </div>
+            {/* Header resultado */}
+            <div style={S.resultHeader}>
+              <CheckCircle size={20} color="#4a9e7a" />
+              <span style={S.resultTitle}>Perfil analizado correctamente</span>
             </div>
 
-            {/* Selector de avatar */}
-            <AvatarPicker
-              selected={profile.avatar}
-              onChange={(av) => setProfile({ ...profile, avatar: av })}
-            />
-
-            {/* Medidor de reputación */}
-            <div style={S.meter}>
-              <div style={S.meterValue}>{rep}</div>
-              <div style={S.meterLabel}>Reputación · tu medidor de conocimiento</div>
-              <div style={S.meterBar}>
-                <div style={{ ...S.meterFill, width: `${barWidth}%` }} />
-              </div>
-            </div>
-
-            {/* Información del perfil */}
-            <div style={S.roleLabel}>{profile.seniorLabel}</div>
-            <div style={S.posLabel}>
-              {profile.labels.slice(0, 3).join(' · ') || 'tu especialidad'}
-            </div>
-
-            {/* Preview del mejor trabajo */}
-            {topJob && (
-              <div style={S.jobPreview}>
-                <div style={{ flex: 1 }}>
-                  <div style={S.jobTitle}>{topJob.job.title}</div>
-                  <div style={S.jobTag}>Tu mejor match ahora</div>
+            {/* Tarjeta de perfil */}
+            <div style={S.profileCard}>
+              <div style={S.profileRow}>
+                <div style={S.profileAvatar}>
+                  <Briefcase size={22} color="#7a8ea8" />
                 </div>
-                <div style={{ ...S.jobScore, color: successColor }}>
-                  {topJob.success}%
-                  <div style={S.jobScoreLabel}>ÉXITO</div>
+                <div style={{ flex: 1 }}>
+                  <div style={S.profileName}>{profile.seniorLabel}</div>
+                  <div style={S.profileSkills}>
+                    {profile.labels.slice(0, 4).join(' · ')}
+                  </div>
+                  {profile.years > 0 && (
+                    <div style={S.profileYears}>{profile.years} año{profile.years !== 1 ? 's' : ''} de experiencia</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Métricas profesionales */}
+            <div style={S.metricsGrid}>
+              <div style={S.metricCard}>
+                <div style={S.metricValue}>{rep}<span style={S.metricUnit}>/100</span></div>
+                <div style={S.metricLabel}>Índice profesional</div>
+                <div style={S.metricBar}>
+                  <div style={{ ...S.metricFill, width: `${barWidth}%` }} />
+                </div>
+              </div>
+              <div style={S.metricCard}>
+                <div style={S.metricValue}>{profile.skills.length}</div>
+                <div style={S.metricLabel}>Competencias detectadas</div>
+              </div>
+            </div>
+
+            {/* Ejes de evaluación */}
+            <div style={S.axesCard}>
+              <div style={S.axesTitle}>Evaluación por dimensión</div>
+              <div style={S.axesList}>
+                <AxisRow label="Ejecución" value={profile.axes.exec} desc="Capacidad de entrega" />
+                <AxisRow label="Calidad" value={profile.axes.qual} desc="Estándar de trabajo" />
+                <AxisRow label="Fundamento" value={profile.axes.fund} desc="Base de conocimiento" />
+                <AxisRow label="Trascendencia" value={profile.axes.trans} desc="Impacto y liderazgo" />
+              </div>
+            </div>
+
+            {/* Mejor oportunidad */}
+            {topJob && (
+              <div style={S.matchCard}>
+                <div style={S.matchLabel}>Mayor afinidad detectada</div>
+                <div style={S.matchRow}>
+                  <div style={{ flex: 1 }}>
+                    <div style={S.matchTitle}>{topJob.job.title}</div>
+                    <div style={S.matchMeta}>{topJob.job.pay} · {topJob.job.type === 'empresa' ? 'Empresa' : topJob.job.type === 'freelance' ? 'Freelance' : 'Mentoría'}</div>
+                  </div>
+                  <div style={S.matchScore}>{topJob.success}%</div>
                 </div>
               </div>
             )}
 
             <button onClick={handleComplete} style={S.btnPrimary}>
-              <Sparkles size={18} />
-              Entrar al sistema
+              Continuar al sistema
+              <ArrowRight size={16} />
             </button>
           </div>
         )}
@@ -195,18 +267,113 @@ export function CVOnboarding({ onComplete }: Props) {
   );
 }
 
-function getAvatarGradient(index: number): string {
-  const palettes = [
-    ['#5cc8ff', '#5e5ce6'],
-    ['#3fd0c9', '#5cc8ff'],
-    ['#ffb02e', '#ff6a3d'],
-    ['#b98bff', '#5e5ce6'],
-    ['#ff8fb0', '#ff375f'],
-    ['#8b9dff', '#3fd0c9'],
-  ];
-  const [c1, c2] = palettes[(index || 0) % palettes.length];
-  return `linear-gradient(140deg, ${c1}, ${c2})`;
+// ───────────────────────────────────────────────────────────────────────
+// Extractores de texto para PDF y Word (básicos, sin dependencias)
+// ───────────────────────────────────────────────────────────────────────
+
+async function extractTextFromPDF(buffer: ArrayBuffer): Promise<string> {
+  // Extracción básica de texto desde PDF sin librería externa.
+  // Busca streams de texto entre paréntesis y operadores Tj/TJ.
+  const bytes = new Uint8Array(buffer);
+  const raw = new TextDecoder('latin1').decode(bytes);
+
+  const textChunks: string[] = [];
+
+  // Buscar texto entre paréntesis que precede a Tj o TJ
+  const regex = /\(([^)]*)\)\s*T[jJ]/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(raw)) !== null) {
+    const chunk = match[1]
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '')
+      .replace(/\\\(/g, '(')
+      .replace(/\\\)/g, ')')
+      .replace(/\\\\/g, '\\');
+    if (chunk.trim()) textChunks.push(chunk);
+  }
+
+  // También buscar texto en arrays TJ: [(text) num (text) ...]
+  const tjArrayRegex = /\[([^\]]*)\]\s*TJ/g;
+  while ((match = tjArrayRegex.exec(raw)) !== null) {
+    const inner = match[1];
+    const partRegex = /\(([^)]*)\)/g;
+    let part: RegExpExecArray | null;
+    while ((part = partRegex.exec(inner)) !== null) {
+      const chunk = part[1]
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '')
+        .replace(/\\\(/g, '(')
+        .replace(/\\\)/g, ')')
+        .replace(/\\\\/g, '\\');
+      if (chunk.trim()) textChunks.push(chunk);
+    }
+  }
+
+  return textChunks.join(' ').replace(/\s+/g, ' ').trim();
 }
+
+async function extractTextFromDocx(buffer: ArrayBuffer): Promise<string> {
+  // .docx es un ZIP con document.xml adentro.
+  // Descompresión mínima sin dependencias externas.
+  try {
+    const bytes = new Uint8Array(buffer);
+    // Buscar el contenido XML directamente (simplificado)
+    const raw = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+
+    // Buscar patrones de texto en el XML del documento
+    const textParts: string[] = [];
+
+    // Buscar <w:t> tags (contenido de texto en Word XML)
+    const wtRegex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+    let match: RegExpExecArray | null;
+    while ((match = wtRegex.exec(raw)) !== null) {
+      if (match[1].trim()) textParts.push(match[1]);
+    }
+
+    if (textParts.length > 0) {
+      return textParts.join(' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // Fallback: extraer cualquier texto legible entre tags XML
+    const cleaned = raw
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/[^\x20-\x7E\xA0-\xFF\u0100-\u024F]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Solo devolver si parece texto real (más de 50 chars de texto legible)
+    if (cleaned.length > 50) {
+      return cleaned.slice(0, 8000);
+    }
+
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// Componente auxiliar: fila de eje
+// ───────────────────────────────────────────────────────────────────────
+
+function AxisRow({ label, value, desc }: { label: string; value: number; desc: string }) {
+  return (
+    <div style={S.axisRow}>
+      <div style={S.axisInfo}>
+        <span style={S.axisLabel}>{label}</span>
+        <span style={S.axisDesc}>{desc}</span>
+      </div>
+      <div style={S.axisBarWrap}>
+        <div style={{ ...S.axisFill, width: `${value}%` }} />
+      </div>
+      <span style={S.axisValue}>{value}</span>
+    </div>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// Estilos: diseño profesional, sobrio, sin gamificación
+// ───────────────────────────────────────────────────────────────────────
 
 const S: Record<string, React.CSSProperties> = {
   overlay: {
@@ -217,228 +384,360 @@ const S: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    background: 'radial-gradient(120% 90% at 50% 36%, #080c1c 0%, #010104 74%)',
+    background: '#030508',
     overflowY: 'auto',
-    padding: `max(34px, env(safe-area-inset-top, 0px)) 20px 20px`,
+    padding: `max(28px, env(safe-area-inset-top, 0px)) 20px 30px`,
   },
   container: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 420,
     margin: 'auto 0',
   },
   step: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 15,
+    gap: 16,
     width: '100%',
   },
-  icon: {
-    width: 74,
-    height: 74,
-    borderRadius: 24,
+  logoRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  logoMark: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontFamily: FONT.display,
-    fontSize: 34,
+    fontSize: 18,
     fontWeight: 700,
-    color: '#fff',
-    background: 'linear-gradient(140deg, #5cc8ff, #5e5ce6)',
-    boxShadow: '0 22px 66px rgba(94,92,230,0.55)',
-    animation: 'floatY 4s ease-in-out infinite',
+    color: '#c8d8f0',
+    background: 'linear-gradient(140deg, #1a2a44, #0f1a2e)',
+    border: '1px solid rgba(100,140,200,0.15)',
+  },
+  logoText: {
+    fontFamily: FONT.display,
+    fontSize: 18,
+    fontWeight: 700,
+    color: '#c8d8f0',
+    letterSpacing: -0.3,
   },
   h1: {
     fontFamily: FONT.display,
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: 700,
-    letterSpacing: -0.3,
-    color: C.ink,
-    maxWidth: 320,
+    letterSpacing: -0.4,
+    color: '#dce4f0',
+    maxWidth: 340,
     textAlign: 'center',
     margin: 0,
   },
   p: {
     fontFamily: FONT.display,
-    fontSize: 14.5,
-    lineHeight: 1.55,
-    color: C.mut,
-    maxWidth: 300,
+    fontSize: 14,
+    lineHeight: 1.6,
+    color: '#6a7a94',
+    maxWidth: 360,
     textAlign: 'center',
     margin: 0,
   },
+  dropZone: {
+    width: '100%',
+    padding: '28px 20px',
+    borderRadius: RADIUS.lg,
+    border: '1.5px dashed rgba(90,112,144,0.35)',
+    background: 'rgba(10,16,28,0.6)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+    cursor: 'pointer',
+    transition: 'border-color 0.2s',
+  },
+  dropTitle: {
+    fontFamily: FONT.display,
+    fontSize: 15,
+    fontWeight: 600,
+    color: '#8a9ab4',
+  },
+  dropSub: {
+    fontFamily: FONT.mono,
+    fontSize: 11,
+    color: '#4a5a70',
+  },
+  separator: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+    margin: '4px 0',
+  },
+  sepLine: {
+    flex: 1,
+    height: 1,
+    background: 'rgba(90,112,144,0.15)',
+  },
+  sepText: {
+    fontFamily: FONT.mono,
+    fontSize: 10.5,
+    color: '#4a5a70',
+    whiteSpace: 'nowrap',
+  },
   textarea: {
     width: '100%',
-    minHeight: 118,
-    maxHeight: 190,
-    borderRadius: RADIUS.lg,
-    border: `1px solid ${C.line}`,
-    background: 'rgba(255,255,255,0.045)',
-    color: C.ink,
+    minHeight: 100,
+    maxHeight: 160,
+    borderRadius: RADIUS.md,
+    border: '1px solid rgba(90,112,144,0.2)',
+    background: 'rgba(8,12,22,0.8)',
+    color: '#c0cce0',
     fontFamily: FONT.display,
-    fontSize: 13,
-    padding: 13,
+    fontSize: 13.5,
+    padding: 14,
     outline: 'none',
     resize: 'none' as const,
-    lineHeight: 1.5,
+    lineHeight: 1.55,
   },
   note: {
     fontFamily: FONT.mono,
     fontSize: 11.5,
-    color: C.gold,
     width: '100%',
     textAlign: 'left',
   },
-  row: {
-    display: 'flex',
-    gap: 10,
-    width: '100%',
-  },
-  btnSecondary: {
-    flex: 1,
-    padding: 11,
-    borderRadius: RADIUS.md,
-    cursor: 'pointer',
-    fontFamily: FONT.display,
-    fontSize: 12.5,
-    fontWeight: 500,
-    color: C.mut,
-    background: C.glass,
-    border: `1px solid ${C.line}`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-  },
   btnPrimary: {
     width: '100%',
-    padding: '15px 30px',
-    borderRadius: 17,
+    padding: '14px 24px',
+    borderRadius: 12,
     border: 'none',
     cursor: 'pointer',
     fontFamily: FONT.display,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 600,
     color: '#fff',
-    background: 'linear-gradient(135deg, #5cc8ff, #5e5ce6)',
-    boxShadow: '0 14px 38px rgba(10,132,255,0.5)',
+    background: 'linear-gradient(135deg, #1a4070, #1a2a50)',
+    boxShadow: '0 4px 14px rgba(26,64,112,0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  avatarWrap: {
-    position: 'relative',
-    width: 112,
-    height: 112,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: '2px 0 8px',
-  },
-  avatarRing: {
-    position: 'absolute',
-    inset: -6,
-    borderRadius: '50%',
-    border: '1px solid rgba(120,180,255,0.25)',
-    animation: 'cp-spin 14s linear infinite',
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 16px 46px rgba(92,120,255,0.5), inset 0 2px 10px rgba(255,255,255,0.25)',
-    animation: 'floatY 5s ease-in-out infinite',
-  },
-  meter: {
-    width: '100%',
-    textAlign: 'center',
-  },
-  meterValue: {
-    fontFamily: FONT.display,
-    fontSize: 46,
-    fontWeight: 800,
-    letterSpacing: -1,
-    lineHeight: 1,
-    background: 'linear-gradient(135deg, #eaf3ff, #5cc8ff)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
-  },
-  meterLabel: {
+  linkBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
     fontFamily: FONT.mono,
-    fontSize: 10.5,
-    color: C.mut,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase' as const,
-    marginTop: 3,
+    fontSize: 11.5,
+    color: '#5a7a9a',
+    textDecoration: 'underline',
+    padding: '8px 0',
   },
-  meterBar: {
-    height: 8,
-    borderRadius: 6,
-    background: 'rgba(255,255,255,0.08)',
-    margin: '9px 0 3px',
-    overflow: 'hidden',
-  },
-  meterFill: {
-    height: '100%',
-    borderRadius: 6,
-    background: 'linear-gradient(90deg, #5cc8ff, #5e5ce6)',
-    transition: 'width 1.1s cubic-bezier(0.2, 0.9, 0.25, 1)',
-  },
-  roleLabel: {
-    fontFamily: FONT.display,
-    fontSize: 14.5,
-    fontWeight: 700,
-    textAlign: 'center',
-    color: C.ink,
-    marginTop: 2,
-  },
-  posLabel: {
-    fontFamily: FONT.display,
-    fontSize: 12.5,
-    color: C.mut,
-    textAlign: 'center',
-    lineHeight: 1.5,
-  },
-  jobPreview: {
-    width: '100%',
+  // Paso 2: Resultados
+  resultHeader: {
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'center',
     gap: 10,
-    padding: '11px 13px',
-    borderRadius: 14,
-    border: `1px solid ${C.line}`,
-    background: C.glass,
-    marginTop: 4,
+    padding: '12px 16px',
+    borderRadius: 12,
+    background: 'rgba(40,90,60,0.12)',
+    border: '1px solid rgba(74,158,122,0.2)',
+    width: '100%',
   },
-  jobTitle: {
+  resultTitle: {
     fontFamily: FONT.display,
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: 600,
-    color: C.ink,
+    color: '#7ac0a0',
   },
-  jobTag: {
+  profileCard: {
+    width: '100%',
+    padding: '16px',
+    borderRadius: 14,
+    background: 'rgba(8,12,22,0.85)',
+    border: '1px solid rgba(90,112,144,0.12)',
+  },
+  profileRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 14,
+  },
+  profileAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    background: 'rgba(20,30,50,0.8)',
+    border: '1px solid rgba(90,112,144,0.15)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  profileName: {
+    fontFamily: FONT.display,
+    fontSize: 16,
+    fontWeight: 700,
+    color: '#d0daf0',
+  },
+  profileSkills: {
+    fontFamily: FONT.mono,
+    fontSize: 11.5,
+    color: '#6a8aaa',
+    marginTop: 3,
+  },
+  profileYears: {
     fontFamily: FONT.mono,
     fontSize: 10.5,
-    color: C.mut,
-    marginTop: 1,
+    color: '#4a6080',
+    marginTop: 2,
   },
-  jobScore: {
+  metricsGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 10,
+    width: '100%',
+  },
+  metricCard: {
+    padding: '14px 12px',
+    borderRadius: 12,
+    background: 'rgba(8,12,22,0.85)',
+    border: '1px solid rgba(90,112,144,0.1)',
+  },
+  metricValue: {
     fontFamily: FONT.display,
-    fontSize: 15,
+    fontSize: 28,
     fontWeight: 800,
-    whiteSpace: 'nowrap' as const,
+    color: '#c0d4e8',
+    letterSpacing: -0.5,
   },
-  jobScoreLabel: {
+  metricUnit: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: '#5a7090',
+  },
+  metricLabel: {
     fontFamily: FONT.mono,
-    fontSize: 8.5,
-    fontWeight: 600,
-    color: C.mut,
+    fontSize: 10,
+    color: '#4a6080',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase' as const,
+    marginTop: 4,
+  },
+  metricBar: {
+    height: 4,
+    borderRadius: 3,
+    background: 'rgba(255,255,255,0.06)',
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  metricFill: {
+    height: '100%',
+    borderRadius: 3,
+    background: 'linear-gradient(90deg, #2a5080, #1a3a60)',
+    transition: 'width 1.2s cubic-bezier(0.2, 0.9, 0.25, 1)',
+  },
+  axesCard: {
+    width: '100%',
+    padding: '14px 14px',
+    borderRadius: 14,
+    background: 'rgba(8,12,22,0.85)',
+    border: '1px solid rgba(90,112,144,0.1)',
+  },
+  axesTitle: {
+    fontFamily: FONT.mono,
+    fontSize: 10.5,
+    color: '#5a7090',
     letterSpacing: 0.4,
+    textTransform: 'uppercase' as const,
+    marginBottom: 12,
+  },
+  axesList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  axisRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
+  axisInfo: {
+    width: 100,
+    flexShrink: 0,
+  },
+  axisLabel: {
+    fontFamily: FONT.display,
+    fontSize: 12.5,
+    fontWeight: 600,
+    color: '#b0c0d8',
+    display: 'block',
+  },
+  axisDesc: {
+    fontFamily: FONT.mono,
+    fontSize: 9.5,
+    color: '#4a6080',
+    display: 'block',
+  },
+  axisBarWrap: {
+    flex: 1,
+    height: 5,
+    borderRadius: 3,
+    background: 'rgba(255,255,255,0.05)',
+    overflow: 'hidden',
+  },
+  axisFill: {
+    height: '100%',
+    borderRadius: 3,
+    background: 'linear-gradient(90deg, #2a5a88, #1a3a5a)',
+    transition: 'width 0.8s ease',
+  },
+  axisValue: {
+    fontFamily: FONT.mono,
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#8aa0b8',
+    width: 28,
+    textAlign: 'right' as const,
+  },
+  matchCard: {
+    width: '100%',
+    padding: '14px 14px',
+    borderRadius: 14,
+    background: 'rgba(12,16,24,0.9)',
+    border: '1px solid rgba(90,112,144,0.12)',
+  },
+  matchLabel: {
+    fontFamily: FONT.mono,
+    fontSize: 9.5,
+    color: '#5a7090',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase' as const,
+    marginBottom: 8,
+  },
+  matchRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  },
+  matchTitle: {
+    fontFamily: FONT.display,
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#c0d0e4',
+  },
+  matchMeta: {
+    fontFamily: FONT.mono,
+    fontSize: 11,
+    color: '#5a7a94',
+    marginTop: 3,
+  },
+  matchScore: {
+    fontFamily: FONT.display,
+    fontSize: 22,
+    fontWeight: 800,
+    color: '#7aaa90',
   },
 };
