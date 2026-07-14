@@ -402,6 +402,7 @@ export function HoloNucleo3D({
       ctx.restore();
 
       // LÍNEAS del centro a cada nodo (profesional: sutiles, sin dash)
+      const coreP = project(0, 0, 0);
       ctx.save();
       for (const i of sortIdx) {
         const n = nodes[i];
@@ -415,10 +416,25 @@ export function HoloNucleo3D({
       }
       ctx.restore();
 
+      // NODOS DETRÁS del orbe (zz < 0)
+      for (const i of sortIdx) {
+        if (nodes[i].zz >= 0) continue;
+        const n = nodes[i];
+        const m = meta[i];
+        const isHov = i === hovered;
+        const pulse = Math.sin(t * 2 + i * 0.8);
+        const alpha = isHov ? 0.8 : 0.4;
+        glow(n.sx, n.sy, n.baseR * n.sc, m.color, alpha, pulse);
+        ctx.fillStyle = hexA(m.color, alpha * 0.8);
+        ctx.font = `600 ${Math.round(10 * n.sc)}px ${FONT.display}`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(m.label, n.sx, n.sy + n.baseR * n.sc + 5);
+      }
+
       // ORBE CENTRAL.
       drawCore(t);
 
-      // NODOS con GLOW PULSANTE (delante del orbe).
+      // NODOS DELANTE del orbe (zz >= 0)
       for (const i of sortIdx) {
         if (nodes[i].zz < 0) continue;
         const n = nodes[i];
