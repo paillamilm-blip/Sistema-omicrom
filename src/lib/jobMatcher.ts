@@ -5,6 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import type { AnalyzedProfile } from './cvAnalyzer';
+export { SKILL_LABELS } from './cvAnalyzer';
 
 export interface Job {
   id: string;

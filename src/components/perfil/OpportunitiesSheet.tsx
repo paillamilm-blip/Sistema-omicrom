@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
-import { X, Briefcase, Zap, GraduationCap, Store, ShoppingBag, Users } from 'lucide-react';
+import { X, Briefcase } from 'lucide-react';
 import type { AnalyzedProfile } from '../../lib/cvAnalyzer';
 import { getTopJobs, getJobsByType, getGapSkills, jobTypeLabel, SKILL_LABELS, type JobScore } from '../../lib/jobMatcher';
 import { C, FONT, RADIUS } from '../../theme';
@@ -162,6 +162,7 @@ export function OpportunitiesSheet({
             reputation={reputation}
             onPostulate={handlePostulate}
             onNavigate={onNavigate}
+            onChangeTab={setCurrentTab}
           />
         </div>
       </div>
@@ -179,11 +180,15 @@ function TabContent({
   reputation,
   onPostulate,
   onNavigate,
+  onChangeTab,
 }: {
   tab: TabId;
   profile: AnalyzedProfile;
   reputation: number;
   onPostulate: (jobId: string, jobTitle: string) => void;
+  onNavigate?: (action: string) => void;
+  onChangeTab?: (tab: TabId) => void;
+})
   onNavigate?: (action: string) => void;
 }) {
   // Tab: Trabajos (top 3)
@@ -399,7 +404,7 @@ function TabContent({
             description={step.desc}
             buttonLabel={step.btnLabel}
             onAction={() => {
-              if (step.action === 'practicas') setCurrentTab('practicas');
+              if (step.action === 'practicas') onChangeTab?.('practicas');
               else onNavigate?.(step.action);
             }}
           />

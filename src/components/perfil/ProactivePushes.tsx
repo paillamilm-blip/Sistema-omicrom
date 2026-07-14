@@ -6,8 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useCallback } from 'react';
-import { X } from 'lucide-react';
-import { C, FONT, RADIUS } from '../../theme';
+import { C, FONT } from '../../theme';
 
 export interface Push {
   id: string;

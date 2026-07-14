@@ -8,7 +8,7 @@
 import { X, CheckCircle } from 'lucide-react';
 import type { AnalyzedProfile } from '../../lib/cvAnalyzer';
 import { getTopJobs } from '../../lib/jobMatcher';
-import { C, FONT, RADIUS } from '../../theme';
+import { C, FONT } from '../../theme';
 
 interface Props {
   isOpen: boolean;
