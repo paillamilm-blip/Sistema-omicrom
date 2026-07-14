@@ -248,11 +248,12 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
     setTimeout(() => setEmotion('idle'), 3000);
   }
 
-  // Chips para el Núcleo 3D (métricas flotantes del Gemelo).
+  // Chips para el Núcleo 3D (métricas flotantes del Gemelo Digital).
+  const tierLabel = tier.name.replace('Nodo ', '');
   const chips: NucleoChip[] = [
-    { label: 'Nodo', value: `N${level} · ${tier.name.replace('Nodo ', '')}`, color: C.purple, x: 0.18, y: 0.22 },
+    { label: 'Nivel', value: tierLabel, color: C.purple, x: 0.18, y: 0.22 },
     { label: 'PE', value: String(pe), color: C.gold, x: 0.82, y: 0.22 },
-    { label: 'Tokens', value: tokens.toLocaleString(), color: C.cyan, x: 0.18, y: 0.78 },
+    { label: 'Tokens', value: tokens.toLocaleString() + ' Ω', color: C.cyan, x: 0.18, y: 0.78 },
     { label: 'Contratos', value: String(contratos), color: C.green, x: 0.82, y: 0.78 },
   ];
 
@@ -324,8 +325,9 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
           audioLevel={audioLevel}
           center={
             <div style={{ textAlign: 'center', lineHeight: 1 }}>
-              <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 48, color: '#eafffb', textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>{rep}</div>
-              <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: 'rgba(190,230,255,0.85)', marginTop: 3 }}>REPUTACIÓN</div>
+              <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 42, color: '#dce8f4', textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>{rep}</div>
+              <div style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1.5, color: 'rgba(160,190,220,0.75)', marginTop: 3 }}>REPUTACIÓN</div>
+              <div style={{ fontFamily: FONT.mono, fontSize: 7, color: 'rgba(120,150,180,0.5)', marginTop: 2 }}>20% TRAD + 80% EJES</div>
             </div>
           }
         />

@@ -128,9 +128,9 @@ export function CVOnboarding({ onComplete }: Props) {
               <span style={S.logoText}>Ómicron</span>
             </div>
 
-            <h1 style={S.h1}>Configura tu perfil profesional</h1>
+            <h1 style={S.h1}>Construye tu Gemelo Digital</h1>
             <p style={S.p}>
-              Sube tu CV en PDF o Word para que el sistema analice tu experiencia, identifique tus fortalezas y te conecte con oportunidades alineadas a tu perfil.
+              Tu Gemelo Digital es una reputación verificable e imposible de falsear. Sube tu CV y el sistema calculará tus 4 ejes de desempeño para posicionarte en el ecosistema de capital intelectual.
             </p>
 
             {/* Zona de upload principal */}
@@ -158,14 +158,14 @@ export function CVOnboarding({ onComplete }: Props) {
             {/* Separador */}
             <div style={S.separator}>
               <div style={S.sepLine} />
-              <span style={S.sepText}>o describe tu experiencia</span>
+              <span style={S.sepText}>o describe tu experiencia profesional</span>
               <div style={S.sepLine} />
             </div>
 
             <textarea
               value={cvText}
               onChange={(e) => setCvText(e.target.value)}
-              placeholder="Describe tu experiencia profesional: rol actual, años de experiencia, tecnologías que dominas, proyectos relevantes, certificaciones..."
+              placeholder="Rol actual, años de experiencia, tecnologías que dominas, contratos completados, certificaciones, mentorías realizadas..."
               style={S.textarea}
             />
 
@@ -180,12 +180,12 @@ export function CVOnboarding({ onComplete }: Props) {
               disabled={isProcessing}
               style={{ ...S.btnPrimary, opacity: isProcessing ? 0.7 : 1 }}
             >
-              {isProcessing ? 'Analizando...' : 'Analizar perfil'}
+              {isProcessing ? 'Calculando ejes...' : 'Calcular mi Gemelo Digital'}
               {!isProcessing && <ArrowRight size={16} />}
             </button>
 
             <button onClick={() => { setCvText(DEMO_CV); setCvNote(''); }} style={S.linkBtn}>
-              Usar perfil de ejemplo para explorar
+              Usar perfil de ejemplo para explorar el sistema
             </button>
           </div>
         )}
@@ -195,7 +195,7 @@ export function CVOnboarding({ onComplete }: Props) {
             {/* Header resultado */}
             <div style={S.resultHeader}>
               <CheckCircle size={20} color="#4a9e7a" />
-              <span style={S.resultTitle}>Perfil analizado correctamente</span>
+              <span style={S.resultTitle}>Gemelo Digital calculado</span>
             </div>
 
             {/* Tarjeta de perfil */}
@@ -216,29 +216,37 @@ export function CVOnboarding({ onComplete }: Props) {
               </div>
             </div>
 
+            {/* Fórmula de reputación visible */}
+            <div style={S.formulaCard}>
+              <div style={S.formulaTitle}>Fórmula de tu reputación</div>
+              <div style={S.formulaText}>
+                REPUTACIÓN = 20% Tradicional + 80% (Ejecución + Calidad + Fundamento + Trascendencia) / 4
+              </div>
+            </div>
+
             {/* Métricas profesionales */}
             <div style={S.metricsGrid}>
               <div style={S.metricCard}>
                 <div style={S.metricValue}>{rep}<span style={S.metricUnit}>/100</span></div>
-                <div style={S.metricLabel}>Índice profesional</div>
+                <div style={S.metricLabel}>Reputación</div>
                 <div style={S.metricBar}>
                   <div style={{ ...S.metricFill, width: `${barWidth}%` }} />
                 </div>
               </div>
               <div style={S.metricCard}>
                 <div style={S.metricValue}>{profile.skills.length}</div>
-                <div style={S.metricLabel}>Competencias detectadas</div>
+                <div style={S.metricLabel}>Competencias</div>
               </div>
             </div>
 
-            {/* Ejes de evaluación */}
+            {/* Ejes de evaluación — con nombres exactos de la bitácora */}
             <div style={S.axesCard}>
-              <div style={S.axesTitle}>Evaluación por dimensión</div>
+              <div style={S.axesTitle}>Tus 4 ejes de desempeño (80% de tu reputación)</div>
               <div style={S.axesList}>
-                <AxisRow label="Ejecución" value={profile.axes.exec} desc="Capacidad de entrega" />
-                <AxisRow label="Calidad" value={profile.axes.qual} desc="Estándar de trabajo" />
-                <AxisRow label="Fundamento" value={profile.axes.fund} desc="Base de conocimiento" />
-                <AxisRow label="Trascendencia" value={profile.axes.trans} desc="Impacto y liderazgo" />
+                <AxisRow label="Ejecución" value={profile.axes.exec} desc="Contratos completados" />
+                <AxisRow label="Calidad" value={profile.axes.qual} desc="Calificaciones de clientes" />
+                <AxisRow label="Fundamento" value={profile.axes.fund} desc="Academia + credenciales" />
+                <AxisRow label="Trascendencia" value={profile.axes.trans} desc="Bóveda + mentorías" />
               </div>
             </div>
 
@@ -257,7 +265,7 @@ export function CVOnboarding({ onComplete }: Props) {
             )}
 
             <button onClick={handleComplete} style={S.btnPrimary}>
-              Continuar al sistema
+              Entrar al ecosistema
               <ArrowRight size={16} />
             </button>
           </div>
@@ -716,6 +724,27 @@ const S: Record<string, React.CSSProperties> = {
     letterSpacing: 0.5,
     textTransform: 'uppercase' as const,
     marginBottom: 8,
+  },
+  formulaCard: {
+    width: '100%',
+    padding: '12px 14px',
+    borderRadius: 12,
+    background: 'rgba(20,30,50,0.6)',
+    border: '1px solid rgba(70,110,160,0.15)',
+  },
+  formulaTitle: {
+    fontFamily: FONT.mono,
+    fontSize: 9.5,
+    color: '#5a7a9a',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase' as const,
+    marginBottom: 6,
+  },
+  formulaText: {
+    fontFamily: FONT.mono,
+    fontSize: 11,
+    color: '#8aa8c8',
+    lineHeight: 1.5,
   },
   matchRow: {
     display: 'flex',

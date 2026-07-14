@@ -65,17 +65,17 @@ interface GNode {
 }
 
 const AXES_DEF: { key: keyof NucleoAxes; label: string; color: string; detail: string; mejora: string; tab: string }[] = [
-  { key: 'execution', label: 'Ejecuta', color: '#5cc8ff', detail: 'Rapidez y calidad de entrega en contratos.', mejora: 'Toma un contrato de hito corto en el Market.', tab: 'empleos' },
-  { key: 'quality', label: 'Calidad', color: '#8a88f0', detail: 'Calificaciones de tus clientes.', mejora: 'Pide reseña al cerrar cada contrato.', tab: 'empleos' },
-  { key: 'transcendence', label: 'Aprende', color: '#ffb02e', detail: 'Conocimiento compartido: Bóveda y mentorías.', mejora: 'Publica un aporte en la Bóveda.', tab: 'academia' },
-  { key: 'foundation', label: 'Gobierna', color: '#3fd0c9', detail: 'Dominio teórico y cursos de la Academia.', mejora: 'Rinde el Examen IA de un nodo pendiente.', tab: 'gobernanza' },
+  { key: 'execution', label: 'Ejecución', color: '#5cc8ff', detail: 'Contratos completados con éxito. Se gana ejecutando trabajos con Escrow.', mejora: 'Completa un contrato en Empleos para subir este eje.', tab: 'empleos' },
+  { key: 'quality', label: 'Calidad', color: '#8a88f0', detail: 'Calificaciones ⭐ de tus clientes. Refleja la excelencia de tus entregas.', mejora: 'Pide reseña al cerrar cada contrato.', tab: 'empleos' },
+  { key: 'transcendence', label: 'Trascendencia', color: '#ffb02e', detail: 'Conocimiento compartido: Bóveda (regalías) + Mentorías.', mejora: 'Publica un aporte en la Bóveda o da una mentoría.', tab: 'vault' },
+  { key: 'foundation', label: 'Fundamento', color: '#3fd0c9', detail: 'Dominio verificable: cursos de Academia + credenciales validadas.', mejora: 'Completa un curso o valida una credencial.', tab: 'academia' },
 ];
 
 const CHIP_DETAIL: Record<string, string> = {
-  Tokens: 'Saldo disponible en tu billetera.', PE: 'Puntos de experiencia acumulados.', Contratos: 'Contratos completados.', Nodo: 'Tu nodo actual en la red.',
+  Tokens: 'Moneda interna de utilidad (Ω). Se gana con contratos y Bóveda.', PE: 'Puntos de experiencia. Miden tu progreso en el ecosistema.', Contratos: 'Contratos completados con Escrow.', Nodo: 'Tu nivel: Estudiante → Técnico → Arquitecto → Pioneer.',
 };
 const CHIP_MEJORA: Record<string, string> = {
-  Tokens: 'Cierra contratos con escrow.', PE: 'Completa cursos en la Academia.', Contratos: 'Postula a una oportunidad.', Nodo: 'Acumula PE para subir de nodo.',
+  Tokens: 'Cierra contratos con Escrow o publica en la Bóveda.', PE: 'Completa cursos en la Academia o ejecuta contratos.', Contratos: 'Postula a una oportunidad en Empleos.', Nodo: 'Acumula PE para evolucionar de nivel.',
 };
 const CHIP_TAB: Record<string, string> = {
   Tokens: 'wallet', PE: 'academia', Contratos: 'empleos', Nodo: 'perfil',
