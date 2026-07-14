@@ -215,8 +215,13 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
     // Guardar en localStorage
     localStorage.setItem('omicron_analyzed_profile', JSON.stringify(newProfile));
     
-    // Actualizar ejes del Gemelo en el profile global
-    profile.axes = newProfile.axes;
+    // Actualizar ejes del Gemelo en el profile global (mapeo de nombres)
+    profile.axes = {
+      execution: newProfile.axes.exec,
+      quality: newProfile.axes.qual,
+      transcendence: newProfile.axes.trans,
+      foundation: newProfile.axes.fund,
+    };
     
     // Mensaje de bienvenida
     speak(`¡Bienvenido! Tu Gemelo Digital está activado. Reputación ${rep}, ${newProfile.seniorLabel}.`);
