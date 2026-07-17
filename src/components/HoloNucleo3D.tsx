@@ -188,9 +188,11 @@ export function HoloNucleo3D({
       if (e.pointerType) isTouch = e.pointerType === 'touch';
     }
     function onDown(e: PointerEvent) { onMove(e); }
-    function onLeave() { if (!isTouch) active = false; }
+    function onUp() { active = false; } // Fix: desactivar al soltar (evita giro infinito en touch)
+    function onLeave() { active = false; }
     canvas.addEventListener('pointermove', onMove);
     canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointerup', onUp);
     canvas.addEventListener('pointerleave', onLeave);
 
     const errorTint = orbState === 'error';
@@ -331,12 +333,19 @@ export function HoloNucleo3D({
         ctx.beginPath(); ctx.arc(d.x * W, d.y * H, d.r * 0.6, 0, 6.2832); ctx.fill();
       }
 
-      // Cámara: parallax + autorrotación suave.
+      // Cámara: parallax suave (NO acumulativo — fix del giro infinito).
+      // El puntero ORIENTA la cámara hacia un ángulo, no la ACELERA.
       const nx = active ? (ptrX / W - 0.5) * 2 : 0;
       const ny = active ? (ptrY / H - 0.5) * 2 : 0;
       if (!reduce && orbState !== 'error' && selRef.current < 0) yaw += 0.003;
-      pitch = -0.2 + ny * 0.25;
-      yaw = yaw + nx * 0.3;
+      // nx/ny controlan suavemente el TARGET, no se acumulan
+      const targetPitch = -0.2 + ny * 0.25;
+      pitch += (targetPitch - pitch) * 0.08;
+      // En vez de sumar nx al yaw cada frame (causaba giro infinito),
+      // usamos nx como un OFFSET suave que se aplica solo una vez
+      if (active) {
+        yaw += nx * 0.008; // Muy suave, proporcional al desplazamiento
+      }
 
       for (const n of nodes) {
         const p = project(n.bx, n.by, n.bz);
@@ -479,6 +488,7 @@ export function HoloNucleo3D({
       if (ro) ro.disconnect();
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerdown', onDown);
+      canvas.removeEventListener('pointerup', onUp);
       canvas.removeEventListener('pointerleave', onLeave);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

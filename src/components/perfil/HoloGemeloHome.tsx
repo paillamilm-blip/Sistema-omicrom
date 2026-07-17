@@ -7,7 +7,7 @@
 // INTEGRADO CON: CVOnboarding, OpportunitiesSheet, ProfileCard, ProactivePushes.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect } from 'react';
-import { Brain, Briefcase, Lock, Scale, UserCircle, Target, Volume2, Send, Store, Boxes, Wallet, MessageCircle } from 'lucide-react';
+import { Brain, Briefcase, Lock, Scale, UserCircle, Target, Volume2, Send, Store, Boxes, Wallet, MessageCircle, LogOut } from 'lucide-react';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';
@@ -23,6 +23,7 @@ import { ProfileCard } from './ProfileCard';
 import { ProactivePushes, usePushQueue } from './ProactivePushes';
 import { analyzeCV, type AnalyzedProfile } from '../../lib/cvAnalyzer';
 import { getTopJobs } from '../../lib/jobMatcher';
+import { supabase } from '../../lib/supabase';
 import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
 
@@ -287,6 +288,13 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
           active={speaking}
         >
           <Volume2 size={17} />
+        </IconBtn>
+        <IconBtn
+          onClick={() => { supabase.auth.signOut(); }}
+          label="Cerrar sesión"
+          color="#8a5050"
+        >
+          <LogOut size={16} />
         </IconBtn>
       </div>
 
