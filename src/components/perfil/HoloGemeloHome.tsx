@@ -211,19 +211,37 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
     setAnalyzedProfile(newProfile);
     setShowOnboarding(false);
     
-    // Guardar en localStorage
+    // Guardar en localStorage para persistencia
     localStorage.setItem('omicron_analyzed_profile', JSON.stringify(newProfile));
     
-    // Actualizar ejes del Gemelo en el profile global (mapeo de nombres)
-    profile.axes = {
-      execution: newProfile.axes.exec,
-      quality: newProfile.axes.qual,
-      transcendence: newProfile.axes.trans,
-      foundation: newProfile.axes.fund,
-    };
+    // ═══ CONVALIDACIÓN REAL: CV → 4 ejes del Gemelo Digital ═══
+    // Calcula los deltas respecto al estado actual y actualiza en Supabase
+    // via el servicio de reputación (que dispara el trigger server-side).
+    const currentAxes = profile.axes || { execution: 50, quality: 50, transcendence: 50, foundation: 50 };
+    const executionDelta = Math.max(0, newProfile.axes.exec - (currentAxes.execution ?? 50));
+    const qualityDelta = Math.max(0, newProfile.axes.qual - (currentAxes.quality ?? 50));
+    const transcendenceDelta = Math.max(0, newProfile.axes.trans - (currentAxes.transcendence ?? 50));
+    const foundationDelta = Math.max(0, newProfile.axes.fund - (currentAxes.foundation ?? 50));
     
-    // Mensaje de bienvenida
-    speak(`¡Bienvenido! Tu Gemelo Digital está activado. Reputación ${rep}, ${newProfile.seniorLabel}.`);
+    // Solo convalidar si hay mejoras reales (deltas > 0)
+    if (executionDelta > 0 || qualityDelta > 0 || transcendenceDelta > 0 || foundationDelta > 0) {
+      // Usar el servicio de reputación para actualizar (via RPC o update)
+      import('../../services/reputationService').then(({ updateReputationInDatabase }) => {
+        if (sb?.id) {
+          updateReputationInDatabase({
+            user_id: sb.id,
+            execution_delta: executionDelta,
+            quality_delta: qualityDelta,
+            transcendence_delta: transcendenceDelta,
+            foundation_delta: foundationDelta,
+            reason: `Convalidación automática de CV: ${newProfile.seniorLabel}, ${newProfile.skills.length} competencias detectadas`,
+          });
+        }
+      });
+    }
+    
+    // Mensaje de confirmación
+    speak(`Gemelo Digital actualizado. ${newProfile.skills.length} competencias detectadas. Tu reputación refleja tus ${newProfile.years || 0} años de experiencia.`);
   }
 
   function handlePostulate(jobId: string) {
@@ -260,13 +278,11 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
 
   // Si no hay perfil analizado, mostrar onboarding
   if (showOnboarding) {
-    return <CVOnboarding onComplete={handleOnboardingComplete} />;
+    return <CVOnboarding onComplete={handleOnboardingComplete} onSkip={() => setShowOnboarding(false)} />;
   }
 
-  // Si no hay perfil analizado y no está el onboarding, no renderizar nada
-  if (!analyzedProfile) {
-    return null;
-  }
+  // Si no hay perfil analizado y no está el onboarding, seguir sin él
+  // (la app funciona con datos del Gemelo de Supabase, el perfil analizado es opcional)
 
   return (
     <div style={S.wrap}>
