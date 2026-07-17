@@ -7,7 +7,7 @@
 // INTEGRADO CON: CVOnboarding, OpportunitiesSheet, ProfileCard, ProactivePushes.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect } from 'react';
-import { Brain, Briefcase, Lock, Scale, UserCircle, Target, Volume2, Send, Store, Boxes, Wallet, MessageCircle } from 'lucide-react';
+import { Brain, Briefcase, Lock, Scale, UserCircle, Target, Volume2, Send, Store, Boxes, Wallet, MessageCircle, LogOut } from 'lucide-react';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';
@@ -23,6 +23,7 @@ import { ProfileCard } from './ProfileCard';
 import { ProactivePushes, usePushQueue } from './ProactivePushes';
 import { type AnalyzedProfile } from '../../lib/cvAnalyzer';
 import { getTopJobs } from '../../lib/jobMatcher';
+import { supabase } from '../../lib/supabase';
 import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
 
@@ -210,19 +211,37 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
     setAnalyzedProfile(newProfile);
     setShowOnboarding(false);
     
-    // Guardar en localStorage
+    // Guardar en localStorage para persistencia
     localStorage.setItem('omicron_analyzed_profile', JSON.stringify(newProfile));
     
-    // Actualizar ejes del Gemelo en el profile global (mapeo de nombres)
-    profile.axes = {
-      execution: newProfile.axes.exec,
-      quality: newProfile.axes.qual,
-      transcendence: newProfile.axes.trans,
-      foundation: newProfile.axes.fund,
-    };
+    // ═══ CONVALIDACIÓN REAL: CV → 4 ejes del Gemelo Digital ═══
+    // Calcula los deltas respecto al estado actual y actualiza en Supabase
+    // via el servicio de reputación (que dispara el trigger server-side).
+    const currentAxes = profile.axes || { execution: 50, quality: 50, transcendence: 50, foundation: 50 };
+    const executionDelta = Math.max(0, newProfile.axes.exec - (currentAxes.execution ?? 50));
+    const qualityDelta = Math.max(0, newProfile.axes.qual - (currentAxes.quality ?? 50));
+    const transcendenceDelta = Math.max(0, newProfile.axes.trans - (currentAxes.transcendence ?? 50));
+    const foundationDelta = Math.max(0, newProfile.axes.fund - (currentAxes.foundation ?? 50));
     
-    // Mensaje de bienvenida
-    speak(`¡Bienvenido! Tu Gemelo Digital está activado. Reputación ${rep}, ${newProfile.seniorLabel}.`);
+    // Solo convalidar si hay mejoras reales (deltas > 0)
+    if (executionDelta > 0 || qualityDelta > 0 || transcendenceDelta > 0 || foundationDelta > 0) {
+      // Usar el servicio de reputación para actualizar (via RPC o update)
+      import('../../services/reputationService').then(({ updateReputationInDatabase }) => {
+        if (sb?.id) {
+          updateReputationInDatabase({
+            user_id: sb.id,
+            execution_delta: executionDelta,
+            quality_delta: qualityDelta,
+            transcendence_delta: transcendenceDelta,
+            foundation_delta: foundationDelta,
+            reason: `Convalidación automática de CV: ${newProfile.seniorLabel}, ${newProfile.skills.length} competencias detectadas`,
+          });
+        }
+      });
+    }
+    
+    // Mensaje de confirmación
+    speak(`Gemelo Digital actualizado. ${newProfile.skills.length} competencias detectadas. Tu reputación refleja tus ${newProfile.years || 0} años de experiencia.`);
   }
 
   function handlePostulate(jobId: string) {
@@ -259,13 +278,11 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
 
   // Si no hay perfil analizado, mostrar onboarding
   if (showOnboarding) {
-    return <CVOnboarding onComplete={handleOnboardingComplete} />;
+    return <CVOnboarding onComplete={handleOnboardingComplete} onSkip={() => setShowOnboarding(false)} />;
   }
 
-  // Si no hay perfil analizado y no está el onboarding, no renderizar nada
-  if (!analyzedProfile) {
-    return null;
-  }
+  // Si no hay perfil analizado y no está el onboarding, seguir sin él
+  // (la app funciona con datos del Gemelo de Supabase, el perfil analizado es opcional)
 
   return (
     <div style={S.wrap}>
@@ -287,6 +304,13 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
           active={speaking}
         >
           <Volume2 size={17} />
+        </IconBtn>
+        <IconBtn
+          onClick={() => { supabase.auth.signOut(); }}
+          label="Cerrar sesión"
+          color="#8a5050"
+        >
+          <LogOut size={16} />
         </IconBtn>
       </div>
 
@@ -386,13 +410,13 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
         <div style={S.matchCard}>
           <div style={S.matchTag}>
             <span style={{ ...S.tagDot, background: C.gold, boxShadow: `0 0 8px ${C.gold}` }} />
-            {analyzedProfile.arch === 'estudiante' ? 'UNA OPORTUNIDAD TE BUSCA' : 'UNA EMPRESA TE BUSCA'}
+            {analyzedProfile?.arch === 'estudiante' ? 'UNA OPORTUNIDAD TE BUSCA' : 'UNA EMPRESA TE BUSCA'}
           </div>
           <div style={S.matchTitle}>
-            {(() => { const tj = getTopJobs(analyzedProfile, rep, 1)[0]; return tj ? tj.job.title : 'Creative Technologist'; })()}
+            {(() => { if (!analyzedProfile) return 'Oportunidad disponible'; const tj = getTopJobs(analyzedProfile, rep, 1)[0]; return tj ? tj.job.title : 'Creative Technologist'; })()}
           </div>
           <div style={S.matchMeta}>
-            {(() => { const tj = getTopJobs(analyzedProfile, rep, 1)[0]; return tj ? `${tj.success}% de afinidad · ${tj.job.pay} · ${tj.job.type}` : '96% de afinidad · 120–200 Ω/hora · Freelance'; })()}
+            {(() => { if (!analyzedProfile) return 'Sube tu CV para ver tu afinidad'; const tj = getTopJobs(analyzedProfile, rep, 1)[0]; return tj ? `${tj.success}% de afinidad · ${tj.job.pay} · ${tj.job.type}` : '96% de afinidad · 120–200 Ω/hora · Freelance'; })()}
           </div>
           <div style={S.matchActions}>
             <button style={S.btnGold} onClick={() => setShowOpportunities(true)}>Ver oportunidades</button>
@@ -463,35 +487,39 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
       <ProactivePushes pushes={pushes} onDismiss={dismissPush} />
 
       {/* Sheet de oportunidades */}
-      <OpportunitiesSheet
-        isOpen={showOpportunities}
-        onClose={() => setShowOpportunities(false)}
-        profile={analyzedProfile}
-        reputation={rep}
-        onPostulate={handlePostulate}
-        onNavigate={(action) => {
-          setShowOpportunities(false);
-          if (action === 'academia') setActiveTab('academia');
-          else if (action === 'vault') setActiveTab('vault');
-          else if (action === 'market') setActiveTab('market');
-          else if (action === 'mentor' || action === 'chat') setActiveTab('chat');
-        }}
-      />
+      {analyzedProfile && (
+        <OpportunitiesSheet
+          isOpen={showOpportunities}
+          onClose={() => setShowOpportunities(false)}
+          profile={analyzedProfile}
+          reputation={rep}
+          onPostulate={handlePostulate}
+          onNavigate={(action) => {
+            setShowOpportunities(false);
+            if (action === 'academia') setActiveTab('academia');
+            else if (action === 'vault') setActiveTab('vault');
+            else if (action === 'market') setActiveTab('market');
+            else if (action === 'mentor' || action === 'chat') setActiveTab('chat');
+          }}
+        />
+      )}
 
       {/* Tarjeta de identidad / perfil */}
-      <ProfileCard
-        isOpen={showProfile}
-        onClose={() => setShowProfile(false)}
-        profile={analyzedProfile}
-        reputation={rep}
-        pe={pe}
-        tokens={tokens}
-        contracts={contratos}
-        onViewOpportunities={() => {
-          setShowProfile(false);
-          setShowOpportunities(true);
-        }}
-      />
+      {analyzedProfile && (
+        <ProfileCard
+          isOpen={showProfile}
+          onClose={() => setShowProfile(false)}
+          profile={analyzedProfile}
+          reputation={rep}
+          pe={pe}
+          tokens={tokens}
+          contracts={contratos}
+          onViewOpportunities={() => {
+            setShowProfile(false);
+            setShowOpportunities(true);
+          }}
+        />
+      )}
     </div>
   );
 }

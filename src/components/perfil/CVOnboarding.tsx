@@ -12,9 +12,10 @@ import { FONT, RADIUS } from '../../theme';
 
 interface Props {
   onComplete: (profile: AnalyzedProfile) => void;
+  onSkip?: () => void; // Permite saltar el onboarding de CV
 }
 
-export function CVOnboarding({ onComplete }: Props) {
+export function CVOnboarding({ onComplete, onSkip }: Props) {
   const [step, setStep] = useState<'cv' | 'analysis'>('cv');
   const [cvText, setCvText] = useState('');
   const [cvNote, setCvNote] = useState('');
@@ -119,6 +120,12 @@ export function CVOnboarding({ onComplete }: Props) {
 
   return (
     <div style={S.overlay}>
+      {/* Botón de saltar (coherente con IniciacionGemelo que también lo permite) */}
+      {onSkip && (
+        <button onClick={onSkip} style={S.skipBtn} aria-label="Saltar configuración">
+          Saltar por ahora
+        </button>
+      )}
       <div style={S.container}>
         {step === 'cv' && (
           <div style={S.step}>
@@ -543,6 +550,20 @@ const S: Record<string, React.CSSProperties> = {
     color: '#5a7a9a',
     textDecoration: 'underline',
     padding: '8px 0',
+  },
+  skipBtn: {
+    position: 'absolute',
+    top: 'max(16px, env(safe-area-inset-top, 16px))',
+    right: 16,
+    zIndex: 2,
+    background: 'none',
+    border: '1px solid rgba(90,112,144,0.2)',
+    borderRadius: 8,
+    padding: '6px 14px',
+    cursor: 'pointer',
+    fontFamily: FONT.mono,
+    fontSize: 11,
+    color: '#6a7a94',
   },
   // Paso 2: Resultados
   resultHeader: {

@@ -260,28 +260,31 @@ export function AuthOverlay() {
           </div>
 
           {mode !== 'forgot' && (
-            <div className="relative">
+            <div>
               <label className="text-xs text-omicron-subtle uppercase tracking-wide mb-1 block">
                 Contraseña <span className="text-red-400">*</span>
               </label>
-              <input
-                type={showPass ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="..."
-                required
-                minLength={PASSWORD_MIN_LENGTH}
-                maxLength={PASSWORD_MAX_LENGTH}
-                autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                className="w-full bg-omicron-surface border border-omicron-border rounded-xl px-4 py-3 pr-12 text-omicron-text placeholder:text-omicron-muted text-sm focus:outline-none focus:border-omicron-accent transition"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 bottom-3 text-omicron-subtle hover:text-omicron-text transition"
-              >
-                {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              <div className="relative">
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="..."
+                  required
+                  minLength={PASSWORD_MIN_LENGTH}
+                  maxLength={PASSWORD_MAX_LENGTH}
+                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                  className="w-full bg-omicron-surface border border-omicron-border rounded-xl px-4 py-3 pr-12 text-omicron-text placeholder:text-omicron-muted text-sm focus:outline-none focus:border-omicron-accent transition"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-omicron-subtle hover:text-omicron-text transition"
+                  aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               <p className="text-[11px] text-omicron-subtle mt-1">
                 Mínimo {PASSWORD_MIN_LENGTH} caracteres.
               </p>
