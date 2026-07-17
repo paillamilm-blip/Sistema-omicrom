@@ -410,13 +410,13 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
         <div style={S.matchCard}>
           <div style={S.matchTag}>
             <span style={{ ...S.tagDot, background: C.gold, boxShadow: `0 0 8px ${C.gold}` }} />
-            {analyzedProfile.arch === 'estudiante' ? 'UNA OPORTUNIDAD TE BUSCA' : 'UNA EMPRESA TE BUSCA'}
+            {analyzedProfile?.arch === 'estudiante' ? 'UNA OPORTUNIDAD TE BUSCA' : 'UNA EMPRESA TE BUSCA'}
           </div>
           <div style={S.matchTitle}>
-            {(() => { const tj = getTopJobs(analyzedProfile, rep, 1)[0]; return tj ? tj.job.title : 'Creative Technologist'; })()}
+            {(() => { if (!analyzedProfile) return 'Oportunidad disponible'; const tj = getTopJobs(analyzedProfile, rep, 1)[0]; return tj ? tj.job.title : 'Creative Technologist'; })()}
           </div>
           <div style={S.matchMeta}>
-            {(() => { const tj = getTopJobs(analyzedProfile, rep, 1)[0]; return tj ? `${tj.success}% de afinidad · ${tj.job.pay} · ${tj.job.type}` : '96% de afinidad · 120–200 Ω/hora · Freelance'; })()}
+            {(() => { if (!analyzedProfile) return 'Sube tu CV para ver tu afinidad'; const tj = getTopJobs(analyzedProfile, rep, 1)[0]; return tj ? `${tj.success}% de afinidad · ${tj.job.pay} · ${tj.job.type}` : '96% de afinidad · 120–200 Ω/hora · Freelance'; })()}
           </div>
           <div style={S.matchActions}>
             <button style={S.btnGold} onClick={() => setShowOpportunities(true)}>Ver oportunidades</button>
@@ -487,35 +487,39 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
       <ProactivePushes pushes={pushes} onDismiss={dismissPush} />
 
       {/* Sheet de oportunidades */}
-      <OpportunitiesSheet
-        isOpen={showOpportunities}
-        onClose={() => setShowOpportunities(false)}
-        profile={analyzedProfile}
-        reputation={rep}
-        onPostulate={handlePostulate}
-        onNavigate={(action) => {
-          setShowOpportunities(false);
-          if (action === 'academia') setActiveTab('academia');
-          else if (action === 'vault') setActiveTab('vault');
-          else if (action === 'market') setActiveTab('market');
-          else if (action === 'mentor' || action === 'chat') setActiveTab('chat');
-        }}
-      />
+      {analyzedProfile && (
+        <OpportunitiesSheet
+          isOpen={showOpportunities}
+          onClose={() => setShowOpportunities(false)}
+          profile={analyzedProfile}
+          reputation={rep}
+          onPostulate={handlePostulate}
+          onNavigate={(action) => {
+            setShowOpportunities(false);
+            if (action === 'academia') setActiveTab('academia');
+            else if (action === 'vault') setActiveTab('vault');
+            else if (action === 'market') setActiveTab('market');
+            else if (action === 'mentor' || action === 'chat') setActiveTab('chat');
+          }}
+        />
+      )}
 
       {/* Tarjeta de identidad / perfil */}
-      <ProfileCard
-        isOpen={showProfile}
-        onClose={() => setShowProfile(false)}
-        profile={analyzedProfile}
-        reputation={rep}
-        pe={pe}
-        tokens={tokens}
-        contracts={contratos}
-        onViewOpportunities={() => {
-          setShowProfile(false);
-          setShowOpportunities(true);
-        }}
-      />
+      {analyzedProfile && (
+        <ProfileCard
+          isOpen={showProfile}
+          onClose={() => setShowProfile(false)}
+          profile={analyzedProfile}
+          reputation={rep}
+          pe={pe}
+          tokens={tokens}
+          contracts={contratos}
+          onViewOpportunities={() => {
+            setShowProfile(false);
+            setShowOpportunities(true);
+          }}
+        />
+      )}
     </div>
   );
 }
