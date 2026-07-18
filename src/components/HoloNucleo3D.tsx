@@ -180,12 +180,11 @@ export function HoloNucleo3D({
     }));
 
     let yaw = 0.4, pitch = -0.2;
-    let ptrX = CX, ptrY = CY, active = false, isTouch = false;
+    let ptrX = CX, ptrY = CY, active = false;
 
     function onMove(e: PointerEvent) {
       const r = canvas.getBoundingClientRect();
       ptrX = e.clientX - r.left; ptrY = e.clientY - r.top; active = true;
-      if (e.pointerType) isTouch = e.pointerType === 'touch';
     }
     function onDown(e: PointerEvent) {
       onMove(e);
