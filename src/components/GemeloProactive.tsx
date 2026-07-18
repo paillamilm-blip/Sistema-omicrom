@@ -77,10 +77,11 @@ export function GemeloProactive({ event, onDismiss, onAction }: Props) {
     <div
       style={{
         position: 'fixed',
-        top: 80,
-        right: 14,
+        top: 60,
+        right: 10,
         zIndex: 1000,
-        maxWidth: 380,
+        maxWidth: 300,
+        width: 'calc(100vw - 80px)',
         transform: visible ? 'translateX(0)' : 'translateX(calc(100% + 20px))',
         opacity: visible ? 1 : 0,
         transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -105,35 +106,35 @@ export function GemeloProactive({ event, onDismiss, onAction }: Props) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
-            padding: '14px 16px',
+            gap: 10,
+            padding: '10px 12px',
             borderBottom: `1px solid ${color}33`,
             background: `linear-gradient(90deg, ${color}18, transparent)`,
           }}
         >
           <div
             style={{
-              width: 38,
-              height: 38,
-              borderRadius: 11,
+              width: 32,
+              height: 32,
+              borderRadius: 9,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               background: `${color}22`,
               border: `1.5px solid ${color}`,
-              boxShadow: `0 0 20px ${color}55`,
+              boxShadow: `0 0 12px ${color}44`,
               flexShrink: 0,
             }}
           >
-            <Icon size={20} style={{ color }} />
+            <Icon size={16} style={{ color }} />
           </div>
           
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.ink }}>
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12, color: C.ink }}>
               Gemelo Digital
             </div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 0.8 }}>
-              {event.type.toUpperCase().replace('_', ' ')} · PRIORIDAD {event.priority}
+            <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.mut, letterSpacing: 0.6 }}>
+              {event.type.toUpperCase().replace('_', ' ')} · P{event.priority}
             </div>
           </div>
 
@@ -159,14 +160,14 @@ export function GemeloProactive({ event, onDismiss, onAction }: Props) {
         </div>
 
         {/* Mensaje del Gemelo */}
-        <div style={{ padding: '16px 16px 14px' }}>
+        <div style={{ padding: '10px 12px 8px' }}>
           <p
             style={{
               margin: 0,
               fontFamily: FONT.display,
-              fontSize: 14.5,
+              fontSize: 13,
               color: C.ink,
-              lineHeight: 1.6,
+              lineHeight: 1.5,
               whiteSpace: 'pre-wrap',
             }}
           >
@@ -179,10 +180,10 @@ export function GemeloProactive({ event, onDismiss, onAction }: Props) {
           <div
             style={{
               display: 'flex',
-              gap: 8,
-              padding: '0 16px 16px',
+              gap: 6,
+              padding: '0 12px 10px',
               borderTop: `1px solid ${C.line}`,
-              paddingTop: 12,
+              paddingTop: 8,
             }}
           >
             {event.actions.map((action, index) => (
@@ -191,18 +192,18 @@ export function GemeloProactive({ event, onDismiss, onAction }: Props) {
                 onClick={() => handleAction(index)}
                 style={{
                   flex: 1,
-                  padding: '10px 14px',
-                  borderRadius: 12,
+                  padding: '8px 10px',
+                  borderRadius: 10,
                   cursor: 'pointer',
                   fontFamily: FONT.display,
                   fontWeight: 600,
-                  fontSize: 13,
+                  fontSize: 11,
                   border: index === 0 ? 'none' : `1px solid ${C.line}`,
                   background: index === 0 
                     ? `linear-gradient(135deg, ${color}, ${color}cc)`
                     : 'rgba(255,255,255,0.05)',
                   color: index === 0 ? '#fff' : C.ink,
-                  boxShadow: index === 0 ? `0 4px 16px ${color}55` : 'none',
+                  boxShadow: index === 0 ? `0 3px 10px ${color}44` : 'none',
                 }}
               >
                 {action.label}
