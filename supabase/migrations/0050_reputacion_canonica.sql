@@ -1,83 +1,80 @@
--- =====================================================================
 -- 0050_reputacion_canonica.sql
--- MODELO DE REPUTACIÓN CANÓNICO Y UNIFICADO (fuente única de verdad).
--- Ver DEFINICION_REPUTACION_OMICROM.md.
+-- ═══════════════════════════════════════════════════════════════════════
+-- FORMULA MAESTRA DE REPUTACION (trigger consolidador)
 --
--- La reputación mide EN TIEMPO REAL "lo que tienes" + "lo que puedes conseguir":
+-- Se dispara CADA VEZ que cambia un eje o traditional_score en profiles.
+-- Recalcula:
+--   experience_score = promedio(4 ejes)
+--   reputation_score = 0.20*traditional + 0.80*experience + momentum(PE)
+--   node_level = según umbrales
 --
---   experience_score = promedio( ejecución, calidad, trascendencia, fundamento )
---   base            = 0.20 · traditional_score  +  0.80 · experience_score   -- lo que TIENES
---   momentum        = min(15, sqrt(pe_points) / 4)                           -- lo que PUEDES conseguir
---   reputation_score = min(100, base + momentum)
---
--- - `experience_score` es DERIVADO (promedio de los 4 ejes), no un acumulador.
--- - Los PE (pe_points) SÍ suman a la reputación, como un bono de momentum
---   acotado (+15 máx) con rendimientos decrecientes: premian el aprendizaje
---   y el potencial sin permitir "comprar" reputación ni inflarla sin límite.
--- - Todo se recalcula por trigger ante cualquier cambio de las variables:
---   la reputación está siempre "medida en tiempo real con todo sobre la mesa".
---
--- Escala 0–100. 100% idempotente (seguro de correr varias veces).
--- =====================================================================
+-- Ver DEFINICION_REPUTACION_OMICROM.md §1.
+-- ═══════════════════════════════════════════════════════════════════════
 
--- ── 1) Función canónica de recálculo ─────────────────────────────────
-create or replace function public.recalc_reputation()
-returns trigger
-language plpgsql
-as $$
-declare
-  v_exp      numeric;
-  v_base     numeric;
+CREATE OR REPLACE FUNCTION recalc_reputation()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_experience numeric;
   v_momentum numeric;
-begin
-  -- experiencia laboral = promedio de los 4 ejes del Gemelo Digital
-  v_exp := round((coalesce(new.execution_score, 0)
-                + coalesce(new.quality_score, 0)
-                + coalesce(new.transcendence_score, 0)
-                + coalesce(new.foundation_score, 0)) / 4.0, 2);
-  new.experience_score := least(100, greatest(0, v_exp));
+  v_reputation numeric;
+  v_node_level integer;
+  v_node_type text;
+BEGIN
+  -- Experience = promedio de los 4 ejes (columna DERIVADA)
+  v_experience := (
+    COALESCE(NEW.execution_score, 0) +
+    COALESCE(NEW.quality_score, 0) +
+    COALESCE(NEW.transcendence_score, 0) +
+    COALESCE(NEW.foundation_score, 0)
+  ) / 4.0;
 
-  -- base demostrada: 20% credenciales + 80% experiencia laboral
-  v_base := coalesce(new.traditional_score, 0) * 0.20
-          + new.experience_score * 0.80;
+  -- Momentum por PE: min(15, sqrt(pe_points) / 4)
+  v_momentum := LEAST(15, SQRT(GREATEST(COALESCE(NEW.pe_points, 0), 0)) / 4.0);
 
-  -- momentum por PE (potencial): bono acotado a +15, rendimientos decrecientes
-  -- (cast a numeric: sqrt() devuelve double precision y round(x,2) exige numeric)
-  v_momentum := least(15, round(sqrt(greatest(coalesce(new.pe_points, 0), 0)::numeric) / 4.0, 2));
+  -- Reputación = base(20/80) + momentum
+  v_reputation := LEAST(100, GREATEST(0,
+    0.20 * COALESCE(NEW.traditional_score, 0) +
+    0.80 * v_experience +
+    v_momentum
+  ));
 
-  new.reputation_score := least(100, greatest(0, round(v_base + v_momentum, 2)));
-  new.reputation_updated_at := now();
-  return new;
-end;
+  -- Determinar nivel del nodo
+  IF v_reputation >= 80 THEN
+    v_node_level := 3;
+    v_node_type := 'Nodo Arquitecto';
+  ELSIF v_reputation >= 50 THEN
+    v_node_level := 2;
+    v_node_type := 'Nodo Core';
+  ELSE
+    v_node_level := 1;
+    v_node_type := 'Nodo Operativo';
+  END IF;
+
+  -- Actualizar campos derivados
+  NEW.experience_score := ROUND(v_experience, 2);
+  NEW.reputation_score := ROUND(v_reputation, 2);
+  NEW.node_level := v_node_level;
+  NEW.node_type := v_node_type;
+  NEW.reputation_updated_at := NOW();
+
+  RETURN NEW;
+END;
 $$;
 
--- ── 2) Trigger sobre TODOS los insumos (incluye pe_points) ───────────
--- Incluye experience_score y pe_points para que cualquier cambio recalcule
--- la reputación en tiempo real y auto-corrija escrituras antiguas.
-drop trigger if exists trg_recalc_reputation on public.profiles;
-create trigger trg_recalc_reputation
-  before insert or update of
-    traditional_score,
-    experience_score,
+-- BEFORE UPDATE: intercepta el row antes de que se escriba
+DROP TRIGGER IF EXISTS trg_recalc_reputation ON profiles;
+CREATE TRIGGER trg_recalc_reputation
+  BEFORE UPDATE OF
     execution_score,
     quality_score,
     transcendence_score,
     foundation_score,
+    traditional_score,
     pe_points
-  on public.profiles
-  for each row execute function public.recalc_reputation();
-
--- ── 3) Backfill: normaliza a TODOS los perfiles existentes ───────────
--- Este UPDATE dispara el trigger (columna experience_score en la lista),
--- que recalcula experience_score y reputation_score (base + momentum).
-update public.profiles
-set experience_score = least(100, greatest(0, round((
-        coalesce(execution_score, 0)
-      + coalesce(quality_score, 0)
-      + coalesce(transcendence_score, 0)
-      + coalesce(foundation_score, 0)) / 4.0, 2)));
-
--- =====================================================================
--- FIN — 0050 supersede la fórmula de 0009 y consolida la de 9999. El bono
--- de momentum por PE se puede ajustar cambiando el cap (15) o el divisor (4).
--- =====================================================================
+  ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION recalc_reputation();

@@ -1,13 +1,9 @@
 // src/hooks/useGemeloProfile.ts
-// Hook reactivo del Gemelo. UNIFICADO: cuando hay sesión, la reputación, los
-// PE, los ejes y el nodo que ve el usuario salen de la MISMA fuente que el
-// ranking, la presencia y los contratos → el perfil de Supabase. Así existe
-// UN solo número de reputación en toda la app (antes convivían el valor local
-// convalidado y el de Supabase, y podían contradecirse).
-//
-// El store local sigue guardando los datos CONVALIDADOS (CV, títulos, años,
-// aportes) para el flujo de convalidación; lo que cambia es que el número
-// mostrado es único y consistente con el ecosistema.
+// ═══════════════════════════════════════════════════════════════════════
+// Hook reactivo del Gemelo. FUENTE ÚNICA: Supabase `profiles`.
+// El store local es solo caché de degradación (offline/sin sesión).
+// Las acciones de convalidación son ASÍNCRONAS (van al servidor).
+// ═══════════════════════════════════════════════════════════════════════
 import { useSyncExternalStore } from 'react';
 import { useApp } from '../store/AppContext';
 import {
@@ -27,7 +23,7 @@ export function useGemeloProfile() {
   const history = useSyncExternalStore(subscribe, getHistory, getHistory) as GemeloEvent[];
   const { profile: sb } = useApp();
 
-  // Fuente canónica (Supabase) con degradación al local si no hay sesión/datos.
+  // Fuente canónica: Supabase. Degradación al local si no hay sesión.
   const rep = sb && typeof sb.reputation_score === 'number' ? Math.round(sb.reputation_score) : local.rep;
   const pe = sb && typeof sb.pe_points === 'number' ? sb.pe_points : local.pe;
   const axes = sb
@@ -45,6 +41,7 @@ export function useGemeloProfile() {
 
   return {
     profile,
+    /** Acciones asíncronas que van al servidor (RPCs SECURITY DEFINER). */
     actions: gemeloActions,
     tier,
     history,

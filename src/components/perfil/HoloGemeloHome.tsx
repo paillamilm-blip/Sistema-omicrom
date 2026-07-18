@@ -54,7 +54,35 @@ export function HoloGemeloHome({ onOpenPerfil: _onOpenPerfil }: { onOpenPerfil: 
   const level = rep >= 80 ? 3 : rep >= 50 ? 2 : 1;
   const tokens = (sb?.token_balance ?? 0);
   const nodos = onlineCount > 0 ? onlineCount : 1;
-  const contratos = profile.cv ? 12 : 0;
+  const contratos = sb?.total_contracts_completed ?? 0;
+
+  // ═══ MATCHING REAL: consultar job_matches desde Supabase ═══
+  const [realMatches, setRealMatches] = useState<Array<{ job_id: string; match_score: number; title?: string }>>([]);
+  
+  useEffect(() => {
+    if (!sb?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('job_matches')
+          .select('job_id, match_score, job:job_postings(title)')
+          .eq('user_id', sb.id)
+          .order('match_score', { ascending: false })
+          .limit(3);
+        if (!cancelled && data) {
+          setRealMatches(data.map((m: { job_id: string; match_score: number; job?: { title: string } | null }) => ({
+            job_id: m.job_id,
+            match_score: m.match_score,
+            title: m.job?.title,
+          })));
+        }
+      } catch {
+        // Sin tabla job_matches: degradar a matcher local (modo demo)
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [sb?.id]);
 
   // Cargar perfil analizado desde localStorage si existe
   useEffect(() => {
@@ -419,7 +447,7 @@ export function HoloGemeloHome({ onOpenPerfil: _onOpenPerfil }: { onOpenPerfil: 
                 <p style={S.improveSubtext}>
                   Tu reputación actual: <strong style={{ color: C.cyan }}>{rep}/100</strong> · Nivel: <strong style={{ color: C.purple }}>{tier.name}</strong> · PE: <strong style={{ color: C.gold }}>{pe}</strong>
                 </p>
-                <button style={S.btnImprove} onClick={() => { actions.addTitle(); speakOracle(`Ejecutando: ${next.label}. Esto mejora tu reputación y te posiciona mejor.`); }}>
+                <button style={S.btnImprove} onClick={async () => { if (next) { await actions.run(next.action); speakOracle(`Ejecutando: ${next.label}. Esto mejora tu reputación y te posiciona mejor.`); } }}>
                   Ejecutar → {next.label}
                 </button>
               </>
@@ -439,17 +467,29 @@ export function HoloGemeloHome({ onOpenPerfil: _onOpenPerfil }: { onOpenPerfil: 
           </div>
         </div>
 
-        {/* ── Una empresa te busca (match de alto valor) ── */}
+        {/* ── Una empresa te busca (datos REALES de job_matches, con fallback) ── */}
         <div style={S.matchCard}>
           <div style={S.matchTag}>
             <span style={{ ...S.tagDot, background: C.gold, boxShadow: `0 0 8px ${C.gold}` }} />
-            {analyzedProfile?.arch === 'estudiante' ? 'UNA OPORTUNIDAD TE BUSCA' : 'UNA EMPRESA TE BUSCA'}
+            {realMatches.length > 0 ? 'OPORTUNIDAD VERIFICADA' : (analyzedProfile?.arch === 'estudiante' ? 'OPORTUNIDAD SUGERIDA' : 'MATCH ESTIMADO (DEMO)')}
           </div>
           <div style={S.matchTitle}>
-            {(() => { if (!analyzedProfile) return 'Oportunidad disponible'; const tj = getTopJobs(analyzedProfile, rep, 1)[0]; return tj ? tj.job.title : 'Creative Technologist'; })()}
+            {(() => {
+              // Prioridad 1: datos reales de job_matches
+              if (realMatches.length > 0) return realMatches[0].title || 'Oportunidad disponible';
+              // Fallback: matcher local (modo demo — señalizado)
+              if (!analyzedProfile) return 'Sube tu CV para ver oportunidades';
+              const tj = getTopJobs(analyzedProfile, rep, 1)[0];
+              return tj ? tj.job.title : 'Sin oportunidades por ahora';
+            })()}
           </div>
           <div style={S.matchMeta}>
-            {(() => { if (!analyzedProfile) return 'Sube tu CV para ver tu afinidad'; const tj = getTopJobs(analyzedProfile, rep, 1)[0]; return tj ? `${tj.success}% de afinidad · ${tj.job.pay} · ${tj.job.type}` : '96% de afinidad · 120–200 Ω/hora · Freelance'; })()}
+            {(() => {
+              if (realMatches.length > 0) return `${realMatches[0].match_score}% de match · Datos verificados`;
+              if (!analyzedProfile) return 'Completa tu perfil para el matching real';
+              const tj = getTopJobs(analyzedProfile, rep, 1)[0];
+              return tj ? `~${tj.success}% afinidad estimada · ${tj.job.pay} · Modo demo` : '';
+            })()}
           </div>
           <div style={S.matchActions}>
             <button style={S.btnGold} onClick={() => setShowOpportunities(true)}>Ver oportunidades</button>
@@ -464,7 +504,7 @@ export function HoloGemeloHome({ onOpenPerfil: _onOpenPerfil }: { onOpenPerfil: 
               {next ? `${next.label} subiría tu match ~${Math.max(3, Math.round(next.dRep))}%` : 'Consolida tus 4 ejes y toma un contrato'}
             </span>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button style={S.btnGold} onClick={() => { if (next) { actions.addTitle(); speakOracle(`Acción ejecutada: ${next.label}`); } else { setActiveTab('academia'); } }}>
+              <button style={S.btnGold} onClick={async () => { if (next) { await actions.run(next.action); speakOracle(`Acción ejecutada: ${next.label}`); } else { setActiveTab('academia'); } }}>
                 {next ? 'Ejecutar' : 'Academia'}
               </button>
             </div>

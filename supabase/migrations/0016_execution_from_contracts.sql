@@ -1,38 +1,56 @@
--- =====================================================================
 -- 0016_execution_from_contracts.sql
--- EJECUCIÓN = contratos completados (RELEASED) como vendedor.
--- =====================================================================
-create or replace function public.recalc_execution_score(p_user uuid)
-returns void language plpgsql security definer set search_path = public as $fn$
-declare v_count int; v_score numeric;
-begin
-  select count(*) into v_count
-  from public.contracts
-  where seller_id = p_user and upper(status) = 'RELEASED';
+-- ═══════════════════════════════════════════════════════════════════════
+-- EJE EJECUCION: Se recalcula cuando un contrato pasa a estado RELEASED.
+-- Formula: min(100, nº_contratos_completados × 12)
+-- ~9 contratos = 100 (tope).
+-- ═══════════════════════════════════════════════════════════════════════
 
-  v_score := least(100, v_count * 12);  -- ~10 contratos = 100
-  update public.profiles set execution_score = v_score where id = p_user;
-end; $fn$;
+CREATE OR REPLACE FUNCTION recalc_execution_score()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_seller_id uuid;
+  v_completed_count integer;
+  v_new_execution numeric;
+BEGIN
+  -- Solo actuar cuando el contrato pasa a RELEASED
+  IF NEW.status <> 'RELEASED' THEN
+    RETURN NEW;
+  END IF;
 
-create or replace function public.fn_contract_execution_after()
-returns trigger language plpgsql security definer set search_path = public as $fn$
-begin
-  if new.seller_id is not null then
-    perform public.recalc_execution_score(new.seller_id);
-  end if;
-  return null;
-end; $fn$;
+  -- El vendedor (payee/seller) es quien gana ejecución
+  v_seller_id := NEW.seller_id;
+  IF v_seller_id IS NULL THEN
+    RETURN NEW;
+  END IF;
 
-drop trigger if exists trg_contract_execution on public.contracts;
-create trigger trg_contract_execution
-  after insert or update on public.contracts
-  for each row execute function public.fn_contract_execution_after();
+  -- Contar contratos completados como vendedor
+  SELECT COUNT(*)
+  INTO v_completed_count
+  FROM contracts
+  WHERE seller_id = v_seller_id
+    AND status = 'RELEASED';
 
-do $do$
-declare r record;
-begin
-  for r in (select distinct seller_id from public.contracts where seller_id is not null) loop
-    perform public.recalc_execution_score(r.seller_id);
-  end loop;
-end;
-$do$;
+  -- Execution = min(100, contratos × 12)
+  v_new_execution := LEAST(100, v_completed_count * 12);
+
+  UPDATE profiles
+  SET execution_score = v_new_execution,
+      total_contracts_completed = v_completed_count,
+      updated_at = NOW()
+  WHERE id = v_seller_id;
+
+  RETURN NEW;
+END;
+$$;
+
+-- Trigger: se dispara al actualizar status de un contrato
+DROP TRIGGER IF EXISTS trg_recalc_execution ON contracts;
+CREATE TRIGGER trg_recalc_execution
+  AFTER UPDATE OF status ON contracts
+  FOR EACH ROW
+  WHEN (NEW.status = 'RELEASED')
+  EXECUTE FUNCTION recalc_execution_score();
