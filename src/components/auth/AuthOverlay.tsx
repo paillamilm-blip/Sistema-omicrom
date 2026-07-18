@@ -264,7 +264,7 @@ export function AuthOverlay() {
               <label className="text-xs text-omicron-subtle uppercase tracking-wide mb-1 block">
                 Contraseña <span className="text-red-400">*</span>
               </label>
-              <div className="relative">
+              <div className="relative flex items-center">
                 <input
                   type={showPass ? 'text' : 'password'}
                   value={password}
@@ -279,10 +279,10 @@ export function AuthOverlay() {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-omicron-subtle hover:text-omicron-text transition"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-lg bg-omicron-surface/50 hover:bg-omicron-accent/10 text-omicron-subtle hover:text-omicron-text transition"
                   aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
-                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               <p className="text-[11px] text-omicron-subtle mt-1">
