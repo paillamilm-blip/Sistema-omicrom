@@ -182,7 +182,7 @@ export function IniciacionGemelo({ userName, onClose }: { userName?: string; onC
           <button style={S.cta} onClick={() => fileRef.current?.click()}>
             <Upload size={18} /> Cargar mi CV
           </button>
-          <button style={S.ghost} onClick={toReveal}>Omitir por ahora</button>
+          <button style={S.skipStep} onClick={toReveal}>Saltar por ahora →</button>
         </div>
       )}
 
@@ -296,6 +296,12 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: P.font, fontWeight: 600, fontSize: 16, boxShadow: '0 14px 38px rgba(10,132,255,.5)',
   },
   ghost: { marginTop: 14, background: 'none', border: 'none', cursor: 'pointer', color: P.mut, fontFamily: P.mono, fontSize: 12, letterSpacing: 0.5 },
+  skipStep: {
+    marginTop: 14, width: '100%', maxWidth: 320, padding: '12px 20px', borderRadius: 14,
+    background: 'rgba(255,255,255,0.04)', border: `1px solid ${P.line}`, cursor: 'pointer',
+    color: P.mut, fontFamily: P.font, fontSize: 14, fontWeight: 500, letterSpacing: 0.2,
+    textAlign: 'center' as const,
+  },
   cvBadge: {
     display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 10,
     padding: '6px 13px', borderRadius: 20, border: `1px solid ${P.line}`,

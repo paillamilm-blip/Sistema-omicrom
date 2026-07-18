@@ -45,13 +45,40 @@ export function CVOnboarding({ onComplete, onSkip }: Props) {
       return;
     }
     setIsProcessing(true);
-    // Simular breve procesamiento (UX profesional)
+    setCvNote('');
+    
+    // Procesamiento con feedback visual progresivo
+    const steps = ['Extrayendo competencias...', 'Calculando ejes de desempeño...', 'Posicionando en el ecosistema...'];
+    let stepIndex = 0;
+    const stepInterval = setInterval(() => {
+      stepIndex++;
+      if (stepIndex < steps.length) {
+        setCvNote(steps[stepIndex]);
+      }
+    }, 400);
+    
+    setCvNote(steps[0]);
+    
     setTimeout(() => {
-      const analyzed = analyzeCV(txt);
-      setProfile(analyzed);
-      setStep('analysis');
+      clearInterval(stepInterval);
+      try {
+        const analyzed = analyzeCV(txt);
+        
+        if (analyzed.skills.length === 0 && analyzed.years === 0) {
+          setCvNote('No se detectaron competencias claras. Intenta con un CV más detallado o describe tu experiencia manualmente.');
+          setIsProcessing(false);
+          return;
+        }
+        
+        setProfile(analyzed);
+        setStep('analysis');
+        setCvNote('');
+      } catch (err) {
+        setCvNote('Error al analizar el CV. Intenta con otro formato o describe tu experiencia manualmente.');
+        console.error('CV analysis error:', err);
+      }
       setIsProcessing(false);
-    }, 800);
+    }, 1200);
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -287,14 +314,14 @@ export function CVOnboarding({ onComplete, onSkip }: Props) {
 // ───────────────────────────────────────────────────────────────────────
 
 async function extractTextFromPDF(buffer: ArrayBuffer): Promise<string> {
-  // Extracción básica de texto desde PDF sin librería externa.
-  // Busca streams de texto entre paréntesis y operadores Tj/TJ.
+  // Extracción robusta de texto desde PDF sin librería externa.
+  // Soporta múltiples patrones de encoding de texto PDF.
   const bytes = new Uint8Array(buffer);
   const raw = new TextDecoder('latin1').decode(bytes);
 
   const textChunks: string[] = [];
 
-  // Buscar texto entre paréntesis que precede a Tj o TJ
+  // Patrón 1: texto entre paréntesis que precede a Tj o TJ
   const regex = /\(([^)]*)\)\s*T[jJ]/g;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(raw)) !== null) {
@@ -307,7 +334,7 @@ async function extractTextFromPDF(buffer: ArrayBuffer): Promise<string> {
     if (chunk.trim()) textChunks.push(chunk);
   }
 
-  // También buscar texto en arrays TJ: [(text) num (text) ...]
+  // Patrón 2: arrays TJ: [(text) num (text) ...]
   const tjArrayRegex = /\[([^\]]*)\]\s*TJ/g;
   while ((match = tjArrayRegex.exec(raw)) !== null) {
     const inner = match[1];
@@ -324,7 +351,42 @@ async function extractTextFromPDF(buffer: ArrayBuffer): Promise<string> {
     }
   }
 
-  return textChunks.join(' ').replace(/\s+/g, ' ').trim();
+  // Patrón 3: BT ... ET bloques con texto inline
+  const btEtRegex = /BT\s([\s\S]*?)ET/g;
+  while ((match = btEtRegex.exec(raw)) !== null) {
+    const block = match[1];
+    const inlineRegex = /\(([^)]+)\)/g;
+    let inlineMatch: RegExpExecArray | null;
+    while ((inlineMatch = inlineRegex.exec(block)) !== null) {
+      const chunk = inlineMatch[1].replace(/\\[()\\]/g, (m) => m[1]);
+      if (chunk.trim() && chunk.length > 1) textChunks.push(chunk);
+    }
+  }
+
+  // Patrón 4: texto en hex strings <hex> Tj
+  const hexRegex = /<([0-9A-Fa-f]+)>\s*T[jJ]/g;
+  while ((match = hexRegex.exec(raw)) !== null) {
+    const hex = match[1];
+    let decoded = '';
+    for (let i = 0; i < hex.length; i += 2) {
+      const charCode = parseInt(hex.slice(i, i + 2), 16);
+      if (charCode >= 32 && charCode < 127) {
+        decoded += String.fromCharCode(charCode);
+      }
+    }
+    if (decoded.trim().length > 1) textChunks.push(decoded);
+  }
+
+  // Deduplicar y ensamblar
+  const seen = new Set<string>();
+  const unique = textChunks.filter(chunk => {
+    const normalized = chunk.trim().toLowerCase();
+    if (seen.has(normalized) || normalized.length < 2) return false;
+    seen.add(normalized);
+    return true;
+  });
+
+  return unique.join(' ').replace(/\s+/g, ' ').trim();
 }
 
 async function extractTextFromDocx(buffer: ArrayBuffer): Promise<string> {

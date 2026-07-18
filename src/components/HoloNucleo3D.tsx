@@ -187,13 +187,29 @@ export function HoloNucleo3D({
       ptrX = e.clientX - r.left; ptrY = e.clientY - r.top; active = true;
       if (e.pointerType) isTouch = e.pointerType === 'touch';
     }
-    function onDown(e: PointerEvent) { onMove(e); }
-    function onUp() { active = false; } // Fix: desactivar al soltar (evita giro infinito en touch)
+    function onDown(e: PointerEvent) {
+      onMove(e);
+      // Capture pointer to receive events even if user drags outside canvas
+      try { canvas.setPointerCapture(e.pointerId); } catch { /* noop */ }
+    }
+    function onUp(e: PointerEvent) {
+      active = false;
+      try { canvas.releasePointerCapture(e.pointerId); } catch { /* noop */ }
+    }
     function onLeave() { active = false; }
+    function onCancel(e: PointerEvent) {
+      active = false;
+      try { canvas.releasePointerCapture(e.pointerId); } catch { /* noop */ }
+    }
     canvas.addEventListener('pointermove', onMove);
     canvas.addEventListener('pointerdown', onDown);
     canvas.addEventListener('pointerup', onUp);
     canvas.addEventListener('pointerleave', onLeave);
+    canvas.addEventListener('pointercancel', onCancel);
+    // Also listen for touch end globally to handle edge cases
+    const globalUp = () => { active = false; };
+    window.addEventListener('pointerup', globalUp);
+    canvas.style.touchAction = 'none'; // Prevent browser scroll/zoom interference
 
     const errorTint = orbState === 'error';
     const rep = Math.max(0, Math.min(100, reputation));
@@ -214,7 +230,11 @@ export function HoloNucleo3D({
       const x1 = x * cy1 - z * sy1, z1 = x * sy1 + z * cy1, y1 = y;
       const cx1 = Math.cos(pitch), sx1 = Math.sin(pitch);
       const y2 = y1 * cx1 - z1 * sx1, z2 = y1 * sx1 + z1 * cx1, x2 = x1;
-      const R = Math.min(W, H) * 0.42, FOV = 900, persp = FOV / (FOV + z2 * R);
+      const R = Math.min(W, H) * 0.42;
+      // Smooth zoom: when a node is hovered/selected, zoom factor gently increases
+      const zoomTarget = selRef.current >= 0 ? 1.12 : 1.0;
+      const FOV = 900 / zoomTarget;
+      const persp = FOV / (FOV + z2 * R);
       return { sx: CX + x2 * R * persp, sy: CY + y2 * R * persp, sc: persp, zz: z2 };
     }
 
@@ -333,18 +353,25 @@ export function HoloNucleo3D({
         ctx.beginPath(); ctx.arc(d.x * W, d.y * H, d.r * 0.6, 0, 6.2832); ctx.fill();
       }
 
-      // Cámara: parallax suave (NO acumulativo — fix del giro infinito).
-      // El puntero ORIENTA la cámara hacia un ángulo, no la ACELERA.
+      // Cámara: parallax suave — EASING FÍSICO CORREGIDO.
+      // El puntero establece un TARGET de ángulo; la cámara interpola hacia él
+      // con un factor de suavizado (nunca se acumula, nunca gira infinito).
       const nx = active ? (ptrX / W - 0.5) * 2 : 0;
       const ny = active ? (ptrY / H - 0.5) * 2 : 0;
-      if (!reduce && orbState !== 'error' && selRef.current < 0) yaw += 0.003;
-      // nx/ny controlan suavemente el TARGET, no se acumulan
-      const targetPitch = -0.2 + ny * 0.25;
-      pitch += (targetPitch - pitch) * 0.08;
-      // En vez de sumar nx al yaw cada frame (causaba giro infinito),
-      // usamos nx como un OFFSET suave que se aplica solo una vez
+      
+      // Rotación automática solo cuando no hay interacción y no hay nodo seleccionado
+      if (!reduce && orbState !== 'error' && !active && selRef.current < 0) {
+        yaw += 0.002; // Rotación lenta constante (auto-orbit)
+      }
+      
+      // Pitch: interpolación suave hacia target (no acumulativa)
+      const targetPitch = -0.2 + ny * 0.2;
+      pitch += (targetPitch - pitch) * 0.06;
+      
+      // Yaw: cuando el usuario toca, el desplazamiento es proporcional y suavizado
       if (active) {
-        yaw += nx * 0.008; // Muy suave, proporcional al desplazamiento
+        const targetYawDelta = nx * 0.004;
+        yaw += targetYawDelta * 0.5; // Factor de damping para eliminar brusquedad
       }
 
       for (const n of nodes) {
@@ -490,6 +517,8 @@ export function HoloNucleo3D({
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointerup', onUp);
       canvas.removeEventListener('pointerleave', onLeave);
+      canvas.removeEventListener('pointercancel', onCancel);
+      window.removeEventListener('pointerup', globalUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meta, height, orbState, reputation]);

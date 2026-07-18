@@ -1,10 +1,14 @@
 // components/perfil/AvatarPicker.tsx
 // ═══════════════════════════════════════════════════════════════════════
 // SELECTOR DE AVATAR: gradientes predefinidos + opción de subir imagen.
+// Las imágenes se suben al bucket "avatars" de Supabase Storage y se
+// devuelve la URL pública. Fallback a base64 si Storage no disponible.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { useRef } from 'react';
-import { Plus } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Plus, Loader2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useApp } from '../../store/AppContext';
 import { C } from '../../theme';
 import type { AnalyzedProfile } from '../../lib/cvAnalyzer';
 
@@ -24,26 +28,105 @@ const AVATAR_PALETTES = [
 
 export function AvatarPicker({ selected, onChange }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { profile } = useApp();
 
   function handleGradientSelect(index: number) {
     onChange({ type: 'grad', v: index });
   }
 
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Validar tamaño (máx 2MB)
     if (file.size > 2200000) {
-      alert('Imagen muy grande (máx 2MB)');
+      setError('Imagen muy grande (máx 2MB)');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      onChange({ type: 'img', v: String(reader.result) });
-    };
-    reader.readAsDataURL(file);
+    // Validar tipo
+    if (!file.type.startsWith('image/')) {
+      setError('El archivo debe ser una imagen');
+      return;
+    }
+
+    setError(null);
+    setUploading(true);
+
+    try {
+      const userId = profile?.id;
+      if (!userId) {
+        // Fallback: usar base64 local si no hay usuario autenticado
+        const reader = new FileReader();
+        reader.onload = () => {
+          onChange({ type: 'img', v: String(reader.result) });
+          setUploading(false);
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      // Generar nombre único para evitar conflictos de caché
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `${userId}/avatar-${Date.now()}.${ext}`;
+
+      // Subir a Supabase Storage (bucket: avatars)
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type,
+        });
+
+      if (uploadError) {
+        console.warn('Supabase Storage upload failed, using base64 fallback:', uploadError.message);
+        // Fallback a base64 si el bucket no existe o falla
+        const reader = new FileReader();
+        reader.onload = () => {
+          onChange({ type: 'img', v: String(reader.result) });
+          setUploading(false);
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      // Obtener URL pública
+      const { data: publicData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      const publicUrl = publicData?.publicUrl;
+
+      if (publicUrl) {
+        onChange({ type: 'img', v: publicUrl });
+
+        // Guardar en el perfil del usuario
+        await supabase.from('profiles').update({
+          avatar_url: publicUrl,
+        }).eq('id', userId);
+      } else {
+        // Fallback si no se puede obtener URL pública
+        const reader = new FileReader();
+        reader.onload = () => {
+          onChange({ type: 'img', v: String(reader.result) });
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.error('Error uploading avatar:', err);
+      setError('Error al subir la imagen');
+      // Fallback final a base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        onChange({ type: 'img', v: String(reader.result) });
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setUploading(false);
+    }
   }
 
   const isImgSelected = selected?.type === 'img';
@@ -53,6 +136,7 @@ export function AvatarPicker({ selected, onChange }: Props) {
       {/* Botón de upload */}
       <button
         onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
         style={{
           ...S.slot,
           ...(isImgSelected && selected?.type === 'img'
@@ -66,10 +150,11 @@ export function AvatarPicker({ selected, onChange }: Props) {
             : {
                 borderStyle: 'dashed',
               }),
+          opacity: uploading ? 0.6 : 1,
         }}
         aria-label="Subir avatar"
       >
-        {!isImgSelected && <Plus size={22} />}
+        {uploading ? <Loader2 size={20} style={{ animation: 'cp-spin 1s linear infinite' }} /> : (!isImgSelected && <Plus size={22} />)}
       </button>
 
       {/* Gradientes predefinidos */}
@@ -97,6 +182,10 @@ export function AvatarPicker({ selected, onChange }: Props) {
         onChange={handleImageUpload}
         style={{ display: 'none' }}
       />
+
+      {error && (
+        <div style={S.error}>{error}</div>
+      )}
     </div>
   );
 }
@@ -124,5 +213,12 @@ const S: Record<string, React.CSSProperties> = {
     color: C.mut,
     transition: 'all 0.15s',
     flexShrink: 0,
+  },
+  error: {
+    width: '100%',
+    textAlign: 'center',
+    fontSize: 11,
+    color: '#f87171',
+    marginTop: 4,
   },
 };

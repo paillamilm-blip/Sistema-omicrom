@@ -240,6 +240,22 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
       });
     }
     
+    // Persistir datos estructurados del CV en Supabase (para el motor de analítica)
+    if (sb?.id) {
+      supabase.from('profiles').update({
+        cv_skills: newProfile.skills,
+        cv_labels: newProfile.labels,
+        cv_years: newProfile.years,
+        cv_seniority: newProfile.arch,
+        cv_senior_label: newProfile.seniorLabel,
+        cv_processed_at: new Date().toISOString(),
+      }).eq('id', sb.id).then(({ error: cvErr }) => {
+        if (cvErr && import.meta.env.DEV) {
+          console.warn('CV data persistence (non-critical):', cvErr.message);
+        }
+      });
+    }
+    
     // Mensaje de confirmación
     speak(`Gemelo Digital actualizado. ${newProfile.skills.length} competencias detectadas. Tu reputación refleja tus ${newProfile.years || 0} años de experiencia.`);
   }
@@ -306,7 +322,24 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
           <Volume2 size={17} />
         </IconBtn>
         <IconBtn
-          onClick={() => { supabase.auth.signOut(); }}
+          onClick={async () => {
+            // Limpiar todo el estado local antes de cerrar sesión
+            try {
+              localStorage.removeItem('omicron_analyzed_profile');
+              localStorage.removeItem('omicron_iniciacion_v1');
+              localStorage.removeItem('omicron_gemelo_profile');
+              localStorage.removeItem('omicron_gemelo_history');
+              // Clear any other omicron-prefixed keys
+              const keysToRemove: string[] = [];
+              for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('omicron_')) keysToRemove.push(key);
+              }
+              keysToRemove.forEach(k => localStorage.removeItem(k));
+            } catch { /* noop */ }
+            // Cerrar sesión en Supabase (invalida token de sesión)
+            await supabase.auth.signOut();
+          }}
           label="Cerrar sesión"
           color="#8a5050"
         >

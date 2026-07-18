@@ -20,7 +20,7 @@ interface UnifiedLayoutProps {
 export function UnifiedLayout({
   children,
   title,
-  showBackButton = false,
+  showBackButton = true,
   onBack,
   headerActions,
   fullHeight = false,
@@ -44,8 +44,8 @@ export function UnifiedLayout({
         <div style={S.bgNoise} />
       </div>
 
-      {/* Header contextual (solo si hay título) */}
-      {title && (
+      {/* Header contextual (siempre muestra botón de volver) */}
+      {(title || showBackButton) && (
         <div style={S.header}>
           <div style={S.headerContent}>
             {showBackButton && (
@@ -54,10 +54,12 @@ export function UnifiedLayout({
               </button>
             )}
             
-            <div style={S.titleSection}>
-              <Sparkles size={16} style={{ color: C.cyan, opacity: 0.7 }} />
-              <h1 style={S.title}>{title}</h1>
-            </div>
+            {title && (
+              <div style={S.titleSection}>
+                <Sparkles size={16} style={{ color: C.cyan, opacity: 0.7 }} />
+                <h1 style={S.title}>{title}</h1>
+              </div>
+            )}
 
             {headerActions && (
               <div style={S.actions}>{headerActions}</div>
