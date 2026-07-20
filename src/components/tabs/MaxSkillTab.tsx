@@ -9,7 +9,7 @@ import { supabase } from '../../lib/supabase';
 import { C as T } from '../../theme';
 import { useToast } from '../shared/Toast';
 import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
-import { ExamenChallenge } from '../shared/ExamenChallenge';
+import { UniversalSimulator } from '../shared/UniversalSimulator';
 import { CourseFlowModal } from '../shared/CourseFlow';
 import type { SkillTreeNode, UserSkillProgress, ActaEvidencia } from '../../types';
 
@@ -598,14 +598,14 @@ export function MaxSkillTab() {
       )}
 
       {examNode && (
-        <ExamenChallenge
+        <UniversalSimulator
           node={examNode}
           onClose={() => setExamNode(null)}
-          onFinished={(res) => {
+          onSuccess={(pe) => {
             loadActas();
             void refreshProfile?.();
-            if (res.veredicto === 'APROBADO') {
-              setLastPeEarned(examNode.pe_reward);
+            if (pe > 0) {
+              setLastPeEarned(pe);
               setTimeout(() => setLastPeEarned(null), 3500);
             }
           }}
