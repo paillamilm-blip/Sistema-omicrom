@@ -200,29 +200,24 @@ function updateLocalCache(patch: Partial<GemeloProfile>) {
 
 export const gemeloActions = {
   /**
-   * Convalida CV via RPC server-side. El servidor:
-   * 1. Valida que exista evidencia (archivo subido o texto procesado)
-   * 2. Actualiza gemelo_profiles.cv = true
-   * 3. Dispara recálculo de ejes (trigger 0050)
-   * 4. Retorna el nuevo profile actualizado
+   * Convalida CV via RPC real: public.convalidar_credencial(p_kind text).
+   * (Ver supabase/migrations/0048_convalidar_credencial.sql — firma real.)
+   * La función es SECURITY DEFINER, usa auth.uid() internamente (no recibe
+   * user_id como parámetro) y suma +6 a traditional_score (tope 60).
+   * El trigger 0050 recalcula reputation_score automáticamente.
    */
   async addCV(): Promise<boolean> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-
-      const { error } = await supabase.rpc('convalidar_cv', { p_user_id: user.id });
+      const { data, error } = await supabase.rpc('convalidar_credencial', { p_kind: 'cv' });
       if (error) {
-        // Fallback para desarrollo: actualizar caché local si RPC no existe
-        if (error.code === '42883' || error.message?.includes('does not exist')) {
-          updateLocalCache({ cv: true });
-          logEvent('CV convalidado (local — RPC pendiente)');
-          return true;
-        }
         console.error('[gemeloActions.addCV] RPC error:', error.message);
         return false;
       }
-
+      const result = data as { ok: boolean; error?: string } | null;
+      if (!result?.ok) {
+        console.warn('[gemeloActions.addCV] Rechazado por el servidor:', result?.error);
+        return false;
+      }
       updateLocalCache({ cv: true });
       logEvent('CV convalidado');
       return true;
@@ -232,32 +227,20 @@ export const gemeloActions = {
     }
   },
 
-  /**
-   * Convalida un título/credencial via RPC server-side.
-   */
+  /** Convalida un título académico (p_kind: 'title'). */
   async addTitle(): Promise<boolean> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-
-      const { error } = await supabase.rpc('convalidar_credencial', {
-        p_user_id: user.id,
-        p_tipo: 'titulo',
-      });
+      const { data, error } = await supabase.rpc('convalidar_credencial', { p_kind: 'title' });
       if (error) {
-        if (error.code === '42883' || error.message?.includes('does not exist')) {
-          if (current.titles < 10) {
-            updateLocalCache({ titles: current.titles + 1 });
-            logEvent('Título validado (local — RPC pendiente)');
-          }
-          return true;
-        }
         console.error('[gemeloActions.addTitle] RPC error:', error.message);
         return false;
       }
-
-      updateLocalCache({ titles: current.titles + 1 });
-      logEvent('Título validado');
+      const result = data as { ok: boolean; error?: string } | null;
+      if (!result?.ok) return false;
+      if (current.titles < 10) {
+        updateLocalCache({ titles: current.titles + 1 });
+        logEvent('Título validado');
+      }
       return true;
     } catch (err) {
       console.error('[gemeloActions.addTitle] Error:', err);
@@ -265,31 +248,20 @@ export const gemeloActions = {
     }
   },
 
-  /**
-   * Registra un año de experiencia verificada.
-   */
+  /** Acredita 1 año de experiencia (p_kind: 'year'). */
   async addYear(): Promise<boolean> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-
-      const { error } = await supabase.rpc('convalidar_credencial', {
-        p_user_id: user.id,
-        p_tipo: 'experiencia',
-      });
+      const { data, error } = await supabase.rpc('convalidar_credencial', { p_kind: 'year' });
       if (error) {
-        if (error.code === '42883' || error.message?.includes('does not exist')) {
-          if (current.years < 15) {
-            updateLocalCache({ years: current.years + 1 });
-            logEvent('Experiencia +1 año (local — RPC pendiente)');
-          }
-          return true;
-        }
+        console.error('[gemeloActions.addYear] RPC error:', error.message);
         return false;
       }
-
-      updateLocalCache({ years: current.years + 1 });
-      logEvent('Experiencia +1 año');
+      const result = data as { ok: boolean; error?: string } | null;
+      if (!result?.ok) return false;
+      if (current.years < 15) {
+        updateLocalCache({ years: current.years + 1 });
+        logEvent('Experiencia +1 año');
+      }
       return true;
     } catch (err) {
       console.error('[gemeloActions.addYear] Error:', err);
@@ -297,24 +269,16 @@ export const gemeloActions = {
     }
   },
 
-  /**
-   * Registra un aporte a la Bóveda de Conocimiento.
-   */
+  /** Registra un aporte declarado a la Bóveda (p_kind: 'vault'). */
   async addVault(): Promise<boolean> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-
-      const { error } = await supabase.rpc('registrar_aporte_boveda', { p_user_id: user.id });
+      const { data, error } = await supabase.rpc('convalidar_credencial', { p_kind: 'vault' });
       if (error) {
-        if (error.code === '42883' || error.message?.includes('does not exist')) {
-          updateLocalCache({ vault: current.vault + 1 });
-          logEvent('Aporte a la Bóveda (local — RPC pendiente)');
-          return true;
-        }
+        console.error('[gemeloActions.addVault] RPC error:', error.message);
         return false;
       }
-
+      const result = data as { ok: boolean; error?: string } | null;
+      if (!result?.ok) return false;
       updateLocalCache({ vault: current.vault + 1 });
       logEvent('Aporte a la Bóveda');
       return true;

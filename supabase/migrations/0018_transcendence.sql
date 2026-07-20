@@ -1,69 +1,79 @@
+-- =====================================================================
 -- 0018_transcendence.sql
--- ═══════════════════════════════════════════════════════════════════════
--- EJE TRASCENDENCIA: Aporte al ecosistema.
--- Formula: min(100, servicios×8 + docs_boveda×12 + mentorias×6)
--- Se dispara al publicar servicios, documentos o completar mentorías.
--- ═══════════════════════════════════════════════════════════════════════
+-- TRASCENDENCIA = (a) servicios publicados en Market
+--               + (b) documentos validados en la Bóveda
+--               + (c) mentorías completadas (tabla nueva)
+-- =====================================================================
 
-CREATE OR REPLACE FUNCTION recalc_transcendence_score()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_user_id uuid;
-  v_services integer := 0;
-  v_docs integer := 0;
-  v_mentorships integer := 0;
-  v_new_transcendence numeric;
-BEGIN
-  v_user_id := COALESCE(NEW.author_id, NEW.seller_id, NEW.mentor_id);
-  IF v_user_id IS NULL THEN
-    RETURN NEW;
-  END IF;
+-- (c) Tabla de mentorías
+create table if not exists public.mentorships (
+  id         uuid primary key default gen_random_uuid(),
+  mentor_id  uuid not null references public.profiles(id) on delete cascade,
+  mentee_id  uuid references public.profiles(id) on delete set null,
+  topic      text,
+  status     text not null default 'COMPLETED'
+               check (status in ('ACTIVE','COMPLETED','CANCELLED')),
+  created_at timestamptz not null default now()
+);
+alter table public.mentorships enable row level security;
 
-  -- Contar servicios publicados activos
-  SELECT COUNT(*) INTO v_services
-  FROM market_services
-  WHERE seller_id = v_user_id AND is_active = true;
+drop policy if exists mentorship_select on public.mentorships;
+create policy mentorship_select on public.mentorships
+  for select using (auth.uid() = mentor_id or auth.uid() = mentee_id);
 
-  -- Contar documentos validados en la Bóveda
-  SELECT COUNT(*) INTO v_docs
-  FROM knowledge_vault_documents
-  WHERE author_id = v_user_id AND status = 'VALIDATED';
+drop policy if exists mentorship_mentor_write on public.mentorships;
+create policy mentorship_mentor_write on public.mentorships
+  for all using (auth.uid() = mentor_id) with check (auth.uid() = mentor_id);
 
-  -- Contar mentorías completadas (si existe la tabla)
-  BEGIN
-    SELECT COUNT(*) INTO v_mentorships
-    FROM mentorship_sessions
-    WHERE mentor_id = v_user_id AND status = 'COMPLETED';
-  EXCEPTION WHEN undefined_table THEN
-    v_mentorships := 0;
-  END;
+grant select, insert, update, delete on public.mentorships to authenticated;
 
-  -- Transcendence = min(100, servicios×8 + docs×12 + mentorias×6)
-  v_new_transcendence := LEAST(100, v_services * 8 + v_docs * 12 + v_mentorships * 6);
+-- Recálculo de Trascendencia
+create or replace function public.recalc_transcendence_score(p_user uuid)
+returns void language plpgsql security definer set search_path = public as $fn$
+declare v_services int; v_docs int; v_mentor int; v_score numeric;
+begin
+  if p_user is null then return; end if;
 
-  UPDATE profiles
-  SET transcendence_score = v_new_transcendence,
-      updated_at = NOW()
-  WHERE id = v_user_id;
+  select count(*) into v_services from public.market_services
+    where seller_id = p_user and is_active = true;
+  select count(*) into v_docs from public.knowledge_vault_documents
+    where author_id = p_user and is_validated = true;
+  select count(*) into v_mentor from public.mentorships
+    where mentor_id = p_user and status = 'COMPLETED';
 
-  RETURN NEW;
-END;
-$$;
+  -- (a)*8 + (b)*12 + (c)*6, tope 100
+  v_score := least(100, v_services * 8 + v_docs * 12 + v_mentor * 6);
+  update public.profiles set transcendence_score = v_score where id = p_user;
+end; $fn$;
 
--- Triggers en market_services
-DROP TRIGGER IF EXISTS trg_recalc_transcendence_market ON market_services;
-CREATE TRIGGER trg_recalc_transcendence_market
-  AFTER INSERT OR UPDATE OF is_active ON market_services
-  FOR EACH ROW
-  EXECUTE FUNCTION recalc_transcendence_score();
+-- Triggers en las 3 fuentes
+create or replace function public.fn_market_transcendence()
+returns trigger language plpgsql security definer set search_path = public as $fn$
+begin perform public.recalc_transcendence_score(coalesce(new.seller_id, old.seller_id)); return null; end; $fn$;
+drop trigger if exists trg_market_transcendence on public.market_services;
+create trigger trg_market_transcendence after insert or update or delete on public.market_services
+  for each row execute function public.fn_market_transcendence();
 
--- Triggers en knowledge_vault_documents
-DROP TRIGGER IF EXISTS trg_recalc_transcendence_vault ON knowledge_vault_documents;
-CREATE TRIGGER trg_recalc_transcendence_vault
-  AFTER INSERT OR UPDATE OF status ON knowledge_vault_documents
-  FOR EACH ROW
-  EXECUTE FUNCTION recalc_transcendence_score();
+create or replace function public.fn_vault_transcendence()
+returns trigger language plpgsql security definer set search_path = public as $fn$
+begin perform public.recalc_transcendence_score(coalesce(new.author_id, old.author_id)); return null; end; $fn$;
+drop trigger if exists trg_vault_transcendence on public.knowledge_vault_documents;
+create trigger trg_vault_transcendence after insert or update or delete on public.knowledge_vault_documents
+  for each row execute function public.fn_vault_transcendence();
+
+create or replace function public.fn_mentorship_transcendence()
+returns trigger language plpgsql security definer set search_path = public as $fn$
+begin perform public.recalc_transcendence_score(coalesce(new.mentor_id, old.mentor_id)); return null; end; $fn$;
+drop trigger if exists trg_mentorship_transcendence on public.mentorships;
+create trigger trg_mentorship_transcendence after insert or update or delete on public.mentorships
+  for each row execute function public.fn_mentorship_transcendence();
+
+-- Backfill para todos
+do $do$
+declare r record;
+begin
+  for r in (select id from public.profiles) loop
+    perform public.recalc_transcendence_score(r.id);
+  end loop;
+end;
+$do$;

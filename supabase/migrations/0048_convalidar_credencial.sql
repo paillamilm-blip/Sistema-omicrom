@@ -1,98 +1,77 @@
--- 0048_convalidar_credencial.sql
--- ═══════════════════════════════════════════════════════════════════════
--- RPCs de convalidación — SECURITY DEFINER (bypassean protect_profile_columns)
--- Estas son las funciones que el cliente invoca para registrar evidencia
--- verificada. Al actualizar traditional_score, disparan recalc_reputation.
--- ═══════════════════════════════════════════════════════════════════════
+-- =====================================================================
+-- 0048_convalidar_credencial.sql — Endurecimiento de reputación (auditoría 🔴)
+--
+-- CONTEXTO: `0007_protect_profile.sql` revierte toda escritura del cliente a
+-- las columnas de score (anti auto-inflado). Por eso la convalidación desde el
+-- cliente NO movía la reputación. Esta RPC es el camino correcto:
+--
+--   · SECURITY DEFINER → puede escribir los scores (sortea el trigger 0007).
+--   · Usa auth.uid() → SOLO puede convalidar TU propio perfil (no el de otros).
+--   · Es ADITIVA y NO destructiva → nunca baja un score existente.
+--
+-- MODELO CANÓNICO (ver 0050_reputacion_canonica.sql y DEFINICION_REPUTACION_OMICROM.md):
+--   La convalidación SOLO mueve `traditional_score` (credenciales = el 20%),
+--   que NO es una columna derivada. La experiencia (80%) es el promedio de los
+--   4 ejes y se GANA con evidencia real (contratos, calificaciones, nodos,
+--   aportes) — no se puede "declarar". Escribir experience_score aquí sería
+--   inútil: el trigger recalc_reputation lo normaliza a promedio de 4 ejes.
+--
+--   Tope de convalidación: traditional_score ≤ 60. Una reputación alta exige
+--   desempeño demostrado, no solo credenciales convalidadas.
+--
+-- Idempotente.
+-- =====================================================================
 
--- Convalidar CV (requiere que exista archivo en storage o texto procesado)
-CREATE OR REPLACE FUNCTION convalidar_cv(p_user_id uuid)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_current_traditional numeric;
-BEGIN
-  -- Verificar que el usuario existe
-  IF NOT EXISTS (SELECT 1 FROM profiles WHERE id = p_user_id) THEN
-    RAISE EXCEPTION 'Usuario no encontrado';
-  END IF;
+create or replace function public.convalidar_credencial(p_kind text)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  uid uuid := auth.uid();
+  d_trad numeric := 0;
+begin
+  if uid is null then
+    return json_build_object('ok', false, 'error', 'sin sesión');
+  end if;
 
-  -- Verificar que el caller es el propio usuario
-  IF auth.uid() IS DISTINCT FROM p_user_id THEN
-    RAISE EXCEPTION 'No autorizado';
-  END IF;
+  -- Todos los tipos son CREDENCIALES autodeclaradas → 20% (traditional_score).
+  if p_kind = 'cv' then
+    d_trad := 6;                     -- CV
+  elsif p_kind = 'title' then
+    d_trad := 5;                     -- título académico
+  elsif p_kind = 'year' then
+    d_trad := 4;                     -- año de experiencia declarado
+  elsif p_kind = 'vault' then
+    d_trad := 3;                     -- aporte declarado a la Bóveda
+  else
+    return json_build_object('ok', false, 'error', 'tipo inválido');
+  end if;
 
-  -- Obtener traditional actual
-  SELECT traditional_score INTO v_current_traditional
-  FROM profiles WHERE id = p_user_id;
+  -- Aditivo, no destructivo, con tope de convalidación (60).
+  update public.profiles set
+    traditional_score = greatest(coalesce(traditional_score, 0),
+                                 least(60, coalesce(traditional_score, 0) + d_trad))
+  where id = uid;
+  -- → el trigger recalc_reputation (0050) actualiza reputation_score (base 20/80 + momentum).
 
-  -- CV suma +6 al traditional (tope 60)
-  UPDATE profiles
-  SET traditional_score = LEAST(60, COALESCE(v_current_traditional, 0) + 6),
-      updated_at = NOW()
-  WHERE id = p_user_id;
+  -- Auditoría best-effort (no crítica si el esquema difiere).
+  begin
+    insert into public.reputation_history(user_id, reason)
+    values (uid, 'Convalidación: ' || p_kind);
+  exception when others then
+    null;
+  end;
 
-  -- El UPDATE de traditional_score dispara recalc_reputation automáticamente
-END;
-$$;
+  return json_build_object(
+    'ok', true,
+    'reputation', (select reputation_score from public.profiles where id = uid)
+  );
+end;
+$fn$;
 
--- Convalidar credencial genérica (titulo, experiencia)
-CREATE OR REPLACE FUNCTION convalidar_credencial(p_user_id uuid, p_tipo text)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_current_traditional numeric;
-  v_delta numeric;
-BEGIN
-  IF auth.uid() IS DISTINCT FROM p_user_id THEN
-    RAISE EXCEPTION 'No autorizado';
-  END IF;
+revoke all on function public.convalidar_credencial(text) from public, anon;
+grant execute on function public.convalidar_credencial(text) to authenticated;
 
-  SELECT traditional_score INTO v_current_traditional
-  FROM profiles WHERE id = p_user_id;
-
-  -- Deltas por tipo de credencial
-  CASE p_tipo
-    WHEN 'titulo' THEN v_delta := 5;
-    WHEN 'experiencia' THEN v_delta := 4;
-    WHEN 'certificacion' THEN v_delta := 3;
-    ELSE v_delta := 2;
-  END CASE;
-
-  UPDATE profiles
-  SET traditional_score = LEAST(60, COALESCE(v_current_traditional, 0) + v_delta),
-      updated_at = NOW()
-  WHERE id = p_user_id;
-END;
-$$;
-
--- Registrar aporte a la Bóveda (para el eje Trascendencia)
-CREATE OR REPLACE FUNCTION registrar_aporte_boveda(p_user_id uuid)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  IF auth.uid() IS DISTINCT FROM p_user_id THEN
-    RAISE EXCEPTION 'No autorizado';
-  END IF;
-
-  -- El eje Trascendencia se recalcula por el trigger 0018 cuando
-  -- se inserta en knowledge_vault_documents. Esta RPC es un convenience
-  -- wrapper que podría insertar un registro placeholder si se necesita.
-  -- Por ahora solo refresca el score forzando un recálculo.
-  PERFORM recalc_transcendence_score();
-END;
-$$;
-
--- Grants
-GRANT EXECUTE ON FUNCTION convalidar_cv(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION convalidar_credencial(uuid, text) TO authenticated;
-GRANT EXECUTE ON FUNCTION registrar_aporte_boveda(uuid) TO authenticated;
+notify pgrst, 'reload schema';

@@ -1,51 +1,60 @@
+-- =====================================================================
 -- 0015_foundation_from_skills.sql
--- ═══════════════════════════════════════════════════════════════════════
--- EJE FUNDAMENTO: Se recalcula cuando un usuario valida/domina un nodo
--- del árbol de habilidades. Formula: % ponderado por dificultad.
--- ═══════════════════════════════════════════════════════════════════════
+-- Conecta el eje FUNDAMENTO del Gemelo con el progreso del árbol (MaxSkill).
+-- foundation_score = % (ponderado por dificultad) de nodos VALIDATED/MASTERED.
+-- Al cambiar, el trigger de reputación recalcula la reputación automáticamente.
+-- Idempotente. Etiquetas de dollar-quote con nombre para el editor de Supabase.
+-- =====================================================================
 
-CREATE OR REPLACE FUNCTION recalc_foundation_score()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_user_id uuid;
-  v_total_weight numeric := 0;
-  v_earned_weight numeric := 0;
-  v_new_foundation numeric;
-BEGIN
-  v_user_id := COALESCE(NEW.user_id, OLD.user_id);
+-- ── 1) Función de recálculo del Fundamento ───────────────────────────
+create or replace function public.recalc_foundation_score(p_user uuid)
+returns void language plpgsql security definer set search_path = public as $fn1$
+declare
+  v_total numeric;
+  v_done  numeric;
+  v_score numeric;
+begin
+  select coalesce(sum(greatest(difficulty_level, 1)), 0) into v_total
+  from public.skill_tree_nodes;
 
-  -- Calcular peso total disponible (todos los nodos del árbol)
-  SELECT COALESCE(SUM(difficulty_level), 1)
-  INTO v_total_weight
-  FROM skill_tree_nodes;
+  select coalesce(sum(greatest(n.difficulty_level, 1)), 0) into v_done
+  from public.user_skill_progress p
+  join public.skill_tree_nodes n on n.id = p.node_id
+  where p.user_id = p_user
+    and p.status in ('VALIDATED', 'MASTERED');
 
-  -- Calcular peso ganado (nodos VALIDATED o MASTERED por el usuario)
-  SELECT COALESCE(SUM(stn.difficulty_level), 0)
-  INTO v_earned_weight
-  FROM user_skill_progress usp
-  JOIN skill_tree_nodes stn ON stn.id = usp.node_id
-  WHERE usp.user_id = v_user_id
-    AND usp.status IN ('VALIDATED', 'MASTERED');
+  if v_total > 0 then
+    v_score := round((v_done / v_total) * 100, 2);
+  else
+    v_score := 0;
+  end if;
 
-  -- Foundation = porcentaje ponderado, escala 0-100
-  v_new_foundation := LEAST(100, ROUND((v_earned_weight / GREATEST(v_total_weight, 1)) * 100));
+  update public.profiles
+  set foundation_score = least(100, greatest(0, v_score))
+  where id = p_user;
+end;
+$fn1$;
 
-  UPDATE profiles
-  SET foundation_score = v_new_foundation,
-      updated_at = NOW()
-  WHERE id = v_user_id;
+-- ── 2) Trigger: al avanzar en el árbol, recalcular Fundamento ────────
+create or replace function public.fn_skill_progress_after()
+returns trigger language plpgsql security definer set search_path = public as $fn2$
+begin
+  perform public.recalc_foundation_score(coalesce(new.user_id, old.user_id));
+  return null;
+end;
+$fn2$;
 
-  RETURN NEW;
-END;
-$$;
+drop trigger if exists trg_skill_progress_foundation on public.user_skill_progress;
+create trigger trg_skill_progress_foundation
+  after insert or update or delete on public.user_skill_progress
+  for each row execute function public.fn_skill_progress_after();
 
--- Trigger: se dispara al cambiar status en user_skill_progress
-DROP TRIGGER IF EXISTS trg_recalc_foundation ON user_skill_progress;
-CREATE TRIGGER trg_recalc_foundation
-  AFTER INSERT OR UPDATE OF status ON user_skill_progress
-  FOR EACH ROW
-  EXECUTE FUNCTION recalc_foundation_score();
+-- ── 3) Backfill: recalcular para quienes ya tienen progreso ──────────
+do $do$
+declare r record;
+begin
+  for r in (select distinct user_id from public.user_skill_progress) loop
+    perform public.recalc_foundation_score(r.user_id);
+  end loop;
+end;
+$do$;
