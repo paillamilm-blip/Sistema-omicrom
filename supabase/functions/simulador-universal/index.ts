@@ -86,9 +86,12 @@ type SimMode = 'CODIGO' | 'ANALISIS' | 'MIXTO';
 const SOFTWARE_CATEGORIES = ['SOFTWARE', 'DATA', 'PROGRAMMING', 'FOUNDATION'];
 
 function detectMode(nodeCategory: string, hasCodeTests: boolean): SimMode {
-  const isSoftware = SOFTWARE_CATEGORIES.includes(nodeCategory.toUpperCase());
+  const cat = nodeCategory.toUpperCase();
+  const isSoftware = SOFTWARE_CATEGORIES.includes(cat);
   if (isSoftware && hasCodeTests) return 'CODIGO';
   if (isSoftware && !hasCodeTests) return 'MIXTO';
+  // Todas las demás disciplinas: ANÁLISIS (IA genera retos contextualizados)
+  // INGENIERIA, AUTOMATIZACION, PROCESOS, ELECTRONICA, DISEÑO, GESTION, ENERGIA
   return 'ANALISIS';
 }
 
