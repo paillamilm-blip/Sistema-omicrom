@@ -1,15 +1,18 @@
 // src/lib/gemeloProfile.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · Perfil del Gemelo (fuente de verdad del ecosistema)
-// Store ligero (sin dependencias) con suscripción, persistido en
-// localStorage y sincronizado entre pestañas. La reputación, los PE y los
-// 4 ejes se RECALCULAN de forma determinista a partir de los datos
-// convalidados (CV, títulos, años, aportes a la Bóveda), de modo que toda
-// la app lea exactamente lo mismo.
+// ÓMICRON · Perfil del Gemelo Digital — FACADE DE SOLO LECTURA
 //
-// Supabase-ready: `syncFromSupabase` / `pushToSupabase` son puntos de
-// enganche opcionales (degradación elegante: si no hay backend, funciona
-// 100% con localStorage).
+// RECTIFICACIÓN PRIORIDAD 1: Este módulo ya NO modifica la reputación
+// localmente. Toda mutación de datos convalidados pasa por RPCs de
+// Supabase (SECURITY DEFINER) que validan evidencia y disparan triggers.
+//
+// El store local se conserva ÚNICAMENTE como caché de lectura para:
+// - Degradación elegante sin conexión (PWA offline)
+// - Sincronización entre pestañas
+// - Calcular "siguiente mejor paso" (simulación read-only)
+//
+// REGLA DE ORO: La reputación se calcula SOLO en el servidor.
+// El cliente lee, no escribe.
 // ═══════════════════════════════════════════════════════════════════════
 
 import { supabase } from './supabase';
@@ -38,13 +41,13 @@ function base(): GemeloProfile {
   return {
     cv: false, titles: 0, years: 0, vault: 0,
     pe: 120, rep: 34,
-    axes: { execution: 40, quality: 30, transcendence: 18, foundation: 25 },
+    axes: { execution: 40, quality: 50, transcendence: 18, foundation: 25 },
   };
 }
 
-/** Recalcula PE, ejes y reputación a partir de los datos convalidados. */
+/** Recalcula PE, ejes y reputación SOLO para simulación/predicción (read-only). */
 export function recompute(p: GemeloProfile): GemeloProfile {
-  const ax: GemeloAxes = { execution: 40, quality: 30, transcendence: 18, foundation: 25 };
+  const ax: GemeloAxes = { execution: 40, quality: 50, transcendence: 18, foundation: 25 };
   let pe = 120;
   if (p.cv) { pe += 200; ax.execution += 10; ax.quality += 6; }
   pe += p.titles * 250; ax.foundation += p.titles * 12;
@@ -52,16 +55,12 @@ export function recompute(p: GemeloProfile): GemeloProfile {
   pe += p.vault * 150; ax.transcendence += p.vault * 14;
   (Object.keys(ax) as (keyof GemeloAxes)[]).forEach((k) => (ax[k] = Math.min(100, ax[k])));
   const avg = (ax.execution + ax.quality + ax.transcendence + ax.foundation) / 4;
-  // Reputación CANÓNICA: idéntica al trigger de Supabase (0050) y a reputationService.
-  //   base 20/80 (credenciales + experiencia) + momentum por PE.
-  // traditional = credenciales convalidadas (mismos pesos/tope que la RPC 0048).
   const traditional = Math.min(60, (p.cv ? 6 : 0) + p.titles * 5 + p.years * 4);
   const rep = Math.round(calculateTotalReputation(traditional, avg, pe));
   return { ...p, pe, rep, axes: ax };
 }
 
-// Tiers por PE, alineados a los umbrales de nivel de reputationService
-// (calculateProgressToNextLevel: N2=1000 PE, N3=3500 PE).
+// Tiers por PE
 const TIERS = [
   { name: 'Nodo Operativo', min: 0, commission: 15 },
   { name: 'Nodo Core', min: 1000, commission: 10 },
@@ -77,7 +76,7 @@ export function tierFor(pe: number) {
   return { ...t, next, progress };
 }
 
-// ── Store con suscripción ──────────────────────────────────────────────
+// ── Store de SOLO LECTURA con suscripción ─────────────────────────────
 function load(): GemeloProfile {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(KEY) : null;
@@ -91,8 +90,7 @@ function load(): GemeloProfile {
 let current: GemeloProfile = load();
 const listeners = new Set<() => void>();
 
-function persist() {
-  try { localStorage.setItem(KEY, JSON.stringify(current)); } catch { /* noop */ }
+function notify() {
   listeners.forEach((l) => l());
 }
 
@@ -105,13 +103,7 @@ export function subscribe(l: () => void): () => void {
   return () => { listeners.delete(l); };
 }
 
-function mutate(patch: Partial<GemeloProfile>) {
-  current = recompute({ ...current, ...patch });
-  persist();
-  void pushToSupabase(); // fire-and-forget; se ignora si no hay backend
-}
-
-// ── Historial de actividad y racha ──────────────────────────────────────
+// ── Historial de actividad (lectura) ────────────────────────────────────
 const HKEY = 'omicron_hist';
 
 export interface GemeloEvent { t: string; d: number; }
@@ -127,17 +119,7 @@ let history: GemeloEvent[] = loadHist();
 
 export function getHistory(): GemeloEvent[] { return history; }
 
-function persistHist() {
-  try { localStorage.setItem(HKEY, JSON.stringify(history.slice(-60))); } catch { /* noop */ }
-  listeners.forEach((l) => l());
-}
-
-function logEvent(label: string) {
-  history = [...history, { t: label, d: Date.now() }].slice(-60);
-  persistHist();
-}
-
-/** Racha de días consecutivos con actividad (termina hoy o ayer). */
+/** Racha de días consecutivos con actividad. */
 export function streakDays(): number {
   if (!history.length) return 0;
   const set = new Set(history.map((h) => new Date(h.d).toDateString()));
@@ -151,11 +133,11 @@ export function streakDays(): number {
   return s;
 }
 
-// ── Motor "Siguiente mejor paso" (recomendación por retorno) ────────────
+// ── Motor "Siguiente mejor paso" (SOLO SIMULACIÓN — NO muta estado) ────
 export type NextAction = 'cv' | 'title' | 'year' | 'vault';
 export interface NextStep { action: NextAction; label: string; dRep: number; dPe: number; }
 
-/** Simula cada acción posible y devuelve la de mayor retorno (reputación + PE). */
+/** Simula cada acción posible y devuelve la de mayor retorno. NO modifica nada. */
 export function bestNextStep(p: GemeloProfile = current): NextStep | null {
   const b = recompute(p);
   const opts: NextStep[] = [];
@@ -171,7 +153,7 @@ export function bestNextStep(p: GemeloProfile = current): NextStep | null {
   return opts[0] ?? null;
 }
 
-// ── Ruta al siguiente Nodo (secuencia óptima de acciones) ───────────────
+// ── Ruta al siguiente Nodo (solo simulación) ────────────────────────────
 export interface RouteStep { action: NextAction; label: string; }
 export interface Route { steps: RouteStep[]; endRep: number; endPe: number; endTier: string; }
 
@@ -182,7 +164,6 @@ function applyAction(p: GemeloProfile, a: NextAction): GemeloProfile {
   return { ...p, vault: p.vault + 1 };
 }
 
-/** Secuencia greedy de acciones (por retorno) hasta alcanzar el siguiente Nodo. */
 export function routeToNextTier(p: GemeloProfile = current): Route {
   let cur = recompute({ ...p });
   const startTier = tierFor(cur.pe).name;
@@ -197,45 +178,143 @@ export function routeToNextTier(p: GemeloProfile = current): Route {
   return { steps, endRep: cur.rep, endPe: cur.pe, endTier: tierFor(cur.pe).name };
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// ACCIONES DE CONVALIDACIÓN — VIA RPC SERVER-SIDE (SECURITY DEFINER)
+// Estas funciones llaman a Supabase RPCs que validan evidencia y disparan
+// los triggers de recálculo de ejes. El store local se actualiza SOLO
+// después de confirmación del servidor.
+// ═══════════════════════════════════════════════════════════════════════
+
+function logEvent(label: string) {
+  history = [...history, { t: label, d: Date.now() }].slice(-60);
+  try { localStorage.setItem(HKEY, JSON.stringify(history)); } catch { /* noop */ }
+  notify();
+}
+
+/** Actualiza la caché local tras confirmación del servidor. */
+function updateLocalCache(patch: Partial<GemeloProfile>) {
+  current = recompute({ ...current, ...patch });
+  try { localStorage.setItem(KEY, JSON.stringify(current)); } catch { /* noop */ }
+  notify();
+}
+
 export const gemeloActions = {
-  addCV() { if (!current.cv) { mutate({ cv: true }); logEvent('CV convalidado'); } },
-  addTitle() { if (current.titles < 10) { mutate({ titles: current.titles + 1 }); logEvent('Título validado'); } },
-  addYear() { if (current.years < 15) { mutate({ years: current.years + 1 }); logEvent('Experiencia +1 año'); } },
-  removeYear() { mutate({ years: Math.max(0, current.years - 1) }); },
-  addVault() { mutate({ vault: current.vault + 1 }); logEvent('Aporte a la Bóveda'); },
-  /** Ejecuta una acción por su identificador (para el "Siguiente mejor paso"). */
-  run(action: NextAction) {
-    if (action === 'cv') this.addCV();
-    else if (action === 'title') this.addTitle();
-    else if (action === 'year') this.addYear();
-    else this.addVault();
+  /**
+   * Convalida CV via RPC real: public.convalidar_credencial(p_kind text).
+   * (Ver supabase/migrations/0048_convalidar_credencial.sql — firma real.)
+   * La función es SECURITY DEFINER, usa auth.uid() internamente (no recibe
+   * user_id como parámetro) y suma +6 a traditional_score (tope 60).
+   * El trigger 0050 recalcula reputation_score automáticamente.
+   */
+  async addCV(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('convalidar_credencial', { p_kind: 'cv' });
+      if (error) {
+        console.error('[gemeloActions.addCV] RPC error:', error.message);
+        return false;
+      }
+      const result = data as { ok: boolean; error?: string } | null;
+      if (!result?.ok) {
+        console.warn('[gemeloActions.addCV] Rechazado por el servidor:', result?.error);
+        return false;
+      }
+      updateLocalCache({ cv: true });
+      logEvent('CV convalidado');
+      return true;
+    } catch (err) {
+      console.error('[gemeloActions.addCV] Error:', err);
+      return false;
+    }
   },
+
+  /** Convalida un título académico (p_kind: 'title'). */
+  async addTitle(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('convalidar_credencial', { p_kind: 'title' });
+      if (error) {
+        console.error('[gemeloActions.addTitle] RPC error:', error.message);
+        return false;
+      }
+      const result = data as { ok: boolean; error?: string } | null;
+      if (!result?.ok) return false;
+      if (current.titles < 10) {
+        updateLocalCache({ titles: current.titles + 1 });
+        logEvent('Título validado');
+      }
+      return true;
+    } catch (err) {
+      console.error('[gemeloActions.addTitle] Error:', err);
+      return false;
+    }
+  },
+
+  /** Acredita 1 año de experiencia (p_kind: 'year'). */
+  async addYear(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('convalidar_credencial', { p_kind: 'year' });
+      if (error) {
+        console.error('[gemeloActions.addYear] RPC error:', error.message);
+        return false;
+      }
+      const result = data as { ok: boolean; error?: string } | null;
+      if (!result?.ok) return false;
+      if (current.years < 15) {
+        updateLocalCache({ years: current.years + 1 });
+        logEvent('Experiencia +1 año');
+      }
+      return true;
+    } catch (err) {
+      console.error('[gemeloActions.addYear] Error:', err);
+      return false;
+    }
+  },
+
+  /** Registra un aporte declarado a la Bóveda (p_kind: 'vault'). */
+  async addVault(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('convalidar_credencial', { p_kind: 'vault' });
+      if (error) {
+        console.error('[gemeloActions.addVault] RPC error:', error.message);
+        return false;
+      }
+      const result = data as { ok: boolean; error?: string } | null;
+      if (!result?.ok) return false;
+      updateLocalCache({ vault: current.vault + 1 });
+      logEvent('Aporte a la Bóveda');
+      return true;
+    } catch (err) {
+      console.error('[gemeloActions.addVault] Error:', err);
+      return false;
+    }
+  },
+
+  /** Ejecuta una acción por su identificador. */
+  async run(action: NextAction): Promise<boolean> {
+    if (action === 'cv') return this.addCV();
+    if (action === 'title') return this.addTitle();
+    if (action === 'year') return this.addYear();
+    return this.addVault();
+  },
+
+  /** Reset solo para desarrollo/testing. */
   reset() {
     current = recompute(base());
     history = [];
     try { localStorage.removeItem(KEY); localStorage.removeItem(HKEY); } catch { /* noop */ }
-    persist();
-    persistHist();
+    notify();
   },
 };
 
-// Sincronización entre pestañas del mismo origen.
+// Sincronización entre pestañas.
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
-    if (e.key === KEY) { current = load(); listeners.forEach((l) => l()); }
+    if (e.key === KEY) { current = load(); notify(); }
   });
 }
 
-// ── Sincronización con Supabase (degradación elegante) ──────────────────
-// Tabla sugerida:
-//   create table gemelo_profiles (
-//     user_id uuid primary key references auth.users(id),
-//     cv boolean, titles int, years int, vault int,
-//     pe int, rep int, axes jsonb, updated_at timestamptz default now()
-//   );
-// RLS: el usuario solo puede leer/escribir su propia fila (auth.uid() = user_id).
+// ── Sincronización con Supabase (lectura) ───────────────────────────────
 
-/** Hidrata el perfil desde Supabase (si hay sesión y tabla). */
+/** Hidrata la caché local desde Supabase (si hay sesión y tabla). */
 export async function syncFromSupabase(): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -248,11 +327,12 @@ export async function syncFromSupabase(): Promise<void> {
       cv: !!data.cv, titles: data.titles ?? 0, years: data.years ?? 0, vault: data.vault ?? 0,
     });
     try { localStorage.setItem(KEY, JSON.stringify(current)); } catch { /* noop */ }
-    listeners.forEach((l) => l());
+    notify();
   } catch { /* sin backend: se ignora */ }
 }
 
-/** Empuja los datos convalidados a Supabase (upsert). */
+/** @deprecated — Las escrituras ahora van via RPCs. Este método se conserva
+ * solo para compatibilidad temporal. NO escribe scores de reputación. */
 export async function pushToSupabase(): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
