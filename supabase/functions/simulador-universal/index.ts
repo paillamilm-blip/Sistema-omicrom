@@ -2,14 +2,15 @@
 // ═══════════════════════════════════════════════════════════════════════
 // SIMULADOR UNIVERSAL ADAPTATIVO — Motor único de validación de competencias.
 //
-// Reemplaza examen-ia + run-code con un motor inteligente que:
-// 1. Detecta la disciplina del nodo (software, ingeniería, diseño, gestión)
-// 2. Selecciona el modo correcto (CÓDIGO, ANÁLISIS, MIXTO) automáticamente
-// 3. Adapta la dificultad al nivel REAL del usuario (Zone of Proximal Development)
-// 4. Evalúa los 4 ejes del Gemelo Digital en cada intento
-// 5. Da feedback accionable para mejorar eficientemente
+// Evalúa TODAS las disciplinas con IA adaptativa (Gemini):
+// 1. Detecta la disciplina del nodo (software, ingeniería, diseño, gestión, etc.)
+// 2. Adapta la dificultad al nivel REAL del usuario (Zone of Proximal Development)
+// 3. Genera reto contextualizado: preguntas + caso práctico
+// 4. Defensa: la IA repregunta para verificar comprensión real
+// 5. Evalúa los 4 ejes del Gemelo Digital + feedback accionable
 //
-// Acciones: 'iniciar' | 'enviar' | 'defensa' | 'evaluar'
+// NO ejecuta código del usuario. Todo es evaluado por IA.
+// Acciones: 'iniciar' | 'defensa' | 'evaluar'
 // ═══════════════════════════════════════════════════════════════════════
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -20,8 +21,6 @@ const MODEL = 'gemini-2.5-flash';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const PISTON_URL = (Deno.env.get('PISTON_URL') ?? 'https://emkc.org/api/v2/piston').replace(/\/+$/, '');
-
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
 const CORS = {
@@ -81,19 +80,9 @@ async function getUserId(authHeader: string): Promise<string | null> {
 
 // ═══ DETECCIÓN DE MODO Y DIFICULTAD ══════════════════════════════════
 
-type SimMode = 'CODIGO' | 'ANALISIS' | 'MIXTO';
-
-const SOFTWARE_CATEGORIES = ['SOFTWARE', 'DATA', 'PROGRAMMING', 'FOUNDATION'];
-
-function detectMode(nodeCategory: string, hasCodeTests: boolean): SimMode {
-  const cat = nodeCategory.toUpperCase();
-  const isSoftware = SOFTWARE_CATEGORIES.includes(cat);
-  if (isSoftware && hasCodeTests) return 'CODIGO';
-  if (isSoftware && !hasCodeTests) return 'MIXTO';
-  // Todas las demás disciplinas: ANÁLISIS (IA genera retos contextualizados)
-  // INGENIERIA, AUTOMATIZACION, PROCESOS, ELECTRONICA, DISEÑO, GESTION, ENERGIA
-  return 'ANALISIS';
-}
+// El simulador es SIEMPRE modo ANÁLISIS — evaluación por IA adaptativa
+// para TODAS las disciplinas sin excepción (incluyendo software).
+// No hay sandbox de código ni ejecución de programas del usuario.
 
 interface DifficultyContext {
   foundationScore: number;
@@ -131,73 +120,7 @@ function calculateAdaptiveDifficulty(ctx: DifficultyContext): { level: number; l
 
 
 
-// ═══ EJECUCIÓN DE CÓDIGO EN SANDBOX (PISTON) ═════════════════════════
-
-const HARNESS = `
-const fs = require('fs');
-const vm = require('vm');
-function readStdin() {
-  try { return fs.readFileSync(0, 'utf8'); } catch (_) {
-    try { return fs.readFileSync('/dev/stdin', 'utf8'); } catch (_) { return ''; }
-  }
-}
-function toStr(v) {
-  if (typeof v === 'string') return v;
-  if (v === null) return 'null';
-  if (v === undefined) return 'undefined';
-  try { if (typeof v === 'object') return JSON.stringify(v); } catch (_) {}
-  try { return String(v); } catch (_) { return ''; }
-}
-(function main() {
-  let payload = {};
-  try { payload = JSON.parse(readStdin() || '{}'); } catch (_) {}
-  const inputs = Array.isArray(payload.inputs) ? payload.inputs : [];
-  const nonce = String(payload.nonce || 'OMICRON');
-  let userCode = '';
-  try { userCode = fs.readFileSync('usercode.js', 'utf8'); } catch (_) {}
-  const out = []; let fatal = null; let solution = null;
-  try {
-    const sandbox = { console: { log(){}, error(){}, warn(){}, info(){}, debug(){} } };
-    vm.createContext(sandbox);
-    vm.runInContext(userCode + "\\n;try{globalThis.__sol=(typeof solution!=='undefined')?solution:undefined;}catch(e){globalThis.__sol=undefined;}", sandbox, { timeout: 2000, filename: 'usercode.js' });
-    solution = sandbox.__sol;
-    if (typeof solution !== 'function') fatal = 'Define una funcion llamada "solution".';
-  } catch (e) { fatal = String((e && e.message) || e); }
-  if (typeof solution === 'function' && !fatal) {
-    for (let i = 0; i < inputs.length; i++) {
-      try { const r = solution(String(inputs[i])); out.push({ ok: true, value: toStr(r) }); }
-      catch (e) { out.push({ ok: false, error: String((e && e.message) || e) }); }
-    }
-  }
-  process.stdout.write(nonce + JSON.stringify({ fatal, out }));
-})();
-`;
-
-async function runCodeInSandbox(code: string, inputs: string[], nonce: string) {
-  let _jsVersion: string | null = null;
-  try {
-    const r = await fetch(`${PISTON_URL}/runtimes`);
-    const rts = await r.json() as Array<{ language: string; version: string; aliases?: string[] }>;
-    const js = rts.find(x => x.language === 'javascript' || x.language === 'node' || (x.aliases ?? []).includes('javascript'));
-    _jsVersion = js?.version ?? '18.15.0';
-  } catch { _jsVersion = '18.15.0'; }
-
-  const body = {
-    language: 'javascript', version: _jsVersion,
-    files: [{ name: 'main.js', content: HARNESS }, { name: 'usercode.js', content: code }],
-    stdin: JSON.stringify({ inputs, nonce }),
-    compile_timeout: 10000, run_timeout: 5000,
-  };
-
-  let res: Response | null = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    res = await fetch(`${PISTON_URL}/execute`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (res!.status !== 429) break;
-    await new Promise(r => setTimeout(r, 1300));
-  }
-  if (!res || !res.ok) throw new Error(`Sandbox respondio ${res?.status ?? 'sin respuesta'}.`);
-  return await res.json();
-}
+// (Sección de sandbox/Piston eliminada — el simulador es 100% IA)
 
 
 
@@ -244,15 +167,6 @@ Deno.serve(async (req) => {
         .order('attempted_at', { ascending: false })
         .limit(5);
 
-      // ¿Tiene tests de código definidos?
-      const { data: codeTests } = await admin
-        .from('skill_tests')
-        .select('id, test_name, problem_statement, test_cases, time_limit_seconds, passing_score')
-        .eq('node_id', nodeId).limit(1);
-
-      const hasCodeTests = (codeTests ?? []).length > 0;
-      const mode = detectMode(node.category ?? '', hasCodeTests);
-
       // Calcular dificultad adaptativa
       const difficulty = calculateAdaptiveDifficulty({
         foundationScore: Number(prof?.foundation_score ?? 50),
@@ -260,27 +174,7 @@ Deno.serve(async (req) => {
         nodeDifficulty: node.difficulty_level ?? 3,
       });
 
-      // Generar el reto según el modo
-      if (mode === 'CODIGO' && codeTests && codeTests[0]) {
-        // Modo código: usar el test predefinido + análisis IA de calidad
-        const test = codeTests[0];
-        return json({
-          session_mode: 'CODIGO',
-          node: { id: node.id, title: node.title, category: node.category },
-          difficulty,
-          code_challenge: {
-            test_id: test.id,
-            test_name: test.test_name,
-            problem_statement: test.problem_statement,
-            test_cases: test.test_cases,
-            time_limit_seconds: test.time_limit_seconds,
-            passing_score: test.passing_score,
-          },
-          tip: `Nivel adaptado: ${difficulty.label}. Tu código será evaluado por ejecución Y por calidad (legibilidad, eficiencia, buenas prácticas).`,
-        });
-      }
-
-      // Modo ANÁLISIS o MIXTO: generar reto con IA adaptativa
+      // Generar reto con IA adaptativa (siempre modo ANÁLISIS)
       const sys =
         'Eres el Simulador Universal de Omicrom: un evaluador experto que valida competencias en CUALQUIER disciplina. ' +
         'Tu rol es generar un RETO ADAPTATIVO que empuje al usuario justo por encima de su nivel actual. ' +
@@ -318,7 +212,7 @@ Deno.serve(async (req) => {
       // Guardar sesión con la clave (no viaja al cliente)
       const { data: sess, error: se } = await admin
         .from('exam_sessions')
-        .insert({ user_id: uid, node_id: nodeId, payload: { node, reto, difficulty, mode }, status: 'OPEN' })
+        .insert({ user_id: uid, node_id: nodeId, payload: { node, reto, difficulty }, status: 'OPEN' })
         .select('id').single();
       if (se) return json({ error: 'No pude crear la sesión.', detail: se.message }, 500);
 
@@ -326,7 +220,7 @@ Deno.serve(async (req) => {
       const preguntasSafe = reto.preguntas.map((p: any) => ({ pregunta: p.pregunta, opciones: p.opciones }));
       return json({
         session_id: sess.id,
-        session_mode: mode === 'MIXTO' ? 'MIXTO' : 'ANALISIS',
+        session_mode: 'ANALISIS',
         node: { id: node.id, title: node.title, category: node.category },
         difficulty,
         reto: {
@@ -428,94 +322,6 @@ Deno.serve(async (req) => {
 
 
 
-    // ═══════════ ACCIÓN: EVALUAR-CODIGO (modo CÓDIGO) ═══════════
-    if (action === 'evaluar-codigo') {
-      const testId: string = body?.test_id;
-      const nodeId: string = body?.node_id;
-      const code: string = body?.code ?? '';
-      if (!testId || !code) return json({ error: 'Faltan test_id o code.' }, 400);
-      if (code.length > 50000) return json({ error: 'Código demasiado largo.' }, 413);
-
-      // Obtener test autoritativo
-      const { data: test } = await admin
-        .from('skill_tests')
-        .select('test_cases, time_limit_seconds, passing_score')
-        .eq('id', testId).single();
-      if (!test) return json({ error: 'Test no encontrado.' }, 404);
-
-      const testCases = Array.isArray(test.test_cases) ? test.test_cases.slice(0, 50) : [];
-      const passingScore = test.passing_score ?? 80;
-      const inputs = testCases.map((tc: any) => String(tc.input));
-
-      // Ejecutar en sandbox
-      const start = Date.now();
-      const nonce = 'OMI_' + crypto.randomUUID().replace(/-/g, '');
-      let piston: any;
-      try { piston = await runCodeInSandbox(code, inputs, nonce); }
-      catch (e) { return json({ result: 'ERROR', score: 0, testCaseResults: [], timeTakenSeconds: 0, pe_awarded: 0, errorMessage: 'Sandbox no disponible: ' + String((e as Error)?.message ?? e) }); }
-
-      const run = piston.run ?? {};
-      const stdout = run.stdout ?? '';
-      const idx = stdout.lastIndexOf(nonce);
-      const results: Array<{ input: string; expected: string; actual: string; passed: boolean; error?: string }> = [];
-      let result: string; let score = 0; let fatalMsg: string | undefined;
-
-      if (idx === -1) {
-        const killed = run.signal === 'SIGKILL' || run.signal === 'SIGTERM';
-        const stderr = (piston.compile?.stderr || run.stderr || '').trim();
-        result = killed ? 'TIMEOUT' : 'ERROR';
-        fatalMsg = killed ? 'Ejecución detenida por tiempo límite.' : (stderr.slice(0, 400) || piston.message || 'Error de ejecución.');
-      } else {
-        let parsed: any = { fatal: null, out: [] };
-        try { parsed = JSON.parse(stdout.slice(idx + nonce.length)); } catch { parsed = { fatal: 'Salida ilegible.', out: [] }; }
-        if (parsed.fatal) { result = 'ERROR'; fatalMsg = String(parsed.fatal).slice(0, 400); }
-        else {
-          for (let i = 0; i < testCases.length; i++) {
-            const expected = String(testCases[i].expected_output);
-            const o = parsed.out[i];
-            if (!o) results.push({ input: inputs[i], expected, actual: '', passed: false, error: 'Sin salida.' });
-            else if (o.ok) { const actual = String(o.value ?? ''); results.push({ input: inputs[i], expected, actual, passed: actual.trim() === expected.trim() }); }
-            else results.push({ input: inputs[i], expected, actual: '', passed: false, error: String(o.error ?? 'Error') });
-          }
-          const passed = results.filter(r => r.passed).length;
-          score = testCases.length ? Math.round((passed / testCases.length) * 100) : 0;
-          result = score >= passingScore ? 'PASS' : 'FAIL';
-        }
-      }
-
-      const timeTakenSeconds = Math.round((Date.now() - start) / 1000);
-
-      // Análisis IA de calidad del código (si aprobó los tests)
-      let codeQualityFeedback = '';
-      if (result === 'PASS') {
-        try {
-          const qualityRaw = await gemini(
-            'Eres un revisor de código experto. Analiza la CALIDAD del código (no si funciona — ya sabemos que sí). Sé breve y accionable.',
-            `CÓDIGO:\n${code}\n\nEvalúa: legibilidad, eficiencia, naming, edge cases considerados. Devuelve JSON: {"quality_score":0-100,"feedback":"1 frase de mejora"}`,
-            true
-          );
-          const q = parseJson(qualityRaw);
-          if (q?.feedback) codeQualityFeedback = q.feedback;
-        } catch { /* no bloquear */ }
-      }
-
-      // Persistir intento
-      let pe_awarded = 0;
-      try {
-        const { data: rpc } = await admin.rpc('handle_skill_attempt', {
-          p_user_id: uid, p_test_id: testId, p_node_id: nodeId ?? null,
-          p_score: score, p_time_sec: timeTakenSeconds, p_code: code, p_result: result, p_tc_results: results,
-        });
-        pe_awarded = (rpc as any)?.pe_awarded ?? 0;
-      } catch { /* no bloquear */ }
-
-      return json({
-        result, score, testCaseResults: results, timeTakenSeconds, pe_awarded,
-        errorMessage: fatalMsg,
-        code_quality_feedback: codeQualityFeedback || undefined,
-      });
-    }
-
     // ═══════════ ACCIÓN: DEFENSA ═══════════
     if (action === 'defensa') {
       const sessionId: string = body?.session_id;
@@ -544,7 +350,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return json({ error: 'Acción no válida. Usa: iniciar, evaluar, evaluar-codigo, defensa.' }, 400);
+    return json({ error: 'Acción no válida. Usa: iniciar, defensa, evaluar.' }, 400);
   } catch (e) {
     return json({ error: 'Error inesperado en el Simulador Universal.', detail: String(e) }, 500);
   }

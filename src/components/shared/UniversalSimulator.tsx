@@ -8,8 +8,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Brain, Sparkles, ShieldCheck, CheckCircle, XCircle, Loader2,
-  ArrowRight, Send, RotateCcw, Play, Square, Clock, Trophy,
-  Zap, Code2, BookOpen, Target,
+  ArrowRight, Send, RotateCcw, Clock, Trophy, Target,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { C as T } from '../../theme';
@@ -35,8 +34,7 @@ interface Props {
   onSuccess: (peAwarded: number) => void;
 }
 
-type Phase = 'loading' | 'reto' | 'codigo' | 'defensa' | 'evaluando' | 'resultado' | 'error';
-type SessionMode = 'CODIGO' | 'ANALISIS' | 'MIXTO';
+type Phase = 'loading' | 'reto' | 'defensa' | 'evaluando' | 'resultado' | 'error';
 
 
 interface Difficulty { level: number; label: string; }
@@ -46,14 +44,6 @@ interface RetoData {
   preguntas: Array<{ pregunta: string; opciones: string[] }>;
   caso_practico: { enunciado: string };
   pista_adaptativa?: string;
-}
-interface CodeChallenge {
-  test_id: string;
-  test_name: string;
-  problem_statement: string;
-  test_cases: Array<{ input: string; expected_output: string; explanation?: string }>;
-  time_limit_seconds: number;
-  passing_score: number;
 }
 interface ResultadoData {
   veredicto: string;
@@ -69,20 +59,14 @@ interface ResultadoData {
 export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
   const { profile } = useApp();
   const [phase, setPhase] = useState<Phase>('loading');
-  const [mode, setMode] = useState<SessionMode>('ANALISIS');
   const [difficulty, setDifficulty] = useState<Difficulty>({ level: 2, label: 'intermedio' });
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [errMsg, setErrMsg] = useState('');
 
-  // Reto (modo ANÁLISIS/MIXTO)
+  // Reto (preguntas + caso práctico + defensa)
   const [reto, setReto] = useState<RetoData | null>(null);
   const [respuestas, setRespuestas] = useState<number[]>([]);
   const [casoRespuesta, setCasoRespuesta] = useState('');
-
-  // Código (modo CÓDIGO)
-  const [codeChallenge, setCodeChallenge] = useState<CodeChallenge | null>(null);
-  const [code, setCode] = useState("// Define tu función como 'solution'\nfunction solution(input) {\n  \n}");
-  const [codeRunning, setCodeRunning] = useState(false);
 
   // Defensa
   const [defensaPregunta, setDefensaPregunta] = useState('');
@@ -117,19 +101,12 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
         setPhase('error'); return;
       }
 
-      const sessionMode: SessionMode = data.session_mode ?? 'ANALISIS';
-      setMode(sessionMode);
+      const sessionMode = data.session_mode ?? 'ANALISIS';
       setDifficulty(data.difficulty ?? { level: 2, label: 'intermedio' });
-
-      if (sessionMode === 'CODIGO' && data.code_challenge) {
-        setCodeChallenge(data.code_challenge);
-        setPhase('codigo');
-      } else {
-        setSessionId(data.session_id);
-        setReto(data.reto);
-        setRespuestas(new Array((data.reto?.preguntas ?? []).length).fill(-1));
-        setPhase('reto');
-      }
+      setSessionId(data.session_id);
+      setReto(data.reto);
+      setRespuestas(new Array((data.reto?.preguntas ?? []).length).fill(-1));
+      setPhase('reto');
       startTimer();
     } catch {
       setErrMsg('Error de conexión con el Simulador Universal.');
@@ -138,34 +115,6 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
   }, [node.id, startTimer]);
 
   useEffect(() => { iniciar(); }, [iniciar]);
-
-  // ── EVALUAR CÓDIGO ──────────────────────────────────────────────────
-  const evaluarCodigo = useCallback(async () => {
-    if (!codeChallenge || codeRunning) return;
-    setCodeRunning(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('simulador-universal', {
-        body: { action: 'evaluar-codigo', test_id: codeChallenge.test_id, node_id: node.id, code },
-      });
-      stopTimer();
-      if (error || !data) {
-        setErrMsg('Error al ejecutar el código.'); setPhase('error'); return;
-      }
-      setResultado({
-        veredicto: data.result === 'PASS' ? 'APROBADO' : 'REPROBADO',
-        puntaje_global: data.score ?? 0,
-        ejes: { ejecucion: data.score ?? 0, calidad: 0, trascendencia: 0, fundamento: 0 },
-        resumen: data.result === 'PASS' ? 'Todos los casos de prueba pasaron.' : `${data.testCaseResults?.filter((r: any) => r.passed).length ?? 0}/${data.testCaseResults?.length ?? 0} casos correctos.`,
-        feedback: data.code_quality_feedback || (data.result === 'PASS' ? 'Solución correcta. Sigue practicando para mejorar eficiencia.' : (data.errorMessage || 'Revisa los casos que fallaron.')),
-        siguiente_paso: data.result === 'PASS' ? 'Intenta resolver el siguiente nodo del árbol.' : 'Revisa tu lógica y vuelve a intentarlo.',
-        pe_awarded: data.pe_awarded ?? 0,
-      });
-      setPhase('resultado');
-      if (data.result === 'PASS') onSuccess(data.pe_awarded ?? 0);
-    } catch {
-      setErrMsg('Error de conexión.'); setPhase('error');
-    } finally { setCodeRunning(false); }
-  }, [codeChallenge, code, node.id, stopTimer, onSuccess, codeRunning]);
 
   // ── IR A DEFENSA ────────────────────────────────────────────────────
   const irADefensa = useCallback(async () => {
@@ -216,12 +165,12 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
       <header style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: C.panel, borderBottom: `1px solid ${C.line}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, boxShadow: `0 0 14px ${C.cyan}44` }}>
-            {mode === 'CODIGO' ? <Code2 size={18} style={{ color: C.cyan }} /> : <Brain size={18} style={{ color: C.cyan }} />}
+            <Brain size={18} style={{ color: C.cyan }} />
           </div>
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontFamily: DISP, fontWeight: 700, fontSize: 15, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{node.title}</p>
             <p style={{ margin: '2px 0 0', fontFamily: MONO, fontSize: 9, color: C.sub, letterSpacing: 0.5 }}>
-              SIMULADOR UNIVERSAL · {mode} · NIVEL {difficulty.level}/5
+              SIMULADOR UNIVERSAL · NIVEL {difficulty.level}/5
             </p>
           </div>
         </div>
@@ -361,14 +310,6 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
 
       {/* Footer con acciones */}
       <footer style={{ flex: '0 0 auto', padding: 14, borderTop: `1px solid ${C.line}`, background: C.panel, display: 'flex', gap: 12 }}>
-        {phase === 'codigo' && (
-          <>
-            <button onClick={onClose} style={btnGhostS}>Cancelar</button>
-            <button onClick={evaluarCodigo} disabled={codeRunning} style={{ ...btnStyle(C.cyan), flex: 1, opacity: codeRunning ? 0.5 : 1 }}>
-              {codeRunning ? <><Square size={14} fill="currentColor" /> Ejecutando...</> : <><Play size={14} fill="currentColor" /> Ejecutar solución</>}
-            </button>
-          </>
-        )}
         {phase === 'reto' && (
           <>
             <button onClick={onClose} style={btnGhostS}>Cancelar</button>
