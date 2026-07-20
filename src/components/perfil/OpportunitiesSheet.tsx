@@ -502,7 +502,7 @@ function JobCard({
   isTop: boolean;
   onPostulate: (jobId: string, jobTitle: string) => void;
 }) {
-  const { job, success, match: _match } = jobScore;
+  const { job, success } = jobScore;
   const successColor = success >= 75 ? C.gold : success >= 55 ? C.cyan : C.mut;
 
   const matchedLabels = job.need
