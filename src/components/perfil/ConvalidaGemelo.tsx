@@ -128,14 +128,14 @@ export function ConvalidaGemelo() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button disabled style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(92, 200, 255,0.03)', color: C.cyanDim, cursor: 'not-allowed', fontSize: 16, opacity: 0.4 }}>−</button>
             <span style={{ fontWeight: 700, fontSize: 18, minWidth: 44, textAlign: 'center' }}>{profile.years} añ.</span>
-            <button onClick={() => { if (profile.years < 15) { actions.addYear(); convalidar('year'); } }} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(92, 200, 255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>+</button>
+            <button onClick={async () => { if (profile.years < 15) { await actions.addYear(); convalidar('year'); } }} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(92, 200, 255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>+</button>
           </div>
           <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
             {profile.years >= 15 ? '✓ al máximo' : BOOST.year}
           </span>
         </div>
 
-        <button style={{ ...cardBtn, ...(profile.vault > 0 ? done : {}), ...reco('vault') }} onClick={() => { actions.addVault(); convalidar('vault'); }}>
+        <button style={{ ...cardBtn, ...(profile.vault > 0 ? done : {}), ...reco('vault') }} onClick={async () => { await actions.addVault(); convalidar('vault'); }}>
           <BookOpen size={18} style={{ color: profile.vault > 0 ? C.green : C.cyan }} />
           <span style={{ fontWeight: 700, fontSize: 14 }}>Aporte a la Bóveda {next && next.action === 'vault' ? '★' : ''}</span>
           <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.gold }}>
