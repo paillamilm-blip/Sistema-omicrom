@@ -117,6 +117,9 @@ do $$ begin
 exception when others then null; end $$;
 
 -- ── 6) Botón OBJETAR (abre disputa + detiene liberación) ─────────────
+-- NOTA: la definición canónica vive en 0056_correction_and_rehab.sql
+-- (permite objetar sobre DELIVERED o CORRECTION_REQUESTED). Se replica
+-- aquí idéntica porque 9999 corre al final y no debe revertir 0056.
 create or replace function public.object_delivery(p_contract_id uuid, p_reason text default 'Objeción durante Ghost Approval')
 returns uuid language plpgsql security definer set search_path = public as $$
 declare c record; v_other uuid; v_dispute uuid;
@@ -125,19 +128,25 @@ begin
   select * into c from public.contracts where id = p_contract_id for update;
   if c.id is null then raise exception 'Contrato no encontrado'; end if;
   if auth.uid() <> c.buyer_id and auth.uid() <> c.seller_id then raise exception 'No autorizado'; end if;
-  if c.status <> 'DELIVERED' then raise exception 'Solo se puede objetar una entrega en curso'; end if;
+  if c.status not in ('DELIVERED','CORRECTION_REQUESTED') then
+    raise exception 'Solo se puede objetar una entrega en curso';
+  end if;
   v_other := case when auth.uid() = c.buyer_id then c.seller_id else c.buyer_id end;
   insert into public.disputes (contract_id, plaintiff_id, defendant_id, reason, status)
   values (p_contract_id, auth.uid(), v_other,
           coalesce(nullif(btrim(p_reason),''),'Objeción durante Ghost Approval'),'OPENED')
   returning id into v_dispute;
   update public.contracts set status='DISPUTED', updated_at=now()
-  where id = p_contract_id and status='DELIVERED';
+  where id = p_contract_id and status in ('DELIVERED','CORRECTION_REQUESTED');
   return v_dispute;
 end; $$;
 grant execute on function public.object_delivery(uuid, text) to authenticated;
 
 -- ── 7) Botón ENTREGAR (vendedor declara entrega) ─────────────────────
+-- NOTA: definición canónica en 0056 (deadline escalonado por monto +
+-- soporte de re-entrega tras corrección). Replicada aquí para que 9999,
+-- que corre al final, no revierta 0056. Requiere ghost_approval_interval()
+-- y las columnas de corrección creadas en 0056 (que corre antes).
 create or replace function public.declare_delivery(p_contract_id uuid, p_note text default null)
 returns void language plpgsql security definer set search_path = public as $$
 declare c record;
@@ -146,10 +155,22 @@ begin
   select * into c from public.contracts where id = p_contract_id for update;
   if c.id is null then raise exception 'Contrato no encontrado'; end if;
   if auth.uid() <> c.seller_id then raise exception 'Solo el vendedor puede declarar la entrega'; end if;
-  if c.status not in ('LOCKED','PENDING') then raise exception 'El contrato no está en curso'; end if;
+  if c.status not in ('LOCKED','PENDING','CORRECTION_REQUESTED') then
+    raise exception 'El contrato no está en curso';
+  end if;
   update public.contracts
     set status='DELIVERED', delivery_declared_at=now(),
-        delivery_note=coalesce(p_note, delivery_note), updated_at=now()
+        ghost_approval_deadline=now() + public.ghost_approval_interval(c.amount),
+        delivery_note=coalesce(p_note, delivery_note),
+        correction_requested_at=null, correction_deadline=null, correction_reason=null,
+        updated_at=now()
   where id = p_contract_id;
+
+  if c.status = 'CORRECTION_REQUESTED' then
+    insert into public.notifications (user_id, type, title, message, related_id)
+    values (c.buyer_id, 'CONTRACT_UPDATE', 'Corrección entregada',
+            'El vendedor re-entregó "' || c.title || '". Revisa la solución nuevamente.',
+            p_contract_id);
+  end if;
 end; $$;
 grant execute on function public.declare_delivery(uuid, text) to authenticated;

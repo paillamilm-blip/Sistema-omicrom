@@ -103,48 +103,23 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // 2a. Actualizar contrato a RELEASED
-        const { error: updateErr } = await admin
-          .from('contracts')
-          .update({
-            status: 'RELEASED',
-            released_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', contract.id)
-          .eq('status', 'DELIVERED'); // Guard: solo si sigue DELIVERED (idempotencia)
+        // 2a. Liberación ATÓMICA (escrow + estado + wallet tx + PE) en una
+        //     sola transacción SQL. Evita estados parciales y pago doble.
+        const { data: released, error: relErr } = await admin.rpc('ghost_release_contract', {
+          p_contract_id: contract.id,
+        });
 
-        if (updateErr) {
-          results.push({ id: contract.id, title: contract.title, status: 'error', detail: updateErr.message });
+        if (relErr) {
+          results.push({ id: contract.id, title: contract.title, status: 'error', detail: relErr.message });
+          continue;
+        }
+        if (released !== true) {
+          // El contrato ya no estaba DELIVERED (otra vía lo liberó/objetó). Idempotente.
+          results.push({ id: contract.id, title: contract.title, status: 'error', detail: 'skipped: no longer DELIVERED' });
           continue;
         }
 
-        // 2b. Transferir fondos: escrow → seller via RPC (incremento atómico)
-        const { error: balErr } = await admin.rpc('ghost_release_funds', {
-          p_contract_id: contract.id,
-          p_seller_id: contract.seller_id,
-          p_amount: contract.amount,
-        });
-
-        if (balErr) {
-          // Intentar incremento directo si la RPC no existe (fail-forward)
-          console.warn('[ghost-approval] RPC ghost_release_funds not found, using direct update');
-          await admin
-            .from('profiles')
-            .update({ token_balance: contract.amount }) // Fallback: set directo (no atómico)
-            .eq('id', contract.seller_id);
-        }
-
-        // 2c. Registrar transacción en wallet_transactions
-        await admin.from('wallet_transactions').insert({
-          user_id: contract.seller_id,
-          transaction_type: 'escrow_release',
-          amount: contract.amount,
-          description: `Ghost Approval: "${contract.title}" liberado automáticamente`,
-          reference_id: contract.id,
-        });
-
-        // 2d. Notificar a ambas partes
+        // 2b. Notificar a ambas partes
         const notifications = [
           {
             user_id: contract.seller_id,
@@ -162,17 +137,6 @@ Deno.serve(async (req) => {
           },
         ];
         await admin.from('notifications').insert(notifications);
-
-        // 2e. Incrementar PE del vendedor (recompensa por entrega exitosa)
-        await admin.rpc('increment_pe', {
-          p_user_id: contract.seller_id,
-          p_amount: 30, // +30 PE por entrega exitosa
-        }).then(({ error: peErr }) => {
-          if (peErr) {
-            // Non-critical: PE increment failed (RPC may not exist yet)
-            console.warn('[ghost-approval] PE increment failed (non-critical):', peErr.message);
-          }
-        });
 
         results.push({ id: contract.id, title: contract.title, status: 'released' });
       } catch (e) {
