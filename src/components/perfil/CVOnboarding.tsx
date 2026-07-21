@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useRef, useEffect } from 'react';
-import { FileText, Upload, ArrowRight, CheckCircle, Briefcase } from 'lucide-react';
+import { Upload, ArrowRight, CheckCircle, Briefcase } from 'lucide-react';
 import { analyzeCV, DEMO_CV, type AnalyzedProfile } from '../../lib/cvAnalyzer';
 import { getTopJobs } from '../../lib/jobMatcher';
 import { FONT, RADIUS } from '../../theme';

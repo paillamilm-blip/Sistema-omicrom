@@ -27,7 +27,7 @@ import { supabase } from '../../lib/supabase';
 import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
 
-export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
+export function HoloGemeloHome({ onOpenPerfil: _onOpenPerfil }: { onOpenPerfil: () => void }) {
   const { profile, tier, next, actions } = useGemeloProfile();
   const { setActiveTab, profile: sb } = useApp();
   const { onlineCount } = useRealtime();
@@ -260,7 +260,7 @@ export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
     speak(`Gemelo Digital actualizado. ${newProfile.skills.length} competencias detectadas. Tu reputación refleja tus ${newProfile.years || 0} años de experiencia.`);
   }
 
-  function handlePostulate(jobId: string) {
+  function handlePostulate(_jobId: string) {
     // Simulación: aumentar PE
     profile.pe += 45;
     speak('Postulación enviada. Tu Gemelo respalda la candidatura con tu reputación.');
