@@ -97,9 +97,12 @@ export function OpportunitiesSheet({
     }
   }, [isOpen, currentTab, defaultTab, tabs]);
 
-  function handlePostulate(jobId: string, _jobTitle: string) {
+  function handlePostulate(jobId: string, jobTitle: string) {
     onPostulate?.(jobId);
-    // Simulación: cerrar sheet y mostrar toast
+    // Feedback visual: cerrar sheet con contexto del trabajo postulado
+    if (import.meta.env.DEV) {
+      console.info(`[Omicron] Postulación: ${jobTitle} (${jobId})`);
+    }
     setTimeout(() => {
       onClose();
     }, 300);

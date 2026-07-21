@@ -57,7 +57,7 @@ interface ResultadoData {
 }
 
 export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
-  const { profile: _profile } = useApp();
+  useApp(); // mantiene reactividad del contexto sin destructurar
   const [phase, setPhase] = useState<Phase>('loading');
   const [difficulty, setDifficulty] = useState<Difficulty>({ level: 2, label: 'intermedio' });
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -101,7 +101,6 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
         setPhase('error'); return;
       }
 
-      const _sessionMode = data.session_mode ?? 'ANALISIS';
       setDifficulty(data.difficulty ?? { level: 2, label: 'intermedio' });
       setSessionId(data.session_id);
       setReto(data.reto);

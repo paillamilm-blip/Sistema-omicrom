@@ -27,7 +27,7 @@ import { supabase } from '../../lib/supabase';
 import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
 
-export function HoloGemeloHome({ onOpenPerfil: _onOpenPerfil }: { onOpenPerfil: () => void }) {
+export function HoloGemeloHome({ onOpenPerfil }: { onOpenPerfil: () => void }) {
   const { profile, tier, next, actions } = useGemeloProfile();
   const { setActiveTab, profile: sb } = useApp();
   const { onlineCount } = useRealtime();
@@ -260,9 +260,31 @@ export function HoloGemeloHome({ onOpenPerfil: _onOpenPerfil }: { onOpenPerfil: 
     speak(`Gemelo Digital actualizado. ${newProfile.skills.length} competencias detectadas. Tu reputación refleja tus ${newProfile.years || 0} años de experiencia.`);
   }
 
-  function handlePostulate(_jobId: string) {
-    // Simulación: aumentar PE
+  function handlePostulate(jobId: string) {
+    // Registrar la postulación con el jobId real
+    const appliedJobs: string[] = JSON.parse(localStorage.getItem('omicron_applied_jobs') || '[]');
+    if (!appliedJobs.includes(jobId)) {
+      appliedJobs.push(jobId);
+      localStorage.setItem('omicron_applied_jobs', JSON.stringify(appliedJobs));
+    }
+
+    // Incrementar PE basado en la acción real
     profile.pe += 45;
+
+    // Persistir la postulación en Supabase si hay sesión
+    if (sb?.id) {
+      supabase.from('job_applications').insert({
+        user_id: sb.id,
+        job_id: jobId,
+        status: 'applied',
+        applied_at: new Date().toISOString(),
+      }).then(({ error: appErr }) => {
+        if (appErr && import.meta.env.DEV) {
+          console.warn('Job application persistence (non-critical):', appErr.message);
+        }
+      });
+    }
+
     speak('Postulación enviada. Tu Gemelo respalda la candidatura con tu reputación.');
   }
 
@@ -312,7 +334,7 @@ export function HoloGemeloHome({ onOpenPerfil: _onOpenPerfil }: { onOpenPerfil: 
             {nodos.toLocaleString()} nodos activos · N{level} · REP {rep}
           </div>
         </div>
-        <IconBtn onClick={() => setShowProfile(true)} label="Perfil"><UserCircle size={17} /></IconBtn>
+        <IconBtn onClick={() => setShowProfile(true)} label="Perfil rápido"><UserCircle size={17} /></IconBtn>
         <IconBtn onClick={() => setShowOpportunities(true)} label="Red / oportunidades" color={C.gold}><Target size={17} /></IconBtn>
         <IconBtn
           onClick={() => speakOracle(`Hola. Eres ${tier.name.replace('Nodo ', '')}, reputación ${rep}, ${pe} PE.` + (next ? ` Tu mejor paso: ${next.label}.` : ''))}
@@ -453,7 +475,7 @@ export function HoloGemeloHome({ onOpenPerfil: _onOpenPerfil }: { onOpenPerfil: 
           </div>
           <div style={S.matchActions}>
             <button style={S.btnGold} onClick={() => setShowOpportunities(true)}>Ver oportunidades</button>
-            <button style={S.btnGhost} onClick={() => setShowProfile(true)}>Mi perfil</button>
+            <button style={S.btnGhost} onClick={onOpenPerfil}>Mi perfil</button>
           </div>
         </div>
 
