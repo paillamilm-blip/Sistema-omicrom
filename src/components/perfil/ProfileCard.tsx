@@ -28,7 +28,7 @@ export function ProfileCard({
   reputation,
   pe,
   tokens,
-  contracts = 0,
+  contracts: _contracts = 0,
   onViewOpportunities,
 }: Props) {
   const level = reputation >= 80 ? 6 : reputation >= 66 ? 4 : reputation >= 50 ? 2 : 1;
