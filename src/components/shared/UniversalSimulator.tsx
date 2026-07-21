@@ -214,30 +214,6 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
           </div>
         )}
 
-        {/* MODO CÓDIGO */}
-        {phase === 'codigo' && codeChallenge && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={cardS}>
-              <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>⬡ PROBLEMA</p>
-              <p style={{ margin: 0, fontFamily: DISP, fontSize: 14, color: C.text, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{codeChallenge.problem_statement}</p>
-            </div>
-            <div style={{ position: 'relative', borderRadius: 12, border: `1px solid ${C.cyanDim}`, overflow: 'hidden', background: '#040a18' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderBottom: `1px solid ${C.line}`, background: 'rgba(92,200,255,0.04)' }}>
-                <div style={{ display: 'flex', gap: 5 }}><div style={{ width: 8, height: 8, borderRadius: '50%', background: C.red, opacity: 0.7 }} /><div style={{ width: 8, height: 8, borderRadius: '50%', background: C.gold, opacity: 0.7 }} /><div style={{ width: 8, height: 8, borderRadius: '50%', background: C.green, opacity: 0.7 }} /></div>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: C.sub }}>solution.js</span>
-              </div>
-              <textarea value={code} onChange={e => setCode(e.target.value)} disabled={codeRunning}
-                style={{ width: '100%', minHeight: 220, padding: 14, background: 'transparent', color: '#c9f6ff', fontFamily: MONO, fontSize: 13, lineHeight: 1.6, resize: 'none', outline: 'none', border: 'none', boxSizing: 'border-box' }}
-                spellCheck={false} />
-            </div>
-            <p style={{ fontFamily: MONO, fontSize: 10, color: C.sub, textAlign: 'center' }}>
-              Tu código será evaluado por ejecución (¿funciona?) + calidad (¿cómo está escrito?)
-            </p>
-          </div>
-        )}
-
-
-        {/* MODO ANÁLISIS/MIXTO — PREGUNTAS + CASO */}
         {phase === 'reto' && reto && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Contexto del reto */}

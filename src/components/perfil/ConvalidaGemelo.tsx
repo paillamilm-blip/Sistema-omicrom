@@ -126,7 +126,7 @@ export function ConvalidaGemelo() {
           <Clock size={18} style={{ color: profile.years > 0 ? C.green : C.cyan }} />
           <span style={{ fontWeight: 700, fontSize: 14 }}>Experiencia {next && next.action === 'year' ? '★' : ''}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => actions.removeYear()} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(92, 200, 255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>−</button>
+            <button disabled style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(92, 200, 255,0.03)', color: C.cyanDim, cursor: 'not-allowed', fontSize: 16, opacity: 0.4 }}>−</button>
             <span style={{ fontWeight: 700, fontSize: 18, minWidth: 44, textAlign: 'center' }}>{profile.years} añ.</span>
             <button onClick={() => { if (profile.years < 15) { actions.addYear(); convalidar('year'); } }} style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${C.cyanDim}`, background: 'rgba(92, 200, 255,0.06)', color: C.cyan, cursor: 'pointer', fontSize: 16 }}>+</button>
           </div>
