@@ -2,6 +2,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { checkRateLimit, tooManyRequests, clientIp } from '../_shared/rateLimit.ts';
+import { checkAndConsumeCredit } from '../_shared/iaCredits.ts';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const MODEL = 'gemini-2.5-flash';
@@ -30,6 +31,11 @@ Deno.serve(async (req) => {
     if (!rl.allowed) return tooManyRequests(rl.reset_at);
 
     const authHeader = req.headers.get('Authorization') ?? '';
+
+    // Verificar créditos IA
+    const creditBlock = await checkAndConsumeCredit(_admin, authHeader, 'coach');
+    if (creditBlock) return creditBlock;
+
     const userClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
 
     const { data: ctx, error } = await userClient.rpc('get_coach_context');
