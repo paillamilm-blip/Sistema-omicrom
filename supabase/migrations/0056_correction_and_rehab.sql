@@ -15,7 +15,7 @@
 --     tiene 24 h para re-entregar; al re-entregar arranca un nuevo
 --     Ghost Approval del mismo tramo.
 --   • Tras 1 corrección, el comprador solo puede APROBAR u OBJETAR.
---   • Rehabilitación: 5 entregas RELEASED consecutivas limpian la marca
+--   • Rehabilitación: 3 entregas RELEASED consecutivas limpian la marca
 --     (penalización) más antigua del vendedor. La racha se rompe SOLO
 --     cuando se registra una penalización (p.ej. disputa perdida).
 --     Convive con el decaimiento por tiempo de 0042 (dos vías de recuperación).
@@ -194,7 +194,7 @@ end; $fn$;
 
 -- ── 8) Trigger: racha de entregas exitosas (RELEASED) ────────────────
 -- Al pasar un contrato a RELEASED, +1 a la racha del vendedor. Al llegar
--- a 5, limpia la marca más antigua y reinicia la racha.
+-- a 3, limpia la marca más antigua y reinicia la racha.
 create or replace function public.on_contract_released()
 returns trigger language plpgsql security definer set search_path = public as $fn$
 declare v_streak integer;
@@ -205,7 +205,7 @@ begin
       where id = new.seller_id
       returning success_streak into v_streak;
 
-    if coalesce(v_streak, 0) >= 5 then
+    if coalesce(v_streak, 0) >= 3 then
       perform public.rehabilitate_oldest_mark(new.seller_id);
       update public.profiles set success_streak = 0 where id = new.seller_id;
     end if;
