@@ -28,7 +28,7 @@ export function ProfileCard({
   reputation,
   pe,
   tokens,
-  contracts: _contracts = 0,
+  contracts = 0,
   onViewOpportunities,
 }: Props) {
   const level = reputation >= 80 ? 6 : reputation >= 66 ? 4 : reputation >= 50 ? 2 : 1;
@@ -121,8 +121,8 @@ export function ProfileCard({
             <div style={S.statLabel}>Tokens Ω</div>
           </div>
           <div style={S.stat}>
-            <div style={{ ...S.statValue, color: C.gold }}>{topJob ? `${topJob.success}%` : '—'}</div>
-            <div style={S.statLabel}>Mejor match</div>
+            <div style={{ ...S.statValue, color: C.gold }}>{contracts > 0 ? contracts : (topJob ? `${topJob.success}%` : '—')}</div>
+            <div style={S.statLabel}>{contracts > 0 ? 'Contratos' : 'Mejor match'}</div>
           </div>
           <div style={S.stat}>
             <div style={{ ...S.statValue, color: C.purple }}>{pe.toLocaleString()}</div>
