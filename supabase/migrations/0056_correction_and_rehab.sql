@@ -15,9 +15,10 @@
 --     tiene 24 h para re-entregar; al re-entregar arranca un nuevo
 --     Ghost Approval del mismo tramo.
 --   • Tras 1 corrección, el comprador solo puede APROBAR u OBJETAR.
---   • Rehabilitación: 3 entregas RELEASED consecutivas limpian la marca
---     (penalización) más antigua del vendedor. La racha se rompe SOLO
---     cuando se registra una penalización (p.ej. disputa perdida).
+--   • Rehabilitación: N entregas RELEASED consecutivas limpian la marca
+--     (penalización) más antigua del vendedor. N es configurable en
+--     system_config (clave 'rehab_streak_threshold', default 3). La racha
+--     se rompe SOLO cuando se registra una penalización (p.ej. disputa perdida).
 --     Convive con el decaimiento por tiempo de 0042 (dos vías de recuperación).
 --
 -- Idempotente. Seguro de correr varias veces.
@@ -34,6 +35,44 @@ alter table public.contracts
 -- ── 2) Columna de racha de éxito en profiles ─────────────────────────
 alter table public.profiles
   add column if not exists success_streak integer not null default 0;
+
+-- ── 2b) Configuración del sistema (clave/valor) ──────────────────────
+-- Tabla genérica de parámetros ajustables sin necesidad de migrar.
+-- El umbral de rehabilitación (entregas exitosas para limpiar 1 marca)
+-- vive aquí para poder cambiarlo sin tocar el trigger.
+create table if not exists public.system_config (
+  key         text primary key,
+  value       text not null,
+  description text,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.system_config enable row level security;
+
+-- Lectura pública (authenticated); escritura solo vía funciones internas.
+drop policy if exists system_config_select on public.system_config;
+create policy system_config_select on public.system_config for select to authenticated using (true);
+grant select on public.system_config to authenticated;
+revoke insert, update, delete on public.system_config from authenticated;
+
+-- Valor por defecto (no pisa un valor ya configurado por un admin).
+insert into public.system_config (key, value, description)
+values ('rehab_streak_threshold', '3',
+        'Entregas RELEASED consecutivas necesarias para limpiar 1 marca de reputación.')
+on conflict (key) do nothing;
+
+-- Helper: lee un entero de configuración con respaldo si falta o es inválido.
+create or replace function public.get_config_int(p_key text, p_default integer)
+returns integer language plpgsql stable set search_path = public as $fn$
+declare v_raw text;
+begin
+  select value into v_raw from public.system_config where key = p_key;
+  if v_raw is null then return p_default; end if;
+  return v_raw::integer;
+exception when others then
+  return p_default;  -- valor no numérico → respaldo
+end; $fn$;
+grant execute on function public.get_config_int(text, integer) to authenticated;
 
 -- ── 3) State machine: agregar CORRECTION_REQUESTED ───────────────────
 alter table public.contracts drop constraint if exists contracts_status_check;
@@ -194,18 +233,23 @@ end; $fn$;
 
 -- ── 8) Trigger: racha de entregas exitosas (RELEASED) ────────────────
 -- Al pasar un contrato a RELEASED, +1 a la racha del vendedor. Al llegar
--- a 3, limpia la marca más antigua y reinicia la racha.
+-- al umbral configurable (system_config.rehab_streak_threshold, default 3)
+-- limpia la marca más antigua y reinicia la racha.
 create or replace function public.on_contract_released()
 returns trigger language plpgsql security definer set search_path = public as $fn$
-declare v_streak integer;
+declare
+  v_streak    integer;
+  v_threshold integer;
 begin
   if new.status = 'RELEASED' and coalesce(old.status, '') <> 'RELEASED' then
+    v_threshold := public.get_config_int('rehab_streak_threshold', 3);
+
     update public.profiles
       set success_streak = coalesce(success_streak, 0) + 1
       where id = new.seller_id
       returning success_streak into v_streak;
 
-    if coalesce(v_streak, 0) >= 3 then
+    if coalesce(v_streak, 0) >= greatest(v_threshold, 1) then
       perform public.rehabilitate_oldest_mark(new.seller_id);
       update public.profiles set success_streak = 0 where id = new.seller_id;
     end if;

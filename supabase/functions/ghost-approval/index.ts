@@ -4,11 +4,13 @@
 //
 // Flujo (DEFINICION_OMICROM_v8_BACKEND.md, sección 5):
 //   1. Vendedor declara entrega → contrato pasa a status='DELIVERED',
-//      delivery_declared_at = now().
-//   2. Comprador tiene 15 minutos para OBJETAR (object_delivery() abre
-//      disputa y pasa el contrato a DISPUTED).
-//   3. Si pasan 15 min sin objeción → esta función libera los fondos
-//      al vendedor (DELIVERED → RELEASED, escrow → seller).
+//      delivery_declared_at = now() y ghost_approval_deadline según el monto.
+//   2. El comprador puede APROBAR, PEDIR CORRECCIÓN (1 ronda) u OBJETAR
+//      (object_delivery() abre disputa y pasa el contrato a DISPUTED)
+//      dentro de la ventana escalonada por monto:
+//        < 100 Ω → 1 h · 100–500 Ω → 24 h · > 500 Ω → 48 h.
+//   3. Si vence el plazo sin objeción ni corrección → esta función libera
+//      los fondos al vendedor (DELIVERED → RELEASED, escrow → seller).
 //
 // Se invoca vía cron (Supabase pg_cron → supabase.functions.invoke) o
 // manualmente con un bearer service_role. NO requiere auth de usuario.
