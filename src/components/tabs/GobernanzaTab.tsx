@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Gavel, TrendingUp, Users, ShieldAlert, Scale, Check, Lock, Unlock, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
+import { Gavel, TrendingUp, Users, ShieldAlert, Scale, Check, Lock, Unlock, ShieldCheck, Sparkles, Loader2, AlertTriangle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
@@ -11,10 +11,11 @@ import { openBlackbox, type BlackboxResult } from '../../lib/secureChat';
 import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 
 interface Contract { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; amount: number; }
-interface Dispute { id: string; reason: string; status: string; created_at: string; }
+interface Dispute { id: string; reason: string; status: string; created_at: string; resolved_at?: string; appeal_status?: string; appeal_opened_at?: string; appeal_arbiters?: string[]; appeal_resolution?: string; plaintiff_id?: string; defendant_id?: string; }
 interface Candidate { id: string; username: string; node_type: string; pe_points: number; }
 interface Stake { id: string; target_id: string; amount: number; status: string; return_amount: number | null; }
 interface ArbCase { id: string; dispute_id: string; verdict: string | null; dispute: { reason: string; status: string } | null; }
+interface AppealVote { dispute_id: string; arbiter_id: string; verdict: string; created_at: string; }
 
 const DISPUTE_COLOR: Record<string, string> = { OPENED: C.gold, IN_REVIEW: C.cyan, RESOLVED: C.green, APPEALED: C.red };
 
@@ -25,9 +26,13 @@ export function GobernanzaTab() {
   const [stakes, setStakes] = useState<Stake[]>([]);
   const [arbCases, setArbCases] = useState<ArbCase[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [appealVotes, setAppealVotes] = useState<AppealVote[]>([]);
+  const [isSeniorArbiter, setIsSeniorArbiter] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [panel, setPanel] = useState<'dispute' | 'stake' | null>(null);
+  const [panel, setPanel] = useState<'dispute' | 'stake' | 'appeal' | null>(null);
   const [selContract, setSelContract] = useState<Contract | null>(null);
+  const [selDispute, setSelDispute] = useState<Dispute | null>(null);
+  const [appealDeposit, setAppealDeposit] = useState('50');
   const [reason, setReason] = useState('');
   const [selTarget, setSelTarget] = useState<Candidate | null>(null);
   const [amount, setAmount] = useState('');
@@ -39,7 +44,7 @@ export function GobernanzaTab() {
   const load = useCallback(async () => {
     if (!profile) return;
     const [d, c, s, a] = await Promise.all([
-      supabase.from('disputes').select('id,reason,status,created_at').or(`plaintiff_id.eq.${profile.id},defendant_id.eq.${profile.id}`).order('created_at', { ascending: false }),
+      supabase.from('disputes').select('id,reason,status,created_at,resolved_at,appeal_status,appeal_opened_at,appeal_arbiters,appeal_resolution,plaintiff_id,defendant_id').or(`plaintiff_id.eq.${profile.id},defendant_id.eq.${profile.id}`).order('created_at', { ascending: false }),
       supabase.from('contracts').select('id,title,buyer_id,seller_id,status,amount').or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`),
       supabase.from('human_venture_stakes').select('id,target_id,amount,status,return_amount').eq('investor_id', profile.id).order('created_at', { ascending: false }),
       supabase.from('arbitration_cases').select('id, dispute_id, verdict').contains('arbiters', [profile.id]),
@@ -59,6 +64,15 @@ export function GobernanzaTab() {
       cases = rawCases.map(x => ({ ...x, dispute: dmap.get(x.dispute_id) ?? null }));
     }
     setArbCases(cases);
+
+    // Verificar si el usuario es árbitro senior (para panel de apelaciones)
+    const { data: seniorData } = await supabase.rpc('is_senior_arbiter', { p_user_id: profile.id });
+    setIsSeniorArbiter(seniorData === true);
+
+    // Cargar votos de apelación del usuario (para saber si ya votó)
+    const { data: votesData } = await supabase.from('appeal_votes').select('dispute_id,arbiter_id,verdict,created_at').eq('arbiter_id', profile.id);
+    setAppealVotes((votesData as AppealVote[]) ?? []);
+
     setLoading(false);
   }, [profile]);
 
@@ -112,12 +126,59 @@ export function GobernanzaTab() {
     notify('Veredicto emitido · reputación ajustada'); load();
   }
 
+  async function submitAppeal() {
+    if (!profile || !selDispute || busy) return;
+    const deposit = parseInt(appealDeposit);
+    if (!deposit || deposit <= 0) return notify('Depósito inválido');
+    setBusy(true);
+    const { error } = await supabase.rpc('open_appeal', { p_dispute_id: selDispute.id, p_deposit: deposit });
+    setBusy(false);
+    if (error) return notify('Error: ' + error.message);
+    setPanel(null); setSelDispute(null); setAppealDeposit('50');
+    notify('Apelación abierta · panel de 3 árbitros senior asignado');
+    await refreshProfile(); load();
+  }
+
+  async function castAppealVerdict(disputeId: string, verdict: 'UPHOLD' | 'OVERTURN') {
+    setBusy(true);
+    const { error } = await supabase.rpc('resolve_appeal', { p_dispute_id: disputeId, p_verdict: verdict });
+    setBusy(false);
+    if (error) return notify('Error: ' + error.message);
+    notify(verdict === 'UPHOLD' ? 'Fallo confirmado' : 'Fallo revertido · fondos redistribuidos');
+    await refreshProfile(); load();
+  }
+
   if (loading) return <LoadingScreen message="ACCEDIENDO AL TRIBUNAL..." />;
 
   const activos = disputes.filter(d => d.status !== 'RESOLVED').length;
   const invertido = stakes.filter(s => s.status === 'ACTIVE').reduce((a, s) => a + s.amount, 0);
   const retornos = stakes.filter(s => s.status === 'RETURNED').reduce((a, s) => a + (s.return_amount ?? 0), 0);
   const pendientesArb = arbCases.filter(a => !a.verdict);
+
+  // Apelaciones: disputas resueltas dentro de ventana de 7 días que puedo apelar
+  const now = Date.now();
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+  const appealableDisputes = disputes.filter(d =>
+    d.status === 'RESOLVED' &&
+    d.appeal_status === 'NONE' &&
+    d.resolved_at &&
+    (now - new Date(d.resolved_at).getTime()) < SEVEN_DAYS_MS
+  );
+
+  // Apelaciones abiertas donde soy árbitro senior asignado
+  const myAppealCases = disputes.filter(d =>
+    d.appeal_status === 'OPEN' &&
+    d.appeal_arbiters?.includes(profile?.id ?? '')
+  );
+
+  // Apelaciones abiertas donde soy parte (para ver el estado)
+  const myOpenAppeals = disputes.filter(d =>
+    d.appeal_status === 'OPEN' &&
+    (d.plaintiff_id === profile?.id || d.defendant_id === profile?.id)
+  );
+
+  // Apelaciones resueltas
+  const resolvedAppeals = disputes.filter(d => d.appeal_status === 'RESOLVED');
 
   return (
     <div style={BASE.root}>
@@ -197,6 +258,125 @@ export function GobernanzaTab() {
           <p style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, padding: '2px 28px 6px', lineHeight: 1.6 }}>
             Aún no tienes disputas. Si un contrato sale mal, ábrela desde el botón de arriba.
           </p>
+        )}
+
+        <Divider glow margin="14px 16px" />
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* APELACIONES — Segunda instancia de justicia (árbitros senior) */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        <SectionLabel>Apelaciones ⚖️</SectionLabel>
+        <CyberCard color={C.gold} topBar>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <AlertTriangle size={18} style={{ color: C.gold }} />
+            <div>
+              <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#dbeafe' }}>Segunda Instancia</div>
+              <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.goldDim, letterSpacing: 0.5 }}>PANEL SENIOR N5/N6 · QUÓRUM 2-DE-3 · VENTANA 7 DÍAS</div>
+            </div>
+          </div>
+          <StatGrid cols={3} style={{ marginBottom: 12 }}>
+            <StatCard label="Puedo apelar" value={String(appealableDisputes.length)} color={C.gold} />
+            <StatCard label="Como árbitro" value={String(myAppealCases.length)} color={C.purple} />
+            <StatCard label="Mis abiertas" value={String(myOpenAppeals.length)} color={C.cyan} />
+          </StatGrid>
+          {appealableDisputes.length > 0 && (
+            <CyberButton variant="primary" onClick={() => setPanel('appeal')} style={{ borderColor: C.goldDim, color: C.gold }}>
+              <AlertTriangle size={15} /> ABRIR APELACIÓN
+            </CyberButton>
+          )}
+          {appealableDisputes.length === 0 && !isSeniorArbiter && myOpenAppeals.length === 0 && (
+            <p style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, margin: 0, lineHeight: 1.5 }}>
+              No tienes disputas resueltas apelables. Tienes 7 días tras un fallo para apelar.
+            </p>
+          )}
+        </CyberCard>
+
+        {/* CASOS DE APELACIÓN COMO ÁRBITRO SENIOR */}
+        {myAppealCases.length > 0 && (
+          <>
+            <SectionLabel>Panel de Apelación (Árbitro Senior) 🔱</SectionLabel>
+            {myAppealCases.map(d => {
+              const myVote = appealVotes.find(v => v.dispute_id === d.id);
+              return (
+                <CyberCard key={d.id} color={C.purple} margin="0 14px 10px">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Scale size={14} style={{ color: C.purple }} />
+                    <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.purple }}>
+                      APELACIÓN · {myVote ? 'YA VOTASTE' : 'EMITE TU VOTO'}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0 0 6px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, color: '#dbeafe', lineHeight: 1.4 }}>
+                    {d.reason}
+                  </p>
+                  <p style={{ margin: '0 0 10px', fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>
+                    Disputa resuelta el {d.resolved_at ? new Date(d.resolved_at).toLocaleDateString('es-CL') : '—'} · Apelación abierta el {d.appeal_opened_at ? new Date(d.appeal_opened_at).toLocaleDateString('es-CL') : '—'}
+                  </p>
+
+                  {myVote ? (
+                    <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(92, 200, 255, 0.08)', border: `1px solid ${C.cyanFaint}` }}>
+                      <span style={{ fontFamily: FONT.mono, fontSize: 10, color: myVote.verdict === 'UPHOLD' ? C.green : C.gold }}>
+                        Tu voto: {myVote.verdict === 'UPHOLD' ? '✓ CONFIRMAR FALLO' : '↩ REVERTIR FALLO'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <CyberButton variant="primary" onClick={() => castAppealVerdict(d.id, 'UPHOLD')} disabled={busy} style={{ borderColor: C.greenDim, color: C.green, flex: 1 }}>
+                        <ThumbsUp size={14} /> CONFIRMAR
+                      </CyberButton>
+                      <CyberButton variant="danger" onClick={() => castAppealVerdict(d.id, 'OVERTURN')} disabled={busy} style={{ flex: 1 }}>
+                        <ThumbsDown size={14} /> REVERTIR
+                      </CyberButton>
+                    </div>
+                  )}
+                </CyberCard>
+              );
+            })}
+          </>
+        )}
+
+        {/* MIS APELACIONES ABIERTAS (como parte) */}
+        {myOpenAppeals.length > 0 && (
+          <>
+            <SectionLabel>Mis Apelaciones en Curso</SectionLabel>
+            {myOpenAppeals.map(d => {
+              const votesForThis = appealVotes.filter(v => v.dispute_id === d.id);
+              return (
+                <CyberCard key={d.id} color={C.gold} margin="0 14px 10px">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.gold }}>
+                      <span className="liquid-dot" />APELACIÓN EN CURSO
+                    </span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>
+                      {d.appeal_opened_at ? new Date(d.appeal_opened_at).toLocaleDateString('es-CL') : ''}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0 0 6px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, color: '#dbeafe' }}>{d.reason}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0 0' }}>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>
+                      Votos: {votesForThis.length}/3 (necesita 2 para quórum)
+                    </span>
+                  </div>
+                </CyberCard>
+              );
+            })}
+          </>
+        )}
+
+        {/* APELACIONES RESUELTAS */}
+        {resolvedAppeals.length > 0 && (
+          <>
+            <SectionLabel>Apelaciones Resueltas</SectionLabel>
+            {resolvedAppeals.map(d => (
+              <CyberCard key={d.id} color={C.cyanDim} margin="0 14px 10px">
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: d.appeal_resolution?.includes('OVERTURN') ? C.gold : C.green }}>
+                    {d.appeal_resolution?.includes('OVERTURN') ? '↩ REVERTIDO' : '✓ CONFIRMADO'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#aab5cc' }}>{d.reason}</p>
+              </CyberCard>
+            ))}
+          </>
         )}
 
         <Divider glow margin="14px 16px" />
@@ -294,6 +474,41 @@ export function GobernanzaTab() {
             style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, outline: 'none', marginBottom: 12 }} />
           <CyberButton variant="primary" onClick={submitStake} disabled={!selTarget || !amount || busy} style={{ borderColor: C.greenDim, color: C.green }}>
             {busy ? 'INVIRTIENDO...' : 'CONFIRMAR INVERSIÓN'}
+          </CyberButton>
+        </DetailPanel>
+      )}
+
+      {/* PANEL: ABRIR APELACIÓN */}
+      {panel === 'appeal' && (
+        <DetailPanel title="Abrir Apelación" subtitle="SEGUNDA INSTANCIA · PANEL SENIOR" accentColor={C.gold} onClose={() => { setPanel(null); setSelDispute(null); setAppealDeposit('50'); }}>
+          <p style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#aab5cc', margin: '0 0 12px', lineHeight: 1.5 }}>
+            Selecciona la disputa a apelar. Se cobrará un depósito que se devuelve si la apelación es exitosa (fallo revertido). Si se confirma el fallo original, pierdes el depósito.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+            {appealableDisputes.map(d => {
+              const daysLeft = d.resolved_at ? Math.max(0, 7 - Math.floor((now - new Date(d.resolved_at).getTime()) / (24 * 60 * 60 * 1000))) : 0;
+              return (
+                <button key={d.id} onClick={() => setSelDispute(d)} style={cx(
+                  { textAlign: 'left', padding: '10px 12px', borderRadius: 8, cursor: 'pointer', background: C.surface },
+                  selDispute?.id === d.id ? { border: `1px solid ${C.gold}` } : { border: `1px solid ${C.cyanFaint}` }
+                )}>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe' }}>{d.reason}</div>
+                  <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, marginTop: 2 }}>
+                    Resuelta: {d.resolved_at ? new Date(d.resolved_at).toLocaleDateString('es-CL') : '—'} · {daysLeft} días restantes para apelar
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, display: 'block', marginBottom: 6 }}>
+              DEPÓSITO DE APELACIÓN (Ω) — se devuelve si ganas
+            </label>
+            <input type="number" min="1" value={appealDeposit} onChange={e => setAppealDeposit(e.target.value)} placeholder="50"
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, outline: 'none' }} />
+          </div>
+          <CyberButton variant="primary" onClick={submitAppeal} disabled={!selDispute || !appealDeposit || busy} style={{ borderColor: C.goldDim, color: C.gold }}>
+            {busy ? 'PROCESANDO...' : 'CONFIRMAR APELACIÓN'}
           </CyberButton>
         </DetailPanel>
       )}
