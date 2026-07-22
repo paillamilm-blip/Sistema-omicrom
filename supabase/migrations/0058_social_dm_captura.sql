@@ -16,9 +16,12 @@
 -- Idempotente. En producción las tablas ya existen (create if not exists
 -- es no-op); en un entorno limpio/staging las crea desde cero.
 --
--- ⚠️ REVISIÓN DE SEGURIDAD PENDIENTE: resolve_audit() no valida que quien
---    llama sea árbitro/senior antes de marcar PASSED/FAILED. Se versiona
---    tal cual está en producción; conviene endurecerla en un PR aparte.
+-- 🔒 ENDURECIDO: resolve_audit() es un flujo de AUTO-REDENCIÓN (no de árbitro).
+--    Ahora exige (a) que el usuario resuelva su propia auditoría PENDING y
+--    (b) para reactivar el nodo, un examen APROBADO real verificado en el
+--    servidor (skill_test_attempts.result='PASS' posterior al disparo).
+--    Antes confiaba en el flag p_passed del cliente → se podía reactivar el
+--    nodo llamando el RPC directo sin aprobar el reto. Cerrado.
 -- =====================================================================
 
 -- ── 1) Tablas ────────────────────────────────────────────────────────
@@ -248,19 +251,69 @@ as $function$
   order by c.created_at desc;
 $function$;
 
--- ⚠️ Sin validación de rol de árbitro (ver nota de seguridad en el encabezado).
+-- ── Refuerzo de integridad para el anti-spoof de resolve_audit ───────
+-- skill_test_attempts es la FUENTE DE VERDAD de "aprobó un examen" y solo
+-- debe escribirla el servidor (run-code → handle_skill_attempt, service_role,
+-- que ignora RLS). La política previa 'attempts_own' era FOR ALL → permitía
+-- al usuario INSERTAR sus propias filas y fabricar result='PASS', burlando el
+-- anti-spoof de abajo. La restringimos a SELECT. El frontend solo lee, así
+-- que este cambio no rompe ningún flujo.
+drop policy if exists "attempts_own" on public.skill_test_attempts;
+drop policy if exists attempts_select_own on public.skill_test_attempts;
+create policy attempts_select_own on public.skill_test_attempts
+  for select to authenticated using (auth.uid() = user_id);
+revoke insert, update, delete on public.skill_test_attempts from authenticated;
+do $$ begin
+  execute 'revoke insert, update, delete on public.skill_test_attempts from anon';
+exception when others then null; end $$;
+grant select on public.skill_test_attempts to authenticated;
+
+-- Auto-redención endurecida: el usuario resuelve SU PROPIA auditoría, y para
+-- reactivar el nodo (p_passed=true) el servidor exige un examen APROBADO real
+-- (skill_test_attempts.result='PASS', registrado por run-code/handle_skill_attempt)
+-- posterior al disparo de la auditoría. Impide reactivar llamando el RPC directo.
 create or replace function public.resolve_audit(p_audit_id uuid, p_passed boolean)
  returns void
  language plpgsql security definer set search_path to 'public'
 as $function$
-declare v_uid uuid;
+declare
+  v_uid       uuid;
+  v_status    text;
+  v_triggered timestamptz;
+  v_has_pass  boolean;
 begin
-  update public.rank_audits
-     set status = case when p_passed then 'PASSED' else 'FAILED' end
-   where id = p_audit_id
-   returning user_id into v_uid;
+  if auth.uid() is null then raise exception 'No autenticado'; end if;
+
+  select user_id, status, triggered_at
+    into v_uid, v_status, v_triggered
+  from public.rank_audits where id = p_audit_id for update;
+
+  if not found then raise exception 'Auditoría no encontrada'; end if;
+  if v_uid is null or v_uid <> auth.uid() then
+    raise exception 'Solo puedes resolver tu propia auditoría de rango';
+  end if;
+  if coalesce(v_status, 'PENDING') <> 'PENDING' then
+    raise exception 'La auditoría ya fue resuelta';
+  end if;
+
   if p_passed then
-    update public.profiles set node_status = 'ACTIVE' where id = v_uid;
+    -- Anti-spoof: exige un examen aprobado (verificado en el servidor por
+    -- run-code → handle_skill_attempt) posterior al disparo de la auditoría.
+    select exists (
+      select 1 from public.skill_test_attempts a
+      where a.user_id = auth.uid()
+        and a.result = 'PASS'
+        and a.attempted_at >= coalesce(v_triggered, to_timestamp(0))
+    ) into v_has_pass;
+
+    if not v_has_pass then
+      raise exception 'Debes aprobar el examen de redención antes de reactivar tu nodo';
+    end if;
+
+    update public.rank_audits set status = 'PASSED' where id = p_audit_id;
+    update public.profiles   set node_status = 'ACTIVE' where id = v_uid;
+  else
+    update public.rank_audits set status = 'FAILED' where id = p_audit_id;
   end if;
 end; $function$;
 
