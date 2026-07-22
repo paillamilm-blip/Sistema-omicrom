@@ -53,13 +53,13 @@ end; $$;
 -- ── 3) Cron: ejecutar ghost-approval cada minuto ─────────────────────
 -- Usa pg_cron + pg_net para invocar la Edge Function periódicamente.
 -- Si pg_cron no está habilitado, esta sección no hace nada (DO block seguro).
-do $$
+do $do$
 begin
   -- Intentar programar el cron (Supabase Pro/Enterprise tiene pg_cron)
   perform cron.schedule(
     'ghost-approval-sweep',
     '* * * * *',  -- cada minuto
-    $$
+    $cron$
     select net.http_post(
       url := current_setting('app.settings.supabase_url') || '/functions/v1/ghost-approval',
       headers := jsonb_build_object(
@@ -68,7 +68,7 @@ begin
       ),
       body := '{}'::jsonb
     );
-    $$
+    $cron$
   );
   raise notice '[ghost-approval] Cron programado: cada 1 minuto';
 exception
@@ -76,4 +76,4 @@ exception
     raise notice '[ghost-approval] pg_cron no disponible — ejecutar manualmente o configurar cron externo';
   when others then
     raise notice '[ghost-approval] Error programando cron: %', sqlerrm;
-end $$;
+end $do$;
