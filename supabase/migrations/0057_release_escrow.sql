@@ -118,3 +118,29 @@ begin
   perform public.increment_pe(c.seller_id, 30);
   return true;
 end; $fn$;
+
+
+-- ── 4) Blindaje de permisos (BACKEND-ONLY) ───────────────────────────
+-- 🔴 Crítico: estas funciones son SECURITY DEFINER y mueven dinero/PE. Sin un
+-- revoke explícito tendrían EXECUTE para PUBLIC (default de Postgres), lo que
+-- permitiría a cualquier usuario 'authenticated' acuñar tokens (ghost_release_funds),
+-- regalarse PE (increment_pe) o forzar la liberación de contratos
+-- (ghost_release_contract). Solo deben invocarlas la Edge Function ghost-approval
+-- (con service_role) o, indirectamente, otras funciones SECURITY DEFINER
+-- (release_escrow llama a increment_pe como owner). Mismo patrón que 0051.
+do $$ begin
+  execute 'revoke execute on function public.ghost_release_contract(uuid) from public, anon, authenticated';
+exception when others then null; end $$;
+grant execute on function public.ghost_release_contract(uuid) to service_role;
+
+do $$ begin
+  execute 'revoke execute on function public.ghost_release_funds(uuid, uuid, numeric) from public, anon, authenticated';
+exception when others then null; end $$;
+grant execute on function public.ghost_release_funds(uuid, uuid, numeric) to service_role;
+
+do $$ begin
+  execute 'revoke execute on function public.increment_pe(uuid, integer) from public, anon, authenticated';
+exception when others then null; end $$;
+grant execute on function public.increment_pe(uuid, integer) to service_role;
+
+notify pgrst, 'reload schema';
