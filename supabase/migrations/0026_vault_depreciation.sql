@@ -19,13 +19,16 @@ begin
     and current_token_cost > round(coalesce(initial_token_cost, current_token_cost) * 0.30);
 end; $fn$;
 
--- Programar corrida diaria (03:00). Re-programa de forma segura.
-do $do$ begin
-  perform cron.unschedule('vault_depreciation_daily');
-exception when others then null; end $do$;
-
-select cron.schedule(
-  'vault_depreciation_daily',
-  '0 3 * * *',
-  $cron$ select public.apply_vault_depreciation(); $cron$
-);
+-- Programar corrida diaria (03:00). A prueba de fallos: si pg_cron no esta
+-- disponible, la migracion no se rompe (la tarea no se programa).
+do $do$
+begin
+  begin perform cron.unschedule('vault_depreciation_daily'); exception when others then null; end;
+  perform cron.schedule(
+    'vault_depreciation_daily',
+    '0 3 * * *',
+    $cron$ select public.apply_vault_depreciation(); $cron$
+  );
+exception when others then
+  raise notice '[0026] pg_cron no disponible; vault_depreciation_daily no programado (%).', sqlerrm;
+end $do$;

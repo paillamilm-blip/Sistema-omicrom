@@ -195,12 +195,14 @@ begin
   where recovered_at is null and current_pmc_points <= 0;
 end; $fn$;
 
-do $do$ begin
-  perform cron.unschedule('pmc_recovery_daily');
-exception when others then null; end $do$;
-
-select cron.schedule(
-  'pmc_recovery_daily',
-  '0 3 * * *',
-  $cron$ select public.apply_pmc_recovery(); $cron$
-);
+do $do$
+begin
+  begin perform cron.unschedule('pmc_recovery_daily'); exception when others then null; end;
+  perform cron.schedule(
+    'pmc_recovery_daily',
+    '0 3 * * *',
+    $cron$ select public.apply_pmc_recovery(); $cron$
+  );
+exception when others then
+  raise notice '[0042] pg_cron no disponible; pmc_recovery_daily no programado (%).', sqlerrm;
+end $do$;

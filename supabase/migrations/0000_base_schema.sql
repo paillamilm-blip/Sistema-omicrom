@@ -1,4 +1,26 @@
 -- =====================================================================
+-- 0000_base_schema.sql — Base reproducible del esquema real de producción.
+-- Crea las tablas reales (incl. contracts) ANTES de las migraciones aditivas.
+--
+-- Extensiones necesarias (a prueba de fallos: si el plan/permiso no las
+-- permite, la migración NO se rompe; las tareas cron simplemente no se
+-- programarán y se pueden activar luego desde el Dashboard).
+-- =====================================================================
+do $ext$
+begin
+  execute 'create extension if not exists pg_cron';
+exception when others then
+  raise notice '[0000] pg_cron no se pudo habilitar automaticamente: %', sqlerrm;
+end $ext$;
+
+do $ext$
+begin
+  execute 'create extension if not exists pg_net';
+exception when others then
+  raise notice '[0000] pg_net no se pudo habilitar automaticamente: %', sqlerrm;
+end $ext$;
+
+-- =====================================================================
 -- schema.sql — RETRATO FIEL del esquema real de producción (Sistema Ómicron)
 -- Generado desde information_schema. Esta es la FUENTE DE VERDAD.
 --

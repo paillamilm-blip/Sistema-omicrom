@@ -97,13 +97,16 @@ begin
   where v_amount > 0;
 end; $fn$;
 
--- Programar corrida mensual (día 1, 03:30). Re-programa de forma segura.
-do $do$ begin
-  perform cron.unschedule('token_depreciation_monthly');
-exception when others then null; end $do$;
-
-select cron.schedule(
-  'token_depreciation_monthly',
-  '30 3 1 * *',
-  $cron$ select public.apply_token_depreciation(); $cron$
-);
+-- Programar corrida mensual (día 1, 03:30). A prueba de fallos: si pg_cron
+-- no esta disponible, la migracion no se rompe (la tarea no se programa).
+do $do$
+begin
+  begin perform cron.unschedule('token_depreciation_monthly'); exception when others then null; end;
+  perform cron.schedule(
+    'token_depreciation_monthly',
+    '30 3 1 * *',
+    $cron$ select public.apply_token_depreciation(); $cron$
+  );
+exception when others then
+  raise notice '[0045] pg_cron no disponible; token_depreciation_monthly no programado (%).', sqlerrm;
+end $do$;
