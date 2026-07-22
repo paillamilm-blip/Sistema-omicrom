@@ -95,8 +95,15 @@ drop policy if exists conn_insert on public.connections;
 create policy conn_insert on public.connections for insert to authenticated
   with check (auth.uid() = requester_id);
 drop policy if exists conn_update on public.connections;
+-- WITH CHECK: solo el DESTINATARIO puede pasar una solicitud a 'accepted'.
+-- Sin esto, el solicitante podía UPDATE directo su propia solicitud a
+-- 'accepted' (auto-aceptarse) y luego enviar DMs sin consentimiento.
 create policy conn_update on public.connections for update to authenticated
-  using (auth.uid() = requester_id or auth.uid() = addressee_id);
+  using (auth.uid() = requester_id or auth.uid() = addressee_id)
+  with check (
+    (auth.uid() = requester_id or auth.uid() = addressee_id)
+    and (status <> 'accepted' or auth.uid() = addressee_id)
+  );
 
 -- direct_messages
 drop policy if exists dm_select on public.direct_messages;
@@ -105,9 +112,12 @@ create policy dm_select on public.direct_messages for select to authenticated
 drop policy if exists dm_insert on public.direct_messages;
 create policy dm_insert on public.direct_messages for insert to authenticated
   with check (auth.uid() = sender_id and public.are_connected(auth.uid(), recipient_id));
+-- Sin UPDATE directo para usuarios: marcar leído va por mark_dm_read()
+-- (SECURITY DEFINER, ignora RLS). El policy anterior permitía al receptor
+-- EDITAR el content del mensaje. RLS no puede restringir por columna, así
+-- que se quita el UPDATE de authenticated por completo.
 drop policy if exists dm_update on public.direct_messages;
-create policy dm_update on public.direct_messages for update to authenticated
-  using (auth.uid() = recipient_id);
+revoke update on public.direct_messages from authenticated;
 
 -- rank_audits
 drop policy if exists s_audit on public.rank_audits;
@@ -297,13 +307,18 @@ begin
   end if;
 
   if p_passed then
-    -- Anti-spoof: exige un examen aprobado (verificado en el servidor por
-    -- run-code → handle_skill_attempt) posterior al disparo de la auditoría.
+    -- Anti-spoof: exige aprobar el RETO DE REDENCIÓN (el examen más difícil,
+    -- que es justo el que lanza startRedemption: order by difficulty_multiplier
+    -- desc limit 1), verificado en el servidor por run-code → handle_skill_attempt,
+    -- y con fecha posterior al disparo de la auditoría.
     select exists (
-      select 1 from public.skill_test_attempts a
+      select 1
+      from public.skill_test_attempts a
+      join public.skill_tests t on t.id = a.test_id
       where a.user_id = auth.uid()
         and a.result = 'PASS'
         and a.attempted_at >= coalesce(v_triggered, to_timestamp(0))
+        and t.difficulty_multiplier >= (select max(difficulty_multiplier) from public.skill_tests)
     ) into v_has_pass;
 
     if not v_has_pass then
@@ -404,5 +419,5 @@ grant execute on function public.send_connection_request(uuid)             to au
 grant execute on function public.send_direct_message(uuid, text)           to authenticated;
 
 grant select, insert, update on public.connections     to authenticated;
-grant select, insert, update on public.direct_messages to authenticated;
+grant select, insert on public.direct_messages to authenticated;  -- UPDATE solo vía mark_dm_read()
 grant select                 on public.rank_audits     to authenticated;
