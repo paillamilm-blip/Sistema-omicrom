@@ -4,11 +4,13 @@
 //
 // Flujo (DEFINICION_OMICROM_v8_BACKEND.md, sección 5):
 //   1. Vendedor declara entrega → contrato pasa a status='DELIVERED',
-//      delivery_declared_at = now().
-//   2. Comprador tiene 15 minutos para OBJETAR (object_delivery() abre
-//      disputa y pasa el contrato a DISPUTED).
-//   3. Si pasan 15 min sin objeción → esta función libera los fondos
-//      al vendedor (DELIVERED → RELEASED, escrow → seller).
+//      delivery_declared_at = now() y ghost_approval_deadline según el monto.
+//   2. El comprador puede APROBAR, PEDIR CORRECCIÓN (1 ronda) u OBJETAR
+//      (object_delivery() abre disputa y pasa el contrato a DISPUTED)
+//      dentro de la ventana escalonada por monto:
+//        < 100 Ω → 1 h · 100–500 Ω → 24 h · > 500 Ω → 48 h.
+//   3. Si vence el plazo sin objeción ni corrección → esta función libera
+//      los fondos al vendedor (DELIVERED → RELEASED, escrow → seller).
 //
 // Se invoca vía cron (Supabase pg_cron → supabase.functions.invoke) o
 // manualmente con un bearer service_role. NO requiere auth de usuario.
@@ -35,8 +37,18 @@ const json = (body: unknown, status = 200) =>
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
 
-// Configuración: ventana de Ghost Approval en minutos
-const GHOST_APPROVAL_MINUTES = 15;
+// ── Ghost Approval escalonado por monto del contrato (en minutos) ──
+//   < 100 Ω    → 1 hora      (60 min)
+//   100–500 Ω  → 24 horas    (1440 min)
+//   > 500 Ω    → 48 horas    (2880 min)
+// Debe mantenerse en sincronía con ghost_approval_interval() en
+// supabase/migrations/0056_correction_and_rehab.sql.
+function ghostWindowMinutes(amount: number): number {
+  const a = Number(amount) || 0;
+  if (a < 100) return 60;
+  if (a <= 500) return 1440;
+  return 2880;
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
@@ -50,14 +62,19 @@ Deno.serve(async (req) => {
     }
 
     // ── PASO 1: Encontrar contratos elegibles ──────────────────────────
-    // Contratos en DELIVERED cuyo delivery_declared_at es anterior a 15 min.
-    const cutoff = new Date(Date.now() - GHOST_APPROVAL_MINUTES * 60 * 1000).toISOString();
+    // Contratos en DELIVERED cuya ventana de Ghost Approval ya venció.
+    // La ventana es escalonada por monto (ghost_approval_deadline lo fija
+    // declare_delivery). Para contratos legacy sin deadline, se usa como
+    // respaldo delivery_declared_at + ventana mínima (60 min), y se
+    // recalcula por contrato más abajo antes de liberar.
+    const nowIso = new Date().toISOString();
+    const minCutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
     const { data: contracts, error: fetchErr } = await admin
       .from('contracts')
-      .select('id, seller_id, buyer_id, amount, title, delivery_declared_at')
+      .select('id, seller_id, buyer_id, amount, title, delivery_declared_at, ghost_approval_deadline')
       .eq('status', 'DELIVERED')
-      .lt('delivery_declared_at', cutoff)
+      .or(`ghost_approval_deadline.lt.${nowIso},and(ghost_approval_deadline.is.null,delivery_declared_at.lt.${minCutoff})`)
       .limit(50); // Procesar en lotes para evitar timeouts
 
     if (fetchErr) {
@@ -74,48 +91,35 @@ Deno.serve(async (req) => {
 
     for (const contract of contracts) {
       try {
-        // 2a. Actualizar contrato a RELEASED
-        const { error: updateErr } = await admin
-          .from('contracts')
-          .update({
-            status: 'RELEASED',
-            released_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', contract.id)
-          .eq('status', 'DELIVERED'); // Guard: solo si sigue DELIVERED (idempotencia)
-
-        if (updateErr) {
-          results.push({ id: contract.id, title: contract.title, status: 'error', detail: updateErr.message });
+        // 2.0. Verificar por contrato que la ventana escalonada realmente venció.
+        //      Para legacy sin ghost_approval_deadline, se calcula con el tramo por monto.
+        const effectiveDeadline = contract.ghost_approval_deadline
+          ? new Date(contract.ghost_approval_deadline).getTime()
+          : (contract.delivery_declared_at
+              ? new Date(contract.delivery_declared_at).getTime() + ghostWindowMinutes(contract.amount) * 60 * 1000
+              : Number.POSITIVE_INFINITY);
+        if (Date.now() < effectiveDeadline) {
+          results.push({ id: contract.id, title: contract.title, status: 'error', detail: 'skipped: window not expired' });
           continue;
         }
 
-        // 2b. Transferir fondos: escrow → seller via RPC (incremento atómico)
-        const { error: balErr } = await admin.rpc('ghost_release_funds', {
+        // 2a. Liberación ATÓMICA (escrow + estado + wallet tx + PE) en una
+        //     sola transacción SQL. Evita estados parciales y pago doble.
+        const { data: released, error: relErr } = await admin.rpc('ghost_release_contract', {
           p_contract_id: contract.id,
-          p_seller_id: contract.seller_id,
-          p_amount: contract.amount,
         });
 
-        if (balErr) {
-          // Intentar incremento directo si la RPC no existe (fail-forward)
-          console.warn('[ghost-approval] RPC ghost_release_funds not found, using direct update');
-          await admin
-            .from('profiles')
-            .update({ token_balance: contract.amount }) // Fallback: set directo (no atómico)
-            .eq('id', contract.seller_id);
+        if (relErr) {
+          results.push({ id: contract.id, title: contract.title, status: 'error', detail: relErr.message });
+          continue;
+        }
+        if (released !== true) {
+          // El contrato ya no estaba DELIVERED (otra vía lo liberó/objetó). Idempotente.
+          results.push({ id: contract.id, title: contract.title, status: 'error', detail: 'skipped: no longer DELIVERED' });
+          continue;
         }
 
-        // 2c. Registrar transacción en wallet_transactions
-        await admin.from('wallet_transactions').insert({
-          user_id: contract.seller_id,
-          transaction_type: 'escrow_release',
-          amount: contract.amount,
-          description: `Ghost Approval: "${contract.title}" liberado automáticamente`,
-          reference_id: contract.id,
-        });
-
-        // 2d. Notificar a ambas partes
+        // 2b. Notificar a ambas partes
         const notifications = [
           {
             user_id: contract.seller_id,
@@ -128,22 +132,11 @@ Deno.serve(async (req) => {
             user_id: contract.buyer_id,
             type: 'CONTRACT_COMPLETED',
             title: 'Entrega aprobada',
-            message: `"${contract.title}" se aprobó por Ghost Approval (15 min sin objeción).`,
+            message: `"${contract.title}" se aprobó por Ghost Approval (venció el plazo sin objeción ni corrección).`,
             related_id: contract.id,
           },
         ];
         await admin.from('notifications').insert(notifications);
-
-        // 2e. Incrementar PE del vendedor (recompensa por entrega exitosa)
-        await admin.rpc('increment_pe', {
-          p_user_id: contract.seller_id,
-          p_amount: 30, // +30 PE por entrega exitosa
-        }).then(({ error: peErr }) => {
-          if (peErr) {
-            // Non-critical: PE increment failed (RPC may not exist yet)
-            console.warn('[ghost-approval] PE increment failed (non-critical):', peErr.message);
-          }
-        });
 
         results.push({ id: contract.id, title: contract.title, status: 'released' });
       } catch (e) {

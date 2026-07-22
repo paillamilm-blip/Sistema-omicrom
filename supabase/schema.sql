@@ -351,9 +351,40 @@ create table if not exists public.user_status_history (
   created_at         timestamptz default now()
 );
 
+-- ---------- RED SOCIAL / MENSAJES DIRECTOS / AUDITORÍA ----------
+-- Capturadas desde producción y versionadas en
+-- 0058_social_dm_captura.sql (antes vivían solo en la BD real).
+create table if not exists public.connections (
+  id           uuid primary key default gen_random_uuid(),
+  requester_id uuid not null,
+  addressee_id uuid not null,
+  status       text not null default 'pending',   -- pending | accepted | rejected
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create table if not exists public.direct_messages (
+  id           uuid primary key default gen_random_uuid(),
+  sender_id    uuid not null,
+  recipient_id uuid not null,
+  content      text not null,                       -- 1..4000 chars
+  is_read      boolean not null default false,
+  created_at   timestamptz not null default now()
+);
+
+create table if not exists public.rank_audits (
+  id                    uuid primary key default gen_random_uuid(),
+  user_id               uuid,
+  reason                text,
+  reputation_at_trigger numeric,
+  status                text default 'PENDING',     -- PENDING | PASSED | FAILED
+  triggered_at          timestamptz default now()
+);
+
 -- =====================================================================
--- NOTA: Funciones (RPCs), triggers y políticas RLS NO están en este
--- archivo. Viven en las migraciones 0005–0010 + tu configuración previa.
--- Para un repo 100% reproducible, el siguiente paso sería volcar también
--- las funciones (pg_get_functiondef) y las policies (pg_policies).
+-- NOTA: La mayoría de funciones (RPCs), triggers y políticas RLS NO están
+-- en este archivo; viven en las migraciones. La capa social/DM/auditoría
+-- (tablas de arriba + sus 13 RPCs + políticas) SÍ quedó capturada en
+-- 0058_social_dm_captura.sql. El resto de RPCs sigue en migraciones
+-- 0005+ y en configuración previa de la BD.
 -- =====================================================================

@@ -11,10 +11,28 @@ import { sendSecureMessage, loadSecureMessages } from '../../lib/secureChat';
 import { DirectChatModal } from '../perfil/RedSocial';
 import type { Message } from '../../types';
 
-interface Room { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; delivery_declared_at: string | null; rating: number | null; }
+interface Room { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; delivery_declared_at: string | null; rating: number | null; amount: number; ghost_approval_deadline: string | null; correction_count: number | null; correction_reason: string | null; correction_deadline: string | null; }
 interface DMConvo { user_id: string; username: string; full_name: string; avatar_url: string | null; last_message: string; last_at: string; unread: number; }
 
-const ST_COLOR: Record<string, string> = { LOCKED: C.gold, DELIVERED: C.cyan, RELEASED: C.green, DISPUTED: C.red };
+const ST_COLOR: Record<string, string> = { LOCKED: C.gold, DELIVERED: C.cyan, CORRECTION_REQUESTED: C.gold, RELEASED: C.green, DISPUTED: C.red };
+
+// ── Ghost Approval escalonado por monto (ms). Debe coincidir con
+//    ghost_approval_interval() (SQL) y ghostWindowMinutes() (Edge Fn). ──
+function ghostWindowMs(amount: number): number {
+  const a = Number(amount) || 0;
+  if (a < 100) return 60 * 60000;            // 1 h
+  if (a <= 500) return 24 * 60 * 60000;      // 24 h
+  return 48 * 60 * 60000;                     // 48 h
+}
+
+// Contador legible: horas+minutos si falta >1 h, si no MM:SS.
+function fmtCountdown(secs: number): string {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 
 // ─── Modal de calificación ────────────────────────────────────────────────────
 function RatingModal({
@@ -185,6 +203,7 @@ export function ChatTab() {
   const [objecting, setObjecting] = useState(false);
   const [delivering, setDelivering] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [correcting, setCorrecting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
   const [rateFor, setRateFor] = useState<Room | null>(null);
@@ -198,7 +217,7 @@ export function ChatTab() {
   const loadRooms = useCallback(async () => {
     if (!profile) return;
     const { data } = await supabase
-      .from('contracts').select('id,title,buyer_id,seller_id,status,delivery_declared_at,rating')
+      .from('contracts').select('id,title,buyer_id,seller_id,status,delivery_declared_at,rating,amount,ghost_approval_deadline,correction_count,correction_reason,correction_deadline')
       .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
       .order('created_at', { ascending: false });
     const rs = (data as Room[]) ?? [];
@@ -243,8 +262,18 @@ export function ChatTab() {
   function otherName(r: Room) { return names.get(otherId(r)) ?? 'contraparte'; }
 
   function ghostLeft(r: Room): number | null {
-    if (r.status !== 'DELIVERED' || !r.delivery_declared_at) return null;
-    const end = new Date(r.delivery_declared_at).getTime() + 15 * 60000;
+    if (r.status !== 'DELIVERED') return null;
+    let end: number | null = null;
+    if (r.ghost_approval_deadline) end = new Date(r.ghost_approval_deadline).getTime();
+    else if (r.delivery_declared_at) end = new Date(r.delivery_declared_at).getTime() + ghostWindowMs(r.amount);
+    if (end === null) return null;
+    return Math.max(0, Math.floor((end - now) / 1000));
+  }
+
+  // Segundos restantes de la ventana de corrección (24 h) del vendedor.
+  function correctionLeft(r: Room): number | null {
+    if (r.status !== 'CORRECTION_REQUESTED' || !r.correction_deadline) return null;
+    const end = new Date(r.correction_deadline).getTime();
     return Math.max(0, Math.floor((end - now) / 1000));
   }
 
@@ -285,13 +314,45 @@ export function ChatTab() {
     }
   }
 
+  async function requestCorrection() {
+    if (!room || !profile || correcting) return;
+    const reason = window.prompt('¿Qué debe corregir el vendedor? (se le notificará)', '');
+    if (reason === null) return;
+    setCorrecting(true);
+    try {
+      const { error } = await supabase.rpc('request_correction', { p_contract_id: room.id, p_reason: reason || null });
+      if (error) throw error;
+      setRoom({
+        ...room,
+        status: 'CORRECTION_REQUESTED',
+        correction_count: (room.correction_count ?? 0) + 1,
+        correction_reason: reason || 'Sin detalle',
+        correction_deadline: new Date(Date.now() + 24 * 60 * 60000).toISOString(),
+        ghost_approval_deadline: null,
+      });
+      await loadRooms();
+    } catch (e) {
+      toast('No se pudo pedir corrección: ' + ((e as Error).message ?? e), 'error');
+    } finally {
+      setCorrecting(false);
+    }
+  }
+
   async function markDelivered() {
     if (!room || delivering) return;
     setDelivering(true);
     try {
       const { error } = await supabase.rpc('declare_delivery', { p_contract_id: room.id, p_note: null });
       if (error) throw error;
-      setRoom({ ...room, status: 'DELIVERED', delivery_declared_at: new Date().toISOString() });
+      const nowMs = Date.now();
+      setRoom({
+        ...room,
+        status: 'DELIVERED',
+        delivery_declared_at: new Date(nowMs).toISOString(),
+        ghost_approval_deadline: new Date(nowMs + ghostWindowMs(room.amount)).toISOString(),
+        correction_reason: null,
+        correction_deadline: null,
+      });
       await loadRooms();
     } catch (e) {
       toast('No se pudo marcar entregado: ' + ((e as Error).message ?? e), 'error');
@@ -447,6 +508,7 @@ export function ChatTab() {
   }
 
   const gl = ghostLeft(room);
+  const cl = correctionLeft(room);
   const isSeller = room.seller_id === profile?.id;
   const isBuyer = room.buyer_id === profile?.id;
   return (
@@ -489,7 +551,7 @@ export function ChatTab() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontFamily: FONT.mono, fontSize: 14, fontWeight: 700, letterSpacing: 2, color: gl <= 60 ? C.red : C.cyan, textShadow: `0 0 10px ${gl <= 60 ? C.red : C.cyan}`, animation: `liquidPulse ${gl <= 60 ? '1s' : '2.4s'} ease-in-out infinite`, borderRadius: 6, padding: '1px 6px' }}>
-              {String(Math.floor(gl / 60)).padStart(2, '0')}:{String(gl % 60).padStart(2, '0')}
+              {fmtCountdown(gl)}
             </span>
             {isBuyer && (
               <button onClick={approveDelivery} disabled={approving}
@@ -497,11 +559,54 @@ export function ChatTab() {
                 {approving ? '...' : 'APROBAR'}
               </button>
             )}
+            {isBuyer && (room.correction_count ?? 0) < 1 && (
+              <button onClick={requestCorrection} disabled={correcting} title="Pide un arreglo antes de disputar (1 ronda)"
+                style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#1a1205', background: C.gold, border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 700, opacity: correcting ? 0.5 : 1 }}>
+                {correcting ? '...' : 'CORREGIR'}
+              </button>
+            )}
             <button onClick={objectDelivery} disabled={objecting}
               style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#fff', background: C.red, border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', opacity: objecting ? 0.5 : 1 }}>
-              {objecting ? '...' : 'OBJETAR'}
+              {objecting ? '...' : 'DISPUTAR'}
             </button>
           </div>
+        </div>
+      )}
+
+      {room.status === 'CORRECTION_REQUESTED' && (
+        <div style={{ padding: '8px 14px', flexShrink: 0, background: 'rgba(255, 176, 46,0.10)', borderBottom: `1px solid ${C.cyanFaint}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <ShieldAlert size={14} style={{ color: C.gold, flexShrink: 0 }} />
+              <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.gold }}>
+                {isSeller ? 'CORRECCIÓN SOLICITADA · RE-ENTREGA' : 'ESPERANDO CORRECCIÓN DEL VENDEDOR'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              {cl !== null && (
+                <span style={{ fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: 1, color: cl <= 3600 ? C.red : '#dbeafe' }}>
+                  {fmtCountdown(cl)}
+                </span>
+              )}
+              {isSeller && (
+                <button onClick={markDelivered} disabled={delivering}
+                  style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#04110a', background: C.green, border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 700, opacity: delivering ? 0.5 : 1 }}>
+                  {delivering ? '...' : 'RE-ENTREGAR ▸'}
+                </button>
+              )}
+              {isBuyer && (
+                <button onClick={objectDelivery} disabled={objecting}
+                  style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: '#fff', background: C.red, border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', opacity: objecting ? 0.5 : 1 }}>
+                  {objecting ? '...' : 'DISPUTAR'}
+                </button>
+              )}
+            </div>
+          </div>
+          {room.correction_reason && (
+            <div style={{ marginTop: 6, fontFamily: FONT.body, fontSize: 12, color: '#dbeafe', opacity: 0.85 }}>
+              <span style={{ color: C.cyanDim }}>Motivo:</span> {room.correction_reason}
+            </div>
+          )}
         </div>
       )}
 

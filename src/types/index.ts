@@ -299,7 +299,7 @@ export interface EscrowContract {
   payee_id: string;
   amount_usd: number;
   amount_tokens: number;
-  status: 'LOCKED' | 'APPROVED' | 'RELEASED' | 'REFUNDED' | 'DISPUTED';
+  status: 'LOCKED' | 'APPROVED' | 'DELIVERED' | 'CORRECTION_REQUESTED' | 'RELEASED' | 'REFUNDED' | 'DISPUTED';
   ghost_approval_deadline: string;
   created_at: string;
   released_at?: string;
