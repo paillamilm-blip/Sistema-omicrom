@@ -148,14 +148,15 @@ interface OmicronCardProps {
   accent?: string;
   glow?: boolean;
   style?: CSSProperties;
+  className?: string;
 }
 
 // Tarjeta glass premium con barra de acento opcional, glow y estado "pressable".
-export function OmicronCard({ children, onClick, accent, glow, style }: OmicronCardProps) {
+export function OmicronCard({ children, onClick, accent, glow, style, className }: OmicronCardProps) {
   const clickable = !!onClick;
   return (
     <div
-      className={`oc-card${clickable ? ' oc-pressable' : ''}`}
+      className={`oc-card${clickable ? ' oc-pressable' : ''}${className ? ' ' + className : ''}`}
       onClick={onClick}
       style={{
         position: 'relative',
