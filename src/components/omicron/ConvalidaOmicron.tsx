@@ -9,7 +9,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles } from 'lucide-react';
+import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles, Upload, ArrowRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { useToast } from '../shared/Toast';
@@ -43,6 +43,9 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
   const [done, setDone] = useState<Kind[]>([]);
   const [dossier, setDossier] = useState<AnalyzedProfile | null>(null);
   const [ai, setAi] = useState<{ loading: boolean; text: string }>({ loading: false, text: '' });
+  const [showCv, setShowCv] = useState(false);
+  const [cvText, setCvText] = useState('');
+  const [cvFileName, setCvFileName] = useState('');
   const [msg, setMsg] = useState('Convalidá tus datos reales: cada uno eleva tu Gemelo al instante.');
 
   const rep = gemelo ? Math.round(gemelo.overallReputation) : 0;
@@ -76,14 +79,27 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
     setBusy(null);
   };
 
-  // CV: extrae texto → analiza (skills/seniority) → convalida (reputación) →
-  // persiste skills en el perfil → muestra el Dossier de Experticia.
-  const handleCV = async (file: File) => {
-    if (busy) return;
-    setBusy('cv');
-    setMsg('Analizando tu CV con Ómicron…');
+  // Lee el archivo (PDF/Word/TXT) y vuelca el texto al recuadro.
+  const onCVFile = async (file: File) => {
+    setCvFileName(file.name);
+    setMsg('Leyendo tu documento…');
     try {
       const text = await extractCVText(file);
+      if (text.length >= 30) { setCvText(text); setMsg(`"${file.name}" leído ✓ Revisá y tocá "Analizar mi CV".`); }
+      else setMsg('No pude extraer texto del archivo. Pegá tu experiencia abajo y analizá.');
+    } catch {
+      setMsg('No pude leer el archivo. Pegá tu experiencia abajo y analizá.');
+    }
+  };
+
+  // Analiza el texto (skills/seniority) → convalida (reputación real) →
+  // persiste skills en el perfil → muestra el Dossier de Experticia.
+  const analyzeCVText = async (raw: string) => {
+    const text = raw.trim();
+    if (!text || busy) return;
+    setBusy('cv');
+    setMsg('Analizando con Ómicron…');
+    try {
       const analyzed = analyzeCV(text);
       await supabase.rpc('convalidar_credencial', { p_kind: 'cv' });
       if (profile?.id) {
@@ -93,17 +109,57 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
       toast('CV cargado y convalidado ✓', 'success');
       speak(`CV analizado. Tu perfil: ${analyzed.seniorLabel}. Experto en ${analyzed.labels.slice(0, 3).join(', ')}.`);
       await refreshProfile();
+      setShowCv(false);
       setDossier(analyzed);
-      // Análisis personalizado de la IA (coach) — en paralelo, no bloquea el Dossier.
       setAi({ loading: true, text: '' });
       askCoach()
         .then((r) => setAi({ loading: false, text: r.advice || '' }))
         .catch(() => setAi({ loading: false, text: '' }));
     } catch {
-      setMsg('No pude analizar el CV. Probá con un PDF de texto o pegá tu experiencia.');
+      setMsg('No pude analizar. Revisá el texto e intentá de nuevo.');
     }
     setBusy(null);
   };
+
+  // ── Panel de CV: subir PDF/Word o pegar experiencia ───────────────
+  if (showCv && !dossier) {
+    const canAnalyze = !!cvText.trim() && busy !== 'cv';
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 92, display: 'flex', flexDirection: 'column', background: 'radial-gradient(130% 100% at 50% 8%, rgba(8,14,30,0.98), #000 70%)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px' }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: C.ink }}>SUBÍ TU CV</span>
+          <button onClick={() => setShowCv(false)} aria-label="Cerrar" style={{ width: 36, height: 36, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '4px 18px' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '26px 16px', borderRadius: RADIUS.lg, border: `1.5px dashed ${C.cyanDim}`, background: C.cyanGhost, cursor: 'pointer', marginBottom: 14, textAlign: 'center' }}>
+            <input type="file" accept=".pdf,.doc,.docx,.txt" style={{ display: 'none' }}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) void onCVFile(f); e.currentTarget.value = ''; }} />
+            <Upload size={26} color={C.cyan} />
+            <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>{cvFileName || 'Subir CV (PDF · Word · TXT)'}</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>Lee cualquier PDF o Word</span>
+          </label>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 12px' }}>
+            <div style={{ flex: 1, height: 1, background: C.line }} />
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>o pegá tu experiencia</span>
+            <div style={{ flex: 1, height: 1, background: C.line }} />
+          </div>
+
+          <textarea value={cvText} onChange={(e) => setCvText(e.target.value)}
+            placeholder="Rol actual, años de experiencia, tecnologías que dominás, contratos, certificaciones, mentorías…"
+            style={{ width: '100%', minHeight: 130, borderRadius: RADIUS.md, border: `1px solid ${C.line}`, background: 'rgba(8,12,22,0.8)', color: C.ink, fontFamily: FONT.body, fontSize: 14, padding: 13, outline: 'none', resize: 'vertical' }} />
+
+          <p style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut, margin: '8px 2px 0', lineHeight: 1.4 }}>{msg}</p>
+        </div>
+        <div style={{ padding: '10px 18px calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+          <button onClick={() => void analyzeCVText(cvText)} disabled={!canAnalyze}
+            style={{ width: '100%', padding: '14px 0', borderRadius: 14, border: 'none', cursor: canAnalyze ? 'pointer' : 'default', opacity: canAnalyze ? 1 : 0.5, background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            {busy === 'cv' ? 'Analizando…' : <>Analizar mi CV <ArrowRight size={17} /></>}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Dossier de Experticia (alto impacto) tras analizar el CV ───────
   if (dossier) {
@@ -247,11 +303,9 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
           // El CV usa input de archivo; el resto son botones directos.
           if (kind === 'cv') {
             return (
-              <label key={kind} style={style}>
-                <input type="file" accept=".pdf,.doc,.docx,.txt,image/*" style={{ display: 'none' }}
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleCV(f); e.currentTarget.value = ''; }} />
+              <button key={kind} onClick={() => setShowCv(true)} disabled={!!busy} style={style}>
                 {content}
-              </label>
+              </button>
             );
           }
           return (
