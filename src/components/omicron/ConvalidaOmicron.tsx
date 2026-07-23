@@ -37,7 +37,7 @@ const AXES: [string, 'execution' | 'quality' | 'transcendence' | 'foundation', s
 ];
 
 export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: () => void; onViewProfile?: () => void }) {
-  const { profile, gemelo, refreshProfile } = useApp();
+  const { gemelo, refreshProfile } = useApp();
   const { toast } = useToast();
   const [busy, setBusy] = useState<Kind | null>(null);
   const [done, setDone] = useState<Kind[]>([]);
@@ -101,12 +101,24 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
     setMsg('Analizando con Ómicron…');
     try {
       const analyzed = analyzeCV(text);
-      await supabase.rpc('convalidar_credencial', { p_kind: 'cv' });
-      if (profile?.id) {
-        try { await supabase.from('profiles').update({ skills: analyzed.labels }).eq('id', profile.id); } catch { /* best-effort */ }
+      // Aplica el análisis REAL al perfil server-side (ejes + nombre + skills).
+      // El trigger recalcula experiencia y reputación. Sortea el trigger anti-inflado.
+      const { data, error } = await supabase.rpc('aplicar_analisis_cv', {
+        p_name: analyzed.name || '',
+        p_skills: analyzed.labels,
+        p_exec: analyzed.axes.exec,
+        p_qual: analyzed.axes.qual,
+        p_trans: analyzed.axes.trans,
+        p_fund: analyzed.axes.fund,
+      });
+      const res = data as { ok?: boolean; error?: string } | null;
+      if (error || !res?.ok) {
+        setMsg(res?.error ? `No se pudo: ${res.error}` : 'No se pudo aplicar el análisis. ¿Tu sesión está activa?');
+        setBusy(null);
+        return;
       }
       setDone((prev) => (prev.includes('cv') ? prev : [...prev, 'cv']));
-      toast('CV cargado y convalidado ✓', 'success');
+      toast('CV analizado y aplicado ✓', 'success');
       speak(`CV analizado. Tu perfil: ${analyzed.seniorLabel}. Experto en ${analyzed.labels.slice(0, 3).join(', ')}.`);
       await refreshProfile();
       setShowCv(false);
