@@ -77,10 +77,14 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
 }) {
   const [rot, setRot] = useState(0);
   useEffect(() => {
+    // Respeta "reduce motion": los nodos quedan quietos (accesibilidad + batería).
+    const mq = typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+    if (mq?.matches) return;
     let raf = 0;
     let last = performance.now();
     const loop = (t: number) => {
-      const dt = Math.min(t - last, 64);
+      const dt = Math.min(t - last, 64);   // rAF ya se pausa solo en pestañas ocultas
       last = t;
       setRot((r) => (r + dt * 0.00015) % (Math.PI * 2));
       raf = requestAnimationFrame(loop);
@@ -146,6 +150,7 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
   const [cvOpen, setCvOpen] = useState(false);
   const greetedRef = useRef(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const navTimerRef = useRef<number | null>(null);
 
   const color = STATE_COLOR[state];
   const rep = gemelo ? Math.round(gemelo.overallReputation) : 0;
@@ -171,7 +176,11 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     return () => clearTimeout(t);
   }, [profile, top, omicronSay]);
 
-  useEffect(() => () => { stopSpeaking(); recognitionRef.current?.abort(); }, []);
+  useEffect(() => () => {
+    stopSpeaking();
+    recognitionRef.current?.abort();
+    if (navTimerRef.current) clearTimeout(navTimerRef.current);
+  }, []);
 
   const handleQuery = useCallback(async (raw: string) => {
     const text = raw.trim();
@@ -236,12 +245,19 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     try { rec.start(); } catch { setState('idle'); }
   }, [state, handleQuery, omicronSay]);
 
+  // Navega tras un breve instante (la voz sigue sonando, es global) y cancela
+  // cualquier navegación pendiente para evitar carreras al tocar rápido.
+  const scheduleNav = useCallback((tab: TabId) => {
+    if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    navTimerRef.current = window.setTimeout(() => setActiveTab(tab), 260);
+  }, [setActiveTab]);
+
   const goStep = useCallback((s: NextStep) => {
     if (s.cv) { setCvOpen(true); return; }
     if (s.tab === 'perfil') { onOpenPerfil?.(); return; }
     omicronSay(`Vamos. ${s.why}`);
-    setTimeout(() => setActiveTab(s.tab), 700);
-  }, [omicronSay, setActiveTab, onOpenPerfil]);
+    scheduleNav(s.tab);
+  }, [omicronSay, scheduleNav, onOpenPerfil]);
 
   const goToAction = useCallback(() => { if (top) goStep(top); }, [top, goStep]);
 
@@ -250,8 +266,8 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     if (tab === 'perfil') { onOpenPerfil?.(); return; }
     const guide = nodeGuidance(tab, profile, gemelo);
     if (guide) omicronSay(guide);
-    setTimeout(() => setActiveTab(tab), guide ? 650 : 0);
-  }, [setActiveTab, onOpenPerfil, profile, gemelo, omicronSay]);
+    scheduleNav(tab);
+  }, [scheduleNav, onOpenPerfil, profile, gemelo, omicronSay]);
 
   const doLogout = useCallback(() => {
     omicronSay('Cerrando tu sesión. Hasta pronto, Nodo.');
