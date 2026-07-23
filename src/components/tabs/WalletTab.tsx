@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap, Wallet, Award, Layers } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap, Wallet, Award, Layers, CreditCard, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { TokenTransferModal } from '../wallet/TokenTransferModal';
+import { TokenPurchaseModal } from '../wallet/TokenPurchaseModal';
+
+// La compra de tokens (Stripe) se activa solo cuando está configurada.
+const STRIPE_ENABLED = import.meta.env.VITE_STRIPE_ENABLED === 'true';
 import { C, FONT } from '../../theme';
 import { oc, OmicronHeader, OmicronCard, Stat, ProgressBar, Chip } from '../omicron/OmicronChrome';
 import type { WalletTransaction } from '../../types';
@@ -29,6 +33,7 @@ const TX_META: Record<WalletTransaction['type'], { label: string; sign: '+' | '�
   refund:         { label: 'Reembolso',           sign: '+', color: C.cyan,  incoming: true  },
   commission:     { label: 'Comisión de red',     sign: '−', color: C.red,   incoming: false },
   withdrawal:     { label: 'Retiro',              sign: '−', color: C.gold,  incoming: false },
+  purchase:       { label: 'Recarga con tarjeta',  sign: '+', color: C.green, incoming: true  },
 };
 
 function formatDate(iso: string) {
@@ -43,6 +48,8 @@ export function WalletTab() {
   const [loading, setLoading]           = useState(true);
   const [view, setView]                 = useState<'movimientos' | 'niveles'>('movimientos');
   const [transferMode, setTransferMode] = useState<'send' | 'receive' | null>(null);
+  const [showPurchase, setShowPurchase] = useState(false);
+  const [purchaseOk, setPurchaseOk]     = useState(false);
 
   const loadTxs = useCallback(async () => {
     if (!profile) return;
@@ -57,6 +64,25 @@ export function WalletTab() {
   }, [profile]);
 
   useEffect(() => { loadTxs(); }, [loadTxs]);
+
+  // Al volver de Stripe (?compra=exito) mostramos confirmación y refrescamos el
+  // saldo (el webhook acredita en segundo plano, así que reintentamos un momento).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const compra = params.get('compra');
+    if (!compra) return;
+    // Limpia el parámetro de la URL sin recargar.
+    params.delete('compra');
+    const clean = window.location.pathname + (params.toString() ? `?${params}` : '');
+    window.history.replaceState({}, '', clean);
+    if (compra === 'exito') {
+      setPurchaseOk(true);
+      const t1 = setTimeout(() => { refreshProfile(); loadTxs(); }, 1500);
+      const t2 = setTimeout(() => { refreshProfile(); loadTxs(); }, 5000);
+      const t3 = setTimeout(() => setPurchaseOk(false), 8000);
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }
+  }, [refreshProfile, loadTxs]);
 
   async function handleTransferClose() {
     setTransferMode(null);
@@ -117,7 +143,35 @@ export function WalletTab() {
                 <ArrowDownLeft size={16} style={{ color: C.cyan }} /> Recibir
               </button>
             </div>
+
+            {/* ── Recargar con dinero real (Stripe) — visible solo si está configurado ── */}
+            {STRIPE_ENABLED && (
+              <button onClick={() => setShowPurchase(true)} className="oc-pressable" style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                marginTop: 10, padding: '12px 0', borderRadius: 14, cursor: 'pointer',
+                fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+                background: `linear-gradient(135deg, ${C.gold}, #b56d00)`, border: 'none', color: '#1a1204',
+                boxShadow: `0 8px 22px ${C.gold}44`,
+              }}>
+                <CreditCard size={16} /> Recargar tokens
+              </button>
+            )}
           </OmicronCard>
+
+          {/* ── Confirmación de compra al volver de Stripe ── */}
+          {purchaseOk && (
+            <OmicronCard accent={C.green} glow className="oc-rise" style={{ background: `linear-gradient(135deg, ${C.green}1e, ${C.green}08)` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <CheckCircle2 size={22} style={{ color: C.green, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 15, color: C.ink }}>¡Pago recibido!</div>
+                  <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>
+                    Tus tokens se están acreditando. El saldo se actualiza en unos segundos.
+                  </div>
+                </div>
+              </div>
+            </OmicronCard>
+          )}
 
           {/* ── Banner Pionero ── */}
           {pioneer && (
@@ -239,6 +293,10 @@ export function WalletTab() {
 
       {transferMode && (
         <TokenTransferModal mode={transferMode} onClose={handleTransferClose} />
+      )}
+
+      {showPurchase && (
+        <TokenPurchaseModal onClose={() => setShowPurchase(false)} />
       )}
     </div>
   );
