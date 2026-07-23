@@ -2,6 +2,7 @@
 // Captura errores de render de cualquier pestaña/módulo y muestra un panel
 // holográfico en vez de dejar la app en pantalla blanca.
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { captureError } from '../../lib/observability';
 
 interface Props {
   children: ReactNode;
@@ -23,6 +24,11 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Log para diagnóstico (visible en consola del navegador).
     console.error('[Ómicron · ErrorBoundary]', this.props.section ?? '', error, info);
+    // Reporta a Sentry si está activo (no hace nada si no hay DSN).
+    captureError(error, {
+      section: this.props.section ?? 'desconocida',
+      componentStack: info.componentStack ?? '',
+    });
   }
 
   private handleReset = () => this.setState({ hasError: false, message: '' });

@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
 import './styles/responsive.css';
+import { initObservability } from './lib/observability';
+
+// ── Observabilidad: monitoreo de errores + analítica (activada por env vars). ──
+initObservability();
 
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('No se encontró el elemento #root');
