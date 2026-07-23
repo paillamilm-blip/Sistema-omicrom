@@ -62,6 +62,79 @@ function getRecognitionCtor(): SRCtor | null {
   return w.SpeechRecognition || w.webkitSpeechRecognition || null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// NodeOrbit — los nodos flotan y orbitan alrededor de la orbe en 3D.
+// Profundidad real: los del frente se ven grandes y brillantes; los del
+// fondo, chicos y tenues. Giran lento y de forma continua. El nodo
+// recomendado por el motor (highlightTab) brilla para guiarte.
+// Se aísla en su propio componente para no re-renderizar todo el asistente.
+// ─────────────────────────────────────────────────────────────────────────
+function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
+  nodes: { tab: TabId; label: string; Icon: typeof GraduationCap }[];
+  onSelect: (tab: TabId) => void;
+  highlightTab?: TabId | null;
+  highlightAccent?: string;
+}) {
+  const [rot, setRot] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    const loop = (t: number) => {
+      const dt = Math.min(t - last, 64);
+      last = t;
+      setRot((r) => (r + dt * 0.00015) % (Math.PI * 2));
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const n = nodes.length;
+  return (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3 }}>
+      {/* Anillo de órbita (elipse inclinada) */}
+      <div style={{ position: 'absolute', left: '50%', top: '47%', width: '88%', height: '40%', transform: 'translate(-50%,-50%)', borderRadius: '50%', border: `1px dashed ${C.line}`, opacity: 0.45 }} />
+      {nodes.map((node, i) => {
+        const ang = rot + (i / n) * Math.PI * 2;
+        const x = 50 + 42 * Math.cos(ang);
+        const y = 47 + 20 * Math.sin(ang);
+        const depth = (Math.sin(ang) + 1) / 2;            // 0 (fondo) .. 1 (frente)
+        const scale = 0.68 + depth * 0.5;
+        const opacity = 0.4 + depth * 0.6;
+        const z = 10 + Math.round(depth * 100);
+        const hi = node.tab === highlightTab;
+        const accent = hi ? (highlightAccent || C.gold) : C.cyan;
+        const Icon = node.Icon;
+        return (
+          <button
+            key={node.tab}
+            onClick={() => onSelect(node.tab)}
+            aria-label={node.label}
+            style={{
+              position: 'absolute', left: `${x}%`, top: `${y}%`,
+              transform: `translate(-50%,-50%) scale(${scale})`, opacity, zIndex: z,
+              pointerEvents: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+              transition: 'filter .2s ease',
+            }}
+          >
+            <span style={{
+              width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: `radial-gradient(circle at 32% 26%, ${accent}33, rgba(6,10,22,0.82))`,
+              border: `1px solid ${accent}${hi ? '' : '66'}`,
+              boxShadow: hi ? `0 0 22px ${accent}, inset 0 0 14px ${accent}55` : `0 4px 16px rgba(0,0,0,0.5), 0 0 12px ${accent}33`,
+              backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+            }}>
+              <Icon size={20} color={hi ? '#fff' : accent} />
+            </span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 0.3, color: hi ? accent : C.ink, textShadow: '0 1px 5px #000, 0 0 2px #000' }}>{node.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 interface Props { onOpenPerfil?: () => void }
 
 export default function OmicronAssistant({ onOpenPerfil }: Props) {
@@ -187,9 +260,8 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
 
   // Alertas / nodos que flotan sobre la orbe (sistema de aprendizaje continuo).
   const alerts: { text: string; color: string; onClick: () => void; pos: React.CSSProperties }[] = [];
-  if (top) alerts.push({ text: top.metric || 'Próximo paso', color: top.accent, onClick: goToAction, pos: { top: '6%', left: '4%' } });
-  if (unreadCount > 0) alerts.push({ text: `${unreadCount} alerta${unreadCount > 1 ? 's' : ''}`, color: C.gold, onClick: () => setActiveTab('empleos'), pos: { top: '11%', right: '4%' } });
-  alerts.push({ text: 'Subí tu CV', color: C.cyan, onClick: () => setCvOpen(true), pos: { bottom: '8%', right: '7%' } });
+  if (top) alerts.push({ text: top.metric || 'Próximo paso', color: top.accent, onClick: goToAction, pos: { top: '3%', left: '3%' } });
+  if (unreadCount > 0) alerts.push({ text: `${unreadCount} alerta${unreadCount > 1 ? 's' : ''}`, color: C.gold, onClick: () => setActiveTab('empleos'), pos: { top: '3%', right: '3%' } });
 
   return (
     <div style={{
@@ -225,10 +297,19 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
         </div>
       </div>
 
-      {/* ORBE DE PARTÍCULAS */}
-      <div style={{ position: 'relative', zIndex: 2, height: '32vh', minHeight: 210, flexShrink: 0 }}>
+      {/* ORBE DE PARTÍCULAS + NODOS ORBITANDO EN 3D */}
+      <div style={{ position: 'relative', zIndex: 2, height: '44vh', minHeight: 340, flexShrink: 0 }}>
         <ParticleOrb enableMic={state === 'listening'} />
-        {/* Alertas / nodos flotando sobre la orbe */}
+
+        {/* Los nodos flotan y orbitan alrededor de la orbe en 3D */}
+        <NodeOrbit
+          nodes={NODES}
+          onSelect={goNode}
+          highlightTab={top?.tab ?? null}
+          highlightAccent={top?.accent}
+        />
+
+        {/* Alertas flotando en las esquinas */}
         {alerts.map((a, i) => (
           <motion.button key={i} onClick={a.onClick}
             animate={{ y: [0, -6, 0] }}
@@ -343,17 +424,6 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
           </div>
         )}
 
-        {/* Nodos de la app */}
-        <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: C.mut, margin: '2px 2px 8px' }}>Explorá tus nodos</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
-          {NODES.map(({ tab, label, Icon }) => (
-            <button key={tab} onClick={() => goNode(tab)}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 6px', borderRadius: RADIUS.md, cursor: 'pointer', background: C.glass, border: `1px solid ${C.line}`, color: C.ink }}>
-              <Icon size={19} color={C.cyan} />
-              <span style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: 0.3, color: C.mut }}>{label}</span>
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Convalidación REAL del Gemelo (mueve tus ejes server-side) */}
