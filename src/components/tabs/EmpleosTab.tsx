@@ -10,6 +10,7 @@ import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
 import { TrabajoTeEncuentra } from '../empleos/TrabajoTeEncuentra';
 import { RutaCarrera } from '../empleos/RutaCarrera';
+import { oc, OmicronHeader, OmicronAction } from '../omicron/OmicronChrome';
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
 // "muted" con más contraste para no forzar la vista.
@@ -49,7 +50,7 @@ function bearingDeg(lat1: number, lng1: number, lat2: number, lng2: number): num
 function fmtDist(km: number): string { return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(km < 10 ? 1 : 0)} km`; }
 
 export function EmpleosTab() {
-  const { profile } = useApp();
+  const { profile, setActiveTab } = useApp();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [names, setNames] = useState<Map<string, string>>(new Map());
@@ -118,18 +119,15 @@ export function EmpleosTab() {
   });
 
   return (
-    <div style={styles.root}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={styles.iconBadge}><Briefcase size={15} style={{ color: C.bg }} /></div>
-          <div>
-            <div style={styles.hTitle}>EMPLEOS · OPORTUNIDADES</div>
-            <div style={styles.hSub}>MATCHMAKING 80/20 · TERNA EXPRESS</div>
-          </div>
-        </div>
-        <button style={styles.pubBtn} onClick={() => setShowPublish(true)}><Plus size={14} /> PUBLICAR</button>
-      </div>
+    <div style={oc.root}>
+      {/* Header Ómicron unificado */}
+      <OmicronHeader
+        onBack={() => setActiveTab('perfil')}
+        icon={<Briefcase size={17} />}
+        title="Oportunidades"
+        subtitle="Matchmaking 80/20 · Terna Express"
+        action={<OmicronAction onClick={() => setShowPublish(true)}><Plus size={14} /> Publicar</OmicronAction>}
+      />
 
       {/* Filtros */}
       <div style={styles.filterRow}>
@@ -468,13 +466,13 @@ const styles: Record<string, React.CSSProperties> = {
   hTitle: { fontFamily: FM, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   hSub: { fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
   pubBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(92, 200, 255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1 },
-  filterRow: { display: 'flex', gap: 8, padding: '12px 14px', overflowX: 'auto', flexShrink: 0 },
-  viewRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px 10px', flexShrink: 0 },
+  filterRow: { display: 'flex', gap: 8, padding: '12px 0', overflowX: 'auto', flexShrink: 0 },
+  viewRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '0 0 10px', flexShrink: 0 },
   viewPill: { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 13px', borderRadius: 6, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1, whiteSpace: 'nowrap', textTransform: 'uppercase' },
   fPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 6, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1, whiteSpace: 'nowrap', textTransform: 'uppercase' },
-  scroll: { flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
+  scroll: { flex: 1, overflowY: 'auto', padding: '4px 0 20px', display: 'flex', flexDirection: 'column', gap: 14 },
   muted: { fontFamily: FM, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
-  card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 10, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
+  card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 18, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
   cardTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.steelHi}, ${C.blue}, transparent)` },
   matchBadge: { position: 'absolute', top: 12, right: 14, display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FM, fontSize: 8, color: C.amber, background: 'rgba(255, 176, 46,0.1)', border: '1px solid rgba(255, 176, 46,0.3)', padding: '2px 7px', borderRadius: 3 },
   title: { fontFamily: FR, fontWeight: 700, fontSize: 18, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', paddingRight: 70 },

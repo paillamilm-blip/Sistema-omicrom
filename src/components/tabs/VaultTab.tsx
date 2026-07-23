@@ -9,6 +9,7 @@ import { C as T, FONT as TF } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import { useToast } from '../shared/Toast';
 import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
+import { oc, OmicronHeader, OmicronAction } from '../omicron/OmicronChrome';
 
 // Paleta v5.0 "Neo-Académico Holográfico" — Bóveda = Cajas Negras (azul acero industrial)
 // Paleta DERIVADA del tema (theme.ts) → un cambio de tema se propaga solo.
@@ -51,7 +52,7 @@ async function embedText(text: string): Promise<string | null> {
 }
 
 export function VaultTab() {
-  const { profile, refreshProfile } = useApp();
+  const { profile, refreshProfile, setActiveTab } = useApp();
   const { toast } = useToast();
   const { isPremium } = usePremium();
   const [premiumLock, setPremiumLock] = useState(false);
@@ -180,17 +181,14 @@ export function VaultTab() {
     : docs;
 
   return (
-    <div style={styles.root}>
-      <div style={styles.header}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={styles.iconBadge}><BookOpen size={15} style={{ color: C.bg }} /></div>
-          <div>
-            <div style={styles.hTitle}>BÓVEDA DE CONOCIMIENTO</div>
-            <div style={styles.hSub}>BÚSQUEDA SEMÁNTICA · REGALÍAS</div>
-          </div>
-        </div>
-        <button style={styles.pubBtn} onClick={() => setShowPublish(true)}><Plus size={14} /> PUBLICAR</button>
-      </div>
+    <div style={oc.root}>
+      <OmicronHeader
+        onBack={() => setActiveTab('perfil')}
+        icon={<BookOpen size={17} />}
+        title="Bóveda"
+        subtitle="Búsqueda semántica · Regalías"
+        action={<OmicronAction onClick={() => setShowPublish(true)}><Plus size={14} /> Publicar</OmicronAction>}
+      />
 
       {/* Buscador semántico */}
       <div style={styles.searchRow}>
@@ -399,11 +397,11 @@ const styles: Record<string, React.CSSProperties> = {
   hTitle: { fontFamily: FM, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   hSub: { fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
   pubBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(92, 200, 255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1 },
-  searchRow: { display: 'flex', gap: 8, padding: '12px 14px', flexShrink: 0 },
+  searchRow: { display: 'flex', gap: 8, padding: '12px 0', flexShrink: 0 },
   searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', borderRadius: 8, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.line}` },
   searchInput: { flex: 1, background: 'none', border: 'none', outline: 'none', color: C.ink, fontFamily: FR, fontSize: 14, padding: '10px 0' },
   searchBtn: { width: 44, borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: 'none', color: '#04121f', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  scroll: { flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 14 },
+  scroll: { flex: 1, overflowY: 'auto', padding: '4px 0 20px', display: 'flex', flexDirection: 'column', gap: 14 },
   oracleWrap: { flexShrink: 0, borderRadius: 10, border: `1px solid rgba(255, 176, 46,0.35)`, background: 'linear-gradient(135deg, rgba(255, 176, 46,0.08), rgba(2,6,19,0.5))', overflow: 'hidden' },
   oracleToggle: { width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FM, fontSize: 11, letterSpacing: 1, color: '#ffd27a', fontWeight: 700 },
   oracleBody: { padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 },
@@ -414,7 +412,7 @@ const styles: Record<string, React.CSSProperties> = {
   oracleResult: { padding: 12, borderRadius: 8, background: 'rgba(92, 200, 255,0.06)', border: `1px solid rgba(92, 200, 255,0.25)` },
   oracleResultHead: { display: 'flex', alignItems: 'center', gap: 6, fontFamily: FM, fontSize: 9, letterSpacing: 1.5, color: C.blueHi, marginBottom: 8 },
   muted: { fontFamily: FM, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
-  card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 10, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
+  card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 18, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
   cardTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.steelHi}, ${C.blue}, transparent)` },
   simBadge: { position: 'absolute', top: 12, right: 14, fontFamily: FM, fontSize: 8, color: C.blueHi, background: 'rgba(92, 200, 255,0.12)', border: `1px solid ${C.blue}`, padding: '2px 7px', borderRadius: 3 },
   title: { fontFamily: FR, fontWeight: 700, fontSize: 17, color: C.ink, lineHeight: 1.15, paddingRight: 60 },

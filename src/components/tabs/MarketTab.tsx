@@ -11,6 +11,7 @@ import { EmptyState } from '../shared/EmptyState';
 import { ContractModal } from '../contracts/ContractModal';
 import { PublishServiceModal } from '../market/PublishServiceModal';
 import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
+import { oc, OmicronHeader, OmicronAction } from '../omicron/OmicronChrome';
 import type { MarketService } from '../../types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
@@ -87,7 +88,7 @@ function Corners({ color }: { color: string }) {
 }
 
 export function MarketTab() {
-  const { profile } = useApp();
+  const { profile, setActiveTab } = useApp();
   const [category, setCategory] = useState<Category>('todos');
   const [services, setServices] = useState<MarketService[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,29 +178,22 @@ export function MarketTab() {
   }
 
   return (
-    <div style={styles.root}>
-      <div style={styles.grid} />
-
-      {/* Header HUD */}
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <button
-            onClick={() => setFiltersOpen(true)}
-            aria-label="Abrir filtros de búsqueda"
-            style={styles.hamburgerBtn}
-          >
-            <Menu size={18} style={{ color: C.blueHi }} />
-          </button>
-          <div style={styles.iconBadge}><Cpu size={16} style={{ color: C.bg }} /></div>
-          <div>
-            <div style={styles.headerTitle}>MERCADO · CAPITAL INTELECTUAL</div>
-            <div style={styles.headerSub}>◢ INDUSTRIA 5.0 // RED ÓMICROM</div>
-          </div>
-        </div>
-        <button style={styles.publishBtn} onClick={() => setShowPublish(true)}>
-          <Plus size={14} /> PUBLICAR
-        </button>
-      </div>
+    <div style={oc.root}>
+      {/* Header Ómicron unificado */}
+      <OmicronHeader
+        onBack={() => setActiveTab('perfil')}
+        icon={<Cpu size={18} />}
+        title="Mercado"
+        subtitle="Capital Intelectual · Industria 5.0"
+        action={
+          <>
+            <button onClick={() => setFiltersOpen(true)} aria-label="Abrir filtros de búsqueda" style={styles.hamburgerBtn}>
+              <Menu size={18} style={{ color: C.blueHi }} />
+            </button>
+            <OmicronAction onClick={() => setShowPublish(true)}><Plus size={14} /> Publicar</OmicronAction>
+          </>
+        }
+      />
 
       {/* Indicador compacto de filtro activo (reemplaza las filas fijas de categoría/orden) */}
       <button onClick={() => setFiltersOpen(true)} style={styles.activeFilterBar} aria-label="Ver y editar filtros activos">
@@ -383,7 +377,7 @@ const styles: Record<string, React.CSSProperties> = {
   header: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.line}`, background: 'rgba(8,11,18,0.7)', flexShrink: 0 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 },
   hamburgerBtn: { flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.lineSoft}`, cursor: 'pointer' },
-  activeFilterBar: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, margin: '10px 14px 4px', padding: '9px 12px', borderRadius: 8, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.lineSoft}`, color: C.muted, fontFamily: FONT_MONO, fontSize: 11, cursor: 'pointer', flexShrink: 0, textAlign: 'left' },
+  activeFilterBar: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, margin: '10px 0 4px', padding: '9px 12px', borderRadius: 8, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.lineSoft}`, color: C.muted, fontFamily: FONT_MONO, fontSize: 11, cursor: 'pointer', flexShrink: 0, textAlign: 'left' },
   drawerBg: { position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(2,5,11,0.72)', backdropFilter: 'blur(3px)' },
   drawerPanel: { position: 'absolute', top: 0, left: 0, bottom: 0, width: '82%', maxWidth: 320, display: 'flex', flexDirection: 'column', background: `linear-gradient(165deg, ${C.panelA}, ${C.panelB})`, borderRight: `1px solid ${C.blue}`, boxShadow: '4px 0 30px rgba(0,0,0,0.5)' },
   drawerHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 14px', borderBottom: `1px solid ${C.line}` },
@@ -416,9 +410,9 @@ const styles: Record<string, React.CSSProperties> = {
   advisorResult: { padding: 12, borderRadius: 8, background: 'rgba(92, 200, 255,0.06)', border: `1px solid rgba(92, 200, 255,0.25)` },
   advisorResultHead: { display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONT_MONO, fontSize: 9, letterSpacing: 1.5, color: C.blueHi, marginBottom: 8 },
   catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, whiteSpace: 'nowrap', transition: 'all .2s', textTransform: 'uppercase' },
-  scroll: { position: 'relative', zIndex: 2, flex: 1, overflowY: 'auto', padding: '4px 14px 20px', display: 'flex', flexDirection: 'column', gap: 10 },
+  scroll: { position: 'relative', zIndex: 2, flex: 1, overflowY: 'auto', padding: '4px 0 20px', display: 'flex', flexDirection: 'column', gap: 10 },
   muted: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
-  card: { position: 'relative', flexShrink: 0, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 10, padding: '13px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
+  card: { position: 'relative', flexShrink: 0, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 18, padding: '14px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
   cardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.steelHi}, ${C.blue}, transparent)` },
   idTag: { position: 'absolute', top: 12, right: 14, fontFamily: FONT_MONO, fontSize: 8, color: C.muted, letterSpacing: 1, border: `1px solid ${C.lineSoft}`, padding: '2px 6px', borderRadius: 3 },
   cardTitle: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 15, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', letterSpacing: 0.5 },

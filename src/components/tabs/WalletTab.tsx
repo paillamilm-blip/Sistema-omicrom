@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap, Wallet } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { TokenTransferModal } from '../wallet/TokenTransferModal';
+import { C } from '../../theme';
+import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import type { WalletTransaction } from '../../types';
 
 // ── Node tiers (Bitácora V4: 0-499 / 500-1999 / 2000+) ──────────────────────
@@ -74,9 +76,16 @@ export function WalletTab() {
 
 
   return (
-    <>
-      <div className="flex-1 scroll-area bg-omicron-bg pb-6">
-        <div className="px-4 pt-5 space-y-4">
+    <div style={oc.root}>
+      <OmicronHeader
+        onBack={() => setActiveTab('perfil')}
+        icon={<Wallet size={17} />}
+        accent={C.gold}
+        title="Billetera"
+        subtitle={`${balance.toLocaleString('es-CL')} Tokens disponibles`}
+      />
+      <div style={oc.scroll} className="pb-6">
+        <div className="pt-2 space-y-4">
 
           {/* ── Balance card ── */}
           <div className="bg-omicron-card border border-omicron-border rounded-2xl p-5">
@@ -278,6 +287,6 @@ export function WalletTab() {
       {transferMode && (
         <TokenTransferModal mode={transferMode} onClose={handleTransferClose} />
       )}
-    </>
+    </div>
   );
 }
