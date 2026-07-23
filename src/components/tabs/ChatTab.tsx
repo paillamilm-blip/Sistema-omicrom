@@ -3,7 +3,8 @@ import { Send, Shield, Timer, ArrowLeft, MessageCircle, Lock, ShieldCheck, Shiel
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
-import { ScanlineOverlay, CyberHeader, CyberCard, SectionLabel, LoadingScreen } from '../shared/CyberComponents';
+import { ScanlineOverlay, CyberCard, SectionLabel, LoadingScreen } from '../shared/CyberComponents';
+import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
 import { usePremium, PremiumLock } from '../shared/Premium';
@@ -366,9 +367,15 @@ export function ChatTab() {
 
   if (!room) {
     return (
-      <div style={BASE.root}>
+      <div style={oc.root}>
         <ScanlineOverlay />
-        <CyberHeader title="CHAT SEGURO" subtitle="SALAS POR CONTRATO // CAJA NEGRA" dotColor={C.green} badge={<Shield size={16} style={{ color: C.cyan }} />} />
+        <OmicronHeader
+          onBack={() => setActiveTab('perfil')}
+          icon={<Shield size={17} />}
+          accent={C.green}
+          title="Mensajes"
+          subtitle="Salas por contrato · Caja negra"
+        />
         <div style={cx(BASE.scrollArea, { padding: '10px 14px 20px' })}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <SectionLabel>◆ MENSAJES DIRECTOS ({dmConvos.length})</SectionLabel>
@@ -450,26 +457,21 @@ export function ChatTab() {
   const isSeller = room.seller_id === profile?.id;
   const isBuyer = room.buyer_id === profile?.id;
   return (
-    <div style={BASE.root}>
+    <div style={oc.root}>
       <ScanlineOverlay />
-      <div style={cx(BASE.header, { gap: 10 })}>
-        <button onClick={() => { setRoom(null); setMessages([]); }} style={{ background: 'none', border: 'none', color: C.cyan, cursor: 'pointer', display: 'flex' }}>
-          <ArrowLeft size={18} />
-        </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: C.cyan, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{room.title}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            {integrityOk ? <ShieldCheck size={9} style={{ color: C.green }} /> : <ShieldAlert size={9} style={{ color: C.red }} />}
-            <span style={{ fontFamily: FONT.mono, fontSize: 8, color: integrityOk ? C.cyanDim : C.red }}>
-              @{otherName(room)} · {integrityOk ? 'CAJA NEGRA · CADENA OK' : 'CADENA ALTERADA'}
-            </span>
-          </div>
-        </div>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan, padding: '3px 9px', borderRadius: 12, border: `1px solid ${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}55`, background: `${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}14`, animation: 'liquidPulse 2.6s ease-in-out infinite' }}>
-          <span className="liquid-dot" />
-          {room.status ?? 'LOCKED'}
-        </span>
-      </div>
+      <OmicronHeader
+        onBack={() => { setRoom(null); setMessages([]); }}
+        icon={integrityOk ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
+        accent={integrityOk ? C.green : C.red}
+        title={room.title}
+        subtitle={`@${otherName(room)} · ${integrityOk ? 'Caja negra · cadena OK' : 'Cadena alterada'}`}
+        action={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan, padding: '3px 9px', borderRadius: 12, border: `1px solid ${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}55`, background: `${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}14`, animation: 'liquidPulse 2.6s ease-in-out infinite' }}>
+            <span className="liquid-dot" />
+            {room.status ?? 'LOCKED'}
+          </span>
+        }
+      />
 
       {isSeller && room.status === 'LOCKED' && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(34,197,94,0.07)', borderBottom: `1px solid ${C.cyanFaint}` }}>

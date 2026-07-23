@@ -7,6 +7,7 @@ import { Play, Trophy, BookOpen, ArrowRight, Brain } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
 import { C as T } from '../../theme';
+import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import { useToast } from '../shared/Toast';
 import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import { UniversalSimulator } from '../shared/UniversalSimulator';
@@ -122,7 +123,7 @@ function svgDimensions(flat: LayoutNode[]) {
 }
 
 export function MaxSkillTab() {
-  const { profile, refreshProfile } = useApp();
+  const { profile, refreshProfile, setActiveTab } = useApp();
   const { toast } = useToast();
   // 🔓 TEMPORAL: el módulo de Aprendizaje (Árbol de Habilidades) queda de
   // libre acceso durante el piloto — se bypassa el candado Premium. Para
@@ -267,14 +268,16 @@ export function MaxSkillTab() {
   const coreBottomY = CORE_CY + CORE_H / 2;
 
   return (
-    <div style={styles.root}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderBottom: `1px solid ${COLORS.cyanFaint}` }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 700, fontSize: 15, color: '#eaf4ff', letterSpacing: 0.5 }}>SISTEMA DE APRENDIZAJE</div>
-          <div style={{ fontFamily: "'SF Mono', monospace", fontSize: 9, color: COLORS.cyanDim, marginTop: 1 }}>Circuito unificado · {totalPe}/{maxPe} PE</div>
-          <div style={{ height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginTop: 7 }}>
-            <div style={{ height: '100%', width: `${corePct}%`, background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.cyan})`, borderRadius: 4, transition: 'width 0.5s ease' }} />
-          </div>
+    <div style={oc.root}>
+      <OmicronHeader
+        onBack={() => setActiveTab('perfil')}
+        icon={<Brain size={17} />}
+        title="Habilidades"
+        subtitle={`Circuito unificado · ${totalPe}/${maxPe} PE`}
+      />
+      <div style={{ padding: '8px 2px 0', flexShrink: 0 }}>
+        <div style={{ height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${corePct}%`, background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.cyan})`, borderRadius: 4, transition: 'width 0.5s ease' }} />
         </div>
       </div>
 

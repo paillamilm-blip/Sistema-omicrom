@@ -99,8 +99,7 @@ function AppShell() {
               )
             ) : (
               <UnifiedLayout
-                title={TAB_TITLES[currentTab]}
-                showBackButton
+                showBackButton={false}
                 fullHeight={currentTab === 'chat'}
               >
                 <Suspense fallback={<TabLoader />}>

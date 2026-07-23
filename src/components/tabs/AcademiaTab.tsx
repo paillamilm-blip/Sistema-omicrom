@@ -11,7 +11,8 @@ import { useApp } from '../../store/AppContext';
 // 🧪 MVP PILOTO: candado Premium usado únicamente por Coach IA / Tutor IA.
 // import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '../../theme';
-import { ScanlineOverlay, CyberHeader, LoadingScreen } from '../shared/CyberComponents';
+import { ScanlineOverlay, LoadingScreen } from '../shared/CyberComponents';
+import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import { Orb } from '../Orb';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
@@ -336,11 +337,15 @@ export function AcademiaTab() {
     const completed = courses.filter(c => prog.get(c.id)?.status === 'COMPLETED').length;
 
     return (
-      <div style={BASE.root}>
+      <div style={oc.root}>
         <ScanlineOverlay />
-        <CyberHeader title="ACADEMIA" subtitle="APRENDE Y VALIDA TUS NODOS" dotColor={C.cyan}
-          badge={<GraduationCap size={16} style={{ color: C.cyan }} />} />
-        <div style={cx(BASE.scrollArea, { padding: '12px 14px 20px' })}>
+        <OmicronHeader
+          onBack={() => setActiveTab('perfil')}
+          icon={<GraduationCap size={17} />}
+          title="Academia"
+          subtitle="Aprende y valida tus nodos"
+        />
+        <div style={cx(BASE.scrollArea, { padding: '12px 2px 20px' })}>
 
           {/* 🧪 MVP PILOTO CONTROLADO: botón "Coach IA" deshabilitado (comentado). */}
           {/* <button onClick={() => { if (!isPremium) { setPremiumLock('El Coach IA'); return; } setCoachOpen(true); }} style={{
@@ -444,25 +449,19 @@ export function AcademiaTab() {
     const allDone = lessons.length > 0 && lessons.every(l => doneLessons.has(l.id));
     const pct = lessons.length ? Math.round((doneLessons.size / lessons.length) * 100) : 0;
     return (
-      <div style={BASE.root}>
+      <div style={oc.root}>
         <ScanlineOverlay />
-        <div style={cx(BASE.header, { gap: 10 })}>
-          <button onClick={backToList} style={{ background: 'none', border: 'none', color: C.cyan, cursor: 'pointer', display: 'flex' }}>
-            <ArrowLeft size={18} />
-          </button>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {course.cover_emoji} {course.title}
-            </div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>{doneLessons.size}/{lessons.length} lecciones · {pct}%</div>
-          </div>
-        </div>
+        <OmicronHeader
+          onBack={backToList}
+          title={`${course.cover_emoji} ${course.title}`}
+          subtitle={`${doneLessons.size}/${lessons.length} lecciones · ${pct}%`}
+        />
 
-        <div style={{ padding: '10px 14px 0', flexShrink: 0 }}>
+        <div style={{ padding: '10px 2px 0', flexShrink: 0 }}>
           <Bar pct={pct} color={allDone ? C.green : C.cyan} />
         </div>
 
-        <div style={cx(BASE.scrollArea, { padding: '14px' })}>
+        <div style={cx(BASE.scrollArea, { padding: '14px 2px' })}>
           <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, marginBottom: 16, lineHeight: 1.5 }}>{course.description}</p>
 
           {lessons.map((l, i) => {
@@ -556,18 +555,17 @@ export function AcademiaTab() {
   }
 
   return (
-    <div style={BASE.root}>
+    <div style={oc.root}>
       <ScanlineOverlay />
-      <div style={cx(BASE.header, { gap: 10 })}>
-        <button onClick={() => setView('course')} style={{ background: 'none', border: 'none', color: C.cyan, cursor: 'pointer', display: 'flex' }}>
-          <ArrowLeft size={18} />
-        </button>
-        <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: C.gold, textTransform: 'uppercase' }}>
-          QUIZ · {course?.title}
-        </div>
-      </div>
+      <OmicronHeader
+        onBack={() => setView('course')}
+        icon={<Sparkles size={17} />}
+        accent={C.gold}
+        title="Quiz final"
+        subtitle={course?.title}
+      />
 
-      <div style={cx(BASE.scrollArea, { padding: '14px' })}>
+      <div style={cx(BASE.scrollArea, { padding: '14px 2px' })}>
         {result ? (
           <div style={{ textAlign: 'center', padding: '30px 16px' }}>
             <div style={{

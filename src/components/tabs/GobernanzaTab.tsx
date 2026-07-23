@@ -4,9 +4,10 @@ import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
 import {
-  CyberHeader, CyberCard, CyberButton, SectionLabel,
+  CyberCard, CyberButton, SectionLabel,
   StatGrid, StatCard, ScanlineOverlay, CyberToast, Divider, DetailPanel, LoadingScreen,
 } from '../shared/CyberComponents';
+import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import { openBlackbox, type BlackboxResult } from '../../lib/secureChat';
 import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 
@@ -20,7 +21,7 @@ interface AppealVote { dispute_id: string; arbiter_id: string; verdict: string; 
 const DISPUTE_COLOR: Record<string, string> = { OPENED: C.gold, IN_REVIEW: C.cyan, RESOLVED: C.green, APPEALED: C.red };
 
 export function GobernanzaTab() {
-  const { profile, refreshProfile } = useApp();
+  const { profile, refreshProfile, setActiveTab } = useApp();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [stakes, setStakes] = useState<Stake[]>([]);
@@ -181,9 +182,15 @@ export function GobernanzaTab() {
   const resolvedAppeals = disputes.filter(d => d.appeal_status === 'RESOLVED');
 
   return (
-    <div style={BASE.root}>
+    <div style={oc.root}>
       <ScanlineOverlay />
-      <CyberHeader title="Gobernanza" subtitle="JUSTICIA DESCENTRALIZADA // STAKING" dotColor={C.red} badge={<Scale size={18} style={{ color: C.red }} />} />
+      <OmicronHeader
+        onBack={() => setActiveTab('perfil')}
+        icon={<Scale size={18} />}
+        accent={C.red}
+        title="Gobernanza"
+        subtitle="Justicia descentralizada · Staking"
+      />
 
       <div style={cx(BASE.scrollArea, { paddingBottom: 20 })}>
         {/* TRIBUNAL */}
