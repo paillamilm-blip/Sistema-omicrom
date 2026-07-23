@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  GraduationCap, ArrowLeft, BookOpen, CheckCircle2, Lock, Award, Loader2,
+  GraduationCap, BookOpen, CheckCircle2, Lock, Award, Loader2,
   ChevronDown, Sparkles, Target,
   // 🧪 MVP PILOTO: Bot, Send, X eran usados solo por el Tutor IA / Coach IA
   // (modales comentados abajo). Se dejan comentados junto con esos bloques.

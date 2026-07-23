@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Shield, Timer, ArrowLeft, MessageCircle, Lock, ShieldCheck, ShieldAlert, Star, X, Plus, Users, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Shield, Timer, MessageCircle, Lock, ShieldCheck, ShieldAlert, Star, X, Plus, Users, Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
