@@ -6,10 +6,9 @@ import { supabase } from './lib/supabase';
 import { NoAccess } from './components/shared/NoAccess';
 import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
-import { OraculoBar } from './components/OraculoBar';
+import OmicronAssistant from './components/omicron/OmicronAssistant';
 import { InstallPWA } from './components/shared/InstallPWA';
 import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
-import { HoloGemeloHome } from './components/perfil/HoloGemeloHome';
 import { UnifiedLayout } from './components/UnifiedLayout';
 import { NavigationStack } from './components/NavigationStack';
 import { ToastProvider } from './components/shared/Toast';
@@ -105,7 +104,7 @@ function AppShell() {
                   </Suspense>
                 </UnifiedLayout>
               ) : (
-                <HoloGemeloHome onOpenPerfil={() => setProfileDetail(true)} />
+                <OmicronAssistant onOpenPerfil={() => setProfileDetail(true)} />
               )
             ) : (
               <UnifiedLayout
@@ -133,9 +132,6 @@ function AppShell() {
       <IncomingJobPush />
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
       <PublicProfileGate />
-      <ErrorBoundary section="Oráculo">
-        <OraculoBar />
-      </ErrorBoundary>
       <ErrorBoundary section="InstalarApp">
         <InstallPWA />
       </ErrorBoundary>
