@@ -329,7 +329,7 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
   const repColor = rep >= 70 ? '#3fd0c9' : rep >= 50 ? C.amber : C.muted;
   const lvl = String(service.seller?.node_level ?? '1').replace(/^N/i, '');
   return (
-    <div style={styles.card}>
+    <div className="oc-rise" style={styles.card}>
       <Corners color={C.line} />
       <div style={styles.cardTopBar} />
 

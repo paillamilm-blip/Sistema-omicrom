@@ -192,7 +192,7 @@ export function EmpleosTab() {
           const isApplied = applied.has(j.id);
           const mine = j.company_id === profile?.id;
           return (
-            <div key={j.id} style={styles.card}>
+            <div key={j.id} className="oc-rise" style={styles.card}>
               <div style={styles.cardTop} />
               {rank && (
                 <div style={styles.matchBadge}><Star size={9} style={{ fill: C.amber, color: C.amber }} /> MATCH #{rank}</div>
