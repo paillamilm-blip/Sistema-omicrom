@@ -131,12 +131,30 @@ function injectOcStyles(): void {
   const s = document.createElement('style');
   s.id = 'omicron-chrome-css';
   s.textContent = `
-    .oc-card { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .oc-card, .oc-rise { position: relative; }
+    .oc-card { transition: transform .24s cubic-bezier(.2,.7,.2,1), box-shadow .24s ease, border-color .24s ease; }
+
+    /* Brillo holografico de vidrio: luz cayendo sobre el panel (look 3D). */
+    .oc-card::after, .oc-rise::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+      background: linear-gradient(158deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.03) 32%, transparent 55%);
+    }
+
     .oc-pressable { cursor: pointer; }
-    .oc-pressable:hover { transform: translateY(-2px); border-color: rgba(150,180,255,0.30) !important; }
-    .oc-pressable:active { transform: scale(0.985); }
-    @keyframes ocRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-    .oc-rise { animation: ocRise .32s ease both; }
+    .oc-pressable:hover { transform: perspective(1100px) translateY(-3px) rotateX(3deg); border-color: rgba(150,180,255,0.34) !important; }
+    .oc-pressable:active { transform: perspective(1100px) scale(.985); }
+
+    /* Aparicion 3D: la tarjeta se materializa inclinandose hacia ti. */
+    @keyframes ocRise {
+      from { opacity: 0; transform: perspective(1100px) rotateX(-14deg) translateY(16px); }
+      to   { opacity: 1; transform: perspective(1100px) rotateX(0) translateY(0); }
+    }
+    .oc-rise { animation: ocRise .5s cubic-bezier(.2,.7,.2,1) both; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .oc-rise { animation: none; }
+      .oc-pressable:hover { transform: none; }
+    }
   `;
   document.head.appendChild(s);
 }
@@ -166,8 +184,8 @@ export function OmicronCard({ children, onClick, accent, glow, style, className 
         border: `1px solid ${C.line}`,
         backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
         boxShadow: glow && accent
-          ? `0 10px 34px rgba(0,0,0,0.42), 0 0 22px ${accent}22`
-          : '0 10px 30px rgba(0,0,0,0.4)',
+          ? `inset 0 1px 0 rgba(255,255,255,0.09), 0 14px 38px rgba(0,0,0,0.5), 0 0 26px ${accent}2b`
+          : 'inset 0 1px 0 rgba(255,255,255,0.07), 0 14px 34px rgba(0,0,0,0.48)',
         overflow: 'hidden',
         ...style,
       }}
