@@ -17,7 +17,7 @@ import {
   Briefcase, Store, Wallet, Database, MessageSquare, Scale,
 } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
-import { interpret, askCoach } from '../../lib/oraculo';
+import { interpret, askCoach, askTutor } from '../../lib/oraculo';
 import { speak, stopSpeaking } from '../../lib/voiceEngine';
 import { C, FONT, RADIUS } from '../../theme';
 import type { TabId, GemeloDigital } from '../../types';
@@ -208,10 +208,16 @@ export default function OmicronAssistant() {
       return;
     }
 
-    // coach + unknown → siempre intentamos EMPUJAR con el Coach IA.
-    const r = await askCoach();
-    if (r.advice) omicronSay(r.advice);
-    else omicronSay(r.error || 'No pude consultar al Coach ahora. Probemos tu próximo paso desde el nodo de acción.');
+    // coach → diagnóstico real que EMPUJA a mejorar (Edge Function coach).
+    if (intent.kind === 'coach') {
+      const r = await askCoach();
+      omicronSay(r.advice || r.error || 'No pude consultar al Coach ahora. Probemos tu próximo paso desde el nodo de acción.');
+      return;
+    }
+
+    // unknown → respuesta conversacional general (Edge Function tutor).
+    const t = await askTutor(text);
+    omicronSay(t.answer || t.error || 'No pude responder ahora. Probá de nuevo o pedime tu próximo paso.');
   }, [gemelo, profile, pushMsg, omicronSay, setActiveTab]);
 
   // Escucha por voz (SpeechRecognition es-ES).

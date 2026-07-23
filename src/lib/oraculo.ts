@@ -64,6 +64,31 @@ export interface CoachResult {
   error?: string;
 }
 
+export interface TutorResult {
+  answer?: string;
+  error?: string;
+}
+
+/**
+ * Pregunta libre a la IA (Edge Function `tutor`, respaldada por Gemini).
+ * Ómicron la usa como cerebro conversacional general. Degrada con gracia.
+ */
+export async function askTutor(question: string): Promise<TutorResult> {
+  try {
+    const { data, error } = await supabase.functions.invoke('tutor', { body: { question } });
+    if (error) {
+      return { error: 'No pude consultar al Tutor IA. ¿Está desplegada la función "tutor" y hay sesión activa?' };
+    }
+    if (data && (data as { error?: string }).error) {
+      return { error: (data as { error: string }).error };
+    }
+    const answer = (data as { answer?: string })?.answer;
+    return { answer: answer || 'No obtuve respuesta. Reformulá tu pregunta.' };
+  } catch {
+    return { error: 'Error inesperado al consultar al Tutor IA.' };
+  }
+}
+
 /**
  * Consulta al Coach IA (Edge Function `coach`, respaldada por Gemini).
  * Degrada con gracia si la función no está desplegada o falla.
