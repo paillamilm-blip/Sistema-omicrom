@@ -73,8 +73,8 @@ test('3 · Convalidar el Gemelo mueve la reputación real', async ({ page }) => 
   // Convalidar un aporte a la Bóveda (botón directo, sin archivo).
   await page.getByRole('button', { name: /aporte a la bóveda/i }).click();
 
-  // El servidor confirma → mensaje de éxito.
-  await expect(page.getByText(/convalidado/i)).toBeVisible({ timeout: 20_000 });
+  // El servidor confirma → mensaje de éxito (reputación subió). Selector único.
+  await expect(page.getByText(/reputación real subió/i)).toBeVisible({ timeout: 20_000 });
   await page.screenshot({ path: 'test-results/omicron-convalida.png', fullPage: true });
 });
 
