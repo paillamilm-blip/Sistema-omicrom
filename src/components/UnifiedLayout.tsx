@@ -8,6 +8,21 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 import { C, FONT } from '../theme';
 
+// Inyecta (una sola vez) el keyframe del barrido holográfico "Industria 5.0".
+function injectHudStyles(): void {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById('omi-hud-css')) return;
+  const s = document.createElement('style');
+  s.id = 'omi-hud-css';
+  s.textContent = `
+    @keyframes omiScan { 0%{transform:translateY(-160px);opacity:0} 12%{opacity:.55} 88%{opacity:.55} 100%{transform:translateY(100vh);opacity:0} }
+    .omi-scan { animation: omiScan 7.5s linear infinite; }
+    @media (prefers-reduced-motion: reduce){ .omi-scan{ animation:none; opacity:0; } }
+  `;
+  document.head.appendChild(s);
+}
+injectHudStyles();
+
 interface UnifiedLayoutProps {
   children: ReactNode;
   title?: string;
@@ -40,6 +55,14 @@ export function UnifiedLayout({
       {/* Fondo Ómicron: grilla + halo (continuidad visual con la orbe) */}
       <div style={S.bgGrid} />
       <div style={S.bgGlow} />
+
+      {/* Ambiente Industria 5.0: scanlines + barrido holográfico + esquinas HUD */}
+      <div style={S.scanlines} />
+      <div className="omi-scan" style={S.scanSweep} />
+      <div style={{ ...S.hudCorner, ...S.hudTL }} />
+      <div style={{ ...S.hudCorner, ...S.hudTR }} />
+      <div style={{ ...S.hudCorner, ...S.hudBL }} />
+      <div style={{ ...S.hudCorner, ...S.hudBR }} />
 
       {/* Header contextual (siempre muestra botón de volver) */}
       {(title || showBackButton) && (
@@ -94,6 +117,24 @@ const S: Record<string, React.CSSProperties> = {
     width: '120%', height: '70%', zIndex: 0, pointerEvents: 'none',
     background: 'radial-gradient(circle at 50% 30%, rgba(94,92,230,0.16), transparent 60%)',
   },
+
+  // Líneas de escaneo tenues (textura de pantalla holográfica), detrás del contenido.
+  scanlines: {
+    position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.5,
+    backgroundImage: 'repeating-linear-gradient(to bottom, rgba(92,200,255,0.035) 0px, rgba(92,200,255,0.035) 1px, transparent 1px, transparent 3px)',
+  },
+  // Barrido holográfico que recorre la consola (encima, muy sutil).
+  scanSweep: {
+    position: 'absolute', left: 0, right: 0, top: 0, height: 150, zIndex: 4, pointerEvents: 'none',
+    background: 'linear-gradient(180deg, transparent, rgba(92,200,255,0.07), transparent)',
+    mixBlendMode: 'screen',
+  },
+  // Esquinas HUD (marco de consola industrial) en las 4 esquinas del viewport.
+  hudCorner: { position: 'absolute', width: 20, height: 20, zIndex: 3, pointerEvents: 'none', opacity: 0.6 },
+  hudTL: { top: 8, left: 8, borderTop: `1.5px solid ${C.cyan}`, borderLeft: `1.5px solid ${C.cyan}` },
+  hudTR: { top: 8, right: 8, borderTop: `1.5px solid ${C.cyan}`, borderRight: `1.5px solid ${C.cyan}` },
+  hudBL: { bottom: 8, left: 8, borderBottom: `1.5px solid ${C.cyan}`, borderLeft: `1.5px solid ${C.cyan}` },
+  hudBR: { bottom: 8, right: 8, borderBottom: `1.5px solid ${C.cyan}`, borderRight: `1.5px solid ${C.cyan}` },
 
   // Background holográfico compartido
   background: {
