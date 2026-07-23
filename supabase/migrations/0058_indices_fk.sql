@@ -1,0 +1,20 @@
+-- 0058 · Rendimiento: índices en foreign keys sin cubrir.
+create index if not exists idx_academy_courses_node on public.academy_courses(node_id);
+create index if not exists idx_actas_evidencia_node on public.actas_evidencia(node_id);
+create index if not exists idx_actas_evidencia_user on public.actas_evidencia(user_id);
+create index if not exists idx_appeal_votes_arbiter on public.appeal_votes(arbiter_id);
+create index if not exists idx_arbiter_votes_arbiter on public.arbiter_votes(arbiter_id);
+create index if not exists idx_content_lineage_child on public.content_lineage(child_content_id);
+create index if not exists idx_credentials_verified_by on public.credentials(verified_by);
+create index if not exists idx_escrow_buyer on public.escrow_contracts(buyer_id);
+create index if not exists idx_escrow_seller on public.escrow_contracts(seller_id);
+create index if not exists idx_escrow_service on public.escrow_contracts(service_id);
+create index if not exists idx_exam_sessions_node on public.exam_sessions(node_id);
+create index if not exists idx_exam_sessions_user on public.exam_sessions(user_id);
+create index if not exists idx_job_postings_company on public.job_postings(company_id);
+create index if not exists idx_mentorships_mentee on public.mentorships(mentee_id);
+create index if not exists idx_mentorships_mentor on public.mentorships(mentor_id);
+create index if not exists idx_penalties_dispute on public.penalties(dispute_id);
+create index if not exists idx_penalties_user on public.penalties(user_id);
+create index if not exists idx_ucp_course on public.user_course_progress(course_id);
+create index if not exists idx_ulp_lesson on public.user_lesson_progress(lesson_id);
