@@ -103,3 +103,70 @@ test('5 · Todos los nodos abren desde el home', async ({ page }) => {
     });
   }
 });
+
+
+// ── 6 · Subir CV real → convalidado (push) ─────────────────────────────
+test('6 · Subir CV real convalida y muestra el push', async ({ page }) => {
+  test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
+  await login(page);
+  await page.getByText(/convalidar gemelo/i).click();
+  // El nodo CV tiene un <input type=file> oculto dentro de un <label>.
+  await page.locator('input[type="file"]').first().setInputFiles({
+    name: 'cv.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('Ingeniero. 5 años de experiencia. React, Node, SQL. Contratos completados y mentorías.'),
+  });
+  await expect(page.getByText(/cv cargado y convalidado|reputación real subió/i).first())
+    .toBeVisible({ timeout: 20_000 });
+  await page.screenshot({ path: 'test-results/omicron-cv.png', fullPage: true });
+});
+
+// ── 7 · Voz: el micrófono activa el modo escucha ───────────────────────
+test('7 · El micrófono activa el modo "Escuchando"', async ({ page, context }) => {
+  test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
+  await context.grantPermissions(['microphone']);
+  await login(page);
+  await page.getByRole('button', { name: /hablar/i }).click();
+  await expect(page.getByText(/escuchando/i)).toBeVisible({ timeout: 10_000 });
+});
+
+// ── 8 · Ómicron responde a un saludo (conversación) ────────────────────
+test('8 · Ómicron responde cuando le hablás', async ({ page }) => {
+  test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
+  await login(page);
+  const input = page.getByPlaceholder(/hablá o escribí a ómicron/i);
+  await input.fill('hola');
+  await input.press('Enter');
+  await expect(page.getByText(/hablame o escribime/i)).toBeVisible({ timeout: 15_000 });
+});
+
+// ── 9 · Cerrar sesión ──────────────────────────────────────────────────
+test('9 · Cerrar sesión vuelve a la pantalla de acceso', async ({ page }) => {
+  test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
+  await login(page);
+  await page.getByRole('button', { name: /cerrar sesión/i }).click();
+  await expect(page.getByRole('heading', { name: /sistema ómicron/i })).toBeVisible({ timeout: 20_000 });
+});
+
+// ── 10 · SINERGIA: journey completo end-to-end ─────────────────────────
+test('10 · Sinergia: login → convalidar → navegar → cerrar sesión', async ({ page }) => {
+  test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
+  await login(page);
+
+  // Convalidar (reputación sube)
+  await page.getByText(/convalidar gemelo/i).click();
+  await page.getByRole('button', { name: /aporte a la bóveda/i }).click();
+  await expect(page.getByText(/reputación real subió/i)).toBeVisible({ timeout: 20_000 });
+
+  // Navegar por comando
+  await goHome(page);
+  const input = page.getByPlaceholder(/hablá o escribí a ómicron/i);
+  await input.fill('llévame a Empleos');
+  await input.press('Enter');
+  await expect(page.getByText(/oportunidades/i).first()).toBeVisible({ timeout: 20_000 });
+
+  // Cerrar sesión
+  await goHome(page);
+  await page.getByRole('button', { name: /cerrar sesión/i }).click();
+  await expect(page.getByRole('heading', { name: /sistema ómicron/i })).toBeVisible({ timeout: 20_000 });
+});
