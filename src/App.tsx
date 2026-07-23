@@ -8,7 +8,7 @@ import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import OmicronAssistant from './components/omicron/OmicronAssistant';
 import { InstallPWA } from './components/shared/InstallPWA';
-import { IniciacionGemelo, shouldShowIniciacion } from './components/shared/IniciacionGemelo';
+import ParticleOrb from './components/omicron/ParticleOrb';
 import { UnifiedLayout } from './components/UnifiedLayout';
 import { NavigationStack } from './components/NavigationStack';
 import { ToastProvider } from './components/shared/Toast';
@@ -49,10 +49,9 @@ function TabLoader() {
 }
 
 function AppShell() {
-  const { authStatus, isLoadingProfile, profile } = useApp();
+  const { authStatus, isLoadingProfile } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
-  const [showIniciacion, setShowIniciacion] = useState(() => shouldShowIniciacion());
   const [profileDetail, setProfileDetail] = useState(false);
 
   useEffect(() => {
@@ -66,8 +65,8 @@ function AppShell() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(94,92,230,0.14), transparent 60%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', width: 92, height: 92, borderRadius: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(140deg, #5cc8ff, #5e5ce6)', boxShadow: '0 22px 60px rgba(94,92,230,0.5)', animation: 'floatY 4s ease-in-out infinite' }}>
-          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 50, color: '#fff' }}>Ω</span>
+        <div style={{ position: 'relative', width: 168, height: 168 }}>
+          <ParticleOrb />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
           <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
@@ -83,15 +82,7 @@ function AppShell() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {showIniciacion && (
-        <ErrorBoundary section="Iniciación">
-          <IniciacionGemelo
-            userName={profile?.full_name || profile?.username}
-            onClose={() => setShowIniciacion(false)}
-          />
-        </ErrorBoundary>
-      )}
-      
+
       {/* Navegación fluida con stack */}
       <NavigationStack>
         {(currentTab) => (

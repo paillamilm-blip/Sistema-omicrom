@@ -19,7 +19,7 @@ import { interpret, askCoach, askTutor } from '../../lib/oraculo';
 import { speak, stopSpeaking } from '../../lib/voiceEngine';
 import { C, FONT, RADIUS } from '../../theme';
 import ParticleOrb from './ParticleOrb';
-import { CVOnboarding } from '../perfil/CVOnboarding';
+import ConvalidaOmicron from './ConvalidaOmicron';
 import type { TabId, GemeloDigital } from '../../types';
 
 type OrbState = 'idle' | 'listening' | 'thinking' | 'speaking';
@@ -270,8 +270,8 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
           <button onClick={() => setCvOpen(true)} style={ctaStyle(C.cyan)}>
             <Upload size={20} color={C.cyan} />
-            <span style={ctaTitle}>Subir mi CV</span>
-            <span style={ctaSub}>PDF · Word · texto</span>
+            <span style={ctaTitle}>Convalidar Gemelo</span>
+            <span style={ctaSub}>CV · título · años · aportes</span>
           </button>
           <button onClick={() => { omicronSay('Vamos al examen para calcular tu nivel real.'); setTimeout(() => setActiveTab('maxskill'), 700); }} style={ctaStyle(C.purple)}>
             <FileCheck2 size={20} color={C.purple} />
@@ -324,13 +324,8 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
         </div>
       </div>
 
-      {/* Modal de carga de CV */}
-      {cvOpen && (
-        <CVOnboarding
-          onSkip={() => setCvOpen(false)}
-          onComplete={() => { setCvOpen(false); omicronSay('Analicé tu CV. Revisá tu nivel y seguí tu próximo paso para mejorar.'); }}
-        />
-      )}
+      {/* Convalidación REAL del Gemelo (mueve tus ejes server-side) */}
+      {cvOpen && <ConvalidaOmicron onClose={() => setCvOpen(false)} />}
     </div>
   );
 }
