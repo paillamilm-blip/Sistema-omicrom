@@ -4,14 +4,21 @@
 // cuando no hay red. Esto da instalabilidad PWA + resiliencia offline básica
 // sin el riesgo de contenido obsoleto.
 
-const CACHE = 'omicron-v2';
+const CACHE = 'omicron-v3';
 const SHELL = ['/', '/index.html', '/icon.svg', '/manifest.webmanifest', '/og-image.png'];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  // NO activamos automáticamente: el SW nuevo queda "esperando" hasta que el
+  // usuario toque "Actualizar" (evita romper la sesión en curso). La app
+  // detecta este estado y muestra el aviso de nueva versión.
   event.waitUntil(
     caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {})
   );
+});
+
+// La app pide activar la versión nueva cuando el usuario toca "Actualizar".
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {

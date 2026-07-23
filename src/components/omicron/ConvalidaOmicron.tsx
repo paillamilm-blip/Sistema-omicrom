@@ -98,11 +98,38 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
     const text = raw.trim();
     if (!text || busy) return;
     setBusy('cv');
-    setMsg('Analizando con Ómicron…');
+    setMsg('Ómicron está leyendo TODO tu CV…');
     try {
-      const analyzed = analyzeCV(text);
-      // Aplica el análisis REAL al perfil server-side (ejes + nombre + skills).
-      // El trigger recalcula experiencia y reputación. Sortea el trigger anti-inflado.
+      // 1) Análisis REAL con IA (lee TODO el CV). Fallback a la heurística local si falla.
+      let analyzed = analyzeCV(text);
+      let summary = '';
+      try {
+        const { data: aiData } = await supabase.functions.invoke('analizar-cv', { body: { text } });
+        const a = aiData as { ok?: boolean; analysis?: {
+          name?: string; seniorLabel?: string; seniorLevel?: number; years?: number;
+          skills?: string[]; arch?: string; summary?: string;
+          axes?: { exec?: number; qual?: number; trans?: number; fund?: number };
+        } } | null;
+        const ia = a?.ok ? a.analysis : null;
+        if (ia?.axes) {
+          const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+          const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
+          analyzed = {
+            ...analyzed,
+            name: ia.name || analyzed.name,
+            seniorLabel: ia.seniorLabel || analyzed.seniorLabel,
+            seniorLevel: (ia.seniorLevel as AnalyzedProfile['seniorLevel']) || analyzed.seniorLevel,
+            years: typeof ia.years === 'number' ? ia.years : analyzed.years,
+            skills: skills.length ? skills : analyzed.skills,
+            labels: skills.length ? skills : analyzed.labels,
+            arch: (ia.arch as AnalyzedProfile['arch']) || analyzed.arch,
+            axes: { exec: clamp(ia.axes.exec), qual: clamp(ia.axes.qual), trans: clamp(ia.axes.trans), fund: clamp(ia.axes.fund) },
+          };
+          summary = ia.summary || '';
+        }
+      } catch { /* la IA no respondió: usamos la heurística local */ }
+
+      // 2) Persiste el análisis server-side (ejes + nombre + skills). El trigger recalcula reputación.
       const { data, error } = await supabase.rpc('aplicar_analisis_cv', {
         p_name: analyzed.name || '',
         p_skills: analyzed.labels,
@@ -123,10 +150,15 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
       await refreshProfile();
       setShowCv(false);
       setDossier(analyzed);
-      setAi({ loading: true, text: '' });
-      askCoach()
-        .then((r) => setAi({ loading: false, text: r.advice || '' }))
-        .catch(() => setAi({ loading: false, text: '' }));
+      // Si la IA ya explicó el porqué de tus niveles, lo mostramos; si no, pedimos el diagnóstico del coach.
+      if (summary) {
+        setAi({ loading: false, text: summary });
+      } else {
+        setAi({ loading: true, text: '' });
+        askCoach()
+          .then((r) => setAi({ loading: false, text: r.advice || '' }))
+          .catch(() => setAi({ loading: false, text: '' }));
+      }
     } catch {
       setMsg('No pude analizar. Revisá el texto e intentá de nuevo.');
     }
