@@ -345,7 +345,12 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
       </div>
 
       {/* Convalidación REAL del Gemelo (mueve tus ejes server-side) */}
-      {cvOpen && <ConvalidaOmicron onClose={() => setCvOpen(false)} />}
+      {cvOpen && (
+        <ConvalidaOmicron
+          onClose={() => setCvOpen(false)}
+          onViewProfile={() => { setCvOpen(false); onOpenPerfil?.(); }}
+        />
+      )}
     </div>
   );
 }
