@@ -9,7 +9,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 export default tseslint.config(
   // scripts/**: utilidades de build en CommonJS puro (.cjs), fuera del
   // alcance de las reglas de TypeScript/React (no son código de la app).
-  { ignores: ['dist', 'node_modules', 'supabase/functions/**', 'scripts/**'] },
+  { ignores: ['dist', 'node_modules', 'supabase/functions/**', 'scripts/**', 'e2e/**', 'playwright.config.ts'] },
   ...tseslint.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
