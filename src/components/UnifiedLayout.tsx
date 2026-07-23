@@ -37,12 +37,9 @@ export function UnifiedLayout({
 
   return (
     <div style={S.container}>
-      {/* Background holográfico unificado */}
-      <div style={S.background}>
-        <div style={S.bgGradient1} />
-        <div style={S.bgGradient2} />
-        <div style={S.bgNoise} />
-      </div>
+      {/* Fondo Ómicron: grilla + halo (continuidad visual con la orbe) */}
+      <div style={S.bgGrid} />
+      <div style={S.bgGlow} />
 
       {/* Header contextual (siempre muestra botón de volver) */}
       {(title || showBackButton) && (
@@ -83,6 +80,19 @@ const S: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     height: '100%',
     overflow: 'hidden',
+    background: 'radial-gradient(130% 95% at 50% 6%, #061024 0%, #02030a 52%, #000003 100%)',
+  },
+  bgGrid: {
+    position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+    backgroundImage: `linear-gradient(${C.grid} 1px, transparent 1px), linear-gradient(90deg, ${C.grid} 1px, transparent 1px)`,
+    backgroundSize: '44px 44px',
+    maskImage: 'radial-gradient(circle at 50% 16%, #000, transparent 72%)',
+    WebkitMaskImage: 'radial-gradient(circle at 50% 16%, #000, transparent 72%)',
+  },
+  bgGlow: {
+    position: 'absolute', top: '-28%', left: '50%', transform: 'translateX(-50%)',
+    width: '120%', height: '70%', zIndex: 0, pointerEvents: 'none',
+    background: 'radial-gradient(circle at 50% 30%, rgba(94,92,230,0.16), transparent 60%)',
   },
 
   // Background holográfico compartido
