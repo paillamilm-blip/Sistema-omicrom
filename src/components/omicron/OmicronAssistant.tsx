@@ -205,7 +205,7 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
 
       {/* ORBE DE PARTÍCULAS */}
       <div style={{ position: 'relative', zIndex: 2, height: '32vh', minHeight: 210, flexShrink: 0 }}>
-        <ParticleOrb enableMic={state === 'listening'} colorA={0x5cc8ff} colorB={0x5e5ce6} />
+        <ParticleOrb enableMic={state === 'listening'} />
       </div>
 
       {/* Mensaje de Ómicron */}

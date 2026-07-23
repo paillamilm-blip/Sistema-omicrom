@@ -1,162 +1,142 @@
 import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
 
 // =====================================================================
-// <ParticleOrb /> — Orbe de partículas vibrando con el sonido (Three.js).
+// <ParticleOrb /> — Orbe de partículas viva, en Canvas puro (sin Three.js).
 //
-// Nube de ~2600 partículas sobre una esfera; se deforman con ruido +
-// el volumen del audio (voz del Oráculo o micrófono). Núcleo vivo de
-// Ómicron. Encapsulado en un <div> propio, con limpieza estricta (sin
-// fugas de memoria) y responsividad.
+// Esfera de partículas proyectada en 2.5D que rota y VIBRA con el sonido
+// (voz del Oráculo o micrófono). Núcleo vivo de Ómicron. Cero dependencias
+// externas, limpieza estricta (sin fugas) y responsividad (devicePixelRatio).
 // =====================================================================
 
 export interface ParticleOrbProps {
   audioStream?: MediaStream | null;
   enableMic?: boolean;
-  colorA?: number; // color en zonas calmas
-  colorB?: number; // color en crestas (voz fuerte)
+  colorA?: [number, number, number]; // zonas calmas (RGB)
+  colorB?: [number, number, number]; // crestas / voz fuerte (RGB)
   className?: string;
 }
+
+// Tipo del parámetro real de getByteFrequencyData (agnóstico a la versión de TS).
+type FreqArg = Parameters<AnalyserNode['getByteFrequencyData']>[0];
 
 export default function ParticleOrb({
   audioStream = null,
   enableMic = false,
-  colorA = 0x5cc8ff,
-  colorB = 0x5e5ce6,
+  colorA = [92, 200, 255],
+  colorB = [94, 92, 230],
   className,
 }: ParticleOrbProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
 
-  // ── Escena WebGL + animación + resize + cleanup ────────────────────
+  // ── Render de partículas + animación + resize + cleanup ────────────
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
+    const canvas = document.createElement('canvas');
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.display = 'block';
+    mount.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    const width = mount.clientWidth || 1;
-    const height = mount.clientHeight || 1;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);
-    camera.position.z = 9;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(width, height);
-    mount.appendChild(renderer.domElement);
-
-    // Partículas sobre una esfera (distribución de Fibonacci).
-    const COUNT = 2600;
-    const positions = new Float32Array(COUNT * 3);
+    // Puntos base sobre una esfera (distribución de Fibonacci).
+    const COUNT = 900;
+    const base: { x: number; y: number; z: number }[] = [];
     for (let i = 0; i < COUNT; i++) {
       const y = 1 - (i / (COUNT - 1)) * 2;
       const r = Math.sqrt(Math.max(0, 1 - y * y));
       const phi = i * Math.PI * (3 - Math.sqrt(5));
-      positions[i * 3] = Math.cos(phi) * r * 3;
-      positions[i * 3 + 1] = y * 3;
-      positions[i * 3 + 2] = Math.sin(phi) * r * 3;
+      base.push({ x: Math.cos(phi) * r, y, z: Math.sin(phi) * r });
     }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
-    const uniforms = {
-      uTime: { value: 0 },
-      uAudio: { value: 0 },
-      uColorA: { value: new THREE.Color(colorA) },
-      uColorB: { value: new THREE.Color(colorB) },
+    let W = 0, H = 0, dpr = 1;
+    const resize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = mount.clientWidth || 1;
+      H = mount.clientHeight || 1;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
-
-    const vertexShader = /* glsl */ `
-      uniform float uTime;
-      uniform float uAudio;
-      varying float vGlow;
-      void main() {
-        vec3 p = position;
-        float n = sin(p.x * 2.2 + uTime) * sin(p.y * 2.2 + uTime * 1.1) * sin(p.z * 2.2 + uTime * 0.9);
-        float disp = n * (0.18 + uAudio / 90.0);
-        p += normalize(position) * disp;
-        vGlow = 0.5 + 0.5 * n;
-        vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        gl_PointSize = (2.2 + uAudio / 18.0) * (300.0 / -mv.z);
-        gl_Position = projectionMatrix * mv;
-      }
-    `;
-
-    const fragmentShader = /* glsl */ `
-      uniform vec3 uColorA;
-      uniform vec3 uColorB;
-      varying float vGlow;
-      void main() {
-        vec2 c = gl_PointCoord - vec2(0.5);
-        float d = length(c);
-        if (d > 0.5) discard;
-        float alpha = smoothstep(0.5, 0.0, d);
-        vec3 col = mix(uColorA, uColorB, clamp(vGlow, 0.0, 1.0));
-        gl_FragColor = vec4(col, alpha);
-      }
-    `;
-
-    const material = new THREE.ShaderMaterial({
-      uniforms,
-      vertexShader,
-      fragmentShader,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-
-    const points = new THREE.Points(geometry, material);
-    scene.add(points);
-
-    const clock = new THREE.Clock();
-    let freqData: Uint8Array | null = null;
-    let frameId = 0;
-
-    const animate = () => {
-      frameId = requestAnimationFrame(animate);
-      uniforms.uTime.value = clock.getElapsedTime();
-
-      const analyser = analyserRef.current;
-      if (analyser) {
-        if (!freqData || freqData.length !== analyser.frequencyBinCount) {
-          freqData = new Uint8Array(analyser.frequencyBinCount);
-        }
-        analyser.getByteFrequencyData(freqData);
-        let sum = 0;
-        for (let i = 0; i < freqData.length; i++) sum += freqData[i];
-        uniforms.uAudio.value = sum / freqData.length;
-      } else {
-        uniforms.uAudio.value = 10 + Math.sin(uniforms.uTime.value * 1.6) * 7;
-      }
-
-      points.rotation.y += 0.0016;
-      points.rotation.x += 0.0007;
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      const w = mount.clientWidth || 1;
-      const h = mount.clientHeight || 1;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-    window.addEventListener('resize', handleResize);
-    const ro = new ResizeObserver(handleResize);
+    resize();
+    window.addEventListener('resize', resize);
+    const ro = new ResizeObserver(resize);
     ro.observe(mount);
 
+    let raf = 0;
+    let t = 0;
+    let freq: Uint8Array | null = null;
+
+    const draw = () => {
+      raf = requestAnimationFrame(draw);
+      t += 0.01;
+
+      // Nivel de audio (0..1)
+      let level = 0.12 + Math.sin(t * 1.6) * 0.05; // latido base sin audio
+      const analyser = analyserRef.current;
+      if (analyser) {
+        const bins = analyser.frequencyBinCount;
+        if (!freq || freq.length !== bins) freq = new Uint8Array(new ArrayBuffer(bins));
+        analyser.getByteFrequencyData(freq as unknown as FreqArg);
+        let sum = 0;
+        for (let i = 0; i < freq.length; i++) sum += freq[i];
+        level = Math.min(1, (sum / freq.length) / 90);
+      }
+
+      ctx.clearRect(0, 0, W, H);
+      const cx = W / 2, cy = H / 2;
+      const baseR = Math.min(W, H) * 0.36;
+      const fov = 3.2;
+
+      // Rotación
+      const ay = t * 0.35, ax = t * 0.16;
+      const cosY = Math.cos(ay), sinY = Math.sin(ay);
+      const cosX = Math.cos(ax), sinX = Math.sin(ax);
+
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < COUNT; i++) {
+        const p = base[i];
+        // Desplazamiento radial por ruido + audio (vibración)
+        const noise = Math.sin(p.x * 3 + t * 2) * Math.sin(p.y * 3 + t * 2.2) * Math.sin(p.z * 3 + t * 1.8);
+        const rr = 1 + level * 0.5 + noise * (0.05 + level * 0.22);
+        const x = p.x * rr, y = p.y * rr, z = p.z * rr;
+        // Rotar en Y
+        const x1 = x * cosY - z * sinY;
+        const z1 = x * sinY + z * cosY;
+        // Rotar en X
+        const y1 = y * cosX - z1 * sinX;
+        const z2 = y * sinX + z1 * cosX;
+
+        // Proyección perspectiva
+        const scale = fov / (fov - z2);
+        const sx = cx + x1 * baseR * scale;
+        const sy = cy + y1 * baseR * scale;
+
+        const depth = (z2 + 1.4) / 2.8; // 0..1
+        const mix = Math.min(1, Math.max(0, depth * 0.6 + level * 0.6));
+        const rC = Math.round(colorA[0] + (colorB[0] - colorA[0]) * mix);
+        const gC = Math.round(colorA[1] + (colorB[1] - colorA[1]) * mix);
+        const bC = Math.round(colorA[2] + (colorB[2] - colorA[2]) * mix);
+        const alpha = 0.25 + depth * 0.6;
+        const size = Math.max(0.6, (0.8 + level * 1.6) * scale);
+
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${rC},${gC},${bC},${alpha.toFixed(3)})`;
+        ctx.arc(sx, sy, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    };
+    draw();
+
     return () => {
-      cancelAnimationFrame(frameId);
-      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', resize);
       ro.disconnect();
-      scene.remove(points);
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
-      renderer.forceContextLoss();
-      if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
-      freqData = null;
+      if (canvas.parentNode === mount) mount.removeChild(canvas);
+      freq = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -189,7 +169,7 @@ export default function ParticleOrb({
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then((stream) => {
-          if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
+          if (cancelled) { stream.getTracks().forEach((tr) => tr.stop()); return; }
           ownedMicStream = stream;
           attach(stream);
         })
@@ -200,14 +180,12 @@ export default function ParticleOrb({
       cancelled = true;
       if (analyserRef.current === localAnalyser) analyserRef.current = null;
       try { source?.disconnect(); localAnalyser?.disconnect(); } catch { /* noop */ }
-      ownedMicStream?.getTracks().forEach((t) => t.stop());
+      ownedMicStream?.getTracks().forEach((tr) => tr.stop());
       if (audioContext && audioContext.state !== 'closed') {
         void audioContext.close().catch(() => undefined);
       }
     };
   }, [audioStream, enableMic]);
 
-  return (
-    <div ref={mountRef} className={className} style={{ width: '100%', height: '100%' }} />
-  );
+  return <div ref={mountRef} className={className} style={{ width: '100%', height: '100%' }} />;
 }
