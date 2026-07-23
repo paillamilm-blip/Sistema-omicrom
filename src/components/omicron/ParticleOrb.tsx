@@ -42,7 +42,7 @@ export default function ParticleOrb({
     if (!ctx) return;
 
     // Puntos base sobre una esfera (distribución de Fibonacci).
-    const COUNT = 900;
+    const COUNT = 1600;
     const base: { x: number; y: number; z: number }[] = [];
     for (let i = 0; i < COUNT; i++) {
       const y = 1 - (i / (COUNT - 1)) * 2;
@@ -82,13 +82,21 @@ export default function ParticleOrb({
         analyser.getByteFrequencyData(freq as unknown as FreqArg);
         let sum = 0;
         for (let i = 0; i < freq.length; i++) sum += freq[i];
-        level = Math.min(1, (sum / freq.length) / 90);
+        level = Math.min(1, (sum / freq.length) / 52);
       }
 
       ctx.clearRect(0, 0, W, H);
       const cx = W / 2, cy = H / 2;
       const baseR = Math.min(W, H) * 0.36;
       const fov = 3.2;
+
+      // Halo central que respira con la voz
+      const glowR = baseR * (1.15 + level * 0.75);
+      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
+      glow.addColorStop(0, `rgba(${colorB[0]},${colorB[1]},${colorB[2]},${(0.10 + level * 0.30).toFixed(3)})`);
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
 
       // Rotación
       const ay = t * 0.35, ax = t * 0.16;
@@ -100,7 +108,7 @@ export default function ParticleOrb({
         const p = base[i];
         // Desplazamiento radial por ruido + audio (vibración)
         const noise = Math.sin(p.x * 3 + t * 2) * Math.sin(p.y * 3 + t * 2.2) * Math.sin(p.z * 3 + t * 1.8);
-        const rr = 1 + level * 0.5 + noise * (0.05 + level * 0.22);
+        const rr = 1 + level * 0.72 + noise * (0.06 + level * 0.36);
         const x = p.x * rr, y = p.y * rr, z = p.z * rr;
         // Rotar en Y
         const x1 = x * cosY - z * sinY;
@@ -119,8 +127,8 @@ export default function ParticleOrb({
         const rC = Math.round(colorA[0] + (colorB[0] - colorA[0]) * mix);
         const gC = Math.round(colorA[1] + (colorB[1] - colorA[1]) * mix);
         const bC = Math.round(colorA[2] + (colorB[2] - colorA[2]) * mix);
-        const alpha = 0.25 + depth * 0.6;
-        const size = Math.max(0.6, (0.8 + level * 1.6) * scale);
+        const alpha = 0.28 + depth * 0.62;
+        const size = Math.max(0.5, (0.7 + level * 2.6) * scale);
 
         ctx.beginPath();
         ctx.fillStyle = `rgba(${rC},${gC},${bC},${alpha.toFixed(3)})`;

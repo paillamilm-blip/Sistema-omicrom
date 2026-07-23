@@ -76,7 +76,7 @@ function getRecognitionCtor(): SRCtor | null {
 interface Props { onOpenPerfil?: () => void }
 
 export default function OmicronAssistant({ onOpenPerfil }: Props) {
-  const { profile, gemelo, setActiveTab } = useApp();
+  const { profile, gemelo, setActiveTab, unreadCount } = useApp();
 
   const [state, setState] = useState<OrbState>('idle');
   const [input, setInput] = useState('');
@@ -122,6 +122,11 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     const intent = interpret(text);
 
     if (intent.kind === 'navigate') {
+      if (intent.tab === 'perfil') {
+        omicronSay('Abro tu perfil completo: todo medido, con tus oportunidades de mejora.');
+        setTimeout(() => onOpenPerfil?.(), 500);
+        return;
+      }
       omicronSay(`Te llevo a ${intent.label}.`);
       setTimeout(() => setActiveTab(intent.tab), 650);
       return;
@@ -147,7 +152,7 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     }
     const t = await askTutor(text);
     omicronSay(t.answer || t.error || 'No pude responder ahora. Probá de nuevo.');
-  }, [gemelo, profile, omicronSay, setActiveTab]);
+  }, [gemelo, profile, omicronSay, setActiveTab, onOpenPerfil]);
 
   const toggleListen = useCallback(() => {
     if (state === 'listening') { recognitionRef.current?.stop(); return; }
@@ -175,6 +180,12 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     if (tab === 'perfil') { onOpenPerfil?.(); return; }
     setActiveTab(tab);
   }, [setActiveTab, onOpenPerfil]);
+
+  // Alertas / nodos que flotan sobre la orbe (sistema de aprendizaje continuo).
+  const alerts: { text: string; color: string; onClick: () => void; pos: React.CSSProperties }[] = [];
+  if (action) alerts.push({ text: `${action.label} ${action.value}`, color: action.color, onClick: goToAction, pos: { top: '6%', left: '4%' } });
+  if (unreadCount > 0) alerts.push({ text: `${unreadCount} alerta${unreadCount > 1 ? 's' : ''}`, color: C.gold, onClick: () => setActiveTab('empleos'), pos: { top: '11%', right: '4%' } });
+  alerts.push({ text: 'Subí tu CV', color: C.cyan, onClick: () => setCvOpen(true), pos: { bottom: '8%', right: '7%' } });
 
   return (
     <div style={{
@@ -206,6 +217,23 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
       {/* ORBE DE PARTÍCULAS */}
       <div style={{ position: 'relative', zIndex: 2, height: '32vh', minHeight: 210, flexShrink: 0 }}>
         <ParticleOrb enableMic={state === 'listening'} />
+        {/* Alertas / nodos flotando sobre la orbe */}
+        {alerts.map((a, i) => (
+          <motion.button key={i} onClick={a.onClick}
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute', ...a.pos, display: 'flex', alignItems: 'center', gap: 6,
+              padding: '5px 10px', borderRadius: 999, cursor: 'pointer',
+              background: 'rgba(6,10,22,0.72)', border: `1px solid ${a.color}66`, color: C.ink,
+              fontFamily: FONT.mono, fontSize: 10, letterSpacing: 0.3,
+              backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+              zIndex: 4, boxShadow: `0 0 14px ${a.color}44`,
+            }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: a.color, boxShadow: `0 0 6px ${a.color}` }} />
+            {a.text}
+          </motion.button>
+        ))}
       </div>
 
       {/* Mensaje de Ómicron */}
