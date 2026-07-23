@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  GraduationCap, ArrowLeft, BookOpen, CheckCircle2, Lock, Award, Loader2,
+  GraduationCap, BookOpen, CheckCircle2, Lock, Award, Loader2,
   ChevronDown, Sparkles, Target,
   // 🧪 MVP PILOTO: Bot, Send, X eran usados solo por el Tutor IA / Coach IA
   // (modales comentados abajo). Se dejan comentados junto con esos bloques.
@@ -413,9 +413,9 @@ export function AcademiaTab() {
                     <div key={c.id} style={{ position: 'relative', minHeight: 96, display: 'flex', alignItems: 'center', justifyContent: left ? 'flex-start' : 'flex-end' }}>
                       <span style={{ position: 'absolute', top: '50%', height: 2, background: accent, boxShadow: `0 0 6px ${accent}`, left: left ? '44%' : '50%', width: '6%' }} />
                       <span style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 13, height: 13, borderRadius: '50%', background: accent, border: '2px solid #060a12', boxShadow: `0 0 10px ${accent}`, zIndex: 3, animation: inProgress ? 'corePulse 1.8s ease-in-out infinite' : undefined }} />
-                      <button onClick={() => openCourse(c)} style={{
+                      <button onClick={() => openCourse(c)} className="oc-card oc-pressable oc-rise" style={{
                         width: '44%', textAlign: 'left', cursor: 'pointer', position: 'relative', zIndex: 2,
-                        borderRadius: 12, padding: 11,
+                        borderRadius: 14, padding: 11,
                         background: 'linear-gradient(165deg, rgba(20,30,52,0.92), rgba(12,20,38,0.96))',
                         border: `1px solid ${accent}66`, boxShadow: `0 0 16px ${accent}26`,
                       }}>

@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap, Wallet } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap, Wallet, Award, Layers } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { TokenTransferModal } from '../wallet/TokenTransferModal';
-import { C } from '../../theme';
-import { oc, OmicronHeader } from '../omicron/OmicronChrome';
+import { C, FONT } from '../../theme';
+import { oc, OmicronHeader, OmicronCard, Stat, ProgressBar, Chip } from '../omicron/OmicronChrome';
 import type { WalletTransaction } from '../../types';
 
-// ── Node tiers (Bitácora V4: 0-499 / 500-1999 / 2000+) ──────────────────────
+// ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────
 const NODES = [
-  { name: 'Nodo Operativo',  minPE: 0,    maxPE: 499,  commission: 15, color: 'text-slate-400',      border: 'border-slate-700'       },
-  { name: 'Nodo Core',       minPE: 500,  maxPE: 1999, commission: 10, color: 'text-omicron-cyan',   border: 'border-omicron-cyan/50'  },
-  { name: 'Nodo Arquitecto', minPE: 2000, maxPE: null, commission: 5,  color: 'text-omicron-accent', border: 'border-omicron-accent/50' },
-] as const;
+  { name: 'Nodo Operativo',  minPE: 0,    maxPE: 499 as number | null,  commission: 15, accent: '#9aa7bd' },
+  { name: 'Nodo Core',       minPE: 500,  maxPE: 1999 as number | null, commission: 10, accent: C.cyan },
+  { name: 'Nodo Arquitecto', minPE: 2000, maxPE: null as number | null, commission: 5,  accent: C.gold },
+];
 
 function getNode(pe: number) {
   if (pe >= 2000) return NODES[2];
@@ -21,16 +21,14 @@ function getNode(pe: number) {
   return NODES[0];
 }
 
-// ── Wallet tx display config ──────────────────────────────────────────────────
-const TX_META: Record<WalletTransaction['type'], {
-  label: string; sign: '+' | '−'; color: string; dot: string;
-}> = {
-  deposit:        { label: 'Deposit',          sign: '+', color: 'text-omicron-green', dot: 'bg-omicron-green'  },
-  escrow_lock:    { label: 'Escrow locked',    sign: '−', color: 'text-yellow-400',   dot: 'bg-yellow-400'     },
-  escrow_release: { label: 'Payment received', sign: '+', color: 'text-omicron-green', dot: 'bg-omicron-green'  },
-  refund:         { label: 'Refund',           sign: '+', color: 'text-omicron-cyan',  dot: 'bg-omicron-cyan'   },
-  commission:     { label: 'Network fee',      sign: '−', color: 'text-red-400',       dot: 'bg-red-400'        },
-  withdrawal:     { label: 'Withdrawal',       sign: '−', color: 'text-omicron-gold',  dot: 'bg-omicron-gold'   },
+// ── Config de visualización de transacciones ────────────────────────────────
+const TX_META: Record<WalletTransaction['type'], { label: string; sign: '+' | '−'; color: string; incoming: boolean }> = {
+  deposit:        { label: 'Depósito',            sign: '+', color: C.green, incoming: true  },
+  escrow_lock:    { label: 'Garantía bloqueada',  sign: '−', color: C.gold,  incoming: false },
+  escrow_release: { label: 'Pago recibido',       sign: '+', color: C.green, incoming: true  },
+  refund:         { label: 'Reembolso',           sign: '+', color: C.cyan,  incoming: true  },
+  commission:     { label: 'Comisión de red',     sign: '−', color: C.red,   incoming: false },
+  withdrawal:     { label: 'Retiro',              sign: '−', color: C.gold,  incoming: false },
 };
 
 function formatDate(iso: string) {
@@ -39,13 +37,11 @@ function formatDate(iso: string) {
     ' · ' + d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
 }
 
-
-// ── Component ─────────────────────────────────────────────────────────────────
 export function WalletTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
-  const [txs, setTxs]               = useState<WalletTransaction[]>([]);
-  const [loading, setLoading]        = useState(true);
-  const [view, setView]              = useState<'transactions' | 'nodes'>('transactions');
+  const [txs, setTxs]                   = useState<WalletTransaction[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [view, setView]                 = useState<'movimientos' | 'niveles'>('movimientos');
   const [transferMode, setTransferMode] = useState<'send' | 'receive' | null>(null);
 
   const loadTxs = useCallback(async () => {
@@ -68,12 +64,11 @@ export function WalletTab() {
     await loadTxs();
   }
 
-  const balance  = profile?.token_balance ?? 0;
-  const escrow   = profile?.token_escrow ?? 0;
-  const pe       = profile?.pe_points     ?? 0;
-  const pioneer  = profile?.is_pioneer    ?? false;
-  const node     = getNode(pe);
-
+  const balance = profile?.token_balance ?? 0;
+  const escrow  = profile?.token_escrow  ?? 0;
+  const pe      = profile?.pe_points      ?? 0;
+  const pioneer = profile?.is_pioneer     ?? false;
+  const node    = getNode(pe);
 
   return (
     <div style={oc.root}>
@@ -82,200 +77,158 @@ export function WalletTab() {
         icon={<Wallet size={17} />}
         accent={C.gold}
         title="Billetera"
-        subtitle={`${balance.toLocaleString('es-CL')} Tokens disponibles`}
+        subtitle={`Nivel ${node.name}`}
       />
-      <div style={oc.scroll} className="pb-6">
-        <div className="pt-2 space-y-4">
+      <div style={oc.scroll}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 24 }}>
 
-          {/* ── Balance card ── */}
-          <div className="bg-omicron-card border border-omicron-border rounded-2xl p-5">
-            <p className="text-omicron-subtle text-[10px] uppercase tracking-widest mb-3">
-              Available Balance
-            </p>
-            <div className="flex items-end gap-2 mb-1">
-              <span className="text-5xl font-bold text-omicron-text tracking-tight leading-none">
+          {/* ── Tarjeta de saldo (hero) ── */}
+          <OmicronCard accent={C.gold} glow className="oc-rise" style={{ padding: 20 }}>
+            <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: C.mut }}>
+              Saldo disponible
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 8 }}>
+              <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 46, color: C.ink, letterSpacing: -1.5, lineHeight: 0.95, textShadow: `0 0 26px ${C.gold}44` }}>
                 {balance.toLocaleString('es-CL')}
               </span>
-              <span className="text-omicron-accent text-lg font-semibold mb-1">T</span>
+              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold, marginBottom: 6 }}>T</span>
             </div>
-            <p className="text-omicron-subtle text-xs mt-1">1 Token = 1 CLP</p>
+            <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginTop: 4 }}>1 Token = 1 CLP</div>
 
-            {/* Escrow + PE mini cards */}
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <div className="bg-omicron-surface border border-omicron-border rounded-xl px-3 py-2.5">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Lock size={10} className="text-yellow-400" />
-                  <span className="text-[10px] text-omicron-subtle uppercase tracking-widest">In Escrow</span>
-                </div>
-                <span className="text-yellow-400 font-bold text-base">
-                  {escrow.toLocaleString('es-CL')}
-                </span>
-                <span className="text-yellow-400/60 text-xs ml-1">T</span>
-              </div>
-              <div className="bg-omicron-surface border border-omicron-border rounded-xl px-3 py-2.5">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Zap size={10} className="text-omicron-accent" />
-                  <span className="text-[10px] text-omicron-subtle uppercase tracking-widest">PE Points</span>
-                </div>
-                <span className={`font-bold text-base ${node.color}`}>
-                  {pe.toLocaleString('es-CL')}
-                </span>
-                <span className="text-omicron-subtle text-[10px] block mt-0.5">{node.name}</span>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16 }}>
+              <Stat label="En garantía" value={`${escrow.toLocaleString('es-CL')} T`} color={C.gold} icon={<Lock size={11} />} />
+              <Stat label="Puntos PE" value={pe.toLocaleString('es-CL')} color={node.accent} icon={<Zap size={11} />} />
             </div>
 
-
-            {/* Action buttons */}
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => setTransferMode('send')}
-                className="flex-1 flex items-center justify-center gap-2 bg-omicron-surface border border-omicron-border rounded-xl py-2.5 text-sm text-omicron-text hover:border-omicron-green hover:text-omicron-green transition active:scale-95"
-              >
-                <ArrowUpRight size={15} className="text-omicron-green" />
-                Send
+            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              <button onClick={() => setTransferMode('send')} className="oc-pressable" style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0',
+                borderRadius: 14, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+                background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', border: 'none', color: '#fff',
+                boxShadow: '0 8px 22px rgba(10,132,255,0.34)',
+              }}>
+                <ArrowUpRight size={16} /> Enviar
               </button>
-              <button
-                onClick={() => setTransferMode('receive')}
-                className="flex-1 flex items-center justify-center gap-2 bg-omicron-surface border border-omicron-border rounded-xl py-2.5 text-sm text-omicron-text hover:border-omicron-cyan hover:text-omicron-cyan transition active:scale-95"
-              >
-                <ArrowDownLeft size={15} className="text-omicron-cyan" />
-                Receive
+              <button onClick={() => setTransferMode('receive')} className="oc-pressable" style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0',
+                borderRadius: 14, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+                background: C.glass2, border: `1px solid ${C.line}`, color: C.ink,
+              }}>
+                <ArrowDownLeft size={16} style={{ color: C.cyan }} /> Recibir
               </button>
             </div>
-          </div>
+          </OmicronCard>
 
-          {/* ── Pioneer banner ── */}
+          {/* ── Banner Pionero ── */}
           {pioneer && (
-            <div className="bg-gradient-to-r from-yellow-900/40 to-amber-900/30 border border-omicron-gold/50 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-base">🏆</span>
-                <span className="text-omicron-gold text-[10px] font-bold uppercase tracking-widest">
-                  Pioneer Program
-                </span>
+            <OmicronCard accent={C.gold} glow className="oc-rise" style={{ background: `linear-gradient(135deg, ${C.gold}1e, ${C.gold}08)` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.gold}22`, border: `1px solid ${C.gold}55` }}>
+                  <Award size={20} style={{ color: C.gold }} />
+                </div>
+                <div>
+                  <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>Programa Pionero</div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 18, color: C.ink, marginTop: 2 }}>Comisión 10% de por vida</div>
+                  <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>Beneficio garantizado por ser usuario fundador.</div>
+                </div>
               </div>
-              <p className="text-omicron-gold text-xl font-bold mb-1">Lifetime 10% Commission</p>
-              <p className="text-yellow-300/80 text-xs leading-snug">
-                Guaranteed benefit for founding-stage users.
-              </p>
-            </div>
+            </OmicronCard>
           )}
 
-
-          {/* ── View tabs ── */}
-          <div className="flex border-b border-omicron-border">
-            {(['transactions', 'nodes'] as const).map(v => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={`px-4 py-2 text-xs font-semibold uppercase tracking-widest transition border-b-2 -mb-px capitalize ${
-                  view === v
-                    ? 'text-omicron-accent border-omicron-accent'
-                    : 'text-omicron-subtle border-transparent hover:text-omicron-text'
-                }`}
-              >
-                {v}
-              </button>
-            ))}
+          {/* ── Segmentador de vista ── */}
+          <div style={{ display: 'flex', gap: 8, padding: 4, borderRadius: 14, background: C.glass, border: `1px solid ${C.line}` }}>
+            {([['movimientos', 'Movimientos'], ['niveles', 'Niveles']] as const).map(([v, label]) => {
+              const active = view === v;
+              return (
+                <button key={v} onClick={() => setView(v)} className="oc-pressable" style={{
+                  flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                  fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
+                  background: active ? 'linear-gradient(135deg,#5cc8ff,#5e5ce6)' : 'transparent',
+                  border: 'none', color: active ? '#fff' : C.mut,
+                  boxShadow: active ? '0 6px 16px rgba(10,132,255,0.3)' : 'none',
+                }}>{label}</button>
+              );
+            })}
           </div>
 
-          {/* ── Transactions ── */}
-          {view === 'transactions' && (
-            <div className="bg-omicron-card border border-omicron-border rounded-2xl p-4">
-              {loading ? (
-                <div className="text-center py-6 text-omicron-subtle text-sm">Loading…</div>
-              ) : txs.length === 0 ? (
-                <EmptyState
-                  icon={<Clock size={28} />}
-                  title="Sin movimientos aún"
-                  hint="Tus transacciones aparecerán aquí. Gana tokens completando contratos o vendiendo en el Mercado."
-                  ctaLabel="Explorar Mercado"
-                  onCta={() => setActiveTab('market')}
-                />
-              ) : (
-                <div className="space-y-1">
-                  {txs.map(tx => {
-                    const meta = TX_META[tx.type] ?? {
-                      label: tx.type, sign: '', color: 'text-omicron-subtle', dot: 'bg-omicron-subtle'
-                    };
-                    return (
-                      <div key={tx.id} className="flex items-center gap-3 py-3 border-b border-omicron-border last:border-0">
-                        <div className={`w-8 h-8 rounded-xl bg-omicron-surface flex-shrink-0 flex items-center justify-center`}>
-                          <div className={`w-2 h-2 rounded-full ${meta.dot}`} />
+          {/* ── Movimientos ── */}
+          {view === 'movimientos' && (
+            loading ? (
+              <div style={{ textAlign: 'center', padding: '30px 0', fontFamily: FONT.mono, fontSize: 12, color: C.mut }}>Cargando…</div>
+            ) : txs.length === 0 ? (
+              <EmptyState
+                icon={<Clock size={28} />}
+                title="Sin movimientos aún"
+                hint="Tus transacciones aparecerán aquí. Gana tokens completando contratos o vendiendo en el Mercado."
+                ctaLabel="Explorar Mercado"
+                onCta={() => setActiveTab('market')}
+              />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {txs.map(tx => {
+                  const meta = TX_META[tx.type] ?? { label: tx.type, sign: '', color: C.mut, incoming: true };
+                  return (
+                    <OmicronCard key={tx.id} className="oc-rise" style={{ padding: 13 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${meta.color}1c`, border: `1px solid ${meta.color}44` }}>
+                          {meta.incoming ? <ArrowDownLeft size={17} style={{ color: meta.color }} /> : <ArrowUpRight size={17} style={{ color: meta.color }} />}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-omicron-text text-xs font-semibold">{meta.label}</p>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5, color: C.ink }}>{meta.label}</div>
                           {tx.description && (
-                            <p className="text-omicron-subtle text-[10px] truncate">{tx.description}</p>
+                            <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.mut, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.description}</div>
                           )}
-                          <p className="text-omicron-muted text-[10px] mt-0.5">{formatDate(tx.created_at)}</p>
+                          <div style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.mut, marginTop: 1 }}>{formatDate(tx.created_at)}</div>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className={`font-bold text-sm ${meta.color}`}>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 15, color: meta.color }}>
                             {meta.sign}{Math.abs(tx.amount).toLocaleString('es-CL')} T
-                          </p>
+                          </div>
                           {tx.balance_after != null && (
-                            <p className="text-omicron-muted text-[10px] mt-0.5">
-                              Balance: {tx.balance_after.toLocaleString('es-CL')} T
-                            </p>
+                            <div style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.mut, marginTop: 1 }}>
+                              Saldo: {tx.balance_after.toLocaleString('es-CL')} T
+                            </div>
                           )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                    </OmicronCard>
+                  );
+                })}
+              </div>
+            )
           )}
 
-
-          {/* ── Nodes ── */}
-          {view === 'nodes' && (
-            <div className="space-y-3">
+          {/* ── Niveles ── */}
+          {view === 'niveles' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {NODES.map(n => {
-                const active   = node.name === n.name;
+                const active = node.name === n.name;
                 const progress = n.maxPE
                   ? Math.min(((pe - n.minPE) / (n.maxPE - n.minPE)) * 100, 100)
                   : 100;
                 return (
-                  <div
-                    key={n.name}
-                    className={`rounded-2xl border p-4 transition ${
-                      active
-                        ? `bg-omicron-card ${n.border}`
-                        : 'bg-omicron-surface border-omicron-border opacity-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`text-sm font-bold ${active ? n.color : 'text-omicron-subtle'}`}>
-                        {n.name}
-                        {active && <span className="text-[10px] font-normal opacity-60 ml-1">← current</span>}
-                      </span>
-                      <span className={`text-sm font-bold ${active ? n.color : 'text-omicron-subtle'}`}>
-                        {n.commission}% fee
-                      </span>
+                  <OmicronCard key={n.name} accent={active ? n.accent : undefined} className="oc-rise" style={{ opacity: active ? 1 : 0.6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Layers size={16} style={{ color: active ? n.accent : C.mut }} />
+                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: active ? C.ink : C.mut }}>{n.name}</span>
+                        {active && <Chip color={n.accent} filled>ACTUAL</Chip>}
+                      </div>
+                      <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 14, color: active ? n.accent : C.mut }}>{n.commission}% fee</span>
                     </div>
-                    <p className="text-omicron-subtle text-[10px] mb-2">
-                      {n.maxPE
-                        ? `${n.minPE.toLocaleString()} – ${n.maxPE.toLocaleString()} PE`
-                        : `${n.minPE.toLocaleString()}+ PE`}
-                    </p>
-                    {active && (
+                    <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut, marginBottom: active && n.maxPE ? 8 : 0 }}>
+                      {n.maxPE ? `${n.minPE.toLocaleString()} – ${n.maxPE.toLocaleString()} PE` : `${n.minPE.toLocaleString()}+ PE`}
+                    </div>
+                    {active && n.maxPE && (
                       <>
-                        <div className="flex justify-between text-[10px] text-omicron-subtle mb-1.5">
-                          <span>{pe} PE current</span>
-                          <span>{n.maxPE ? `Next tier: ${(n.maxPE + 1).toLocaleString()} PE` : 'Max tier'}</span>
+                        <ProgressBar pct={progress} color={n.accent} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: FONT.mono, fontSize: 9.5, color: C.mut, marginTop: 6 }}>
+                          <span>{pe} PE actuales</span>
+                          <span>Siguiente: {(n.maxPE + 1).toLocaleString()} PE</span>
                         </div>
-                        {n.maxPE && (
-                          <div className="bg-omicron-border rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${n.color.replace('text-', 'bg-')}`}
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
-                        )}
                       </>
                     )}
-                  </div>
+                  </OmicronCard>
                 );
               })}
             </div>

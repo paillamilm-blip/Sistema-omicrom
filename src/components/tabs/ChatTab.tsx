@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Shield, Timer, ArrowLeft, MessageCircle, Lock, ShieldCheck, ShieldAlert, Star, X, Plus, Users, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Shield, Timer, MessageCircle, Lock, ShieldCheck, ShieldAlert, Star, X, Plus, Users, Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, cx } from '../../theme';
@@ -422,7 +422,7 @@ export function ChatTab() {
               onCta={() => setActiveTab('market')}
             />
           ) : rooms.map(r => (
-            <CyberCard key={r.id} color={ST_COLOR[r.status ?? 'LOCKED'] ?? C.cyan} margin="0 0 10px" onClick={() => setRoom(r)}>
+            <CyberCard key={r.id} className="oc-rise oc-pressable" color={ST_COLOR[r.status ?? 'LOCKED'] ?? C.cyan} margin="0 0 10px" onClick={() => setRoom(r)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Lock size={15} style={{ color: ST_COLOR[r.status ?? 'LOCKED'] ?? C.cyan }} />

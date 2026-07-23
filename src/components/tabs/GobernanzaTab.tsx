@@ -195,7 +195,7 @@ export function GobernanzaTab() {
       <div style={cx(BASE.scrollArea, { paddingBottom: 20 })}>
         {/* TRIBUNAL */}
         <SectionLabel>Tribunal de Pares</SectionLabel>
-        <CyberCard color={C.red} topBar>
+        <CyberCard color={C.red} topBar margin="10px 0 8px">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <Gavel size={18} style={{ color: C.red }} />
             <div>
@@ -218,7 +218,7 @@ export function GobernanzaTab() {
           <>
             <SectionLabel>Casos como Árbitro ⚖️</SectionLabel>
             {pendientesArb.map(a => (
-              <CyberCard key={a.id} color={C.purple} margin="0 14px 10px">
+              <CyberCard key={a.id} color={C.purple} className="oc-rise" margin="0 0 10px">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <Gavel size={14} style={{ color: C.purple }} />
                   <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.purple }}>CASO ASIGNADO · EMITE TU FALLO</span>
@@ -248,7 +248,7 @@ export function GobernanzaTab() {
           <>
             <SectionLabel>Mis Disputas</SectionLabel>
             {disputes.map(d => (
-              <CyberCard key={d.id} color={DISPUTE_COLOR[d.status] ?? C.cyan} margin="0 14px 10px">
+              <CyberCard key={d.id} color={DISPUTE_COLOR[d.status] ?? C.cyan} className="oc-rise" margin="0 0 10px">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: DISPUTE_COLOR[d.status] ?? C.cyan }}>
                     <span className="liquid-dot" />{d.status}
@@ -273,7 +273,7 @@ export function GobernanzaTab() {
         {/* APELACIONES — Segunda instancia de justicia (árbitros senior) */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         <SectionLabel>Apelaciones ⚖️</SectionLabel>
-        <CyberCard color={C.gold} topBar>
+        <CyberCard color={C.gold} topBar margin="10px 0 8px">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <AlertTriangle size={18} style={{ color: C.gold }} />
             <div>
@@ -305,7 +305,7 @@ export function GobernanzaTab() {
             {myAppealCases.map(d => {
               const myVote = appealVotes.find(v => v.dispute_id === d.id);
               return (
-                <CyberCard key={d.id} color={C.purple} margin="0 14px 10px">
+                <CyberCard key={d.id} color={C.purple} className="oc-rise" margin="0 0 10px">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <Scale size={14} style={{ color: C.purple }} />
                     <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.purple }}>
@@ -348,7 +348,7 @@ export function GobernanzaTab() {
             {myOpenAppeals.map(d => {
               const votesForThis = appealVotes.filter(v => v.dispute_id === d.id);
               return (
-                <CyberCard key={d.id} color={C.gold} margin="0 14px 10px">
+                <CyberCard key={d.id} color={C.gold} className="oc-rise" margin="0 0 10px">
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.gold }}>
                       <span className="liquid-dot" />APELACIÓN EN CURSO
@@ -374,7 +374,7 @@ export function GobernanzaTab() {
           <>
             <SectionLabel>Apelaciones Resueltas</SectionLabel>
             {resolvedAppeals.map(d => (
-              <CyberCard key={d.id} color={C.cyanDim} margin="0 14px 10px">
+              <CyberCard key={d.id} color={C.cyanDim} className="oc-rise" margin="0 0 10px">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: d.appeal_resolution?.includes('OVERTURN') ? C.gold : C.green }}>
                     {d.appeal_resolution?.includes('OVERTURN') ? '↩ REVERTIDO' : '✓ CONFIRMADO'}
@@ -390,7 +390,7 @@ export function GobernanzaTab() {
 
         {/* STAKING */}
         <SectionLabel>Staking de Talento</SectionLabel>
-        <CyberCard color={C.green} topBar>
+        <CyberCard color={C.green} topBar margin="10px 0 8px">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <TrendingUp size={18} style={{ color: C.green }} />
             <div>
@@ -411,7 +411,7 @@ export function GobernanzaTab() {
           <>
             <SectionLabel>Mis Inversiones</SectionLabel>
             {stakes.map(s => (
-              <CyberCard key={s.id} color={s.status === 'ACTIVE' ? C.green : C.cyanDim} margin="0 14px 10px">
+              <CyberCard key={s.id} color={s.status === 'ACTIVE' ? C.green : C.cyanDim} className="oc-rise" margin="0 0 10px">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: s.status === 'ACTIVE' ? 10 : 0 }}>
                   <div>
                     <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#dbeafe' }}>🪙 {s.amount}</div>
