@@ -29,14 +29,16 @@ interface PdfLib {
 }
 interface MammothLib { extractRawText(input: { arrayBuffer: ArrayBuffer }): Promise<{ value: string }> }
 
+function getPdfLib(): PdfLib | undefined {
+  return (window as unknown as { pdfjsLib?: PdfLib }).pdfjsLib;
+}
+
 async function pdfText(buffer: ArrayBuffer): Promise<string> {
-  const w = window as unknown as { pdfjsLib?: PdfLib };
-  if (!w.pdfjsLib) {
-    await loadScript(PDFJS);
-    if (w.pdfjsLib) w.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
-  }
-  if (!w.pdfjsLib) throw new Error('pdfjs no disponible');
-  const pdf = await w.pdfjsLib.getDocument({ data: buffer }).promise;
+  if (!getPdfLib()) await loadScript(PDFJS);
+  const lib = getPdfLib();
+  if (!lib) throw new Error('pdfjs no disponible');
+  lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+  const pdf = await lib.getDocument({ data: buffer }).promise;
   let out = '';
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
