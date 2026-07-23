@@ -20,6 +20,7 @@ import { useApp } from '../../store/AppContext';
 import { interpret, askCoach, askTutor } from '../../lib/oraculo';
 import { speak, stopSpeaking } from '../../lib/voiceEngine';
 import { C, FONT, RADIUS } from '../../theme';
+import DynamicNode from '../DynamicNode';
 import type { TabId, GemeloDigital } from '../../types';
 
 // ── Estados de la orbe ─────────────────────────────────────────────────
@@ -327,21 +328,19 @@ export default function OmicronAssistant() {
                       borderRadius: '50%', border: `1px solid ${color}`, opacity: 0.16 + i * 0.05,
                     }} />
                 ))}
-                {/* Núcleo */}
+                {/* Núcleo WebGL (Three.js · DynamicNode). Escucha el micrófono
+                    mientras Ómicron está en modo "listening" para deformarse con tu voz. */}
                 <motion.div
-                  animate={{
-                    scale: state === 'speaking' ? [1, 1.08, 1] : state === 'listening' ? [1, 1.05, 1] : [1, 1.03, 1],
-                    boxShadow: [`0 0 40px ${color}`, `0 0 70px ${color}`, `0 0 40px ${color}`],
-                  }}
+                  animate={{ boxShadow: [`0 0 44px ${color}`, `0 0 74px ${color}`, `0 0 44px ${color}`] }}
                   transition={{ duration: state === 'idle' ? 3.2 : 1.2, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{
-                    width: 130, height: 130, borderRadius: '50%',
-                    background: `radial-gradient(circle at 38% 32%, #fff, ${color} 42%, ${C.purple} 100%)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: FONT.display, fontWeight: 700, fontSize: 54, color: 'rgba(255,255,255,0.92)',
-                  }}
+                  style={{ width: 156, height: 156, borderRadius: '50%', overflow: 'hidden' }}
                 >
-                  Ω
+                  <DynamicNode
+                    enableMic={state === 'listening'}
+                    baseColor={0x0b1226}
+                    activeColor={0x5cc8ff}
+                    wireframe
+                  />
                 </motion.div>
               </div>
             </div>
