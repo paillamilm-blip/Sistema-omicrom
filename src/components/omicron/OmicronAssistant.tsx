@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mic, Send, Sparkles, ArrowRight, Upload, FileCheck2,
-  Home, GraduationCap, Zap, Briefcase, Store, Wallet, Database, MessageSquare, Scale,
+  GraduationCap, Zap, Briefcase, Store, Wallet, Database, MessageSquare, Scale,
 } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { interpret, askCoach, askTutor } from '../../lib/oraculo';
@@ -34,7 +34,7 @@ const STATE_COLOR: Record<OrbState, string> = {
   idle: C.cyan, listening: C.green, thinking: C.purple, speaking: C.gold,
 };
 
-const NODES: { tab: TabId; label: string; Icon: typeof Home }[] = [
+const NODES: { tab: TabId; label: string; Icon: typeof GraduationCap }[] = [
   { tab: 'academia', label: 'Academia', Icon: GraduationCap },
   { tab: 'maxskill', label: 'Habilidades', Icon: Zap },
   { tab: 'empleos', label: 'Empleos', Icon: Briefcase },
