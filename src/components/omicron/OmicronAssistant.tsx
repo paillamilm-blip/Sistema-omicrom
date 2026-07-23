@@ -11,10 +11,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Mic, Send, Sparkles, ArrowRight, Upload, FileCheck2,
+  Mic, Send, Sparkles, ArrowRight, Upload, FileCheck2, LogOut,
   GraduationCap, Zap, Briefcase, Store, Wallet, Database, MessageSquare, Scale,
 } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
+import { supabase } from '../../lib/supabase';
 import { interpret, askCoach, askTutor } from '../../lib/oraculo';
 import { speak, stopSpeaking } from '../../lib/voiceEngine';
 import { C, FONT, RADIUS } from '../../theme';
@@ -119,6 +120,14 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     if (!text) return;
     setInput('');
     setState('thinking');
+
+    // Comando de cierre de sesión (por voz o texto).
+    if (/cerrar sesi[oó]n|cerrar sesion|\bsalir\b|logout|log out|desconect|cerrar cuenta/i.test(text)) {
+      omicronSay('Cerrando tu sesión. Hasta pronto, Nodo.');
+      setTimeout(() => { void supabase.auth.signOut(); }, 900);
+      return;
+    }
+
     const intent = interpret(text);
 
     if (intent.kind === 'navigate') {
@@ -181,6 +190,11 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     setActiveTab(tab);
   }, [setActiveTab, onOpenPerfil]);
 
+  const doLogout = useCallback(() => {
+    omicronSay('Cerrando tu sesión. Hasta pronto, Nodo.');
+    setTimeout(() => { void supabase.auth.signOut(); }, 900);
+  }, [omicronSay]);
+
   // Alertas / nodos que flotan sobre la orbe (sistema de aprendizaje continuo).
   const alerts: { text: string; color: string; onClick: () => void; pos: React.CSSProperties }[] = [];
   if (action) alerts.push({ text: `${action.label} ${action.value}`, color: action.color, onClick: goToAction, pos: { top: '6%', left: '4%' } });
@@ -206,11 +220,17 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
           <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: C.ink }}>ÓMICRON</span>
           <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>· {STATE_LABEL[state]}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: RADIUS.pill, background: C.glass, border: `1px solid ${C.line}` }}>
-          <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>NIVEL</span>
-          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.cyan }}>N{level}</span>
-          <span style={{ width: 1, height: 12, background: C.line }} />
-          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.gold }}>{rep}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: RADIUS.pill, background: C.glass, border: `1px solid ${C.line}` }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>NIVEL</span>
+            <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.cyan }}>N{level}</span>
+            <span style={{ width: 1, height: 12, background: C.line }} />
+            <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.gold }}>{rep}</span>
+          </div>
+          <button onClick={doLogout} aria-label="Cerrar sesión" title="Cerrar sesión"
+            style={{ width: 34, height: 34, borderRadius: 11, border: `1px solid ${C.line}`, background: C.glass, color: C.mut, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
 

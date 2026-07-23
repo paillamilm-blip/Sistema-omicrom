@@ -12,6 +12,8 @@ import { motion } from 'framer-motion';
 import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
+import { useToast } from '../shared/Toast';
+import { speak } from '../../lib/voiceEngine';
 import { C, FONT, RADIUS } from '../../theme';
 import ParticleOrb from './ParticleOrb';
 
@@ -33,6 +35,7 @@ const AXES: [string, 'execution' | 'quality' | 'transcendence' | 'foundation', s
 
 export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   const { gemelo, refreshProfile } = useApp();
+  const { toast } = useToast();
   const [busy, setBusy] = useState<Kind | null>(null);
   const [done, setDone] = useState<Kind[]>([]);
   const [msg, setMsg] = useState('Convalidá tus datos reales: cada uno eleva tu Gemelo al instante.');
@@ -51,7 +54,15 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
       } else {
         setDone((prev) => (prev.includes(kind) ? prev : [...prev, kind]));
         const label = NODES.find((n) => n.kind === kind)?.label ?? 'Dato';
-        setMsg(`${label} convalidado ✓ Tu reputación real subió a ${Math.round(res.reputation ?? rep)}.`);
+        const nuevoRep = Math.round(res.reputation ?? rep);
+        setMsg(`${label} convalidado ✓ Tu reputación real subió a ${nuevoRep}.`);
+        // Push de confirmación (toast + voz para el CV).
+        if (kind === 'cv') {
+          toast('CV cargado y convalidado ✓', 'success');
+          speak('CV cargado y convalidado. Tu Gemelo subió de nivel.');
+        } else {
+          toast(`${label} convalidado ✓`, 'success');
+        }
         await refreshProfile();
       }
     } catch {
