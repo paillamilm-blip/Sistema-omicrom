@@ -189,14 +189,16 @@ interface CyberCardProps {
   style?:      CSSProperties;
   onClick?:    () => void;
   topBar?:     boolean;  // muestra barra superior del color del acento
+  className?:  string;   // permite motion Ómicron (oc-rise / oc-pressable)
 }
 export function CyberCard({
   children, color = C.cyan, margin = '10px 14px 6px',
-  padding = '12px 14px', style, onClick, topBar = false,
+  padding = '12px 14px', style, onClick, topBar = false, className,
 }: CyberCardProps) {
   return (
     <div
       onClick={onClick}
+      className={className}
       style={cx({
         margin,
         padding,

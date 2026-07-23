@@ -261,7 +261,7 @@ export function VaultTab() {
           const mine = d.author_id === profile?.id;
           const sim = simMap.get(d.id);
           return (
-            <div key={d.id} style={styles.card}>
+            <div key={d.id} className="oc-rise" style={styles.card}>
               <div style={styles.cardTop} />
               {sim != null && (
                 <div style={styles.simBadge}>{Math.round(sim * 100)}% afín</div>
