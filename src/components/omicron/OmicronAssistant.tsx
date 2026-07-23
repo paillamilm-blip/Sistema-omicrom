@@ -17,11 +17,12 @@ import {
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
 import { interpret, askCoach, askTutor } from '../../lib/oraculo';
+import { computeSteps, nodeGuidance, type NextStep } from '../../lib/omicronCoach';
 import { speak, stopSpeaking } from '../../lib/voiceEngine';
 import { C, FONT, RADIUS } from '../../theme';
 import ParticleOrb from './ParticleOrb';
 import ConvalidaOmicron from './ConvalidaOmicron';
-import type { TabId, GemeloDigital } from '../../types';
+import type { TabId } from '../../types';
 
 type OrbState = 'idle' | 'listening' | 'thinking' | 'speaking';
 
@@ -45,19 +46,6 @@ const NODES: { tab: TabId; label: string; Icon: typeof GraduationCap }[] = [
   { tab: 'chat', label: 'Mensajes', Icon: MessageSquare },
   { tab: 'gobernanza', label: 'Gobernanza', Icon: Scale },
 ];
-
-type AxisKey = 'execution' | 'quality' | 'transcendence' | 'foundation';
-const AXIS_ACTION: Record<AxisKey, { label: string; tab: TabId; step: string; color: string }> = {
-  execution: { label: 'Ejecución', tab: 'maxskill', step: 'Completá un reto en Habilidades para demostrar tu velocidad de ejecución.', color: C.cyan },
-  quality: { label: 'Calidad', tab: 'academia', step: 'Rendí un examen en Academia y validá tu calidad técnica con evidencia real.', color: C.purple },
-  transcendence: { label: 'Trascendencia', tab: 'vault', step: 'Subí un aporte a la Bóveda: compartir conocimiento multiplica tu impacto.', color: C.gold },
-  foundation: { label: 'Fundamento', tab: 'perfil', step: 'Convalidá tu CV y títulos para reforzar tu base teórica.', color: C.green },
-};
-function weakestAxis(g: GemeloDigital): AxisKey {
-  const e: [AxisKey, number][] = [['execution', g.execution], ['quality', g.quality], ['transcendence', g.transcendence], ['foundation', g.foundation]];
-  e.sort((a, b) => a[1] - b[1]);
-  return e[0][0];
-}
 
 // Reconocimiento de voz (tipos mínimos)
 interface SRAlt { transcript: string }
@@ -90,11 +78,8 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
   const rep = gemelo ? Math.round(gemelo.overallReputation) : 0;
   const level = profile?.node_level ?? 1;
 
-  const action = useMemo(() => {
-    if (!gemelo) return null;
-    const key = weakestAxis(gemelo);
-    return { ...AXIS_ACTION[key], value: Math.round(gemelo[key]) };
-  }, [gemelo]);
+  const steps = useMemo(() => computeSteps(profile, gemelo), [profile, gemelo]);
+  const top = steps[0] ?? null;
 
   const omicronSay = useCallback((text: string) => {
     setReply(text);
@@ -107,11 +92,11 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     if (greetedRef.current) return;
     greetedRef.current = true;
     const name = profile?.display_name || profile?.full_name || profile?.username || 'Nodo';
-    const base = `Hola ${name}. Soy Ómicron, tu Gemelo Digital. Para empezar, subí tu CV real y calculo tu nivel, o hacé el examen de nivel.`;
-    const push = action ? ` Tu ${action.label} está en ${action.value}: ahí está tu mayor oportunidad.` : '';
+    const base = `Hola ${name}. Soy Ómicron, tu Gemelo Digital.`;
+    const push = top ? ` Tu próximo paso: ${top.title}. ${top.why}` : ' Para empezar, subí tu CV real y calculo tu nivel.';
     const t = setTimeout(() => omicronSay(base + push), 500);
     return () => clearTimeout(t);
-  }, [profile, action, omicronSay]);
+  }, [profile, top, omicronSay]);
 
   useEffect(() => () => { stopSpeaking(); recognitionRef.current?.abort(); }, []);
 
@@ -178,17 +163,22 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     try { rec.start(); } catch { setState('idle'); }
   }, [state, handleQuery, omicronSay]);
 
-  const goToAction = useCallback(() => {
-    if (!action) return;
-    if (action.tab === 'perfil') { onOpenPerfil?.(); return; }
-    omicronSay(`Vamos. ${action.step}`);
-    setTimeout(() => setActiveTab(action.tab), 700);
-  }, [action, omicronSay, setActiveTab, onOpenPerfil]);
+  const goStep = useCallback((s: NextStep) => {
+    if (s.cv) { setCvOpen(true); return; }
+    if (s.tab === 'perfil') { onOpenPerfil?.(); return; }
+    omicronSay(`Vamos. ${s.why}`);
+    setTimeout(() => setActiveTab(s.tab), 700);
+  }, [omicronSay, setActiveTab, onOpenPerfil]);
 
+  const goToAction = useCallback(() => { if (top) goStep(top); }, [top, goStep]);
+
+  // Al abrir un nodo, Ómicron te empuja con el paso concreto de ese nodo.
   const goNode = useCallback((tab: TabId) => {
     if (tab === 'perfil') { onOpenPerfil?.(); return; }
-    setActiveTab(tab);
-  }, [setActiveTab, onOpenPerfil]);
+    const guide = nodeGuidance(tab, profile, gemelo);
+    if (guide) omicronSay(guide);
+    setTimeout(() => setActiveTab(tab), guide ? 650 : 0);
+  }, [setActiveTab, onOpenPerfil, profile, gemelo, omicronSay]);
 
   const doLogout = useCallback(() => {
     omicronSay('Cerrando tu sesión. Hasta pronto, Nodo.');
@@ -197,7 +187,7 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
 
   // Alertas / nodos que flotan sobre la orbe (sistema de aprendizaje continuo).
   const alerts: { text: string; color: string; onClick: () => void; pos: React.CSSProperties }[] = [];
-  if (action) alerts.push({ text: `${action.label} ${action.value}`, color: action.color, onClick: goToAction, pos: { top: '6%', left: '4%' } });
+  if (top) alerts.push({ text: top.metric || 'Próximo paso', color: top.accent, onClick: goToAction, pos: { top: '6%', left: '4%' } });
   if (unreadCount > 0) alerts.push({ text: `${unreadCount} alerta${unreadCount > 1 ? 's' : ''}`, color: C.gold, onClick: () => setActiveTab('empleos'), pos: { top: '11%', right: '4%' } });
   alerts.push({ text: 'Subí tu CV', color: C.cyan, onClick: () => setCvOpen(true), pos: { bottom: '8%', right: '7%' } });
 
@@ -301,19 +291,40 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
           </button>
         </div>
 
-        {/* Propuesta de mejora (puerta) */}
-        {action && (
-          <div style={{ borderRadius: RADIUS.lg, padding: '13px 14px', marginBottom: 12, background: `linear-gradient(135deg, ${action.color}1f, rgba(255,255,255,0.03))`, border: `1px solid ${action.color}55` }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-              <Sparkles size={14} color={action.color} />
-              <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: action.color }}>
-                Próximo paso · {action.label} {action.value}
+        {/* Propuesta de mejora (puerta) — motor real en tiempo real */}
+        {top && (
+          <div style={{ borderRadius: RADIUS.lg, padding: '14px 15px', marginBottom: 12, background: `linear-gradient(135deg, ${top.accent}1f, rgba(255,255,255,0.03))`, border: `1px solid ${top.accent}55` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
+              <Sparkles size={14} color={top.accent} />
+              <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: top.accent }}>
+                Próximo paso{top.metric ? ` · ${top.metric}` : ''}
               </span>
             </div>
-            <p style={{ margin: '0 0 11px', fontFamily: FONT.body, fontSize: 14, lineHeight: 1.45, color: C.ink }}>{action.step}</p>
-            <button onClick={goToAction} style={{ width: '100%', padding: '11px 0', borderRadius: 13, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${action.color}, ${C.purple})`, color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              Ir a mejorar <ArrowRight size={17} />
+            <p style={{ margin: '0 0 5px', fontFamily: FONT.display, fontWeight: 700, fontSize: 16, lineHeight: 1.25, color: '#fff' }}>{top.title}</p>
+            <p style={{ margin: '0 0 12px', fontFamily: FONT.body, fontSize: 13, lineHeight: 1.45, color: 'rgba(234,240,251,0.72)' }}>{top.why}</p>
+            <button onClick={goToAction} style={{ width: '100%', padding: '11px 0', borderRadius: 13, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${top.accent}, ${C.purple})`, color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              {top.actionLabel} <ArrowRight size={17} />
             </button>
+          </div>
+        )}
+
+        {/* Ruta de mejora: siguientes pasos encadenados (sinergia entre nodos) */}
+        {steps.length > 1 && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: C.mut, margin: '2px 2px 8px' }}>Tu ruta de mejora</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {steps.slice(1, 4).map((s) => (
+                <button key={s.id} onClick={() => goStep(s)} className="oc-pressable"
+                  style={{ display: 'flex', alignItems: 'center', gap: 11, width: '100%', textAlign: 'left', padding: '11px 13px', borderRadius: RADIUS.md, cursor: 'pointer', background: C.glass, border: `1px solid ${C.line}` }}>
+                  <span style={{ width: 9, height: 9, borderRadius: '50%', flexShrink: 0, background: s.accent, boxShadow: `0 0 8px ${s.accent}` }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5, color: C.ink }}>{s.title}</div>
+                    {s.metric && <div style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: 0.4, color: C.mut, marginTop: 1 }}>{s.metric}</div>}
+                  </div>
+                  <ArrowRight size={16} color={C.mut} />
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
