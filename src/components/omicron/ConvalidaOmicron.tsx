@@ -9,13 +9,14 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2 } from 'lucide-react';
+import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { useToast } from '../shared/Toast';
 import { speak } from '../../lib/voiceEngine';
 import { analyzeCV, type AnalyzedProfile } from '../../lib/cvAnalyzer';
 import { extractCVText } from '../../lib/cvExtract';
+import { askCoach } from '../../lib/oraculo';
 import { C, FONT, RADIUS } from '../../theme';
 import ParticleOrb from './ParticleOrb';
 
@@ -41,6 +42,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
   const [busy, setBusy] = useState<Kind | null>(null);
   const [done, setDone] = useState<Kind[]>([]);
   const [dossier, setDossier] = useState<AnalyzedProfile | null>(null);
+  const [ai, setAi] = useState<{ loading: boolean; text: string }>({ loading: false, text: '' });
   const [msg, setMsg] = useState('Convalidá tus datos reales: cada uno eleva tu Gemelo al instante.');
 
   const rep = gemelo ? Math.round(gemelo.overallReputation) : 0;
@@ -92,6 +94,11 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
       speak(`CV analizado. Tu perfil: ${analyzed.seniorLabel}. Experto en ${analyzed.labels.slice(0, 3).join(', ')}.`);
       await refreshProfile();
       setDossier(analyzed);
+      // Análisis personalizado de la IA (coach) — en paralelo, no bloquea el Dossier.
+      setAi({ loading: true, text: '' });
+      askCoach()
+        .then((r) => setAi({ loading: false, text: r.advice || '' }))
+        .catch(() => setAi({ loading: false, text: '' }));
     } catch {
       setMsg('No pude analizar el CV. Probá con un PDF de texto o pegá tu experiencia.');
     }
@@ -136,6 +143,24 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
                   <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: col }}>{Math.round(val)}</div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Análisis personalizado de la IA (coach) */}
+          {(ai.loading || ai.text) && (
+            <div style={{ textAlign: 'left', borderRadius: RADIUS.lg, padding: '13px 14px', marginTop: 4, background: `linear-gradient(135deg, ${C.cyan}14, rgba(255,255,255,0.03))`, border: `1px solid ${C.cyanFaint}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                <Sparkles size={14} color={C.cyan} />
+                <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.cyan }}>Análisis de Ómicron</span>
+              </div>
+              {ai.loading ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.mut, fontFamily: FONT.body, fontSize: 13 }}>
+                  <Loader2 size={14} style={{ animation: 'cp-spin 0.8s linear infinite' }} />
+                  Ómicron está leyendo tu perfil…
+                </div>
+              ) : (
+                <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13.5, lineHeight: 1.5, color: C.ink, whiteSpace: 'pre-wrap' }}>{ai.text}</p>
+              )}
             </div>
           )}
         </div>
