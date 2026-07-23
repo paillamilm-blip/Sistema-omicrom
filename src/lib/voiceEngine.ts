@@ -8,25 +8,27 @@
 
 /** Configuración de voz premium amigable. */
 const VOICE_CONFIG = {
-  // Pitch más alto = más amigable y menos robótico
-  pitch: 1.08,
-  // Rate más lento = más comprensible y menos acelerado
-  rate: 0.95,
+  // Pitch levemente alto = cálido sin sonar robótico
+  pitch: 1.02,
+  // Rate natural (1.0). La puntuación ya da pausas fluidas.
+  rate: 1.0,
   // Volume: 100% (1.0) para claridad
   volume: 1.0,
 } as const;
 
 /**
- * Inserta pausas naturales en el texto para hacerlo más fluido y amigable.
- * - Reemplaza puntos por pausas largas (800ms).
- * - Reemplaza comas por pausas cortas (300ms).
- * - Reemplaza ";" por pausas medias (500ms).
+ * Limpia el texto para una locución FLUIDA.
+ * IMPORTANTE: la Web Speech API NO soporta SSML (<break/>, etc.). Inyectar
+ * esas etiquetas hacía que la voz las leyera o perdiera parte del texto
+ * (se escuchaba entrecortado/raro). Acá solo removemos markdown y
+ * normalizamos espacios; la puntuación da las pausas naturales.
  */
-function addNaturalPauses(text: string): string {
+function cleanForSpeech(text: string): string {
   return text
-    .replace(/\./g, '. <break time="800ms"/>')
-    .replace(/,/g, ', <break time="300ms"/>')
-    .replace(/;/g, '; <break time="500ms"/>');
+    .replace(/\*\*/g, '')       // negrita markdown
+    .replace(/[*_`#>|]/g, ' ')  // otros símbolos markdown
+    .replace(/\s+/g, ' ')       // colapsar espacios/saltos
+    .trim();
 }
 
 /**
@@ -103,9 +105,8 @@ export function speak(
       return false;
     }
 
-    // Crear utterance con pausas naturales
-    const textWithPauses = addNaturalPauses(text);
-    const utterance = new SpeechSynthesisUtterance(textWithPauses);
+    // Crear utterance con texto limpio (sin SSML: la Web Speech API no lo soporta)
+    const utterance = new SpeechSynthesisUtterance(cleanForSpeech(text));
 
     // Aplicar configuración premium
     utterance.pitch = VOICE_CONFIG.pitch;
