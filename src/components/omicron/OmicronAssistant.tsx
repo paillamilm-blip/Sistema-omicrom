@@ -21,7 +21,9 @@ import { computeSteps, nodeGuidance, type NextStep } from '../../lib/omicronCoac
 import { speak, stopSpeaking } from '../../lib/voiceEngine';
 import { C, FONT, RADIUS } from '../../theme';
 import ParticleOrb from './ParticleOrb';
+import OrbDataStream from './OrbDataStream';
 import ConvalidaOmicron from './ConvalidaOmicron';
+import { notifyOrb } from '../../lib/orbNotify';
 import type { TabId } from '../../types';
 
 type OrbState = 'idle' | 'listening' | 'thinking' | 'speaking';
@@ -168,8 +170,18 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     const base = `Hola ${name}. Soy Ómicron, tu Gemelo Digital.`;
     const push = top ? ` Tu próximo paso: ${top.title}. ${top.why}` : ' Para empezar, subí tu CV real y calculo tu nivel.';
     const t = setTimeout(() => omicronSay(base + push), 500);
-    return () => clearTimeout(t);
+    const t2 = setTimeout(() => notifyOrb('Gemelo sincronizado · datos cargados', 'success'), 900);
+    return () => { clearTimeout(t); clearTimeout(t2); };
   }, [profile, top, omicronSay]);
+
+  // Cuando llegan alertas nuevas, la orbe "carga" el aviso.
+  const prevUnread = useRef(0);
+  useEffect(() => {
+    if (unreadCount > prevUnread.current) {
+      notifyOrb(`${unreadCount} alerta${unreadCount > 1 ? 's' : ''} nueva${unreadCount > 1 ? 's' : ''}`, 'gold');
+    }
+    prevUnread.current = unreadCount;
+  }, [unreadCount]);
 
   useEffect(() => () => { stopSpeaking(); recognitionRef.current?.abort(); }, []);
 
@@ -301,6 +313,9 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
       <div style={{ position: 'relative', zIndex: 2, height: '44vh', minHeight: 340, flexShrink: 0 }}>
         <ParticleOrb enableMic={state === 'listening'} />
 
+        {/* Notificaciones como "carga de datos" holográfica en la orbe */}
+        <OrbDataStream />
+
         {/* Los nodos flotan y orbitan alrededor de la orbe en 3D */}
         <NodeOrbit
           nodes={NODES}
@@ -357,7 +372,7 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
       </div>
 
       {/* CONTENIDO desplazable */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px calc(env(safe-area-inset-bottom, 0px) + 20px)', position: 'relative', zIndex: 2, minHeight: 0 }}>
+      <div className="scrollbar-hidden" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', scrollBehavior: 'smooth', padding: '14px 16px calc(env(safe-area-inset-bottom, 0px) + 20px)', position: 'relative', zIndex: 2, minHeight: 0 }}>
         {/* Onboarding: subir CV + examen de nivel */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
           <button onClick={() => setCvOpen(true)} style={ctaStyle(C.cyan)}>
