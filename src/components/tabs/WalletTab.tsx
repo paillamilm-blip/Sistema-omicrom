@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap, Wallet, Award, Layers, CreditCard, CheckCircle2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap, Wallet, Award, Layers, CreditCard, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
@@ -51,8 +51,9 @@ export function WalletTab() {
   const [loading, setLoading]           = useState(true);
   const [view, setView]                 = useState<'movimientos' | 'niveles'>('movimientos');
   const [transferMode, setTransferMode] = useState<'send' | 'receive' | null>(null);
-  const [showPurchase, setShowPurchase] = useState(false);
-  const [purchaseOk, setPurchaseOk]     = useState(false);
+  const [showPurchase, setShowPurchase]     = useState(false);
+  const [purchaseState, setPurchaseState]   = useState<'idle' | 'verifying' | 'ok' | 'pending'>('idle');
+  const [creditedTokens, setCreditedTokens] = useState<number | null>(null);
 
   const loadTxs = useCallback(async () => {
     if (!profile) return;
@@ -68,23 +69,54 @@ export function WalletTab() {
 
   useEffect(() => { loadTxs(); }, [loadTxs]);
 
-  // Al volver de Stripe (?compra=exito) mostramos confirmación y refrescamos el
-  // saldo (el webhook acredita en segundo plano, así que reintentamos un momento).
+  // Al volver de Stripe (?compra=exito&session_id=...) verificamos el pago
+  // DIRECTAMENTE con Stripe y acreditamos los tokens (no dependemos del webhook).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const compra = params.get('compra');
     if (!compra) return;
-    // Limpia el parámetro de la URL sin recargar.
+    const sessionId = params.get('session_id');
+    // Limpia la URL sin recargar.
     params.delete('compra');
+    params.delete('session_id');
     const clean = window.location.pathname + (params.toString() ? `?${params}` : '');
     window.history.replaceState({}, '', clean);
-    if (compra === 'exito') {
-      setPurchaseOk(true);
-      const t1 = setTimeout(() => { refreshProfile(); loadTxs(); }, 1500);
-      const t2 = setTimeout(() => { refreshProfile(); loadTxs(); }, 5000);
-      const t3 = setTimeout(() => setPurchaseOk(false), 8000);
-      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-    }
+
+    if (compra !== 'exito') return;
+
+    let cancelled = false;
+    (async () => {
+      setPurchaseState('verifying');
+      if (sessionId) {
+        try {
+          const { data, error } = await supabase.functions.invoke('verificar-pago', {
+            body: { session_id: sessionId },
+          });
+          if (!cancelled) {
+            if (!error && data?.ok && data?.paid) {
+              setCreditedTokens(typeof data.credited === 'number' ? data.credited : null);
+              setPurchaseState('ok');
+            } else if (!error && data?.ok && data?.pending) {
+              setPurchaseState('pending');
+            } else {
+              // El pago se realizó; si algo falló, el webhook lo acreditará.
+              setPurchaseState('ok');
+            }
+          }
+        } catch {
+          if (!cancelled) setPurchaseState('ok');
+        }
+      } else {
+        setPurchaseState('ok');
+      }
+      await refreshProfile();
+      await loadTxs();
+      // Reintento por si la acreditación tardó unos segundos.
+      setTimeout(() => { if (!cancelled) { refreshProfile(); loadTxs(); } }, 4000);
+    })();
+
+    const hide = setTimeout(() => { if (!cancelled) setPurchaseState('idle'); }, 14000);
+    return () => { cancelled = true; clearTimeout(hide); };
   }, [refreshProfile, loadTxs]);
 
   async function handleTransferClose() {
@@ -192,15 +224,40 @@ export function WalletTab() {
             </div>
           </OmicronCard>
 
-          {/* ── Confirmación de compra al volver de Stripe ── */}
-          {purchaseOk && (
+          {/* ── Estado de la compra al volver de Stripe ── */}
+          {purchaseState === 'verifying' && (
+            <OmicronCard accent={C.cyan} glow className="oc-rise" style={{ background: `linear-gradient(135deg, ${C.cyan}1e, ${C.cyan}08)` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Loader2 size={20} className="animate-spin" style={{ color: C.cyan, flexShrink: 0 }} />
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.ink }}>
+                  Verificando tu pago…
+                </div>
+              </div>
+            </OmicronCard>
+          )}
+          {purchaseState === 'ok' && (
             <OmicronCard accent={C.green} glow className="oc-rise" style={{ background: `linear-gradient(135deg, ${C.green}1e, ${C.green}08)` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <CheckCircle2 size={22} style={{ color: C.green, flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 15, color: C.ink }}>¡Pago recibido!</div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 15, color: C.ink }}>¡Pago confirmado!</div>
                   <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>
-                    Tus tokens se están acreditando. El saldo se actualiza en unos segundos.
+                    {creditedTokens != null
+                      ? `Se acreditaron ${creditedTokens.toLocaleString('es-CL')} tokens a tu saldo.`
+                      : 'Tus tokens ya están en tu saldo.'}
+                  </div>
+                </div>
+              </div>
+            </OmicronCard>
+          )}
+          {purchaseState === 'pending' && (
+            <OmicronCard accent={C.gold} glow className="oc-rise" style={{ background: `linear-gradient(135deg, ${C.gold}1e, ${C.gold}08)` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Clock size={20} style={{ color: C.gold, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 15, color: C.ink }}>Pago en proceso</div>
+                  <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>
+                    Estamos confirmando tu pago. Tu saldo se actualizará en breve.
                   </div>
                 </div>
               </div>

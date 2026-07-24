@@ -52,7 +52,9 @@ Deno.serve(async (req) => {
     // 3) URLs de retorno (usa el origen real del navegador; fallback a env).
     const origin = req.headers.get('Origin') || PUBLIC_SITE_URL || '';
     if (!origin) return json({ ok: false, error: 'No pude determinar la URL de retorno.' }, 400);
-    const successUrl = `${origin}/?compra=exito`;
+    // Incluimos el id de la sesión para poder verificar el pago al volver
+    // (Stripe reemplaza {CHECKOUT_SESSION_ID} por el id real).
+    const successUrl = `${origin}/?compra=exito&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${origin}/?compra=cancelada`;
 
     // 4) Crear la sesión de Checkout (CLP es moneda sin decimales: unit_amount en pesos).
