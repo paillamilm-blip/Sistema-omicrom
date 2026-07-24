@@ -5,6 +5,7 @@ import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { TokenTransferModal } from '../wallet/TokenTransferModal';
 import { TokenPurchaseModal } from '../wallet/TokenPurchaseModal';
+import { notifyOrb } from '../../lib/orbNotify';
 
 // Compra de tokens (Stripe): visible por defecto. Solo se oculta si se pone
 // VITE_STRIPE_ENABLED="false" a propósito. Así el botón aparece sin depender de
@@ -94,8 +95,10 @@ export function WalletTab() {
           });
           if (!cancelled) {
             if (!error && data?.ok && data?.paid) {
-              setCreditedTokens(typeof data.credited === 'number' ? data.credited : null);
+              const n = typeof data.credited === 'number' ? data.credited : null;
+              setCreditedTokens(n);
               setPurchaseState('ok');
+              notifyOrb(n != null ? `+${n.toLocaleString('es-CL')} tokens acreditados` : 'Pago confirmado', 'success');
             } else if (!error && data?.ok && data?.pending) {
               setPurchaseState('pending');
             } else {

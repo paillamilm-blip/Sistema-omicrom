@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT } from '../../theme';
+import { notifyOrb } from '../../lib/orbNotify';
 
 interface JobRow {
   id?: string;
@@ -37,6 +38,8 @@ export function IncomingJobPush() {
 
     const show = (next: Incoming) => {
       setIncoming(next);
+      // La orbe del home reacciona con una "carga de datos".
+      notifyOrb(next.kind === 'match' ? 'Coincides con una oferta' : (next.title || 'Nueva oportunidad'), next.kind === 'match' ? 'gold' : 'info');
       if (timerRef.current) window.clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(() => setIncoming(null), 12000);
     };
