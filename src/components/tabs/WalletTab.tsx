@@ -6,10 +6,13 @@ import { EmptyState } from '../shared/EmptyState';
 import { TokenTransferModal } from '../wallet/TokenTransferModal';
 import { TokenPurchaseModal } from '../wallet/TokenPurchaseModal';
 
-// La compra de tokens (Stripe) se activa solo cuando está configurada.
-const STRIPE_ENABLED = import.meta.env.VITE_STRIPE_ENABLED === 'true';
+// Compra de tokens (Stripe): visible por defecto. Solo se oculta si se pone
+// VITE_STRIPE_ENABLED="false" a propósito. Así el botón aparece sin depender de
+// que la variable se haya horneado en el build (evita el típico "no aparece").
+// Si Stripe no está configurado en el backend, el modal muestra un aviso amable.
+const STRIPE_ENABLED = import.meta.env.VITE_STRIPE_ENABLED !== 'false';
 import { C, FONT } from '../../theme';
-import { oc, OmicronHeader, OmicronCard, Stat, ProgressBar, Chip } from '../omicron/OmicronChrome';
+import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '../omicron/OmicronChrome';
 import type { WalletTransaction } from '../../types';
 
 // ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────
@@ -110,22 +113,38 @@ export function WalletTab() {
 
           {/* ── Tarjeta de saldo (hero) ── */}
           <OmicronCard accent={C.gold} glow className="oc-rise" style={{ padding: 20 }}>
-            <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: C.mut }}>
-              Saldo disponible
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.mut }}>
+              Tu saldo disponible
             </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 6 }}>
               <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 46, color: C.ink, letterSpacing: -1.5, lineHeight: 0.95, textShadow: `0 0 26px ${C.gold}44` }}>
                 {balance.toLocaleString('es-CL')}
               </span>
-              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold, marginBottom: 6 }}>T</span>
+              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold, marginBottom: 6 }}>Tokens</span>
             </div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginTop: 4 }}>1 Token = 1 CLP</div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16 }}>
-              <Stat label="En garantía" value={`${escrow.toLocaleString('es-CL')} T`} color={C.gold} icon={<Lock size={11} />} />
-              <Stat label="Puntos PE" value={pe.toLocaleString('es-CL')} color={node.accent} icon={<Zap size={11} />} />
+            <div style={{ fontFamily: FONT.body, fontSize: 12.5, color: C.mut, marginTop: 6, lineHeight: 1.4 }}>
+              Es tu dinero dentro de Ómicron. <strong style={{ color: C.ink }}>1 Token = $1 peso chileno.</strong>
             </div>
 
+            {/* ── Botón principal: Recargar (comprar con tarjeta) ── */}
+            {STRIPE_ENABLED && (
+              <button onClick={() => setShowPurchase(true)} className="oc-pressable" style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                marginTop: 16, padding: '15px 0', borderRadius: 16, cursor: 'pointer',
+                fontFamily: FONT.display, fontWeight: 800, fontSize: 16,
+                background: `linear-gradient(135deg, #ffcb52, ${C.gold})`, border: 'none', color: '#1a1204',
+                boxShadow: `0 10px 26px ${C.gold}55`,
+              }}>
+                <CreditCard size={19} /> Recargar tokens
+              </button>
+            )}
+            {STRIPE_ENABLED && (
+              <div style={{ textAlign: 'center', fontFamily: FONT.body, fontSize: 11, color: C.mut, marginTop: 6 }}>
+                Compra segura con tarjeta · débito o crédito
+              </div>
+            )}
+
+            {/* ── Acciones secundarias: enviar / recibir entre usuarios ── */}
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
               <button onClick={() => setTransferMode('send')} className="oc-pressable" style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0',
@@ -144,18 +163,33 @@ export function WalletTab() {
               </button>
             </div>
 
-            {/* ── Recargar con dinero real (Stripe) — visible solo si está configurado ── */}
-            {STRIPE_ENABLED && (
-              <button onClick={() => setShowPurchase(true)} className="oc-pressable" style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                marginTop: 10, padding: '12px 0', borderRadius: 14, cursor: 'pointer',
-                fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
-                background: `linear-gradient(135deg, ${C.gold}, #b56d00)`, border: 'none', color: '#1a1204',
-                boxShadow: `0 8px 22px ${C.gold}44`,
-              }}>
-                <CreditCard size={16} /> Recargar tokens
-              </button>
-            )}
+            {/* ── Detalles con explicación simple ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
+              <div style={{ padding: 12, borderRadius: 14, background: C.glass, border: `1px solid ${C.line}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Lock size={12} style={{ color: C.gold }} />
+                  <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12.5, color: C.ink }}>En garantía</span>
+                </div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 18, color: C.gold, marginTop: 4 }}>
+                  {escrow.toLocaleString('es-CL')} T
+                </div>
+                <div style={{ fontFamily: FONT.body, fontSize: 10.5, color: C.mut, marginTop: 2, lineHeight: 1.3 }}>
+                  Guardado mientras dura un trabajo
+                </div>
+              </div>
+              <div style={{ padding: 12, borderRadius: 14, background: C.glass, border: `1px solid ${C.line}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Zap size={12} style={{ color: node.accent }} />
+                  <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12.5, color: C.ink }}>Puntos PE</span>
+                </div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 18, color: node.accent, marginTop: 4 }}>
+                  {pe.toLocaleString('es-CL')}
+                </div>
+                <div style={{ fontFamily: FONT.body, fontSize: 10.5, color: C.mut, marginTop: 2, lineHeight: 1.3 }}>
+                  Tu experiencia en la red
+                </div>
+              </div>
+            </div>
           </OmicronCard>
 
           {/* ── Confirmación de compra al volver de Stripe ── */}
@@ -212,8 +246,8 @@ export function WalletTab() {
             ) : txs.length === 0 ? (
               <EmptyState
                 icon={<Clock size={28} />}
-                title="Sin movimientos aún"
-                hint="Tus transacciones aparecerán aquí. Gana tokens completando contratos o vendiendo en el Mercado."
+                title="Aún no tienes movimientos"
+                hint="Aquí verás tus recargas, envíos y pagos. Puedes recargar tokens con el botón dorado de arriba, o ganarlos completando trabajos en el Mercado."
                 ctaLabel="Explorar Mercado"
                 onCta={() => setActiveTab('market')}
               />
