@@ -1,11 +1,19 @@
 // supabase/functions/analizar-cv/index.ts
 // Analiza el CV COMPLETO con Gemini y devuelve un perfil real y personalizado.
 // Salida JSON estructurada (responseSchema) para que siempre sea parseable.
-// Pondera TODO lo que aparezca en el CV; el resultado es específico de cada CV.
+//
+// ENDURECIMIENTO (producción): límite de tasa por IP (fail-open) para evitar
+// abuso del endpoint de IA sin bloquear el onboarding legítimo. Si el
+// limitador falla o no está desplegado, se permite la solicitud.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const MODEL = 'gemini-2.5-flash';
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+const _admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +22,45 @@ const CORS = {
 };
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+
+/** IP aproximada del solicitante (para rate-limit sin identidad estable). */
+function clientIp(req: Request): string {
+  const fwd = req.headers.get('x-forwarded-for');
+  if (fwd) return fwd.split(',')[0].trim();
+  return req.headers.get('cf-connecting-ip') ?? req.headers.get('x-real-ip') ?? 'unknown';
+}
+
+/**
+ * Límite de tasa fail-open: usa la RPC public.check_rate_limit (ventana fija,
+ * atómica). Si no hay cliente admin o la RPC falla, permite (no bloquea).
+ * Límite: 6 análisis de CV por IP cada 60s (suficiente para reintentos, corta abuso).
+ */
+async function rateLimited(req: Request): Promise<Response | null> {
+  if (!_admin) return null; // fail-open: sin service role, no bloqueamos
+  try {
+    const { data, error } = await _admin.rpc('check_rate_limit', {
+      p_bucket: 'analizar-cv',
+      p_identifier: clientIp(req),
+      p_limit: 6,
+      p_window_sec: 60,
+    });
+    if (error || !data) return null; // fail-open
+    const r = data as { allowed?: boolean; reset_at?: string };
+    if (r.allowed === false) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: 'Demasiados análisis de CV en poco tiempo. Espera unos segundos e intenta de nuevo.',
+          retry_at: r.reset_at ?? null,
+        }),
+        { status: 429, headers: { ...CORS, 'Content-Type': 'application/json', 'Retry-After': '30' } },
+      );
+    }
+    return null;
+  } catch {
+    return null; // fail-open
+  }
+}
 
 const SYS =
   'Eres un evaluador experto de talento de ingenieria/tecnica para Omicrom. ' +
@@ -58,6 +105,11 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!GEMINI_API_KEY) return json({ ok: false, error: 'Falta GEMINI_API_KEY.' }, 500);
+
+    // Límite de tasa por IP (fail-open) antes de gastar tokens de Gemini.
+    const limited = await rateLimited(req);
+    if (limited) return limited;
+
     const body = await req.json().catch(() => ({}));
     const cv = (body?.text ?? '').toString().slice(0, 16000).trim();
     if (cv.length < 20) return json({ ok: false, error: 'El CV es muy corto o no se pudo leer.' }, 400);

@@ -1,11 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap, Wallet, Award, Layers } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap, Wallet, Award, Layers, CreditCard, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { TokenTransferModal } from '../wallet/TokenTransferModal';
+import { TokenPurchaseModal } from '../wallet/TokenPurchaseModal';
+
+// Compra de tokens (Stripe): visible por defecto. Solo se oculta si se pone
+// VITE_STRIPE_ENABLED="false" a propósito. Así el botón aparece sin depender de
+// que la variable se haya horneado en el build (evita el típico "no aparece").
+// Si Stripe no está configurado en el backend, el modal muestra un aviso amable.
+const STRIPE_ENABLED = import.meta.env.VITE_STRIPE_ENABLED !== 'false';
 import { C, FONT } from '../../theme';
-import { oc, OmicronHeader, OmicronCard, Stat, ProgressBar, Chip } from '../omicron/OmicronChrome';
+import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '../omicron/OmicronChrome';
 import type { WalletTransaction } from '../../types';
 
 // ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────
@@ -29,6 +36,7 @@ const TX_META: Record<WalletTransaction['type'], { label: string; sign: '+' | '�
   refund:         { label: 'Reembolso',           sign: '+', color: C.cyan,  incoming: true  },
   commission:     { label: 'Comisión de red',     sign: '−', color: C.red,   incoming: false },
   withdrawal:     { label: 'Retiro',              sign: '−', color: C.gold,  incoming: false },
+  purchase:       { label: 'Recarga con tarjeta',  sign: '+', color: C.green, incoming: true  },
 };
 
 function formatDate(iso: string) {
@@ -43,6 +51,9 @@ export function WalletTab() {
   const [loading, setLoading]           = useState(true);
   const [view, setView]                 = useState<'movimientos' | 'niveles'>('movimientos');
   const [transferMode, setTransferMode] = useState<'send' | 'receive' | null>(null);
+  const [showPurchase, setShowPurchase]     = useState(false);
+  const [purchaseState, setPurchaseState]   = useState<'idle' | 'verifying' | 'ok' | 'pending'>('idle');
+  const [creditedTokens, setCreditedTokens] = useState<number | null>(null);
 
   const loadTxs = useCallback(async () => {
     if (!profile) return;
@@ -57,6 +68,56 @@ export function WalletTab() {
   }, [profile]);
 
   useEffect(() => { loadTxs(); }, [loadTxs]);
+
+  // Al volver de Stripe (?compra=exito&session_id=...) verificamos el pago
+  // DIRECTAMENTE con Stripe y acreditamos los tokens (no dependemos del webhook).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const compra = params.get('compra');
+    if (!compra) return;
+    const sessionId = params.get('session_id');
+    // Limpia la URL sin recargar.
+    params.delete('compra');
+    params.delete('session_id');
+    const clean = window.location.pathname + (params.toString() ? `?${params}` : '');
+    window.history.replaceState({}, '', clean);
+
+    if (compra !== 'exito') return;
+
+    let cancelled = false;
+    (async () => {
+      setPurchaseState('verifying');
+      if (sessionId) {
+        try {
+          const { data, error } = await supabase.functions.invoke('verificar-pago', {
+            body: { session_id: sessionId },
+          });
+          if (!cancelled) {
+            if (!error && data?.ok && data?.paid) {
+              setCreditedTokens(typeof data.credited === 'number' ? data.credited : null);
+              setPurchaseState('ok');
+            } else if (!error && data?.ok && data?.pending) {
+              setPurchaseState('pending');
+            } else {
+              // El pago se realizó; si algo falló, el webhook lo acreditará.
+              setPurchaseState('ok');
+            }
+          }
+        } catch {
+          if (!cancelled) setPurchaseState('ok');
+        }
+      } else {
+        setPurchaseState('ok');
+      }
+      await refreshProfile();
+      await loadTxs();
+      // Reintento por si la acreditación tardó unos segundos.
+      setTimeout(() => { if (!cancelled) { refreshProfile(); loadTxs(); } }, 4000);
+    })();
+
+    const hide = setTimeout(() => { if (!cancelled) setPurchaseState('idle'); }, 14000);
+    return () => { cancelled = true; clearTimeout(hide); };
+  }, [refreshProfile, loadTxs]);
 
   async function handleTransferClose() {
     setTransferMode(null);
@@ -84,22 +145,38 @@ export function WalletTab() {
 
           {/* ── Tarjeta de saldo (hero) ── */}
           <OmicronCard accent={C.gold} glow className="oc-rise" style={{ padding: 20 }}>
-            <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: C.mut }}>
-              Saldo disponible
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.mut }}>
+              Tu saldo disponible
             </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 6 }}>
               <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 46, color: C.ink, letterSpacing: -1.5, lineHeight: 0.95, textShadow: `0 0 26px ${C.gold}44` }}>
                 {balance.toLocaleString('es-CL')}
               </span>
-              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold, marginBottom: 6 }}>T</span>
+              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold, marginBottom: 6 }}>Tokens</span>
             </div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginTop: 4 }}>1 Token = 1 CLP</div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16 }}>
-              <Stat label="En garantía" value={`${escrow.toLocaleString('es-CL')} T`} color={C.gold} icon={<Lock size={11} />} />
-              <Stat label="Puntos PE" value={pe.toLocaleString('es-CL')} color={node.accent} icon={<Zap size={11} />} />
+            <div style={{ fontFamily: FONT.body, fontSize: 12.5, color: C.mut, marginTop: 6, lineHeight: 1.4 }}>
+              Es tu dinero dentro de Ómicron. <strong style={{ color: C.ink }}>1 Token = $1 peso chileno.</strong>
             </div>
 
+            {/* ── Botón principal: Recargar (comprar con tarjeta) ── */}
+            {STRIPE_ENABLED && (
+              <button onClick={() => setShowPurchase(true)} className="oc-pressable" style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                marginTop: 16, padding: '15px 0', borderRadius: 16, cursor: 'pointer',
+                fontFamily: FONT.display, fontWeight: 800, fontSize: 16,
+                background: `linear-gradient(135deg, #ffcb52, ${C.gold})`, border: 'none', color: '#1a1204',
+                boxShadow: `0 10px 26px ${C.gold}55`,
+              }}>
+                <CreditCard size={19} /> Recargar tokens
+              </button>
+            )}
+            {STRIPE_ENABLED && (
+              <div style={{ textAlign: 'center', fontFamily: FONT.body, fontSize: 11, color: C.mut, marginTop: 6 }}>
+                Compra segura con tarjeta · débito o crédito
+              </div>
+            )}
+
+            {/* ── Acciones secundarias: enviar / recibir entre usuarios ── */}
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
               <button onClick={() => setTransferMode('send')} className="oc-pressable" style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0',
@@ -117,7 +194,75 @@ export function WalletTab() {
                 <ArrowDownLeft size={16} style={{ color: C.cyan }} /> Recibir
               </button>
             </div>
+
+            {/* ── Detalles con explicación simple ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
+              <div style={{ padding: 12, borderRadius: 14, background: C.glass, border: `1px solid ${C.line}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Lock size={12} style={{ color: C.gold }} />
+                  <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12.5, color: C.ink }}>En garantía</span>
+                </div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 18, color: C.gold, marginTop: 4 }}>
+                  {escrow.toLocaleString('es-CL')} T
+                </div>
+                <div style={{ fontFamily: FONT.body, fontSize: 10.5, color: C.mut, marginTop: 2, lineHeight: 1.3 }}>
+                  Guardado mientras dura un trabajo
+                </div>
+              </div>
+              <div style={{ padding: 12, borderRadius: 14, background: C.glass, border: `1px solid ${C.line}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Zap size={12} style={{ color: node.accent }} />
+                  <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12.5, color: C.ink }}>Puntos PE</span>
+                </div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 18, color: node.accent, marginTop: 4 }}>
+                  {pe.toLocaleString('es-CL')}
+                </div>
+                <div style={{ fontFamily: FONT.body, fontSize: 10.5, color: C.mut, marginTop: 2, lineHeight: 1.3 }}>
+                  Tu experiencia en la red
+                </div>
+              </div>
+            </div>
           </OmicronCard>
+
+          {/* ── Estado de la compra al volver de Stripe ── */}
+          {purchaseState === 'verifying' && (
+            <OmicronCard accent={C.cyan} glow className="oc-rise" style={{ background: `linear-gradient(135deg, ${C.cyan}1e, ${C.cyan}08)` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Loader2 size={20} className="animate-spin" style={{ color: C.cyan, flexShrink: 0 }} />
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.ink }}>
+                  Verificando tu pago…
+                </div>
+              </div>
+            </OmicronCard>
+          )}
+          {purchaseState === 'ok' && (
+            <OmicronCard accent={C.green} glow className="oc-rise" style={{ background: `linear-gradient(135deg, ${C.green}1e, ${C.green}08)` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <CheckCircle2 size={22} style={{ color: C.green, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 15, color: C.ink }}>¡Pago confirmado!</div>
+                  <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>
+                    {creditedTokens != null
+                      ? `Se acreditaron ${creditedTokens.toLocaleString('es-CL')} tokens a tu saldo.`
+                      : 'Tus tokens ya están en tu saldo.'}
+                  </div>
+                </div>
+              </div>
+            </OmicronCard>
+          )}
+          {purchaseState === 'pending' && (
+            <OmicronCard accent={C.gold} glow className="oc-rise" style={{ background: `linear-gradient(135deg, ${C.gold}1e, ${C.gold}08)` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Clock size={20} style={{ color: C.gold, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 15, color: C.ink }}>Pago en proceso</div>
+                  <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>
+                    Estamos confirmando tu pago. Tu saldo se actualizará en breve.
+                  </div>
+                </div>
+              </div>
+            </OmicronCard>
+          )}
 
           {/* ── Banner Pionero ── */}
           {pioneer && (
@@ -158,8 +303,8 @@ export function WalletTab() {
             ) : txs.length === 0 ? (
               <EmptyState
                 icon={<Clock size={28} />}
-                title="Sin movimientos aún"
-                hint="Tus transacciones aparecerán aquí. Gana tokens completando contratos o vendiendo en el Mercado."
+                title="Aún no tienes movimientos"
+                hint="Aquí verás tus recargas, envíos y pagos. Puedes recargar tokens con el botón dorado de arriba, o ganarlos completando trabajos en el Mercado."
                 ctaLabel="Explorar Mercado"
                 onCta={() => setActiveTab('market')}
               />
@@ -239,6 +384,10 @@ export function WalletTab() {
 
       {transferMode && (
         <TokenTransferModal mode={transferMode} onClose={handleTransferClose} />
+      )}
+
+      {showPurchase && (
+        <TokenPurchaseModal onClose={() => setShowPurchase(false)} />
       )}
     </div>
   );

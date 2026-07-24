@@ -400,7 +400,8 @@ export type WalletTransactionType =
   | 'escrow_release'
   | 'refund'
   | 'commission'
-  | 'withdrawal';
+  | 'withdrawal'
+  | 'purchase';
 
 export interface WalletTransaction {
   id: string;
