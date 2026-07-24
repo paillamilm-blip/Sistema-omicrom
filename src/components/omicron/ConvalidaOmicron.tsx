@@ -37,7 +37,7 @@ const AXES: [string, 'execution' | 'quality' | 'transcendence' | 'foundation', s
 ];
 
 export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: () => void; onViewProfile?: () => void }) {
-  const { profile, gemelo, refreshProfile } = useApp();
+  const { gemelo, refreshProfile } = useApp();
   const { toast } = useToast();
   const [busy, setBusy] = useState<Kind | null>(null);
   const [done, setDone] = useState<Kind[]>([]);
@@ -98,23 +98,67 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
     const text = raw.trim();
     if (!text || busy) return;
     setBusy('cv');
-    setMsg('Analizando con Ómicron…');
+    setMsg('Ómicron está leyendo TODO tu CV…');
     try {
-      const analyzed = analyzeCV(text);
-      await supabase.rpc('convalidar_credencial', { p_kind: 'cv' });
-      if (profile?.id) {
-        try { await supabase.from('profiles').update({ skills: analyzed.labels }).eq('id', profile.id); } catch { /* best-effort */ }
+      // 1) Análisis REAL con IA (lee TODO el CV). Fallback a la heurística local si falla.
+      let analyzed = analyzeCV(text);
+      let summary = '';
+      try {
+        const { data: aiData } = await supabase.functions.invoke('analizar-cv', { body: { text } });
+        const a = aiData as { ok?: boolean; analysis?: {
+          name?: string; seniorLabel?: string; seniorLevel?: number; years?: number;
+          skills?: string[]; arch?: string; summary?: string;
+          axes?: { exec?: number; qual?: number; trans?: number; fund?: number };
+        } } | null;
+        const ia = a?.ok ? a.analysis : null;
+        if (ia?.axes) {
+          const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+          const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
+          analyzed = {
+            ...analyzed,
+            name: ia.name || analyzed.name,
+            seniorLabel: ia.seniorLabel || analyzed.seniorLabel,
+            seniorLevel: (ia.seniorLevel as AnalyzedProfile['seniorLevel']) || analyzed.seniorLevel,
+            years: typeof ia.years === 'number' ? ia.years : analyzed.years,
+            skills: skills.length ? skills : analyzed.skills,
+            labels: skills.length ? skills : analyzed.labels,
+            arch: (ia.arch as AnalyzedProfile['arch']) || analyzed.arch,
+            axes: { exec: clamp(ia.axes.exec), qual: clamp(ia.axes.qual), trans: clamp(ia.axes.trans), fund: clamp(ia.axes.fund) },
+          };
+          summary = ia.summary || '';
+        }
+      } catch { /* la IA no respondió: usamos la heurística local */ }
+
+      // 2) Persiste el análisis server-side (ejes + nombre + skills). El trigger recalcula reputación.
+      const { data, error } = await supabase.rpc('aplicar_analisis_cv', {
+        p_name: analyzed.name || '',
+        p_skills: analyzed.labels,
+        p_exec: analyzed.axes.exec,
+        p_qual: analyzed.axes.qual,
+        p_trans: analyzed.axes.trans,
+        p_fund: analyzed.axes.fund,
+      });
+      const res = data as { ok?: boolean; error?: string } | null;
+      if (error || !res?.ok) {
+        setMsg(res?.error ? `No se pudo: ${res.error}` : 'No se pudo aplicar el análisis. ¿Tu sesión está activa?');
+        setBusy(null);
+        return;
       }
       setDone((prev) => (prev.includes('cv') ? prev : [...prev, 'cv']));
-      toast('CV cargado y convalidado ✓', 'success');
+      toast('CV analizado y aplicado ✓', 'success');
       speak(`CV analizado. Tu perfil: ${analyzed.seniorLabel}. Experto en ${analyzed.labels.slice(0, 3).join(', ')}.`);
       await refreshProfile();
       setShowCv(false);
       setDossier(analyzed);
-      setAi({ loading: true, text: '' });
-      askCoach()
-        .then((r) => setAi({ loading: false, text: r.advice || '' }))
-        .catch(() => setAi({ loading: false, text: '' }));
+      // Si la IA ya explicó el porqué de tus niveles, lo mostramos; si no, pedimos el diagnóstico del coach.
+      if (summary) {
+        setAi({ loading: false, text: summary });
+      } else {
+        setAi({ loading: true, text: '' });
+        askCoach()
+          .then((r) => setAi({ loading: false, text: r.advice || '' }))
+          .catch(() => setAi({ loading: false, text: '' }));
+      }
     } catch {
       setMsg('No pude analizar. Revisá el texto e intentá de nuevo.');
     }

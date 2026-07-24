@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { registerPWA } from './lib/pwaUpdate';
 import './index.css';
 import './styles/responsive.css';
 
@@ -13,11 +14,5 @@ createRoot(rootEl).render(
   </StrictMode>
 );
 
-// ── PWA: registra el service worker en producción (instalable + offline). ──
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
-      console.warn('[Ómicron] No se pudo registrar el service worker:', err);
-    });
-  });
-}
+// ── PWA: registra el SW en producción con AUTO-ACTUALIZACIÓN + aviso de versión nueva. ──
+if (import.meta.env.PROD) registerPWA();
