@@ -96,18 +96,16 @@ export function WalletTab() {
             if (!error && data?.ok && data?.paid) {
               setCreditedTokens(typeof data.credited === 'number' ? data.credited : null);
               setPurchaseState('ok');
-            } else if (!error && data?.ok && data?.pending) {
-              setPurchaseState('pending');
             } else {
-              // El pago se realizó; si algo falló, el webhook lo acreditará.
-              setPurchaseState('ok');
+              // Aún no confirmado (pendiente o reintentando): NO decimos "confirmado".
+              setPurchaseState('pending');
             }
           }
         } catch {
-          if (!cancelled) setPurchaseState('ok');
+          if (!cancelled) setPurchaseState('pending');
         }
       } else {
-        setPurchaseState('ok');
+        setPurchaseState('pending');
       }
       await refreshProfile();
       await loadTxs();
