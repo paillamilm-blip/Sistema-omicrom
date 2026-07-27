@@ -185,7 +185,7 @@ export function AuthOverlay() {
         </div>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-omicron-text tracking-tight">Sistema Ómicron</h1>
-          <p className="text-omicron-subtle text-sm mt-1">Capital Intelectual Digital</p>
+          <p className="text-omicron-subtle text-sm mt-1">Tu reputación, imposible de falsificar.</p>
         </div>
       </div>
 

@@ -1,36 +1,31 @@
 // config/hubs.ts
-// Navegación por "hubs": agrupa las pestañas en 5 grupos por intención,
+// Navegación por "hubs": agrupa las pestañas en grupos por intención,
 // con etiquetas en lenguaje natural (claras y autoexplicativas).
-import { Home, GraduationCap, Briefcase, type LucideIcon } from 'lucide-react';
-// 🧪 Store, MessageCircle, Scale quedan sin usar mientras Mercado/Mensajes/
-// Gobernanza estén ocultos para el piloto (MVP). No se eliminan: se
-// reactivan junto con sus hubs comentados más abajo.
-// import { Store, MessageCircle, Scale } from 'lucide-react';
+import { Home, GraduationCap, Briefcase, Store, MessageCircle, Scale, type LucideIcon } from 'lucide-react';
 import type { TabId } from '../types';
 
 export interface HubMember { tab: TabId; label: string; }
 export interface Hub { id: string; label: string; Icon: LucideIcon; members: HubMember[]; }
 
 // ─────────────────────────────────────────────────────────────
-// 🧪 MVP PILOTO CONTROLADO: navegación reducida a sus funciones
-// estructurales básicas — solo Perfil, Academia y Empleos.
-// Los hubs de Mercado, Billetera (dentro de Perfil) y Gobernanza
-// quedan comentados (no eliminados) para reactivarlos fácilmente
-// después del piloto.
+// Navegación completa: los 6 hubs del ecosistema Ómicron activos.
+// (Anteriormente reducida a 3 hubs para un piloto controlado; se
+// reactivaron Mercado, Billetera, Mensajes y Gobernanza — todos los
+// módulos ya estaban construidos y probados, solo ocultos.)
 // ─────────────────────────────────────────────────────────────
 export const HUBS: Hub[] = [
   {
     id: 'perfil', label: 'Inicio', Icon: Home,
     members: [
       { tab: 'perfil', label: 'Inicio' },
-      // { tab: 'wallet', label: 'Billetera' }, // 🧪 oculto para el piloto (MVP)
+      { tab: 'wallet', label: 'Billetera' },
     ],
   },
   {
     id: 'aprender', label: 'Academia', Icon: GraduationCap,
     members: [
       { tab: 'academia', label: 'Academia' },
-      // { tab: 'maxskill', label: 'Habilidades' }, // 🧪 oculto para el piloto (MVP): mantiene solo 3 pestañas visibles (sin sub-nav)
+      { tab: 'maxskill', label: 'Habilidades' },
     ],
   },
   {
@@ -39,24 +34,21 @@ export const HUBS: Hub[] = [
       { tab: 'empleos', label: 'Empleos' },
     ],
   },
-  // 🧪 oculto para el piloto (MVP) — Mercado (Servicios + Bóveda)
-  // {
-  //   id: 'mercado', label: 'Mercado', Icon: Store,
-  //   members: [
-  //     { tab: 'market',  label: 'Servicios' },
-  //     { tab: 'vault',   label: 'Bóveda' },
-  //   ],
-  // },
-  // 🧪 oculto para el piloto (MVP) — Mensajes
-  // {
-  //   id: 'chat', label: 'Mensajes', Icon: MessageCircle,
-  //   members: [{ tab: 'chat', label: 'Mensajes' }],
-  // },
-  // 🧪 oculto para el piloto (MVP) — Gobernanza
-  // {
-  //   id: 'gobernanza', label: 'Gobernanza', Icon: Scale,
-  //   members: [{ tab: 'gobernanza', label: 'Gobernanza' }],
-  // },
+  {
+    id: 'mercado', label: 'Mercado', Icon: Store,
+    members: [
+      { tab: 'market',  label: 'Servicios' },
+      { tab: 'vault',   label: 'Bóveda' },
+    ],
+  },
+  {
+    id: 'chat', label: 'Mensajes', Icon: MessageCircle,
+    members: [{ tab: 'chat', label: 'Mensajes' }],
+  },
+  {
+    id: 'gobernanza', label: 'Gobernanza', Icon: Scale,
+    members: [{ tab: 'gobernanza', label: 'Gobernanza' }],
+  },
 ];
 
 // Devuelve el hub al que pertenece una pestaña.
