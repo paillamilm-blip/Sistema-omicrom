@@ -154,6 +154,7 @@ supabase/migrations/        Migraciones SQL
 
 | Documento | Contenido |
 |-----------|-----------|
+| [`PLAN_PRODUCCION.md`](./PLAN_PRODUCCION.md) | 🚀 Plan de producción vivo: fases, progreso real, PRs asociados |
 | [`DEFINICION_OMICROM.md`](./DEFINICION_OMICROM.md) | Visión y definición del sistema |
 | [`DEFINICION_OMICROM_v8_BACKEND.md`](./DEFINICION_OMICROM_v8_BACKEND.md) | Definición técnica del backend |
 | [`DEFINICION_REPUTACION_OMICROM.md`](./DEFINICION_REPUTACION_OMICROM.md) | Fórmula canónica de reputación (fuente única de verdad) |
@@ -162,8 +163,8 @@ supabase/migrations/        Migraciones SQL
 | [`PANEL_DE_CONTROL.md`](./PANEL_DE_CONTROL.md) | Dónde van las claves/secretos + checklist maestro |
 
 > 📌 **Pendientes de documentar** (no existen aún en el repo, se están priorizando):
-> Bitácora histórica de decisiones, roadmap de lanzamiento con hitos, auditoría técnica formal,
-> y revisión de UX. Ver plan de mejora activo.
+> Bitácora histórica de decisiones, auditoría técnica formal, y revisión de UX.
+> Ver [`PLAN_PRODUCCION.md`](./PLAN_PRODUCCION.md) para el roadmap activo con estado real.
 
 ---
 
