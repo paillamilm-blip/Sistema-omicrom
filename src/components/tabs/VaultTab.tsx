@@ -8,7 +8,6 @@ import { supabase } from '../../lib/supabase';
 import { C as T, FONT as TF } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import { useToast } from '../shared/Toast';
-import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import { oc, OmicronHeader, OmicronAction } from '../omicron/OmicronChrome';
 
 // Paleta v5.0 "Neo-Académico Holográfico" — Bóveda = Cajas Negras (azul acero industrial)
@@ -54,8 +53,6 @@ async function embedText(text: string): Promise<string | null> {
 export function VaultTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
   const { toast } = useToast();
-  const { isPremium } = usePremium();
-  const [premiumLock, setPremiumLock] = useState(false);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [access, setAccess] = useState<Set<string>>(new Set());
@@ -127,7 +124,6 @@ export function VaultTab() {
 
   async function askOracle() {
     if (!oracleQuery.trim() || oracleLoading) return;
-    if (!isPremium) { setPremiumLock(true); return; }
     setOracleLoading(true); setOracleErr(null); setOracleResult(null);
     try {
       const vec = await embedText(oracleQuery.trim());
@@ -214,7 +210,6 @@ export function VaultTab() {
           <button onClick={() => setOracleOpen(o => !o)} style={styles.oracleToggle}>
             <Sparkles size={14} style={{ color: C.amberHi }} />
             <span style={{ flex: 1, textAlign: 'left' }}>🔮 ORÁCULO DE LA BÓVEDA</span>
-            {!isPremium && <PremiumBadge />}
             <span style={{ color: C.muted }}>{oracleOpen ? '▲' : '▼'}</span>
           </button>
           {oracleOpen && (
@@ -305,7 +300,6 @@ export function VaultTab() {
       </div>
 
       {showPublish && <PublishDocModal onClose={() => setShowPublish(false)} onDone={() => { setShowPublish(false); load(); refreshProfile(); }} />}
-      {premiumLock && <PremiumLock feature="El Oráculo de la Bóveda" onClose={() => setPremiumLock(false)} />}
     </div>
   );
 }

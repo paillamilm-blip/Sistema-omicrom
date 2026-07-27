@@ -10,7 +10,6 @@ import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { ContractModal } from '../contracts/ContractModal';
 import { PublishServiceModal } from '../market/PublishServiceModal';
-import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import { oc, OmicronHeader, OmicronAction } from '../omicron/OmicronChrome';
 import type { MarketService } from '../../types';
 
@@ -104,12 +103,9 @@ export function MarketTab() {
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchResult, setMatchResult] = useState<string | null>(null);
   const [matchErr, setMatchErr] = useState<string | null>(null);
-  const { isPremium } = usePremium();
-  const [premiumLock, setPremiumLock] = useState(false);
 
   const askAdvisor = useCallback(async () => {
     if (!matchQuery.trim() || matchLoading) return;
-    if (!isPremium) { setPremiumLock(true); return; }
     setMatchLoading(true); setMatchErr(null); setMatchResult(null);
     try {
       const { data, error } = await supabase.functions.invoke('market-match', { body: { query: matchQuery } });
@@ -124,7 +120,7 @@ export function MarketTab() {
     } finally {
       setMatchLoading(false);
     }
-  }, [matchQuery, matchLoading, isPremium]);
+  }, [matchQuery, matchLoading]);
 
   const loadServices = useCallback(async () => {
     setLoading(true);
@@ -263,7 +259,6 @@ export function MarketTab() {
           <button onClick={() => setAdvisorOpen(o => !o)} style={styles.advisorToggle}>
             <Sparkles size={14} style={{ color: C.amberHi }} />
             <span style={{ flex: 1, textAlign: 'left' }}>ASESOR IA DE CONTRATACIÓN</span>
-            {!isPremium && <PremiumBadge />}
             <span style={{ color: C.muted }}>{advisorOpen ? '▲' : '▼'}</span>
           </button>
           {advisorOpen && (
@@ -317,7 +312,6 @@ export function MarketTab() {
       {showPublish && (
         <PublishServiceModal onClose={() => setShowPublish(false)} onPublished={loadServices} />
       )}
-      {premiumLock && <PremiumLock feature="El Asesor IA de contratación" onClose={() => setPremiumLock(false)} />}
     </div>
   );
 }

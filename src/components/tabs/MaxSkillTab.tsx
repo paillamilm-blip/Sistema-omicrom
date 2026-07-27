@@ -9,7 +9,6 @@ import { supabase } from '../../lib/supabase';
 import { C as T } from '../../theme';
 import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import { useToast } from '../shared/Toast';
-import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
 import { UniversalSimulator } from '../shared/UniversalSimulator';
 import { CourseFlowModal } from '../shared/CourseFlow';
 import type { SkillTreeNode, UserSkillProgress, ActaEvidencia } from '../../types';
@@ -125,13 +124,9 @@ function svgDimensions(flat: LayoutNode[]) {
 export function MaxSkillTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
   const { toast } = useToast();
-  // 🔓 TEMPORAL: el módulo de Aprendizaje (Árbol de Habilidades) queda de
-  // libre acceso durante el piloto — se bypassa el candado Premium. Para
-  // reactivar el cobro, basta con volver a `const { isPremium } = usePremium();`.
-  const { isPremium: _isPremiumReal } = usePremium();
-  void _isPremiumReal;
-  const isPremium = true;
-  const [premiumLock, setPremiumLock] = useState<string | null>(null);
+  // ✅ El módulo de Aprendizaje (Árbol de Habilidades) es de libre acceso
+  // para siempre: todas las funciones de IA (Examinador, Examen de Rango)
+  // son gratuitas, sin candado Premium.
   const [nodes, setNodes]             = useState<SkillTreeNode[]>([]);
   const [progress, setProgress]       = useState<Map<string, UserSkillProgress>>(new Map());
   const [isLoading, setIsLoading]     = useState(true);
@@ -222,17 +217,15 @@ export function MaxSkillTab() {
   }, [profile?.id]);
 
   const handleStartChallenge = useCallback((node: SkillTreeNode) => {
-    if (!isPremium) { setPremiumLock('El Examinador IA'); return; }
     setExamNode(node);
-  }, [isPremium]);
+  }, []);
 
   const handleRangeChallenge = useCallback(() => {
-    if (!isPremium) { setPremiumLock('El Examen de Rango IA'); return; }
     if (nodes.length === 0) { toast('Aún no hay nodos disponibles. 🛠️', 'info'); return; }
     const byStatus = (want: string) => nodes.find(n => getStatus(n.id) === want);
     const target = byStatus('VALIDATED') || byStatus('MASTERED') || byStatus('AVAILABLE') || nodes[0];
     setExamNode(target);
-  }, [isPremium, nodes, getStatus, toast]);
+  }, [nodes, getStatus, toast]);
 
   useEffect(() => { loadActas(); }, [loadActas]);
 
@@ -292,7 +285,6 @@ export function MaxSkillTab() {
         <button style={styles.rangeBtn} onClick={handleRangeChallenge}>
           <Brain size={15} />
           Iniciar Examen de Rango
-          {!isPremium && <PremiumBadge />}
         </button>
       </div>
 
@@ -565,7 +557,6 @@ export function MaxSkillTab() {
           ) : (
             <button style={styles.challengeBtn} onClick={() => handleStartChallenge(selectedNode)}>
               <Play size={14} fill="currentColor" /> Rendir Examen IA
-              {!isPremium && <PremiumBadge />}
             </button>
           )}
 
@@ -618,7 +609,6 @@ export function MaxSkillTab() {
       {courseNode && (
         <CourseFlowModal nodeId={courseNode} onClose={() => setCourseNode(null)} onValidated={() => {}} />
       )}
-      {premiumLock && <PremiumLock feature={premiumLock} onClose={() => setPremiumLock(null)} />}
     </div>
   );
 }

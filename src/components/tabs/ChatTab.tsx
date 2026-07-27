@@ -7,7 +7,6 @@ import { ScanlineOverlay, CyberCard, SectionLabel, LoadingScreen } from '../shar
 import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
-import { usePremium, PremiumLock } from '../shared/Premium';
 import { sendSecureMessage, loadSecureMessages } from '../../lib/secureChat';
 import { DirectChatModal } from '../perfil/RedSocial';
 import type { Message } from '../../types';
@@ -170,8 +169,6 @@ function NewMessagePicker({ onPick, onClose }: { onPick: (c: Conn) => void; onCl
 export function ChatTab() {
   const { profile, setActiveTab } = useApp();
   const { toast } = useToast();
-  const { isPremium } = usePremium();
-  const [premiumLock, setPremiumLock] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [dmConvos, setDmConvos] = useState<DMConvo[]>([]);
   const [chatWith, setChatWith] = useState<{ id: string; name: string; username: string; avatar: string | null } | null>(null);
@@ -341,7 +338,6 @@ export function ChatTab() {
 
   async function improveDraft() {
     if (!input.trim() || aiAssisting) return;
-    if (!isPremium) { setPremiumLock(true); return; }
     setAiAssisting(true);
     try {
       const { data, error } = await supabase.functions.invoke('chat-assist', { body: { draft: input.trim() } });
@@ -543,9 +539,9 @@ export function ChatTab() {
       <div style={{ display: 'flex', gap: 8, padding: '10px 14px', flexShrink: 0, borderTop: `1px solid ${C.cyanFaint}` }}>
         <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()} placeholder="Mensaje cifrado..."
           style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, outline: 'none' }} />
-        <button onClick={improveDraft} disabled={!input.trim() || aiAssisting} title={isPremium ? 'Mejorar redacción con IA' : 'Redactor IA · Premium'}
+        <button onClick={improveDraft} disabled={!input.trim() || aiAssisting} title="Mejorar redacción con IA"
           style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(255, 176, 46,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || aiAssisting ? 0.4 : 1 }}>
-          {aiAssisting ? <Loader2 size={16} className="animate-spin" /> : isPremium ? <Sparkles size={16} /> : <Lock size={16} />}
+          {aiAssisting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
         </button>
         <button onClick={send} disabled={!input.trim() || sending} style={{ width: 44, height: 44, borderRadius: 10, background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
           <Send size={16} />
@@ -562,7 +558,6 @@ export function ChatTab() {
           onClose={() => setRateFor(null)}
         />
       )}
-      {premiumLock && <PremiumLock feature="El Redactor IA de Acuerdos" onClose={() => setPremiumLock(false)} />}
     </div>
   );
 }
