@@ -184,7 +184,7 @@ export function MarketTab() {
         onBack={() => setActiveTab('perfil')}
         icon={<Cpu size={18} />}
         title="Mercado"
-        subtitle="Capital Intelectual · Industria 5.0"
+        subtitle="Reputación real, oportunidades reales"
         action={
           <>
             <button onClick={() => setFiltersOpen(true)} aria-label="Abrir filtros de búsqueda" style={styles.hamburgerBtn}>
