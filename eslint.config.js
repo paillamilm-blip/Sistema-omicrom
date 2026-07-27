@@ -21,6 +21,12 @@ export default tseslint.config(
       '.kiro/**',
     ],
   },
+  // NOTA HISTÓRICA (corrige un intento anterior, commit c2abfdb): se probó la teoría
+  // de que "...tseslint.configs.recommended" suelto en la raíz del array filtraba
+  // reglas TS a TODO archivo sin importar 'ignores'. Se verificó con una reproducción
+  // directa del binario de ESLint que esa teoría es INCORRECTA: 'ignores' sí excluye
+  // correctamente los archivos que matchea de los bloques de reglas que le siguen en
+  // el array. No reintroducir el scoping a 'files: ["src/**"]' por esa razón.
   ...tseslint.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
@@ -42,16 +48,17 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
   },
-  // ── Override final para .cjs (máxima prioridad: es el ÚLTIMO bloque del array) ──
-  // En ESLint 9 flat config, cuando varios bloques matchean el mismo archivo, el
-  // que aparece MÁS TARDE en el array gana. Este bloque queda al final a propósito:
-  // sin importar qué reglas TS se hayan aplicado antes (via ignores, o spread de
-  // recommended), esta es la última palabra para cualquier archivo .cjs, esté donde
-  // esté (incluyendo .kiro/skills/**/*.cjs). Verificado con una reproducción aislada
-  // del binario real de ESLint: este bloque por sí solo exime a los .cjs sin
-  // depender de que 'ignores' matchee directorios con punto en todos los runners.
+  // ── Override para scripts CommonJS de .kiro/skills/ (terceros, no código de la app) ──
+  // Acotado EXPLÍCITAMENTE a '.kiro/**/*.cjs' (no a '**/*.cjs' global). Un .cjs futuro
+  // en scripts/ o en la raíz del repo sigue recibiendo 'no-undef' normal — esa regla
+  // sí detecta bugs reales (variables no definidas), a diferencia de las reglas de
+  // estilo require()/CommonJS que sí tiene sentido apagar solo para skills de terceros.
+  // Nota: '.kiro/**' ya está en 'ignores' arriba, lo que por sí solo alcanza para
+  // excluir estos archivos del lint. Este bloque queda como segunda capa explícita
+  // (a propósito, documentado) para que la exención sea visible sin tener que mirar
+  // 'ignores', y sobreviva aunque cambie el mecanismo de ignore en el futuro.
   {
-    files: ['**/*.cjs'],
+    files: ['.kiro/**/*.cjs'],
     languageOptions: {
       sourceType: 'commonjs',
     },
