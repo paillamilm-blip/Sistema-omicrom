@@ -30,7 +30,7 @@ Ver `.kiro/steering/vision-producto.md` para el detalle completo de esta decisi�
 | Edge Functions | 21 (coach, tutor, examen-ia, arbiter-ai, vault-oracle, market-match, carta-ia, chat-assist, stripe-webhook...) | ✅ Implementado, con rate limiting propio por IP en cada función |
 | Hubs de navegación | 6 (Inicio, Academia, Empleos, Mercado, Mensajes, Gobernanza) | ✅ Todos activos |
 | Funciones de IA gratuitas | 7 (ver tabla abajo) | ✅ Todas sin candado |
-| Tests | 1 archivo (`reputationService.test.ts`) | 🔴 Insuficiente — gap abierto |
+| Tests | 5 archivos (`reputationService`, `cvAnalyzer`, `jobMatcher`, `omicronCoach`, `oraculo`) | 🟡 Mejorando — faltan tests de componentes |
 | Skills Kiro instaladas | 13 (creator, superpowers, gsd, review-ultra, context-mode, claude-mem, + suite UI/UX Pro Max) | ✅ Listas |
 
 ---
@@ -40,7 +40,7 @@ Ver `.kiro/steering/vision-producto.md` para el detalle completo de esta decisi�
 | # | Tarea | Estado |
 |---|-------|--------|
 | 0.1 | CI en verde (fix de lint `.cjs` + actions v5) | ✅ **Hecho** — PR #90 mergeado |
-| 0.2 | Tests unitarios de libs puras (`oraculo`, `cvAnalyzer`, `jobMatcher`, `omicronCoach`) | ⬜ Pendiente |
+| 0.2 | Tests unitarios de libs puras (`oraculo`, `cvAnalyzer`, `jobMatcher`, `omicronCoach`) | ✅ **Hecho** — PR #94 (82 tests nuevos) |
 | 0.3 | Splitear `AppContext.tsx` (auth/profile/navigation) | ⬜ Pendiente |
 | 0.4 | Unificar design system (`theme.ts` vs `design-system/tokens.ts`) | ⬜ Pendiente |
 
@@ -103,13 +103,23 @@ Functions ya tienen rate limiting propio por IP, independiente de esto.
 | PR | Título | Fase | Estado |
 |----|--------|------|--------|
 | [#90](https://github.com/paillamilm-blip/Sistema-omicrom/pull/90) | fix(ci): resolver fallos de CI en main | 0.1 | ✅ Mergeado |
-| [#91](https://github.com/paillamilm-blip/Sistema-omicrom/pull/91) | feat: activar hubs ocultos + reposicionar mensaje | 1.1 + 1.3 | 🟡 Abierto — mergear primero |
-| [#92](https://github.com/paillamilm-blip/Sistema-omicrom/pull/92) | feat: eliminar candados Premium (IA gratis para siempre) | 1.5 | 🟡 Abierto — mergear después de #91 (base: rama de #91) |
+| [#91](https://github.com/paillamilm-blip/Sistema-omicrom/pull/91) | feat: activar hubs ocultos + reposicionar mensaje | 1.1 + 1.3 | ✅ Mergeado |
+| [#92](https://github.com/paillamilm-blip/Sistema-omicrom/pull/92) | feat: eliminar candados Premium (IA gratis para siempre) | 1.5 | ✅ Mergeado |
+| [#93](https://github.com/paillamilm-blip/Sistema-omicrom/pull/93) | docs: crear PLAN_PRODUCCION.md | — (documentación) | ✅ Mergeado |
+| [#94](https://github.com/paillamilm-blip/Sistema-omicrom/pull/94) | test: agregar tests unitarios de libs puras | 0.2 | 🟡 Abierto |
 
 ---
 
-## ❓ Próximo paso sugerido
+## ▶️ En curso ahora
 
-Con 1.1, 1.3 y 1.5 completos, la relación esfuerzo/impacto más alta disponible
-ahora es **0.2 (tests de libs puras)** o **0.3 (splitear AppContext)** — ambas
-del bloque de cimientos, antes de seguir apilando features de la Fase 2.
+Con 0.2 recién entregado (pendiente de merge en PR #94), el siguiente paso
+del bloque de cimientos es:
+
+**Fase 0.3 — Splitear `AppContext.tsx`** (auth/profile/navigation en
+providers separados, con `useApp()` como facade de compatibilidad para no
+romper los 39 archivos que ya lo consumen).
+
+## ❓ Después de esto
+
+**Fase 0.4 — Unificar design system** (`theme.ts` vs `design-system/tokens.ts`)
+cierra el bloque de cimientos antes de empezar la Fase 2.
