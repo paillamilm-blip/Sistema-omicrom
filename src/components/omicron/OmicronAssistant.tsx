@@ -79,9 +79,11 @@ function getRecognitionCtor(): SRCtor | null {
 // "el nodo se aleja al tocarlo": no hay pelea entre la rotación automática
 // y el gesto de arrastre porque la rotación deja de aplicarse en cuanto el
 // drag arranca. Navegar (tap) y reposicionar (drag) usan los gestos nativos
-// de Framer Motion (onTap/onDragStart/onDragEnd), no onClick — ver nota
-// técnica 2 más abajo. Se aísla en su propio componente para no
-// re-renderizar todo el asistente.
+// de Framer Motion (onTap/onDragStart/onDragEnd) más una bandera propia
+// (justDraggedRef) que bloquea la navegación justo después de soltar un
+// arrastre real — ver nota técnica 2 y la definición de justDraggedRef más
+// abajo. Se aísla en su propio componente para no re-renderizar todo el
+// asistente.
 // ─────────────────────────────────────────────────────────────────────────
 const NODE_POS_KEY = 'omicron_node_positions_v1';
 const NODE_HINT_KEY = 'omicron_node_hint_seen_v1';
@@ -103,6 +105,16 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const nodeElsRef = useRef<Map<TabId, HTMLButtonElement>>(new Map());
+  // Bandera "se acaba de arrastrar" por nodo. Framer Motion NO garantiza que
+  // `onTap`/`onClick` se cancelen automáticamente tras un `onDragEnd` real en
+  // todos los navegadores/dispositivos (confirmado revisando reportes de la
+  // comunidad de Framer Motion) — de ahí el bug reportado de "al mover un
+  // nodo se abre la pestaña sola". Se limpia con setTimeout(0), NO de forma
+  // inmediata: el evento tap/click se dispara sincrónicamente justo después
+  // de onDragEnd, así que si la limpiáramos ahí mismo, tap la vería en false
+  // de todos modos. setTimeout(0) la deja en true durante ese instante y la
+  // limpia recién en el siguiente ciclo, listo para el próximo gesto.
+  const justDraggedRef = useRef<Set<TabId>>(new Set());
   const [rot, setRot] = useState(0);
   const [pinned, setPinned] = useState<Partial<Record<TabId, NodePos>>>(() => loadNodePositions());
   const [hintVisible, setHintVisible] = useState(() => {
@@ -177,16 +189,11 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
           // Framer Motion compone drag + scale en un único transform consistente,
           // y el hit-box de toque siempre coincide con lo que se ve.
           //
-          // Nota técnica 2: se usa `onTap` (gesto propio de Framer Motion) en vez
-          // de `onClick` nativo para navegar. Mezclar `drag` con `onClick` nativo
-          // es un anti-patrón conocido: el navegador puede disparar el evento
-          // "click" nativo DESPUÉS de un arrastre real, y cualquier bandera manual
-          // que reseteemos en `onDragEnd` puede quedar en el estado equivocado
-          // justo antes de que "click" la lea (condición de carrera) — en la
-          // práctica esto navegaría por error tras arrastrar. `onTap` no tiene
-          // ese problema: Framer Motion ya distingue tap vs. drag internamente
-          // y es la vía confiable también en touch/móvil (motivo original de
-          // este rediseño).
+          // Nota técnica 2: navegar usa `onTap` (gesto propio de Framer Motion,
+          // más confiable que `onClick` nativo en touch) PERO además se chequea
+          // `justDraggedRef` como segunda barrera de seguridad — ver comentario
+          // junto a la definición de `justDraggedRef` más arriba (bug real
+          // reportado: "al mover un nodo se abre la pestaña sola").
           <motion.button
             key={node.tab}
             drag
@@ -208,16 +215,21 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
               // eliminar, ahora en la capa de arrastre en vez de en la de click.
               const nodeEl = nodeElsRef.current.get(node.tab);
               const containerEl = containerRef.current;
-              if (!nodeEl || !containerEl) return;
-              const nodeRect = nodeEl.getBoundingClientRect();
-              const containerRect = containerEl.getBoundingClientRect();
-              const centerX = nodeRect.left + nodeRect.width / 2;
-              const centerY = nodeRect.top + nodeRect.height / 2;
-              const px = ((centerX - containerRect.left) / containerRect.width) * 100;
-              const py = ((centerY - containerRect.top) / containerRect.height) * 100;
-              persist({ ...pinned, [node.tab]: { xPct: Math.min(96, Math.max(4, px)), yPct: Math.min(96, Math.max(4, py)) } });
+              if (nodeEl && containerEl) {
+                const nodeRect = nodeEl.getBoundingClientRect();
+                const containerRect = containerEl.getBoundingClientRect();
+                const centerX = nodeRect.left + nodeRect.width / 2;
+                const centerY = nodeRect.top + nodeRect.height / 2;
+                const px = ((centerX - containerRect.left) / containerRect.width) * 100;
+                const py = ((centerY - containerRect.top) / containerRect.height) * 100;
+                persist({ ...pinned, [node.tab]: { xPct: Math.min(96, Math.max(4, px)), yPct: Math.min(96, Math.max(4, py)) } });
+              }
+              // Marca "se acaba de arrastrar" y la limpia en el siguiente ciclo
+              // (no ahora mismo) — ver nota técnica junto a justDraggedRef.
+              justDraggedRef.current.add(node.tab);
+              setTimeout(() => justDraggedRef.current.delete(node.tab), 0);
             }}
-            onTap={() => onSelect(node.tab)}
+            onTap={() => { if (!justDraggedRef.current.has(node.tab)) onSelect(node.tab); }}
             ref={(el) => {
               if (el) nodeElsRef.current.set(node.tab, el);
               else nodeElsRef.current.delete(node.tab);
