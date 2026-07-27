@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mic, Send, Sparkles, ArrowRight, Upload, FileCheck2, LogOut,
-  GraduationCap, Zap, Briefcase, Store, Wallet, Database, MessageSquare, Scale,
+  GraduationCap, Zap, Briefcase, Store, Wallet, Database, MessageSquare, Scale, RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
@@ -65,19 +65,50 @@ function getRecognitionCtor(): SRCtor | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// NodeOrbit — los nodos flotan y orbitan alrededor de la orbe en 3D.
-// Profundidad real: los del frente se ven grandes y brillantes; los del
-// fondo, chicos y tenues. Giran lento y de forma continua. El nodo
-// recomendado por el motor (highlightTab) brilla para guiarte.
-// Se aísla en su propio componente para no re-renderizar todo el asistente.
+// NodeOrbit — los nodos flotan y orbitan alrededor de la orbe. Sinergia real:
+// cada nodo se puede TOCAR y ARRASTRAR para reposicionarlo donde el usuario
+// quiera; su lugar queda guardado (localStorage) y conectado al núcleo con
+// una línea de "sinergia". Los nodos que aún no se movieron siguen girando
+// solos (efecto vivo, guía visual inicial). Profundidad real: los del
+// frente se ven grandes y brillantes; los del fondo, chicos y tenues. El
+// nodo recomendado por el motor (highlightTab) brilla para guiarte.
+//
+// Al confirmarse un arrastre (onDragStart) el nodo se congela en su posición
+// actual (sin salto) y desde ahí sigue libre → al soltar, la posición queda
+// fija para siempre (hasta "Reordenar"). Esto evita el bug histórico de
+// "el nodo se aleja al tocarlo": no hay pelea entre la rotación automática
+// y el gesto de arrastre porque la rotación deja de aplicarse en cuanto el
+// drag arranca. Navegar (tap) y reposicionar (drag) usan los gestos nativos
+// de Framer Motion (onTap/onDragStart/onDragEnd), no onClick — ver nota
+// técnica 2 más abajo. Se aísla en su propio componente para no
+// re-renderizar todo el asistente.
 // ─────────────────────────────────────────────────────────────────────────
+const NODE_POS_KEY = 'omicron_node_positions_v1';
+const NODE_HINT_KEY = 'omicron_node_hint_seen_v1';
+
+type NodePos = { xPct: number; yPct: number };
+
+function loadNodePositions(): Partial<Record<TabId, NodePos>> {
+  try {
+    const raw = localStorage.getItem(NODE_POS_KEY);
+    return raw ? (JSON.parse(raw) as Partial<Record<TabId, NodePos>>) : {};
+  } catch { return {}; }
+}
+
 function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
   nodes: { tab: TabId; label: string; Icon: typeof GraduationCap }[];
   onSelect: (tab: TabId) => void;
   highlightTab?: TabId | null;
   highlightAccent?: string;
 }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const nodeElsRef = useRef<Map<TabId, HTMLButtonElement>>(new Map());
   const [rot, setRot] = useState(0);
+  const [pinned, setPinned] = useState<Partial<Record<TabId, NodePos>>>(() => loadNodePositions());
+  const [hintVisible, setHintVisible] = useState(() => {
+    try { return !localStorage.getItem(NODE_HINT_KEY) && Object.keys(loadNodePositions()).length === 0; } catch { return false; }
+  });
+
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
@@ -91,33 +122,114 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
     return () => cancelAnimationFrame(raf);
   }, []);
 
+  const persist = useCallback((next: Partial<Record<TabId, NodePos>>) => {
+    setPinned(next);
+    try { localStorage.setItem(NODE_POS_KEY, JSON.stringify(next)); } catch { /* noop */ }
+  }, []);
+
+  const dismissHint = useCallback(() => {
+    setHintVisible(false);
+    try { localStorage.setItem(NODE_HINT_KEY, '1'); } catch { /* noop */ }
+  }, []);
+
+  const resetLayout = useCallback(() => persist({}), [persist]);
+
   const n = nodes.length;
+  const hasPinned = Object.keys(pinned).length > 0;
+
   return (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3 }}>
-      {/* Anillo de órbita (elipse inclinada) */}
-      <div style={{ position: 'absolute', left: '50%', top: '47%', width: '88%', height: '40%', transform: 'translate(-50%,-50%)', borderRadius: '50%', border: `1px dashed ${C.line}`, opacity: 0.45 }} />
+    <div ref={containerRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3 }}>
+      {/* Anillo guía (se desvanece a medida que armás tu propia red de nodos) */}
+      <div style={{ position: 'absolute', left: '50%', top: '47%', width: '88%', height: '40%', transform: 'translate(-50%,-50%)', borderRadius: '50%', border: `1px dashed ${C.line}`, opacity: hasPinned ? 0.16 : 0.45, transition: 'opacity 0.5s ease' }} />
+
+      {/* Líneas de sinergia: cada nodo reposicionado queda conectado al núcleo */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none' }}>
+        {nodes.filter((node) => pinned[node.tab]).map((node) => {
+          const p = pinned[node.tab]!;
+          const isHi = node.tab === highlightTab;
+          return (
+            <line key={node.tab} x1="50%" y1="47%" x2={`${p.xPct}%`} y2={`${p.yPct}%`}
+              stroke={isHi ? (highlightAccent || C.gold) : C.cyan} strokeWidth={1} strokeDasharray="2 5" opacity={0.32} />
+          );
+        })}
+      </svg>
+
       {nodes.map((node, i) => {
+        const custom = pinned[node.tab];
         const ang = rot + (i / n) * Math.PI * 2;
-        const x = 50 + 42 * Math.cos(ang);
-        const y = 47 + 20 * Math.sin(ang);
-        const depth = (Math.sin(ang) + 1) / 2;            // 0 (fondo) .. 1 (frente)
+        const autoX = 50 + 42 * Math.cos(ang);
+        const autoY = 47 + 20 * Math.sin(ang);
+        const x = custom?.xPct ?? autoX;
+        const y = custom?.yPct ?? autoY;
+        const depth = custom ? 0.85 : (Math.sin(ang) + 1) / 2;   // nodos fijados: siempre "al frente"
         const scale = 0.68 + depth * 0.5;
         const opacity = 0.4 + depth * 0.6;
         const z = 10 + Math.round(depth * 100);
         const hi = node.tab === highlightTab;
         const accent = hi ? (highlightAccent || C.gold) : C.cyan;
         const Icon = node.Icon;
+
         return (
-          <button
+          // Nota técnica 1: NO se usa `transform: translate()` manual para centrar
+          // este botón — colisionaría con el transform que Framer Motion genera
+          // para el `drag`. Centrado con calc()/píxeles (mitad del tamaño del
+          // nodo) y `scale` pasado como prop de motion (no como string CSS): así
+          // Framer Motion compone drag + scale en un único transform consistente,
+          // y el hit-box de toque siempre coincide con lo que se ve.
+          //
+          // Nota técnica 2: se usa `onTap` (gesto propio de Framer Motion) en vez
+          // de `onClick` nativo para navegar. Mezclar `drag` con `onClick` nativo
+          // es un anti-patrón conocido: el navegador puede disparar el evento
+          // "click" nativo DESPUÉS de un arrastre real, y cualquier bandera manual
+          // que reseteemos en `onDragEnd` puede quedar en el estado equivocado
+          // justo antes de que "click" la lea (condición de carrera) — en la
+          // práctica esto navegaría por error tras arrastrar. `onTap` no tiene
+          // ese problema: Framer Motion ya distingue tap vs. drag internamente
+          // y es la vía confiable también en touch/móvil (motivo original de
+          // este rediseño).
+          <motion.button
             key={node.tab}
-            onClick={() => onSelect(node.tab)}
-            aria-label={node.label}
+            drag
+            dragMomentum={false}
+            dragElastic={0}
+            dragConstraints={containerRef}
+            onDragStart={() => {
+              // Freeze en la posición actual (recién al confirmarse el arrastre,
+              // no en cada toque) — así el nodo nunca "se aleja" al agarrarlo.
+              if (!pinned[node.tab]) persist({ ...pinned, [node.tab]: { xPct: autoX, yPct: autoY } });
+              if (hintVisible) dismissHint();
+            }}
+            onDragEnd={() => {
+              // Se lee la posición REAL del propio nodo (su getBoundingClientRect
+              // tras el arrastre), no el punto final del puntero. Si se usara el
+              // punto del puntero, soltar el nodo sin haberlo agarrado en su
+              // centro exacto provocaría un salto visible al soltar — el mismo
+              // tipo de bug de "el nodo se mueve solo" que este rediseño busca
+              // eliminar, ahora en la capa de arrastre en vez de en la de click.
+              const nodeEl = nodeElsRef.current.get(node.tab);
+              const containerEl = containerRef.current;
+              if (!nodeEl || !containerEl) return;
+              const nodeRect = nodeEl.getBoundingClientRect();
+              const containerRect = containerEl.getBoundingClientRect();
+              const centerX = nodeRect.left + nodeRect.width / 2;
+              const centerY = nodeRect.top + nodeRect.height / 2;
+              const px = ((centerX - containerRect.left) / containerRect.width) * 100;
+              const py = ((centerY - containerRect.top) / containerRect.height) * 100;
+              persist({ ...pinned, [node.tab]: { xPct: Math.min(96, Math.max(4, px)), yPct: Math.min(96, Math.max(4, py)) } });
+            }}
+            onTap={() => onSelect(node.tab)}
+            ref={(el) => {
+              if (el) nodeElsRef.current.set(node.tab, el);
+              else nodeElsRef.current.delete(node.tab);
+            }}
+            aria-label={`${node.label} — tocá y mantené para reposicionar`}
             style={{
-              position: 'absolute', left: `${x}%`, top: `${y}%`,
-              transform: `translate(-50%,-50%) scale(${scale})`, opacity, zIndex: z,
-              pointerEvents: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-              background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
-              transition: 'filter .2s ease',
+              position: 'absolute',
+              left: `calc(${x}% - 24px)`, top: `calc(${y}% - 24px)`,
+              width: 48, zIndex: z, scale, opacity,
+              pointerEvents: 'auto', touchAction: 'none',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              background: 'transparent', border: 'none', cursor: 'grab', padding: 0, margin: 0,
             }}
           >
             <span style={{
@@ -129,10 +241,34 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
             }}>
               <Icon size={20} color={hi ? '#fff' : accent} />
             </span>
-            <span style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 0.3, color: hi ? accent : C.ink, textShadow: '0 1px 5px #000, 0 0 2px #000' }}>{node.label}</span>
-          </button>
+            <span style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 0.3, color: hi ? accent : C.ink, textShadow: '0 1px 5px #000, 0 0 2px #000', whiteSpace: 'nowrap' }}>{node.label}</span>
+          </motion.button>
         );
       })}
+
+      {/* Pista de uso — una sola vez, hasta que el usuario mueva un nodo */}
+      {hintVisible && (
+        <div style={{
+          position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none',
+          fontFamily: FONT.mono, fontSize: 9, letterSpacing: 0.4, color: C.cyanDim, textShadow: '0 1px 5px #000',
+          background: 'rgba(4,8,18,0.55)', padding: '4px 10px', borderRadius: 999, whiteSpace: 'nowrap',
+        }}>
+          ✋ Mantené y arrastrá un nodo para armar tu red
+        </div>
+      )}
+
+      {/* Reordenar: vuelve todos los nodos a la órbita automática */}
+      {hasPinned && (
+        <button onClick={resetLayout} aria-label="Reordenar nodos automáticamente" style={{
+          position: 'absolute', bottom: 4, right: 4, pointerEvents: 'auto', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 5, padding: '5px 9px', borderRadius: 999,
+          background: 'rgba(6,10,22,0.65)', border: `1px solid ${C.line}`, color: C.mut,
+          fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 0.4,
+          backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+        }}>
+          <RotateCcw size={11} /> REORDENAR
+        </button>
+      )}
     </div>
   );
 }

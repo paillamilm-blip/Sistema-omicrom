@@ -54,7 +54,7 @@ export function OraculoBar() {
     const userName = profile?.display_name || 'operador';
     const hour = new Date().getHours();
     const reputation = profile?.reputation_score ?? 0;
-    const daysSinceLastLogin = 0; // Se calcula en HoloGemeloHome
+    const daysSinceLastLogin = 0; // TODO: calcular desde el último login real del perfil
     
     // ⭐ Usa el generador contextual de la memoria
     const greeting = generateContextualGreeting(userName, hour, reputation, daysSinceLastLogin);

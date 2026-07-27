@@ -147,7 +147,7 @@ export function CVOnboarding({ onComplete, onSkip }: Props) {
 
   return (
     <div style={S.overlay}>
-      {/* Botón de saltar (coherente con IniciacionGemelo que también lo permite) */}
+      {/* Botón de saltar */}
       {onSkip && (
         <button onClick={onSkip} style={S.skipBtn} aria-label="Saltar configuración">
           Saltar por ahora

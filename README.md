@@ -135,7 +135,7 @@ ver [`GUIA_ACTIVACION_PRODUCCION.md`](./GUIA_ACTIVACION_PRODUCCION.md).
 src/
 ├── App.tsx                 Shell + navegación + providers (Realtime)
 ├── components/
-│   ├── HoloNucleo3D.tsx    Núcleo 3D (canvas) data-driven
+│   ├── omicron/ParticleOrb.tsx  Núcleo único (canvas 2.5D, reactivo a voz) — el ÚNICO orbe de toda la app
 │   ├── OraculoBar.tsx      Oráculo por voz (proactivo)
 │   ├── shared/             LivePresence, LiveRanking, IncomingJobs, GemeloBadge…
 │   ├── perfil/             ConvalidaGemelo, RedSocial, Pasaporte…
