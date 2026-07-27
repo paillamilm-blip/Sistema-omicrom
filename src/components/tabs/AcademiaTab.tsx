@@ -9,7 +9,7 @@ import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '../../theme';
 import { ScanlineOverlay, LoadingScreen } from '../shared/CyberComponents';
 import { oc, OmicronHeader } from '../omicron/OmicronChrome';
-import { Orb } from '../Orb';
+import ParticleOrb from '../omicron/ParticleOrb';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
 
@@ -371,20 +371,17 @@ export function AcademiaTab() {
             <div style={{ position: 'relative' }}>
               <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyan, marginBottom: 12 }}>◆ NÚCLEO DE APRENDIZAJE</div>
 
-              {/* Sistema Solar del Aprendizaje · orbe Ómicron Core */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
-                <Orb
-                  variant="learning-system"
-                  size="md"
-                  state={totalAll && totalDone >= totalAll ? 'success' : 'idle'}
-                  ariaLabel={`Progreso de aprendizaje ${totalAll ? Math.round((totalDone / totalAll) * 100) : 0} por ciento`}
-                >
+              {/* Sistema Solar del Aprendizaje · mismo Núcleo de partículas de toda la app (Ómicron unificado) */}
+              <div style={{ position: 'relative', width: 180, height: 180, margin: '0 auto 6px' }}
+                role="img" aria-label={`Progreso de aprendizaje ${totalAll ? Math.round((totalDone / totalAll) * 100) : 0} por ciento`}>
+                <ParticleOrb colorA={[92, 200, 255]} colorB={totalAll && totalDone >= totalAll ? [63, 208, 201] : [94, 92, 230]} />
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <div style={{ textAlign: 'center', lineHeight: 1 }}>
                     <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 8, color: C.cyan, letterSpacing: 2 }}>NÚCLEO</span>
                     <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 32, color: '#ffffff', margin: '3px 0', textShadow: `0 0 18px ${C.cyan}` }}>{totalAll ? Math.round((totalDone / totalAll) * 100) : 0}%</span>
                     <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 7.5, color: 'rgba(255,255,255,0.75)', letterSpacing: 1 }}>{completed}/{courses.length} CURSOS</span>
                   </div>
-                </Orb>
+                </div>
               </div>
 
               <div style={{ position: 'relative', paddingTop: 4 }}>

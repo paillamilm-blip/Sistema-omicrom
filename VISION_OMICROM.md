@@ -44,7 +44,7 @@ Lo hacés  →  sube tu capacidad EN VIVO  →  se abren nuevas puertas y oportu
 
 | Pieza actual | Rol en Ómicron |
 |---|---|
-| `HoloNucleo3D` / `Orb` / `DynamicNode` | La orbe viva |
+| `ParticleOrb` (único, unificado) + `NodeOrbit` (nodos libres, arrastrables) | La orbe viva |
 | `OraculoBar` + `oraculo.ts` + `voiceEngine.ts` | Hablar/escribir (voz es-ES + intención) |
 | Edge Functions (`coach`, `tutor`, `chat-assist`…) | El cerebro IA que responde y aconseja |
 | `activeTab` / `setActiveTab` + `config/hubs.ts` | Los nodos de navegación |
