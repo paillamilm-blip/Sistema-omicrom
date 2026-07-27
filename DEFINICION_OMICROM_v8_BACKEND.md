@@ -3,8 +3,9 @@
 **7 de julio de 2026**
 
 > Documento de arquitectura objetivo aportado por el usuario. Se conserva íntegro como
-> referencia. Ver `BITACORA_MAESTRA.md` (sección "ACTUALIZACIÓN v8.1") para el diagnóstico
-> de qué partes ya están implementadas en el esquema real de Supabase y qué falta.
+> referencia. El diagnóstico de qué partes ya están implementadas en el esquema real de
+> Supabase (60+ migraciones en `supabase/migrations/`, 21 Edge Functions en
+> `supabase/functions/`) está pendiente de consolidarse en un documento de bitácora dedicado.
 
 Este documento se centra en la **arquitectura, lógica de negocio, contratos inteligentes, integraciones y modelos de sistema**, sin entrar en detalles de interfaz de usuario ni frontend.
 

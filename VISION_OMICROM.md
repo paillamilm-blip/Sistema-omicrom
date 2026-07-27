@@ -1,15 +1,17 @@
 # 🔮 Visión Ómicron — El Asistente que Empuja a la Mejora
 
 > **Norte del producto.** Versionado en el repo a propósito, para no perderlo nunca.
-> Última actualización: **2026-07-22**.
+> Última actualización: **2026-07-27**.
 
 ---
 
 ## La idea en una frase
 
-**Ómicron es un asistente de IA estilo "Jarvis"** que envuelve toda la app y, desde donde estés
-parado, **te empuja en tiempo real hacia tu próxima mejora** — y esa mejora te abre
-**oportunidades reales** a través de la comunidad. Industria 5.0.
+**Ómicron es una herramienta de aprendizaje continuo en tiempo real, para todo el mundo.**
+Es un asistente de IA estilo "Jarvis" que envuelve toda la app y, desde donde estés
+parado, **te empuja en tiempo real hacia tu próxima mejora** — y esa mejora se traduce, al
+instante, en **oportunidades reales del mercado**. No es una promesa a futuro ni un curso más:
+es la Industria 5.0 aplicada al talento humano, donde todo es instantáneo y sin fronteras.
 
 ## Principios
 
@@ -24,8 +26,9 @@ parado, **te empuja en tiempo real hacia tu próxima mejora** — y esa mejora t
    Fundamento) son el pulso vivo de tu Gemelo Digital; cada acción los mueve.
 5. **Sinergia total y fluidez.** Aprender (Academia) → medir (Reputación) → oportunidad
    (Empleos/Market) → comunidad. Todo conectado, sin fricción.
-6. **El fin real:** revolucionar el aprendizaje y **entregar oportunidades de verdad** a través
-   de la comunidad.
+6. **El fin real:** revolucionar el aprendizaje continuo y **entregar oportunidades reales del
+   mercado, en tiempo real**, a cualquier persona en cualquier lugar — sin restricción
+   geográfica ni depender de un modelo free/premium para definir quién accede a mejorar.
 
 ## El loop central
 

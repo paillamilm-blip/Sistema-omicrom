@@ -1,12 +1,15 @@
 # 🌐 Sistema Ómicrom — Definición Maestra
-_27 de junio de 2026_
+_27 de junio de 2026 · Reposicionamiento global: 27 de julio de 2026_
 
 Este documento tiene **dos versiones de la definición** (una visión, una para usuarios) y el
-**modelo económico por fases**. La innovación es el eje, pero aterrizada para construir y para CORFO.
+**modelo económico por fases**. La innovación es el eje: Ómicrom es una **herramienta de
+aprendizaje continuo en tiempo real, para todo el mundo**, que conecta esa capacidad demostrada
+con **oportunidades reales del mercado** de forma instantánea. Es la Industria 5.0 aplicada al
+talento: nada de esperar meses para validar lo que sabés — se mide y se conecta ahora.
 
 ---
 
-## 🏛️ VERSIÓN VISIÓN (para CORFO / inversionistas / manifiesto)
+## 🏛️ VERSIÓN VISIÓN (manifiesto del producto)
 
 **Sistema Ómicrom es un ecosistema de capital intelectual y validación meritocrática que
 transforma la capacidad humana en valor económico, mediante una reputación verificable e
@@ -14,7 +17,9 @@ imposible de falsear: el Gemelo Digital.**
 
 Donde un CV se inventa y las reseñas se compran, Ómicrom construye confianza con **evidencia
 real, validada entre pares**. Opera bajo una arquitectura de **"confianza cero"**: nada se asume,
-todo se prueba.
+todo se prueba. Y todo esto ocurre **en tiempo real** y **sin restricción geográfica**: es una
+herramienta pensada para cualquier persona en cualquier lugar que quiera que su aprendizaje se
+traduzca, al instante, en oportunidades reales.
 
 ### Pilares innovadores
 - **🧬 Gemelo Digital** — reputación dinámica que audita el desempeño en tiempo real:
@@ -36,7 +41,7 @@ todo se prueba.
 > ⚠️ **Notas de implementación (no borrar):**
 > - *Academia* (formación/árbol) y *Bóveda* (mercado de conocimiento) **coexisten**: una entrena, la otra capitaliza.
 > - "Validación distribuida entre pares" ≠ blockchain. Si en el futuro se usa Web3, es decisión aparte.
-> - **Regalías Encadenadas** y **Depreciación H-07** son innovaciones de **Fase 2+** (post-tracción/CORFO), no del MVP.
+> - **Regalías Encadenadas** y **Depreciación H-07** son innovaciones de **Fase 2+** (post-tracción), no del MVP.
 
 ---
 
@@ -97,12 +102,15 @@ Rompe el círculo *"sin experiencia no me contratan / sin que me contraten no ga
 
 ---
 
-## 🚀 POR QUÉ ES INNOVADOR (tu pitch ante CORFO)
+## 🚀 POR QUÉ ES INNOVADOR
+- **Aprendizaje conectado a oportunidad real, en tiempo real** — no un curso más: cada
+  progreso mueve tu reputación y te acerca a un trabajo real, al instante.
 - **Reputación imposible de falsear** (vs CV auto-declarado / reseñas compradas).
 - **Conocimiento que se capitaliza** y paga en cadena a sus creadores (Regalías Encadenadas).
 - **Activos de conocimiento que se autodeprecian** para mantener vigencia (H-07).
 - **Justicia entre pares** en un entorno de confianza cero.
-- **Inclusión real:** jóvenes sin recursos acceden a ingresos y a una credencial verificable.
+- **Inclusión real y sin fronteras:** cualquier persona, en cualquier lugar, accede a ingresos
+  y a una credencial verificable — sin depender de dónde nació ni de a quién conoce.
 
 > Vision = bold. MVP = liviano (Aprender + Reputación + Primeros trabajos).
-> Lo avanzado (Regalías, H-07, Tribunal complejo) se construye **con el financiamiento**, no antes.
+> Lo avanzado (Regalías, H-07, Tribunal complejo) se construye con tracción real, no antes.
