@@ -60,9 +60,8 @@ describe('interpret — convalidación', () => {
     expect(interpret('carga un aporte a la bóveda')).toEqual({ kind: 'convalidate', item: 'vault' });
   });
 
-  it('verbo de convalidación sin objeto reconocible cae a otra rama (no revienta)', () => {
-    const result = interpret('convalida algo random sin sentido');
-    expect(result.kind).not.toBe('convalidate');
+  it('verbo de convalidación sin objeto reconocible cae a unknown (no revienta)', () => {
+    expect(interpret('convalida algo random sin sentido')).toEqual({ kind: 'unknown' });
   });
 });
 

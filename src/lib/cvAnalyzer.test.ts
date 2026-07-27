@@ -57,14 +57,20 @@ describe('analyzeCV — años de experiencia', () => {
 });
 
 describe('analyzeCV — nivel de seniority', () => {
+  // NOTA: analyzeCV tiene un paso posterior (7. ARQUITECTURA) que sobrescribe
+  // seniorLevel/seniorLabel a 'estudiante' (nivel 1) cuando years < 1 Y
+  // found.length < 3. Los inputs de este bloque incluyen años explícitos
+  // y/o suficientes skills detectables para escapar ese override y así
+  // testear realmente la detección de seniority del paso 3.
+
   it('detecta Lead/Arquitecto por palabra clave', () => {
-    const p = analyzeCV('Tech Lead con experiencia liderando equipos');
+    const p = analyzeCV('Tech Lead con 8 años liderando equipos de React y Node');
     expect(p.seniorLevel).toBe(5);
     expect(p.seniorLabel).toBe('Tech Lead / Arquitecto');
   });
 
   it('detecta Senior por palabra clave', () => {
-    const p = analyzeCV('Desarrollador Senior con experiencia sólida');
+    const p = analyzeCV('Desarrollador Senior con 6 años de experiencia sólida en React');
     expect(p.seniorLevel).toBe(4);
   });
 
@@ -74,12 +80,12 @@ describe('analyzeCV — nivel de seniority', () => {
   });
 
   it('detecta Junior por palabra clave + pocos años', () => {
-    const p = analyzeCV('Desarrollador Junior con 1 año de experiencia');
+    const p = analyzeCV('Desarrollador Junior con 1 año de experiencia en React');
     expect(p.seniorLevel).toBe(1);
   });
 
-  it('default es Mid cuando no hay señales claras', () => {
-    const p = analyzeCV('Desarrollador de software con experiencia variada');
+  it('default es Mid cuando no hay señales claras pero sí experiencia y skills', () => {
+    const p = analyzeCV('Desarrollador de software con 2 años de experiencia en React, Node y SQL');
     expect(p.seniorLevel).toBe(2);
     expect(p.seniorLabel).toBe('Desarrollador Mid');
   });
