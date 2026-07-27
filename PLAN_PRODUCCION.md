@@ -103,13 +103,21 @@ Functions ya tienen rate limiting propio por IP, independiente de esto.
 | PR | Título | Fase | Estado |
 |----|--------|------|--------|
 | [#90](https://github.com/paillamilm-blip/Sistema-omicrom/pull/90) | fix(ci): resolver fallos de CI en main | 0.1 | ✅ Mergeado |
-| [#91](https://github.com/paillamilm-blip/Sistema-omicrom/pull/91) | feat: activar hubs ocultos + reposicionar mensaje | 1.1 + 1.3 | 🟡 Abierto — mergear primero |
-| [#92](https://github.com/paillamilm-blip/Sistema-omicrom/pull/92) | feat: eliminar candados Premium (IA gratis para siempre) | 1.5 | 🟡 Abierto — mergear después de #91 (base: rama de #91) |
+| [#91](https://github.com/paillamilm-blip/Sistema-omicrom/pull/91) | feat: activar hubs ocultos + reposicionar mensaje | 1.1 + 1.3 | ✅ Mergeado |
+| [#92](https://github.com/paillamilm-blip/Sistema-omicrom/pull/92) | feat: eliminar candados Premium (IA gratis para siempre) | 1.5 | ✅ Mergeado |
+| [#93](https://github.com/paillamilm-blip/Sistema-omicrom/pull/93) | docs: crear PLAN_PRODUCCION.md | — (documentación) | ✅ Mergeado |
 
 ---
 
-## ❓ Próximo paso sugerido
+## ▶️ En curso ahora
 
-Con 1.1, 1.3 y 1.5 completos, la relación esfuerzo/impacto más alta disponible
-ahora es **0.2 (tests de libs puras)** o **0.3 (splitear AppContext)** — ambas
-del bloque de cimientos, antes de seguir apilando features de la Fase 2.
+**Fase 0.2 — Tests unitarios de libs puras** (`oraculo.ts`, `cvAnalyzer.ts`,
+`jobMatcher.ts`, `omicronCoach.ts`, `gemeloProfile.ts`). Elegida como siguiente
+paso: son funciones deterministas sin dependencias de Supabase, bajo esfuerzo
+y cierran el gap de cobertura más urgente antes de seguir tocando código en
+la Fase 2.
+
+## ❓ Después de esto
+
+**Fase 0.3 — Splitear `AppContext.tsx`** (auth/profile/navigation) queda como
+el siguiente paso del bloque de cimientos, antes de apilar features de la Fase 2.
