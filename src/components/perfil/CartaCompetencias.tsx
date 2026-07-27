@@ -7,8 +7,6 @@ import { useState, useCallback } from 'react';
 import { FileText, Sparkles, Loader2, Copy, Check, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { C, FONT, RADIUS } from '../../theme';
-import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
-
 async function serverError(error: unknown, data: unknown, fallback: string): Promise<string> {
   const d = data as { error?: string; detail?: string } | null;
   if (d?.error) return d.detail ? `${d.error} — ${d.detail}` : d.error;
@@ -20,15 +18,12 @@ async function serverError(error: unknown, data: unknown, fallback: string): Pro
 }
 
 export function CartaCompetencias() {
-  const { isPremium } = usePremium();
-  const [locked, setLocked] = useState(false);
   const [carta, setCarta] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const generar = useCallback(async () => {
-    if (!isPremium) { setLocked(true); return; }
     setLoading(true); setErr(null);
     try {
       const { data, error } = await supabase.functions.invoke('carta-ia', { body: {} });
@@ -43,7 +38,7 @@ export function CartaCompetencias() {
     } finally {
       setLoading(false);
     }
-  }, [isPremium]);
+  }, []);
 
   const copiar = useCallback(() => {
     if (!carta) return;
@@ -72,7 +67,6 @@ export function CartaCompetencias() {
           </p>
           <button onClick={generar} style={btn(C.cyan)}>
             <Sparkles size={15} /> Generar mi Carta de Competencias
-            {!isPremium && <PremiumBadge />}
           </button>
         </>
       )}
@@ -106,7 +100,6 @@ export function CartaCompetencias() {
           </p>
         </div>
       )}
-      {locked && <PremiumLock feature="La Carta de Competencias" onClose={() => setLocked(false)} />}
     </div>
   );
 }

@@ -9,8 +9,6 @@ import {
 } from '../shared/CyberComponents';
 import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import { openBlackbox, type BlackboxResult } from '../../lib/secureChat';
-import { usePremium, PremiumLock, PremiumBadge } from '../shared/Premium';
-
 interface Contract { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; amount: number; }
 interface Dispute { id: string; reason: string; status: string; created_at: string; resolved_at?: string; appeal_status?: string; appeal_opened_at?: string; appeal_arbiters?: string[]; appeal_resolution?: string; plaintiff_id?: string; defendant_id?: string; }
 interface Candidate { id: string; username: string; node_type: string; pe_points: number; }
@@ -534,8 +532,6 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [aLoading, setALoading] = useState(false);
   const [aErr, setAErr] = useState<string | null>(null);
-  const { isPremium } = usePremium();
-  const [premiumLock, setPremiumLock] = useState(false);
 
   async function vote() {
     setLoading(true); setErr(null);
@@ -545,7 +541,6 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
   }
 
   async function analyze() {
-    if (!isPremium) { setPremiumLock(true); return; }
     setALoading(true); setAErr(null);
     try {
       const transcript = (res?.transcript ?? []).map(m => ({ autor: m.sender?.username ?? 'nodo', texto: m.content }));
@@ -610,7 +605,6 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
               <button onClick={analyze} disabled={aLoading}
                 style={{ width: '100%', padding: '8px', borderRadius: 6, background: 'rgba(255, 176, 46,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: aLoading ? 0.6 : 1 }}>
                 {aLoading ? <><Loader2 size={13} className="animate-spin" /> ANALIZANDO…</> : <><Sparkles size={13} /> RELATOR IA · ANALIZAR CASO</>}
-                {!isPremium && !aLoading && <PremiumBadge />}
               </button>
             )}
             {aErr && <p style={{ fontFamily: FONT.mono, fontSize: 9, color: C.red, marginTop: 6 }}>{aErr}</p>}
@@ -627,7 +621,6 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
       )}
 
       {err && <p style={{ fontFamily: FONT.mono, fontSize: 9, color: C.red, marginTop: 8 }}>{err}</p>}
-      {premiumLock && <PremiumLock feature="El Relator IA del Tribunal" onClose={() => setPremiumLock(false)} />}
     </div>
   );
 }
