@@ -73,16 +73,18 @@ function getRecognitionCtor(): SRCtor | null {
 // frente se ven grandes y brillantes; los del fondo, chicos y tenues. El
 // nodo recomendado por el motor (highlightTab) brilla para guiarte.
 //
-// Toque = freeze inmediato en su posición actual (sin salto) → drag libre
-// → al soltar, la posición queda fija para siempre (hasta "Reordenar").
-// Esto es intencional: evita el bug histórico de "el nodo se aleja al
-// tocarlo" (no hay pelea entre la rotación automática y el gesto de arrastre
-// porque la rotación se detiene ANTES de que el drag empiece a moverlo).
-// Se aísla en su propio componente para no re-renderizar todo el asistente.
+// Al confirmarse un arrastre (onDragStart) el nodo se congela en su posición
+// actual (sin salto) y desde ahí sigue libre → al soltar, la posición queda
+// fija para siempre (hasta "Reordenar"). Esto evita el bug histórico de
+// "el nodo se aleja al tocarlo": no hay pelea entre la rotación automática
+// y el gesto de arrastre porque la rotación deja de aplicarse en cuanto el
+// drag arranca. Navegar (tap) y reposicionar (drag) usan los gestos nativos
+// de Framer Motion (onTap/onDragStart/onDragEnd), no onClick — ver nota
+// técnica 2 más abajo. Se aísla en su propio componente para no
+// re-renderizar todo el asistente.
 // ─────────────────────────────────────────────────────────────────────────
 const NODE_POS_KEY = 'omicron_node_positions_v1';
 const NODE_HINT_KEY = 'omicron_node_hint_seen_v1';
-const DRAG_THRESHOLD = 6; // px — separa un tap (navegar) de un arrastre (reposicionar)
 
 type NodePos = { xPct: number; yPct: number };
 
@@ -100,12 +102,12 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
   highlightAccent?: string;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const nodeElsRef = useRef<Map<TabId, HTMLButtonElement>>(new Map());
   const [rot, setRot] = useState(0);
   const [pinned, setPinned] = useState<Partial<Record<TabId, NodePos>>>(() => loadNodePositions());
   const [hintVisible, setHintVisible] = useState(() => {
     try { return !localStorage.getItem(NODE_HINT_KEY) && Object.keys(loadNodePositions()).length === 0; } catch { return false; }
   });
-  const movedRef = useRef(false);
 
   useEffect(() => {
     let raf = 0;
@@ -168,42 +170,62 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
         const Icon = node.Icon;
 
         return (
-          // Nota técnica: NO se usa `transform: translate()` manual para centrar
+          // Nota técnica 1: NO se usa `transform: translate()` manual para centrar
           // este botón — colisionaría con el transform que Framer Motion genera
           // para el `drag`. Centrado con calc()/píxeles (mitad del tamaño del
           // nodo) y `scale` pasado como prop de motion (no como string CSS): así
           // Framer Motion compone drag + scale en un único transform consistente,
           // y el hit-box de toque siempre coincide con lo que se ve.
+          //
+          // Nota técnica 2: se usa `onTap` (gesto propio de Framer Motion) en vez
+          // de `onClick` nativo para navegar. Mezclar `drag` con `onClick` nativo
+          // es un anti-patrón conocido: el navegador puede disparar el evento
+          // "click" nativo DESPUÉS de un arrastre real, y cualquier bandera manual
+          // que reseteemos en `onDragEnd` puede quedar en el estado equivocado
+          // justo antes de que "click" la lea (condición de carrera) — en la
+          // práctica esto navegaría por error tras arrastrar. `onTap` no tiene
+          // ese problema: Framer Motion ya distingue tap vs. drag internamente
+          // y es la vía confiable también en touch/móvil (motivo original de
+          // este rediseño).
           <motion.button
             key={node.tab}
             drag
             dragMomentum={false}
             dragElastic={0}
             dragConstraints={containerRef}
-            onPointerDown={() => {
-              // Freeze inmediato en la posición actual ANTES de que el drag mueva
-              // nada — así el nodo nunca "se aleja" al primer toque.
+            onDragStart={() => {
+              // Freeze en la posición actual (recién al confirmarse el arrastre,
+              // no en cada toque) — así el nodo nunca "se aleja" al agarrarlo.
               if (!pinned[node.tab]) persist({ ...pinned, [node.tab]: { xPct: autoX, yPct: autoY } });
-              movedRef.current = false;
               if (hintVisible) dismissHint();
             }}
-            onDrag={(_e, info) => {
-              if (Math.abs(info.offset.x) > DRAG_THRESHOLD || Math.abs(info.offset.y) > DRAG_THRESHOLD) movedRef.current = true;
-            }}
-            onDragEnd={(_e, info) => {
-              const el = containerRef.current;
-              if (!el || !movedRef.current) return;
-              const rect = el.getBoundingClientRect();
-              const px = ((info.point.x - rect.left) / rect.width) * 100;
-              const py = ((info.point.y - rect.top) / rect.height) * 100;
+            onDragEnd={() => {
+              // Se lee la posición REAL del propio nodo (su getBoundingClientRect
+              // tras el arrastre), no el punto final del puntero. Si se usara el
+              // punto del puntero, soltar el nodo sin haberlo agarrado en su
+              // centro exacto provocaría un salto visible al soltar — el mismo
+              // tipo de bug de "el nodo se mueve solo" que este rediseño busca
+              // eliminar, ahora en la capa de arrastre en vez de en la de click.
+              const nodeEl = nodeElsRef.current.get(node.tab);
+              const containerEl = containerRef.current;
+              if (!nodeEl || !containerEl) return;
+              const nodeRect = nodeEl.getBoundingClientRect();
+              const containerRect = containerEl.getBoundingClientRect();
+              const centerX = nodeRect.left + nodeRect.width / 2;
+              const centerY = nodeRect.top + nodeRect.height / 2;
+              const px = ((centerX - containerRect.left) / containerRect.width) * 100;
+              const py = ((centerY - containerRect.top) / containerRect.height) * 100;
               persist({ ...pinned, [node.tab]: { xPct: Math.min(96, Math.max(4, px)), yPct: Math.min(96, Math.max(4, py)) } });
-              movedRef.current = false;
             }}
-            onClick={() => { if (!movedRef.current) onSelect(node.tab); }}
+            onTap={() => onSelect(node.tab)}
+            ref={(el) => {
+              if (el) nodeElsRef.current.set(node.tab, el);
+              else nodeElsRef.current.delete(node.tab);
+            }}
             aria-label={`${node.label} — tocá y mantené para reposicionar`}
             style={{
               position: 'absolute',
-              left: `calc(${x}% - 24px)`, top: `calc(${y}% - 20px)`,
+              left: `calc(${x}% - 24px)`, top: `calc(${y}% - 24px)`,
               width: 48, zIndex: z, scale, opacity,
               pointerEvents: 'auto', touchAction: 'none',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
