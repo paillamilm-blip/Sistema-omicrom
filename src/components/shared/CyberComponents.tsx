@@ -203,8 +203,13 @@ export function CyberCard({
         margin,
         padding,
         borderRadius: RADIUS.lg,
-        border:       `1px solid ${color}22`,
-        background:   `${color}06`,
+        border:       `1px solid ${color}33`,
+        // Vidrio premium (mismo lenguaje que OmicronCard en Billetera/Perfil):
+        // gradiente sutil + blur real, en vez de un fondo casi transparente
+        // (`${color}06`) que se veía plano contra el fondo de la app.
+        background:   `linear-gradient(160deg, ${color}14, rgba(255,255,255,0.02))`,
+        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+        boxShadow:    `0 10px 30px rgba(0,0,0,0.4), 0 0 18px ${color}14`,
         position:     'relative',
         overflow:     'hidden',
         cursor:       onClick ? 'pointer' : undefined,
