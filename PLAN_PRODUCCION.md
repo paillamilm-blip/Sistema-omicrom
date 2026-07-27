@@ -41,7 +41,7 @@ Ver `.kiro/steering/vision-producto.md` para el detalle completo de esta decisi�
 |---|-------|--------|
 | 0.1 | CI en verde (fix de lint `.cjs` + actions v5) | ✅ **Hecho** — PR #90 mergeado |
 | 0.2 | Tests unitarios de libs puras (`oraculo`, `cvAnalyzer`, `jobMatcher`, `omicronCoach`) | ✅ **Hecho** — PR #94 (82 tests nuevos) |
-| 0.3 | Splitear `AppContext.tsx` (auth/profile/navigation) | ⬜ Pendiente |
+| 0.3 | Splitear `AppContext.tsx` en `ProfileContext` + `NavigationContext` (facade de compatibilidad) | ✅ **Hecho** — PR #95 |
 | 0.4 | Unificar design system (`theme.ts` vs `design-system/tokens.ts`) | ⬜ Pendiente |
 
 ---
@@ -106,20 +106,43 @@ Functions ya tienen rate limiting propio por IP, independiente de esto.
 | [#91](https://github.com/paillamilm-blip/Sistema-omicrom/pull/91) | feat: activar hubs ocultos + reposicionar mensaje | 1.1 + 1.3 | ✅ Mergeado |
 | [#92](https://github.com/paillamilm-blip/Sistema-omicrom/pull/92) | feat: eliminar candados Premium (IA gratis para siempre) | 1.5 | ✅ Mergeado |
 | [#93](https://github.com/paillamilm-blip/Sistema-omicrom/pull/93) | docs: crear PLAN_PRODUCCION.md | — (documentación) | ✅ Mergeado |
-| [#94](https://github.com/paillamilm-blip/Sistema-omicrom/pull/94) | test: agregar tests unitarios de libs puras | 0.2 | 🟡 Abierto |
+| [#94](https://github.com/paillamilm-blip/Sistema-omicrom/pull/94) | test: agregar tests unitarios de libs puras | 0.2 | ✅ Mergeado |
+| [#95](https://github.com/paillamilm-blip/Sistema-omicrom/pull/95) | refactor: splitear AppContext en Profile + Navigation | 0.3 | 🟡 Abierto |
+
+### Detalle 0.3 — Decisión de diseño y pendientes abiertos (Ultra Review)
+
+**Decisión:** el plan original proponía 3 contextos independientes
+(auth/profile/navigation). Se implementaron **2**: `ProfileContext.tsx`
+(auth + profile + gemelo, genuinamente acoplados — `authStatus` depende de
+si el perfil existe en la BD) y `NavigationContext.tsx` (activeTab +
+unreadCount). `AppContext.tsx` quedó como facade puro; `useApp()` no cambió
+de forma para ninguno de los ~39 consumidores existentes.
+
+**Pendientes explícitos que dejó el Ultra Review de PR #95** (no bloquean
+el merge, pero hay que volver a ellos):
+- La ganancia de performance **no aplica todavía a código existente** —
+  `useApp()` sigue suscribiéndose a ambos contextos nuevos, así que los 39
+  consumidores actuales re-renderizan igual que antes de este PR. El
+  beneficio real solo aparece cuando un componente migra a usar
+  `useProfile()`/`useNavigation()` directamente en vez de `useApp()`.
+  Ningún componente lo hace aún — queda como tarea de seguimiento.
+- No se pudo confirmar con un profiler si `NavigationProviderBridge` (que
+  lee `useProfile()` para pasarle `profileId` a `NavigationProvider`)
+  realmente aísla los re-renders del árbol de navegación, o si React
+  igual re-renderiza sus hijos por inestabilidad referencial de `children`.
+- Cero tests para `AppContext`/`ProfileContext`/`NavigationContext` — es
+  el archivo de mayor blast-radius de la app; sigue siendo un gap abierto.
 
 ---
 
 ## ▶️ En curso ahora
 
-Con 0.2 recién entregado (pendiente de merge en PR #94), el siguiente paso
-del bloque de cimientos es:
+Con 0.3 entregado (pendiente de merge en PR #95), el siguiente paso del
+bloque de cimientos es:
 
-**Fase 0.3 — Splitear `AppContext.tsx`** (auth/profile/navigation en
-providers separados, con `useApp()` como facade de compatibilidad para no
-romper los 39 archivos que ya lo consumen).
+**Fase 0.4 — Unificar design system** (`theme.ts` vs `design-system/tokens.ts`).
 
 ## ❓ Después de esto
 
-**Fase 0.4 — Unificar design system** (`theme.ts` vs `design-system/tokens.ts`)
-cierra el bloque de cimientos antes de empezar la Fase 2.
+Con el bloque de Fase 0 (cimientos) completo, el próximo bloque es la
+**Fase 2 — innovaciones de mercado 2026** (ver tabla arriba).

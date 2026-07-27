@@ -41,6 +41,14 @@ export function NavigationProvider({ profileId, children }: { profileId?: string
   }, []);
 
   // Al cerrar sesión (profileId pasa a undefined), limpiar el contador.
+  // NOTA: en el AppContext.tsx original, este reset vivía dentro del mismo
+  // handler de SIGNED_OUT que limpiaba profile/gemelo/authStatus. Al separar
+  // los contextos, se movió acá porque unreadCount ahora vive en este
+  // archivo — se dispara igual (cuando profileId pasa a undefined, que
+  // ocurre al hacer sign-out en ProfileContext.tsx), pero por un efecto
+  // separado en vez del mismo bloque. Si se toca el flujo de sign-out en
+  // ProfileContext.tsx, revisar que profileId siga pasando a undefined
+  // correctamente para que este efecto siga disparando.
   useEffect(() => {
     if (!profileId) setUnreadCount(0);
   }, [profileId]);
