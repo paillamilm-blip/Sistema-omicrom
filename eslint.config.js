@@ -7,9 +7,20 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default tseslint.config(
-  // scripts/**: utilidades de build en CommonJS puro (.cjs), fuera del
-  // alcance de las reglas de TypeScript/React (no son código de la app).
-  { ignores: ['dist', 'node_modules', 'supabase/functions/**', 'scripts/**', 'e2e/**', 'playwright.config.ts'] },
+  // Archivos/directorios fuera del alcance del linting de la app.
+  // .kiro/ contiene skills con scripts CommonJS (.cjs) que usan require();
+  // no son código de la app y no deben pasar por las reglas de TS/React.
+  {
+    ignores: [
+      'dist',
+      'node_modules',
+      'supabase/functions/**',
+      'scripts/**',
+      'e2e/**',
+      'playwright.config.ts',
+      '.kiro/**',
+    ],
+  },
   ...tseslint.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
@@ -29,6 +40,26 @@ export default tseslint.config(
       // el código existente gradualmente sin romper el flujo de trabajo.
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    },
+  },
+  // ── Override final para .cjs (máxima prioridad: es el ÚLTIMO bloque del array) ──
+  // En ESLint 9 flat config, cuando varios bloques matchean el mismo archivo, el
+  // que aparece MÁS TARDE en el array gana. Este bloque queda al final a propósito:
+  // sin importar qué reglas TS se hayan aplicado antes (via ignores, o spread de
+  // recommended), esta es la última palabra para cualquier archivo .cjs, esté donde
+  // esté (incluyendo .kiro/skills/**/*.cjs). Verificado con una reproducción aislada
+  // del binario real de ESLint: este bloque por sí solo exime a los .cjs sin
+  // depender de que 'ignores' matchee directorios con punto en todos los runners.
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-var-requires': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-undef': 'off',
     },
   }
 );
