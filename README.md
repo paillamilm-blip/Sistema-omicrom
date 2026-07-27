@@ -2,7 +2,7 @@
 
 # ⚡ Sistema Ómicrom
 
-**El marketplace de capital intelectual donde tu conocimiento se vuelve tu activo más valioso.**
+**Aprendizaje continuo en tiempo real, para todo el mundo — conectado a oportunidades reales del mercado, al instante.**
 
 `React + Vite` · `Supabase` · `Realtime` · `PWA` · `Industria 5.0`
 
@@ -12,10 +12,14 @@
 
 ## 🌐 Qué es
 
-Ómicrom es una plataforma donde estudiantes y profesionales construyen una **reputación
-verificable e imposible de falsear** — su **Gemelo Digital** — para **aprender, demostrar lo
-que saben y conseguir trabajo** con confianza. Rompe el círculo _"sin experiencia no me
+Ómicrom es una herramienta de **aprendizaje continuo en tiempo real**, pensada para cualquier
+persona en cualquier lugar, sin restricción geográfica. Construís una **reputación verificable
+e imposible de falsear** — tu **Gemelo Digital** — y esa reputación se conecta, al instante,
+con **oportunidades reales del mercado laboral**. Rompe el círculo _"sin experiencia no me
 contratan → sin que me contraten no gano experiencia"_.
+
+Es la Industria 5.0 aplicada al talento: en un mundo donde todo es instantáneo, tu capacidad
+real ya no debería tardar meses en ser reconocida.
 
 El corazón es el **Núcleo (Gemelo Digital)**: un núcleo 3D vivo, alimentado por datos reales,
 rodeado por tu red en tiempo real. Un **Oráculo** te guía por voz hacia tu mejor próximo paso,
@@ -108,7 +112,7 @@ Claves recientes:
 - **`0047_realtime_publication.sql`** — habilita **Realtime replication** en `profiles`, `job_postings` y `job_matches` (necesario para ranking en vivo y "el trabajo te busca").
 
 Para las funciones de IA (Coach/Tutor/Examinador/etc.) y el despliegue de Edge Functions,
-ver [`PUESTA_EN_MARCHA.md`](./PUESTA_EN_MARCHA.md).
+ver [`GUIA_ACTIVACION_PRODUCCION.md`](./GUIA_ACTIVACION_PRODUCCION.md).
 
 > Presencia, actividad y DM funcionan con Presence/Broadcast (no requieren replication).
 > Ranking y ofertas en vivo requieren la migración `0047`.
@@ -152,13 +156,14 @@ supabase/migrations/        Migraciones SQL
 |-----------|-----------|
 | [`DEFINICION_OMICROM.md`](./DEFINICION_OMICROM.md) | Visión y definición del sistema |
 | [`DEFINICION_OMICROM_v8_BACKEND.md`](./DEFINICION_OMICROM_v8_BACKEND.md) | Definición técnica del backend |
-| [`BITACORA_MAESTRA.md`](./BITACORA_MAESTRA.md) | Bitácora / estado del proyecto |
-| [`PUESTA_EN_MARCHA.md`](./PUESTA_EN_MARCHA.md) | Checklist de activación (IA, Edge Functions, DB) |
-| [`ROADMAP_LANZAMIENTO.md`](./ROADMAP_LANZAMIENTO.md) | Roadmap |
-| [`ESTRATEGIA_LANZAMIENTO.md`](./ESTRATEGIA_LANZAMIENTO.md) | Estrategia de lanzamiento |
-| [`COSTOS_OPERACION.md`](./COSTOS_OPERACION.md) | Costos de operación |
-| [`AUDITORIA_COMPLETA.md`](./AUDITORIA_COMPLETA.md) | Auditoría y hallazgos |
-| [`UX_REVISION.md`](./UX_REVISION.md) | Revisión de UX |
+| [`DEFINICION_REPUTACION_OMICROM.md`](./DEFINICION_REPUTACION_OMICROM.md) | Fórmula canónica de reputación (fuente única de verdad) |
+| [`VISION_OMICROM.md`](./VISION_OMICROM.md) | Norte de producto: el asistente que empuja a la mejora |
+| [`GUIA_ACTIVACION_PRODUCCION.md`](./GUIA_ACTIVACION_PRODUCCION.md) | Guía paso a paso para activar producción (pagos, monitoreo, correo) |
+| [`PANEL_DE_CONTROL.md`](./PANEL_DE_CONTROL.md) | Dónde van las claves/secretos + checklist maestro |
+
+> 📌 **Pendientes de documentar** (no existen aún en el repo, se están priorizando):
+> Bitácora histórica de decisiones, roadmap de lanzamiento con hitos, auditoría técnica formal,
+> y revisión de UX. Ver plan de mejora activo.
 
 ---
 
@@ -173,6 +178,6 @@ Experiencias estáticas navegables (sin build) en `public/prototipos/`, servidas
 
 <div align="center">
 
-Hecho con ⚡ para Industria 5.0 · Capital Intelectual · Confianza Cero
+Hecho con ⚡ para la Industria 5.0 · Aprendizaje continuo en tiempo real · Sin fronteras · Confianza Cero
 
 </div>
