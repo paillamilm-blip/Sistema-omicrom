@@ -5,6 +5,11 @@
 // Calcula ejes del Gemelo Digital y posicionamiento en la red.
 // ═══════════════════════════════════════════════════════════════════════
 
+export interface SkillDetail {
+  name: string;
+  pct: number; // 0-100, nivel de dominio estimado
+}
+
 export interface AnalyzedProfile {
   name: string;
   seniorLabel: string;
@@ -12,6 +17,8 @@ export interface AnalyzedProfile {
   years: number;
   skills: string[]; // IDs de skills (react, typescript, etc)
   labels: string[]; // Nombres legibles
+  skillsDetail: SkillDetail[]; // labels + % de dominio (heurístico o de la IA)
+  summary: string; // resumen de 2 párrafos (heurístico o de la IA)
   creativity: number; // 0-1
   arch: 'estudiante' | 'junior' | 'mid' | 'senior' | 'lead' | 'pro';
   axes: {
@@ -79,13 +86,16 @@ function clamp(v: number, min: number, max: number): number {
 export function analyzeCV(text: string): AnalyzedProfile {
   const t = (' ' + String(text || '').toLowerCase() + ' ').replace(/[|/\\]/g, ' ');
 
-  // 1. SKILLS: detectar cuáles menciona
+  // 1. SKILLS: detectar cuáles menciona (y cuántas veces, para estimar dominio)
   const found: string[] = [];
   const labels: string[] = [];
+  const mentionCount: Record<string, number> = {};
   Object.keys(SKILLS).forEach((k) => {
-    if (SKILLS[k].some((keyword) => t.includes(keyword))) {
+    const hits = SKILLS[k].reduce((n, keyword) => n + (t.split(keyword).length - 1), 0);
+    if (hits > 0) {
       found.push(k);
       labels.push(SKILL_LABELS[k] || k);
+      mentionCount[k] = hits;
     }
   });
 
@@ -155,6 +165,8 @@ export function analyzeCV(text: string): AnalyzedProfile {
   if (found.length === 0) {
     found.push('frontend', 'javascript');
     labels.push('Frontend', 'JavaScript');
+    mentionCount.frontend = 1;
+    mentionCount.javascript = 1;
   }
 
   // 6. EDUCACIÓN (boost fundamento si hay certificaciones/universidad)
@@ -234,6 +246,27 @@ export function analyzeCV(text: string): AnalyzedProfile {
     fund: arch === 'estudiante' ? clamp(fund, 20, 60) : fund,
   };
 
+  // 9. SKILLS CON % DE DOMINIO (heurístico): base según seniority general +
+  // boost por cantidad de menciones en el CV — cada skill queda diferenciado
+  // según su propia evidencia, no todos al mismo nivel.
+  const baseDominion = 30 + seniorLevel * 8; // seniority general como piso
+  const skillsDetail: SkillDetail[] = found.map((k, i) => {
+    const mentions = mentionCount[k] ?? 1;
+    const pct = clamp(Math.round(baseDominion + Math.min(mentions, 5) * 6), 25, 96);
+    return { name: labels[i], pct };
+  });
+
+  // 10. RESUMEN HEURÍSTICO en 2 párrafos (se sobreescribe si la IA responde
+  // con uno más específico — ver ConvalidaOmicron.tsx).
+  const topSkills = labels.slice(0, 3).join(', ') || 'tecnologías generales';
+  const summary =
+    `${name || 'Este perfil'} se posiciona como ${seniorLabel.toLowerCase()}` +
+    `${years > 0 ? `, con ${years} ${years === 1 ? 'año' : 'años'} de experiencia declarada` : ''}` +
+    `, con foco principal en ${topSkills}.\n\n` +
+    `Ejecución ${axes.exec}/100 y Calidad ${axes.qual}/100 según la profundidad técnica detectada; ` +
+    `Trascendencia ${axes.trans}/100 y Fundamento ${axes.fund}/100 según la evidencia de impacto y base ` +
+    `formal encontrada en el CV. Estos valores suben con evidencia real adicional (contratos, aportes, nodos validados).`;
+
   return {
     name,
     seniorLabel,
@@ -241,6 +274,8 @@ export function analyzeCV(text: string): AnalyzedProfile {
     years,
     skills: found,
     labels,
+    skillsDetail,
+    summary,
     creativity,
     arch,
     axes,

@@ -16,7 +16,6 @@ import { useToast } from '../shared/Toast';
 import { speak } from '../../lib/voiceEngine';
 import { analyzeCV, type AnalyzedProfile } from '../../lib/cvAnalyzer';
 import { extractCVText } from '../../lib/cvExtract';
-import { askCoach } from '../../lib/oraculo';
 import { C, FONT, RADIUS } from '../../theme';
 import ParticleOrb from './ParticleOrb';
 
@@ -101,19 +100,25 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
     setMsg('Ómicron está leyendo TODO tu CV…');
     try {
       // 1) Análisis REAL con IA (lee TODO el CV). Fallback a la heurística local si falla.
+      // analyzeCV() ya devuelve summary (2 párrafos) y skillsDetail (skill + % de
+      // dominio) heurísticos — la IA los sobrescribe con una versión más precisa
+      // y específica de ESTE CV cuando responde a tiempo.
       let analyzed = analyzeCV(text);
-      let summary = '';
       try {
         const { data: aiData } = await supabase.functions.invoke('analizar-cv', { body: { text } });
         const a = aiData as { ok?: boolean; analysis?: {
           name?: string; seniorLabel?: string; seniorLevel?: number; years?: number;
-          skills?: string[]; arch?: string; summary?: string;
+          skills?: string[]; skillsDetail?: { name?: string; pct?: number }[]; arch?: string; summary?: string;
           axes?: { exec?: number; qual?: number; trans?: number; fund?: number };
         } } | null;
         const ia = a?.ok ? a.analysis : null;
         if (ia?.axes) {
           const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
           const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
+          const skillsDetail = (ia.skillsDetail ?? [])
+            .filter((s) => s?.name)
+            .slice(0, 12)
+            .map((s) => ({ name: s.name!, pct: clamp(s.pct) }));
           analyzed = {
             ...analyzed,
             name: ia.name || analyzed.name,
@@ -122,14 +127,16 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
             years: typeof ia.years === 'number' ? ia.years : analyzed.years,
             skills: skills.length ? skills : analyzed.skills,
             labels: skills.length ? skills : analyzed.labels,
+            skillsDetail: skillsDetail.length ? skillsDetail : analyzed.skillsDetail,
+            summary: ia.summary || analyzed.summary,
             arch: (ia.arch as AnalyzedProfile['arch']) || analyzed.arch,
             axes: { exec: clamp(ia.axes.exec), qual: clamp(ia.axes.qual), trans: clamp(ia.axes.trans), fund: clamp(ia.axes.fund) },
           };
-          summary = ia.summary || '';
         }
-      } catch { /* la IA no respondió: usamos la heurística local */ }
+      } catch { /* la IA no respondió: usamos la heurística local (ya tiene summary + skillsDetail) */ }
 
-      // 2) Persiste el análisis server-side (ejes + nombre + skills). El trigger recalcula reputación.
+      // 2) Persiste el análisis COMPLETO server-side (ejes + nombre + skills +
+      // años + resumen + detalle de dominio). El trigger recalcula reputación.
       const { data, error } = await supabase.rpc('aplicar_analisis_cv', {
         p_name: analyzed.name || '',
         p_skills: analyzed.labels,
@@ -137,6 +144,9 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
         p_qual: analyzed.axes.qual,
         p_trans: analyzed.axes.trans,
         p_fund: analyzed.axes.fund,
+        p_years: analyzed.years || null,
+        p_summary: analyzed.summary || null,
+        p_skills_detail: analyzed.skillsDetail,
       });
       const res = data as { ok?: boolean; error?: string } | null;
       if (error || !res?.ok) {
@@ -150,15 +160,9 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
       await refreshProfile();
       setShowCv(false);
       setDossier(analyzed);
-      // Si la IA ya explicó el porqué de tus niveles, lo mostramos; si no, pedimos el diagnóstico del coach.
-      if (summary) {
-        setAi({ loading: false, text: summary });
-      } else {
-        setAi({ loading: true, text: '' });
-        askCoach()
-          .then((r) => setAi({ loading: false, text: r.advice || '' }))
-          .catch(() => setAi({ loading: false, text: '' }));
-      }
+      // El resumen de 2 párrafos ya viene armado (IA o heurística) — no hace
+      // falta pedirle un segundo diagnóstico al coach como antes.
+      setAi({ loading: false, text: analyzed.summary });
     } catch {
       setMsg('No pude analizar. Revisá el texto e intentá de nuevo.');
     }
@@ -228,10 +232,21 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
             {dossier.years > 0 && <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.gold, padding: '4px 10px', borderRadius: 999, background: C.goldFaint, border: `1px solid ${C.goldDim}` }}>{dossier.years} {dossier.years === 1 ? 'año' : 'años'}</span>}
           </div>
 
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.2, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Experto en</div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
-            {dossier.labels.map((l) => (
-              <span key={l} style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff', padding: '7px 13px', borderRadius: 999, background: `linear-gradient(135deg, ${C.purple}22, ${C.cyan}18)`, border: `1px solid ${C.purpleDim}`, boxShadow: `0 0 14px ${C.purple}33` }}>{l}</span>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.2, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Skills · % de dominio</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18, textAlign: 'left' }}>
+            {(dossier.skillsDetail?.length ? dossier.skillsDetail : dossier.labels.map((name) => ({ name, pct: 60 }))).map((s) => (
+              <div key={s.name}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                  <span style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 12.5, color: '#eaf4ff' }}>{s.name}</span>
+                  <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan }}>{s.pct}%</span>
+                </div>
+                <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', width: `${s.pct}%`, borderRadius: 3, transition: 'width .6s ease',
+                    background: `linear-gradient(90deg, ${C.purple}, ${C.cyan})`, boxShadow: `0 0 8px ${C.cyan}66`,
+                  }} />
+                </div>
+              </div>
             ))}
           </div>
 
@@ -259,7 +274,9 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
                   Ómicron está leyendo tu perfil…
                 </div>
               ) : (
-                <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13.5, lineHeight: 1.5, color: C.ink, whiteSpace: 'pre-wrap' }}>{ai.text}</p>
+                // whiteSpace: 'pre-wrap' respeta el \n\n entre los 2 párrafos
+                // del resumen (pedido explícito: "resumidos en dos párrafos precisos").
+                <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13.5, lineHeight: 1.55, color: C.ink, whiteSpace: 'pre-wrap' }}>{ai.text}</p>
               )}
             </div>
           )}

@@ -68,8 +68,14 @@ const SYS =
   'roles, anios, proyectos, tecnologias, logros medibles, liderazgo, mentoria, educacion, certificaciones, ' +
   'publicaciones, open source, idiomas. El analisis debe ser REAL y ESPECIFICO de ESTE CV (no generico). ' +
   'Devuelve SOLO JSON con: name (nombre de la persona si aparece, si no ""), seniorLabel (ej. "Ingeniera Senior"), ' +
-  'seniorLevel (1=estudiante,2=junior,3=semi-senior,4=senior,5=lead/experto), years (anios de experiencia, numero), ' +
-  'skills (las habilidades/tecnologias mas relevantes que REALMENTE aparecen, legibles, maximo 12), ' +
+  'seniorLevel (1=estudiante,2=junior,3=semi-senior,4=senior,5=lead/experto), years (anios TOTALES de experiencia ' +
+  'profesional sumando todos los roles del CV, numero entero, 0 si no se puede inferir), ' +
+  'skills (las habilidades/tecnologias mas relevantes que REALMENTE aparecen, legibles, maximo 12; usar el campo ' +
+  '"skillsDetail" para el detalle con porcentaje, este campo "skills" es solo la lista simple de nombres), ' +
+  'skillsDetail: array de objetos {name, pct} — mismo orden/cantidad que "skills" — donde pct (0-100 entero) estima ' +
+  'el NIVEL DE DOMINIO real de esa tecnologia segun evidencia del CV (anios usandola, profundidad de los proyectos ' +
+  'descritos, seniority del rol donde se usa, si es su stack principal vs. algo mencionado una vez). No pongas ' +
+  'todos los skills al mismo pct: diferenciar segun la evidencia real de cada uno. ' +
   'arch (uno de: estudiante, junior, mid, senior, lead, pro), ' +
   'axes con 4 valores 0-100 justificados por el CV: ' +
   'exec=Ejecucion (capacidad de entregar: proyectos completados, stack dominado, resultados), ' +
@@ -77,7 +83,10 @@ const SYS =
   'trans=Trascendencia (impacto y liderazgo: mentoria, comunidad, open source, publicaciones, escala del impacto), ' +
   'fund=Fundamento (base teorica: educacion formal, certificaciones, profundidad conceptual). ' +
   'Si el CV es debil o vacio en un eje, pon un valor BAJO real (no inventes). ' +
-  'summary: 1-2 frases en espanol neutro-chileno explicando por que esos niveles, citando algo concreto del CV.';
+  'summary: EXACTAMENTE 2 parrafos en espanol neutro-chileno (separados por un salto de linea \\n\\n), precisos y ' +
+  'sin relleno generico. Parrafo 1: quien es profesionalmente (seniority, anios, especialidad principal) citando ' +
+  'algo concreto y verificable del CV (un proyecto, un rol, una tecnologia dominante). Parrafo 2: por que esos 4 ' +
+  'ejes tienen esos valores, citando otro elemento concreto distinto del CV para cada eje que lo justifique.';
 
 const SCHEMA = {
   type: 'OBJECT',
@@ -87,6 +96,14 @@ const SCHEMA = {
     seniorLevel: { type: 'INTEGER' },
     years: { type: 'NUMBER' },
     skills: { type: 'ARRAY', items: { type: 'STRING' } },
+    skillsDetail: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: { name: { type: 'STRING' }, pct: { type: 'INTEGER' } },
+        required: ['name', 'pct'],
+      },
+    },
     arch: { type: 'STRING' },
     axes: {
       type: 'OBJECT',
@@ -98,7 +115,7 @@ const SCHEMA = {
     },
     summary: { type: 'STRING' },
   },
-  required: ['name', 'seniorLabel', 'seniorLevel', 'years', 'skills', 'arch', 'axes', 'summary'],
+  required: ['name', 'seniorLabel', 'seniorLevel', 'years', 'skills', 'skillsDetail', 'arch', 'axes', 'summary'],
 };
 
 Deno.serve(async (req) => {

@@ -73,6 +73,20 @@ function getRecognitionCtor(): SRCtor | null {
 // frente se ven grandes y brillantes; los del fondo, chicos y tenues. El
 // nodo recomendado por el motor (highlightTab) brilla para guiarte.
 //
+// ZONA DE ANCLAJE (pedido explícito del usuario): si sueltas un nodo en la
+// franja inferior (justo arriba de donde se habla/escribe), en vez de
+// quedar flotando libre se ORDENA EN FILA junto a los demás nodos anclados,
+// según el criterio del usuario: el punto horizontal donde lo soltás
+// determina su lugar en el orden (izquierda = primero). Se puede reordenar
+// sacando y volviendo a soltar cualquier nodo anclado.
+//
+// BRILLO DE SELECCIÓN (pedido explícito del usuario, independiente del
+// brillo dorado de "sugerencia de la IA" = highlightTab): al tocar un nodo
+// para navegar, se enciende un anillo verde pulsante + el ícono brilla,
+// como confirmación inmediata de "tu toque se registró" — visible durante
+// la breve pausa antes de cambiar de pantalla (Ómicron suele hablar
+// primero, ver goNode en el padre).
+//
 // Al confirmarse un arrastre (onDragStart) el nodo se congela en su posición
 // actual (sin salto) y desde ahí sigue libre → al soltar, la posición queda
 // fija para siempre (hasta "Reordenar"). Esto evita el bug histórico de
@@ -86,7 +100,15 @@ function getRecognitionCtor(): SRCtor | null {
 // asistente.
 // ─────────────────────────────────────────────────────────────────────────
 const NODE_POS_KEY = 'omicron_node_positions_v1';
+const NODE_ANCHOR_KEY = 'omicron_node_anchor_v1';
 const NODE_HINT_KEY = 'omicron_node_hint_seen_v1';
+
+// Zona de anclaje: franja horizontal en la parte inferior del área del
+// orbe, justo arriba de donde se habla/escribe. Soltar un nodo ahí lo
+// ordena en fila (según el criterio del usuario: el orden en que lo va
+// soltando/arrastrando), en vez de dejarlo flotando en cualquier punto.
+const ANCHOR_ZONE_Y_MIN = 74; // % del alto del área del orbe
+const ANCHOR_SLOT_Y = 87;     // % — línea vertical donde se alinean los nodos anclados
 
 type NodePos = { xPct: number; yPct: number };
 
@@ -97,6 +119,19 @@ function loadNodePositions(): Partial<Record<TabId, NodePos>> {
   } catch { return {}; }
 }
 
+function loadAnchoredOrder(): TabId[] {
+  try {
+    const raw = localStorage.getItem(NODE_ANCHOR_KEY);
+    return raw ? (JSON.parse(raw) as TabId[]) : [];
+  } catch { return []; }
+}
+
+/** Posición (x%, y%) del slot i-ésimo de n nodos anclados, distribuidos en la franja. */
+function anchorSlotPos(i: number, n: number): { x: number; y: number } {
+  const x = n <= 1 ? 50 : 12 + i * (76 / (n - 1));
+  return { x, y: ANCHOR_SLOT_Y };
+}
+
 function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
   nodes: { tab: TabId; label: string; Icon: typeof GraduationCap }[];
   onSelect: (tab: TabId) => void;
@@ -105,6 +140,20 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const nodeElsRef = useRef<Map<TabId, HTMLButtonElement>>(new Map());
+  // Orden de los nodos anclados en la franja inferior (zona de anclaje),
+  // en el orden en que el usuario los fue soltando/reordenando — "según mi
+  // criterio", pedido explícito del usuario.
+  const [anchoredOrder, setAnchoredOrder] = useState<TabId[]>(() => loadAnchoredOrder());
+  // Feedback visual mientras se arrastra un nodo hacia la franja (se activa
+  // cruzando ANCHOR_ZONE_Y_MIN, no en cada frame — barato en renders).
+  const [zoneActive, setZoneActive] = useState(false);
+  // Nodo seleccionado (independiente de highlightTab, que es la SUGERENCIA
+  // de la IA). Se enciende al confirmarse un tap real y se apaga solo tras
+  // un momento — cubre la ventana de transición hacia la otra pantalla
+  // (goNode en el padre demora la navegación hasta ~650ms para que Ómicron
+  // hable primero), así el usuario VE que su toque se registró antes de
+  // que la pantalla cambie.
+  const [selectedTab, setSelectedTab] = useState<TabId | null>(null);
   // Bandera "se acaba de arrastrar" por nodo. Framer Motion NO garantiza que
   // `onTap`/`onClick` se cancelen automáticamente tras un `onDragEnd` real en
   // todos los navegadores/dispositivos (confirmado revisando reportes de la
@@ -139,45 +188,68 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
     try { localStorage.setItem(NODE_POS_KEY, JSON.stringify(next)); } catch { /* noop */ }
   }, []);
 
+  const persistAnchored = useCallback((next: TabId[]) => {
+    setAnchoredOrder(next);
+    try { localStorage.setItem(NODE_ANCHOR_KEY, JSON.stringify(next)); } catch { /* noop */ }
+  }, []);
+
   const dismissHint = useCallback(() => {
     setHintVisible(false);
     try { localStorage.setItem(NODE_HINT_KEY, '1'); } catch { /* noop */ }
   }, []);
 
-  const resetLayout = useCallback(() => persist({}), [persist]);
+  const resetLayout = useCallback(() => { persist({}); persistAnchored([]); }, [persist, persistAnchored]);
 
   const n = nodes.length;
-  const hasPinned = Object.keys(pinned).length > 0;
+  const hasPinned = Object.keys(pinned).length > 0 || anchoredOrder.length > 0;
 
   return (
     <div ref={containerRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3 }}>
       {/* Anillo guía (se desvanece a medida que armás tu propia red de nodos) */}
       <div style={{ position: 'absolute', left: '50%', top: '47%', width: '88%', height: '40%', transform: 'translate(-50%,-50%)', borderRadius: '50%', border: `1px dashed ${C.line}`, opacity: hasPinned ? 0.16 : 0.45, transition: 'opacity 0.5s ease' }} />
 
-      {/* Líneas de sinergia: cada nodo reposicionado queda conectado al núcleo */}
+      {/* Zona de anclaje: franja justo arriba de donde se habla/escribe. Se
+          resalta SOLO mientras se está arrastrando un nodo por encima de ella
+          (feedback claro de "acá se ordena en fila"). */}
+      <div style={{
+        position: 'absolute', left: '4%', right: '4%', top: `${ANCHOR_ZONE_Y_MIN}%`, bottom: 2,
+        borderRadius: RADIUS.lg, border: `1px dashed ${zoneActive ? C.cyan : 'transparent'}`,
+        background: zoneActive ? `${C.cyan}0f` : 'transparent',
+        transition: 'background 0.15s ease, border-color 0.15s ease',
+      }} />
+
+      {/* Líneas de sinergia: cada nodo reposicionado (libre o anclado en la
+          franja inferior) queda conectado al núcleo. */}
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none' }}>
-        {nodes.filter((node) => pinned[node.tab]).map((node) => {
-          const p = pinned[node.tab]!;
+        {nodes.map((node) => {
+          const anchorIdx = anchoredOrder.indexOf(node.tab);
+          const anchorPos = anchorIdx !== -1 ? anchorSlotPos(anchorIdx, anchoredOrder.length) : null;
+          const p = anchorPos ?? (pinned[node.tab] ? { x: pinned[node.tab]!.xPct, y: pinned[node.tab]!.yPct } : null);
+          if (!p) return null;
           const isHi = node.tab === highlightTab;
           return (
-            <line key={node.tab} x1="50%" y1="47%" x2={`${p.xPct}%`} y2={`${p.yPct}%`}
+            <line key={node.tab} x1="50%" y1="47%" x2={`${p.x}%`} y2={`${p.y}%`}
               stroke={isHi ? (highlightAccent || C.gold) : C.cyan} strokeWidth={1} strokeDasharray="2 5" opacity={0.32} />
           );
         })}
       </svg>
 
       {nodes.map((node, i) => {
+        const anchorIdx = anchoredOrder.indexOf(node.tab);
+        const isAnchored = anchorIdx !== -1;
         const custom = pinned[node.tab];
         const ang = rot + (i / n) * Math.PI * 2;
         const autoX = 50 + 42 * Math.cos(ang);
         const autoY = 47 + 20 * Math.sin(ang);
-        const x = custom?.xPct ?? autoX;
-        const y = custom?.yPct ?? autoY;
-        const depth = custom ? 0.85 : (Math.sin(ang) + 1) / 2;   // nodos fijados: siempre "al frente"
+        const anchorPos = isAnchored ? anchorSlotPos(anchorIdx, anchoredOrder.length) : null;
+        const x = anchorPos?.x ?? custom?.xPct ?? autoX;
+        const y = anchorPos?.y ?? custom?.yPct ?? autoY;
+        const depth = isAnchored || custom ? 0.85 : (Math.sin(ang) + 1) / 2;   // fijados/anclados: siempre "al frente"
         const scale = 0.68 + depth * 0.5;
         const opacity = 0.4 + depth * 0.6;
         const z = 10 + Math.round(depth * 100);
         const hi = node.tab === highlightTab;
+        const isSelected = node.tab === selectedTab;
         const accent = hi ? (highlightAccent || C.gold) : C.cyan;
         const Icon = node.Icon;
 
@@ -203,57 +275,124 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
             onDragStart={() => {
               // Freeze en la posición actual (recién al confirmarse el arrastre,
               // no en cada toque) — así el nodo nunca "se aleja" al agarrarlo.
+              // Si el nodo ya estaba anclado, se lo saca de la franja al empezar
+              // a arrastrarlo (queda libre hasta que se decida su nuevo lugar).
+              if (isAnchored) persistAnchored(anchoredOrder.filter((t) => t !== node.tab));
               if (!pinned[node.tab]) persist({ ...pinned, [node.tab]: { xPct: autoX, yPct: autoY } });
               if (hintVisible) dismissHint();
             }}
-            onDragEnd={() => {
-              // Se lee la posición REAL del propio nodo (su getBoundingClientRect
-              // tras el arrastre), no el punto final del puntero. Si se usara el
-              // punto del puntero, soltar el nodo sin haberlo agarrado en su
-              // centro exacto provocaría un salto visible al soltar — el mismo
-              // tipo de bug de "el nodo se mueve solo" que este rediseño busca
-              // eliminar, ahora en la capa de arrastre en vez de en la de click.
+            onDrag={(_e, info) => {
+              // Detecta si el puntero está sobre la franja de anclaje (parte
+              // inferior del área del orbe) — solo actualiza el estado al
+              // cruzar el umbral, no en cada frame, para no forzar renders de
+              // más mientras se arrastra.
+              const containerEl = containerRef.current;
+              if (!containerEl) return;
+              const rect = containerEl.getBoundingClientRect();
+              const py = ((info.point.y - rect.top) / rect.height) * 100;
+              const inZone = py >= ANCHOR_ZONE_Y_MIN;
+              setZoneActive((prev) => (prev === inZone ? prev : inZone));
+            }}
+            onDragEnd={(_e, info) => {
               const nodeEl = nodeElsRef.current.get(node.tab);
               const containerEl = containerRef.current;
-              if (nodeEl && containerEl) {
+              if (!nodeEl || !containerEl) { setZoneActive(false); return; }
+              const containerRect = containerEl.getBoundingClientRect();
+              const py = ((info.point.y - containerRect.top) / containerRect.height) * 100;
+
+              if (py >= ANCHOR_ZONE_Y_MIN) {
+                // Soltado dentro de la zona de anclaje: se ordena en fila según
+                // la posición horizontal donde se soltó — "según mi criterio",
+                // el usuario decide el orden con dónde suelta cada nodo dentro
+                // de la franja (se inserta antes del primer nodo anclado que
+                // esté más a la derecha del punto de soltado).
+                const px = ((info.point.x - containerRect.left) / containerRect.width) * 100;
+                const rest = anchoredOrder.filter((t) => t !== node.tab);
+                let insertAt = rest.length;
+                for (let k = 0; k < rest.length; k++) {
+                  const slot = anchorSlotPos(k, rest.length);
+                  if (px < slot.x) { insertAt = k; break; }
+                }
+                const next = [...rest.slice(0, insertAt), node.tab, ...rest.slice(insertAt)];
+                persistAnchored(next);
+                // Ya no necesita una posición libre — la franja la controla.
+                if (pinned[node.tab]) {
+                  const restPinned = { ...pinned };
+                  delete restPinned[node.tab];
+                  persist(restPinned);
+                }
+              } else {
+                // Se lee la posición REAL del propio nodo (su getBoundingClientRect
+                // tras el arrastre), no el punto final del puntero. Si se usara el
+                // punto del puntero, soltar el nodo sin haberlo agarrado en su
+                // centro exacto provocaría un salto visible al soltar — el mismo
+                // tipo de bug de "el nodo se mueve solo" que este rediseño busca
+                // eliminar, ahora en la capa de arrastre en vez de en la de click.
                 const nodeRect = nodeEl.getBoundingClientRect();
-                const containerRect = containerEl.getBoundingClientRect();
                 const centerX = nodeRect.left + nodeRect.width / 2;
                 const centerY = nodeRect.top + nodeRect.height / 2;
-                const px = ((centerX - containerRect.left) / containerRect.width) * 100;
-                const py = ((centerY - containerRect.top) / containerRect.height) * 100;
-                persist({ ...pinned, [node.tab]: { xPct: Math.min(96, Math.max(4, px)), yPct: Math.min(96, Math.max(4, py)) } });
+                const cx = ((centerX - containerRect.left) / containerRect.width) * 100;
+                const cy = ((centerY - containerRect.top) / containerRect.height) * 100;
+                persist({ ...pinned, [node.tab]: { xPct: Math.min(96, Math.max(4, cx)), yPct: Math.min(ANCHOR_ZONE_Y_MIN - 2, Math.max(4, cy)) } });
               }
+              setZoneActive(false);
               // Marca "se acaba de arrastrar" y la limpia en el siguiente ciclo
               // (no ahora mismo) — ver nota técnica junto a justDraggedRef.
               justDraggedRef.current.add(node.tab);
               setTimeout(() => justDraggedRef.current.delete(node.tab), 0);
             }}
-            onTap={() => { if (!justDraggedRef.current.has(node.tab)) onSelect(node.tab); }}
+            onTap={() => {
+              if (justDraggedRef.current.has(node.tab)) return;
+              setSelectedTab(node.tab);
+              setTimeout(() => setSelectedTab((cur) => (cur === node.tab ? null : cur)), 900);
+              onSelect(node.tab);
+            }}
             ref={(el) => {
               if (el) nodeElsRef.current.set(node.tab, el);
               else nodeElsRef.current.delete(node.tab);
             }}
-            aria-label={`${node.label} — tocá y mantené para reposicionar`}
+            aria-label={`${node.label} — tocá para entrar, mantené para reposicionar`}
+            aria-pressed={isSelected}
+            whileTap={{ scale: 1.12 }}
             style={{
               position: 'absolute',
               left: `calc(${x}% - 24px)`, top: `calc(${y}% - 24px)`,
-              width: 48, zIndex: z, scale, opacity,
+              width: 48, zIndex: isSelected ? 200 : z, scale, opacity,
               pointerEvents: 'auto', touchAction: 'none',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
               background: 'transparent', border: 'none', cursor: 'grab', padding: 0, margin: 0,
             }}
           >
+            {/* Anillo de selección: feedback de "tu toque se registró",
+                independiente del brillo dorado de sugerencia de la IA (hi).
+                whileTap arriba ya da el "pop" instantáneo al tocar; este
+                anillo sostiene la señal visual durante la breve pausa antes
+                de navegar (Ómicron suele hablar primero). */}
+            {isSelected && (
+              <motion.span
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: [0.9, 0.4, 0.9], scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.7, repeat: Infinity, ease: 'easeInOut' }}
+                style={{
+                  position: 'absolute', top: -5, left: -5, right: -5, bottom: 13,
+                  borderRadius: '50%', border: `2px solid ${C.green}`,
+                  boxShadow: `0 0 16px ${C.green}`, pointerEvents: 'none',
+                }}
+              />
+            )}
             <span style={{
               width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: `radial-gradient(circle at 32% 26%, ${accent}33, rgba(6,10,22,0.82))`,
-              border: `1px solid ${accent}${hi ? '' : '66'}`,
-              boxShadow: hi ? `0 0 22px ${accent}, inset 0 0 14px ${accent}55` : `0 4px 16px rgba(0,0,0,0.5), 0 0 12px ${accent}33`,
+              background: `radial-gradient(circle at 32% 26%, ${isSelected ? C.green : accent}33, rgba(6,10,22,0.82))`,
+              border: `1px solid ${isSelected ? C.green : accent}${hi || isSelected ? '' : '66'}`,
+              boxShadow: isSelected
+                ? `0 0 24px ${C.green}, inset 0 0 14px ${C.green}55`
+                : hi ? `0 0 22px ${accent}, inset 0 0 14px ${accent}55` : `0 4px 16px rgba(0,0,0,0.5), 0 0 12px ${accent}33`,
               backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
             }}>
-              <Icon size={20} color={hi ? '#fff' : accent} />
+              <Icon size={20} color={hi || isSelected ? '#fff' : accent} />
             </span>
-            <span style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 0.3, color: hi ? accent : C.ink, textShadow: '0 1px 5px #000, 0 0 2px #000', whiteSpace: 'nowrap' }}>{node.label}</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 0.3, color: isSelected ? C.green : hi ? accent : C.ink, textShadow: '0 1px 5px #000, 0 0 2px #000', whiteSpace: 'nowrap' }}>{node.label}</span>
           </motion.button>
         );
       })}
@@ -265,7 +404,7 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
           fontFamily: FONT.mono, fontSize: 9, letterSpacing: 0.4, color: C.cyanDim, textShadow: '0 1px 5px #000',
           background: 'rgba(4,8,18,0.55)', padding: '4px 10px', borderRadius: 999, whiteSpace: 'nowrap',
         }}>
-          ✋ Mantené y arrastrá un nodo para armar tu red
+          ✋ Mantené y arrastrá un nodo — soltalo abajo para ordenarlo en fila
         </div>
       )}
 
@@ -282,6 +421,66 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
         </button>
       )}
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ProfileBadge — acceso rápido al perfil desde el header. Rediseño pedido
+// por el usuario ("botón donde aparezca mi perfil de forma innovadora,
+// hoy se ve plano y diseño fome"): reemplaza el texto plano "NIVEL N{x}
+// · {rep}" por un anillo de progreso circular (HUD) con la reputación
+// real 0-100 dibujada en SVG (mismo lenguaje visual "Iron Man" que el
+// resto de la app — theme.ts ya usa esta identidad), avatar/iniciales al
+// centro, y el nivel como acento superpuesto. whileTap da feedback táctil
+// inmediato, igual que los nodos del orbe (consistencia entre controles).
+// ─────────────────────────────────────────────────────────────────────────
+function ProfileBadge({ rep, level, name, avatarUrl, onClick }: {
+  rep: number; level: number | string; name?: string; avatarUrl?: string; onClick: () => void;
+}) {
+  const SIZE = 40;
+  const STROKE = 3;
+  const r = (SIZE - STROKE) / 2;
+  const circumference = 2 * Math.PI * r;
+  const progress = Math.max(0, Math.min(100, rep)) / 100;
+  const initials = (name || 'Nodo').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+
+  return (
+    <motion.button onClick={onClick} whileTap={{ scale: 0.94 }} title="Ver mi perfil" aria-label={`Ver mi perfil — nivel ${level}, reputación ${rep}`}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px 4px 4px', borderRadius: RADIUS.pill,
+        background: `linear-gradient(135deg, ${C.cyan}14, rgba(255,255,255,0.03))`, border: `1px solid ${C.cyanDim}`,
+        cursor: 'pointer', position: 'relative',
+      }}>
+      <span style={{ position: 'relative', width: SIZE, height: SIZE, flexShrink: 0 }}>
+        <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx={SIZE / 2} cy={SIZE / 2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={STROKE} />
+          <circle cx={SIZE / 2} cy={SIZE / 2} r={r} fill="none" stroke={C.cyan} strokeWidth={STROKE} strokeLinecap="round"
+            strokeDasharray={circumference} strokeDashoffset={circumference * (1 - progress)}
+            style={{ transition: 'stroke-dashoffset 0.6s ease', filter: `drop-shadow(0 0 4px ${C.cyan})` }} />
+        </svg>
+        <span style={{
+          position: 'absolute', inset: STROKE + 2, borderRadius: '50%', overflow: 'hidden',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'radial-gradient(circle at 32% 26%, rgba(92,200,255,0.22), rgba(6,10,22,0.92))',
+        }}>
+          {avatarUrl
+            ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 12, color: '#fff' }}>{initials}</span>}
+        </span>
+        {/* Acento de nivel: superpuesto sobre el aro, como un "rango" HUD */}
+        <span style={{
+          position: 'absolute', bottom: -3, right: -3, minWidth: 16, height: 16, padding: '0 3px', borderRadius: 999,
+          background: C.gold, border: '1.5px solid #000206', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: `0 0 6px ${C.gold}`,
+        }}>
+          <span style={{ fontFamily: FONT.mono, fontWeight: 800, fontSize: 8.5, color: '#1a1205', lineHeight: 1 }}>{level}</span>
+        </span>
+      </span>
+      <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.15 }}>
+        <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 14, color: '#fff' }}>{rep}</span>
+        <span style={{ fontFamily: FONT.mono, fontSize: 7.5, letterSpacing: 0.8, color: C.mut, textTransform: 'uppercase' }}>Reputación</span>
+      </span>
+    </motion.button>
   );
 }
 
@@ -443,13 +642,8 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
           <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>· {STATE_LABEL[state]}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button onClick={() => onOpenPerfil?.()} title="Ver mi perfil"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: RADIUS.pill, background: C.glass, border: `1px solid ${C.line}`, cursor: 'pointer' }}>
-            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>NIVEL</span>
-            <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.cyan }}>N{level}</span>
-            <span style={{ width: 1, height: 12, background: C.line }} />
-            <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.gold }}>{rep}</span>
-          </button>
+          <ProfileBadge rep={rep} level={level} name={profile?.display_name || profile?.full_name || profile?.username}
+            avatarUrl={profile?.avatar_url} onClick={() => onOpenPerfil?.()} />
           <button onClick={doLogout} aria-label="Cerrar sesión" title="Cerrar sesión"
             style={{ width: 34, height: 34, borderRadius: 11, border: `1px solid ${C.line}`, background: C.glass, color: C.mut, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <LogOut size={16} />
