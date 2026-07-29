@@ -21,6 +21,8 @@ function makeProfile(overrides: Partial<AnalyzedProfile> = {}): AnalyzedProfile 
     years: 3,
     skills: ['react', 'frontend', 'javascript'],
     labels: ['React', 'Frontend', 'JavaScript'],
+    skillsDetail: [],
+    summary: '',
     creativity: 0.4,
     arch: 'mid',
     axes: { exec: 50, qual: 50, trans: 50, fund: 50 },
