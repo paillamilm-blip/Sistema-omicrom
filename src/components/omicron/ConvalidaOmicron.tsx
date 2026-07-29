@@ -169,6 +169,12 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
       const cleanDetail = (analyzed.skillsDetail ?? [])
         .filter((s: { name: string; pct: number }) => s?.name)
         .map((s: { name: string; pct: number }) => ({ name: String(s.name), pct: Number(s.pct) || 0 }));
+
+      // Llamada directa via fetch para evitar problemas de cache de PostgREST
+      // con la resolución de funciones sobrecargadas.
+      const { data: { session } } = await supabase.auth.getSession();
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cuwuyqpxaibbqjrvamjb.supabase.co';
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1d3V5cXB4YWliYnFqcnZhbWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NDA1OTEsImV4cCI6MjA5NzAxNjU5MX0.WCcqvhmws0iibL56pHv5C1yNv2uwFjyVL4zXBQOTic8';
       const rpcBody = {
         p_name: String(analyzed.name || ''),
         p_skills: cleanSkills,
@@ -181,8 +187,20 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
         p_skills_detail: cleanDetail.length > 0 ? cleanDetail : null,
       };
       console.log('[Omicron] aplicar_analisis_cv params:', JSON.stringify(rpcBody, null, 2));
-      const { data, error } = await supabase.rpc('aplicar_analisis_cv', rpcBody);
-      console.log('[Omicron] aplicar_analisis_cv response:', { data, error });
+      const rpcRes = await fetch(`${baseUrl}/rest/v1/rpc/aplicar_analisis_cv`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': anonKey,
+          'Authorization': `Bearer ${session?.access_token || anonKey}`,
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify(rpcBody),
+      });
+      const rpcJson = await rpcRes.json().catch(() => null);
+      console.log('[Omicron] aplicar_analisis_cv response:', rpcRes.status, rpcJson);
+      const data = rpcJson;
+      const error = rpcRes.ok ? null : { message: rpcJson?.message || rpcJson?.hint || `HTTP ${rpcRes.status}` };
       const res = data as { ok?: boolean; error?: string } | null;
       if (error || !res?.ok) {
         const errMsg = error?.message || res?.error || 'Error desconocido';
