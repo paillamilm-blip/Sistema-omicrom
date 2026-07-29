@@ -6,7 +6,7 @@
 // convalidación real (ConvalidaOmicron), sin duplicar flujos.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState } from 'react';
-import { Edit3, Share2, Camera, Shield, BadgeCheck, MapPin, Sparkles, Award, ArrowRight } from 'lucide-react';
+import { Edit3, Share2, Camera, Shield, BadgeCheck, MapPin, Sparkles, Award, ArrowRight, Briefcase, Clock, Database } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp, useGemeloDigital } from '../../store/AppContext';
 import { EditProfileModal } from '../perfil/EditProfileModal';
@@ -169,8 +169,80 @@ export function PerfilTab() {
       {/* Convalidar (única, real) */}
       <button onClick={() => setShowConvalida(true)}
         style={{ width: '100%', padding: '14px 0', borderRadius: RADIUS.lg, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 14 }}>
-        Convalidar mi Gemelo (CV · título · años) <ArrowRight size={17} />
+        {skills.length > 0 ? 'Actualizar mi Gemelo (nuevo CV)' : 'Convalidar mi Gemelo (CV · título · años)'} <ArrowRight size={17} />
       </button>
+
+      {/* Historial Profesional (Timeline) — extracted from CV */}
+      {(profile.cv_years_experience || profile.cv_summary || skills.length > 0) && (
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
+            <Briefcase size={15} color={C.cyan} />
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.cyan }}>Historial Profesional</span>
+          </div>
+
+          {/* Years badge */}
+          {(profile.cv_years_experience ?? 0) > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <Clock size={13} color={C.gold} />
+              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.gold }}>{profile.cv_years_experience} {profile.cv_years_experience === 1 ? 'año' : 'años'} de experiencia</span>
+            </div>
+          )}
+
+          {/* Timeline entries — extracted from profile/skills context */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginLeft: 6, borderLeft: `2px solid ${C.line}`, paddingLeft: 14 }}>
+            {/* Dependiente */}
+            {skills.length > 0 && (
+              <div style={{ position: 'relative', paddingBottom: 12 }}>
+                <span style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: C.cyan, border: '2px solid #0a1120' }} />
+                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: C.mut, marginBottom: 3 }}>Trabajo dependiente / Freelance</div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff' }}>Experto en {skills.slice(0, 3).join(', ')}</div>
+                <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.mut, marginTop: 2 }}>
+                  {profile.cv_years_experience ? `${profile.cv_years_experience}+ años de trayectoria combinada` : 'Trayectoria profesional activa'}
+                </div>
+              </div>
+            )}
+
+            {/* Freelance / Independiente */}
+            {skills.length > 3 && (
+              <div style={{ position: 'relative', paddingBottom: 12 }}>
+                <span style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: C.gold, border: '2px solid #0a1120' }} />
+                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: C.mut, marginBottom: 3 }}>Especialización independiente</div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff' }}>{skills.slice(3, 6).join(' · ')}</div>
+                <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.mut, marginTop: 2 }}>Proyectos y contratos freelance</div>
+              </div>
+            )}
+
+            {/* CTA: expand to vault */}
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: C.green, border: '2px solid #0a1120' }} />
+              <button onClick={() => setShowConvalida(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.green }}>+ Agregar más experiencia (actualizar CV)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bóveda Personal — "Desarrollado por mí" */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Database size={15} color={C.green} />
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.green }}>Desarrollado por mí</span>
+          </div>
+          <button onClick={() => {/* navigate to vault */ }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>Ver Bóveda</span>
+            <ArrowRight size={12} color={C.cyanDim} />
+          </button>
+        </div>
+        <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 12.5, color: C.mut, lineHeight: 1.5 }}>
+          Documentos técnicos, soluciones y proyectos que has desarrollado de forma independiente. Publicá en la Bóveda para generar regalías.
+        </p>
+        <button onClick={() => setShowConvalida(true)}
+          style={{ marginTop: 10, width: '100%', padding: '10px 0', borderRadius: RADIUS.md, border: `1px solid ${C.greenDim}`, background: C.greenFaint, color: C.green, fontFamily: FONT.display, fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <Database size={14} /> Aportar a mi Bóveda
+        </button>
+      </div>
 
       {/* Pioneer */}
       {profile.is_pioneer && (

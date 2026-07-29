@@ -437,7 +437,8 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
 function ProfileBadge({ rep, level, name, avatarUrl, onClick }: {
   rep: number; level: number | string; name?: string; avatarUrl?: string; onClick: () => void;
 }) {
-  const SIZE = 40;
+  // Adaptive size: scales between 36-44px based on viewport
+  const SIZE = typeof window !== 'undefined' ? Math.min(44, Math.max(36, Math.round(window.innerWidth * 0.1))) : 40;
   const STROKE = 3;
   const r = (SIZE - STROKE) / 2;
   const circumference = 2 * Math.PI * r;
@@ -645,7 +646,7 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
           <ProfileBadge rep={rep} level={level} name={profile?.display_name || profile?.full_name || profile?.username}
             avatarUrl={profile?.avatar_url} onClick={() => onOpenPerfil?.()} />
           <button onClick={doLogout} aria-label="Cerrar sesión" title="Cerrar sesión"
-            style={{ width: 34, height: 34, borderRadius: 11, border: `1px solid ${C.line}`, background: C.glass, color: C.mut, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            style={{ width: 'clamp(30px, 8vw, 38px)', height: 'clamp(30px, 8vw, 38px)', borderRadius: 11, border: `1px solid ${C.line}`, background: C.glass, color: C.mut, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <LogOut size={16} />
           </button>
         </div>
@@ -715,19 +716,46 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
 
       {/* CONTENIDO desplazable */}
       <div className="scrollbar-hidden" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', scrollBehavior: 'smooth', padding: '14px 16px calc(env(safe-area-inset-bottom, 0px) + 20px)', position: 'relative', zIndex: 2, minHeight: 0 }}>
-        {/* Onboarding: subir CV + examen de nivel */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-          <button onClick={() => setCvOpen(true)} style={ctaStyle(C.cyan)}>
-            <Upload size={20} color={C.cyan} />
-            <span style={ctaTitle}>Convalidar Gemelo</span>
-            <span style={ctaSub}>CV · título · años · aportes</span>
-          </button>
-          <button onClick={() => { omicronSay('Vamos al examen para calcular tu nivel real.'); setTimeout(() => setActiveTab('maxskill'), 700); }} style={ctaStyle(C.purple)}>
-            <FileCheck2 size={20} color={C.purple} />
-            <span style={ctaTitle}>Examen de nivel</span>
-            <span style={ctaSub}>Medí tu nivel real</span>
-          </button>
-        </div>
+        {/* Hero CTA: Convalidar CV — full width, pulsating, high emphasis */}
+        <motion.button
+          onClick={() => setCvOpen(true)}
+          animate={{ boxShadow: ['0 0 20px rgba(92,200,255,0.3)', '0 0 40px rgba(92,200,255,0.6)', '0 0 20px rgba(92,200,255,0.3)'] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          whileTap={{ scale: 0.97 }}
+          style={{ width: '100%', padding: '16px 18px', borderRadius: RADIUS.lg, border: `1px solid ${C.cyanDim}`, cursor: 'pointer', background: `linear-gradient(135deg, ${C.cyan}22, ${C.purple}18, rgba(255,255,255,0.04))`, display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10, position: 'relative', overflow: 'hidden' }}>
+          {/* Completion ring SVG */}
+          <span style={{ position: 'relative', width: 44, height: 44, flexShrink: 0 }}>
+            <svg width={44} height={44} style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx={22} cy={22} r={19} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={3} />
+              <circle cx={22} cy={22} r={19} fill="none" stroke={C.cyan} strokeWidth={3} strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 19} strokeDashoffset={2 * Math.PI * 19 * (1 - (gemelo ? Math.min(1, gemelo.overallReputation / 100) : 0))}
+                style={{ transition: 'stroke-dashoffset 0.6s ease', filter: `drop-shadow(0 0 4px ${C.cyan})` }} />
+            </svg>
+            <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Upload size={18} color={C.cyan} />
+            </span>
+          </span>
+          <span style={{ flex: 1, textAlign: 'left' }}>
+            <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 15.5, color: '#fff' }}>
+              {(profile?.skills?.length ?? 0) > 0 ? 'Actualizar mi Gemelo' : 'Convalidar mi CV'}
+            </span>
+            <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 9.5, color: C.cyanDim, marginTop: 3 }}>
+              {(profile?.skills?.length ?? 0) > 0 ? 'Subí un CV nuevo · todo se actualiza' : 'Un solo toque activa todo automáticamente'}
+            </span>
+          </span>
+          <ArrowRight size={18} color={C.cyan} />
+        </motion.button>
+
+        {/* Secondary: Examen de nivel */}
+        <button onClick={() => { omicronSay('Vamos al examen para calcular tu nivel real.'); setTimeout(() => setActiveTab('maxskill'), 700); }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: RADIUS.lg, cursor: 'pointer', background: `linear-gradient(135deg, ${C.purple}14, rgba(255,255,255,0.03))`, border: `1px solid ${C.purple}44`, marginBottom: 12 }}>
+          <FileCheck2 size={18} color={C.purple} />
+          <span style={{ flex: 1, textAlign: 'left' }}>
+            <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#fff' }}>Examen de nivel</span>
+            <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 9, color: C.mut }}>Medí tu nivel real</span>
+          </span>
+          <ArrowRight size={16} color={C.mut} />
+        </button>
 
         {/* Propuesta de mejora (puerta) — motor real en tiempo real */}
         {top && (
@@ -794,13 +822,4 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
   );
 }
 
-// Estilos de las tarjetas de acción (CTA)
-function ctaStyle(accent: string): React.CSSProperties {
-  return {
-    display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4,
-    padding: '13px 13px', borderRadius: RADIUS.lg, cursor: 'pointer', textAlign: 'left',
-    background: `linear-gradient(135deg, ${accent}18, rgba(255,255,255,0.03))`, border: `1px solid ${accent}44`,
-  };
-}
-const ctaTitle: React.CSSProperties = { fontFamily: FONT.display, fontWeight: 700, fontSize: 14.5, color: '#fff', marginTop: 2 };
-const ctaSub: React.CSSProperties = { fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: 0.4, color: 'rgba(234,240,251,0.6)' };
+
