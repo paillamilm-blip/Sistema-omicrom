@@ -23,6 +23,9 @@ export interface Profile {
   bio?: string;
   location?: string;       // ✅ añadido: ubicación del nodo
   skills?: string[];       // ✅ añadido: habilidades declaradas
+  cv_summary?: string;             // resumen de 2 párrafos del último CV analizado (IA o heurística)
+  cv_years_experience?: number;    // años de experiencia detectados en el último CV analizado
+  skills_detail?: { name: string; pct: number }[]; // skills con % de dominio estimado
 
   // === TOKENS Y WALLET ===
   token_balance: number;
