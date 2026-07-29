@@ -163,18 +163,26 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
 
 
       // 2) Persist analysis server-side
-      const rpcParams = {
-        p_name: analyzed.name || '',
-        p_skills: analyzed.labels?.length ? analyzed.labels : [],
-        p_exec: Number(analyzed.axes.exec) || 0,
-        p_qual: Number(analyzed.axes.qual) || 0,
-        p_trans: Number(analyzed.axes.trans) || 0,
-        p_fund: Number(analyzed.axes.fund) || 0,
-        p_years: analyzed.years ? Number(analyzed.years) : null,
-        p_summary: analyzed.summary || null,
-        p_skills_detail: analyzed.skillsDetail?.length ? JSON.stringify(analyzed.skillsDetail) : null,
+      // PostgREST requiere que jsonb venga como objeto/array JS (no string)
+      // y text[] como array JS nativo. Aseguramos tipos limpios:
+      const cleanSkills = (analyzed.labels ?? []).filter((s: string) => typeof s === 'string' && s.trim());
+      const cleanDetail = (analyzed.skillsDetail ?? [])
+        .filter((s: { name: string; pct: number }) => s?.name)
+        .map((s: { name: string; pct: number }) => ({ name: String(s.name), pct: Number(s.pct) || 0 }));
+      const rpcBody = {
+        p_name: String(analyzed.name || ''),
+        p_skills: cleanSkills,
+        p_exec: Math.round(Number(analyzed.axes.exec) || 0),
+        p_qual: Math.round(Number(analyzed.axes.qual) || 0),
+        p_trans: Math.round(Number(analyzed.axes.trans) || 0),
+        p_fund: Math.round(Number(analyzed.axes.fund) || 0),
+        p_years: analyzed.years ? Math.round(Number(analyzed.years)) : null,
+        p_summary: analyzed.summary ? String(analyzed.summary) : null,
+        p_skills_detail: cleanDetail.length > 0 ? cleanDetail : null,
       };
-      const { data, error } = await supabase.rpc('aplicar_analisis_cv', rpcParams);
+      console.log('[Omicron] aplicar_analisis_cv params:', JSON.stringify(rpcBody, null, 2));
+      const { data, error } = await supabase.rpc('aplicar_analisis_cv', rpcBody);
+      console.log('[Omicron] aplicar_analisis_cv response:', { data, error });
       const res = data as { ok?: boolean; error?: string } | null;
       if (error || !res?.ok) {
         const errMsg = error?.message || res?.error || 'Error desconocido';
