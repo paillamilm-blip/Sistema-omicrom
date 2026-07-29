@@ -1,7 +1,8 @@
 # 🚀 Plan de Producción — Sistema Ómicron
 
 > Documento vivo. Se actualiza cada vez que se completa una fase o cambia una
-> decisión de negocio. Última actualización: **27 de julio de 2026**.
+> decisión de negocio. Última actualización: **27 de julio de 2026** (tras
+> mergear PR #98).
 
 ---
 
@@ -29,7 +30,9 @@ Ver `.kiro/steering/vision-producto.md` para el detalle completo de esta decisi�
 | Migraciones SQL | 60 (+ audit consolidado) | ✅ Implementado |
 | Edge Functions | 21 (coach, tutor, examen-ia, arbiter-ai, vault-oracle, market-match, carta-ia, chat-assist, stripe-webhook...) | ✅ Implementado, con rate limiting propio por IP en cada función |
 | Hubs de navegación | 6 (Inicio, Academia, Empleos, Mercado, Mensajes, Gobernanza) | ✅ Todos activos |
-| Funciones de IA gratuitas | 7 (ver tabla abajo) | ✅ Todas sin candado |
+| Funciones de IA gratuitas | 7 (ver tabla abajo) | ✅ Todas sin candado — **confirmado en `main` real** (PR #96) |
+| Sistema de orbe / núcleo visual | 1 único (`ParticleOrb`) | ✅ Unificado (PR #97) — antes había 5 sistemas distintos sin consolidar |
+| Nodos de navegación (Home) | Arrastrables/reposicionables, con persistencia | ✅ Hecho (PR #97 + fix PR #98) |
 | Tests | 5 archivos (`reputationService`, `cvAnalyzer`, `jobMatcher`, `omicronCoach`, `oraculo`) | 🟡 Mejorando — faltan tests de componentes |
 | Skills Kiro instaladas | 13 (creator, superpowers, gsd, review-ultra, context-mode, claude-mem, + suite UI/UX Pro Max) | ✅ Listas |
 
@@ -41,7 +44,7 @@ Ver `.kiro/steering/vision-producto.md` para el detalle completo de esta decisi�
 |---|-------|--------|
 | 0.1 | CI en verde (fix de lint `.cjs` + actions v5) | ✅ **Hecho** — PR #90 mergeado |
 | 0.2 | Tests unitarios de libs puras (`oraculo`, `cvAnalyzer`, `jobMatcher`, `omicronCoach`) | ✅ **Hecho** — PR #94 (82 tests nuevos) |
-| 0.3 | Splitear `AppContext.tsx` en `ProfileContext` + `NavigationContext` (facade de compatibilidad) | ✅ **Hecho** — PR #95 |
+| 0.3 | Splitear `AppContext.tsx` en `ProfileContext` + `NavigationContext` (facade de compatibilidad) | ✅ **Hecho** — PR #95 (mergeado) |
 | 0.4 | Unificar design system (`theme.ts` vs `design-system/tokens.ts`) | ⬜ Pendiente |
 
 ---
@@ -54,7 +57,7 @@ Ver `.kiro/steering/vision-producto.md` para el detalle completo de esta decisi�
 | 1.2 | Activar Stripe en producción | ⬜ Pendiente (ver `GUIA_ACTIVACION_PRODUCCION.md`) |
 | 1.3 | Reposicionar mensaje in-app ("reputación imposible de falsificar") | ✅ **Hecho** — PR #91 |
 | 1.4 | Activar Tribunal de Pares end-to-end (`arbiter-ai`) | ⬜ Pendiente de verificación en producción |
-| 1.5 | **[Nuevo]** Eliminar todo candado Premium — IA gratis para siempre | ✅ **Hecho** — PR #92 |
+| 1.5 | **[Nuevo]** Eliminar todo candado Premium — IA gratis para siempre | ✅ **Hecho de verdad** — PR #96 (ver nota abajo) |
 
 ### Detalle 1.5 — Funciones de IA liberadas (decisión de negocio: todo gratis)
 
@@ -70,6 +73,35 @@ Ver `.kiro/steering/vision-producto.md` para el detalle completo de esta decisi�
 
 **Protección contra abuso:** no dependía del candado Premium — las 21 Edge
 Functions ya tienen rate limiting propio por IP, independiente de esto.
+
+> ⚠️ **Nota de la corrección (PR #96):** PR #92 se había marcado "mergeado"
+> en GitHub, pero por un mixup de ramas (la rama base ya estaba fusionada a
+> `main` antes de agregarle los commits de PR #92) esos commits **nunca
+> llegaron realmente a `main`**. Esto explicaba las capturas del usuario
+> mostrando 🔒 PREMIUM todavía en Mercado/Bóveda/Gobernanza. PR #96 re-aplicó
+> los mismos commits (cherry-pick limpio, sin conflictos) directamente sobre
+> el `main` real. Verificado con grep: 0 referencias a `Premium` en `src/`
+> tras el fix.
+
+---
+
+## 🚨 FASE DE EMERGENCIA — Front-end (disparada por el usuario, julio 2026)
+
+Tras activar los hubs y liberar las funciones de IA, el usuario reportó con
+capturas de pantalla un front-end "un desastre, un caos, no se puede
+interactuar desde el celular como app". Se abrió esta fase fuera de la
+secuencia original del plan para atender eso antes de seguir con Fase 2.
+
+| # | Tarea | Estado |
+|---|-------|--------|
+| E.1 | Diagnóstico: por qué el front se ve inconsistente entre pantallas | ✅ **Hecho** — se encontraron 5 sistemas de "orbe" distintos en el código (solo 2 realmente conectados a la navegación; 3 eran restos de un rediseño "Holo-Gemelo" nunca conectado a `App.tsx`) |
+| E.2 | Unificar en un único sistema de orbe (`ParticleOrb`) en toda la app + borrar los 4 sistemas muertos | ✅ **Hecho** — PR #97 |
+| E.3 | Nodos de navegación arrastrables/reposicionables alrededor del núcleo ("todo es sinergia", pedido explícito del usuario) con persistencia | ✅ **Hecho** — PR #97 |
+| E.4 | Fix: arrastrar un nodo también disparaba la navegación (abría la pestaña sola) | ✅ **Hecho** — PR #98 |
+| E.5 | Fix: pantallas "planas" en Gobernanza/Mensajes — se detectaron 2 sistemas de tarjeta (`OmicronCard` premium vs `CyberCard` plano); se mejoró `CyberCard` para heredar el mismo tratamiento visual (blur, gradiente, glow) sin tocar la lógica de cada pantalla | ✅ **Hecho** — PR #98 |
+| E.6 | Confirmar en un celular real si el problema de interacción táctil quedó resuelto | ⬜ **Pendiente — bloqueado en confirmación del usuario** (el sandbox de este agente no tiene acceso a internet para probar la app en vivo) |
+| E.7 | Revisión de experiencia de usuario más amplia (el usuario reporta que "tiene muchos problemas de vivencia de usuario" más allá de lo ya corregido) | ⬜ **Pendiente — en definición** |
+| E.8 | Limpieza técnica menor: `gsap` quedó como dependencia huérfana en `package.json` tras borrar `Orb.tsx` (no se removió en PR #97 para no romper `package-lock.json` sin acceso a `npm install` en el sandbox) | ⬜ Pendiente |
 
 ---
 
@@ -107,7 +139,10 @@ Functions ya tienen rate limiting propio por IP, independiente de esto.
 | [#92](https://github.com/paillamilm-blip/Sistema-omicrom/pull/92) | feat: eliminar candados Premium (IA gratis para siempre) | 1.5 | ✅ Mergeado |
 | [#93](https://github.com/paillamilm-blip/Sistema-omicrom/pull/93) | docs: crear PLAN_PRODUCCION.md | — (documentación) | ✅ Mergeado |
 | [#94](https://github.com/paillamilm-blip/Sistema-omicrom/pull/94) | test: agregar tests unitarios de libs puras | 0.2 | ✅ Mergeado |
-| [#95](https://github.com/paillamilm-blip/Sistema-omicrom/pull/95) | refactor: splitear AppContext en Profile + Navigation | 0.3 | 🟡 Abierto |
+| [#95](https://github.com/paillamilm-blip/Sistema-omicrom/pull/95) | refactor: splitear AppContext en Profile + Navigation | 0.3 | ✅ Mergeado |
+| [#96](https://github.com/paillamilm-blip/Sistema-omicrom/pull/96) | fix: re-aplicar remoción de candados Premium (PR #92 nunca llegó a main) | 1.5 | ✅ Mergeado |
+| [#97](https://github.com/paillamilm-blip/Sistema-omicrom/pull/97) | feat: unificar orbe + nodos libres arrastrables (sinergia) | Emergencia E.1-E.3 | ✅ Mergeado |
+| [#98](https://github.com/paillamilm-blip/Sistema-omicrom/pull/98) | fix: nodo abre pestaña sola al arrastrarlo + pantallas planas | Emergencia E.4-E.5 | ✅ Mergeado |
 
 ### Detalle 0.3 — Decisión de diseño y pendientes abiertos (Ultra Review)
 
@@ -137,12 +172,30 @@ el merge, pero hay que volver a ellos):
 
 ## ▶️ En curso ahora
 
-Con 0.3 entregado (pendiente de merge en PR #95), el siguiente paso del
-bloque de cimientos es:
+Con PR #96, #97 y #98 mergeados, la Fase de Emergencia de front-end está
+**parcialmente resuelta**: se corrigió la inconsistencia visual (orbe
+unificado, tarjetas planas) y dos bugs de interacción concretos (candados
+Premium fantasma, nodo que navegaba solo al arrastrarse).
 
-**Fase 0.4 — Unificar design system** (`theme.ts` vs `design-system/tokens.ts`).
+El usuario reporta que el front **todavía tiene "muchos problemas de
+vivencia de usuario"** más allá de lo ya corregido, sin especificar cuáles
+todavía. Punto de decisión abierto (ver recomendación fuera de este
+documento, en la conversación con el usuario): **terminar el diagnóstico y
+arreglo de UX del front antes de seguir con el resto del plan**, dado que
+construir Fase 2 (innovaciones de mercado) sobre un front con fricciones de
+uso sin resolver arriesga tener que rehacer trabajo — y porque la promesa
+central del producto (Jarvis/Ómicron como asistente diario) depende
+directamente de que la experiencia de uso sea fluida.
 
 ## ❓ Después de esto
 
-Con el bloque de Fase 0 (cimientos) completo, el próximo bloque es la
-**Fase 2 — innovaciones de mercado 2026** (ver tabla arriba).
+1. **Fase de Emergencia (continuación):** cerrar E.6 (confirmación del
+   usuario en celular real) y E.7 (relevar los problemas de UX pendientes
+   que el usuario menciona pero no detalló aún — pedir capturas/casos
+   concretos pantalla por pantalla).
+2. **Fase 0.4:** unificar design system (`theme.ts` vs
+   `design-system/tokens.ts`) — tiene sentido hacerla junto con el resto del
+   trabajo de front, ya que es la causa raíz del mismo tipo de duplicación
+   que se resolvió con el orbe y las tarjetas.
+3. **Fase 2 — innovaciones de mercado 2026** (ver tabla arriba) — recién
+   después de que el front esté estable.
