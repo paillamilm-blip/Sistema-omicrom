@@ -163,20 +163,22 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
 
 
       // 2) Persist analysis server-side
-      const { data, error } = await supabase.rpc('aplicar_analisis_cv', {
+      const rpcParams = {
         p_name: analyzed.name || '',
-        p_skills: analyzed.labels,
-        p_exec: analyzed.axes.exec,
-        p_qual: analyzed.axes.qual,
-        p_trans: analyzed.axes.trans,
-        p_fund: analyzed.axes.fund,
-        p_years: analyzed.years || null,
+        p_skills: analyzed.labels?.length ? analyzed.labels : [],
+        p_exec: Number(analyzed.axes.exec) || 0,
+        p_qual: Number(analyzed.axes.qual) || 0,
+        p_trans: Number(analyzed.axes.trans) || 0,
+        p_fund: Number(analyzed.axes.fund) || 0,
+        p_years: analyzed.years ? Number(analyzed.years) : null,
         p_summary: analyzed.summary || null,
-        p_skills_detail: analyzed.skillsDetail,
-      });
+        p_skills_detail: analyzed.skillsDetail?.length ? JSON.stringify(analyzed.skillsDetail) : null,
+      };
+      const { data, error } = await supabase.rpc('aplicar_analisis_cv', rpcParams);
       const res = data as { ok?: boolean; error?: string } | null;
       if (error || !res?.ok) {
-        setMsg(res?.error ? `No se pudo: ${res.error}` : 'No se pudo aplicar. ¿Tu sesión está activa?');
+        const errMsg = error?.message || res?.error || 'Error desconocido';
+        setMsg(`No se pudo aplicar: ${errMsg}`);
         setPhase('upload');
         return;
       }
