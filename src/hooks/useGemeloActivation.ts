@@ -209,7 +209,7 @@ export function useGemeloActivation() {
       setMsg('Error al procesar. Intentá de nuevo.');
       setPhase('upload');
     }
-  }, [cvText, emitPush, runAutoChain, detectSynergies, toast, refreshProfile]);
+  }, [cvText, emitPush, runAutoChain, detectSynergies, toast]);
 
   return {
     // State

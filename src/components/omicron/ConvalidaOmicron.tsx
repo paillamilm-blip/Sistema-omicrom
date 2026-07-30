@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles, Upload, ArrowRight, TrendingUp, Zap } from 'lucide-react';
-import { useGemeloActivation, type Phase, type Push } from '../../hooks/useGemeloActivation';
+import { useGemeloActivation } from '../../hooks/useGemeloActivation';
 import { C, FONT, RADIUS } from '../../theme';
 import ParticleOrb from './ParticleOrb';
 
