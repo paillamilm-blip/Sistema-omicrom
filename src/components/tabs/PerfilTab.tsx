@@ -81,17 +81,31 @@ export function PerfilTab() {
         </div>
       </div>
 
-      {/* Identidad */}
+      {/* Identidad — con reputación integrada */}
       <div style={card}>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          {/* Avatar con anillo de reputación */}
           <label style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }} title="Cambiar foto">
             <input type="file" accept="image/*" style={{ display: 'none' }}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleAvatar(f); e.currentTarget.value = ''; }} />
-            <div style={{ width: 68, height: 68, borderRadius: 18, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarUrl ? '#0a1120' : `linear-gradient(135deg, ${nodeColor}, ${C.purple})`, color: '#fff', fontWeight: 700, fontSize: 26, fontFamily: FONT.display, boxShadow: `0 0 18px ${nodeColor}44` }}>
-              {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
+            <div style={{ position: 'relative', width: 72, height: 72 }}>
+              {/* Anillo de reputación SVG */}
+              <svg width={72} height={72} style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
+                <circle cx={36} cy={36} r={33} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={3} />
+                <circle cx={36} cy={36} r={33} fill="none" stroke={nodeColor} strokeWidth={3} strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 33} strokeDashoffset={2 * Math.PI * 33 * (1 - rep / 100)}
+                  style={{ transition: 'stroke-dashoffset 0.6s ease', filter: `drop-shadow(0 0 4px ${nodeColor})` }} />
+              </svg>
+              <div style={{ position: 'absolute', inset: 5, borderRadius: 16, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarUrl ? '#0a1120' : `linear-gradient(135deg, ${nodeColor}, ${C.purple})`, color: '#fff', fontWeight: 700, fontSize: 24, fontFamily: FONT.display }}>
+                {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
+              </div>
+              {/* Badge de reputación */}
+              <div style={{ position: 'absolute', bottom: -2, right: -2, minWidth: 24, height: 20, padding: '0 5px', borderRadius: 999, background: nodeColor, border: '2px solid #0a1120', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 8px ${nodeColor}` }}>
+                <span style={{ fontFamily: FONT.mono, fontWeight: 800, fontSize: 9, color: '#0a1120' }}>{rep}</span>
+              </div>
             </div>
-            <div style={{ position: 'absolute', bottom: -3, right: -3, width: 22, height: 22, borderRadius: '50%', background: '#0a1120', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {uploading ? <div style={{ width: 10, height: 10, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} /> : <Camera size={11} color={C.cyan} />}
+            <div style={{ position: 'absolute', bottom: 16, right: -1, width: 20, height: 20, borderRadius: '50%', background: '#0a1120', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {uploading ? <div style={{ width: 9, height: 9, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} /> : <Camera size={10} color={C.cyan} />}
             </div>
           </label>
 
