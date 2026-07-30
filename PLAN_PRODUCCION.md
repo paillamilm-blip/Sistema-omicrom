@@ -1,8 +1,8 @@
 # 🚀 Plan de Producción — Sistema Ómicron
 
 > Documento vivo. Se actualiza cada vez que se completa una fase o cambia una
-> decisión de negocio. Última actualización: **27 de julio de 2026** (tras
-> mergear PR #98).
+> decisión de negocio. Última actualización: **30 de julio de 2026** (consolidación
+> de documentación + roadmap, post PR #106).
 
 ---
 
@@ -27,7 +27,7 @@ Ver `.kiro/steering/vision-producto.md` para el detalle completo de esta decisi�
 
 | Componente | Cantidad | Estado |
 |------------|----------|--------|
-| Migraciones SQL | 60 (+ audit consolidado) | ✅ Implementado |
+| Migraciones SQL | 63 (+ audit consolidado) | ✅ Implementado |
 | Edge Functions | 21 (coach, tutor, examen-ia, arbiter-ai, vault-oracle, market-match, carta-ia, chat-assist, stripe-webhook...) | ✅ Implementado, con rate limiting propio por IP en cada función |
 | Hubs de navegación | 6 (Inicio, Academia, Empleos, Mercado, Mensajes, Gobernanza) | ✅ Todos activos |
 | Funciones de IA gratuitas | 7 (ver tabla abajo) | ✅ Todas sin candado — **confirmado en `main` real** (PR #96) |
@@ -35,6 +35,7 @@ Ver `.kiro/steering/vision-producto.md` para el detalle completo de esta decisi�
 | Nodos de navegación (Home) | Arrastrables/reposicionables, con persistencia | ✅ Hecho (PR #97 + fix PR #98) |
 | Tests | 5 archivos (`reputationService`, `cvAnalyzer`, `jobMatcher`, `omicronCoach`, `oraculo`) | 🟡 Mejorando — faltan tests de componentes |
 | Skills Kiro instaladas | 13 (creator, superpowers, gsd, review-ultra, context-mode, claude-mem, + suite UI/UX Pro Max) | ✅ Listas |
+| Limpieza de producción | PR #106 (final-clean) | ✅ Mergeado |
 
 ---
 
@@ -107,26 +108,32 @@ secuencia original del plan para atender eso antes de seguir con Fase 2.
 
 ## ⬜ FASE 2 — Las innovaciones brutales del mercado 2026
 
-| # | Tarea | Innovación de mercado | Estado |
-|---|-------|------------------------|--------|
-| 2.1 | Cerrar el loop de auto-postulación (Ómicron postula por ti cuando el match supera un umbral) | Agentic AI | ⬜ Pendiente |
-| 2.2 | Emitir el Pasaporte Gemelo como W3C Verifiable Credential (JSON-LD estándar) | Verifiable Credentials / Open Badges 3.0 | ⬜ Pendiente |
-| 2.3 | Matching en tiempo real server-side (trigger al publicarse una oferta) | Real-time labor market | ⬜ Pendiente |
-| 2.4 | Evaluación de código en vivo como parte del examen de nivel (no solo multiple choice) | AI-verified skills en tiempo real | ⬜ Pendiente |
-| 2.5 | Preparar el hash on-chain (`offchainStateHash`) sin desplegar el contrato aún | On-chain reputation / SBT (preparación) | ⬜ Pendiente |
+> **Timeline estimado:** Q3–Q4 2026 (agosto–diciembre), una vez estabilizado el front-end.
+> Prerequisito: Fase de Emergencia cerrada + Stripe activo en producción.
+
+| # | Tarea | Innovación de mercado | Prioridad | Estado |
+|---|-------|------------------------|-----------|--------|
+| 2.1 | Cerrar el loop de auto-postulación (Ómicron postula por ti cuando el match supera un umbral) | Agentic AI | 🔴 Alta | ⬜ Pendiente |
+| 2.2 | Emitir el Pasaporte Gemelo como W3C Verifiable Credential (JSON-LD estándar) | Verifiable Credentials / Open Badges 3.0 | 🟡 Media | ⬜ Pendiente |
+| 2.3 | Matching en tiempo real server-side (trigger al publicarse una oferta) | Real-time labor market | 🔴 Alta | ⬜ Pendiente |
+| 2.4 | Evaluación de código en vivo como parte del examen de nivel (no solo multiple choice) | AI-verified skills en tiempo real | 🟡 Media | ⬜ Pendiente |
+| 2.5 | Preparar el hash on-chain (`offchainStateHash`) sin desplegar el contrato aún | On-chain reputation / SBT (preparación) | 🟢 Baja | ⬜ Pendiente |
 
 ---
 
 ## ⬜ FASE 3 — Escala y pulido
 
-| # | Tarea | Estado |
-|---|-------|--------|
-| 3.1 | Lazy-load de engines pesados (`proactiveEngine`, `gemeloMemory`) | ⬜ Pendiente |
-| 3.2 | Accesibilidad completa (landmarks, contraste, keyboard nav) | ⬜ Pendiente |
-| 3.3 | Auditoría de seguridad formal antes de escalar tráfico | ⬜ Pendiente |
-| 3.4 | Desplegar `GemeloDigitalSBT` on-chain (con tracción suficiente) | ⬜ Pendiente |
-| 3.5 | Multi-idioma (cuando se decida expandir más allá de español) | ⬜ Pendiente |
-| 3.6 | Revisión legal de `TERMINOS_SERVICIO.md` / `POLITICA_PRIVACIDAD.md` (hoy 100% jurisdicción chilena, a ajustar al final del proceso a propósito) | ⬜ Pendiente, explícitamente al final |
+> **Timeline estimado:** Q1–Q2 2027 (enero–junio). Se inicia solo cuando Fase 2 tenga
+> tracción real (usuarios activos, contratos ejecutados, feedback de mercado).
+
+| # | Tarea | Prioridad | Estado |
+|---|-------|-----------|--------|
+| 3.1 | Lazy-load de engines pesados (`proactiveEngine`, `gemeloMemory`) | 🟡 Media | ⬜ Pendiente |
+| 3.2 | Accesibilidad completa (landmarks, contraste, keyboard nav) | 🔴 Alta | ⬜ Pendiente |
+| 3.3 | Auditoría de seguridad formal antes de escalar tráfico | 🔴 Alta | ⬜ Pendiente |
+| 3.4 | Desplegar `GemeloDigitalSBT` on-chain (con tracción suficiente) | 🟡 Media | ⬜ Pendiente |
+| 3.5 | Multi-idioma (cuando se decida expandir más allá de español) | 🟢 Baja | ⬜ Pendiente |
+| 3.6 | Revisión legal de `TERMINOS_SERVICIO.md` / `POLITICA_PRIVACIDAD.md` (hoy 100% jurisdicción chilena, a ajustar al final del proceso a propósito) | 🟡 Media | ⬜ Pendiente, explícitamente al final |
 
 ---
 
@@ -143,6 +150,7 @@ secuencia original del plan para atender eso antes de seguir con Fase 2.
 | [#96](https://github.com/paillamilm-blip/Sistema-omicrom/pull/96) | fix: re-aplicar remoción de candados Premium (PR #92 nunca llegó a main) | 1.5 | ✅ Mergeado |
 | [#97](https://github.com/paillamilm-blip/Sistema-omicrom/pull/97) | feat: unificar orbe + nodos libres arrastrables (sinergia) | Emergencia E.1-E.3 | ✅ Mergeado |
 | [#98](https://github.com/paillamilm-blip/Sistema-omicrom/pull/98) | fix: nodo abre pestaña sola al arrastrarlo + pantallas planas | Emergencia E.4-E.5 | ✅ Mergeado |
+| [#106](https://github.com/paillamilm-blip/Sistema-omicrom/pull/106) | prod: limpieza final de producción | Producción | ✅ Mergeado |
 
 ### Detalle 0.3 — Decisión de diseño y pendientes abiertos (Ultra Review)
 
@@ -172,30 +180,29 @@ el merge, pero hay que volver a ellos):
 
 ## ▶️ En curso ahora
 
-Con PR #96, #97 y #98 mergeados, la Fase de Emergencia de front-end está
-**parcialmente resuelta**: se corrigió la inconsistencia visual (orbe
-unificado, tarjetas planas) y dos bugs de interacción concretos (candados
-Premium fantasma, nodo que navegaba solo al arrastrarse).
+Con PR #106 mergeado (limpieza final de producción), el código está estable.
+La Fase de Emergencia de front-end está **parcialmente resuelta**: se corrigió la
+inconsistencia visual (orbe unificado, tarjetas planas) y bugs de interacción
+concretos (candados Premium fantasma, nodo que navegaba solo al arrastrarse).
 
-El usuario reporta que el front **todavía tiene "muchos problemas de
-vivencia de usuario"** más allá de lo ya corregido, sin especificar cuáles
-todavía. Punto de decisión abierto (ver recomendación fuera de este
-documento, en la conversación con el usuario): **terminar el diagnóstico y
-arreglo de UX del front antes de seguir con el resto del plan**, dado que
-construir Fase 2 (innovaciones de mercado) sobre un front con fricciones de
-uso sin resolver arriesga tener que rehacer trabajo — y porque la promesa
-central del producto (Jarvis/Ómicron como asistente diario) depende
-directamente de que la experiencia de uso sea fluida.
+**Pendientes inmediatos (bloqueantes para avanzar a Fase 2):**
+
+| # | Pendiente | Bloqueado por |
+|---|-----------|---------------|
+| 1 | Confirmar UX en celular real (E.6) | Feedback del usuario |
+| 2 | Relevar problemas de UX restantes (E.7) | Capturas/casos del usuario |
+| 3 | Unificar design system — `theme.ts` vs `design-system/tokens.ts` (0.4) | Decisión técnica |
+| 4 | Activar Stripe en producción (1.2) | Configuración de claves |
+| 5 | Verificar Tribunal de Pares end-to-end (1.4) | Test manual en producción |
+| 6 | Remover dependencia huérfana `gsap` (E.8) | Acceso a `npm install` |
 
 ## ❓ Después de esto
 
-1. **Fase de Emergencia (continuación):** cerrar E.6 (confirmación del
-   usuario en celular real) y E.7 (relevar los problemas de UX pendientes
-   que el usuario menciona pero no detalló aún — pedir capturas/casos
-   concretos pantalla por pantalla).
-2. **Fase 0.4:** unificar design system (`theme.ts` vs
-   `design-system/tokens.ts`) — tiene sentido hacerla junto con el resto del
-   trabajo de front, ya que es la causa raíz del mismo tipo de duplicación
-   que se resolvió con el orbe y las tarjetas.
-3. **Fase 2 — innovaciones de mercado 2026** (ver tabla arriba) — recién
-   después de que el front esté estable.
+1. **Cerrar Fase de Emergencia:** E.6 + E.7 (requiere input del usuario).
+2. **Cerrar Fase 0.4:** unificar design system (junto con el trabajo de front).
+3. **Cerrar Fase 1:** Stripe activo + Tribunal verificado.
+4. **Fase 2 — innovaciones de mercado** (ver tabla arriba) — recién después de
+   que el front esté estable y Stripe activo.
+
+> 📌 Para el roadmap completo con timeline, dependencias y milestones, ver
+> [`ROADMAP.md`](./ROADMAP.md).

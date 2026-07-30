@@ -3,9 +3,15 @@
 **7 de julio de 2026**
 
 > Documento de arquitectura objetivo aportado por el usuario. Se conserva íntegro como
-> referencia. El diagnóstico de qué partes ya están implementadas en el esquema real de
-> Supabase (60+ migraciones en `supabase/migrations/`, 21 Edge Functions en
-> `supabase/functions/`) está pendiente de consolidarse en un documento de bitácora dedicado.
+> referencia. **Diagnóstico de implementación completado en julio 2026** (ver anotaciones
+> `[ESTADO]` en cada sección). Las 63 migraciones en `supabase/migrations/` y las 21 Edge
+> Functions en `supabase/functions/` cubren la mayor parte de las capas 1–4, pero las capas
+> 5 (On-Chain) y 6 (Integraciones Externas) son 100% aspiracionales aún.
+>
+> **Leyenda de estado:**
+> - ✅ **IMPLEMENTADO** — Existe en el código y funciona en producción.
+> - 🟡 **PARCIAL** — Parte de la lógica existe, pero no está completa o verificada end-to-end.
+> - ⬜ **ASPIRACIONAL** — Diseñado en este documento pero NO implementado aún. Es Fase 2/3.
 
 Este documento se centra en la **arquitectura, lógica de negocio, contratos inteligentes, integraciones y modelos de sistema**, sin entrar en detalles de interfaz de usuario ni frontend.
 
@@ -28,16 +34,20 @@ Este documento se centra en la **arquitectura, lógica de negocio, contratos int
 ## 2. MODELO DE DATOS Y ARQUITECTURA GENERAL
 
 ### Capas del Sistema
-1. **Capa de Datos y Lógica de Negocio** (Supabase + Edge Functions)
-2. **Capa de Gamificación y Economía Interna** (Tokens, PE, Niveles, Streaks)
-3. **Capa de Bóveda y Regalías** (Publicación, consulta, linaje H-07)
-4. **Capa de Justicia** (Disputas, Tribunal de Pares, Apelaciones, Penalizaciones)
-5. **Capa On-Chain** (SBT GemeloDigital + eventos + anchoring)
-6. **Capa de Integraciones Externas** (Human Passport, Chainlink)
+1. **Capa de Datos y Lógica de Negocio** (Supabase + Edge Functions) — ✅ IMPLEMENTADO
+2. **Capa de Gamificación y Economía Interna** (Tokens, PE, Niveles, Streaks) — ✅ IMPLEMENTADO
+3. **Capa de Bóveda y Regalías** (Publicación, consulta, linaje H-07) — 🟡 PARCIAL (Bóveda con pgvector ✅, regalías encadenadas ✅, depreciación H-07 ✅; pero sin validación end-to-end en producción)
+4. **Capa de Justicia** (Disputas, Tribunal de Pares, Apelaciones, Penalizaciones) — 🟡 PARCIAL (esquema SQL + Edge Function `arbiter-ai` ✅; flujo end-to-end pendiente de verificación)
+5. **Capa On-Chain** (SBT GemeloDigital + eventos + anchoring) — ⬜ ASPIRACIONAL (Fase 2.5 / Fase 3)
+6. **Capa de Integraciones Externas** (Human Passport, Chainlink) — ⬜ ASPIRACIONAL (Fase 3+)
 
 ---
 
-## 3. SISTEMA DE GAMIFICACIÓN Y TOKENS (LÓGICA)
+## 3. SISTEMA DE GAMIFICACIÓN Y TOKENS (LÓGICA) — ✅ IMPLEMENTADO
+
+> **Estado:** Implementado en migraciones SQL (tokens, PE, niveles). Edge Functions de
+> Coach/Tutor/Examen-IA otorgan PE. Depreciación de tokens inactivos en migración `0045`.
+> Streaks y misiones existen en el esquema pero la mecánica de retención avanzada es básica.
 
 ### Elementos Core
 - **PE (Puntos de Experiencia)**: Principal métrica de progreso.
@@ -52,7 +62,12 @@ Este documento se centra en la **arquitectura, lógica de negocio, contratos int
 
 ---
 
-## 4. BÓVEDA DE CONOCIMIENTO Y REGALÍAS ENCADENADAS
+## 4. BÓVEDA DE CONOCIMIENTO Y REGALÍAS ENCADENADAS — 🟡 PARCIAL
+
+> **Estado:** Bóveda con búsqueda semántica (`pgvector`, migraciones `0024-0026`, `0028`),
+> regalías encadenadas (`0044`), depreciación H-07 (`0045`), Edge Function `vault-oracle` y
+> `embed` implementados. Falta: validación end-to-end del flujo completo de compra → distribución
+> automática → registro en `content_lineage` con usuarios reales.
 
 ### Flujo Técnico
 1. Publicación de contenido → Generación de embedding + detección de similitud.
@@ -67,7 +82,12 @@ Regalía = Ingreso × (20% × 0.75 ^ Profundidad)
 
 ---
 
-## 5. SISTEMA DE JUSTICIA (DISPUTAS, APELACIONES Y PENALIZACIONES)
+## 5. SISTEMA DE JUSTICIA (DISPUTAS, APELACIONES Y PENALIZACIONES) — 🟡 PARCIAL
+
+> **Estado:** Esquema SQL para disputas (`0021`), apelaciones (`0043`), penalizaciones/PMC
+> (`0042`) implementados. Edge Function `arbiter-ai` desplegada. Ghost Approval (15 min)
+> definido en esquema. Falta: verificación end-to-end del flujo completo (apertura →
+> asignación de árbitros → votación → ejecución automática) en producción con usuarios reales.
 
 ### Flujo de Disputas
 1. Ghost Approval (15 minutos).
@@ -88,7 +108,15 @@ Regalía = Ingreso × (20% × 0.75 ^ Profundidad)
 
 ---
 
-## 6. REPUTACIÓN ON-CHAIN (SBT) — LÓGICA DETALLADA DEL SMART CONTRACT
+## 6. REPUTACIÓN ON-CHAIN (SBT) — LÓGICA DETALLADA DEL SMART CONTRACT — ⬜ ASPIRACIONAL
+
+> **Estado:** NADA de esto está implementado aún. Es la visión para Fase 2.5 (preparar hash
+> `offchainStateHash`) y Fase 3 (desplegar el contrato SBT con tracción real). El cálculo
+> de reputación off-chain SÍ existe (migración `0050` + `reputationService.ts`), pero no hay
+> contrato inteligente desplegado ni integración con ninguna blockchain.
+>
+> **Prerequisitos para implementar:** tracción real de usuarios, auditoría de seguridad
+> formal, decisión de cadena (Base/Polygon/otra), presupuesto para gas y mantenimiento.
 
 ### Contrato Principal: `GemeloDigitalSBT`
 
@@ -159,7 +187,10 @@ struct Gemelo {
 
 ---
 
-## 7. INTEGRACIÓN CON HUMAN PASSPORT
+## 7. INTEGRACIÓN CON HUMAN PASSPORT — ⬜ ASPIRACIONAL
+
+> **Estado:** No implementado. Es una mejora de Fase 3+ para verificación de humanidad
+> cuando el producto tenga escala suficiente. No hay código ni configuración relacionada.
 
 **Modelo Recomendado**:
 - Verificación off-chain (API).
@@ -169,7 +200,12 @@ struct Gemelo {
 
 ---
 
-## 8. MODELO ECONÓMICO
+## 8. MODELO ECONÓMICO — 🟡 PARCIAL
+
+> **Estado:** Tokens (Ω) como gamificación ✅ implementados. Dinero real vía Stripe ✅
+> implementado (Edge Functions `crear-checkout`, `stripe-webhook`, `verificar-pago`), pero
+> pendiente de activación en producción (claves no configuradas aún). Comisión por contratos
+> y suscripciones Premium NO implementados (decisión de negocio: todo gratis por ahora).
 
 ### Dos Carriles
 - **Tokens (Ω)**: Gamificación y utilidad interna.
@@ -185,14 +221,16 @@ struct Gemelo {
 
 ## 9. RESUMEN DE ARQUITECTURA TÉCNICA
 
-| Capa                    | Tecnología Principal          | Responsabilidad Principal |
-|-------------------------|--------------------------------|----------------------------|
-| Datos y Lógica          | Supabase + Edge Functions     | Reglas de negocio         |
-| Gamificación            | Supabase + Edge Functions     | PE, Tokens, Niveles, Streaks |
-| Bóveda y Regalías       | Supabase + pgvector           | Publicación, consulta, linaje |
-| Justicia                | Supabase + Edge Functions     | Disputas, apelaciones, penalizaciones |
-| On-Chain                | Solidity (Base) + Chainlink   | SBT, eventos, anchoring   |
-| Integraciones Externas  | APIs + Chainlink              | Human Passport, oráculos  |
+> **Estado consolidado por capa (julio 2026):**
+
+| Capa                    | Tecnología Principal          | Responsabilidad Principal | Estado |
+|-------------------------|--------------------------------|----------------------------|--------|
+| Datos y Lógica          | Supabase + Edge Functions     | Reglas de negocio         | ✅ Implementado |
+| Gamificación            | Supabase + Edge Functions     | PE, Tokens, Niveles, Streaks | ✅ Implementado |
+| Bóveda y Regalías       | Supabase + pgvector           | Publicación, consulta, linaje | 🟡 Parcial |
+| Justicia                | Supabase + Edge Functions     | Disputas, apelaciones, penalizaciones | 🟡 Parcial |
+| On-Chain                | Solidity (Base) + Chainlink   | SBT, eventos, anchoring   | ⬜ Aspiracional |
+| Integraciones Externas  | APIs + Chainlink              | Human Passport, oráculos  | ⬜ Aspiracional |
 
 ---
 
@@ -200,7 +238,17 @@ struct Gemelo {
 
 ---
 
-## 7. ESQUEMA DE BASE DE DATOS SUGERIDO (RESUMEN)
+## 7. ESQUEMA DE BASE DE DATOS SUGERIDO (RESUMEN) — 🟡 PARCIAL (ver notas)
+
+> **Estado:** El esquema real en `supabase/migrations/` (63 archivos) cubre la mayoría de
+> estas tablas pero con nombres y estructuras ligeramente diferentes. La tabla `profiles`
+> unifica lo que aquí se separa en `profiles` + `gemelos`. No existe tabla separada
+> `user_gamification` — esos campos viven en `profiles`. `boveda_content` existe con pgvector.
+> `content_lineage`, `contracts`, `disputes`, `penalties` existen. Los campos `onchain_*`
+> NO existen aún (corresponden a la capa On-Chain aspiracional).
+>
+> **Nota:** Este esquema es una REFERENCIA de diseño. Para el esquema real, consultar
+> directamente las migraciones en `supabase/migrations/`.
 
 A continuación se presenta un esquema de base de datos recomendado para Supabase (PostgreSQL), diseñado para soportar todos los módulos del sistema de forma escalable y segura.
 
