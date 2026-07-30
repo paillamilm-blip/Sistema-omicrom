@@ -5,7 +5,7 @@
 // convalidación + detección de sinergias). El componente solo renderiza.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useRef, useCallback } from 'react';
-import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { useApp } from '../store/AppContext';
 import { useToast } from '../components/shared/Toast';
 import { speak } from '../lib/voiceEngine';
@@ -163,20 +163,13 @@ export function useGemeloActivation() {
         }
       } catch (err) { console.warn('[Omicron] AI analysis unavailable, using heuristic:', err); }
 
-      // 2) Persist server-side
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        setMsg('Tu sesión expiró. Volvé a iniciar sesión.');
-        setPhase('upload');
-        return;
-      }
-
+      // 2) Persist server-side via supabase.rpc (GRANT already applied to authenticator)
       const cleanSkills = (analyzed.labels ?? []).filter((s: string) => typeof s === 'string' && s.trim());
       const cleanDetail = (analyzed.skillsDetail ?? [])
         .filter((s: { name: string; pct: number }) => s?.name)
         .map((s: { name: string; pct: number }) => ({ name: String(s.name), pct: Number(s.pct) || 0 }));
 
-      const rpcBody = {
+      const { data: rpcData, error } = await supabase.rpc('aplicar_analisis_cv', {
         p_name: String(analyzed.name || ''),
         p_skills: cleanSkills.length > 0 ? cleanSkills : ['general'],
         p_exec: Math.round(Number(analyzed.axes.exec) || 0),
@@ -186,21 +179,9 @@ export function useGemeloActivation() {
         p_years: analyzed.years ? Math.round(Number(analyzed.years)) : 0,
         p_summary: analyzed.summary ? String(analyzed.summary) : '',
         p_skills_detail: cleanDetail.length > 0 ? cleanDetail : [],
-      };
-
-      const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/aplicar_analisis_cv`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(rpcBody),
       });
-      const rpcJson = await rpcRes.json().catch(() => null);
-      const error = rpcRes.ok ? null : { message: rpcJson?.message || rpcJson?.hint || `HTTP ${rpcRes.status}` };
-      const res = rpcJson as { ok?: boolean; error?: string } | null;
-
+      console.log('[Omicron] aplicar_analisis_cv:', { rpcData, error });
+      const res = rpcData as { ok?: boolean; error?: string } | null;
       if (error || !res?.ok) {
         const errMsg = error?.message || res?.error || 'Error desconocido';
         setMsg(`No se pudo aplicar: ${errMsg}`);
