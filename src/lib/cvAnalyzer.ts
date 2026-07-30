@@ -51,6 +51,13 @@ const SKILLS: Record<string, string[]> = {
   teaching: ['mentor', 'docent', 'teach', 'profes', 'instructor', 'facilit', 'conferen', 'charla', 'workshop'],
   agile: ['agile', 'scrum', 'kanban', 'jira'],
   testing: ['test', 'jest', 'vitest', 'cypress', 'tdd', 'qa ', 'playwright'],
+  // Skills no-tech / operaciones / industria
+  operations: ['operacion', 'planta', 'producción', 'produccion', 'logística', 'logistica', 'bodega', 'inventario', 'abastecimiento', 'supply chain', 'calidad', 'turno', 'manufactura'],
+  leadership: ['liderazgo', 'líder', 'lider', 'equipo', 'coordinación', 'coordinacion', 'supervisión', 'supervision', 'gestión', 'gestion', 'jefatura'],
+  agriculture: ['agrícola', 'agricola', 'vendimia', 'fruta', 'viña', 'vino', 'cosecha', 'campo', 'riego'],
+  hospitality: ['turismo', 'hotel', 'recepción', 'recepcion', 'atención al cliente', 'atencion al cliente', 'servicio', 'gastronomía', 'gastronomia'],
+  sales: ['ventas', 'comercial', 'negociación', 'negociacion', 'cliente', 'marketing', 'retail'],
+  safety: ['seguridad', 'prevención', 'prevencion', 'riesgo', 'emergencia', 'salud ocupacional', 'sso', 'iso'],
 };
 
 // Etiquetas legibles para cada skill
@@ -74,6 +81,12 @@ export const SKILL_LABELS: Record<string, string> = {
   teaching: 'Mentoría',
   agile: 'Agile',
   testing: 'Testing / QA',
+  operations: 'Operaciones',
+  leadership: 'Liderazgo',
+  agriculture: 'Agroindustria',
+  hospitality: 'Turismo / Hotelería',
+  sales: 'Ventas / Comercial',
+  safety: 'Seguridad / Prevención',
 };
 
 function clamp(v: number, min: number, max: number): number {
@@ -107,19 +120,27 @@ export function analyzeCV(text: string): AnalyzedProfile {
   let seniorLevel = 2; // default: mid
   let seniorLabel = 'Desarrollador Mid';
 
+  // Detectar título profesional (boost importante)
+  const hasProfessionalTitle = /ingenier[oa]|licenciad[oa]|técnic[oa]|profesional|magíster|máster|master|mba|phd|doctor[a]?[\s,]/.test(t);
+
   // Lead/Arquitecto/Principal
   if (
-    /lead|líder|lider|principal|staff|head of|cto|arquitect/.test(t)
+    /lead|líder|lider|principal|staff|head of|cto|arquitect|director|gerente|jefe de|coordinador|supervisor/.test(t)
   ) {
     seniorLevel = 5;
     seniorLabel = 'Tech Lead / Arquitecto';
   }
   // Senior
   else if (
-    /senior|sr\.|experto/.test(t) || years >= 5
+    /senior|sr\.|experto|especialista/.test(t) || years >= 5 || (hasProfessionalTitle && years >= 3)
   ) {
     seniorLevel = 4;
-    seniorLabel = 'Desarrollador Senior';
+    seniorLabel = 'Profesional Senior';
+  }
+  // Mid (con título)
+  else if (hasProfessionalTitle) {
+    seniorLevel = 3;
+    seniorLabel = 'Profesional Mid';
   }
   // Junior
   else if (
@@ -128,7 +149,7 @@ export function analyzeCV(text: string): AnalyzedProfile {
     seniorLevel < 4
   ) {
     seniorLevel = 1;
-    seniorLabel = 'Desarrollador Junior';
+    seniorLabel = 'Profesional Junior';
   }
 
   // 4. CREATIVIDAD (0-1): palabras relacionadas con diseño/UX/motion/product
@@ -179,10 +200,9 @@ export function analyzeCV(text: string): AnalyzedProfile {
   // 7. ARQUITECTURA DEL PERFIL
   let arch: AnalyzedProfile['arch'] = 'pro';
   if (
-    /estudiante|student|cursando|aprendiendo|practican|becari|trainee|sin experiencia|reci[eé]n egres/.test(
-      t
-    ) ||
-    (years < 1 && found.length < 3)
+    !hasProfessionalTitle &&
+    (/estudiante|student|cursando actualmente|sin experiencia laboral|reci[eé]n egres/.test(t) ||
+    (years < 1 && found.length < 2 && !hasProfessionalTitle))
   ) {
     arch = 'estudiante';
     seniorLevel = 1;
@@ -191,7 +211,7 @@ export function analyzeCV(text: string): AnalyzedProfile {
     arch = 'lead';
   } else if (seniorLevel >= 4) {
     arch = 'senior';
-  } else if (seniorLevel <= 1 || years < 2) {
+  } else if (seniorLevel <= 1 || (years < 2 && !hasProfessionalTitle)) {
     arch = 'junior';
   } else {
     arch = 'mid';

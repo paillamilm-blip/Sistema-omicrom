@@ -6,7 +6,7 @@
 // convalidación real (ConvalidaOmicron), sin duplicar flujos.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState } from 'react';
-import { Edit3, Share2, Camera, Shield, BadgeCheck, MapPin, Sparkles, Award, ArrowRight } from 'lucide-react';
+import { Edit3, Share2, Camera, Shield, BadgeCheck, MapPin, Sparkles, Award, ArrowRight, Briefcase, Clock, Database } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp, useGemeloDigital } from '../../store/AppContext';
 import { EditProfileModal } from '../perfil/EditProfileModal';
@@ -81,24 +81,33 @@ export function PerfilTab() {
         </div>
       </div>
 
-      {/* Identidad */}
+      {/* Identidad — con reputación integrada */}
       <div style={card}>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          {/* Avatar */}
           <label style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }} title="Cambiar foto">
             <input type="file" accept="image/*" style={{ display: 'none' }}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleAvatar(f); e.currentTarget.value = ''; }} />
-            <div style={{ width: 68, height: 68, borderRadius: 18, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarUrl ? '#0a1120' : `linear-gradient(135deg, ${nodeColor}, ${C.purple})`, color: '#fff', fontWeight: 700, fontSize: 26, fontFamily: FONT.display, boxShadow: `0 0 18px ${nodeColor}44` }}>
+            <div style={{ width: 62, height: 62, borderRadius: 16, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarUrl ? '#0a1120' : `linear-gradient(135deg, ${nodeColor}, ${C.purple})`, color: '#fff', fontWeight: 700, fontSize: 24, fontFamily: FONT.display, boxShadow: `0 0 14px ${nodeColor}44` }}>
               {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
             </div>
-            <div style={{ position: 'absolute', bottom: -3, right: -3, width: 22, height: 22, borderRadius: '50%', background: '#0a1120', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {uploading ? <div style={{ width: 10, height: 10, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} /> : <Camera size={11} color={C.cyan} />}
+            <div style={{ position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, borderRadius: '50%', background: '#0a1120', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {uploading ? <div style={{ width: 9, height: 9, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} /> : <Camera size={10} color={C.cyan} />}
             </div>
           </label>
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.full_name || profile.username}</div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim }}>@{profile.username}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+            {/* Reputación + Nombre en una línea */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 2 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 10, background: `linear-gradient(135deg, ${nodeColor}22, rgba(255,255,255,0.04))`, border: `1.5px solid ${nodeColor}`, boxShadow: `0 0 12px ${nodeColor}44` }}>
+                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 15, color: nodeColor }}>{rep}</span>
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 19, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.full_name || profile.username}</div>
+              </div>
+            </div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim, marginBottom: 6 }}>@{profile.username}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: `${nodeColor}14`, border: `1px solid ${nodeColor}44` }}>
                 <Shield size={11} color={nodeColor} />
                 <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: nodeColor, letterSpacing: 1 }}>{profile.node_type} · N{profile.node_level}</span>
@@ -169,8 +178,80 @@ export function PerfilTab() {
       {/* Convalidar (única, real) */}
       <button onClick={() => setShowConvalida(true)}
         style={{ width: '100%', padding: '14px 0', borderRadius: RADIUS.lg, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 14 }}>
-        Convalidar mi Gemelo (CV · título · años) <ArrowRight size={17} />
+        {skills.length > 0 ? 'Actualizar mi Gemelo (nuevo CV)' : 'Convalidar mi Gemelo (CV · título · años)'} <ArrowRight size={17} />
       </button>
+
+      {/* Historial Profesional (Timeline) — extracted from CV */}
+      {(profile.cv_years_experience || profile.cv_summary || skills.length > 0) && (
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
+            <Briefcase size={15} color={C.cyan} />
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.cyan }}>Historial Profesional</span>
+          </div>
+
+          {/* Years badge */}
+          {(profile.cv_years_experience ?? 0) > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <Clock size={13} color={C.gold} />
+              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.gold }}>{profile.cv_years_experience} {profile.cv_years_experience === 1 ? 'año' : 'años'} de experiencia</span>
+            </div>
+          )}
+
+          {/* Timeline entries — extracted from profile/skills context */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginLeft: 6, borderLeft: `2px solid ${C.line}`, paddingLeft: 14 }}>
+            {/* Dependiente */}
+            {skills.length > 0 && (
+              <div style={{ position: 'relative', paddingBottom: 12 }}>
+                <span style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: C.cyan, border: '2px solid #0a1120' }} />
+                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: C.mut, marginBottom: 3 }}>Trabajo dependiente / Freelance</div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff' }}>Experto en {skills.slice(0, 3).join(', ')}</div>
+                <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.mut, marginTop: 2 }}>
+                  {profile.cv_years_experience ? `${profile.cv_years_experience}+ años de trayectoria combinada` : 'Trayectoria profesional activa'}
+                </div>
+              </div>
+            )}
+
+            {/* Freelance / Independiente */}
+            {skills.length > 3 && (
+              <div style={{ position: 'relative', paddingBottom: 12 }}>
+                <span style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: C.gold, border: '2px solid #0a1120' }} />
+                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: C.mut, marginBottom: 3 }}>Especialización independiente</div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff' }}>{skills.slice(3, 6).join(' · ')}</div>
+                <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.mut, marginTop: 2 }}>Proyectos y contratos freelance</div>
+              </div>
+            )}
+
+            {/* CTA: expand to vault */}
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: C.green, border: '2px solid #0a1120' }} />
+              <button onClick={() => setShowConvalida(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.green }}>+ Agregar más experiencia (actualizar CV)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bóveda Personal — "Desarrollado por mí" */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Database size={15} color={C.green} />
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.green }}>Desarrollado por mí</span>
+          </div>
+          <button onClick={() => {/* navigate to vault */ }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>Ver Bóveda</span>
+            <ArrowRight size={12} color={C.cyanDim} />
+          </button>
+        </div>
+        <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 12.5, color: C.mut, lineHeight: 1.5 }}>
+          Documentos técnicos, soluciones y proyectos que has desarrollado de forma independiente. Publicá en la Bóveda para generar regalías.
+        </p>
+        <button onClick={() => setShowConvalida(true)}
+          style={{ marginTop: 10, width: '100%', padding: '10px 0', borderRadius: RADIUS.md, border: `1px solid ${C.greenDim}`, background: C.greenFaint, color: C.green, fontFamily: FONT.display, fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <Database size={14} /> Aportar a mi Bóveda
+        </button>
+      </div>
 
       {/* Pioneer */}
       {profile.is_pioneer && (
