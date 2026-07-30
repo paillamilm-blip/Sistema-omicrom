@@ -138,7 +138,7 @@ export function analyzeCV(text: string): AnalyzedProfile {
     seniorLabel = 'Profesional Senior';
   }
   // Mid (con título)
-  else if (hasProfessionalTitle || years >= 2) {
+  else if (hasProfessionalTitle) {
     seniorLevel = 3;
     seniorLabel = 'Profesional Mid';
   }
@@ -201,7 +201,7 @@ export function analyzeCV(text: string): AnalyzedProfile {
   let arch: AnalyzedProfile['arch'] = 'pro';
   if (
     !hasProfessionalTitle &&
-    (/estudiante|student|cursando actualmente|sin experiencia laboral/.test(t) ||
+    (/estudiante|student|cursando actualmente|sin experiencia laboral|reci[eé]n egres/.test(t) ||
     (years < 1 && found.length < 2 && !hasProfessionalTitle))
   ) {
     arch = 'estudiante';
