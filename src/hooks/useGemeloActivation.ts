@@ -131,7 +131,10 @@ export function useGemeloActivation() {
       // 1) Analyze CV (IA + heuristic fallback)
       let analyzed = analyzeCV(text);
       try {
-        const { data: aiData } = await supabase.functions.invoke('analizar-cv', { body: { text } });
+        const { data: aiData } = await supabase.functions.invoke('analizar-cv', { 
+          body: JSON.stringify({ text }),
+          headers: { 'Content-Type': 'application/json' },
+        });
         const a = aiData as { ok?: boolean; analysis?: {
           name?: string; seniorLabel?: string; seniorLevel?: number; years?: number;
           skills?: string[]; skillsDetail?: { name?: string; pct?: number }[]; arch?: string; summary?: string;
