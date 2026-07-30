@@ -175,14 +175,14 @@ export function useGemeloActivation() {
 
       const rpcBody = {
         p_name: String(analyzed.name || ''),
-        p_skills: cleanSkills,
+        p_skills: cleanSkills.length > 0 ? cleanSkills : ['general'],
         p_exec: Math.round(Number(analyzed.axes.exec) || 0),
         p_qual: Math.round(Number(analyzed.axes.qual) || 0),
         p_trans: Math.round(Number(analyzed.axes.trans) || 0),
         p_fund: Math.round(Number(analyzed.axes.fund) || 0),
-        p_years: analyzed.years ? Math.round(Number(analyzed.years)) : null,
-        p_summary: analyzed.summary ? String(analyzed.summary) : null,
-        p_skills_detail: cleanDetail.length > 0 ? cleanDetail : null,
+        p_years: analyzed.years ? Math.round(Number(analyzed.years)) : 0,
+        p_summary: analyzed.summary ? String(analyzed.summary) : '',
+        p_skills_detail: cleanDetail.length > 0 ? cleanDetail : [],
       };
 
       const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/aplicar_analisis_cv`, {
@@ -191,7 +191,6 @@ export function useGemeloActivation() {
           'Content-Type': 'application/json',
           'apikey': supabaseAnonKey,
           'Authorization': `Bearer ${session.access_token}`,
-          'Prefer': 'return=representation',
         },
         body: JSON.stringify(rpcBody),
       });
