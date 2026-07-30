@@ -1,27 +1,15 @@
 // components/omicron/ConvalidaOmicron.tsx
 // ═══════════════════════════════════════════════════════════════════════
 // ÓMICRON · Convalidación REAL del Gemelo — AUTOMATIZACIÓN MÁXIMA.
-//
-// Tras subir el CV, TODO se ejecuta en cadena automática (Subir CV →
-// Validar título → Año de experiencia → Aporte a la Bóveda). Muestra una
-// barra de carga gamificada con "pushes" sutiles (+N en cada eje) que van
-// sumando en tiempo real. Al final: sinergias detectadas + mejora sugerida.
+// Componente de presentación: toda la lógica vive en useGemeloActivation.
 // ═══════════════════════════════════════════════════════════════════════
-import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles, Upload, ArrowRight, TrendingUp, Zap } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { useApp } from '../../store/AppContext';
-import { useToast } from '../shared/Toast';
-import { speak } from '../../lib/voiceEngine';
-import { analyzeCV, type AnalyzedProfile } from '../../lib/cvAnalyzer';
-import { extractCVText } from '../../lib/cvExtract';
+import { useGemeloActivation, type Phase, type Push } from '../../hooks/useGemeloActivation';
 import { C, FONT, RADIUS } from '../../theme';
 import ParticleOrb from './ParticleOrb';
 
 type Kind = 'cv' | 'title' | 'year' | 'vault';
-type Phase = 'upload' | 'syncing' | 'dossier';
-
 
 const STEPS: { kind: Kind; label: string; hint: string; Icon: typeof FileText; color: string }[] = [
   { kind: 'cv', label: 'Analizando CV', hint: 'Extrayendo skills y experiencia', Icon: FileText, color: C.cyan },
@@ -30,205 +18,26 @@ const STEPS: { kind: Kind; label: string; hint: string; Icon: typeof FileText; c
   { kind: 'vault', label: 'Aporte a la Bóveda', hint: 'Conocimiento integrado', Icon: BookOpen, color: C.green },
 ];
 
-
-interface Push { id: number; label: string; delta: number; color: string }
-
 export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: () => void; onViewProfile?: () => void }) {
-  const { gemelo, refreshProfile, profile } = useApp();
-  const { toast } = useToast();
-  const [phase, setPhase] = useState<Phase>('upload');
-  const [currentStep, setCurrentStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState<Kind[]>([]);
-  const [dossier, setDossier] = useState<AnalyzedProfile | null>(null);
-  const [ai, setAi] = useState<{ loading: boolean; text: string }>({ loading: false, text: '' });
-  const [cvText, setCvText] = useState('');
-  const [cvFileName, setCvFileName] = useState('');
-  const [msg, setMsg] = useState('Subí tu CV y Ómicron activa todo automáticamente.');
-  const [pushes, setPushes] = useState<Push[]>([]);
-  const [synergies, setSynergies] = useState<string[]>([]);
-  const pushIdRef = useRef(0);
+  const {
+    phase, currentStep, completedSteps, dossier, ai,
+    cvText, setCvText, cvFileName, msg, pushes, synergies,
+    rep, hasExistingCV, gemelo,
+    onCVFile, activateGemeloCompleto,
+  } = useGemeloActivation();
 
-  const rep = gemelo ? Math.round(gemelo.overallReputation) : 0;
-  const hasExistingCV = (profile?.skills?.length ?? 0) > 0;
-
-
-  // Emit a subtle push notification showing +N on an axis
-  const emitPush = (label: string, delta: number, color: string) => {
-    const id = ++pushIdRef.current;
-    setPushes((prev) => [...prev, { id, label, delta, color }]);
-    setTimeout(() => setPushes((prev) => prev.filter((p) => p.id !== id)), 2400);
-  };
-
-  // Auto-convalidation chain after CV is analyzed
-  const runAutoChain = async () => {
-    // Step 2: Validar título
-    setCurrentStep(1);
-    setMsg('Validando título y certificaciones…');
-    try {
-      const { data } = await supabase.rpc('convalidar_credencial', { p_kind: 'title' });
-      const res = data as { ok?: boolean; reputation?: number } | null;
-      if (res?.ok) {
-        setCompletedSteps((p) => [...p, 'title']);
-        emitPush('Calidad', 5, C.purple);
-        await refreshProfile();
-      }
-    } catch { /* continue */ }
-    await new Promise((r) => setTimeout(r, 600));
-
-    // Step 3: Años de experiencia
-    setCurrentStep(2);
-    setMsg('Reconociendo trayectoria profesional…');
-    try {
-      const { data } = await supabase.rpc('convalidar_credencial', { p_kind: 'year' });
-      const res = data as { ok?: boolean; reputation?: number } | null;
-      if (res?.ok) {
-        setCompletedSteps((p) => [...p, 'year']);
-        emitPush('Ejecución', 8, C.cyan);
-        emitPush('Fundamento', 4, C.green);
-        await refreshProfile();
-      }
-    } catch { /* continue */ }
-    await new Promise((r) => setTimeout(r, 600));
-
-    // Step 4: Aporte a la Bóveda
-    setCurrentStep(3);
-    setMsg('Integrando conocimiento a la Bóveda…');
-    try {
-      const { data } = await supabase.rpc('convalidar_credencial', { p_kind: 'vault' });
-      const res = data as { ok?: boolean; reputation?: number } | null;
-      if (res?.ok) {
-        setCompletedSteps((p) => [...p, 'vault']);
-        emitPush('Trascendencia', 12, C.gold);
-        await refreshProfile();
-      }
-    } catch { /* continue */ }
-    await new Promise((r) => setTimeout(r, 400));
-    setCurrentStep(4);
-  };
-
-
-  // Read CV file
-  const onCVFile = async (file: File) => {
-    setCvFileName(file.name);
-    setMsg('Leyendo tu documento…');
-    try {
-      const text = await extractCVText(file);
-      if (text.length >= 30) { setCvText(text); setMsg(`"${file.name}" leído. Tocá "Activar Gemelo Completo".`); }
-      else setMsg('No pude extraer texto. Pegá tu experiencia abajo.');
-    } catch {
-      setMsg('No pude leer el archivo. Pegá tu experiencia abajo.');
-    }
-  };
-
-  // Full auto-analysis: CV → convalida all → dossier
-  const activateGemeloCompleto = async () => {
-    const text = cvText.trim();
-    if (!text) return;
-    setPhase('syncing');
-    setCurrentStep(0);
-    setMsg('Ómicron está leyendo TODO tu CV…');
-
-    try {
-      // 1) Analyze CV
-      let analyzed = analyzeCV(text);
-      try {
-        const { data: aiData } = await supabase.functions.invoke('analizar-cv', { body: { text } });
-        const a = aiData as { ok?: boolean; analysis?: {
-          name?: string; seniorLabel?: string; seniorLevel?: number; years?: number;
-          skills?: string[]; skillsDetail?: { name?: string; pct?: number }[]; arch?: string; summary?: string;
-          axes?: { exec?: number; qual?: number; trans?: number; fund?: number };
-        } } | null;
-        const ia = a?.ok ? a.analysis : null;
-        if (ia?.axes) {
-          const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
-          const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
-          const skillsDetail = (ia.skillsDetail ?? [])
-            .filter((s) => s?.name).slice(0, 12)
-            .map((s) => ({ name: s.name!, pct: clamp(s.pct) }));
-          analyzed = {
-            ...analyzed,
-            name: ia.name || analyzed.name,
-            seniorLabel: ia.seniorLabel || analyzed.seniorLabel,
-            seniorLevel: (ia.seniorLevel as AnalyzedProfile['seniorLevel']) || analyzed.seniorLevel,
-            years: typeof ia.years === 'number' ? ia.years : analyzed.years,
-            skills: skills.length ? skills : analyzed.skills,
-            labels: skills.length ? skills : analyzed.labels,
-            skillsDetail: skillsDetail.length ? skillsDetail : analyzed.skillsDetail,
-            summary: ia.summary || analyzed.summary,
-            arch: (ia.arch as AnalyzedProfile['arch']) || analyzed.arch,
-            axes: { exec: clamp(ia.axes.exec), qual: clamp(ia.axes.qual), trans: clamp(ia.axes.trans), fund: clamp(ia.axes.fund) },
-          };
-        }
-      } catch { /* heuristic fallback */ }
-
-
-      // 2) Persist analysis server-side
-      const { data, error } = await supabase.rpc('aplicar_analisis_cv', {
-        p_name: analyzed.name || '',
-        p_skills: analyzed.labels,
-        p_exec: analyzed.axes.exec,
-        p_qual: analyzed.axes.qual,
-        p_trans: analyzed.axes.trans,
-        p_fund: analyzed.axes.fund,
-        p_years: analyzed.years || null,
-        p_summary: analyzed.summary || null,
-        p_skills_detail: analyzed.skillsDetail,
-      });
-      const res = data as { ok?: boolean; error?: string } | null;
-      if (error || !res?.ok) {
-        setMsg(res?.error ? `No se pudo: ${res.error}` : 'No se pudo aplicar. ¿Tu sesión está activa?');
-        setPhase('upload');
-        return;
-      }
-      setCompletedSteps(['cv']);
-      emitPush('Ejecución', analyzed.axes.exec > 50 ? 12 : 8, C.cyan);
-      emitPush('Calidad', analyzed.axes.qual > 50 ? 10 : 6, C.purple);
-      toast('CV analizado y aplicado', 'success');
-      speak(`CV analizado. Perfil: ${analyzed.seniorLabel}.`);
-      await refreshProfile();
-      await new Promise((r) => setTimeout(r, 800));
-
-      // 3) Auto-chain remaining convalidations
-      await runAutoChain();
-
-      // 4) Compute synergies
-      const detectedSynergies: string[] = [];
-      if (analyzed.years >= 5 && analyzed.skills.length >= 4) {
-        detectedSynergies.push(`${analyzed.skills.slice(0, 3).join(' + ')} + ${analyzed.years} años → 3 empleos potenciales`);
-      }
-      if (analyzed.skills.includes('react') || analyzed.skills.includes('typescript')) {
-        detectedSynergies.push('Stack moderno detectado → acceso a proyectos premium en Servicios');
-      }
-      if (analyzed.axes.trans > 40) {
-        detectedSynergies.push('Alta trascendencia → publicá en la Bóveda para generar regalías');
-      }
-      setSynergies(detectedSynergies);
-
-      // 5) Show dossier
-      setDossier(analyzed);
-      setAi({ loading: false, text: analyzed.summary });
-      setPhase('dossier');
-    } catch {
-      setMsg('Error al procesar. Intentá de nuevo.');
-      setPhase('upload');
-    }
-  };
-
-
-  // ── PHASE: SYNCING (auto-chain with live progress) ──────────────────
+  // ── PHASE: SYNCING ──────────────────────────────────────────────────
   if (phase === 'syncing') {
-    const progress = ((completedSteps.length) / STEPS.length) * 100;
+    const progress = (completedSteps.length / STEPS.length) * 100;
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: 'radial-gradient(130% 100% at 50% 10%, rgba(8,14,30,0.98), #000 70%)' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `linear-gradient(${C.grid} 1px, transparent 1px), linear-gradient(90deg, ${C.grid} 1px, transparent 1px)`, backgroundSize: '44px 44px', maskImage: 'radial-gradient(circle at 50% 22%, #000, transparent 74%)' }} />
 
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', position: 'relative', zIndex: 2 }}>
           <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: C.cyan }}>SINCRONIZANDO GEMELO</span>
           <Loader2 size={18} color={C.cyan} style={{ animation: 'cp-spin 0.8s linear infinite' }} />
         </div>
 
-        {/* Orb */}
         <div style={{ position: 'relative', zIndex: 2, height: 160, flexShrink: 0 }}>
           <ParticleOrb colorA={[92, 200, 255]} colorB={[94, 92, 230]} />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
@@ -240,8 +49,8 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
           </div>
         </div>
 
-        {/* Push notifications floating */}
-        <div style={{ position: 'fixed', top: 80, right: 16, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {/* Push notifications */}
+        <div aria-live="polite" aria-atomic="false" style={{ position: 'fixed', top: 80, right: 16, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 6 }}>
           <AnimatePresence>
             {pushes.map((p) => (
               <motion.div key={p.id}
@@ -257,9 +66,10 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
           </AnimatePresence>
         </div>
 
-
         {/* Progress bar */}
-        <div style={{ position: 'relative', zIndex: 2, padding: '0 20px', marginBottom: 16 }}>
+        <div style={{ position: 'relative', zIndex: 2, padding: '0 20px', marginBottom: 16 }}
+          role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}
+          aria-label={`Sincronizando Gemelo Digital: ${Math.round(progress)}% completado`}>
           <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
             <motion.div
               animate={{ width: `${progress}%` }}
@@ -296,16 +106,13 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
               );
             })}
           </div>
-
-          {/* Status message */}
           <p style={{ textAlign: 'center', margin: '16px 0', fontFamily: FONT.body, fontSize: 13.5, color: C.ink, lineHeight: 1.5 }}>{msg}</p>
         </div>
       </div>
     );
   }
 
-
-  // ── PHASE: DOSSIER (results + synergies) ────────────────────────────
+  // ── PHASE: DOSSIER ──────────────────────────────────────────────────
   if (phase === 'dossier' && dossier) {
     const ARCH: Record<string, string> = { estudiante: 'Aprendiz', junior: 'Junior', mid: 'Mid', senior: 'Senior', lead: 'Lead · Arquitecto', pro: 'Profesional' };
     return (
@@ -327,7 +134,6 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
             <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan, padding: '4px 10px', borderRadius: 999, background: C.cyanGhost, border: `1px solid ${C.cyanFaint}` }}>{ARCH[dossier.arch] ?? dossier.arch}</span>
             {dossier.years > 0 && <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.gold, padding: '4px 10px', borderRadius: 999, background: C.goldFaint, border: `1px solid ${C.goldDim}` }}>{dossier.years} {dossier.years === 1 ? 'año' : 'años'}</span>}
           </div>
-
 
           {/* Skills with % bars */}
           <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.2, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Skills · % de dominio</div>
@@ -358,8 +164,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
             </div>
           )}
 
-
-          {/* Synergies detected */}
+          {/* Synergies */}
           {synergies.length > 0 && (
             <div style={{ textAlign: 'left', borderRadius: RADIUS.lg, padding: '13px 14px', marginBottom: 14, background: `linear-gradient(135deg, ${C.gold}14, rgba(255,255,255,0.03))`, border: `1px solid ${C.goldDim}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
@@ -403,20 +208,17 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
     );
   }
 
-
-  // ── PHASE: UPLOAD (initial — subir CV) ──────────────────────────────
+  // ── PHASE: UPLOAD ───────────────────────────────────────────────────
   const canActivate = !!cvText.trim();
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: 'radial-gradient(130% 100% at 50% 10%, rgba(8,14,30,0.98), rgba(2,3,10,0.99) 60%, #000 100%)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `linear-gradient(${C.grid} 1px, transparent 1px), linear-gradient(90deg, ${C.grid} 1px, transparent 1px)`, backgroundSize: '44px 44px', maskImage: 'radial-gradient(circle at 50% 26%, #000, transparent 74%)' }} />
 
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', position: 'relative', zIndex: 2 }}>
         <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: C.ink }}>{hasExistingCV ? 'ACTUALIZAR CV' : 'ACTIVAR GEMELO'}</span>
         <button onClick={onClose} aria-label="Cerrar" style={{ width: 36, height: 36, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
       </div>
 
-      {/* Orb with completion ring */}
       <div style={{ position: 'relative', zIndex: 2, height: 150, flexShrink: 0 }}>
         <ParticleOrb />
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
@@ -428,11 +230,8 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
         </div>
       </div>
 
-      {/* Message */}
       <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', margin: '6px 20px 10px', fontFamily: FONT.body, fontSize: 13.5, lineHeight: 1.5, color: C.ink, minHeight: 40 }}>{msg}</p>
 
-
-      {/* Upload area */}
       <div style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 2, padding: '4px 18px' }}>
         {hasExistingCV && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: RADIUS.md, background: C.greenFaint, border: `1px solid ${C.greenDim}`, marginBottom: 12 }}>
@@ -455,13 +254,12 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
           <div style={{ flex: 1, height: 1, background: C.line }} />
         </div>
 
-        <textarea value={cvText} onChange={(e) => setCvText(e.target.value)}
+        <label htmlFor="cv-textarea" className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>Experiencia profesional</label>
+        <textarea id="cv-textarea" value={cvText} onChange={(e) => setCvText(e.target.value)}
           placeholder="Rol actual, años de experiencia, tecnologías, contratos, certificaciones, empresas donde trabajaste (dependiente o freelance)…"
           style={{ width: '100%', minHeight: 120, borderRadius: RADIUS.md, border: `1px solid ${C.line}`, background: 'rgba(8,12,22,0.8)', color: C.ink, fontFamily: FONT.body, fontSize: 14, padding: 13, outline: 'none', resize: 'vertical' }} />
       </div>
 
-
-      {/* Single CTA: Activar Gemelo Completo */}
       <div style={{ padding: '10px 18px calc(env(safe-area-inset-bottom, 0px) + 16px)', position: 'relative', zIndex: 2 }}>
         <motion.button
           onClick={() => void activateGemeloCompleto()}

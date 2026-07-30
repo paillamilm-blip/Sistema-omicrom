@@ -81,24 +81,33 @@ export function PerfilTab() {
         </div>
       </div>
 
-      {/* Identidad */}
+      {/* Identidad — con reputación integrada */}
       <div style={card}>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          {/* Avatar */}
           <label style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }} title="Cambiar foto">
             <input type="file" accept="image/*" style={{ display: 'none' }}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleAvatar(f); e.currentTarget.value = ''; }} />
-            <div style={{ width: 68, height: 68, borderRadius: 18, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarUrl ? '#0a1120' : `linear-gradient(135deg, ${nodeColor}, ${C.purple})`, color: '#fff', fontWeight: 700, fontSize: 26, fontFamily: FONT.display, boxShadow: `0 0 18px ${nodeColor}44` }}>
+            <div style={{ width: 62, height: 62, borderRadius: 16, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarUrl ? '#0a1120' : `linear-gradient(135deg, ${nodeColor}, ${C.purple})`, color: '#fff', fontWeight: 700, fontSize: 24, fontFamily: FONT.display, boxShadow: `0 0 14px ${nodeColor}44` }}>
               {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
             </div>
-            <div style={{ position: 'absolute', bottom: -3, right: -3, width: 22, height: 22, borderRadius: '50%', background: '#0a1120', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {uploading ? <div style={{ width: 10, height: 10, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} /> : <Camera size={11} color={C.cyan} />}
+            <div style={{ position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, borderRadius: '50%', background: '#0a1120', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {uploading ? <div style={{ width: 9, height: 9, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} /> : <Camera size={10} color={C.cyan} />}
             </div>
           </label>
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.full_name || profile.username}</div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim }}>@{profile.username}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+            {/* Reputación + Nombre en una línea */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 2 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 10, background: `linear-gradient(135deg, ${nodeColor}22, rgba(255,255,255,0.04))`, border: `1.5px solid ${nodeColor}`, boxShadow: `0 0 12px ${nodeColor}44` }}>
+                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 15, color: nodeColor }}>{rep}</span>
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 19, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.full_name || profile.username}</div>
+              </div>
+            </div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim, marginBottom: 6 }}>@{profile.username}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: `${nodeColor}14`, border: `1px solid ${nodeColor}44` }}>
                 <Shield size={11} color={nodeColor} />
                 <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: nodeColor, letterSpacing: 1 }}>{profile.node_type} · N{profile.node_level}</span>
