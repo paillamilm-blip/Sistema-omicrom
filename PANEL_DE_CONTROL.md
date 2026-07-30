@@ -63,10 +63,17 @@ https://cuwuyqpxaibbqjrvamjb.supabase.co/functions/v1/stripe-webhook
 
 ## ✅ Checklist maestro (marca a medida que avanzas)
 
-**Publicar cambios**
-- [ ] Mergeé el PR #80 (seguridad + observabilidad + tests)
-- [ ] Mergeé el PR #81 (Stripe + límite de IA)
-- [ ] Mergeé el PR #82 (guía paso a paso)
+**Código — PRs mergeados (verificado julio 2026)**
+- [x] PR #90 — fix(ci): resolver fallos de CI en main
+- [x] PR #91 — feat: activar hubs ocultos + reposicionar mensaje
+- [x] PR #92 — feat: eliminar candados Premium (nota: nunca llegó a main, re-aplicado en #96)
+- [x] PR #93 — docs: crear PLAN_PRODUCCION.md
+- [x] PR #94 — test: agregar tests unitarios de libs puras (82 tests)
+- [x] PR #95 — refactor: splitear AppContext en Profile + Navigation
+- [x] PR #96 — fix: re-aplicar remoción de candados Premium (el verdadero fix)
+- [x] PR #97 — feat: unificar orbe + nodos libres arrastrables (sinergia)
+- [x] PR #98 — fix: nodo abre pestaña sola al arrastrarlo + pantallas planas
+- [x] PR #106 — prod: limpieza final de producción
 - [ ] Corrí en mi Mac: `cd ~/Downloads/Sistema-omicrom && git checkout main && git pull origin main`
 
 **Stripe (modo prueba primero)**

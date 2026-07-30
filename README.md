@@ -13,7 +13,7 @@
 ## 🌐 Qué es
 
 Ómicrom es una herramienta de **aprendizaje continuo en tiempo real**, pensada para cualquier
-persona en cualquier lugar, sin restricción geográfica. Construís una **reputación verificable
+persona en cualquier lugar, sin restricción geográfica. Construyes una **reputación verificable
 e imposible de falsear** — tu **Gemelo Digital** — y esa reputación se conecta, al instante,
 con **oportunidades reales del mercado laboral**. Rompe el círculo _"sin experiencia no me
 contratan → sin que me contraten no gano experiencia"_.
@@ -51,7 +51,7 @@ Construido sobre **Supabase Realtime** (Presence + Broadcast + `postgres_changes
 - **Presencia real**: contador de nodos en línea + **satélites orbitando** tu núcleo + tira de conectados.
 - **Panel "Red Ómicron en vivo"** (badge del header): quién está conectado + actividad de la red.
 - **Ranking en vivo**: se actualiza cuando cambian las reputaciones.
-- **Conexión social**: tocá un nodo → su credencial → **Conectar** / **DM**.
+- **Conexión social**: toca un nodo → su credencial → **Conectar** / **DM**.
 - **"El trabajo te busca"**: push en vivo al publicarse una oferta (`job_postings`) y **match personalizado** (`job_matches`).
 - **Oráculo proactivo** por voz: te saluda con la red en vivo + tu mejor próximo paso.
 
@@ -124,7 +124,7 @@ ver [`GUIA_ACTIVACION_PRODUCCION.md`](./GUIA_ACTIVACION_PRODUCCION.md).
 - **Producción (rama `main`):**
   `https://sistema-omicrom-git-main-tuprofendustrial-s-projects.vercel.app`
 - Cada push a `main` despliega automáticamente en Vercel.
-- Es una **PWA instalable**: abrí el link en el móvil → **"Añadir a pantalla de inicio"** (o el botón **Instalar app** dentro de la app) y queda como una app nativa.
+- Es una **PWA instalable**: abre el link en el móvil → **"Añadir a pantalla de inicio"** (o el botón **Instalar app** dentro de la app) y queda como una app nativa.
 - Para la voz del Oráculo: Chrome/Edge con sonido activo (el primer toque desbloquea el audio en móvil).
 
 ---
@@ -154,9 +154,11 @@ supabase/migrations/        Migraciones SQL
 
 | Documento | Contenido |
 |-----------|-----------|
+| [`ROADMAP.md`](./ROADMAP.md) | 🗺️ Roadmap estratégico: milestones, timeline, dependencias, KPIs |
+| [`CHANGELOG.md`](./CHANGELOG.md) | 📝 Historial de cambios por fecha (formato Keep a Changelog) |
 | [`PLAN_PRODUCCION.md`](./PLAN_PRODUCCION.md) | 🚀 Plan de producción vivo: fases, progreso real, PRs asociados |
 | [`DEFINICION_OMICROM.md`](./DEFINICION_OMICROM.md) | Visión y definición del sistema |
-| [`DEFINICION_OMICROM_v8_BACKEND.md`](./DEFINICION_OMICROM_v8_BACKEND.md) | Definición técnica del backend |
+| [`DEFINICION_OMICROM_v8_BACKEND.md`](./DEFINICION_OMICROM_v8_BACKEND.md) | Definición técnica del backend (con estado de implementación) |
 | [`DEFINICION_REPUTACION_OMICROM.md`](./DEFINICION_REPUTACION_OMICROM.md) | Fórmula canónica de reputación (fuente única de verdad) |
 | [`VISION_OMICROM.md`](./VISION_OMICROM.md) | Norte de producto: el asistente que empuja a la mejora |
 | [`GUIA_ACTIVACION_PRODUCCION.md`](./GUIA_ACTIVACION_PRODUCCION.md) | Guía paso a paso para activar producción (pagos, monitoreo, correo) |
@@ -164,7 +166,8 @@ supabase/migrations/        Migraciones SQL
 
 > 📌 **Pendientes de documentar** (no existen aún en el repo, se están priorizando):
 > Bitácora histórica de decisiones, auditoría técnica formal, y revisión de UX.
-> Ver [`PLAN_PRODUCCION.md`](./PLAN_PRODUCCION.md) para el roadmap activo con estado real.
+> Ver [`PLAN_PRODUCCION.md`](./PLAN_PRODUCCION.md) para el detalle operativo y
+> [`ROADMAP.md`](./ROADMAP.md) para la visión estratégica con timeline.
 
 ---
 

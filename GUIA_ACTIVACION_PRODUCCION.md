@@ -12,7 +12,7 @@ Cada sección termina con una casilla de verificación ✅ para que sepas que qu
 
 | Paso | Qué activas | ¿Obligatorio? | Dónde |
 |------|-------------|---------------|-------|
-| 1 | Mergear los cambios (PR #80 y #81) | ✅ Sí | GitHub |
+| 1 | Verificar que el código está actualizado | ✅ Sí | GitHub + Terminal |
 | 2 | Pagos con Stripe | ✅ Sí (para vender tokens) | Stripe + Supabase + Vercel |
 | 3 | Monitoreo de errores (Sentry) | ⭐ Recomendado | Sentry + Vercel |
 | 4 | Analítica de uso (Plausible) | ⭐ Opcional | Vercel |
@@ -23,26 +23,21 @@ Cada sección termina con una casilla de verificación ✅ para que sepas que qu
 
 ---
 
-## PASO 1 · Mergear los cambios (GitHub)
+## PASO 1 · Verificar que el código está actualizado
 
-Esto publica todo el trabajo nuevo en tu rama principal.
+Todos los PRs de infraestructura ya están mergeados en `main` (PRs #90–#106).
+Solo necesitas tener tu copia local al día:
 
-1. Entra a **https://github.com/paillamilm-blip/Sistema-omicrom/pulls**
-2. Abre el **PR #80** ("Producción P1: seguridad DB, observabilidad y tests").
-   - Botón verde **"Merge pull request"** → **"Confirm merge"**.
-3. Abre el **PR #81** ("Pagos: compra de tokens con Stripe...").
-   - Botón verde **"Merge pull request"** → **"Confirm merge"**.
+1. Entra a **https://github.com/paillamilm-blip/Sistema-omicrom** y confirma que
+   la rama `main` muestra los últimos commits (PR #106 mergeado).
 
-> Si un botón aparece gris y dice "checks in progress", espera 2–3 minutos a que
-> termine la verificación automática (CI) y vuelve a intentar.
-
-**Actualiza tu copia en el Mac** (abre la Terminal y pega):
+2. **Actualiza tu copia en el Mac** (abre la Terminal y pega):
 
 ```bash
 cd ~/Downloads/Sistema-omicrom && git checkout main && git pull origin main
 ```
 
-✅ **Listo cuando:** los dos PR digan "Merged" (morado) y tu Vercel muestre un nuevo despliegue.
+✅ **Listo cuando:** tu copia local tiene los últimos cambios y Vercel muestra el deploy activo.
 
 ---
 
