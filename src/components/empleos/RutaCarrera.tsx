@@ -28,16 +28,20 @@ interface Track {
   name: string;
   area: string;
   target: Record<EjeKey, number>;
+  requiredSkills: string[];
 }
 
 // Catálogo de destinos de carrera (áreas distintas → permite ver pivotes).
+// Cada track ahora incluye skills requeridas para matching con el CV.
 const TRACKS: Track[] = [
-  { id: 'frontend',  name: 'Frontend Senior',        area: 'Desarrollo', target: { execution: 75, quality: 75, foundation: 70, transcendence: 45 } },
-  { id: 'fullstack', name: 'Full-Stack Engineer',    area: 'Desarrollo', target: { execution: 72, quality: 70, foundation: 78, transcendence: 45 } },
-  { id: 'techlead',  name: 'Tech Lead / Arquitecto', area: 'Liderazgo',  target: { execution: 80, quality: 80, foundation: 85, transcendence: 70 } },
-  { id: 'creative',  name: 'Creative Technologist',  area: 'Producto',   target: { execution: 70, quality: 65, foundation: 60, transcendence: 78 } },
-  { id: 'data',      name: 'Data / IA',              area: 'Datos',      target: { execution: 65, quality: 72, foundation: 85, transcendence: 55 } },
-  { id: 'mentor',    name: 'Mentor / Docente',       area: 'Enseñanza',  target: { execution: 58, quality: 70, foundation: 80, transcendence: 88 } },
+  { id: 'frontend',  name: 'Frontend Senior',        area: 'Desarrollo', target: { execution: 75, quality: 75, foundation: 70, transcendence: 45 }, requiredSkills: ['react', 'typescript', 'frontend', 'css', 'ux'] },
+  { id: 'fullstack', name: 'Full-Stack Engineer',    area: 'Desarrollo', target: { execution: 72, quality: 70, foundation: 78, transcendence: 45 }, requiredSkills: ['react', 'node', 'sql', 'backend', 'api'] },
+  { id: 'techlead',  name: 'Tech Lead / Arquitecto', area: 'Liderazgo',  target: { execution: 80, quality: 80, foundation: 85, transcendence: 70 }, requiredSkills: ['arquitectura', 'liderazgo', 'gestión', 'metodologías'] },
+  { id: 'creative',  name: 'Creative Technologist',  area: 'Producto',   target: { execution: 70, quality: 65, foundation: 60, transcendence: 78 }, requiredSkills: ['diseño', 'ux', 'producto', 'innovación'] },
+  { id: 'data',      name: 'Data / IA',              area: 'Datos',      target: { execution: 65, quality: 72, foundation: 85, transcendence: 55 }, requiredSkills: ['machine learning', 'python', 'datos', 'estadística', 'ia'] },
+  { id: 'mentor',    name: 'Mentor / Docente',       area: 'Enseñanza',  target: { execution: 58, quality: 70, foundation: 80, transcendence: 88 }, requiredSkills: ['mentoría', 'docencia', 'comunicación', 'liderazgo'] },
+  { id: 'ops',       name: 'Jefe de Operaciones',    area: 'Industria',  target: { execution: 85, quality: 80, foundation: 70, transcendence: 65 }, requiredSkills: ['operaciones', 'logística', 'producción', 'gestión', 'calidad'] },
+  { id: 'safety',    name: 'Especialista en Seguridad', area: 'Prevención', target: { execution: 70, quality: 85, foundation: 80, transcendence: 60 }, requiredSkills: ['seguridad', 'prevención', 'normativa', 'iso', 'riesgo'] },
 ];
 
 const KEYS: EjeKey[] = ['execution', 'quality', 'foundation', 'transcendence'];
@@ -47,9 +51,11 @@ interface Analyzed {
   readiness: number;
   gapEje: EjeKey | null;
   gapAmount: number;
+  skillMatch: number; // % de skills requeridas que ya tiene
+  missingSkills: string[]; // skills que le faltan para este track
 }
 
-function analyze(track: Track, ejes: Record<EjeKey, number>): Analyzed {
+function analyze(track: Track, ejes: Record<EjeKey, number>, userSkills: string[]): Analyzed {
   let sum = 0;
   let gapEje: EjeKey | null = null;
   let worstDef = 0;
@@ -60,7 +66,15 @@ function analyze(track: Track, ejes: Record<EjeKey, number>): Analyzed {
     const def = t - u;
     if (def > worstDef) { worstDef = def; gapEje = k; }
   });
-  return { track, readiness: Math.round((sum / KEYS.length) * 100), gapEje, gapAmount: Math.max(0, Math.round(worstDef)) };
+  // Skill matching: comparar skills del usuario con las requeridas del track
+  const userLower = userSkills.map((s) => s.toLowerCase());
+  const matched = track.requiredSkills.filter((rs) => userLower.some((us) => us.includes(rs) || rs.includes(us)));
+  const missing = track.requiredSkills.filter((rs) => !userLower.some((us) => us.includes(rs) || rs.includes(us)));
+  const skillMatch = track.requiredSkills.length > 0 ? Math.round((matched.length / track.requiredSkills.length) * 100) : 0;
+  // Readiness combina ejes (70%) + skills (30%)
+  const ejeReadiness = (sum / KEYS.length) * 100;
+  const readiness = Math.round(ejeReadiness * 0.7 + skillMatch * 0.3);
+  return { track, readiness, gapEje, gapAmount: Math.max(0, Math.round(worstDef)), skillMatch, missingSkills: missing };
 }
 
 export function RutaCarrera() {
@@ -75,7 +89,8 @@ export function RutaCarrera() {
   };
 
   const { ranked, strongest } = useMemo(() => {
-    const r = TRACKS.map((t) => analyze(t, ejes)).sort((a, b) => b.readiness - a.readiness);
+    const userSkills = profile.skills ?? [];
+    const r = TRACKS.map((t) => analyze(t, ejes, userSkills)).sort((a, b) => b.readiness - a.readiness);
     let strong: EjeKey = 'execution';
     KEYS.forEach((k) => { if ((ejes[k] ?? 0) > (ejes[strong] ?? 0)) strong = k; });
     return { ranked: r, strongest: strong };
@@ -127,6 +142,11 @@ export function RutaCarrera() {
                   <div style={{ fontFamily: FONT.body, fontSize: 12, color: '#c2cadd', lineHeight: 1.45 }}>
                     Te falta <b style={{ color: eje.color }}>+{a.gapAmount} en {eje.label}</b>. {eje.study}
                   </div>
+                  {a.missingSkills.length > 0 && (
+                    <div style={{ marginTop: 6, fontFamily: FONT.mono, fontSize: 10, color: C.gold }}>
+                      Aprende: {a.missingSkills.slice(0, 3).join(', ')}
+                    </div>
+                  )}
                   <button
                     onClick={() => setActiveTab(eje.tab)}
                     style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 10, cursor: 'pointer', border: `1px solid ${eje.color}66`, background: `${eje.color}1a`, color: eje.color, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase' }}

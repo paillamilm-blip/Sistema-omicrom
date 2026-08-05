@@ -133,13 +133,27 @@ export function PerfilTab() {
         </div>
       </div>
 
-      {/* Experto en (skills del CV) */}
+      {/* Experto en (skills del CV con % de dominio) */}
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
           <Sparkles size={15} color={C.gold} />
           <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>Experto en</span>
         </div>
-        {skills.length > 0 ? (
+        {(profile.skills_detail as { name: string; pct: number }[] | undefined)?.length ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {(profile.skills_detail as { name: string; pct: number }[]).map((s) => (
+              <div key={s.name}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff' }}>{s.name}</span>
+                  <span style={{ fontFamily: FONT.mono, fontSize: 12, color: s.pct >= 80 ? C.cyan : s.pct >= 50 ? C.gold : C.mut }}>{s.pct}%</span>
+                </div>
+                <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${s.pct}%`, borderRadius: 3, background: s.pct >= 80 ? `linear-gradient(90deg, ${C.purple}, ${C.cyan})` : s.pct >= 50 ? C.gold : C.mut, transition: 'width 0.6s ease', boxShadow: s.pct >= 80 ? `0 0 8px ${C.cyan}66` : 'none' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : skills.length > 0 ? (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {skills.map((s) => (
               <span key={s} style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff', padding: '7px 13px', borderRadius: 999, background: `linear-gradient(135deg, ${C.purple}22, ${C.cyan}18)`, border: `1px solid ${C.purpleDim}`, boxShadow: `0 0 12px ${C.purple}22` }}>{s}</span>
@@ -151,6 +165,17 @@ export function PerfilTab() {
           </p>
         )}
       </div>
+
+      {/* Análisis de Ómicron (resumen IA del CV) */}
+      {profile.cv_summary && (
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+            <Sparkles size={15} color={C.cyan} />
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.cyan }}>Análisis de Ómicron</span>
+          </div>
+          <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13.5, lineHeight: 1.6, color: '#eaf4ff', whiteSpace: 'pre-wrap' }}>{profile.cv_summary}</p>
+        </div>
+      )}
 
       {/* Los 4 ejes */}
       {gemelo && (
