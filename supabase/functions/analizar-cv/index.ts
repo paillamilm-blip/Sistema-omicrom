@@ -10,6 +10,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const MODEL = 'gemini-2.5-flash';
+const FALLBACK_MODEL = 'gemini-2.0-flash';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -131,25 +132,50 @@ Deno.serve(async (req) => {
     const cv = (body?.text ?? '').toString().slice(0, 16000).trim();
     if (cv.length < 20) return json({ ok: false, error: 'El CV es muy corto o no se pudo leer.' }, 400);
 
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYS }] },
-          contents: [{ role: 'user', parts: [{ text: 'CV COMPLETO:\n\n' + cv }] }],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 1200,
-            responseMimeType: 'application/json',
-            responseSchema: SCHEMA,
-          },
-        }),
-      },
-    );
+    // Intentar con modelo principal, si falla usar fallback
+    let resp: Response | null = null;
+    let usedModel = MODEL;
+
+    for (const model of [MODEL, FALLBACK_MODEL]) {
+      usedModel = model;
+      resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYS }] },
+            contents: [{ role: 'user', parts: [{ text: 'CV COMPLETO:\n\n' + cv }] }],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 1200,
+              responseMimeType: 'application/json',
+              responseSchema: SCHEMA,
+            },
+          }),
+        },
+      );
+      if (resp.ok) break;
+      // Si el modelo no existe (404) o hay error del servidor (5xx), intentar fallback
+      if (model === MODEL && (resp.status === 404 || resp.status >= 500)) {
+        console.warn(`[analizar-cv] Modelo ${model} falló con ${resp.status}, intentando ${FALLBACK_MODEL}...`);
+        continue;
+      }
+      break;
+    }
+
+    if (!resp) return json({ ok: false, error: 'No se pudo conectar con Gemini.' }, 502);
+
     const data = await resp.json();
-    if (!resp.ok) return json({ ok: false, error: 'Gemini error', detail: data?.error?.message ?? null }, 502);
+    if (!resp.ok) {
+      console.error(`[analizar-cv] Gemini error (${usedModel}):`, JSON.stringify(data?.error ?? data));
+      return json({
+        ok: false,
+        error: 'Error al analizar con IA. Verifica que GEMINI_API_KEY esté configurada correctamente.',
+        detail: data?.error?.message ?? `HTTP ${resp.status}`,
+        model: usedModel,
+      }, 502);
+    }
     const parts = data?.candidates?.[0]?.content?.parts;
     const raw = Array.isArray(parts) ? parts.map((p: { text?: string }) => p.text ?? '').join('').trim() : '';
     let parsed: unknown;
