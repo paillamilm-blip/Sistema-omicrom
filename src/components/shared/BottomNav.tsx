@@ -2,32 +2,46 @@ import { useApp } from '../../store/AppContext';
 import { HUBS, hubForTab } from '../../config/hubs';
 import { C, FONT } from '../../theme';
 
-// Menú inferior limpio: solo las áreas principales de navegación
-// (Inicio, Academia, Empleos). Mensajería, notificaciones y cerrar
-// sesión viven en la barra superior (ver App.tsx) para minimizar los
-// clics del usuario y no duplicar accesos.
+// ═══════════════════════════════════════════════════════════════════════
+// BottomNav — Navegación inferior con los 6 hubs del ecosistema.
+// Interacciones suaves: transiciones CSS, feedback táctil inmediato,
+// safe-area-inset para notch/home indicator en iOS.
+// ═══════════════════════════════════════════════════════════════════════
 export function BottomNav() {
   const { activeTab, setActiveTab } = useApp();
   const currentHub = hubForTab(activeTab);
 
-  // 🧪 MVP PILOTO: con solo 3 hubs visibles (Perfil, Academia, Empleos),
-  // los botones ya no se estiran a todo el ancho (flex:1 por elemento).
-  // En su lugar se centran con un ancho máximo fijo por botón, para que
-  // se vean proporcionados y agrupados en el centro de la barra.
   return (
-    <nav style={{ flexShrink: 0, background: 'rgba(9,12,22,0.66)', backdropFilter: 'blur(22px) saturate(140%)', WebkitBackdropFilter: 'blur(22px) saturate(140%)', borderTop: `1px solid ${C.line}`, position: 'relative', zIndex: 3 }}>
-      {/* Barra indicadora del hub activo */}
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
+    <nav
+      aria-label="Navegación principal"
+      style={{
+        flexShrink: 0,
+        background: 'rgba(2,2,6,0.88)',
+        backdropFilter: 'blur(24px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(150%)',
+        borderTop: `1px solid ${C.line}`,
+        position: 'relative',
+        zIndex: 10,
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+    >
+      {/* Indicador del hub activo — barra superior animada */}
+      <div style={{ display: 'flex', justifyContent: 'center', height: 2 }}>
         {HUBS.map(hub => (
-          <div key={hub.id} style={{ width: 96, maxWidth: '33%', height: 2 }}>
-            {currentHub.id === hub.id && (
-              <div style={{ height: '100%', background: C.cyan, boxShadow: `0 0 8px ${C.cyan}` }} />
-            )}
+          <div key={hub.id} style={{ flex: 1, maxWidth: 72 }}>
+            <div style={{
+              height: '100%',
+              background: currentHub.id === hub.id ? C.cyan : 'transparent',
+              boxShadow: currentHub.id === hub.id ? `0 0 10px ${C.cyan}` : 'none',
+              transition: 'background 0.3s ease, box-shadow 0.3s ease',
+              borderRadius: '0 0 2px 2px',
+            }} />
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
+      {/* Botones de navegación */}
+      <div style={{ display: 'flex', justifyContent: 'space-around', padding: '6px 4px 4px' }}>
         {HUBS.map(hub => {
           const active = currentHub.id === hub.id;
           const Icon = hub.Icon;
@@ -35,14 +49,45 @@ export function BottomNav() {
             <button
               key={hub.id}
               onClick={() => setActiveTab(hub.members[0].tab)}
+              aria-label={hub.label}
+              aria-current={active ? 'page' : undefined}
               style={{
-                flex: '0 1 96px', maxWidth: '33%', display: 'flex', flexDirection: 'column', alignItems: 'center',
-                justifyContent: 'center', gap: 4, padding: '8px 0', background: 'none',
-                border: 'none', cursor: 'pointer', opacity: active ? 1 : 0.5, transition: 'opacity .2s',
+                flex: '0 1 64px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+                padding: '6px 0 4px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                // Interacción suave
+                opacity: active ? 1 : 0.5,
+                transform: active ? 'scale(1)' : 'scale(0.92)',
+                transition: 'opacity 0.25s ease, transform 0.25s ease',
+                // Touch friendly
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation',
+                minHeight: 44, // mínimo touch target
               }}
             >
-              <Icon size={20} color={active ? C.cyan : C.cyanDim} />
-              <span style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, letterSpacing: 0.2, color: active ? C.cyan : C.cyanDim }}>
+              <Icon
+                size={22}
+                color={active ? C.cyan : C.mut}
+                style={{
+                  filter: active ? `drop-shadow(0 0 6px ${C.cyan})` : 'none',
+                  transition: 'color 0.25s ease, filter 0.25s ease',
+                }}
+              />
+              <span style={{
+                fontFamily: FONT.mono,
+                fontSize: 9,
+                fontWeight: active ? 700 : 500,
+                letterSpacing: 0.3,
+                color: active ? C.cyan : C.mut,
+                transition: 'color 0.25s ease',
+              }}>
                 {hub.label}
               </span>
             </button>

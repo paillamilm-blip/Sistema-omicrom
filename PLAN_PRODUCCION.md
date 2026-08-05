@@ -46,7 +46,7 @@ Ver `.kiro/steering/vision-producto.md` para el detalle completo de esta decisi�
 | 0.1 | CI en verde (fix de lint `.cjs` + actions v5) | ✅ **Hecho** — PR #90 mergeado |
 | 0.2 | Tests unitarios de libs puras (`oraculo`, `cvAnalyzer`, `jobMatcher`, `omicronCoach`) | ✅ **Hecho** — PR #94 (82 tests nuevos) |
 | 0.3 | Splitear `AppContext.tsx` en `ProfileContext` + `NavigationContext` (facade de compatibilidad) | ✅ **Hecho** — PR #95 (mergeado) |
-| 0.4 | Unificar design system (`theme.ts` vs `design-system/tokens.ts`) | ⬜ Pendiente |
+| 0.4 | Unificar design system (`theme.ts` vs `design-system/tokens.ts`) | ✅ **Hecho** — PR #109 (eliminado design-system/, tailwind alineado con theme.ts) |
 
 ---
 
@@ -102,7 +102,7 @@ secuencia original del plan para atender eso antes de seguir con Fase 2.
 | E.5 | Fix: pantallas "planas" en Gobernanza/Mensajes — se detectaron 2 sistemas de tarjeta (`OmicronCard` premium vs `CyberCard` plano); se mejoró `CyberCard` para heredar el mismo tratamiento visual (blur, gradiente, glow) sin tocar la lógica de cada pantalla | ✅ **Hecho** — PR #98 |
 | E.6 | Confirmar en un celular real si el problema de interacción táctil quedó resuelto | ⬜ **Pendiente — bloqueado en confirmación del usuario** (el sandbox de este agente no tiene acceso a internet para probar la app en vivo) |
 | E.7 | Revisión de experiencia de usuario más amplia (el usuario reporta que "tiene muchos problemas de vivencia de usuario" más allá de lo ya corregido) | ⬜ **Pendiente — en definición** |
-| E.8 | Limpieza técnica menor: `gsap` quedó como dependencia huérfana en `package.json` tras borrar `Orb.tsx` (no se removió en PR #97 para no romper `package-lock.json` sin acceso a `npm install` en el sandbox) | ⬜ Pendiente |
+| E.8 | Limpieza técnica menor: `gsap` quedó como dependencia huérfana en `package.json` tras borrar `Orb.tsx` (no se removió en PR #97 para no romper `package-lock.json` sin acceso a `npm install` en el sandbox) | ✅ **Hecho** — PR #110 |
 
 ---
 
@@ -151,6 +151,9 @@ secuencia original del plan para atender eso antes de seguir con Fase 2.
 | [#97](https://github.com/paillamilm-blip/Sistema-omicrom/pull/97) | feat: unificar orbe + nodos libres arrastrables (sinergia) | Emergencia E.1-E.3 | ✅ Mergeado |
 | [#98](https://github.com/paillamilm-blip/Sistema-omicrom/pull/98) | fix: nodo abre pestaña sola al arrastrarlo + pantallas planas | Emergencia E.4-E.5 | ✅ Mergeado |
 | [#106](https://github.com/paillamilm-blip/Sistema-omicrom/pull/106) | prod: limpieza final de producción | Producción | ✅ Mergeado |
+| [#108](https://github.com/paillamilm-blip/Sistema-omicrom/pull/108) | feat: activar 16 skills + combos TITAN/RAYO/FORJA/GUARDIAN/OMEGA/NEXUS | Skills/Steering | ✅ Mergeado |
+| [#109](https://github.com/paillamilm-blip/Sistema-omicrom/pull/109) | feat: unificar design system + ADN digital helicoidal | 0.4 + Visual | ✅ Mergeado |
+| [#110](https://github.com/paillamilm-blip/Sistema-omicrom/pull/110) | feat: sesión intensiva — visual + conexión total | E.8 + Realtime + BottomNav | 🟡 Pendiente merge |
 
 ### Detalle 0.3 — Decisión de diseño y pendientes abiertos (Ultra Review)
 
@@ -191,18 +194,28 @@ concretos (candados Premium fantasma, nodo que navegaba solo al arrastrarse).
 |---|-----------|---------------|
 | 1 | Confirmar UX en celular real (E.6) | Feedback del usuario |
 | 2 | Relevar problemas de UX restantes (E.7) | Capturas/casos del usuario |
-| 3 | Unificar design system — `theme.ts` vs `design-system/tokens.ts` (0.4) | Decisión técnica |
+| 3 | ~~Unificar design system — `theme.ts` vs `design-system/tokens.ts` (0.4)~~ | ✅ **Hecho** — PR #109 |
 | 4 | Activar Stripe en producción (1.2) | Configuración de claves |
 | 5 | Verificar Tribunal de Pares end-to-end (1.4) | Test manual en producción |
-| 6 | Remover dependencia huérfana `gsap` (E.8) | Acceso a `npm install` |
+| 6 | ~~Remover dependencia huérfana `gsap` (E.8)~~ | ✅ **Hecho** — PR #110 |
 
 ## ❓ Después de esto
 
-1. **Cerrar Fase de Emergencia:** E.6 + E.7 (requiere input del usuario).
-2. **Cerrar Fase 0.4:** unificar design system (junto con el trabajo de front).
+1. **Cerrar Fase de Emergencia:** E.6 + E.7 (requiere input del usuario con capturas reales).
+2. ~~**Cerrar Fase 0.4:** unificar design system~~ → ✅ **Hecho** (PR #109).
 3. **Cerrar Fase 1:** Stripe activo + Tribunal verificado.
 4. **Fase 2 — innovaciones de mercado** (ver tabla arriba) — recién después de
-   que el front esté estable y Stripe activo.
+   que Stripe esté activo y se confirme la UX en celular real.
+
+### Logros de la sesión intensiva (5 agosto 2026, PR #110):
+- ✅ ADN digital helicoidal como núcleo visual (reemplaza esfera)
+- ✅ Nodos orbitan vertical alrededor del ADN con interacción suave (touch + mouse)
+- ✅ BottomNav montado con los 6 hubs (transiciones fluidas, touch-friendly)
+- ✅ "Ver Bóveda" conectado en PerfilTab
+- ✅ Demo fallback eliminado de MarketTab (solo datos reales)
+- ✅ Realtime en EmpleosTab y MarketTab (postgres_changes)
+- ✅ gsap eliminado de dependencias (E.8 cerrada)
+- ✅ 16 skills + 6 combos nombrados activos via steering
 
 > 📌 Para el roadmap completo con timeline, dependencias y milestones, ver
 > [`ROADMAP.md`](./ROADMAP.md).
