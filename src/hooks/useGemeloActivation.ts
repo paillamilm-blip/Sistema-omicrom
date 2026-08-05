@@ -125,43 +125,62 @@ export function useGemeloActivation() {
     if (!text) return;
     setPhase('syncing');
     setCurrentStep(0);
-    setMsg('Ómicron está leyendo TODO tu CV…');
+    setMsg('Ómicron está analizando TODO tu CV con IA…');
 
     try {
-      // 1) Analyze CV (IA + heuristic fallback)
-      let analyzed = analyzeCV(text);
+      // 1) Analyze CV — SOLO con IA. Si la IA falla, no proceder con datos imprecisos.
+      let analyzed: AnalyzedProfile | null = null;
+      let usedAI = false;
+
       try {
-        const { data: aiData } = await supabase.functions.invoke('analizar-cv', { 
+        const { data: aiData, error: fnError } = await supabase.functions.invoke('analizar-cv', { 
           body: JSON.stringify({ text }),
           headers: { 'Content-Type': 'application/json' },
         });
-        const a = aiData as { ok?: boolean; analysis?: {
+        if (fnError) throw new Error(fnError.message || 'Edge Function error');
+        const a = aiData as { ok?: boolean; error?: string; analysis?: {
           name?: string; seniorLabel?: string; seniorLevel?: number; years?: number;
           skills?: string[]; skillsDetail?: { name?: string; pct?: number }[]; arch?: string; summary?: string;
           axes?: { exec?: number; qual?: number; trans?: number; fund?: number };
         } } | null;
-        const ia = a?.ok ? a.analysis : null;
-        if (ia?.axes) {
-          const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
-          const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
-          const skillsDetail = (ia.skillsDetail ?? [])
-            .filter((s) => s?.name).slice(0, 12)
-            .map((s) => ({ name: s.name!, pct: clamp(s.pct) }));
-          analyzed = {
-            ...analyzed,
-            name: ia.name || analyzed.name,
-            seniorLabel: ia.seniorLabel || analyzed.seniorLabel,
-            seniorLevel: (ia.seniorLevel as AnalyzedProfile['seniorLevel']) || analyzed.seniorLevel,
-            years: typeof ia.years === 'number' ? ia.years : analyzed.years,
-            skills: skills.length ? skills : analyzed.skills,
-            labels: skills.length ? skills : analyzed.labels,
-            skillsDetail: skillsDetail.length ? skillsDetail : analyzed.skillsDetail,
-            summary: ia.summary || analyzed.summary,
-            arch: (ia.arch as AnalyzedProfile['arch']) || analyzed.arch,
-            axes: { exec: clamp(ia.axes.exec), qual: clamp(ia.axes.qual), trans: clamp(ia.axes.trans), fund: clamp(ia.axes.fund) },
-          };
+        if (!a?.ok || !a.analysis?.axes) {
+          throw new Error(a?.error || 'La IA no pudo analizar el CV');
         }
-      } catch (err) { console.warn('[Omicron] AI analysis unavailable, using heuristic:', err); }
+        const ia = a.analysis;
+        const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+        const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
+        const skillsDetail = (ia.skillsDetail ?? [])
+          .filter((s) => s?.name).slice(0, 12)
+          .map((s) => ({ name: s.name!, pct: clamp(s.pct) }));
+        // Construir el análisis base con heurístico solo para campos de estructura
+        const base = analyzeCV(text);
+        analyzed = {
+          ...base,
+          name: ia.name || base.name,
+          seniorLabel: ia.seniorLabel || base.seniorLabel,
+          seniorLevel: (ia.seniorLevel as AnalyzedProfile['seniorLevel']) || base.seniorLevel,
+          years: typeof ia.years === 'number' ? ia.years : base.years,
+          skills: skills.length ? skills : base.skills,
+          labels: skills.length ? skills : base.labels,
+          skillsDetail: skillsDetail.length ? skillsDetail : base.skillsDetail,
+          summary: ia.summary || base.summary,
+          arch: (ia.arch as AnalyzedProfile['arch']) || base.arch,
+          axes: { exec: clamp(ia.axes!.exec), qual: clamp(ia.axes!.qual), trans: clamp(ia.axes!.trans), fund: clamp(ia.axes!.fund) },
+        };
+        usedAI = true;
+      } catch (err) {
+        console.error('[Omicron] AI analysis failed:', err);
+        setMsg('No se pudo analizar tu CV con IA. Verificá tu conexión e intentá de nuevo. Si el problema persiste, contacta soporte.');
+        setPhase('upload');
+        toast('Error de IA al analizar CV — reintentá en unos segundos', 'error');
+        return; // NO proceder con datos imprecisos
+      }
+
+      if (!analyzed || !usedAI) {
+        setMsg('No se obtuvo un análisis confiable. Intentá de nuevo.');
+        setPhase('upload');
+        return;
+      }
 
       // 2) Persist server-side via supabase.rpc (GRANT already applied to authenticator)
       const cleanSkills = (analyzed.labels ?? []).filter((s: string) => typeof s === 'string' && s.trim());
