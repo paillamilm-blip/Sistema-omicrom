@@ -102,6 +102,15 @@ inclusion: always
 
 ---
 
+## Skill Core del Producto
+
+### 16. ADN Digital Técnico (Motor de Convalidación)
+**Trigger:** Siempre activo cuando se procesa un CV, certificado, diploma, o cualquier documento de acreditación técnica. Es el corazón de la convalidación del Gemelo Digital.
+**Comportamiento:** Recibe texto extraído de documentos y lo transforma en un ADN Digital profundamente conectado. Ejecuta bucle de refinamiento (máx 4 iteraciones) hasta coherencia ≥ 9.2. Devuelve JSON estructurado con esencia profesional, stack de competencias, sinergias, firma técnica única. NUNCA inventa información. TODO queda conectado.
+**Referencia:** #[[file:.kiro/skills/adn-digital/skill.md]]
+
+---
+
 ## Combos con Nombre (Combinaciones Potentes)
 
 > Invocar por nombre: "activá [NOMBRE DEL COMBO]" o simplemente decir el nombre.
