@@ -165,6 +165,7 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
   // limpia recién en el siguiente ciclo, listo para el próximo gesto.
   const justDraggedRef = useRef<Set<TabId>>(new Set());
   const [rot, setRot] = useState(0);
+  const rotRef = useRef(0);
   const [pinned, setPinned] = useState<Partial<Record<TabId, NodePos>>>(() => loadNodePositions());
   const [hintVisible, setHintVisible] = useState(() => {
     try { return !localStorage.getItem(NODE_HINT_KEY) && Object.keys(loadNodePositions()).length === 0; } catch { return false; }
@@ -176,8 +177,10 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
     const loop = (t: number) => {
       const dt = Math.min(t - last, 64);
       last = t;
-      // Rotación suave y lenta — friendly para la vista
-      setRot((r) => (r + dt * 0.00012) % (Math.PI * 2));
+      rotRef.current = (rotRef.current + dt * 0.00008) % (Math.PI * 2);
+      // Actualizar React solo a ~15fps para no matar rendimiento
+      if (t - last < -50) { /* throttle handled below */ }
+      setRot(rotRef.current);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -278,9 +281,8 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
           <motion.button
             key={node.tab}
             drag
-            dragMomentum
-            dragElastic={0.15}
-            dragTransition={{ bounceStiffness: 300, bounceDamping: 25 }}
+            dragMomentum={false}
+            dragElastic={0.1}
             dragConstraints={containerRef}
             onDragStart={() => {
               // Freeze en la posición actual (recién al confirmarse el arrastre,
