@@ -102,6 +102,45 @@ export const ANIM = {
 // Radios más redondeados → sensación premium/suave (antes 4/6/10/12/24).
 export const RADIUS = { sm: 8, md: 12, lg: 16, xl: 22, pill: 999 } as const;
 
+// ═══════════════════════════════════════════════════════════════════════
+// Tokens adicionales (antes solo en design-system/tokens.ts — ahora aquí
+// como fuente única de verdad).
+// ═══════════════════════════════════════════════════════════════════════
+
+/** Escala de espaciado (múltiplos de 4px). */
+export const SPACING = {
+  xs:  4,
+  sm:  8,
+  md:  16,
+  lg:  24,
+  xl:  40,
+  xxl: 64,
+} as const;
+
+/** Capas (z-index) para profundidad espacial. */
+export const Z = {
+  base:    0,
+  card:    10,
+  orb:     20,
+  overlay: 40,
+  modal:   50,
+  toast:   60,
+} as const;
+
+/** Desenfoques para glassmorphism. */
+export const BLUR = {
+  sm: '8px',
+  md: '16px',
+  lg: '24px',
+} as const;
+
+/** Curvas de easing premium. */
+export const EASING = {
+  standard: [0.4, 0, 0.2, 1] as const,
+  gentle:   [0.25, 0.1, 0.25, 1] as const,
+  spring:   [0.34, 1.56, 0.64, 1] as const,
+} as const;
+
 export const BORDER = {
   default: '1px solid rgba(150,180,255,0.14)',
   faint:   '1px solid rgba(150,180,255,0.08)',
