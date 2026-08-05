@@ -35,7 +35,7 @@ export function useGemeloProfile() {
       }
     : local.axes;
 
-  const profile: GemeloProfile = { ...local, rep, pe, axes };
+  const profile: GemeloProfile & { skills?: string[] } = { ...local, rep, pe, axes, skills: sb?.skills ?? [] };
   const baseTier = tierFor(pe);
   const tier = sb?.node_type ? { ...baseTier, name: sb.node_type } : baseTier;
 

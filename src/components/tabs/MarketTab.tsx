@@ -150,6 +150,12 @@ export function MarketTab() {
   });
 
   const ordered = [...filtered].sort((a, b) => {
+    // Skill relevance: servicios con tags que coinciden con tus skills del CV van arriba
+    const userSkills = (profile?.skills ?? []).map((s: string) => s.toLowerCase());
+    const relevanceA = (a.tags ?? []).filter((t: string) => userSkills.some((s: string) => s.includes(t.toLowerCase()) || t.toLowerCase().includes(s))).length;
+    const relevanceB = (b.tags ?? []).filter((t: string) => userSkills.some((s: string) => s.includes(t.toLowerCase()) || t.toLowerCase().includes(s))).length;
+    // Primero por relevancia de skills, luego por criterio seleccionado
+    if (relevanceB !== relevanceA) return relevanceB - relevanceA;
     if (sortBy === 'confianza') {
       const ra = a.seller?.reputation_score ?? 0;
       const rb = b.seller?.reputation_score ?? 0;

@@ -205,6 +205,13 @@ export function MaxSkillTab() {
   }, [progress, nodes]);
   const getPercentage = (id: string) => progress.get(id)?.progress_percentage || 0;
 
+  // Conectar Skill Tree con CV: detectar nodos que coinciden con skills del perfil
+  const cvSkills = (profile?.skills ?? []).map((s: string) => s.toLowerCase());
+  const isFromCV = useCallback((node: SkillTreeNode): boolean => {
+    const title = node.title.toLowerCase();
+    return cvSkills.some((s: string) => title.includes(s) || s.includes(title));
+  }, [cvSkills]);
+
   const loadActas = useCallback(async () => {
     if (!profile?.id) return;
     const { data } = await supabase
@@ -489,6 +496,12 @@ export function MaxSkillTab() {
             <div>
               <div style={styles.detailTitle}>{selectedNode.title}</div>
               <div style={styles.detailSub}>{selectedNode.description}</div>
+              {isFromCV(selectedNode) && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 999, background: 'rgba(63,208,201,0.12)', border: '1px solid rgba(63,208,201,0.35)' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: COLORS.green }} />
+                  <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: COLORS.green, letterSpacing: 1 }}>RECONOCIDO POR TU CV</span>
+                </div>
+              )}
             </div>
             <button style={styles.closeBtn} onClick={() => setSelectedNode(null)}>×</button>
           </div>

@@ -52,11 +52,16 @@ export function TrabajoTeEncuentra() {
   useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 5000); return () => clearInterval(t); }, []);
 
   // Afinidad anclada a la reputación CANÓNICA (match ≈ reputación, §7 del modelo),
-  // ajustada por el eje relevante del puesto y el umbral de seniority (PE mínimo).
+  // ajustada por el eje relevante del puesto, umbral de seniority (PE mínimo),
+  // y MATCH DE SKILLS del CV del usuario contra los tags del puesto.
   const fit = (j: JobDef) => {
     const axisAlign = Math.round(((profile.axes[j.eje] ?? 50) - 50) * 0.25);
     const seniority = profile.pe >= j.minPe ? 8 : -14;
-    const f = Math.round(profile.rep * 0.9 + axisAlign + seniority + j.bias);
+    // Skill matching: comparar tags del puesto con skills del perfil (case-insensitive)
+    const userSkills = (profile.skills ?? []).map((s: string) => s.toLowerCase());
+    const matchedTags = j.tags.filter((t) => userSkills.some((s) => s.includes(t.toLowerCase()) || t.toLowerCase().includes(s)));
+    const skillBonus = j.tags.length > 0 ? Math.round((matchedTags.length / j.tags.length) * 15) : 0;
+    const f = Math.round(profile.rep * 0.85 + axisAlign + seniority + j.bias + skillBonus);
     return Math.max(34, Math.min(99, f));
   };
   const scored = JOBS.map((j) => ({ j, f: fit(j) })).sort((a, b) => b.f - a.f);
