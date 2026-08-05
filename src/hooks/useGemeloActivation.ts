@@ -133,26 +133,18 @@ export function useGemeloActivation() {
       let usedAI = false;
 
       try {
-        const { data: aiData, error: fnError } = await supabase.functions.invoke('analizar-cv', { 
-          body: JSON.stringify({ text }),
-          headers: { 'Content-Type': 'application/json' },
-        });
-        if (fnError) throw new Error(fnError.message || 'Edge Function error');
-        const a = aiData as { ok?: boolean; error?: string; analysis?: {
-          name?: string; seniorLabel?: string; seniorLevel?: number; years?: number;
-          skills?: string[]; skillsDetail?: { name?: string; pct?: number }[]; arch?: string; summary?: string;
-          axes?: { exec?: number; qual?: number; trans?: number; fund?: number };
-        } } | null;
-        if (!a?.ok || !a.analysis?.axes) {
-          throw new Error(a?.error || 'La IA no pudo analizar el CV');
+        // Llamar a Gemini DIRECTO desde el browser (sin Edge Function)
+        const { analyzeCVWithGemini } = await import('../lib/geminiClient');
+        const geminiResult = await analyzeCVWithGemini(text);
+        if (!geminiResult.ok || !geminiResult.analysis?.axes) {
+          throw new Error(geminiResult.error || 'La IA no pudo analizar el CV');
         }
-        const ia = a.analysis;
+        const ia = geminiResult.analysis;
         const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
         const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
         const skillsDetail = (ia.skillsDetail ?? [])
           .filter((s) => s?.name).slice(0, 12)
           .map((s) => ({ name: s.name!, pct: clamp(s.pct) }));
-        // Construir el análisis base con heurístico solo para campos de estructura
         const base = analyzeCV(text);
         analyzed = {
           ...base,
