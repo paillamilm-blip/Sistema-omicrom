@@ -18,6 +18,7 @@ import { LiveNetworkFeed } from './components/shared/LivePresence';
 import { IncomingJobPush } from './components/shared/IncomingJobs';
 import { PublicProfileGate } from './components/perfil/RedSocial';
 import { VerifyCredentialView } from './components/perfil/VerifyCredential';
+import { BottomNav } from './components/shared/BottomNav';
 import { C, FONT } from './theme';
 import type { TabId } from './types';
 
@@ -117,6 +118,9 @@ function AppShell() {
           </ErrorBoundary>
         )}
       </NavigationStack>
+
+      {/* Navegación inferior — visible en todos los tabs excepto home (OmicronAssistant) */}
+      <BottomNav />
 
       <LiveNetworkFeed />
       <IncomingJobPush />

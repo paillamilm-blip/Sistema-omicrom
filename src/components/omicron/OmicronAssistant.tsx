@@ -176,7 +176,8 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
     const loop = (t: number) => {
       const dt = Math.min(t - last, 64);
       last = t;
-      setRot((r) => (r + dt * 0.00015) % (Math.PI * 2));
+      // Rotación suave y lenta — friendly para la vista
+      setRot((r) => (r + dt * 0.00012) % (Math.PI * 2));
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -205,8 +206,8 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
 
   return (
     <div ref={containerRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3 }}>
-      {/* Anillo guía (se desvanece a medida que armás tu propia red de nodos) */}
-      <div style={{ position: 'absolute', left: '50%', top: '47%', width: '88%', height: '40%', transform: 'translate(-50%,-50%)', borderRadius: '50%', border: `1px dashed ${C.line}`, opacity: hasPinned ? 0.16 : 0.45, transition: 'opacity 0.5s ease' }} />
+      {/* Anillo guía vertical (se desvanece a medida que armás tu propia red de nodos) */}
+      <div style={{ position: 'absolute', left: '50%', top: '50%', width: '76%', height: '80%', transform: 'translate(-50%,-50%)', borderRadius: '50%', border: `1px dashed ${C.line}`, opacity: hasPinned ? 0.12 : 0.35, transition: 'opacity 0.8s ease' }} />
 
       {/* Zona de anclaje: franja justo arriba de donde se habla/escribe. Se
           resalta SOLO mientras se está arrastrando un nodo por encima de ella
@@ -228,8 +229,9 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
           if (!p) return null;
           const isHi = node.tab === highlightTab;
           return (
-            <line key={node.tab} x1="50%" y1="47%" x2={`${p.x}%`} y2={`${p.y}%`}
-              stroke={isHi ? (highlightAccent || C.gold) : C.cyan} strokeWidth={1} strokeDasharray="2 5" opacity={0.32} />
+            <line key={node.tab} x1="50%" y1="50%" x2={`${p.x}%`} y2={`${p.y}%`}
+              stroke={isHi ? (highlightAccent || C.gold) : C.cyan} strokeWidth={0.8} strokeDasharray="3 6" opacity={0.25}
+              style={{ transition: 'all 0.4s ease' }} />
           );
         })}
       </svg>
@@ -238,9 +240,16 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
         const anchorIdx = anchoredOrder.indexOf(node.tab);
         const isAnchored = anchorIdx !== -1;
         const custom = pinned[node.tab];
-        const ang = rot + (i / n) * Math.PI * 2;
-        const autoX = 50 + 42 * Math.cos(ang);
-        const autoY = 47 + 20 * Math.sin(ang);
+        // Órbita helicoidal vertical: los nodos envuelven el ADN como
+        // electrones en una estructura 3D. Distribución vertical uniforme
+        // con rotación helicoidal (1.5 vueltas) para dar profundidad.
+        const verticalSpread = 0.75; // % del alto que ocupa la distribución
+        const helixTurns = 1.5;
+        const nodeProgress = i / n; // 0..1 uniformemente espaciado
+        const ang = rot + nodeProgress * Math.PI * 2 * helixTurns;
+        const helixRadius = 38 + Math.sin(ang * 0.5) * 4; // radio variable suave
+        const autoX = 50 + helixRadius * Math.cos(ang);
+        const autoY = (50 - verticalSpread * 50 / 2) + nodeProgress * verticalSpread * 50 + Math.sin(ang) * 3;
         const anchorPos = isAnchored ? anchorSlotPos(anchorIdx, anchoredOrder.length) : null;
         const x = anchorPos?.x ?? custom?.xPct ?? autoX;
         const y = anchorPos?.y ?? custom?.yPct ?? autoY;
@@ -269,8 +278,9 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
           <motion.button
             key={node.tab}
             drag
-            dragMomentum={false}
-            dragElastic={0}
+            dragMomentum
+            dragElastic={0.15}
+            dragTransition={{ bounceStiffness: 300, bounceDamping: 25 }}
             dragConstraints={containerRef}
             onDragStart={() => {
               // Freeze en la posición actual (recién al confirmarse el arrastre,
@@ -353,7 +363,9 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
             }}
             aria-label={`${node.label} — tocá para entrar, mantené para reposicionar`}
             aria-pressed={isSelected}
-            whileTap={{ scale: 1.12 }}
+            whileTap={{ scale: 1.08 }}
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             style={{
               position: 'absolute',
               left: `calc(${x}% - 24px)`, top: `calc(${y}% - 24px)`,

@@ -42,30 +42,6 @@ async function marketServerError(error: unknown, data: unknown, fallback: string
   return (error as { message?: string } | null)?.message || fallback;
 }
 
-const DEMO_SERVICES: MarketService[] = [
-  {
-    id: 'demo-1', seller_id: null, title: 'Desarrollo App React',
-    description: 'Aplicación React completa con PWA', price: 350,
-    category: 'dev', tags: ['React', 'PWA'], rating: 4.8, total_reviews: 24,
-    is_active: true, created_at: new Date().toISOString(),
-    seller: { id: 'demo-s1', username: 'marco_v', full_name: 'Marco V', avatar_url: null, node_type: 'Nodo Core', node_level: 2, token_balance: 0, pe_points: 520, is_pioneer: true, bio: null, skills: null, location: null, created_at: '', reputation_score: 78, competencias_validadas: 4 },
-  },
-  {
-    id: 'demo-2', seller_id: null, title: 'Diseño UI/UX Completo',
-    description: 'Sistema de diseño en Figma completo', price: 180,
-    category: 'diseño', tags: ['Figma', 'Sistema'], rating: 4.9, total_reviews: 31,
-    is_active: true, created_at: new Date().toISOString(),
-    seller: { id: 'demo-s2', username: 'ana_design', full_name: 'Ana Design', avatar_url: null, node_type: 'Nodo Arquitecto', node_level: 1, token_balance: 0, pe_points: 280, is_pioneer: false, bio: null, skills: null, location: null, created_at: '', reputation_score: 85, competencias_validadas: 6 },
-  },
-  {
-    id: 'demo-3', seller_id: null, title: 'Consultoría Técnica Cloud',
-    description: 'Asesoría en arquitectura y AWS', price: 120,
-    category: 'consulta', tags: ['AWS', 'Arquitectura'], rating: 4.7, total_reviews: 18,
-    is_active: true, created_at: new Date().toISOString(),
-    seller: { id: 'demo-s3', username: 'carlos_arch', full_name: 'Carlos Arch', avatar_url: null, node_type: 'Nodo Fundador', node_level: 1, token_balance: 0, pe_points: 890, is_pioneer: true, bio: null, skills: null, location: null, created_at: '', reputation_score: 92, competencias_validadas: 9 },
-  },
-];
-
 const CAT_MAP: { key: Category; label: string; icon: string }[] = [
   { key: 'todos',   label: 'Todos',  icon: '' },
   { key: 'dev',     label: 'Dev',    icon: '💻' },
@@ -143,11 +119,25 @@ export function MarketTab() {
         })) as MarketService[];
       }
     }
-    setServices(fetched.length > 0 ? fetched : DEMO_SERVICES);
+    setServices(fetched);
     setLoading(false);
   }, []);
 
   useEffect(() => { loadServices(); }, [loadServices]);
+
+  // Realtime: actualizar cuando se publican o actualizan servicios
+  useEffect(() => {
+    const channel = supabase
+      .channel('market-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'market_services' }, () => {
+        void loadServices();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'market_services' }, () => {
+        void loadServices();
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [loadServices]);
 
   const filtered = services.filter(s => {
     if (category === 'todos') return true;

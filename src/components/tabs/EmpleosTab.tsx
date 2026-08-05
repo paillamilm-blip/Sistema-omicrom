@@ -98,6 +98,20 @@ export function EmpleosTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Realtime: actualizar cuando se publican nuevas ofertas
+  useEffect(() => {
+    const channel = supabase
+      .channel('empleos-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'job_postings' }, () => {
+        void load();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'job_postings' }, () => {
+        void load();
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [load]);
+
   async function apply(jobId: string) {
     setBusy(jobId);
     try {

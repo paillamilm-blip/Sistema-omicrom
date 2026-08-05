@@ -27,7 +27,7 @@ const AXES: [string, 'execution' | 'quality' | 'transcendence' | 'foundation', s
 ];
 
 export function PerfilTab() {
-  const { profile, refreshProfile } = useApp();
+  const { profile, refreshProfile, setActiveTab } = useApp();
   const gemelo = useGemeloDigital();
   const [showEdit, setShowEdit] = useState(false);
   const [showShare, setShowShare] = useState(false);
@@ -239,7 +239,7 @@ export function PerfilTab() {
             <Database size={15} color={C.green} />
             <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.green }}>Desarrollado por mí</span>
           </div>
-          <button onClick={() => {/* navigate to vault */ }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button onClick={() => setActiveTab('vault')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
             <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>Ver Bóveda</span>
             <ArrowRight size={12} color={C.cyanDim} />
           </button>
