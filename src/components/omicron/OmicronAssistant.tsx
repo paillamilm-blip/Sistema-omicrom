@@ -176,8 +176,8 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
     const loop = (t: number) => {
       const dt = Math.min(t - last, 64);
       last = t;
-      // Rotación suave y lenta — friendly para la vista
-      setRot((r) => (r + dt * 0.00012) % (Math.PI * 2));
+      // Rotación suave y muy lenta — no distrae, es ambiental
+      setRot((r) => (r + dt * 0.00008) % (Math.PI * 2));
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -240,16 +240,16 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
         const anchorIdx = anchoredOrder.indexOf(node.tab);
         const isAnchored = anchorIdx !== -1;
         const custom = pinned[node.tab];
-        // Órbita helicoidal vertical: los nodos envuelven el ADN como
-        // electrones en una estructura 3D. Distribución vertical uniforme
-        // con rotación helicoidal (1.5 vueltas) para dar profundidad.
-        const verticalSpread = 0.75; // % del alto que ocupa la distribución
-        const helixTurns = 1.5;
-        const nodeProgress = i / n; // 0..1 uniformemente espaciado
+        // Órbita helicoidal vertical: los nodos están FIJOS en órbita
+        // alrededor del ADN. NO se pueden soltar en cualquier parte —
+        // solo se pueden reordenar dentro de la órbita o anclar abajo.
+        const verticalSpread = 0.70;
+        const helixTurns = 1.2;
+        const nodeProgress = i / n;
         const ang = rot + nodeProgress * Math.PI * 2 * helixTurns;
-        const helixRadius = 38 + Math.sin(ang * 0.5) * 4; // radio variable suave
+        const helixRadius = 40 + Math.sin(ang * 0.3) * 3;
         const autoX = 50 + helixRadius * Math.cos(ang);
-        const autoY = (50 - verticalSpread * 50 / 2) + nodeProgress * verticalSpread * 50 + Math.sin(ang) * 3;
+        const autoY = (50 - verticalSpread * 50 / 2) + nodeProgress * verticalSpread * 50;
         const anchorPos = isAnchored ? anchorSlotPos(anchorIdx, anchoredOrder.length) : null;
         const x = anchorPos?.x ?? custom?.xPct ?? autoX;
         const y = anchorPos?.y ?? custom?.yPct ?? autoY;
@@ -309,14 +309,10 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
               if (!nodeEl || !containerEl) { setZoneActive(false); return; }
               const containerRect = containerEl.getBoundingClientRect();
               const py = ((info.point.y - containerRect.top) / containerRect.height) * 100;
+              const px = ((info.point.x - containerRect.left) / containerRect.width) * 100;
 
               if (py >= ANCHOR_ZONE_Y_MIN) {
-                // Soltado dentro de la zona de anclaje: se ordena en fila según
-                // la posición horizontal donde se soltó — "según mi criterio",
-                // el usuario decide el orden con dónde suelta cada nodo dentro
-                // de la franja (se inserta antes del primer nodo anclado que
-                // esté más a la derecha del punto de soltado).
-                const px = ((info.point.x - containerRect.left) / containerRect.width) * 100;
+                // Soltado en zona de anclaje: ordenar en fila
                 const rest = anchoredOrder.filter((t) => t !== node.tab);
                 let insertAt = rest.length;
                 for (let k = 0; k < rest.length; k++) {
@@ -325,29 +321,23 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
                 }
                 const next = [...rest.slice(0, insertAt), node.tab, ...rest.slice(insertAt)];
                 persistAnchored(next);
-                // Ya no necesita una posición libre — la franja la controla.
                 if (pinned[node.tab]) {
                   const restPinned = { ...pinned };
                   delete restPinned[node.tab];
                   persist(restPinned);
                 }
+              } else if (px >= 8 && px <= 92 && py >= 8 && py <= ANCHOR_ZONE_Y_MIN - 2) {
+                // Soltado DENTRO de la zona válida del orbe: fijar posición
+                persist({ ...pinned, [node.tab]: { xPct: Math.min(92, Math.max(8, px)), yPct: Math.min(ANCHOR_ZONE_Y_MIN - 4, Math.max(8, py)) } });
               } else {
-                // Se lee la posición REAL del propio nodo (su getBoundingClientRect
-                // tras el arrastre), no el punto final del puntero. Si se usara el
-                // punto del puntero, soltar el nodo sin haberlo agarrado en su
-                // centro exacto provocaría un salto visible al soltar — el mismo
-                // tipo de bug de "el nodo se mueve solo" que este rediseño busca
-                // eliminar, ahora en la capa de arrastre en vez de en la de click.
-                const nodeRect = nodeEl.getBoundingClientRect();
-                const centerX = nodeRect.left + nodeRect.width / 2;
-                const centerY = nodeRect.top + nodeRect.height / 2;
-                const cx = ((centerX - containerRect.left) / containerRect.width) * 100;
-                const cy = ((centerY - containerRect.top) / containerRect.height) * 100;
-                persist({ ...pinned, [node.tab]: { xPct: Math.min(96, Math.max(4, cx)), yPct: Math.min(ANCHOR_ZONE_Y_MIN - 2, Math.max(4, cy)) } });
+                // Soltado FUERA de la zona válida: snap-back a la órbita (borrar posición fija)
+                if (pinned[node.tab]) {
+                  const restPinned = { ...pinned };
+                  delete restPinned[node.tab];
+                  persist(restPinned);
+                }
               }
               setZoneActive(false);
-              // Marca "se acaba de arrastrar" y la limpia en el siguiente ciclo
-              // (no ahora mismo) — ver nota técnica junto a justDraggedRef.
               justDraggedRef.current.add(node.tab);
               setTimeout(() => justDraggedRef.current.delete(node.tab), 0);
             }}

@@ -85,7 +85,7 @@ export default function ParticleOrb({
 
     const draw = () => {
       raf = requestAnimationFrame(draw);
-      t += 0.008;
+      t += 0.003; // velocidad mucho más lenta — ADN orgánico, no mecánico
 
       // ── Nivel de audio (0..1) ──────────────────────────────────────
       let level = 0.10 + Math.sin(t * 1.2) * 0.04; // latido base
@@ -101,9 +101,9 @@ export default function ParticleOrb({
 
       ctx.clearRect(0, 0, W, H);
       const cx = W / 2, cy = H / 2;
-      const baseR = Math.min(W, H) * 0.28; // radio de la hélice
-      const helixH = Math.min(W, H) * 0.72; // altura total de la hélice
-      const fov = 3.5;
+      const baseR = Math.min(W, H) * 0.24; // radio de la hélice (más compacto)
+      const helixH = Math.min(W, H) * 0.65; // altura total de la hélice
+      const fov = 2.8; // perspectiva más pronunciada (más 3D)
 
       // ── Halo central que respira ────────────────────────────────────
       const glowR = baseR * (2.2 + level * 1.2);
@@ -114,13 +114,13 @@ export default function ParticleOrb({
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, W, H);
 
-      // ── Rotación global del ADN ─────────────────────────────────────
-      const rotY = t * 0.4;
-      const rotX = 0.3 + Math.sin(t * 0.2) * 0.1; // leve cabeceo
+      // ── Rotación global del ADN — muy lenta, como ADN real bajo microscopio ──
+      const rotY = t * 0.15; // rotación principal (era 0.4 — demasiado rápido)
+      const rotX = 0.35 + Math.sin(t * 0.08) * 0.06; // cabeceo sutil y lento
       const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
       const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
 
-      // Función de proyección 3D → 2D
+      // Función de proyección 3D → 2D con perspectiva fuerte
       const project = (x: number, y: number, z: number): { sx: number; sy: number; scale: number; depth: number } => {
         // Rotar en Y
         const x1 = x * cosY - z * sinY;
@@ -128,8 +128,8 @@ export default function ParticleOrb({
         // Rotar en X
         const y1 = y * cosX - z1 * sinX;
         const z2 = y * sinX + z1 * cosX;
-        // Perspectiva
-        const scale = fov / (fov - z2 * 0.6);
+        // Perspectiva pronunciada — partículas del fondo son mucho más chicas
+        const scale = fov / (fov - z2 * 0.9);
         return {
           sx: cx + x1 * baseR * scale,
           sy: cy + y1 * baseR * scale,
@@ -150,11 +150,11 @@ export default function ParticleOrb({
       // ── Generar puntos de las dos cadenas helicoidales ──────────────
       for (let i = 0; i < STRAND_PARTICLES; i++) {
         const progress = i / (STRAND_PARTICLES - 1); // 0..1 a lo largo de la hélice
-        const angle = progress * Math.PI * 2 * HELIX_TURNS + t * 2; // scroll continuo
+        const angle = progress * Math.PI * 2 * HELIX_TURNS + t * 0.8; // scroll lento y fluido
         const yPos = (progress - 0.5) * 2; // -1..1 normalizado
 
         // Onda de energía que recorre la hélice
-        const wave = Math.sin(progress * Math.PI * 4 - t * 3) * 0.5 + 0.5;
+        const wave = Math.sin(progress * Math.PI * 4 - t * 1.2) * 0.5 + 0.5;
         const energy = wave * (0.4 + level * 0.6);
 
         // Strand A
@@ -183,11 +183,11 @@ export default function ParticleOrb({
       // ── Puentes entre cadenas (base pairs del ADN) ──────────────────
       for (let i = 0; i < BRIDGE_COUNT; i++) {
         const progress = (i + 0.5) / BRIDGE_COUNT;
-        const angle = progress * Math.PI * 2 * HELIX_TURNS + t * 2;
+        const angle = progress * Math.PI * 2 * HELIX_TURNS + t * 0.8;
         const yPos = (progress - 0.5) * 2;
 
         // Energía pulsante por puente
-        const bridgeWave = Math.sin(i * 1.3 + t * 4) * 0.5 + 0.5;
+        const bridgeWave = Math.sin(i * 1.3 + t * 1.5) * 0.5 + 0.5;
         const bridgeEnergy = bridgeWave * (0.3 + level * 0.7);
 
         for (let d = 0; d < BRIDGE_DOTS; d++) {
