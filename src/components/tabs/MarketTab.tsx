@@ -2,7 +2,7 @@
 // Mercado — tema "Industria 5.0": acero oscuro, rejilla blueprint, HUD,
 // azul eléctrico + ámbar de energía. Look tecnológico/industrial de alto impacto.
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ShoppingCart, Star, Plus, Cpu, ShieldCheck, TrendingUp, Sparkles, Loader2, Menu, X, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { C as T } from '../../theme';
@@ -126,18 +126,20 @@ export function MarketTab() {
   useEffect(() => { loadServices(); }, [loadServices]);
 
   // Realtime: actualizar cuando se publican o actualizan servicios
+  const loadRef = useRef(loadServices);
+  loadRef.current = loadServices;
   useEffect(() => {
     const channel = supabase
       .channel('market-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'market_services' }, () => {
-        void loadServices();
+        void loadRef.current();
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'market_services' }, () => {
-        void loadServices();
+        void loadRef.current();
       })
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [loadServices]);
+  }, []);
 
   const filtered = services.filter(s => {
     if (category === 'todos') return true;

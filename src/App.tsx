@@ -50,7 +50,7 @@ function TabLoader() {
 }
 
 function AppShell() {
-  const { authStatus, isLoadingProfile } = useApp();
+  const { authStatus, isLoadingProfile, activeTab } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [profileDetail, setProfileDetail] = useState(false);
@@ -119,8 +119,8 @@ function AppShell() {
         )}
       </NavigationStack>
 
-      {/* Navegación inferior — visible en todos los tabs excepto home (OmicronAssistant) */}
-      <BottomNav />
+      {/* Navegación inferior — oculta en home (OmicronAssistant tiene su propia nav) */}
+      {activeTab !== 'perfil' && <BottomNav />}
 
       <LiveNetworkFeed />
       <IncomingJobPush />
