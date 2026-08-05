@@ -170,14 +170,22 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
     try { return !localStorage.getItem(NODE_HINT_KEY) && Object.keys(loadNodePositions()).length === 0; } catch { return false; }
   });
 
+  const rotRef = useRef(0);
+
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
+    let accum = 0;
     const loop = (t: number) => {
       const dt = Math.min(t - last, 64);
       last = t;
-      // Rotación suave y muy lenta — no distrae, es ambiental
-      setRot((r) => (r + dt * 0.00008) % (Math.PI * 2));
+      rotRef.current = (rotRef.current + dt * 0.00008) % (Math.PI * 2);
+      accum += dt;
+      // Actualizar React solo a ~15fps para no matar rendimiento
+      if (accum > 66) {
+        setRot(rotRef.current);
+        accum = 0;
+      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -278,9 +286,8 @@ function NodeOrbit({ nodes, onSelect, highlightTab, highlightAccent }: {
           <motion.button
             key={node.tab}
             drag
-            dragMomentum
-            dragElastic={0.15}
-            dragTransition={{ bounceStiffness: 300, bounceDamping: 25 }}
+            dragMomentum={false}
+            dragElastic={0.1}
             dragConstraints={containerRef}
             onDragStart={() => {
               // Freeze en la posición actual (recién al confirmarse el arrastre,

@@ -1,7 +1,7 @@
 // components/tabs/EmpleosTab.tsx
 // Empleos — estilo Industria 5.0. Publicar oferta + matchmaking (terna) + aplicar.
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Briefcase, Plus, Flame, Clock, CheckCircle2, X, Star, Send, Radar, MapPin, Navigation, Wifi, LocateFixed } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { C as T, FONT as TF } from '../../theme';
@@ -99,18 +99,20 @@ export function EmpleosTab() {
   useEffect(() => { load(); }, [load]);
 
   // Realtime: actualizar cuando se publican nuevas ofertas
+  const loadRef = useRef(load);
+  loadRef.current = load;
   useEffect(() => {
     const channel = supabase
       .channel('empleos-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'job_postings' }, () => {
-        void load();
+        void loadRef.current();
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'job_postings' }, () => {
-        void load();
+        void loadRef.current();
       })
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [load]);
+  }, []);
 
   async function apply(jobId: string) {
     setBusy(jobId);
