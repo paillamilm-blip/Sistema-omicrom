@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
+import { OrbOnboarding } from './OrbOnboarding';
 import { OraculoBar } from '../OraculoBar';
 import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';
@@ -472,6 +473,20 @@ export function OrbShell() {
     };
   }, [state, isListening]);
 
+  // ── Onboarding handler ───────────────────────────────────────────────
+  const handleOnboardingComplete = useCallback((choice: 'examen' | 'cv' | 'ambos') => {
+    if (choice === 'cv' || choice === 'ambos') {
+      setActiveTab('perfil');
+      const node = dynamicOrbNodes[0]; // Inicio hub
+      setSelectedNode(node);
+      setState('fullscreen');
+    } else {
+      setActiveTab('maxskill');
+      const node = dynamicOrbNodes.find((n: OrbNode) => n.id === 'habilidades');
+      if (node) { setSelectedNode(node); setState('fullscreen'); }
+    }
+  }, [setActiveTab, dynamicOrbNodes]);
+
   // (Voice control exposed via CustomEvents — see oracle:listening / oracle:voice listeners above)
 
   return (
@@ -482,6 +497,9 @@ export function OrbShell() {
       background: C.bg,
       overflow: 'hidden',
     }}>
+      {/* ── ONBOARDING (first time only) ────────────────────────────── */}
+      <OrbOnboarding onComplete={handleOnboardingComplete} />
+
       {/* ── ORB VIEW (always visible, fades when fullscreen) ─────────── */}
       <div style={{
         position: 'absolute',
