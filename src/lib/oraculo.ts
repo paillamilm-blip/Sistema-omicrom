@@ -69,13 +69,30 @@ export interface TutorResult {
   error?: string;
 }
 
+export interface CoachContext {
+  skills?: string[];
+  cv_summary?: string;
+  execution?: number;
+  quality?: number;
+  transcendence?: number;
+  foundation?: number;
+  reputation?: number;
+  pe?: number;
+}
+
 /**
  * Pregunta libre a la IA (Edge Function `tutor`, respaldada por Gemini).
  * Ómicron la usa como cerebro conversacional general. Degrada con gracia.
  */
-export async function askTutor(question: string): Promise<TutorResult> {
+export async function askTutor(question: string, ctx?: CoachContext): Promise<TutorResult> {
   try {
-    const { data, error } = await supabase.functions.invoke('tutor', { body: { question } });
+    const { data, error } = await supabase.functions.invoke('tutor', {
+      body: {
+        question,
+        skills: ctx?.skills ?? [],
+        cv_summary: ctx?.cv_summary ?? '',
+      },
+    });
     if (error) {
       return { error: 'No pude consultar al Tutor IA. ¿Está desplegada la función "tutor" y hay sesión activa?' };
     }
@@ -93,9 +110,20 @@ export async function askTutor(question: string): Promise<TutorResult> {
  * Consulta al Coach IA (Edge Function `coach`, respaldada por Gemini).
  * Degrada con gracia si la función no está desplegada o falla.
  */
-export async function askCoach(): Promise<CoachResult> {
+export async function askCoach(ctx?: CoachContext): Promise<CoachResult> {
   try {
-    const { data, error } = await supabase.functions.invoke('coach', { body: {} });
+    const { data, error } = await supabase.functions.invoke('coach', {
+      body: {
+        skills: ctx?.skills ?? [],
+        cv_summary: ctx?.cv_summary ?? '',
+        execution: ctx?.execution,
+        quality: ctx?.quality,
+        transcendence: ctx?.transcendence,
+        foundation: ctx?.foundation,
+        reputation: ctx?.reputation,
+        pe: ctx?.pe,
+      },
+    });
     if (error) {
       return { error: 'No pude consultar al Coach IA. ¿Está desplegada la función "coach" y hay sesión activa?' };
     }
