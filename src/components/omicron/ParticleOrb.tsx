@@ -63,7 +63,7 @@ export default function ParticleOrb({
     if (!mount) return;
 
     // ── Palette (organic mercury + bioluminescence) ─────────────────
-    const MERCURY = new THREE.Color(0.78, 0.8, 0.82);
+    const MERCURY = new THREE.Color(0.18, 0.28, 0.35);       // dark teal-chrome (no blanco)
     const BIO_GREEN = new THREE.Color(0.1, 0.85, 0.55);
     const BIO_CYAN = new THREE.Color(0.15, 0.7, 0.8);
     const BIO_PULSE = new THREE.Color(0.2, 0.95, 0.65);
@@ -73,7 +73,7 @@ export default function ParticleOrb({
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0x000000, 8, 18);
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-    camera.position.set(0, 0.2, 4.8);
+    camera.position.set(0, 0.1, 3.8);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -173,23 +173,35 @@ export default function ParticleOrb({
 
       void main() {
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
-        float fresnel = pow(1.0 - abs(dot(viewDir, vNormal)), 3.0);
-        vec3 envColor = mix(uMercuryColor, uBioColor, fresnel * 0.35);
-        float irid = sin(dot(vNormal, vec3(1.0)) * 4.0 + uTime * 0.5) * 0.5 + 0.5;
-        vec3 iridescentColor = mix(
-          vec3(0.7, 0.8, 0.85),
-          mix(uBioColor, vec3(0.3, 0.5, 0.9), irid),
-          fresnel * 0.4
-        );
-        vec3 finalColor = mix(envColor, iridescentColor, fresnel);
+        float fresnel = pow(1.0 - abs(dot(viewDir, vNormal)), 2.5);
+
+        // Base: mezcla de mercurio oscuro + bio cyan (siempre visible)
+        vec3 baseColor = mix(uMercuryColor * 0.4, uBioColor * 0.6, 0.35 + fresnel * 0.3);
+
+        // Iridiscencia orgánica en bordes
+        float irid = sin(dot(vNormal, vec3(1.0, 0.5, 0.3)) * 5.0 + uTime * 0.4) * 0.5 + 0.5;
+        vec3 iridescentColor = mix(uBioColor, vec3(0.3, 0.5, 0.9), irid);
+
+        // Combinar: base + iridiscencia en bordes
+        vec3 finalColor = mix(baseColor, iridescentColor, fresnel * 0.6);
+
+        // Breath orgánico (pulso de vida constante, sin audio)
+        float breath = sin(uTime * 1.2) * 0.08 + 0.12;
+        finalColor += uBioColor * breath;
+
+        // Audio-reactive boost
         float pulse = sin(vWorldPos.y * 3.0 + uTime * 1.5) * 0.5 + 0.5;
-        finalColor += uBioColor * pulse * uAudioLevel * 0.12;
-        float alpha = 0.82 + fresnel * 0.18;
+        finalColor += uBioColor * pulse * uAudioLevel * 0.2;
+
+        // Glow en bordes (halo rim)
+        finalColor += uBioColor * fresnel * 0.35;
+
+        float alpha = 0.88 + fresnel * 0.12;
         gl_FragColor = vec4(finalColor, alpha);
       }
     `;
 
-    const sphereGeom = new THREE.SphereGeometry(SPHERE_RADIUS * 0.72, 64, 64);
+    const sphereGeom = new THREE.SphereGeometry(SPHERE_RADIUS * 0.85, 64, 64);
     const sphereMat = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
@@ -205,11 +217,11 @@ export default function ParticleOrb({
     orbGroup.add(mercurySphere);
 
     // ── Outer glow shell ────────────────────────────────────────────
-    const outerGlowGeom = new THREE.SphereGeometry(SPHERE_RADIUS * 0.82, 32, 32);
+    const outerGlowGeom = new THREE.SphereGeometry(SPHERE_RADIUS * 0.95, 32, 32);
     const outerGlowMat = new THREE.MeshBasicMaterial({
       color: BIO_CYAN,
       transparent: true,
-      opacity: 0.04,
+      opacity: 0.1,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
