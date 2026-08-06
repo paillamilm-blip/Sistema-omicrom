@@ -1,64 +1,140 @@
 // lib/voiceEngine.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · Motor de Voz Premium — síntesis natural y amigable.
-// Selecciona voces españolas premium (Google/Microsoft/Apple), ajusta
-// pitch alto para calidez, rate pausado para claridad, inserta pausas
-// inteligentes en puntos/comas para fluidez natural.
+// ÓMICRON · Motor de Voz — ElevenLabs (ultra-realista) + fallback Web Speech
+//
+// Prioridad:
+//   1. ElevenLabs (via Edge Function 'tts') — voz humana real
+//   2. Web Speech API (fallback) — si ElevenLabs no está configurado
+//
+// La app NO necesita saber cuál se usa: solo llama speak("texto").
 // ═══════════════════════════════════════════════════════════════════════
+import { supabase } from './supabase';
 
-/** Configuración de voz premium amigable. */
-const VOICE_CONFIG = {
-  // Pitch levemente alto = cálido sin sonar robótico
-  pitch: 1.02,
-  // Rate natural (1.0). La puntuación ya da pausas fluidas.
-  rate: 1.0,
-  // Volume: 100% (1.0) para claridad
+// ── Cache de audio para no repetir llamadas a ElevenLabs ─────────────
+const audioCache = new Map<string, string>(); // text hash → blob URL
+let currentAudio: HTMLAudioElement | null = null;
+let elevenLabsAvailable: boolean | null = null; // null = no probado aún
+
+// ── Web Speech API config (fallback) ─────────────────────────────────
+const FALLBACK_CONFIG = {
+  pitch: 1.0,
+  rate: 0.92,
   volume: 1.0,
 } as const;
 
 /**
- * Limpia el texto para una locución FLUIDA.
- * IMPORTANTE: la Web Speech API NO soporta SSML (<break/>, etc.). Inyectar
- * esas etiquetas hacía que la voz las leyera o perdiera parte del texto
- * (se escuchaba entrecortado/raro). Acá solo removemos markdown y
- * normalizamos espacios; la puntuación da las pausas naturales.
+ * Limpia texto para locución (quita markdown, normaliza espacios).
  */
 function cleanForSpeech(text: string): string {
   return text
-    .replace(/\*\*/g, '')       // negrita markdown
-    .replace(/[*_`#>|]/g, ' ')  // otros símbolos markdown
-    .replace(/\s+/g, ' ')       // colapsar espacios/saltos
+    .replace(/\*\*/g, '')
+    .replace(/[*_`#>|]/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
 /**
- * Selecciona la mejor voz española disponible en el navegador.
- * Prioriza voces premium de Google (es-ES-Standard-A), Microsoft (es-ES-Helena),
- * y Apple (Mónica, Paulina). Si no hay premium, usa cualquier voz española.
+ * Genera un hash simple del texto para cache.
  */
+function textHash(text: string): string {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = ((hash << 5) - hash) + text.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash.toString(36);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ELEVENLABS TTS (prioridad 1)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Intenta sintetizar voz con ElevenLabs via la Edge Function 'tts'.
+ * Retorna true si funcionó, false si no (y debe usar fallback).
+ */
+async function speakElevenLabs(
+  text: string,
+  onStart?: () => void,
+  onEnd?: () => void,
+): Promise<boolean> {
+  try {
+    const clean = cleanForSpeech(text);
+    if (!clean) return false;
+
+    // Truncate at 500 chars for cost control
+    const truncated = clean.length > 500 ? clean.slice(0, 497) + '...' : clean;
+
+    // Check cache first
+    const hash = textHash(truncated);
+    let blobUrl = audioCache.get(hash);
+
+    if (!blobUrl) {
+      // Call Edge Function
+      const { data, error } = await supabase.functions.invoke('tts', {
+        body: { text: truncated },
+      });
+
+      if (error || !data) {
+        // ElevenLabs not available — mark and fallback
+        elevenLabsAvailable = false;
+        return false;
+      }
+
+      // data is an ArrayBuffer (audio/mpeg) from the Edge Function
+      const blob = new Blob([data], { type: 'audio/mpeg' });
+      blobUrl = URL.createObjectURL(blob);
+
+      // Cache (keep max 20 entries)
+      if (audioCache.size > 20) {
+        const firstKey = audioCache.keys().next().value;
+        if (firstKey) {
+          URL.revokeObjectURL(audioCache.get(firstKey)!);
+          audioCache.delete(firstKey);
+        }
+      }
+      audioCache.set(hash, blobUrl);
+    }
+
+    // Mark as available
+    elevenLabsAvailable = true;
+
+    // Stop previous audio
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+
+    // Play audio
+    const audio = new Audio(blobUrl);
+    currentAudio = audio;
+
+    audio.onplay = () => { onStart?.(); };
+    audio.onended = () => { currentAudio = null; onEnd?.(); };
+    audio.onerror = () => { currentAudio = null; onEnd?.(); };
+
+    await audio.play();
+    return true;
+  } catch (err) {
+    console.warn('[voiceEngine] ElevenLabs failed, using fallback:', err);
+    elevenLabsAvailable = false;
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// WEB SPEECH API (fallback)
+// ═══════════════════════════════════════════════════════════════════════
+
 function selectBestVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   if (!voices || voices.length === 0) return null;
 
-  // Voces premium priorizadas (ordenadas por calidad y amigabilidad)
   const premiumNames = [
-    // Google Cloud TTS (las mejores — naturales + expresivas)
-    'Google español',
-    'es-ES-Standard-A', // Femenina estándar (muy natural)
-    'es-ES-Wavenet-C',  // Femenina Wavenet (IA — la más natural)
-    'es-ES-Neural2-A',  // Femenina neural
-    // Microsoft Azure TTS
-    'Microsoft Helena - Spanish (Spain)',
-    'es-ES-ElviraNeural',
-    // Apple macOS/iOS
-    'Mónica',           // Española (muy natural en Apple)
-    'Paulina',          // Mexicana (muy amigable)
-    'Jorge',            // Masculina española
-    // Voicepack Windows/Android
-    'Spanish Spain',
-    'es-ES',
+    'Google español', 'es-ES-Standard-A', 'es-ES-Wavenet-C', 'es-ES-Neural2-A',
+    'Microsoft Helena - Spanish (Spain)', 'es-ES-ElviraNeural',
+    'Mónica', 'Paulina', 'Jorge', 'Spanish Spain', 'es-ES',
   ];
 
-  // Buscar primera coincidencia premium
   for (const name of premiumNames) {
     const match = voices.find((v) =>
       v.name.toLowerCase().includes(name.toLowerCase()) ||
@@ -67,80 +143,78 @@ function selectBestVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice |
     if (match) return match;
   }
 
-  // Fallback: cualquier voz que empiece con "es-" (español)
   const anySpanish = voices.find((v) => v.lang.toLowerCase().startsWith('es'));
-  if (anySpanish) return anySpanish;
-
-  // Última opción: primera voz disponible
-  return voices[0];
+  return anySpanish || voices[0] || null;
 }
 
-/**
- * Habla el texto con voz natural premium amigable.
- * - Cancela cualquier síntesis anterior.
- * - Usa pitch alto (1.08) y rate pausado (0.95) para calidez.
- * - Inserta pausas inteligentes en puntos/comas.
- * - Selecciona automáticamente la mejor voz española disponible.
- * @param text Texto a sintetizar
- * @param onStart Callback opcional al iniciar la síntesis
- * @param onEnd Callback opcional al terminar la síntesis
- * @returns true si se inició la síntesis, false si no está soportado
- */
-export function speak(
+function speakWebSpeech(
   text: string,
   onStart?: () => void,
-  onEnd?: () => void
+  onEnd?: () => void,
 ): boolean {
   try {
-    // Defensivo: verificar soporte del navegador
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      return false;
-    }
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
 
-    // Cancelar cualquier síntesis previa
     window.speechSynthesis.cancel();
+    const clean = cleanForSpeech(text);
+    if (!clean) return false;
 
-    // Si el texto está vacío, no hacer nada
-    if (!text || text.trim().length === 0) {
-      return false;
-    }
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.pitch = FALLBACK_CONFIG.pitch;
+    utterance.rate = FALLBACK_CONFIG.rate;
+    utterance.volume = FALLBACK_CONFIG.volume;
 
-    // Crear utterance con texto limpio (sin SSML: la Web Speech API no lo soporta)
-    const utterance = new SpeechSynthesisUtterance(cleanForSpeech(text));
-
-    // Aplicar configuración premium
-    utterance.pitch = VOICE_CONFIG.pitch;
-    utterance.rate = VOICE_CONFIG.rate;
-    utterance.volume = VOICE_CONFIG.volume;
-
-    // Seleccionar la mejor voz española disponible
     const voices = window.speechSynthesis.getVoices();
     const bestVoice = selectBestVoice(voices);
     if (bestVoice) {
       utterance.voice = bestVoice;
       utterance.lang = bestVoice.lang;
     } else {
-      // Fallback: idioma español genérico
       utterance.lang = 'es-ES';
     }
 
-    // Callbacks opcionales
-    if (onStart) {
-      utterance.onstart = () => onStart();
-    }
+    if (onStart) utterance.onstart = () => onStart();
     if (onEnd) {
       utterance.onend = () => onEnd();
-      utterance.onerror = () => onEnd(); // También llamar onEnd en error
+      utterance.onerror = () => onEnd();
     }
 
-    // Iniciar síntesis
     window.speechSynthesis.speak(utterance);
     return true;
-  } catch (error) {
-    // Silencioso: si falla, no romper la app
-    console.warn('[voiceEngine] Error en síntesis de voz:', error);
+  } catch {
     return false;
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// PUBLIC API (la app solo llama estas funciones)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Habla el texto con la mejor voz disponible.
+ * Intenta ElevenLabs primero. Si no está configurado/falla, usa Web Speech.
+ */
+export function speak(
+  text: string,
+  onStart?: () => void,
+  onEnd?: () => void,
+): boolean {
+  if (!text || text.trim().length === 0) return false;
+
+  // If we already know ElevenLabs is not available, go straight to fallback
+  if (elevenLabsAvailable === false) {
+    return speakWebSpeech(text, onStart, onEnd);
+  }
+
+  // Try ElevenLabs (async) — fire and don't block
+  speakElevenLabs(text, onStart, onEnd).then((success) => {
+    if (!success) {
+      // Fallback to Web Speech
+      speakWebSpeech(text, onStart, onEnd);
+    }
+  });
+
+  return true; // Optimistic: something will play
 }
 
 /**
@@ -148,48 +222,35 @@ export function speak(
  */
 export function stopSpeaking(): void {
   try {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio = null;
+    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
-  } catch {
-    // Silencioso
-  }
+  } catch { /* silent */ }
 }
 
 /**
- * Verifica si el navegador soporta síntesis de voz.
+ * Verifica si el navegador soporta alguna forma de voz.
  */
 export function isSpeechSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window;
 }
 
 /**
- * Hook para cargar las voces disponibles (necesario en algunos navegadores).
- * Llama este hook en el mount de tu app principal para pre-cargar las voces.
+ * Pre-carga voces del navegador (necesario en Chrome).
  */
 export function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   return new Promise((resolve) => {
     try {
-      if (!isSpeechSupported()) {
-        resolve([]);
-        return;
-      }
-
+      if (!isSpeechSupported()) { resolve([]); return; }
       const synth = window.speechSynthesis;
       let voices = synth.getVoices();
-
-      if (voices.length > 0) {
-        resolve(voices);
-        return;
-      }
-
-      // En algunos navegadores (Chrome), las voces se cargan asíncronamente
-      synth.onvoiceschanged = () => {
-        voices = synth.getVoices();
-        resolve(voices);
-      };
-    } catch {
-      resolve([]);
-    }
+      if (voices.length > 0) { resolve(voices); return; }
+      synth.onvoiceschanged = () => { resolve(synth.getVoices()); };
+    } catch { resolve([]); }
   });
 }
