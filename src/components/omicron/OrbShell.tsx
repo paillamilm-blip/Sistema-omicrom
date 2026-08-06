@@ -979,6 +979,7 @@ export function OrbShell() {
         }}
         reputation={sbProfile?.reputation_score ?? 0}
         synergies={[]}
+        cvSummary={sbProfile?.cv_summary || ''}
         onExplore={() => setShowProfileVisual(false)}
       />
     </div>

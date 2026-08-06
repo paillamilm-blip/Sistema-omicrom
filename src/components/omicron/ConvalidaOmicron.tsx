@@ -223,6 +223,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
           axes={dossier.axes}
           reputation={rep}
           synergies={synergies}
+          cvSummary={dossier.summary || ai.text}
           onExplore={() => { setShowSkillVisual(false); onClose(); }}
         />
       </div>

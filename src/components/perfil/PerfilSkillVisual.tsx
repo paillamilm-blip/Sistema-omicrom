@@ -14,7 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, TrendingUp, Zap, Shield, Globe } from 'lucide-react';
+import { X, Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2 } from 'lucide-react';
 import { C, FONT } from '../../theme';
 
 export interface SkillVisualData {
@@ -39,6 +39,8 @@ export interface PerfilSkillVisualProps {
   reputation: number;
   /** Sinergias detectadas (frases) */
   synergies?: string[];
+  /** Resumen del CV extraído por IA (2 párrafos) — se muestra integrado en la tarjeta */
+  cvSummary?: string;
   /** Callback al tocar "Explorar mi orbe" */
   onExplore?: () => void;
 }
@@ -62,6 +64,7 @@ export function PerfilSkillVisual({
   axes,
   reputation,
   synergies = [],
+  cvSummary,
   onExplore,
 }: PerfilSkillVisualProps) {
   // Top 3 skills (ya ordenados por pct desc)
@@ -267,6 +270,88 @@ export function PerfilSkillVisual({
                 </span>
               </div>
             ))}
+          </motion.div>
+
+          {/* ═══ CV INTEGRADO — Skills fluyendo + resumen ═══ */}
+          <motion.div
+            initial={{ y: 12, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.45 }}
+            style={{
+              width: '100%', maxWidth: 360, padding: '0 24px', marginBottom: 16,
+            }}
+          >
+            {/* Header de la sección */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <FileText size={13} color={C.cyan} />
+              <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase' }}>
+                CV Convalidado
+              </span>
+              <CheckCircle2 size={11} color={C.green} />
+            </div>
+
+            {/* Todas las skills con barras de dominio (evidencia de convalidación) */}
+            <div style={{
+              borderRadius: 16, padding: '14px 14px 10px',
+              background: `linear-gradient(135deg, ${C.glass}, ${C.cyanGhost})`,
+              border: `1px solid ${C.line}`,
+              marginBottom: cvSummary ? 10 : 0,
+            }}>
+              {skillsDetail.slice(0, 8).map((skill, i) => (
+                <div key={skill.name} style={{ marginBottom: i < Math.min(skillsDetail.length, 8) - 1 ? 8 : 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <span style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 12, color: C.ink }}>
+                      {skill.name}
+                    </span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 11, color: SKILL_COLORS[i % SKILL_COLORS.length], fontWeight: 700 }}>
+                      {skill.pct}%
+                    </span>
+                  </div>
+                  <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${skill.pct}%` }}
+                      transition={{ delay: 0.5 + i * 0.08, duration: 0.7, ease: 'easeOut' }}
+                      style={{
+                        height: '100%', borderRadius: 3,
+                        background: `linear-gradient(90deg, ${SKILL_COLORS[i % SKILL_COLORS.length]}cc, ${SKILL_COLORS[(i + 1) % SKILL_COLORS.length]}88)`,
+                        boxShadow: `0 0 6px ${SKILL_COLORS[i % SKILL_COLORS.length]}44`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Resumen del CV (fluye como texto integrado) */}
+            {cvSummary && (
+              <div style={{
+                borderRadius: 14, padding: '12px 14px',
+                background: C.glass,
+                border: `1px solid ${C.line}`,
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                {/* Línea de flujo decorativa (izquierda) */}
+                <div style={{
+                  position: 'absolute', left: 0, top: 8, bottom: 8, width: 2,
+                  borderRadius: 1,
+                  background: `linear-gradient(to bottom, ${C.cyan}, ${C.purple}, ${C.gold})`,
+                  opacity: 0.6,
+                }} />
+                <div style={{ paddingLeft: 10 }}>
+                  <div style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1.5, color: C.mut, textTransform: 'uppercase', marginBottom: 6 }}>
+                    Resumen extraído
+                  </div>
+                  <p style={{
+                    margin: 0, fontFamily: FONT.body, fontSize: 12.5, lineHeight: 1.55,
+                    color: C.ink, whiteSpace: 'pre-wrap',
+                  }}>
+                    {cvSummary}
+                  </p>
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* ═══ 4 EJES — Barras radiales ═══ */}
