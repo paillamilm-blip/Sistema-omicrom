@@ -2,6 +2,9 @@ import { useState, lazy, Suspense, useCallback, useRef, useEffect } from 'react'
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OraculoBar } from '../OraculoBar';
 import { useApp } from '../../store/AppContext';
+import { useRealtime } from '../../store/RealtimeContext';
+import { interpret } from '../../lib/oraculo';
+import { speak } from '../../lib/voiceEngine';
 import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
 
@@ -75,7 +78,76 @@ export function OrbShell() {
   const [voiceLevel, setVoiceLevel] = useState(0);
   const [isListening, setIsListening] = useState(false);
   const [nodePositions, setNodePositions] = useState<{ id: string; x: number; y: number; depth: number }[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [responseMsg, setResponseMsg] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Handle text input (interpret intent → navigate or respond) ──────
+  const handleTextInput = useCallback((text: string) => {
+    const intent = interpret(text);
+    if (intent.kind === 'navigate') {
+      // Find matching node and tap it
+      const node = ORB_NODES.find(n => n.tab === intent.tab);
+      if (node) {
+        setSelectedNode(node);
+        setState('preview');
+        setActiveTab(node.tab);
+        const msg = `Abriendo ${node.label}.`;
+        setResponseMsg(msg);
+        speak(msg);
+      }
+    } else {
+      const msg = 'Toca un nodo del orbe para navegar, o dime: "abre academia", "ve a empleos", etc.';
+      setResponseMsg(msg);
+      speak(msg);
+    }
+    // Auto-hide response after 6s
+    if (responseTimer.current) clearTimeout(responseTimer.current);
+    responseTimer.current = setTimeout(() => setResponseMsg(null), 6000);
+  }, [setActiveTab]);
+
+  // ── Toggle listening (speech recognition) ──────────────────────────
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      setIsListening(false);
+      setVoiceLevel(0);
+      window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
+      return;
+    }
+    setIsListening(true);
+    setVoiceLevel(0.4);
+    window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: true } }));
+
+    // Use SpeechRecognition if available
+    const SR = ((window as unknown as { SpeechRecognition?: any }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: any }).webkitSpeechRecognition);
+    if (!SR) {
+      setResponseMsg('Tu navegador no soporta reconocimiento de voz. Prueba en Chrome.');
+      setIsListening(false);
+      return;
+    }
+    const recog = new SR();
+    recog.lang = 'es-ES';
+    recog.interimResults = false;
+    recog.continuous = false;
+    recog.onresult = (e: any) => {
+      const transcript = e.results[e.results.length - 1][0].transcript;
+      setInputText(transcript);
+      handleTextInput(transcript);
+    };
+    recog.onerror = () => {
+      setIsListening(false);
+      setVoiceLevel(0);
+      window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
+    };
+    recog.onend = () => {
+      setIsListening(false);
+      setVoiceLevel(0);
+      window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
+    };
+    recog.start();
+  }, [isListening, handleTextInput]);
 
   // ── Handle node tap → go to preview ─────────────────────────────────
   const handleNodeTap = useCallback((node: OrbNode) => {
@@ -380,10 +452,121 @@ export function OrbShell() {
         </div>
       )}
 
-      {/* ── ORÁCULO (floating voice bar — integrated) ────────────────── */}
+      {/* ── ORÁCULO INPUT BAR (always visible at bottom) ────────────── */}
       {state !== 'fullscreen' && (
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 15 }}>
-          <OraculoBar />
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 15,
+          padding: '12px 16px',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 12px)',
+          background: 'linear-gradient(0deg, rgba(0,2,6,0.95) 60%, transparent 100%)',
+        }}>
+          {/* Input bar (Hablá o escribí a Ómicron) */}
+          <form
+            onSubmit={(e: { preventDefault: () => void }) => {
+              e.preventDefault();
+              if (!inputText.trim()) return;
+              handleTextInput(inputText.trim());
+              setInputText('');
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              background: C.surface,
+              border: `1px solid ${C.line}`,
+              borderRadius: 28,
+              padding: '8px 12px',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+            }}
+          >
+            {/* Mic button */}
+            <button
+              type="button"
+              onClick={toggleListening}
+              aria-label={isListening ? 'Dejar de escuchar' : 'Hablar al Oráculo'}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                border: `1px solid ${isListening ? '#ff5c7a' : C.line}`,
+                background: isListening ? 'rgba(255,92,122,0.15)' : C.glass2,
+                color: isListening ? '#ff5c7a' : C.cyan,
+                cursor: 'pointer',
+                display: 'grid',
+                placeItems: 'center',
+                fontSize: 14,
+                flexShrink: 0,
+                animation: isListening ? 'cp-pulse 1.2s ease-in-out infinite' : 'none',
+              }}
+            >
+              🎤
+            </button>
+
+            {/* Text input */}
+            <input
+              value={inputText}
+              onChange={(e: { target: { value: string } }) => setInputText(e.target.value)}
+              placeholder="Hablá o escribí a Ómicron…"
+              style={{
+                flex: 1,
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                fontFamily: FONT.body,
+                fontSize: 15,
+                color: C.ink,
+              }}
+            />
+
+            {/* Send button */}
+            <button
+              type="submit"
+              disabled={!inputText.trim()}
+              aria-label="Enviar"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                border: 'none',
+                background: inputText.trim() ? C.cyan : C.glass2,
+                color: inputText.trim() ? '#000' : C.mut,
+                cursor: inputText.trim() ? 'pointer' : 'default',
+                display: 'grid',
+                placeItems: 'center',
+                fontSize: 14,
+                flexShrink: 0,
+                transition: 'background 0.15s ease, color 0.15s ease',
+              }}
+            >
+              ➤
+            </button>
+          </form>
+
+          {/* Response bubble */}
+          {responseMsg && (
+            <div style={{
+              marginTop: 8,
+              padding: '8px 12px',
+              background: C.surface,
+              border: `1px solid ${C.line}`,
+              borderRadius: 12,
+              fontFamily: FONT.body,
+              fontSize: 13,
+              color: C.ink,
+              lineHeight: 1.5,
+              backdropFilter: 'blur(10px)',
+            }}>
+              <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>
+                ÓMICRON ▸{' '}
+              </span>
+              {responseMsg}
+            </div>
+          )}
         </div>
       )}
 
