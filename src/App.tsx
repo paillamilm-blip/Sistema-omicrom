@@ -1,5 +1,5 @@
+import { useState, useEffect } from 'react';
 import { OrbShell } from './components/omicron/OrbShell';
-import { useState, useEffect, lazy, Suspense } from 'react';
 import { AppProvider, useApp } from './store/AppContext';
 import { AuthOverlay } from './components/auth/AuthOverlay';
 import { ResetPasswordOverlay } from './components/auth/ResetPasswordOverlay';
@@ -7,11 +7,7 @@ import { supabase } from './lib/supabase';
 import { NoAccess } from './components/shared/NoAccess';
 import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
-import OmicronAssistant from './components/omicron/OmicronAssistant';
 import { InstallPWA } from './components/shared/InstallPWA';
-import ParticleOrb from './components/omicron/ParticleOrb';
-import { UnifiedLayout } from './components/UnifiedLayout';
-import { NavigationStack } from './components/NavigationStack';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
@@ -19,73 +15,45 @@ import { LiveNetworkFeed } from './components/shared/LivePresence';
 import { IncomingJobPush } from './components/shared/IncomingJobs';
 import { PublicProfileGate } from './components/perfil/RedSocial';
 import { VerifyCredentialView } from './components/perfil/VerifyCredential';
-import { BottomNav } from './components/shared/BottomNav';
 import { C, FONT } from './theme';
-import type { TabId } from './types';
 
-const WalletTab     = lazy(() => import('./components/tabs/WalletTab').then(m => ({ default: m.WalletTab })));
-const ChatTab       = lazy(() => import('./components/tabs/ChatTab').then(m => ({ default: m.ChatTab })));
-const EmpleosTab    = lazy(() => import('./components/tabs/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
-const MarketTab     = lazy(() => import('./components/tabs/MarketTab').then(m => ({ default: m.MarketTab })));
-const PerfilTab     = lazy(() => import('./components/tabs/PerfilTab').then(m => ({ default: m.PerfilTab })));
-const MaxSkillTab   = lazy(() => import('./components/tabs/MaxSkillTab').then(m => ({ default: m.MaxSkillTab })));
-const AcademiaTab   = lazy(() => import('./components/tabs/AcademiaTab').then(m => ({ default: m.AcademiaTab })));
-const GobernanzaTab = lazy(() => import('./components/tabs/GobernanzaTab').then(m => ({ default: m.GobernanzaTab })));
-const VaultTab      = lazy(() => import('./components/tabs/VaultTab').then(m => ({ default: m.VaultTab })));
-
-const TAB_TITLES: Record<TabId, string> = {
-  perfil: 'Hub Central', maxskill: 'Habilidades', academia: 'Academia', market: 'Servicios',
-  empleos: 'Oportunidades', chat: 'Mensajes', wallet: 'Billetera', gobernanza: 'Gobernanza',
-  vault: 'Bóveda',
-};
-
-function TabLoader() {
-  return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: C.bg }}>
-      <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(92,200,255,0.06)', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(94,92,230,0.28)' }}>
-        <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
-      </div>
-      <p style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase' }}>Cargando módulo...</p>
-    </div>
-  );
-}
+// ═══════════════════════════════════════════════════════════════════════
+// App.tsx — Entrada principal de Sistema Ómicron
+//
+// La navegación completa vive en OrbShell (el orbe neuronal).
+// Este archivo solo maneja: auth flow + loading + providers.
+// ═══════════════════════════════════════════════════════════════════════
 
 function AppShell() {
-  const { authStatus, isLoadingProfile, activeTab } = useApp();
+  const { authStatus, isLoadingProfile } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
-  const [profileDetail, setProfileDetail] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
       if (event === 'PASSWORD_RECOVERY') setShowResetPassword(true);
     });
     return () => subscription.unsubscribe();
   }, []);
 
+  // ── Loading state ─────────────────────────────────────────────────
   if (authStatus === 'loading' || isLoadingProfile) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(94,92,230,0.14), transparent 60%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', width: 168, height: 168 }}>
-          <ParticleOrb />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
-          <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
-          <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicron...</p>
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
+        <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicron...</p>
       </div>
     );
   }
 
+  // ── Auth gates ────────────────────────────────────────────────────
   if (showResetPassword) return <ResetPasswordOverlay onDone={() => setShowResetPassword(false)} />;
   if (authStatus === 'unauthenticated') return <AuthOverlay />;
   if (authStatus === 'no_access') return <NoAccess />;
 
+  // ── Main app: the orb IS the app ─────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-
-      {/* ── ORBE NEURONAL: la app es el orbe ──────────────────────── */}
       <OrbShell />
 
       <LiveNetworkFeed />

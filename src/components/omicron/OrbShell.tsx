@@ -9,6 +9,7 @@ import { speak } from '../../lib/voiceEngine';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
 import { evaluateProactiveEvents } from '../../lib/proactiveEngine';
+import { supabase } from '../../lib/supabase';
 import { C, FONT } from '../../theme';
 import type { TabId, GemeloDigital } from '../../types';
 
@@ -153,11 +154,47 @@ export function OrbShell() {
 
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
+  const [actaScores, setActaScores] = useState<Map<string, number>>(new Map());
+
+  // Load real exam scores (actas_evidencia) — nodos brillan según examen real
+  useEffect(() => {
+    if (!sbProfile?.id) return;
+    supabase
+      .from('actas_evidencia')
+      .select('node_id, puntaje_global')
+      .eq('user_id', sbProfile.id)
+      .eq('veredicto', 'APROBADO')
+      .then(({ data }: { data: any }) => {
+        if (data && data.length > 0) {
+          const m = new Map<string, number>();
+          (data as { node_id: string; puntaje_global: number }[]).forEach(a => {
+            // Keep highest score per node
+            const existing = m.get(a.node_id) || 0;
+            if (a.puntaje_global > existing) m.set(a.node_id, a.puntaje_global);
+          });
+          setActaScores(m);
+        }
+      });
+  }, [sbProfile?.id]);
+
   const dynamicOrbNodes = useMemo((): OrbNode[] => {
     const userSkills: string[] = sbProfile?.skills ?? (profile as any).skills ?? [];
     const skillNodes = buildSkillNodes(userSkills);
-    return [...HUB_NODES, ...skillNodes];
-  }, [sbProfile, profile]);
+    // Enrich skill nodes with real exam scores
+    const enriched = skillNodes.map(node => {
+      // Try to find an acta score for this skill (match by label)
+      let realLevel = node.level ?? 0.7;
+      actaScores.forEach((score, nodeId) => {
+        // Match if the acta node_id contains the skill label (case insensitive)
+        if (nodeId.toLowerCase().includes(node.label.toLowerCase().slice(0, 10)) ||
+            node.id.includes(nodeId)) {
+          realLevel = score / 100; // acta puntaje is 0-100, we need 0-1
+        }
+      });
+      return { ...node, level: realLevel };
+    });
+    return [...HUB_NODES, ...enriched];
+  }, [sbProfile, profile, actaScores]);
 
   // ── Compute node levels from user's Gemelo profile ──────────────────
   // Maps each node to a 0-1 level based on validated skills and axes
