@@ -7,6 +7,7 @@ import { interpret, askCoach } from '../../lib/oraculo';
 import { speak } from '../../lib/voiceEngine';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
+import { evaluateProactiveEvents } from '../../lib/proactiveEngine';
 import { C, FONT } from '../../theme';
 import type { TabId, GemeloDigital } from '../../types';
 
@@ -424,6 +425,33 @@ export function OrbShell() {
       window.removeEventListener('oracle:voice', handleOracleVoice);
     };
   }, []);
+
+  // ── GAP 3 FIX: Proactive Engine — Gemelo te empuja sin pedirlo ─────
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const context = {
+        currentHour: new Date().getHours(),
+        dayOfWeek: new Date().getDay(),
+        reputation: sbProfile?.reputation_score ?? 0,
+        pe: sbProfile?.pe_points ?? 0,
+        onlineCount: 0,
+        lastOnlineCount: 0,
+        daysSinceLastLogin: 0,
+        currentTab: 'perfil',
+        userName: sbProfile?.display_name || sbProfile?.username || 'operador',
+      };
+
+      const event = evaluateProactiveEvents(context);
+      if (event) {
+        setResponseMsg(event.message);
+        speak(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
+        if (responseTimer.current) clearTimeout(responseTimer.current);
+        responseTimer.current = setTimeout(() => setResponseMsg(null), 10000);
+      }
+    }, 2000); // 2s delay to let orbe appear first
+
+    return () => clearTimeout(timer);
+  }, [sbProfile]);
 
   // Fix 2: rAF instead of setInterval — no unnecessary re-renders on idle
   useEffect(() => {
