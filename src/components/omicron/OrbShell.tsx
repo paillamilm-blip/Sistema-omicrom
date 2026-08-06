@@ -3,7 +3,7 @@ import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OraculoBar } from '../OraculoBar';
 import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';
-import { interpret } from '../../lib/oraculo';
+import { interpret, askCoach } from '../../lib/oraculo';
 import { speak } from '../../lib/voiceEngine';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
@@ -259,29 +259,82 @@ export function OrbShell() {
     }));
   }, [profile, sbProfile, gemeloDigital]);
 
-  // ── Handle text input (interpret intent → navigate or respond) ──────
-  const handleTextInput = useCallback((text: string) => {
+  // ── Handle text input — GAP 1 FIX: todos los intents del Oráculo ────
+  const handleTextInput = useCallback(async (text: string) => {
     const intent = interpret(text);
+
+    // Build coach context from real profile
+    const coachCtx = {
+      skills: sbProfile?.skills ?? [],
+      cv_summary: sbProfile?.cv_summary ?? '',
+      execution: sbProfile?.execution_score,
+      quality: sbProfile?.quality_score,
+      transcendence: sbProfile?.transcendence_score,
+      foundation: sbProfile?.foundation_score,
+      reputation: sbProfile?.reputation_score,
+      pe: sbProfile?.pe_points,
+    };
+
+    const flash = (msg: string, ms = 6000) => {
+      setResponseMsg(msg);
+      if (responseTimer.current) clearTimeout(responseTimer.current);
+      responseTimer.current = setTimeout(() => setResponseMsg(null), ms);
+    };
+
     if (intent.kind === 'navigate') {
-      // Find matching node and tap it
       const node = orbNodesWithLevels.find((n: OrbNode) => n.tab === intent.tab);
       if (node) {
         setSelectedNode(node);
         setState('preview');
         setActiveTab(node.tab);
         const msg = `Abriendo ${node.label}.`;
-        setResponseMsg(msg);
+        flash(msg);
         speak(msg);
       }
-    } else {
-      const msg = 'Toca un nodo del orbe para navegar, o dime: "abre academia", "ve a empleos", etc.';
-      setResponseMsg(msg);
-      speak(msg);
+      return;
     }
-    // Auto-hide response after 6s
-    if (responseTimer.current) clearTimeout(responseTimer.current);
-    responseTimer.current = setTimeout(() => setResponseMsg(null), 6000);
-  }, [setActiveTab]);
+
+    if (intent.kind === 'coach') {
+      flash('Consultando al Coach IA con tu Gemelo…', 20000);
+      speak('Déjame analizar tu Gemelo Digital.');
+      const r = await askCoach(coachCtx);
+      const msg = r.advice || r.error || 'Sin respuesta del Coach.';
+      flash(msg, 14000);
+      speak(msg.length > 320 ? msg.slice(0, 320) : msg);
+      return;
+    }
+
+    if (intent.kind === 'fact') {
+      let msg = '';
+      if (intent.topic === 'reputacion') msg = `Tu reputación es ${Math.round(sbProfile?.reputation_score ?? 0)} sobre 100.`;
+      else if (intent.topic === 'tokens') msg = `Tienes ${(sbProfile?.token_balance ?? 0).toLocaleString()} tokens.`;
+      else if (intent.topic === 'pe') msg = `Tienes ${(sbProfile?.pe_points ?? 0).toLocaleString()} puntos de experiencia.`;
+      else msg = 'Podés decirme: "abre academia", "dame un consejo", "cuánta reputación tengo", o toca un nodo del orbe.';
+      flash(msg);
+      speak(msg);
+      return;
+    }
+
+    if (intent.kind === 'convalidate') {
+      // Redirect to the right hub for convalidation
+      const convalNode = orbNodesWithLevels.find((n: OrbNode) => n.id === 'inicio');
+      if (convalNode) {
+        setSelectedNode(convalNode);
+        setState('preview');
+        setActiveTab('perfil');
+      }
+      const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia', vault: 'un aporte a la Bóveda' };
+      const msg = `Para convalidar ${names[intent.item]}, abrí tu perfil y usá el botón de convalidación.`;
+      flash(msg);
+      speak(msg);
+      return;
+    }
+
+    // unknown — help message
+    const msg = 'Podés decirme: "abre academia", "dame un consejo", "cuánta reputación tengo", o tocar un nodo.';
+    flash(msg);
+    speak(msg);
+  }, [setActiveTab, sbProfile, orbNodesWithLevels]);
 
   // ── Toggle listening (speech recognition) ──────────────────────────
   const toggleListening = useCallback(() => {
