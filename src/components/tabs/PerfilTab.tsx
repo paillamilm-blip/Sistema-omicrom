@@ -1,303 +1,294 @@
 // components/tabs/PerfilTab.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// PERFIL ÓMICRON — Credencial del Gemelo Digital (look unificado).
-// Usa datos REALES (useApp: profile + gemelo). Muestra tu experticia
-// convalidada (skills del CV), reputación, nivel y los 4 ejes. Una sola
-// convalidación real (ConvalidaOmicron), sin duplicar flujos.
+// PERFIL DEFINITIVO — "Mi ADN Digital"
+// Basado en PerfilSkillVisual: sistema solar personal con Top Skills,
+// 4 ejes del Gemelo, reputación, CV summary. Auto-contenido (useApp).
+// Reemplaza el viejo PerfilTab de tarjetas planas.
 // ═══════════════════════════════════════════════════════════════════════
-import { useState } from 'react';
-import { Edit3, Share2, Camera, Shield, BadgeCheck, MapPin, Sparkles, Award, ArrowRight, Briefcase, Clock, Database } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2 } from 'lucide-react';
 import { useApp, useGemeloDigital } from '../../store/AppContext';
-import { EditProfileModal } from '../perfil/EditProfileModal';
-import { ShareCredentialModal } from '../perfil/RedSocial';
-import ParticleOrb from '../omicron/ParticleOrb';
-import ConvalidaOmicron from '../omicron/ConvalidaOmicron';
-import { C, FONT, RADIUS } from '../../theme';
+import { C, FONT } from '../../theme';
 
-const NODE_COLOR: Record<string, string> = {
-  'Nodo Operativo': C.cyan, 'Nodo Core': C.gold, 'Nodo Arquitecto': C.green, 'Nodo Fundador': C.purple,
-};
-
-const AXES: [string, 'execution' | 'quality' | 'transcendence' | 'foundation', string][] = [
-  ['Ejecución', 'execution', C.cyan],
-  ['Calidad', 'quality', C.purple],
-  ['Trascendencia', 'transcendence', C.gold],
-  ['Fundamento', 'foundation', C.green],
-];
+// ── Colores para cada skill orbital ────────────────────────────────────
+const SKILL_COLORS = [C.cyan, C.purple, C.gold, C.green, C.red];
+const AXIS_META = [
+  { key: 'exec', label: 'Ejecución', color: C.cyan, Icon: Zap },
+  { key: 'qual', label: 'Calidad', color: C.purple, Icon: Shield },
+  { key: 'trans', label: 'Trascendencia', color: C.gold, Icon: Globe },
+  { key: 'fund', label: 'Fundamento', color: C.green, Icon: TrendingUp },
+] as const;
 
 export function PerfilTab() {
-  const { profile, refreshProfile, setActiveTab } = useApp();
+  const { profile } = useApp();
   const gemelo = useGemeloDigital();
-  const [showEdit, setShowEdit] = useState(false);
-  const [showShare, setShowShare] = useState(false);
-  const [showConvalida, setShowConvalida] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [toast, setToast] = useState('');
+
+  const skillsDetail = useMemo(() => {
+    const details = profile?.skills_detail ?? [];
+    if (details.length > 0) return details;
+    return (profile?.skills ?? []).map((s, i) => ({ name: s, pct: Math.max(30, 85 - i * 8) }));
+  }, [profile?.skills_detail, profile?.skills]);
+
+  const top3 = useMemo(() => {
+    const sorted = [...skillsDetail].sort((a, b) => b.pct - a.pct);
+    return sorted.slice(0, 3);
+  }, [skillsDetail]);
+
+  const nucleus = top3[0];
+  const hasTwo = top3.length >= 2;
+  const hasThree = top3.length >= 3;
+
+  const name = profile?.display_name || profile?.full_name || profile?.username || '';
+  const years = profile?.cv_years_experience ?? 0;
+  const seniorLabel = years >= 10 ? 'Profesional Senior'
+    : years >= 5 ? 'Profesional Mid-Senior'
+    : years >= 2 ? 'Profesional Mid'
+    : 'Profesional';
+  const axes = {
+    exec: gemelo?.execution ?? profile?.execution_score ?? 0,
+    qual: gemelo?.quality ?? profile?.quality_score ?? 0,
+    trans: gemelo?.transcendence ?? profile?.transcendence_score ?? 0,
+    fund: gemelo?.foundation ?? profile?.foundation_score ?? 0,
+  };
+  const reputation = gemelo?.overallReputation ?? profile?.reputation_score ?? 0;
+  const cvSummary = profile?.cv_summary || '';
 
   if (!profile) return null;
 
-  const initials = (profile.full_name ?? profile.username ?? 'U').split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-  const avatarUrl = profile.avatar_url;
-  const nodeColor = NODE_COLOR[profile.node_type] ?? C.cyan;
-  const rep = gemelo ? Math.round(gemelo.overallReputation) : Math.round(profile.reputation_score ?? 0);
-  const skills = profile.skills ?? [];
-
-  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
-
-  async function handleAvatar(file: File) {
-    if (!profile) return;
-    if (file.size > 5 * 1024 * 1024) { showToast('La foto supera 5 MB'); return; }
-    setUploading(true);
-    try {
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `${profile.id}/avatar.${ext}`;
-      const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
-      if (upErr) throw upErr;
-      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-      await supabase.from('profiles').update({ avatar_url: `${data.publicUrl}?t=${Date.now()}` }).eq('id', profile.id);
-      await refreshProfile();
-      showToast('Foto actualizada');
-    } catch {
-      showToast('Error al subir la foto');
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  const card: React.CSSProperties = {
-    borderRadius: RADIUS.xl, padding: 16, marginBottom: 14,
-    background: C.glass, border: `1px solid ${C.line}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-  };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Orbe + reputación */}
-      <div style={{ position: 'relative', height: 170, marginBottom: 6 }}>
-        <ParticleOrb />
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-          <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 40, color: '#fff', textShadow: `0 0 24px ${nodeColor}` }}>{rep}</div>
-          <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.mut, textTransform: 'uppercase' }}>Reputación / 100</div>
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      overflow: 'auto', WebkitOverflowScrolling: 'touch',
+      paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 24px)',
+    }}>
+      {/* ═══ HEADER: ADN Digital ═══ */}
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        style={{ textAlign: 'center', paddingTop: 20, marginBottom: 8 }}
+      >
+        <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 6 }}>
+          ADN Digital · Perfil Ómicron
         </div>
-      </div>
-
-      {/* Identidad — con reputación integrada */}
-      <div style={card}>
-        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-          {/* Avatar */}
-          <label style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }} title="Cambiar foto">
-            <input type="file" accept="image/*" style={{ display: 'none' }}
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleAvatar(f); e.currentTarget.value = ''; }} />
-            <div style={{ width: 62, height: 62, borderRadius: 16, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarUrl ? '#0a1120' : `linear-gradient(135deg, ${nodeColor}, ${C.purple})`, color: '#fff', fontWeight: 700, fontSize: 24, fontFamily: FONT.display, boxShadow: `0 0 14px ${nodeColor}44` }}>
-              {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
-            </div>
-            <div style={{ position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, borderRadius: '50%', background: '#0a1120', border: `1px solid ${C.cyanDim}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {uploading ? <div style={{ width: 9, height: 9, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} /> : <Camera size={10} color={C.cyan} />}
-            </div>
-          </label>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Reputación + Nombre en una línea */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 2 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 10, background: `linear-gradient(135deg, ${nodeColor}22, rgba(255,255,255,0.04))`, border: `1.5px solid ${nodeColor}`, boxShadow: `0 0 12px ${nodeColor}44` }}>
-                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 15, color: nodeColor }}>{rep}</span>
-              </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 19, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.full_name || profile.username}</div>
-              </div>
-            </div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim, marginBottom: 6 }}>@{profile.username}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: `${nodeColor}14`, border: `1px solid ${nodeColor}44` }}>
-                <Shield size={11} color={nodeColor} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: nodeColor, letterSpacing: 1 }}>{profile.node_type} · N{profile.node_level}</span>
-              </span>
-              {profile.is_verified_professional && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 20, background: C.greenFaint, border: `1px solid ${C.greenDim}` }}>
-                  <BadgeCheck size={12} color={C.green} />
-                  <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.green, letterSpacing: 1 }}>VERIFICADO</span>
-                </span>
-              )}
-            </div>
-            {profile.location && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, fontFamily: FONT.body, fontSize: 11, color: C.cyanDim }}>
-                <MapPin size={11} /> {profile.location}
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button onClick={() => setShowShare(true)} title="Compartir" style={{ width: 34, height: 34, borderRadius: 11, background: C.glass2, border: `1px solid ${C.line}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Share2 size={15} /></button>
-            <button onClick={() => setShowEdit(true)} title="Editar" style={{ width: 34, height: 34, borderRadius: 11, background: C.glass2, border: `1px solid ${C.line}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Edit3 size={15} /></button>
-          </div>
-        </div>
-      </div>
-
-      {/* Experto en (skills del CV con % de dominio) */}
-      <div style={card}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-          <Sparkles size={15} color={C.gold} />
-          <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>Experto en</span>
-        </div>
-        {(profile.skills_detail as { name: string; pct: number }[] | undefined)?.length ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {(profile.skills_detail as { name: string; pct: number }[]).map((s) => (
-              <div key={s.name}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff' }}>{s.name}</span>
-                  <span style={{ fontFamily: FONT.mono, fontSize: 12, color: s.pct >= 80 ? C.cyan : s.pct >= 50 ? C.gold : C.mut }}>{s.pct}%</span>
-                </div>
-                <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${s.pct}%`, borderRadius: 3, background: s.pct >= 80 ? `linear-gradient(90deg, ${C.purple}, ${C.cyan})` : s.pct >= 50 ? C.gold : C.mut, transition: 'width 0.6s ease', boxShadow: s.pct >= 80 ? `0 0 8px ${C.cyan}66` : 'none' }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : skills.length > 0 ? (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {skills.map((s) => (
-              <span key={s} style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff', padding: '7px 13px', borderRadius: 999, background: `linear-gradient(135deg, ${C.purple}22, ${C.cyan}18)`, border: `1px solid ${C.purpleDim}`, boxShadow: `0 0 12px ${C.purple}22` }}>{s}</span>
-            ))}
-          </div>
-        ) : (
-          <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: C.mut, lineHeight: 1.5 }}>
-            Aún no convalidaste tu CV. Subilo abajo y Ómicron detectará tu experticia.
-          </p>
-        )}
-      </div>
-
-      {/* Análisis de Ómicron (resumen IA del CV) */}
-      {profile.cv_summary && (
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-            <Sparkles size={15} color={C.cyan} />
-            <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.cyan }}>Análisis de Ómicron</span>
-          </div>
-          <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13.5, lineHeight: 1.6, color: '#eaf4ff', whiteSpace: 'pre-wrap' }}>{profile.cv_summary}</p>
-        </div>
-      )}
-
-      {/* Los 4 ejes */}
-      {gemelo && (
-        <div style={card}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.mut, marginBottom: 12 }}>Tus 4 ejes</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {AXES.map(([label, key, col]) => {
-              const v = Math.round(gemelo[key]);
-              return (
-                <div key={key}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                    <span style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff' }}>{label}</span>
-                    <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: col }}>{v}</span>
-                  </div>
-                  <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${v}%`, background: col, borderRadius: 3, transition: 'width .5s ease', boxShadow: `0 0 8px ${col}66` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Convalidar (única, real) */}
-      <button onClick={() => setShowConvalida(true)}
-        style={{ width: '100%', padding: '14px 0', borderRadius: RADIUS.lg, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 14 }}>
-        {skills.length > 0 ? 'Actualizar mi Gemelo (nuevo CV)' : 'Convalidar mi Gemelo (CV · título · años)'} <ArrowRight size={17} />
-      </button>
-
-      {/* Historial Profesional (Timeline) — extracted from CV */}
-      {(profile.cv_years_experience || profile.cv_summary || skills.length > 0) && (
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
-            <Briefcase size={15} color={C.cyan} />
-            <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.cyan }}>Historial Profesional</span>
-          </div>
-
-          {/* Years badge */}
-          {(profile.cv_years_experience ?? 0) > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <Clock size={13} color={C.gold} />
-              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.gold }}>{profile.cv_years_experience} {profile.cv_years_experience === 1 ? 'año' : 'años'} de experiencia</span>
-            </div>
-          )}
-
-          {/* Timeline entries — extracted from profile/skills context */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginLeft: 6, borderLeft: `2px solid ${C.line}`, paddingLeft: 14 }}>
-            {/* Dependiente */}
-            {skills.length > 0 && (
-              <div style={{ position: 'relative', paddingBottom: 12 }}>
-                <span style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: C.cyan, border: '2px solid #0a1120' }} />
-                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: C.mut, marginBottom: 3 }}>Trabajo dependiente / Freelance</div>
-                <div style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff' }}>Experto en {skills.slice(0, 3).join(', ')}</div>
-                <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.mut, marginTop: 2 }}>
-                  {profile.cv_years_experience ? `${profile.cv_years_experience}+ años de trayectoria combinada` : 'Trayectoria profesional activa'}
-                </div>
-              </div>
-            )}
-
-            {/* Freelance / Independiente */}
-            {skills.length > 3 && (
-              <div style={{ position: 'relative', paddingBottom: 12 }}>
-                <span style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: C.gold, border: '2px solid #0a1120' }} />
-                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: C.mut, marginBottom: 3 }}>Especialización independiente</div>
-                <div style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 13, color: '#eaf4ff' }}>{skills.slice(3, 6).join(' · ')}</div>
-                <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.mut, marginTop: 2 }}>Proyectos y contratos freelance</div>
-              </div>
-            )}
-
-            {/* CTA: expand to vault */}
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: C.green, border: '2px solid #0a1120' }} />
-              <button onClick={() => setShowConvalida(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.green }}>+ Agregar más experiencia (actualizar CV)</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bóveda Personal — "Desarrollado por mí" */}
-      <div style={card}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <Database size={15} color={C.green} />
-            <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.green }}>Desarrollado por mí</span>
-          </div>
-          <button onClick={() => setActiveTab('vault')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>Ver Bóveda</span>
-            <ArrowRight size={12} color={C.cyanDim} />
-          </button>
-        </div>
-        <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 12.5, color: C.mut, lineHeight: 1.5 }}>
-          Documentos técnicos, soluciones y proyectos que has desarrollado de forma independiente. Publicá en la Bóveda para generar regalías.
+        <h1 style={{ margin: 0, fontFamily: FONT.display, fontSize: 22, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
+          {name || 'Tu Gemelo Digital'}
+        </h1>
+        <p style={{ margin: '4px 0 0', fontFamily: FONT.body, fontSize: 13, color: C.mut }}>
+          {seniorLabel}{years > 0 ? ` · ${years} años` : ''}
         </p>
-        <button onClick={() => setShowConvalida(true)}
-          style={{ marginTop: 10, width: '100%', padding: '10px 0', borderRadius: RADIUS.md, border: `1px solid ${C.greenDim}`, background: C.greenFaint, color: C.green, fontFamily: FONT.display, fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <Database size={14} /> Aportar a mi Bóveda
-        </button>
-      </div>
+      </motion.div>
 
-      {/* Pioneer */}
-      {profile.is_pioneer && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: RADIUS.lg, marginBottom: 14, background: C.goldFaint, border: `1px solid ${C.goldDim}` }}>
-          <Award size={20} color={C.gold} />
-          <div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold, letterSpacing: 1.5 }}>ESTATUS PIONEER</div>
-            <div style={{ fontFamily: FONT.body, fontSize: 11, color: C.goldDim, marginTop: 2 }}>Beneficio fundacional vitalicio</div>
+      {/* ═══ ORBITAL VISUALIZATION ═══ */}
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.25, type: 'spring', stiffness: 120 }}
+        style={{ position: 'relative', width: 280, height: 280, margin: '12px auto 16px', flexShrink: 0 }}
+      >
+        {/* Outer ring (skill #3) */}
+        {hasThree && (
+          <div aria-hidden="true" style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: `1px solid ${SKILL_COLORS[2]}33`,
+            animation: 'cp-spin 25s linear infinite',
+          }}>
+            <motion.div
+              animate={{ boxShadow: [`0 0 8px ${SKILL_COLORS[2]}`, `0 0 20px ${SKILL_COLORS[2]}`, `0 0 8px ${SKILL_COLORS[2]}`] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              style={{
+                position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%)',
+                width: 12, height: 12, borderRadius: '50%', background: SKILL_COLORS[2],
+              }}
+            />
           </div>
+        )}
+
+        {/* Middle ring (skill #2) */}
+        {hasTwo && (
+          <div aria-hidden="true" style={{
+            position: 'absolute', inset: 40, borderRadius: '50%',
+            border: `1.5px solid ${SKILL_COLORS[1]}44`,
+            animation: 'cp-spin 18s linear infinite reverse',
+          }}>
+            <motion.div
+              animate={{ boxShadow: [`0 0 8px ${SKILL_COLORS[1]}`, `0 0 22px ${SKILL_COLORS[1]}`, `0 0 8px ${SKILL_COLORS[1]}`] }}
+              transition={{ duration: 1.8, repeat: Infinity }}
+              style={{
+                position: 'absolute', bottom: -7, left: '50%', transform: 'translateX(-50%)',
+                width: 14, height: 14, borderRadius: '50%', background: SKILL_COLORS[1],
+              }}
+            />
+          </div>
+        )}
+
+        {/* Nucleus (skill #1) */}
+        {nucleus && (
+          <motion.div
+            animate={{ boxShadow: [
+              `0 0 30px ${SKILL_COLORS[0]}66, inset 0 0 20px ${SKILL_COLORS[0]}33`,
+              `0 0 50px ${SKILL_COLORS[0]}99, inset 0 0 30px ${SKILL_COLORS[0]}55`,
+              `0 0 30px ${SKILL_COLORS[0]}66, inset 0 0 20px ${SKILL_COLORS[0]}33`,
+            ] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute', inset: 80, borderRadius: '50%',
+              background: `radial-gradient(circle at 35% 35%, ${SKILL_COLORS[0]}44, ${C.bg} 70%)`,
+              border: `2px solid ${SKILL_COLORS[0]}88`,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+            }}
+          >
+            <span style={{ fontFamily: FONT.display, fontSize: 28, fontWeight: 800, color: SKILL_COLORS[0] }}>
+              {nucleus.pct}%
+            </span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1.2, color: C.ink, textTransform: 'uppercase', textAlign: 'center', padding: '0 8px', lineHeight: 1.3 }}>
+              {nucleus.name}
+            </span>
+          </motion.div>
+        )}
+
+        {/* Synergy lines */}
+        {hasTwo && (
+          <svg aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+            <line x1="50%" y1="20%" x2="50%" y2="38%" stroke={C.cyan} strokeWidth="0.5" opacity="0.3" strokeDasharray="3 3">
+              <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2.5s" repeatCount="indefinite" />
+            </line>
+            {hasThree && (
+              <line x1="30%" y1="70%" x2="42%" y2="58%" stroke={C.gold} strokeWidth="0.5" opacity="0.3" strokeDasharray="3 3">
+                <animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" repeatCount="indefinite" />
+              </line>
+            )}
+          </svg>
+        )}
+
+        {/* Reputation ring */}
+        <div aria-hidden="true" style={{ position: 'absolute', inset: -8, borderRadius: '50%', border: `1px solid ${C.line}`, opacity: 0.4 }} />
+      </motion.div>
+
+      {/* ═══ SKILL LABELS ═══ */}
+      <motion.div
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', padding: '0 20px', marginBottom: 16 }}
+      >
+        {top3.map((skill, i) => (
+          <div key={skill.name} style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '6px 12px', borderRadius: 999,
+            background: `${SKILL_COLORS[i]}14`, border: `1px solid ${SKILL_COLORS[i]}44`,
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: SKILL_COLORS[i], boxShadow: `0 0 6px ${SKILL_COLORS[i]}` }} />
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.ink, letterSpacing: 0.5 }}>{skill.name}</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: SKILL_COLORS[i], fontWeight: 700 }}>{skill.pct}%</span>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* ═══ CV CONVALIDADO — Skills + Resumen ═══ */}
+      <motion.div
+        initial={{ y: 12, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.45 }}
+        style={{ width: '100%', maxWidth: 360, padding: '0 24px', marginBottom: 16 }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <FileText size={13} color={C.cyan} />
+          <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase' }}>CV Convalidado</span>
+          <CheckCircle2 size={11} color={C.green} />
         </div>
-      )}
 
-      <div style={{ height: 12 }} />
+        <div style={{
+          borderRadius: 16, padding: '14px 14px 10px',
+          background: `linear-gradient(135deg, ${C.glass}, ${C.cyanGhost})`,
+          border: `1px solid ${C.line}`, marginBottom: cvSummary ? 10 : 0,
+        }}>
+          {skillsDetail.slice(0, 8).map((skill, i) => (
+            <div key={skill.name} style={{ marginBottom: i < Math.min(skillsDetail.length, 8) - 1 ? 8 : 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                <span style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 12, color: C.ink }}>{skill.name}</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: 11, color: SKILL_COLORS[i % SKILL_COLORS.length], fontWeight: 700 }}>{skill.pct}%</span>
+              </div>
+              <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${skill.pct}%` }}
+                  transition={{ delay: 0.5 + i * 0.08, duration: 0.7, ease: 'easeOut' }}
+                  style={{
+                    height: '100%', borderRadius: 3,
+                    background: `linear-gradient(90deg, ${SKILL_COLORS[i % SKILL_COLORS.length]}cc, ${SKILL_COLORS[(i + 1) % SKILL_COLORS.length]}88)`,
+                    boxShadow: `0 0 6px ${SKILL_COLORS[i % SKILL_COLORS.length]}44`,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
 
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)', zIndex: 95, padding: '10px 16px', borderRadius: 10, background: 'rgba(8,16,38,0.94)', border: `1px solid ${C.cyanDim}`, color: C.ink, fontFamily: FONT.body, fontSize: 13 }}>{toast}</div>
-      )}
+        {cvSummary && (
+          <div style={{
+            borderRadius: 14, padding: '12px 14px',
+            background: C.glass, border: `1px solid ${C.line}`,
+            position: 'relative', overflow: 'hidden',
+          }}>
+            <div style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 2, borderRadius: 1, background: `linear-gradient(to bottom, ${C.cyan}, ${C.purple}, ${C.gold})`, opacity: 0.6 }} />
+            <div style={{ paddingLeft: 10 }}>
+              <div style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1.5, color: C.mut, textTransform: 'uppercase', marginBottom: 6 }}>Resumen extraído</div>
+              <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 12.5, lineHeight: 1.55, color: C.ink, whiteSpace: 'pre-wrap' }}>{cvSummary}</p>
+            </div>
+          </div>
+        )}
+      </motion.div>
 
-      {showEdit && <EditProfileModal onClose={() => setShowEdit(false)} />}
-      {showShare && <ShareCredentialModal username={profile.username} fullName={profile.full_name} onClose={() => setShowShare(false)} />}
-      {showConvalida && <ConvalidaOmicron onClose={() => setShowConvalida(false)} onViewProfile={() => setShowConvalida(false)} />}
+      {/* ═══ 4 EJES ═══ */}
+      <motion.div
+        initial={{ y: 15, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 24px', width: '100%', maxWidth: 360, marginBottom: 16 }}
+      >
+        {AXIS_META.map(({ key, label, color, Icon }) => {
+          const val = axes[key as keyof typeof axes] ?? 0;
+          return (
+            <div key={key} style={{ padding: '10px 12px', borderRadius: 14, background: C.glass, border: `1px solid ${color}33` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <Icon size={12} color={color} />
+                <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ flex: 1, height: 4, borderRadius: 2, background: `${color}22` }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${val}%` }}
+                    transition={{ delay: 0.6 + 0.1 * AXIS_META.findIndex(a => a.key === key), duration: 0.8, ease: 'easeOut' }}
+                    style={{ height: '100%', borderRadius: 2, background: color, boxShadow: `0 0 6px ${color}66` }}
+                  />
+                </div>
+                <span style={{ fontFamily: FONT.mono, fontSize: 12, fontWeight: 700, color, minWidth: 28, textAlign: 'right' }}>{val}</span>
+              </div>
+            </div>
+          );
+        })}
+      </motion.div>
+
+      {/* ═══ REPUTACIÓN TOTAL ═══ */}
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.65 }}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+          padding: '10px 20px', borderRadius: 999,
+          background: `linear-gradient(135deg, ${C.cyanGhost}, ${C.purpleFaint})`,
+          border: `1px solid ${C.line}`, marginBottom: 14,
+        }}
+      >
+        <Sparkles size={14} color={C.gold} />
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.ink, letterSpacing: 0.5 }}>Reputación Ómicron</span>
+        <span style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 800, color: C.cyan }}>{Math.round(reputation)}</span>
+        <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>/100</span>
+      </motion.div>
     </div>
   );
 }
