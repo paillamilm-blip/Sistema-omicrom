@@ -175,6 +175,12 @@ declare module 'three' {
   export class Fog {
     constructor(color: any, near?: number, far?: number);
   }
+  export class Raycaster {
+    constructor();
+    setFromCamera(coords: any, camera: any): void;
+    intersectObjects(objects: any[], recursive?: boolean): any[];
+    intersectObject(object: any, recursive?: boolean): any[];
+  }
   export class Object3D {
     position: Vector3;
     rotation: { x: number; y: number; z: number };
