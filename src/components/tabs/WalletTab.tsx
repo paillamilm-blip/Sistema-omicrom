@@ -297,6 +297,44 @@ export function WalletTab() {
             })}
           </div>
 
+          {/* ── Sugerencias para ganar según skills ── */}
+          {(() => {
+            const skills = profile?.skills ?? [];
+            if (skills.length === 0) return null;
+            const suggestions: { icon: string; text: string }[] = [];
+            const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const skillsNorm = skills.map(norm);
+            const hasTech = skillsNorm.some(s => ['programacion', 'desarrollo', 'react', 'node', 'python', 'javascript', 'typescript', 'devops', 'backend', 'frontend', 'fullstack'].includes(s));
+            const hasDesign = skillsNorm.some(s => ['diseno', 'ux', 'ui', 'figma', 'illustrator', 'photoshop', 'diseno grafico'].includes(s));
+            const hasData = skillsNorm.some(s => ['data', 'analisis', 'machine learning', 'estadistica', 'sql', 'power bi', 'excel avanzado'].includes(s));
+            const hasWriting = skillsNorm.some(s => ['redaccion', 'copywriting', 'contenido', 'comunicacion', 'marketing'].includes(s));
+
+            if (hasTech) suggestions.push({ icon: '💻', text: 'Ofrece servicios de desarrollo en el Mercado — tu perfil técnico tiene alta demanda.' });
+            if (hasDesign) suggestions.push({ icon: '🎨', text: 'Publica soluciones de diseño en la Bóveda para ganar regalías pasivas.' });
+            if (hasData) suggestions.push({ icon: '📊', text: 'Comparte análisis y dashboards en la Bóveda — otros nodos los necesitan.' });
+            if (hasWriting) suggestions.push({ icon: '✍️', text: 'Ofrece servicios de redacción/copy en el Mercado — es lo más contratado.' });
+            if (suggestions.length === 0) suggestions.push({ icon: '🚀', text: `Con tus skills (${skills.slice(0, 3).join(', ')}), publica en la Bóveda o acepta contratos en el Mercado.` });
+
+            return (
+              <div style={{
+                borderRadius: 14, padding: 14,
+                background: `linear-gradient(135deg, ${C.green}10, ${C.cyan}08)`,
+                border: `1px solid ${C.green}33`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <Zap size={14} style={{ color: C.green }} />
+                  <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12, color: C.green }}>CÓMO GANAR MÁS</span>
+                </div>
+                {suggestions.map((s, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: i < suggestions.length - 1 ? 6 : 0 }}>
+                    <span style={{ fontSize: 14, flexShrink: 0 }}>{s.icon}</span>
+                    <span style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, lineHeight: 1.4 }}>{s.text}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
           {/* ── Movimientos ── */}
           {view === 'movimientos' && (
             loading ? (

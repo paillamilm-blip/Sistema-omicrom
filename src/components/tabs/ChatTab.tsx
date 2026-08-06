@@ -340,7 +340,14 @@ export function ChatTab() {
     if (!input.trim() || aiAssisting) return;
     setAiAssisting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('chat-assist', { body: { draft: input.trim() } });
+      const { data, error } = await supabase.functions.invoke('chat-assist', {
+        body: {
+          draft: input.trim(),
+          skills: profile?.skills ?? [],
+          cv_summary: profile?.cv_summary ?? '',
+          seniority: profile?.node_type ?? '',
+        },
+      });
       const d = data as { texto?: string; error?: string; detail?: string };
       if (error || d?.error || !d?.texto) {
         let msg = d?.error || 'Redactor IA no disponible (¿desplegaste "chat-assist"?).';

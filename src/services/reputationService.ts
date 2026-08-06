@@ -286,17 +286,28 @@ export function shouldTriggerAudit(
 /**
  * CALCULAR MATCH SCORE para empleos ("el trabajo te busca").
  *
- * Modelo canónico unificado: base (20/80) + momentum por PE. Como
- * experience_score = promedio de los 4 ejes, este match score es IDÉNTICO
- * a reputation_score. Frontend y backend coinciden.
+ * Modelo canónico unificado: base (20/80) + momentum por PE + skill overlap.
+ * experience_score = promedio de los 4 ejes. Si se pasan jobSkills, se bonifica
+ * hasta +15 puntos por coincidencia de habilidades (skill overlap).
  * Ver DEFINICION_REPUTACION_OMICROM.md §7.
  */
-export function calculateMatchScore(profile: Profile): number {
-  return calculateTotalReputation(
+export function calculateMatchScore(profile: Profile, jobSkills?: string[]): number {
+  const base = calculateTotalReputation(
     profile.traditional_score,
     profile.experience_score,
     profile.pe_points,
   );
+
+  // Skill overlap: bonifica hasta +15 puntos según % de coincidencia
+  if (!jobSkills || jobSkills.length === 0 || !profile.skills || profile.skills.length === 0) {
+    return base;
+  }
+  const profileSkillsLower = profile.skills.map(s => s.toLowerCase());
+  const matched = jobSkills.filter(js => profileSkillsLower.includes(js.toLowerCase()));
+  const overlapRatio = matched.length / jobSkills.length; // 0..1
+  const skillBonus = overlapRatio * 15; // max +15
+
+  return clamp(base + skillBonus);
 }
 
 

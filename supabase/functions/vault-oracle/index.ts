@@ -47,6 +47,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const query: string = (body?.query ?? '').toString().trim();
     const candidatos: Cand[] = Array.isArray(body?.candidates) ? body.candidates.slice(0, 6) : [];
+    const userSkills: string[] = Array.isArray(body?.skills) ? body.skills : [];
+    const cvSummary: string = (body?.cv_summary ?? '').toString().trim();
     if (!query) return json({ error: 'Escribe tu pregunta para el Oráculo.' }, 400);
 
     if (candidatos.length === 0) {
@@ -58,13 +60,21 @@ Deno.serve(async (req) => {
       `costo ${c.costo ?? 0} tokens; autor @${c.autor || '?'})`,
     ).join('\n');
 
+    const skillInfo = userSkills.length
+      ? `\nSKILLS DEL USUARIO: ${userSkills.join(', ')}.`
+      : '';
+    const cvInfo = cvSummary
+      ? `\nRESUMEN CV: ${cvSummary}`
+      : '';
+
     const sys =
       'Eres el Oráculo de la Bóveda de Omicrom, un asesor de conocimiento. Ayudas a quien busca a decidir ' +
       'QUE solucion(es) le conviene consultar para resolver su pregunta, priorizando afinidad y utilidad. ' +
+      'Considera las SKILLS del usuario para priorizar documentos que complementen sus habilidades o refuercen sus gaps. ' +
       'NO tienes el contenido pagado, solo titulos/etiquetas/afinidad: no inventes el contenido. ' +
-      'Recomienda 1 a 3 documentos en orden, explica en 1 frase por que cada uno le sirve, y recuerdale ' +
+      'Recomienda 1 a 3 documentos en orden, explica en 1 frase por que cada uno le sirve SEGÚN SU PERFIL, y recuerdale ' +
       'que consultar paga regalias al autor (economia justa). Si nada calza, dilo. Espanol, claro y breve (~130 palabras). Sin markdown.';
-    const user = `PREGUNTA: ${query}\n\nCONOCIMIENTO DISPONIBLE (por afinidad):\n${lista}\n\nEntrega tu recomendación.`;
+    const user = `PREGUNTA: ${query}\n\nCONOCIMIENTO DISPONIBLE (por afinidad):\n${lista}${skillInfo}${cvInfo}\n\nEntrega tu recomendación.`;
 
     const resp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,
