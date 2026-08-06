@@ -1,12 +1,15 @@
 // supabase/functions/tutor/index.ts — Tutor IA de Ómicrom.
-// Responde dudas del estudiante sobre la lección que está leyendo en la Academia.
+// SINERGIA: Conoce al estudiante (skills, ejes, CV, último examen) y adapta
+// la enseñanza a su nivel real. Parte del sistema de aprendizaje continuo.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { checkRateLimit, tooManyRequests, clientIp } from '../_shared/rateLimit.ts';
+import { authenticateUser, getUserContext, formatContextForPrompt } from '../_shared/userContext.ts';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const MODEL = 'gemini-2.5-flash';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const _admin = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -28,6 +31,10 @@ Deno.serve(async (req) => {
     if (!GEMINI_API_KEY) {
       return json({ error: 'El Tutor IA no está configurado (falta GEMINI_API_KEY).' }, 500);
     }
+
+    // Auth: requiere JWT para sinergia completa. Sin auth funciona degradado (sin perfil).
+    const uid = await authenticateUser(req, SUPABASE_URL, ANON_KEY);
+
     const rl = await checkRateLimit(_admin, 'tutor', clientIp(req), 20, 60);
     if (!rl.allowed) return tooManyRequests(rl.reset_at);
 
@@ -41,15 +48,25 @@ Deno.serve(async (req) => {
       return json({ error: 'Escribe una pregunta para el Tutor.' }, 400);
     }
 
+    // SINERGIA: obtener contexto completo del estudiante (si autenticado)
+    const ctx = uid ? await getUserContext(_admin, uid) : null;
+    const studentContext = ctx
+      ? formatContextForPrompt(ctx, { includeCompetencias: true, includeLastExam: true, includeAxes: true, includeCV: true })
+      : '';
+
     const sys =
       'Eres el "Tutor IA" de Ómicrom, un tutor cercano y paciente para estudiantes y técnicos de ingeniería. ' +
       'El estudiante está leyendo una lección y te hará dudas sobre ella. ' +
       'Apóyate SIEMPRE en el contenido de la lección que te paso abajo; si la pregunta se sale del tema, ' +
       'respóndela igual de forma breve pero invita a volver a la lección. ' +
+      'ADAPTA tus explicaciones al nivel REAL del estudiante: usa ejemplos de su área de expertise, ' +
+      'calibra la complejidad según sus ejes y su último examen. Si aprobó algo relacionado, profundiza más. ' +
+      'Si reprobó o tiene fundamento bajo, sé más paciente y explica desde los basics. ' +
       'Explica simple, en español neutro-chileno, con ejemplos concretos y, cuando ayude, pasos numerados. ' +
       'Sé breve (máx ~160 palabras). No inventes datos; si no sabes, dilo con honestidad.\n\n' +
       `LECCIÓN: "${lessonTitle}"\n` +
-      `CONTENIDO DE LA LECCIÓN:\n${lessonContent}`;
+      `CONTENIDO DE LA LECCIÓN:\n${lessonContent}` +
+      (studentContext ? `\n\nPERFIL DEL ESTUDIANTE:\n${studentContext}` : '');
 
     // Historial previo del chat (limitado a los últimos 10 turnos) + pregunta nueva.
     const contents = [

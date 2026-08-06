@@ -1,6 +1,9 @@
 // supabase/functions/simulador-universal/index.ts
 // ═══════════════════════════════════════════════════════════════════════
 // SIMULADOR UNIVERSAL ADAPTATIVO — Motor único de validación de competencias.
+// SINERGIA: Usa el módulo userContext.ts para conocer las skills declaradas,
+// competencias validadas y CV del usuario, calibrando la dificultad de forma
+// holística (no solo por foundation_score sino por todo el perfil).
 //
 // Evalúa TODAS las disciplinas con IA adaptativa (Gemini):
 // 1. Detecta la disciplina del nodo (software, ingeniería, diseño, gestión, etc.)
@@ -15,6 +18,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { checkRateLimit, tooManyRequests, clientIp } from '../_shared/rateLimit.ts';
+import { authenticateUser, getUserContext } from '../_shared/userContext.ts';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const MODEL = 'gemini-2.5-flash';
@@ -69,15 +73,6 @@ function parseJson(text: string): any {
 
 const clamp = (n: any) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
 
-async function getUserId(authHeader: string): Promise<string | null> {
-  if (!authHeader) return null;
-  const c = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
-  const { data } = await c.auth.getUser();
-  return data?.user?.id ?? null;
-}
-
-
-
 // ═══ DETECCIÓN DE MODO Y DIFICULTAD ══════════════════════════════════
 
 // El simulador es SIEMPRE modo ANÁLISIS — evaluación por IA adaptativa
@@ -131,8 +126,7 @@ Deno.serve(async (req) => {
   try {
     if (!GEMINI_API_KEY) return json({ error: 'Simulador no configurado (falta GEMINI_API_KEY).' }, 500);
 
-    const authHeader = req.headers.get('Authorization') ?? '';
-    const uid = await getUserId(authHeader);
+    const uid = await authenticateUser(req, SUPABASE_URL, ANON_KEY);
     if (!uid) return json({ error: 'Inicia sesion para usar el Simulador.' }, 401);
 
     const rl = await checkRateLimit(admin, 'simulador', clientIp(req), 30, 60);
@@ -140,6 +134,9 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action: string = body?.action ?? 'iniciar';
+
+    // SINERGIA: obtener contexto completo para calibrar mejor
+    const userCtx = await getUserContext(admin, uid);
 
     // ═══════════ ACCIÓN: INICIAR ═══════════
     if (action === 'iniciar') {
@@ -186,8 +183,10 @@ Deno.serve(async (req) => {
         `DESCRIPCION: ${node.description ?? '(sin descripción)'}\n` +
         `NIVEL ADAPTATIVO DEL USUARIO: ${difficulty.label}\n` +
         `EJES ACTUALES: Ejecución=${prof?.execution_score ?? 50}, Calidad=${prof?.quality_score ?? 50}, ` +
-        `Trascendencia=${prof?.transcendence_score ?? 50}, Fundamento=${prof?.foundation_score ?? 50}\n\n` +
-        'Genera un reto con este formato JSON EXACTO:\n' +
+        `Trascendencia=${prof?.transcendence_score ?? 50}, Fundamento=${prof?.foundation_score ?? 50}\n` +
+        (userCtx?.skills.length ? `SKILLS DEL USUARIO: ${userCtx.skills.slice(0, 10).join(', ')}\n` : '') +
+        (userCtx?.competenciasValidadas.length ? `COMPETENCIAS YA VALIDADAS: ${userCtx.competenciasValidadas.slice(0, 8).join(', ')}\n` : '') +
+        '\nGenera un reto con este formato JSON EXACTO:\n' +
         '{\n' +
         '  "titulo": "nombre corto del reto",\n' +
         '  "contexto": "situación real donde se aplica esta competencia (2-3 frases)",\n' +

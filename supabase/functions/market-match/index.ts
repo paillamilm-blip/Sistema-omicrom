@@ -1,10 +1,10 @@
-// supabase/functions/market-match/index.ts — Asesor IA de Contratación de Ómicrom.
-// El comprador describe qué necesita; la IA recomienda el mejor talento del
-// Mercado, CITANDO su evidencia (reputación del Gemelo + competencias validadas
-// por examen). Es el match empresa↔talento basado en confianza cero.
+// supabase/functions/market-match/index.ts — Asesor IA de Contratación (Ómicrom).
+// SINERGIA: Conoce al COMPRADOR (sus ejes, skills, competencias) para recomendar
+// talento que complementa su equipo, no solo por relevancia de búsqueda.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { checkRateLimit, tooManyRequests, clientIp } from '../_shared/rateLimit.ts';
+import { authenticateUser, getUserContext } from '../_shared/userContext.ts';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const MODEL = 'gemini-2.5-flash';
@@ -22,20 +22,13 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-async function getUserId(authHeader: string): Promise<string | null> {
-  if (!authHeader) return null;
-  const c = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
-  const { data } = await c.auth.getUser();
-  return data?.user?.id ?? null;
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
-    if (!GEMINI_API_KEY) return json({ error: 'El Asesor IA no esta configurado (falta GEMINI_API_KEY).' }, 500);
-    const authHeader = req.headers.get('Authorization') ?? '';
-    const uid = await getUserId(authHeader);
-    if (!uid) return json({ error: 'Inicia sesion para usar el Asesor IA.' }, 401);
+    if (!GEMINI_API_KEY) return json({ error: 'El Asesor IA no está configurado (falta GEMINI_API_KEY).' }, 500);
+
+    const uid = await authenticateUser(req, SUPABASE_URL, ANON_KEY);
+    if (!uid) return json({ error: 'Inicia sesión para usar el Asesor IA.' }, 401);
 
     const rl = await checkRateLimit(admin, 'market-match', clientIp(req), 12, 60);
     if (!rl.allowed) return tooManyRequests(rl.reset_at);
@@ -44,7 +37,16 @@ Deno.serve(async (req) => {
     const query: string = (body?.query ?? '').toString().trim();
     if (!query) return json({ error: 'Describe qué necesitas contratar.' }, 400);
 
-    // 1) Servicios activos con vendedor real
+    // SINERGIA: contexto del comprador para matching inteligente
+    const buyerCtx = await getUserContext(admin, uid);
+    const buyerInfo = buyerCtx
+      ? `PERFIL DEL COMPRADOR: ${buyerCtx.nodeType} N${buyerCtx.nodeLevel}, ` +
+        `skills: ${buyerCtx.skills.slice(0, 6).join(', ') || 'no declaradas'}, ` +
+        `competencias: ${buyerCtx.competenciasValidadas.slice(0, 5).join(', ') || 'ninguna'}. ` +
+        `Busca talento que COMPLEMENTE lo que no tiene.`
+      : '';
+
+    // Servicios activos
     const { data: svcs } = await admin
       .from('market_services')
       .select('id, title, description, category, price, seller_id')
@@ -54,14 +56,14 @@ Deno.serve(async (req) => {
 
     const services = svcs ?? [];
     if (services.length === 0) {
-      return json({ recomendacion: 'Todavía no hay talento suficiente en el Mercado para recomendar. Vuelve cuando haya más servicios publicados por nodos con evidencia validada.' });
+      return json({ recomendacion: 'Todavía no hay talento suficiente en el Mercado.' });
     }
 
-    // 2) Perfil + evidencia de cada vendedor (server-side, con service role)
+    // Perfiles + evidencia de vendedores
     const sellerIds = [...new Set(services.map((s: any) => s.seller_id))];
     const { data: profs } = await admin
       .from('profiles')
-      .select('id, username, full_name, node_type, node_level, reputation_score, competencias_validadas')
+      .select('id, username, full_name, node_type, node_level, reputation_score, skills')
       .in('id', sellerIds);
     const profMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
 
@@ -77,24 +79,24 @@ Deno.serve(async (req) => {
       compMap.set(a.user_id, arr);
     });
 
-    // 3) Catálogo compacto para la IA
     const catalogo = services.map((s: any, i: number) => {
       const p = profMap.get(s.seller_id) as any;
       const comps = compMap.get(s.seller_id) ?? [];
-      return `#${i + 1} · "${s.title}" (${s.category}, ${s.price} tokens) — vendedor @${p?.username ?? '?'} ` +
-        `(${p?.node_type ?? 'Nodo'} N${p?.node_level ?? 1}, reputación ${Math.round(p?.reputation_score ?? 0)}/100, ` +
-        `${p?.competencias_validadas ?? 0} competencias validadas` +
-        (comps.length ? `: ${comps.slice(0, 6).join(', ')}` : '') + ')';
+      const skills = Array.isArray(p?.skills) ? p.skills.slice(0, 5).join(', ') : '';
+      return `#${i + 1} · "${s.title}" (${s.category}, ${s.price}T) — @${p?.username ?? '?'} ` +
+        `(${p?.node_type ?? 'Nodo'} N${p?.node_level ?? 1}, rep ${Math.round(p?.reputation_score ?? 0)}/100` +
+        (skills ? `, skills: ${skills}` : '') +
+        (comps.length ? `, validadas: ${comps.slice(0, 4).join(', ')}` : '') + ')';
     }).join('\n');
 
     const sys =
-      'Eres el Asesor de Contratacion IA de Omicrom. Ayudas a quien contrata a elegir el mejor talento ' +
-      'del catalogo, priorizando la EVIDENCIA (reputacion del Gemelo + competencias validadas por examen), ' +
-      'no solo el precio. Recomienda 1 a 3 opciones, en orden, y explica en 1 frase POR QUE cada una calza, ' +
-      'citando su evidencia concreta. Si ninguna calza bien, dilo con honestidad. Espanol, claro y breve. Sin markdown.';
+      'Eres el Asesor de Contratación IA de Omicrom, parte de un sistema de APRENDIZAJE CONTINUO. ' +
+      'Ayudas al comprador a elegir talento priorizando EVIDENCIA (reputación + competencias validadas). ' +
+      'CONSIDERA el perfil del comprador: recomienda talento que COMPLEMENTE sus skills (no que duplique). ' +
+      'Recomienda 1 a 3 opciones, explica POR QUÉ cada una calza con la necesidad Y el perfil del comprador. ' +
+      'Español, claro y breve (~150 palabras). Sin markdown.';
     const user =
-      `NECESIDAD DEL CLIENTE: ${query}\n\nCATALOGO DISPONIBLE:\n${catalogo}\n\n` +
-      'Entrega tu recomendacion (maximo ~150 palabras).';
+      `NECESIDAD: ${query}\n\n${buyerInfo}\n\nCATÁLOGO:\n${catalogo}\n\nRecomendación:`;
 
     const resp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,
@@ -109,10 +111,10 @@ Deno.serve(async (req) => {
       },
     );
     const data = await resp.json();
-    if (!resp.ok) return json({ error: 'Gemini respondio con error.', detail: data?.error?.message ?? null }, 502);
+    if (!resp.ok) return json({ error: 'Gemini respondió con error.', detail: data?.error?.message ?? null }, 502);
     const parts = data?.candidates?.[0]?.content?.parts;
     const rec = Array.isArray(parts) ? parts.map((p: { text?: string }) => p.text ?? '').join('').trim() : '';
-    return json({ recomendacion: rec || 'No pude generar una recomendación. Reintenta.', total: services.length });
+    return json({ recomendacion: rec || 'No pude generar una recomendación.', total: services.length });
   } catch (e) {
     return json({ error: 'Error inesperado en el Asesor IA.', detail: String(e) }, 500);
   }

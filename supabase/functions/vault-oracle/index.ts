@@ -1,12 +1,10 @@
 // supabase/functions/vault-oracle/index.ts — Oráculo de la Bóveda (Ómicrom).
-// El usuario pregunta en lenguaje natural; el frontend ya buscó por significado
-// (embeddings) y manda los documentos candidatos. La IA interpreta la pregunta
-// y recomienda QUÉ conocimiento consultar y POR QUÉ — impulsando la
-// capitalización (cada consulta paga regalías al autor). No expone el contenido
-// pagado: solo razona sobre título/etiquetas/afinidad.
+// SINERGIA: Conoce los gaps del Gemelo Digital del usuario y prioriza documentos
+// que complementen sus debilidades o profundicen sus fortalezas.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { checkRateLimit, tooManyRequests, clientIp } from '../_shared/rateLimit.ts';
+import { authenticateUser, getUserContext, formatContextForPrompt } from '../_shared/userContext.ts';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const MODEL = 'gemini-2.5-flash';
@@ -24,21 +22,14 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-async function getUserId(authHeader: string): Promise<string | null> {
-  if (!authHeader) return null;
-  const c = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
-  const { data } = await c.auth.getUser();
-  return data?.user?.id ?? null;
-}
-
 interface Cand { titulo: string; etiquetas?: string; costo?: number; autor?: string; afinidad?: number }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!GEMINI_API_KEY) return json({ error: 'El Oráculo no está configurado (falta GEMINI_API_KEY).' }, 500);
-    const authHeader = req.headers.get('Authorization') ?? '';
-    const uid = await getUserId(authHeader);
+
+    const uid = await authenticateUser(req, SUPABASE_URL, ANON_KEY);
     if (!uid) return json({ error: 'Inicia sesión para usar el Oráculo.' }, 401);
 
     const rl = await checkRateLimit(admin, 'vault-oracle', clientIp(req), 12, 60);
@@ -53,18 +44,34 @@ Deno.serve(async (req) => {
       return json({ recomendacion: 'La Bóveda aún no tiene conocimiento relacionado con tu pregunta. Cuando haya más soluciones publicadas, el Oráculo podrá recomendarte cuáles consultar.' });
     }
 
+    // SINERGIA: contexto completo para priorizar según gaps
+    const ctx = await getUserContext(admin, uid);
+    const userProfile = ctx
+      ? formatContextForPrompt(ctx, { includeCompetencias: true, includeAxes: true, includeCV: false, includeLastExam: true })
+      : '';
+
+    // Identificar eje más débil para priorizar
+    const weakAxis = ctx ? Object.entries(ctx.axes).sort((a, b) => a[1] - b[1])[0] : null;
+    const gapHint = weakAxis ? `\nEJE MÁS DÉBIL: ${weakAxis[0]} (${weakAxis[1]}/100) — prioriza documentos que refuercen este gap.` : '';
+
     const lista = candidatos.map((c, i) =>
       `#${i + 1} · "${c.titulo}" (etiquetas: ${c.etiquetas || 'n/d'}; afinidad ${Math.round((c.afinidad ?? 0) * 100)}%; ` +
       `costo ${c.costo ?? 0} tokens; autor @${c.autor || '?'})`,
     ).join('\n');
 
     const sys =
-      'Eres el Oráculo de la Bóveda de Omicrom, un asesor de conocimiento. Ayudas a quien busca a decidir ' +
-      'QUE solucion(es) le conviene consultar para resolver su pregunta, priorizando afinidad y utilidad. ' +
-      'NO tienes el contenido pagado, solo titulos/etiquetas/afinidad: no inventes el contenido. ' +
-      'Recomienda 1 a 3 documentos en orden, explica en 1 frase por que cada uno le sirve, y recuerdale ' +
-      'que consultar paga regalias al autor (economia justa). Si nada calza, dilo. Espanol, claro y breve (~130 palabras). Sin markdown.';
-    const user = `PREGUNTA: ${query}\n\nCONOCIMIENTO DISPONIBLE (por afinidad):\n${lista}\n\nEntrega tu recomendación.`;
+      'Eres el Oráculo de la Bóveda de Omicrom, asesor de conocimiento de un sistema de APRENDIZAJE CONTINUO. ' +
+      'Ayudas al usuario a decidir QUÉ solución(es) consultar para resolver su pregunta. ' +
+      'PRIORIZA documentos que: (1) llenen GAPS de su Gemelo Digital (eje más débil), ' +
+      '(2) complementen sus competencias validadas, (3) sean relevantes para su pregunta. ' +
+      'NO tienes el contenido pagado, solo títulos/etiquetas/afinidad: no inventes el contenido. ' +
+      'Recomienda 1 a 3 documentos, explica en 1 frase cómo cada uno LLENA UN GAP de su perfil, ' +
+      'y recuérdale que consultar paga regalías al autor. Español, claro y breve (~130 palabras). Sin markdown.';
+
+    const user =
+      `PREGUNTA: ${query}\n\nCONOCIMIENTO DISPONIBLE:\n${lista}\n\n` +
+      (userProfile ? `PERFIL DEL USUARIO:\n${userProfile}${gapHint}\n\n` : '') +
+      'Entrega tu recomendación.';
 
     const resp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,

@@ -1,7 +1,9 @@
 // supabase/functions/analizar-cv/index.ts
 // Motor ADN Digital — Analiza CV con Gemini. SIN responseSchema (causaba 502).
+// SINERGIA: Ahora requiere autenticación JWT para evitar abuso.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { authenticateUser } from '../_shared/userContext.ts';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const MODEL = 'gemini-2.5-flash';
@@ -52,6 +54,11 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!GEMINI_API_KEY) return json({ ok: false, error: 'Falta GEMINI_API_KEY en secrets.' }, 500);
+
+    // Auth: requiere JWT
+    const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const uid = await authenticateUser(req, SUPABASE_URL, ANON_KEY);
+    if (!uid) return json({ ok: false, error: 'Inicia sesión para analizar tu CV.' }, 401);
 
     const limited = await rateLimited(req);
     if (limited) return limited;
