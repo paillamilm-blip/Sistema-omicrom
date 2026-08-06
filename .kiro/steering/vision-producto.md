@@ -44,5 +44,5 @@ inclusion: always
   existir como mecanismo de monetización interno, pero no es la identidad del producto).
 - Sí usar: "aprendizaje continuo en tiempo real", "oportunidades reales del mercado",
   "Industria 5.0", "instantáneo", "para todo el mundo".
-- Los documentos `DEFINICION_OMICROM.md`, `VISION_OMICROM.md` y `README.md` fueron
-  actualizados el 2026-07-27 para reflejar esto. Si se editan de nuevo, mantener este marco.
+- Los documentos `DEFINICION_OMICROM.md` y `README.md` fueron
+  actualizados el 2026-08-06 para reflejar esto. Si se editan de nuevo, mantener este marco.

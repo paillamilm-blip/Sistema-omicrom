@@ -82,12 +82,26 @@ function buildSkillNodes(
   if (!skills || skills.length === 0) return INVITATION_NODES;
 
   // Build a lookup from skill name → pct (0-100 → normalized 0-1)
+  // Uses fuzzy matching: checks exact, then includes, to handle naming
+  // differences between skills[] and skills_detail[] (e.g. "React.js" vs "React")
   const pctMap = new Map<string, number>();
   if (skillsDetail && skillsDetail.length > 0) {
     skillsDetail.forEach((sd) => {
-      if (sd.name) pctMap.set(sd.name.toLowerCase(), (sd.pct ?? 70) / 100);
+      if (sd.name) pctMap.set(sd.name.toLowerCase().trim(), (sd.pct ?? 70) / 100);
     });
   }
+
+  /** Fuzzy lookup: exact match first, then substring includes in both directions */
+  const lookupPct = (skillName: string): number | undefined => {
+    const key = skillName.toLowerCase().trim();
+    // Exact match
+    if (pctMap.has(key)) return pctMap.get(key);
+    // Skill name includes a detail name (e.g. "React.js" includes "react")
+    for (const [detailKey, pct] of pctMap) {
+      if (key.includes(detailKey) || detailKey.includes(key)) return pct;
+    }
+    return undefined;
+  };
 
   // Synergy groups: related skills boost each other's effective level
   const SYNERGY_GROUPS: string[][] = [
@@ -100,26 +114,36 @@ function buildSkillNodes(
   ];
 
   // Detect which synergy groups are active (2+ skills from same group)
+  // Uses word-boundary matching to avoid cross-contamination
+  // (e.g. "Google Analytics" should NOT match the ML group's "analytics")
   const activeSynergies = new Set<number>();
   SYNERGY_GROUPS.forEach((group, gi) => {
-    const matches = skills.filter((s) =>
-      group.some((g) => s.toLowerCase().includes(g))
-    );
+    const matches = skills.filter((s) => {
+      const lower = s.toLowerCase();
+      return group.some((g) => {
+        // Word boundary: the group keyword must be a whole word in the skill
+        const re = new RegExp(`\\b${g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        return re.test(lower);
+      });
+    });
     if (matches.length >= 2) activeSynergies.add(gi);
   });
 
   // Synergy bonus: +0.08 if skill belongs to an active synergy group
   const getSynergyBonus = (skill: string): number => {
-    const s = skill.toLowerCase();
+    const lower = skill.toLowerCase();
     for (const gi of activeSynergies) {
-      if (SYNERGY_GROUPS[gi].some((g) => s.includes(g))) return 0.08;
+      if (SYNERGY_GROUPS[gi].some((g) => {
+        const re = new RegExp(`\\b${g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        return re.test(lower);
+      })) return 0.08;
     }
     return 0;
   };
 
   return skills.map((skill, i) => {
-    // Real level from AI analysis, or fallback 0.7
-    const baseLvl = pctMap.get(skill.toLowerCase()) ?? 0.7;
+    // Real level from AI analysis (fuzzy match), or fallback 0.7
+    const baseLvl = lookupPct(skill) ?? 0.7;
     const synergy = getSynergyBonus(skill);
     const level = Math.min(1, baseLvl + synergy);
 
@@ -384,10 +408,17 @@ export function OrbShell() {
       return;
     }
 
-    // unknown — help message
-    const msg = 'Podés decirme: "abre academia", "dame un consejo", "cuánta reputación tengo", o tocar un nodo.';
-    flash(msg);
-    speak(msg);
+    // unknown — consultar al Tutor IA (igual que OmicronAssistant)
+    flash('Consultando al Tutor IA…', 15000);
+    try {
+      const { askTutor } = await import('../../lib/oraculo');
+      const t = await askTutor(text, coachCtx);
+      const msg = t.answer || t.error || 'No pude responder. Probá de nuevo.';
+      flash(msg, 12000);
+      speak(msg.length > 320 ? msg.slice(0, 320) : msg);
+    } catch {
+      flash('Error al consultar la IA. Probá de nuevo.', 6000);
+    }
   }, [setActiveTab, sbProfile, orbNodesWithLevels]);
 
   // ── Toggle listening (speech recognition) ──────────────────────────
@@ -433,18 +464,14 @@ export function OrbShell() {
   }, [isListening, handleTextInput]);
 
   // ── Handle node tap → go to preview ─────────────────────────────────
-  // Si el nodo es "inicio" y el usuario ya tiene skills (CV cargado),
-  // abre la nueva vista PerfilSkillVisual directamente.
+  // El nodo Inicio abre preview normal como cualquier otro nodo.
+  // Desde la preview del Inicio, el usuario puede acceder a PerfilSkillVisual
+  // tocando el boton "Mi ADN Digital" que se renderiza en el preview panel.
   const handleNodeTap = useCallback((node: OrbNode) => {
-    const userSkills: string[] = sbProfile?.skills ?? [];
-    if (node.id === 'inicio' && userSkills.length > 0) {
-      setShowProfileVisual(true);
-      return;
-    }
     setSelectedNode(node);
     setState('preview');
     setActiveTab(node.tab);
-  }, [setActiveTab, sbProfile]);
+  }, [setActiveTab]);
 
   // ── Handle preview click → fullscreen ───────────────────────────────
   const handlePreviewClick = useCallback(() => {
@@ -685,6 +712,22 @@ export function OrbShell() {
               </div>
             )}
           </div>
+
+          {/* Botón "Mi ADN Digital" — solo en el nodo Inicio si tiene skills */}
+          {selectedNode.id === 'inicio' && (sbProfile?.skills?.length ?? 0) > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowProfileVisual(true); }}
+              style={{
+                width: '100%', marginTop: 10, padding: '10px 0',
+                borderRadius: 12, border: `1px solid ${C.cyan}44`,
+                background: `linear-gradient(135deg, ${C.cyanGhost}, ${C.purpleFaint})`,
+                cursor: 'pointer', fontFamily: FONT.mono, fontSize: 11,
+                color: C.cyan, letterSpacing: 0.5, fontWeight: 700,
+              }}
+            >
+              Mi ADN Digital →
+            </button>
+          )}
         </div>
       )}
 
