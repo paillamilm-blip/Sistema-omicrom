@@ -21,6 +21,10 @@ export interface OrbNode {
   tab: TabId;
   /** Emoji o initial para renderizar en el nodo */
   icon: string;
+  /** 0-1: nivel del usuario en este nodo (0=sin explorar, 1=dominado) */
+  level?: number;
+  /** Texto de impulso: qué hacer para mejorar */
+  nextStep?: string;
 }
 
 export interface OrbNeuronalProps {
@@ -528,16 +532,34 @@ export default function OrbNeuronal({
         nd.material.uniforms.uTime.value = elapsed;
 
         // Color shift: active = green bioluminescent, idle = cyan
+        // Also: node level affects base brightness
+        const nodeLevel = nd.node.level ?? 0; // 0-1 from user profile
         const col = nd.material.uniforms.uColor.value as THREE.Color;
         if (isActive) {
           col.lerp(COL_NODE_ACTIVE, 0.08);
-        } else {
+        } else if (nodeLevel > 0.7) {
+          // Dominado: cyan brillante
+          const bright = new THREE.Color(0.4, 0.95, 0.9);
+          col.lerp(bright, 0.04);
+        } else if (nodeLevel > 0.3) {
+          // En progreso: cyan medio
           col.lerp(COL_NODE, 0.04);
+        } else if (nodeLevel > 0) {
+          // Apenas iniciado: teal tenue
+          const dim = new THREE.Color(0.15, 0.45, 0.5);
+          col.lerp(dim, 0.04);
+        } else {
+          // Sin explorar: muy tenue, pulsa suave como invitación
+          const invite = new THREE.Color(0.08, 0.2, 0.28);
+          col.lerp(invite, 0.04);
         }
 
         // Scale pulse (active nodes are larger)
-        const baseScale = 1 + nd.activation * 0.6;
-        const breathScale = 1 + Math.sin(elapsed * 2 + i) * 0.04;
+        // Level affects base scale: dominado = bigger presence
+        const levelScale = 0.8 + (nd.node.level ?? 0) * 0.4;
+        const baseScale = (1 + nd.activation * 0.6) * (nd.isHub ? 1 : levelScale);
+        const breathSpeed = (nd.node.level ?? 0) < 0.1 ? 1.5 : 2; // unexplored pulse slower
+        const breathScale = 1 + Math.sin(elapsed * breathSpeed + i) * (0.04 + ((nd.node.level ?? 0) < 0.1 ? 0.06 : 0));
         const jarvisScale = 1 + jarvisIntensity * Math.sin(elapsed * 12 + i * 2) * 0.08;
 
         // F: Notification badge — extra pulse for nodes with unread
