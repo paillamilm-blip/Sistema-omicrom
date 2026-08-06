@@ -2,6 +2,7 @@ import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } fro
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding } from './OrbOnboarding';
 import { OraculoBar } from '../OraculoBar';
+import { PerfilSkillVisual } from '../perfil/PerfilSkillVisual';
 import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';
 import { interpret, askCoach } from '../../lib/oraculo';
@@ -70,17 +71,69 @@ const SKILL_ICONS = ['◉', '◈', '◇', '◆', '○', '●', '◎', '⬡', '�
 /**
  * Builds knowledge nodes dynamically from the user's real skills.
  * Each skill from the CV becomes a unique node in the orb.
+ * Uses skillsDetail (from AI analysis) for REAL domination % instead of a
+ * flat 0.7. Also detects SYNERGIES between related skills and boosts
+ * connected nodes.
  */
-function buildSkillNodes(skills: string[]): OrbNode[] {
+function buildSkillNodes(
+  skills: string[],
+  skillsDetail?: { name: string; pct: number }[],
+): OrbNode[] {
   if (!skills || skills.length === 0) return INVITATION_NODES;
 
-  return skills.map((skill, i) => ({
-    id: `skill-${i}-${skill.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 20)}`,
-    label: skill.length > 22 ? skill.slice(0, 20) + '…' : skill,
-    tab: categorizeSkill(skill),
-    icon: SKILL_ICONS[i % SKILL_ICONS.length],
-    level: 0.7, // validated from CV = 70% base
-  }));
+  // Build a lookup from skill name → pct (0-100 → normalized 0-1)
+  const pctMap = new Map<string, number>();
+  if (skillsDetail && skillsDetail.length > 0) {
+    skillsDetail.forEach((sd) => {
+      if (sd.name) pctMap.set(sd.name.toLowerCase(), (sd.pct ?? 70) / 100);
+    });
+  }
+
+  // Synergy groups: related skills boost each other's effective level
+  const SYNERGY_GROUPS: string[][] = [
+    ['react', 'typescript', 'javascript', 'frontend', 'node', 'next.js'],
+    ['python', 'machine learning', 'data', 'ia', 'deep learning', 'analytics'],
+    ['docker', 'kubernetes', 'aws', 'devops', 'cloud', 'ci/cd'],
+    ['diseño', 'ux', 'ui', 'figma', 'design', 'branding'],
+    ['gestión', 'liderazgo', 'scrum', 'agile', 'project management'],
+    ['ventas', 'marketing', 'negociación', 'comercial', 'growth'],
+  ];
+
+  // Detect which synergy groups are active (2+ skills from same group)
+  const activeSynergies = new Set<number>();
+  SYNERGY_GROUPS.forEach((group, gi) => {
+    const matches = skills.filter((s) =>
+      group.some((g) => s.toLowerCase().includes(g))
+    );
+    if (matches.length >= 2) activeSynergies.add(gi);
+  });
+
+  // Synergy bonus: +0.08 if skill belongs to an active synergy group
+  const getSynergyBonus = (skill: string): number => {
+    const s = skill.toLowerCase();
+    for (const gi of activeSynergies) {
+      if (SYNERGY_GROUPS[gi].some((g) => s.includes(g))) return 0.08;
+    }
+    return 0;
+  };
+
+  return skills.map((skill, i) => {
+    // Real level from AI analysis, or fallback 0.7
+    const baseLvl = pctMap.get(skill.toLowerCase()) ?? 0.7;
+    const synergy = getSynergyBonus(skill);
+    const level = Math.min(1, baseLvl + synergy);
+
+    return {
+      id: `skill-${i}-${skill.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 20)}`,
+      label: skill.length > 22 ? skill.slice(0, 20) + '…' : skill,
+      tab: categorizeSkill(skill),
+      icon: SKILL_ICONS[i % SKILL_ICONS.length],
+      level,
+      nextStep: synergy > 0
+        ? `Sinergia activa (+${Math.round(synergy * 100)}%) · dominio ${Math.round(level * 100)}%`
+        : `Dominio ${Math.round(level * 100)}%`,
+    };
+  });
 }
 
 /** Categorize a skill string into the most appropriate tab */
@@ -148,14 +201,17 @@ export function OrbShell() {
   const [nodePositions, setNodePositions] = useState<{ id: string; x: number; y: number; depth: number }[]>([]);
   const [inputText, setInputText] = useState('');
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
+  const [showProfileVisual, setShowProfileVisual] = useState(false);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
 
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
+  // Now uses skills_detail (from AI analysis) for real domination %.
   const dynamicOrbNodes = useMemo((): OrbNode[] => {
     const userSkills: string[] = sbProfile?.skills ?? (profile as any).skills ?? [];
-    const skillNodes = buildSkillNodes(userSkills);
+    const skillsDetail: { name: string; pct: number }[] = sbProfile?.skills_detail ?? [];
+    const skillNodes = buildSkillNodes(userSkills, skillsDetail);
     return [...HUB_NODES, ...skillNodes];
   }, [sbProfile, profile]);
 
@@ -377,11 +433,18 @@ export function OrbShell() {
   }, [isListening, handleTextInput]);
 
   // ── Handle node tap → go to preview ─────────────────────────────────
+  // Si el nodo es "inicio" y el usuario ya tiene skills (CV cargado),
+  // abre la nueva vista PerfilSkillVisual directamente.
   const handleNodeTap = useCallback((node: OrbNode) => {
+    const userSkills: string[] = sbProfile?.skills ?? [];
+    if (node.id === 'inicio' && userSkills.length > 0) {
+      setShowProfileVisual(true);
+      return;
+    }
     setSelectedNode(node);
     setState('preview');
     setActiveTab(node.tab);
-  }, [setActiveTab]);
+  }, [setActiveTab, sbProfile]);
 
   // ── Handle preview click → fullscreen ───────────────────────────────
   const handlePreviewClick = useCallback(() => {
@@ -893,6 +956,31 @@ export function OrbShell() {
           *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
       `}</style>
+
+      {/* ── PerfilSkillVisual: vista orbital top 3 skills ────────────── */}
+      <PerfilSkillVisual
+        isOpen={showProfileVisual}
+        onClose={() => setShowProfileVisual(false)}
+        name={sbProfile?.display_name || sbProfile?.full_name || sbProfile?.username || ''}
+        seniorLabel={(() => {
+          const years = sbProfile?.cv_years_experience ?? 0;
+          if (years >= 10) return 'Profesional Senior';
+          if (years >= 5) return 'Profesional Mid-Senior';
+          if (years >= 2) return 'Profesional Mid';
+          return 'Profesional';
+        })()}
+        years={sbProfile?.cv_years_experience ?? 0}
+        skillsDetail={(sbProfile?.skills_detail ?? []).map((s: { name: string; pct: number }) => ({ name: s.name, pct: s.pct }))}
+        axes={{
+          exec: sbProfile?.execution_score ?? 0,
+          qual: sbProfile?.quality_score ?? 0,
+          trans: sbProfile?.transcendence_score ?? 0,
+          fund: sbProfile?.foundation_score ?? 0,
+        }}
+        reputation={sbProfile?.reputation_score ?? 0}
+        synergies={[]}
+        onExplore={() => setShowProfileVisual(false)}
+      />
     </div>
   );
 }
