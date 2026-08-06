@@ -29,7 +29,7 @@ type SpeechRecognitionCtor = new () => {
 
 
 export function OraculoBar() {
-  const { setActiveTab, profile } = useApp();
+  const { setActiveTab, profile, refreshProfile } = useApp();
   const { onlineCount } = useRealtime();
   const [open, setOpen] = useState(false);
   const [listening, setListening] = useState(false);
@@ -121,13 +121,21 @@ export function OraculoBar() {
     }
     if (intent.kind === 'convalidate') {
       const act = { cv: gemeloActions.addCV, title: gemeloActions.addTitle, year: gemeloActions.addYear, vault: gemeloActions.addVault };
-      act[intent.item]();
+      const success = await act[intent.item]();
       const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia', vault: 'un aporte a la Bóveda' };
-      const t = `Registré ${names[intent.item]} en tu Gemelo convalidado. Se reflejará en tu reputación del ecosistema.`;
-      flash('oraculo', t);
-      speak(t);
-      // ⭐ Recordar convalidación
-      remember(text, t, { ...contextData, convalidationType: intent.item });
+      if (success) {
+        await refreshProfile?.();
+        window.dispatchEvent(new CustomEvent('orb:achievement', { detail: { type: 'convalidation', amount: 0, source: intent.item } }));
+        const t = `Registré ${names[intent.item]} en tu Gemelo convalidado. Se reflejará en tu reputación del ecosistema.`;
+        flash('oraculo', t);
+        speak(t);
+        remember(text, t, { ...contextData, convalidationType: intent.item });
+      } else {
+        const t = `No pude convalidar ${names[intent.item]}. ¿Ya lo convalidaste antes?`;
+        flash('oraculo', t);
+        speak(t);
+        remember(text, t, { ...contextData, convalidationType: intent.item, failed: true });
+      }
       return;
     }
     if (intent.kind === 'fact') {
