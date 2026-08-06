@@ -2,10 +2,14 @@
 // ═══════════════════════════════════════════════════════════════════════
 // ÓMICRON · Convalidación REAL del Gemelo — AUTOMATIZACIÓN MÁXIMA.
 // Componente de presentación: toda la lógica vive en useGemeloActivation.
+// Al completar la carga, muestra la NUEVA vista PerfilSkillVisual
+// (sistema orbital basado en los top 3 skills del usuario).
 // ═══════════════════════════════════════════════════════════════════════
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles, Upload, ArrowRight, TrendingUp, Zap } from 'lucide-react';
 import { useGemeloActivation } from '../../hooks/useGemeloActivation';
+import { PerfilSkillVisual } from '../perfil/PerfilSkillVisual';
 import { C, FONT, RADIUS } from '../../theme';
 import ParticleOrb from './ParticleOrb';
 
@@ -25,6 +29,9 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
     rep, hasExistingCV, gemelo,
     onCVFile, activateGemeloCompleto,
   } = useGemeloActivation();
+
+  // Estado para la nueva vista PerfilSkillVisual (post-dossier)
+  const [showSkillVisual, setShowSkillVisual] = useState(false);
 
   // ── PHASE: SYNCING ──────────────────────────────────────────────────
   if (phase === 'syncing') {
@@ -201,9 +208,24 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
         </div>
 
         <div style={{ display: 'flex', gap: 10, padding: '0 18px calc(env(safe-area-inset-bottom, 0px) + 16px)', position: 'relative', zIndex: 2 }}>
-          <button onClick={() => onViewProfile?.()} style={{ flex: 1, padding: '13px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ver mi perfil completo</button>
+          <button onClick={() => setShowSkillVisual(true)} style={{ flex: 1, padding: '13px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ver mi perfil completo</button>
           <button onClick={onClose} style={{ padding: '13px 20px', borderRadius: 14, cursor: 'pointer', background: C.glass, border: `1px solid ${C.line}`, color: C.ink, fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Listo</button>
         </div>
+
+        {/* ═══ NUEVA VISTA: Perfil Skill Visual (top 3 skills orbital) ═══ */}
+        <PerfilSkillVisual
+          isOpen={showSkillVisual}
+          onClose={() => setShowSkillVisual(false)}
+          name={dossier.name || 'Tu Gemelo Digital'}
+          seniorLabel={dossier.seniorLabel}
+          years={dossier.years}
+          skillsDetail={dossier.skillsDetail?.length ? dossier.skillsDetail : dossier.labels.map((name) => ({ name, pct: 60 }))}
+          axes={dossier.axes}
+          reputation={rep}
+          synergies={synergies}
+          cvSummary={dossier.summary || ai.text}
+          onExplore={() => { setShowSkillVisual(false); onClose(); }}
+        />
       </div>
     );
   }
