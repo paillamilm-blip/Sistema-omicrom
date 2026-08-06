@@ -88,6 +88,11 @@ export default function OrbNeuronal({
   onProjectedRef.current = onProjectedPositions;
   notificationsRef.current = notifications;
 
+  // P1: Detect reduced motion preference
+  const reducedMotionRef = useRef(
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+
 
   // ── Three.js Scene ───────────────────────────────────────────────────
   useEffect(() => {
@@ -100,6 +105,12 @@ export default function OrbNeuronal({
     const COL_CONN = new THREE.Color(0.15, 0.4, 0.5);         // teal tenue
     const COL_PULSE = new THREE.Color(0.4, 0.95, 0.8);        // pulse brillante
     const COL_VOICE = new THREE.Color(0.2, 0.6, 1.0);         // azul Jarvis
+
+    // P0 fix: preallocated colors used in animation loop (avoid GC pressure)
+    const _colBright = new THREE.Color(0.4, 0.95, 0.9);       // dominado
+    const _colDim = new THREE.Color(0.15, 0.45, 0.5);         // apenas iniciado
+    const _colInvite = new THREE.Color(0.08, 0.2, 0.28);      // sin explorar
+    const _colNotif = new THREE.Color(1.0, 0.7, 0.2);         // amber notificación
 
     // ── Scene ───────────────────────────────────────────────────────────
     const scene = new THREE.Scene();
@@ -427,6 +438,26 @@ export default function OrbNeuronal({
 
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
 
+    // ── P1: Keyboard navigation (Tab cycles nodes, Enter activates) ─────
+    let keyboardFocusIdx = -1;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        keyboardFocusIdx = (keyboardFocusIdx + (event.shiftKey ? -1 : 1) + nodeCount) % nodeCount;
+        // Set this node as active visually
+        activeNodeRef.current = nodes[keyboardFocusIdx].id;
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (keyboardFocusIdx >= 0 && onNodeTapRef.current) {
+          onNodeTapRef.current(nodes[keyboardFocusIdx]);
+        }
+      } else if (event.key === 'Escape') {
+        activeNodeRef.current = null;
+        keyboardFocusIdx = -1;
+      }
+    };
+    mount.addEventListener('keydown', handleKeyDown);
+
     // ── E: Drag/swipe gesture to manually rotate orb ────────────────────
     let isDragging = false;
     let dragStartX = 0;
@@ -448,6 +479,8 @@ export default function OrbNeuronal({
       if (!isDragging) return;
       const dx = event.clientX - dragStartX;
       const dy = event.clientY - dragStartY;
+      // P2: Drag threshold — only start real drag after 5px movement
+      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
       manualRotY = dragRotYOffset + dx * 0.008;
       manualRotX = dragRotXOffset + dy * 0.005;
       // Clamp vertical rotation
@@ -494,7 +527,9 @@ export default function OrbNeuronal({
 
       // ── Jarvis vibration (voice reactive) ─────────────────────────────
       // When listening or voice active, particles jitter and nodes pulse
-      const jarvisIntensity = listening ? 0.3 + voice * 0.7 : voice * 0.5;
+      // P1: Disabled under reduced motion
+      const reducedMotion = reducedMotionRef.current;
+      const jarvisIntensity = reducedMotion ? 0 : (listening ? 0.3 + voice * 0.7 : voice * 0.5);
 
       // ── Smooth rotation toward active node ────────────────────────────
       if (activeId) {
@@ -506,9 +541,9 @@ export default function OrbNeuronal({
           targetRotX = -Math.asin(pos.y / ORB_RADIUS) * 0.5;
         }
       } else {
-        // Idle: slow ambient rotation
-        targetRotY = elapsed * 0.06;
-        targetRotX = Math.sin(elapsed * 0.03) * 0.1;
+        // Idle: slow ambient rotation (P1: disabled under reduced motion)
+        targetRotY = reducedMotion ? 0 : elapsed * 0.06;
+        targetRotX = reducedMotion ? 0 : Math.sin(elapsed * 0.03) * 0.1;
       }
 
       // Smooth lerp rotation (combine auto + manual drag)
@@ -539,19 +574,16 @@ export default function OrbNeuronal({
           col.lerp(COL_NODE_ACTIVE, 0.08);
         } else if (nodeLevel > 0.7) {
           // Dominado: cyan brillante
-          const bright = new THREE.Color(0.4, 0.95, 0.9);
-          col.lerp(bright, 0.04);
+          col.lerp(_colBright, 0.04);
         } else if (nodeLevel > 0.3) {
           // En progreso: cyan medio
           col.lerp(COL_NODE, 0.04);
         } else if (nodeLevel > 0) {
           // Apenas iniciado: teal tenue
-          const dim = new THREE.Color(0.15, 0.45, 0.5);
-          col.lerp(dim, 0.04);
+          col.lerp(_colDim, 0.04);
         } else {
           // Sin explorar: muy tenue, pulsa suave como invitación
-          const invite = new THREE.Color(0.08, 0.2, 0.28);
-          col.lerp(invite, 0.04);
+          col.lerp(_colInvite, 0.04);
         }
 
         // Scale pulse (active nodes are larger)
@@ -569,8 +601,7 @@ export default function OrbNeuronal({
           : 1;
         // Notification color shift (warm amber)
         if (notifCount > 0 && !isActive) {
-          const notifColor = new THREE.Color(1.0, 0.7, 0.2); // amber
-          col.lerp(notifColor, 0.04 + Math.sin(elapsed * 4) * 0.02);
+          col.lerp(_colNotif, 0.04 + Math.sin(elapsed * 4) * 0.02);
         }
 
         const s = baseScale * breathScale * jarvisScale * notifPulse;
@@ -725,6 +756,7 @@ export default function OrbNeuronal({
       renderer.domElement.removeEventListener('pointermove', handleDragMove);
       renderer.domElement.removeEventListener('pointerup', handleDragEnd);
       renderer.domElement.removeEventListener('pointerleave', handleDragEnd);
+      mount.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('resize', resize);
       ro.disconnect();
 
@@ -743,6 +775,14 @@ export default function OrbNeuronal({
       shellMat.dispose();
       nodeDatas.forEach(nd => { nd.material.dispose(); nd.glowMat.dispose(); });
 
+      // P0 fix: dispose icon sprite textures and materials
+      iconSprites.forEach(sprite => {
+        const mat = sprite.material as any;
+        if (mat.map) mat.map.dispose();
+        mat.dispose();
+        sprite.geometry.dispose();
+      });
+
       glowTexture.dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode === mount) {
@@ -752,5 +792,5 @@ export default function OrbNeuronal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={mountRef} className={className} style={{ width: '100%', height: '100%' }} />;
+  return <div ref={mountRef} className={className} style={{ width: '100%', height: '100%' }} role="navigation" aria-label="Orbe de navegación — usa Tab para explorar nodos, Enter para activar" tabIndex={0} />;
 }
