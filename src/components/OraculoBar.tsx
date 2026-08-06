@@ -146,7 +146,16 @@ export function OraculoBar() {
       setBusy(true);
       flash('oraculo', 'Consultando al Coach IA…', 20000);
       speak('Déjame analizar tu Gemelo Digital.');
-      const r = await askCoach();
+      const r = await askCoach({
+        skills: profile?.skills ?? [],
+        cv_summary: profile?.cv_summary ?? '',
+        execution: profile?.execution_score,
+        quality: profile?.quality_score,
+        transcendence: profile?.transcendence_score,
+        foundation: profile?.foundation_score,
+        reputation: profile?.reputation_score,
+        pe: profile?.pe_points,
+      });
       setBusy(false);
       const t = r.advice || r.error || 'Sin respuesta.';
       flash('oraculo', t, 14000);
