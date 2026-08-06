@@ -7,6 +7,7 @@ import { ScanlineOverlay, CyberCard, SectionLabel, LoadingScreen } from '../shar
 import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
+import { GemeloGuidance } from '../shared/GemeloGuidance';
 import { sendSecureMessage, loadSecureMessages } from '../../lib/secureChat';
 import { DirectChatModal } from '../perfil/RedSocial';
 import type { Message } from '../../types';
@@ -379,6 +380,7 @@ export function ChatTab() {
           title="Mensajes"
           subtitle="Salas por contrato · Caja negra"
         />
+        <GemeloGuidance tab="chat" />
         <div style={cx(BASE.scrollArea, { padding: '10px 14px 20px' })}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <SectionLabel>◆ MENSAJES DIRECTOS ({dmConvos.length})</SectionLabel>
