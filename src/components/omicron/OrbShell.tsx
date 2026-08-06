@@ -6,8 +6,9 @@ import { useRealtime } from '../../store/RealtimeContext';
 import { interpret } from '../../lib/oraculo';
 import { speak } from '../../lib/voiceEngine';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
+import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
 import { C, FONT } from '../../theme';
-import type { TabId } from '../../types';
+import type { TabId, GemeloDigital } from '../../types';
 
 // =====================================================================
 // <OrbShell /> — La shell completa de la app.
@@ -137,6 +138,19 @@ function renderTab(tab: TabId) {
 export function OrbShell() {
   const { setActiveTab, unreadCount } = useApp();
   const { profile } = useGemeloProfile();
+
+  // ── Build GemeloDigital from Supabase profile for omicronCoach ──────
+  const sbProfile = (useApp() as any).profile;
+  const gemeloDigital = useMemo((): GemeloDigital | null => {
+    if (!sbProfile) return null;
+    return {
+      execution: sbProfile.execution_score ?? 40,
+      quality: sbProfile.quality_score ?? 50,
+      transcendence: sbProfile.transcendence_score ?? 18,
+      foundation: sbProfile.foundation_score ?? 25,
+      overallReputation: sbProfile.reputation_score ?? 0,
+    };
+  }, [sbProfile]);
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
   const [voiceLevel, setVoiceLevel] = useState(0);
@@ -165,17 +179,18 @@ export function OrbShell() {
       keywords.some(k => validatedSkills.some(s => s.toLowerCase().includes(k.toLowerCase())));
 
     // Map node id → level (0-1) + next step text
+    // GAP 7 FIX: Hub nextSteps come from omicronCoach.nodeGuidance() (dynamic, real data)
     const levelMap: Record<string, { level: number; nextStep: string }> = {
-      // Hubs → driven by axes
-      inicio:      { level: Math.min(1, rep / 100), nextStep: rep < 50 ? 'Completa tu perfil para subir reputación' : rep < 80 ? 'Sube más convalidaciones' : '¡Perfil sólido! Expándete' },
-      academia:    { level: execNorm * 0.5 + foundNorm * 0.5, nextStep: foundNorm < 0.5 ? 'Empieza un curso para subir fundamentos' : 'Toma el siguiente nivel de certificación' },
-      empleos:     { level: execNorm, nextStep: execNorm < 0.4 ? 'Agrega proyectos reales a tu CV' : execNorm < 0.7 ? 'Postula a oportunidades' : 'Negocia tu próximo contrato' },
-      mercado:     { level: transNorm, nextStep: transNorm < 0.4 ? 'Publica tu primer servicio' : 'Agrega más servicios y sube precios' },
-      mensajes:    { level: transNorm * 0.5 + execNorm * 0.5, nextStep: 'Conecta con otros nodos de la red' },
-      gobernanza:  { level: foundNorm, nextStep: foundNorm < 0.5 ? 'Participa en tu primera propuesta' : 'Lidera una propuesta' },
-      habilidades: { level: qualNorm, nextStep: qualNorm < 0.4 ? 'Valida tus primeras habilidades' : qualNorm < 0.7 ? 'Toma el simulador de nivel' : 'Busca certificación internacional' },
-      billetera:   { level: Math.min(1, (profile.vault ?? 0) / 5), nextStep: profile.vault === 0 ? 'Haz tu primera recarga de tokens' : 'Expande tus activos' },
-      boveda:      { level: Math.min(1, (profile.vault ?? 0) / 5), nextStep: (profile.vault ?? 0) === 0 ? 'Sube tu primer activo a la Bóveda' : 'Diversifica tus activos' },
+      // Hubs → driven by axes + nodeGuidance from omicronCoach (dynamic)
+      inicio:      { level: Math.min(1, rep / 100), nextStep: nodeGuidance('perfil', sbProfile, gemeloDigital) || (rep < 50 ? 'Completa tu perfil' : '¡Perfil sólido!') },
+      academia:    { level: execNorm * 0.5 + foundNorm * 0.5, nextStep: nodeGuidance('academia', sbProfile, gemeloDigital) },
+      empleos:     { level: execNorm, nextStep: nodeGuidance('empleos', sbProfile, gemeloDigital) },
+      mercado:     { level: transNorm, nextStep: nodeGuidance('market', sbProfile, gemeloDigital) },
+      mensajes:    { level: transNorm * 0.5 + execNorm * 0.5, nextStep: nodeGuidance('chat', sbProfile, gemeloDigital) },
+      gobernanza:  { level: foundNorm, nextStep: nodeGuidance('gobernanza', sbProfile, gemeloDigital) },
+      habilidades: { level: qualNorm, nextStep: nodeGuidance('maxskill', sbProfile, gemeloDigital) },
+      billetera:   { level: Math.min(1, (profile.vault ?? 0) / 5), nextStep: nodeGuidance('wallet', sbProfile, gemeloDigital) },
+      boveda:      { level: Math.min(1, (profile.vault ?? 0) / 5), nextStep: nodeGuidance('vault', sbProfile, gemeloDigital) },
 
       // Knowledge nodes → based on validated skills
       react:        { level: hasSkill(['react', 'jsx', 'frontend']) ? 0.8 : execNorm * 0.3, nextStep: hasSkill(['react']) ? 'Aprende Server Components' : 'Empieza con React fundamentals' },
@@ -242,7 +257,7 @@ export function OrbShell() {
       level: levelMap[node.id]?.level ?? 0,
       nextStep: levelMap[node.id]?.nextStep ?? 'Explora esta competencia',
     }));
-  }, [profile]);
+  }, [profile, sbProfile, gemeloDigital]);
 
   // ── Handle text input (interpret intent → navigate or respond) ──────
   const handleTextInput = useCallback((text: string) => {
