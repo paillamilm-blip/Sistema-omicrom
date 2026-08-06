@@ -38,8 +38,8 @@ const VaultTab      = lazy(() => import('../tabs/VaultTab').then(m => ({ default
 // Los primeros 9 son los HUBS navegables de la app.
 // El resto son NODOS DE CONOCIMIENTO: cada partícula es una posibilidad
 // de integrar conocimiento al Gemelo Digital.
-const ORB_NODES: OrbNode[] = [
-  // ── Hubs principales (navegables) ─────────────────────────────────
+// ── Hub nodes (always present — the 9 app sections) ─────────────────
+const HUB_NODES: OrbNode[] = [
   { id: 'inicio',      label: 'Inicio',       tab: 'perfil',     icon: '⬡' },
   { id: 'academia',    label: 'Academia',     tab: 'academia',   icon: '◈' },
   { id: 'empleos',     label: 'Empleos',      tab: 'empleos',    icon: '◇' },
@@ -49,65 +49,53 @@ const ORB_NODES: OrbNode[] = [
   { id: 'habilidades', label: 'Habilidades',  tab: 'maxskill',   icon: '◎' },
   { id: 'billetera',   label: 'Billetera',    tab: 'wallet',     icon: '▽' },
   { id: 'boveda',      label: 'Bóveda',       tab: 'vault',      icon: '⊡' },
-  // ── Nodos de conocimiento (posibilidades) ─────────────────────────
-  { id: 'react',        label: 'React',           tab: 'maxskill', icon: '⚛' },
-  { id: 'python',       label: 'Python',          tab: 'maxskill', icon: '🐍' },
-  { id: 'typescript',   label: 'TypeScript',      tab: 'maxskill', icon: 'TS' },
-  { id: 'nodejs',       label: 'Node.js',         tab: 'maxskill', icon: '⬢' },
-  { id: 'ia',           label: 'Inteligencia Artificial', tab: 'academia', icon: '🧠' },
-  { id: 'ml',           label: 'Machine Learning', tab: 'academia', icon: '📊' },
-  { id: 'data',         label: 'Data Science',    tab: 'academia', icon: '📈' },
-  { id: 'cloud',        label: 'Cloud',           tab: 'academia', icon: '☁' },
-  { id: 'devops',       label: 'DevOps',          tab: 'maxskill', icon: '⚙' },
-  { id: 'design',       label: 'Diseño UX',      tab: 'maxskill', icon: '✦' },
-  { id: 'liderazgo',    label: 'Liderazgo',      tab: 'maxskill', icon: '★' },
-  { id: 'comunicacion', label: 'Comunicación',   tab: 'maxskill', icon: '◆' },
-  { id: 'gestion',      label: 'Gestión',        tab: 'maxskill', icon: '▣' },
-  { id: 'agile',        label: 'Agile',          tab: 'maxskill', icon: '↻' },
-  { id: 'seguridad',    label: 'Ciberseguridad', tab: 'maxskill', icon: '🛡' },
-  { id: 'blockchain',   label: 'Blockchain',     tab: 'academia', icon: '⛓' },
-  { id: 'web3',         label: 'Web3',           tab: 'academia', icon: '◉' },
-  { id: 'mobile',       label: 'Mobile Dev',     tab: 'maxskill', icon: '📱' },
-  { id: 'databases',    label: 'Databases',      tab: 'maxskill', icon: '⊞' },
-  { id: 'api',          label: 'APIs',           tab: 'maxskill', icon: '⇌' },
-  { id: 'testing',      label: 'Testing',        tab: 'maxskill', icon: '✓' },
-  { id: 'arquitectura', label: 'Arquitectura',   tab: 'maxskill', icon: '⊿' },
-  { id: 'analytics',    label: 'Analytics',      tab: 'academia', icon: '◧' },
-  { id: 'marketing',    label: 'Marketing Digital', tab: 'academia', icon: '◩' },
-  { id: 'finanzas',     label: 'Finanzas',       tab: 'academia', icon: '◫' },
-  { id: 'negocios',     label: 'Negocios',       tab: 'academia', icon: '◪' },
-  { id: 'innovacion',   label: 'Innovación',     tab: 'academia', icon: '✧' },
-  { id: 'robotica',     label: 'Robótica',       tab: 'academia', icon: '⚡' },
-  { id: 'iot',          label: 'IoT',            tab: 'academia', icon: '◌' },
-  { id: 'networking',   label: 'Networking',     tab: 'empleos',  icon: '⊛' },
-  { id: 'freelance',    label: 'Freelance',      tab: 'empleos',  icon: '◑' },
-  { id: 'startup',      label: 'Startups',       tab: 'empleos',  icon: '◐' },
-  { id: 'cv',           label: 'CV Digital',     tab: 'perfil',   icon: '◫' },
-  { id: 'reputacion',   label: 'Reputación',     tab: 'perfil',   icon: '◉' },
-  { id: 'certificados', label: 'Certificados',   tab: 'vault',    icon: '◈' },
-  { id: 'mentoria',     label: 'Mentoría',       tab: 'market',   icon: '◇' },
-  { id: 'coaching',     label: 'Coaching',       tab: 'market',   icon: '◆' },
-  { id: 'cursos',       label: 'Cursos Online',  tab: 'academia', icon: '▢' },
-  { id: 'talleres',     label: 'Talleres',       tab: 'academia', icon: '▣' },
-  { id: 'proyectos',    label: 'Proyectos',      tab: 'empleos',  icon: '▤' },
-  { id: 'colaboracion', label: 'Colaboración',   tab: 'chat',     icon: '▥' },
-  { id: 'tokens',       label: 'Tokens',         tab: 'wallet',   icon: '◎' },
-  { id: 'stake',        label: 'Staking',        tab: 'wallet',   icon: '◉' },
-  { id: 'votacion',     label: 'Votación',       tab: 'gobernanza', icon: '◧' },
-  { id: 'propuestas',   label: 'Propuestas',     tab: 'gobernanza', icon: '◨' },
-  { id: 'sql',          label: 'SQL',            tab: 'maxskill', icon: '⊞' },
-  { id: 'git',          label: 'Git',            tab: 'maxskill', icon: '⑂' },
-  { id: 'docker',       label: 'Docker',         tab: 'maxskill', icon: '▦' },
-  { id: 'kubernetes',   label: 'Kubernetes',     tab: 'maxskill', icon: '⎈' },
-  { id: 'aws',          label: 'AWS',            tab: 'maxskill', icon: '△' },
-  { id: 'figma',        label: 'Figma',          tab: 'maxskill', icon: '◈' },
-  { id: 'threejs',      label: 'Three.js',       tab: 'maxskill', icon: '▲' },
-  { id: 'rust',         label: 'Rust',           tab: 'maxskill', icon: '⚙' },
-  { id: 'go',           label: 'Go',             tab: 'maxskill', icon: '⬡' },
-  { id: 'idiomas',      label: 'Idiomas',        tab: 'academia', icon: '🌐' },
-  { id: 'ingles',       label: 'Inglés',         tab: 'academia', icon: '🇬🇧' },
-  { id: 'japones',      label: 'Japonés',        tab: 'academia', icon: '🇯🇵' },
 ];
+
+// ── Default invitation nodes (when user has no skills yet) ───────────
+const INVITATION_NODES: OrbNode[] = [
+  { id: 'inv-cv',       label: 'Sube tu CV',        tab: 'perfil',   icon: '📄' },
+  { id: 'inv-skills',   label: 'Descubre skills',   tab: 'maxskill', icon: '✦' },
+  { id: 'inv-curso',    label: 'Primer curso',      tab: 'academia', icon: '📚' },
+  { id: 'inv-empleo',   label: 'Tu primer match',   tab: 'empleos',  icon: '🎯' },
+  { id: 'inv-servicio', label: 'Ofrece un servicio', tab: 'market',  icon: '💡' },
+  { id: 'inv-token',    label: 'Gana tokens',       tab: 'wallet',   icon: '⚡' },
+  { id: 'inv-connect',  label: 'Conecta',           tab: 'chat',     icon: '🤝' },
+  { id: 'inv-valida',   label: 'Valida expertise',  tab: 'maxskill', icon: '🏆' },
+];
+
+// ── Icon generator for skill nodes (first letter + geometric shape) ──
+const SKILL_ICONS = ['◉', '◈', '◇', '◆', '○', '●', '◎', '⬡', '⬢', '△', '▽', '▣', '▢', '⊡', '⊛', '✦', '✧', '⊿', '⊞', '◧'];
+
+/**
+ * Builds knowledge nodes dynamically from the user's real skills.
+ * Each skill from the CV becomes a unique node in the orb.
+ */
+function buildSkillNodes(skills: string[]): OrbNode[] {
+  if (!skills || skills.length === 0) return INVITATION_NODES;
+
+  return skills.map((skill, i) => ({
+    id: `skill-${i}-${skill.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 20)}`,
+    label: skill.length > 22 ? skill.slice(0, 20) + '…' : skill,
+    tab: categorizeSkill(skill),
+    icon: SKILL_ICONS[i % SKILL_ICONS.length],
+    level: 0.7, // validated from CV = 70% base
+  }));
+}
+
+/** Categorize a skill string into the most appropriate tab */
+function categorizeSkill(skill: string): TabId {
+  const s = skill.toLowerCase();
+  // Tech/dev skills → maxskill
+  if (/react|vue|angular|node|python|java|typescript|javascript|css|html|docker|kubernetes|aws|git|sql|rust|go|flutter|swift|kotlin|c\+\+|php|ruby/.test(s)) return 'maxskill';
+  // Data/AI/science → academia
+  if (/machine learning|ml|ia|inteligencia|data|ciencia|investigaci|estadist|analytics|deep learning|nlp|ai/.test(s)) return 'academia';
+  // Business/management/soft → empleos
+  if (/gesti[oó]n|liderazgo|management|project|scrum|agile|negocio|emprendim|marketing|ventas|comercial/.test(s)) return 'empleos';
+  // Design/creative → market (servicios)
+  if (/dise[nñ]o|design|ux|ui|figma|creative|ilustra|photoshop|branding/.test(s)) return 'market';
+  // Fallback: maxskill (most skills are competencies)
+  return 'maxskill';
+}
 
 // ── States ──────────────────────────────────────────────────────────
 type ShellState = 'orb' | 'preview' | 'fullscreen';
@@ -161,6 +149,14 @@ export function OrbShell() {
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
+
+  // ── Build orb nodes dynamically from user's real skills ─────────────
+  // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
+  const dynamicOrbNodes = useMemo((): OrbNode[] => {
+    const userSkills: string[] = sbProfile?.skills ?? (profile as any).skills ?? [];
+    const skillNodes = buildSkillNodes(userSkills);
+    return [...HUB_NODES, ...skillNodes];
+  }, [sbProfile, profile]);
 
   // ── Compute node levels from user's Gemelo profile ──────────────────
   // Maps each node to a 0-1 level based on validated skills and axes
@@ -253,12 +249,12 @@ export function OrbShell() {
       japones:      { level: hasSkill(['japonés', 'japones', 'japanese', 'jlpt']) ? 0.7 : 0.05, nextStep: 'El japonés abre puertas al mercado asiático' },
     };
 
-    return ORB_NODES.map(node => ({
+    return dynamicOrbNodes.map(node => ({
       ...node,
-      level: levelMap[node.id]?.level ?? 0,
-      nextStep: levelMap[node.id]?.nextStep ?? 'Explora esta competencia',
+      level: levelMap[node.id]?.level ?? node.level ?? 0,
+      nextStep: levelMap[node.id]?.nextStep ?? node.nextStep ?? 'Explora esta competencia',
     }));
-  }, [profile, sbProfile, gemeloDigital]);
+  }, [profile, sbProfile, gemeloDigital, dynamicOrbNodes]);
 
   // ── Handle text input — GAP 1 FIX: todos los intents del Oráculo ────
   const handleTextInput = useCallback(async (text: string) => {
@@ -704,7 +700,7 @@ export function OrbShell() {
             if (!node) return null;
             const isFront = pos.depth < 0.5;
             const isActive = node.id === selectedNode?.id;
-            const isHub = ORB_NODES.findIndex(n => n.id === node.id) < 9;
+            const isHub = HUB_NODES.findIndex(n => n.id === node.id) >= 0;
             if (!isHub && !isActive) return null;
             return (
               <button
