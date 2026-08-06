@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Eye, EyeOff, Zap, Shield, ArrowLeft, Mail } from 'lucide-react';
+import { Eye, EyeOff, Shield, ArrowLeft, Mail } from 'lucide-react';
+import ParticleOrb from '../omicron/ParticleOrb';
 
 type AuthMode = 'login' | 'register' | 'forgot';
 
@@ -178,10 +179,10 @@ export function AuthOverlay() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-6 bg-omicron-bg">
-      {/* Logo */}
+      {/* Logo — Orbe 3D */}
       <div className="mb-8 flex flex-col items-center gap-3">
-        <div className="w-16 h-16 rounded-2xl bg-omicron-accent/20 border border-omicron-accent/40 flex items-center justify-center">
-          <Zap className="w-8 h-8 text-omicron-accent" />
+        <div style={{ width: 80, height: 80, borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(92,200,255,0.3)', boxShadow: '0 0 30px rgba(92,200,255,0.2)' }}>
+          <ParticleOrb />
         </div>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-omicron-text tracking-tight">Sistema Ómicron</h1>
