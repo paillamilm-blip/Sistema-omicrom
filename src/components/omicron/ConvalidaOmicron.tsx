@@ -207,9 +207,35 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: 10, padding: '0 18px calc(env(safe-area-inset-bottom, 0px) + 16px)', position: 'relative', zIndex: 2 }}>
+        <div style={{ display: 'flex', gap: 10, padding: '0 18px', position: 'relative', zIndex: 2, marginBottom: 10 }}>
           <button onClick={() => setShowSkillVisual(true)} style={{ flex: 1, padding: '13px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ver mi perfil completo</button>
           <button onClick={onClose} style={{ padding: '13px 20px', borderRadius: 14, cursor: 'pointer', background: C.glass, border: `1px solid ${C.line}`, color: C.ink, fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Listo</button>
+        </div>
+
+        {/* ═══ OPORTUNIDADES DE MEJORA (post-CV) ═══ */}
+        <div style={{ padding: '0 18px 16px', position: 'relative', zIndex: 2 }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.gold, textTransform: 'uppercase', marginBottom: 10 }}>
+            ⬡ Tu ruta de mejora
+          </div>
+          {(() => {
+            const { computeSteps } = require('../../lib/omicronCoach');
+            const gemelo = {
+              execution: dossier.axes?.exec ?? 0, quality: dossier.axes?.qual ?? 0,
+              transcendence: dossier.axes?.trans ?? 0, foundation: dossier.axes?.fund ?? 0,
+              overallReputation: rep,
+            };
+            const fakeProfile = { skills: dossier.labels ?? [], pe_points: 0, traditional_score: 30 };
+            const steps = computeSteps(fakeProfile, gemelo).slice(0, 3);
+            return steps.map((s: { id: string; title: string; why: string; accent: string; actionLabel: string }) => (
+              <div key={s.id} style={{
+                padding: '10px 12px', borderRadius: 12, marginBottom: 8,
+                background: `${s.accent}08`, border: `1px solid ${s.accent}33`,
+              }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.ink, marginBottom: 4 }}>{s.title}</div>
+                <div style={{ fontFamily: FONT.body, fontSize: 11.5, color: C.mut, lineHeight: 1.4 }}>{s.why.slice(0, 120)}</div>
+              </div>
+            ));
+          })()}
         </div>
 
         {/* ═══ NUEVA VISTA: Perfil Skill Visual (top 3 skills orbital) ═══ */}
