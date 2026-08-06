@@ -136,7 +136,7 @@ function renderTab(tab: TabId) {
 
 export function OrbShell() {
   const { setActiveTab } = useApp();
-  const { profile, next: nextBestStep } = useGemeloProfile();
+  const { profile } = useGemeloProfile();
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
   const [voiceLevel, setVoiceLevel] = useState(0);
@@ -144,8 +144,8 @@ export function OrbShell() {
   const [nodePositions, setNodePositions] = useState<{ id: string; x: number; y: number; depth: number }[]>([]);
   const [inputText, setInputText] = useState('');
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   // ── Compute node levels from user's Gemelo profile ──────────────────
   // Maps each node to a 0-1 level based on validated skills and axes
@@ -357,14 +357,27 @@ export function OrbShell() {
     };
   }, []);
 
-  // ── Simulated Jarvis breath when idle ──────────────────────────────
+  // Fix 2: rAF instead of setInterval — no unnecessary re-renders on idle
   useEffect(() => {
-    if (state === 'orb' && !isListening) {
-      const iv = setInterval(() => {
-        setVoiceLevel(Math.sin(Date.now() * 0.002) * 0.05 + 0.05);
-      }, 50);
-      return () => clearInterval(iv);
-    }
+    if (state !== 'orb' || isListening) return;
+    let running = true;
+    const loop = () => {
+      if (!running) return;
+      setVoiceLevel(Math.sin(Date.now() * 0.002) * 0.05 + 0.05);
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    // Throttle: only update voiceLevel every ~100ms (not every rAF frame)
+    let last = 0;
+    const throttled = (ts: number) => {
+      if (!running) return;
+      if (ts - last > 100) { last = ts; setVoiceLevel(Math.sin(ts * 0.002) * 0.05 + 0.05); }
+      rafRef.current = requestAnimationFrame(throttled);
+    };
+    rafRef.current = requestAnimationFrame(throttled);
+    return () => {
+      running = false;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, [state, isListening]);
 
   // (Voice control exposed via CustomEvents — see oracle:listening / oracle:voice listeners above)
@@ -386,7 +399,7 @@ export function OrbShell() {
         justifyContent: 'center',
         opacity: state === 'fullscreen' ? 0 : 1,
         transform: state === 'fullscreen' ? 'scale(0.8)' : 'scale(1)',
-        transition: 'opacity 0.5s cubic-bezier(0.34,1.56,0.64,1), transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+        transition: 'opacity 0.25s cubic-bezier(0.23,1,0.32,1), transform 0.25s cubic-bezier(0.23,1,0.32,1)',
         pointerEvents: state === 'fullscreen' ? 'none' : 'auto',
         zIndex: 1,
       }}>
@@ -406,13 +419,15 @@ export function OrbShell() {
       {/* ── PREVIEW PANEL (floating card when node selected) ─────────── */}
       {state === 'preview' && selectedNode && (
         <div
-          ref={previewRef}
           onClick={handlePreviewClick}
+          role="dialog"
+          aria-label={`Vista previa: ${selectedNode.label}. ${selectedNode.nextStep || 'Toca para abrir'}`}
+          aria-modal="false"
           style={{
             position: 'absolute',
-            bottom: '12%',
+            top: '50%',
             left: '50%',
-            transform: 'translateX(-50%)',
+            transform: 'translate(-50%, -50%)',
             width: '85%',
             maxWidth: 360,
             background: C.surface,
@@ -424,7 +439,7 @@ export function OrbShell() {
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 30px ${C.cyanFaint}`,
-            animation: 'orbPreviewEnter 0.4s cubic-bezier(0.23,1,0.32,1) both',
+            animation: 'orbPreviewEnter 0.25s cubic-bezier(0.23,1,0.32,1) both',
           }}
         >
           {/* Node label */}
@@ -454,34 +469,47 @@ export function OrbShell() {
             </div>
           </div>
 
-          {/* Mini preview of the tab content (just a teaser) */}
-          <div style={{
-            height: 120,
-            borderRadius: 12,
-            background: C.bg,
-            border: `1px solid ${C.line}`,
-            overflow: 'hidden',
-            position: 'relative',
-          }}>
-            <div style={{
-              transform: 'scale(0.4)',
-              transformOrigin: 'top left',
-              width: '250%',
-              height: '250%',
-              pointerEvents: 'none',
-              opacity: 0.7,
+          {/* Fix 1: Static preview placeholder — no tab render, no queries */}
+          <div
+            role="img"
+            aria-label={`Vista previa de ${selectedNode.label}`}
+            style={{
+              height: 120,
+              borderRadius: 12,
+              background: `linear-gradient(135deg, ${C.bg} 0%, rgba(92,200,255,0.06) 100%)`,
+              border: `1px solid ${C.line}`,
+              overflow: 'hidden',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <span style={{ fontSize: 32, opacity: 0.7 }}>{selectedNode.icon}</span>
+            <span style={{
+              fontFamily: FONT.mono,
+              fontSize: 9,
+              letterSpacing: 1.5,
+              color: C.cyanDim,
+              textTransform: 'uppercase',
             }}>
-              <Suspense fallback={<TabLoader />}>
-                {renderTab(selectedNode.tab)}
-              </Suspense>
-            </div>
-            {/* Gradient overlay for fade effect */}
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              background: `linear-gradient(180deg, transparent 40%, ${C.bg} 100%)`,
-              pointerEvents: 'none',
-            }} />
+              Toca para abrir →
+            </span>
+            {selectedNode.level !== undefined && selectedNode.level > 0 && (
+              <div style={{
+                position: 'absolute',
+                bottom: 8,
+                right: 10,
+                fontFamily: FONT.mono,
+                fontSize: 10,
+                color: C.cyan,
+                fontWeight: 700,
+              }}>
+                {Math.round(selectedNode.level * 100)}%
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -494,7 +522,7 @@ export function OrbShell() {
         zIndex: state === 'fullscreen' ? 20 : -1,
         opacity: state === 'fullscreen' ? 1 : 0,
         transform: state === 'fullscreen' ? 'translateY(0)' : 'translateY(30px)',
-        transition: 'opacity 0.45s cubic-bezier(0.34,1.56,0.64,1), transform 0.45s cubic-bezier(0.34,1.56,0.64,1)',
+        transition: 'opacity 0.25s cubic-bezier(0.23,1,0.32,1), transform 0.25s cubic-bezier(0.23,1,0.32,1)',
         pointerEvents: state === 'fullscreen' ? 'auto' : 'none',
         display: 'flex',
         flexDirection: 'column',
@@ -683,6 +711,9 @@ export function OrbShell() {
               value={inputText}
               onChange={(e: { target: { value: string } }) => setInputText(e.target.value)}
               placeholder="Hablá o escribí a Ómicron…"
+              aria-label="Escribir comando al Oráculo"
+              inputMode="text"
+              autoComplete="off"
               style={{
                 flex: 1,
                 border: 'none',
@@ -744,8 +775,11 @@ export function OrbShell() {
       {/* ── CSS Animations ──────────────────────────────────────────── */}
       <style>{`
         @keyframes orbPreviewEnter {
-          from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.95); }
-          to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+          from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+          to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
       `}</style>
     </div>
