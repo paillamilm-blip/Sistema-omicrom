@@ -453,6 +453,31 @@ export function OrbShell() {
     return () => clearTimeout(timer);
   }, [sbProfile]);
 
+  // ── GAP 8 FIX: Listen for achievements from tabs ───────────────────
+  useEffect(() => {
+    const handleAchievement = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      const { type, amount, source } = detail;
+      let msg = '';
+      if (type === 'pe' && amount > 0) {
+        msg = `+${amount} PE ganados en ${source}. ¡Tu Gemelo evoluciona!`;
+      } else if (type === 'quiz') {
+        msg = '¡Quiz aprobado! Tu Gemelo se fortalece con evidencia real.';
+      } else {
+        msg = '¡Logro desbloqueado! Tu Gemelo crece.';
+      }
+      setResponseMsg(msg);
+      speak(msg);
+      // Pulse the orb briefly
+      setVoiceLevel(0.6);
+      setTimeout(() => setVoiceLevel(0.05), 2000);
+      if (responseTimer.current) clearTimeout(responseTimer.current);
+      responseTimer.current = setTimeout(() => setResponseMsg(null), 6000);
+    };
+    window.addEventListener('orb:achievement', handleAchievement);
+    return () => window.removeEventListener('orb:achievement', handleAchievement);
+  }, []);
+
   // Fix 2: rAF instead of setInterval — no unnecessary re-renders on idle
   useEffect(() => {
     if (state !== 'orb' || isListening) return;

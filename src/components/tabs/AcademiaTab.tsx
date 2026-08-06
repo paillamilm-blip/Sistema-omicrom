@@ -318,7 +318,10 @@ export function AcademiaTab() {
       const r = Array.isArray(data) ? data[0] : data;
       setResult({ score: r.score, passed: r.passed });
       await loadCourses();
-      if (r.passed) await refreshProfile();
+      if (r.passed) {
+        await refreshProfile();
+        window.dispatchEvent(new CustomEvent('orb:achievement', { detail: { type: 'quiz', amount: 0, source: 'academia' } }));
+      }
     } catch (e) {
       toast('No se pudo enviar el quiz: ' + ((e as Error).message ?? e), 'error');
     } finally {

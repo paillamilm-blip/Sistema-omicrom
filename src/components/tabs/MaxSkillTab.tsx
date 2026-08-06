@@ -614,6 +614,8 @@ export function MaxSkillTab() {
             if (pe > 0) {
               setLastPeEarned(pe);
               setTimeout(() => setLastPeEarned(null), 3500);
+              // GAP 8: Notify orb of achievement
+              window.dispatchEvent(new CustomEvent('orb:achievement', { detail: { type: 'pe', amount: pe, source: 'examen' } }));
             }
           }}
         />
