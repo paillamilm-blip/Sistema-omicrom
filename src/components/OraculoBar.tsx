@@ -186,10 +186,11 @@ export function OraculoBar() {
         const last = e.results[e.results.length - 1] as unknown as { isFinal?: boolean };
         if (last && last.isFinal) setTimeout(() => handle(txt), 150);
       };
-      recog.onerror = () => setListening(false);
-      recog.onend = () => setListening(false);
+      recog.onerror = () => { setListening(false); window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } })); };
+      recog.onend = () => { setListening(false); window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } })); };
       recog.start();
       setListening(true);
+      window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: true } }));
       flash('oraculo', 'Te escucho…', 8000);
     } catch {
       setListening(false);
