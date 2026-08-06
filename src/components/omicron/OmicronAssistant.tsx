@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { supabase } from '../../lib/supabase';
-import { interpret, askCoach, askTutor } from '../../lib/oraculo';
+import { interpret, askCoach, askTutor, type CoachContext } from '../../lib/oraculo';
 import { computeSteps, nodeGuidance, type NextStep } from '../../lib/omicronCoach';
 import { speak, stopSpeaking } from '../../lib/voiceEngine';
 import { C, FONT, RADIUS } from '../../theme';
@@ -524,11 +524,13 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     if (!started) setState('idle');
   }, []);
 
-  // Saludo + motivación al entrar (una vez).
+  // Saludo + motivación al entrar (una vez). Espera a que profile esté
+  // cargado para no saludar con datos vacíos (fix race condition).
   useEffect(() => {
     if (greetedRef.current) return;
+    if (!profile) return; // Esperar a que el perfil se cargue
     greetedRef.current = true;
-    const name = profile?.display_name || profile?.full_name || profile?.username || 'Nodo';
+    const name = profile.display_name || profile.full_name || profile.username || 'Nodo';
     const base = `Hola ${name}. Soy Ómicron, tu Gemelo Digital.`;
     const push = top ? ` Tu próximo paso: ${top.title}. ${top.why}` : ' Para empezar, subí tu CV real y calculo tu nivel.';
     const t = setTimeout(() => omicronSay(base + push), 500);
@@ -553,46 +555,82 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     setInput('');
     setState('thinking');
 
-    // Comando de cierre de sesión (por voz o texto).
-    if (/cerrar sesi[oó]n|cerrar sesion|\bsalir\b|logout|log out|desconect|cerrar cuenta/i.test(text)) {
-      omicronSay('Cerrando tu sesión. Hasta pronto, Nodo.');
-      setTimeout(() => { void supabase.auth.signOut(); }, 900);
-      return;
-    }
+    // Safety timeout: si algo falla y el estado queda en 'thinking' más
+    // de 15s, lo reseteamos automáticamente para no dejar la UI colgada.
+    const safetyTimer = setTimeout(() => {
+      setState((s) => (s === 'thinking' ? 'idle' : s));
+    }, 15000);
 
-    const intent = interpret(text);
+    const finalize = () => clearTimeout(safetyTimer);
 
-    if (intent.kind === 'navigate') {
-      if (intent.tab === 'perfil') {
-        omicronSay('Abro tu perfil completo: todo medido, con tus oportunidades de mejora.');
-        setTimeout(() => onOpenPerfil?.(), 500);
+    try {
+      // Comando de cierre de sesión (por voz o texto).
+      if (/cerrar sesi[oó]n|cerrar sesion|\bsalir\b|logout|log out|desconect|cerrar cuenta/i.test(text)) {
+        omicronSay('Cerrando tu sesión. Hasta pronto, Nodo.');
+        setTimeout(() => { void supabase.auth.signOut(); }, 900);
+        finalize();
         return;
       }
-      omicronSay(`Te llevo a ${intent.label}.`);
-      setTimeout(() => setActiveTab(intent.tab), 650);
-      return;
+
+      const intent = interpret(text);
+
+      if (intent.kind === 'navigate') {
+        if (intent.tab === 'perfil') {
+          omicronSay('Abro tu perfil completo: todo medido, con tus oportunidades de mejora.');
+          setTimeout(() => onOpenPerfil?.(), 500);
+          finalize();
+          return;
+        }
+        omicronSay(`Te llevo a ${intent.label}.`);
+        setTimeout(() => setActiveTab(intent.tab), 650);
+        finalize();
+        return;
+      }
+      if (intent.kind === 'convalidate') {
+        omicronSay('Abrimos la carga de tu CV para reforzar tu Gemelo.');
+        setTimeout(() => setCvOpen(true), 500);
+        finalize();
+        return;
+      }
+      if (intent.kind === 'fact') {
+        let ans = 'Estoy para impulsarte. Pedime tu próximo paso o llevarte a una sección.';
+        if (intent.topic === 'reputacion' && gemelo) ans = `Tu reputación es ${Math.round(gemelo.overallReputation)} sobre 100. Subamos tu eje más débil.`;
+        else if (intent.topic === 'tokens' && profile) ans = `Tenés ${profile.token_balance} tokens.`;
+        else if (intent.topic === 'pe' && profile) ans = `Acumulaste ${profile.pe_points} puntos de experiencia.`;
+        else if (intent.topic === 'ayuda') ans = 'Subí tu CV, hacé el examen de nivel, o pedime tu próximo paso. Hablame o escribime.';
+        omicronSay(ans);
+        finalize();
+        return;
+      }
+
+      // Construir contexto completo del Gemelo para la IA.
+      const coachCtx: CoachContext = {
+        skills: profile?.skills ?? [],
+        cv_summary: profile?.cv_summary ?? '',
+        execution: gemelo?.execution,
+        quality: gemelo?.quality,
+        transcendence: gemelo?.transcendence,
+        foundation: gemelo?.foundation,
+        reputation: gemelo?.overallReputation,
+        pe: profile?.pe_points,
+      };
+
+      if (intent.kind === 'coach') {
+        const r = await askCoach(coachCtx);
+        omicronSay(r.advice || r.error || 'Probemos tu próximo paso desde el nodo de acción.');
+        finalize();
+        return;
+      }
+
+      // Fallback: pregunta libre al Tutor IA (con contexto del perfil).
+      const t = await askTutor(text, coachCtx);
+      omicronSay(t.answer || t.error || 'No pude responder ahora. Probá de nuevo.');
+      finalize();
+    } catch {
+      // Si algo explota inesperadamente, recuperar el estado.
+      omicronSay('Ocurrió un error. Probá de nuevo o pedime otra cosa.');
+      finalize();
     }
-    if (intent.kind === 'convalidate') {
-      omicronSay('Abrimos la carga de tu CV para reforzar tu Gemelo.');
-      setTimeout(() => setCvOpen(true), 500);
-      return;
-    }
-    if (intent.kind === 'fact') {
-      let ans = 'Estoy para impulsarte. Pedime tu próximo paso o llevarte a una sección.';
-      if (intent.topic === 'reputacion' && gemelo) ans = `Tu reputación es ${Math.round(gemelo.overallReputation)} sobre 100. Subamos tu eje más débil.`;
-      else if (intent.topic === 'tokens' && profile) ans = `Tenés ${profile.token_balance} tokens.`;
-      else if (intent.topic === 'pe' && profile) ans = `Acumulaste ${profile.pe_points} puntos de experiencia.`;
-      else if (intent.topic === 'ayuda') ans = 'Subí tu CV, hacé el examen de nivel, o pedime tu próximo paso. Hablame o escribime.';
-      omicronSay(ans);
-      return;
-    }
-    if (intent.kind === 'coach') {
-      const r = await askCoach();
-      omicronSay(r.advice || r.error || 'Probemos tu próximo paso desde el nodo de acción.');
-      return;
-    }
-    const t = await askTutor(text);
-    omicronSay(t.answer || t.error || 'No pude responder ahora. Probá de nuevo.');
   }, [gemelo, profile, omicronSay, setActiveTab, onOpenPerfil]);
 
   const toggleListen = useCallback(() => {
