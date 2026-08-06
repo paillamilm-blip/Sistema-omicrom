@@ -135,7 +135,7 @@ function renderTab(tab: TabId) {
 
 
 export function OrbShell() {
-  const { setActiveTab } = useApp();
+  const { setActiveTab, unreadCount } = useApp();
   const { profile } = useGemeloProfile();
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
@@ -411,6 +411,7 @@ export function OrbShell() {
             voiceLevel={voiceLevel}
             isListening={isListening}
             onProjectedPositions={handleProjected}
+            notifications={unreadCount > 0 ? { mensajes: unreadCount } : undefined}
           />
         </div>
       </div>
