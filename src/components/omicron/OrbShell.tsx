@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding } from './OrbOnboarding';
+import ParticleOrb from './ParticleOrb';
 import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';
 import { interpret, askCoach } from '../../lib/oraculo';
@@ -178,8 +179,11 @@ type ShellState = 'orb' | 'preview' | 'fullscreen';
 
 function TabLoader() {
   return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
-      <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', animation: 'cp-spin 0.8s linear infinite' }} />
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: C.bg }}>
+      <div style={{ width: 64, height: 64 }}>
+        <ParticleOrb />
+      </div>
+      <p style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Cargando...</p>
     </div>
   );
 }
