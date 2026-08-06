@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect } from 'react';
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
+import { OraculoBar } from '../OraculoBar';
 import { useApp } from '../../store/AppContext';
 import { C, FONT } from '../../theme';
 import type { TabId } from '../../types';
@@ -73,13 +74,14 @@ export function OrbShell() {
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
   const [voiceLevel, setVoiceLevel] = useState(0);
   const [isListening, setIsListening] = useState(false);
+  const [nodePositions, setNodePositions] = useState<{ id: string; x: number; y: number; depth: number }[]>([]);
   const previewRef = useRef<HTMLDivElement>(null);
 
   // ── Handle node tap → go to preview ─────────────────────────────────
   const handleNodeTap = useCallback((node: OrbNode) => {
     setSelectedNode(node);
     setState('preview');
-    setActiveTab(node.tab); // sync with global nav state
+    setActiveTab(node.tab);
   }, [setActiveTab]);
 
   // ── Handle preview click → fullscreen ───────────────────────────────
@@ -97,11 +99,13 @@ export function OrbShell() {
     }
   }, [state]);
 
-  // ── Expose voice control for OraculoBar integration ─────────────────
-  // In Fase 2, we use a simple pulse simulation.
-  // In Fase 3, this will connect to real speech recognition audio levels.
+  // ── Projected positions callback (from OrbNeuronal 3D → 2D) ────────
+  const handleProjected = useCallback((positions: { id: string; x: number; y: number; depth: number }[]) => {
+    setNodePositions(positions);
+  }, []);
+
+  // ── Simulated Jarvis breath when idle ──────────────────────────────
   useEffect(() => {
-    // Simulated Jarvis breath when idle (very subtle)
     if (state === 'orb' && !isListening) {
       const iv = setInterval(() => {
         setVoiceLevel(Math.sin(Date.now() * 0.002) * 0.05 + 0.05);
@@ -110,8 +114,8 @@ export function OrbShell() {
     }
   }, [state, isListening]);
 
-  // ── Expose setVoiceLevel and setIsListening for external use ────────
-  // (OrbShell will be the parent; OraculoBar can call these via ref/context)
+  // ── Expose voice control for OraculoBar ────────────────────────────
+  // OraculoBar can call these to pulse the orb when speaking
   (OrbShell as any).__setVoiceLevel = setVoiceLevel;
   (OrbShell as any).__setIsListening = setIsListening;
 
@@ -143,6 +147,7 @@ export function OrbShell() {
             onNodeTap={handleNodeTap}
             voiceLevel={voiceLevel}
             isListening={isListening}
+            onProjectedPositions={handleProjected}
           />
         </div>
       </div>
@@ -310,6 +315,56 @@ export function OrbShell() {
             zIndex: 5,
           }}
         />
+      )}
+
+      {/* ── NODE LABELS (HTML overlay projected from 3D) ────────────── */}
+      {state !== 'fullscreen' && (
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2 }}>
+          {nodePositions.map((pos: { id: string; x: number; y: number; depth: number }) => {
+            const node = ORB_NODES.find(n => n.id === pos.id);
+            if (!node) return null;
+            const isFront = pos.depth < 0.5; // only show labels for front-facing nodes
+            const isActive = node.id === selectedNode?.id;
+            return (
+              <div
+                key={node.id}
+                style={{
+                  position: 'absolute',
+                  left: pos.x,
+                  top: pos.y,
+                  transform: 'translate(-50%, -140%)',
+                  opacity: isFront ? (isActive ? 1 : 0.7) : 0,
+                  transition: 'opacity 0.3s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
+                <span style={{
+                  fontFamily: FONT.mono,
+                  fontSize: isActive ? 11 : 9,
+                  fontWeight: isActive ? 700 : 500,
+                  letterSpacing: 1,
+                  color: isActive ? C.cyan : C.mut,
+                  textTransform: 'uppercase',
+                  textShadow: isActive ? `0 0 8px ${C.cyan}` : 'none',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.3s ease',
+                }}>
+                  {node.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── ORÁCULO (floating voice bar — integrated) ────────────────── */}
+      {state !== 'fullscreen' && (
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 15 }}>
+          <OraculoBar />
+        </div>
       )}
 
       {/* ── CSS Animations ──────────────────────────────────────────── */}
