@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import type { TabId } from '../../types';
 
@@ -295,6 +295,7 @@ export default function OrbNeuronal({
 
 
     // ── Neural connections (lines between nearby nodes) ──────────────────
+    const connPairSet = new Set<string>(); // P3: O(1) lookup instead of .some() O(n)
     const connPairs: [number, number][] = [];
     // Connect each node to its 2-3 nearest neighbors
     for (let i = 0; i < nodeCount; i++) {
@@ -306,9 +307,12 @@ export default function OrbNeuronal({
       distances.sort((a, b) => a.dist - b.dist);
       const connectTo = Math.min(3, distances.length);
       for (let k = 0; k < connectTo; k++) {
-        const pair: [number, number] = [Math.min(i, distances[k].idx), Math.max(i, distances[k].idx)];
-        if (!connPairs.some(p => p[0] === pair[0] && p[1] === pair[1])) {
-          connPairs.push(pair);
+        const a = Math.min(i, distances[k].idx);
+        const b = Math.max(i, distances[k].idx);
+        const key = `${a}-${b}`;
+        if (!connPairSet.has(key)) {
+          connPairSet.add(key);
+          connPairs.push([a, b]);
         }
       }
     }
@@ -518,6 +522,13 @@ export default function OrbNeuronal({
     // ── Clock ───────────────────────────────────────────────────────────
     const clock = new THREE.Clock();
 
+    // P3: Precalculate node index lookup (avoid findIndex every frame)
+    const nodeIdToIdx = new Map<string, number>();
+    for (let i = 0; i < nodeCount; i++) nodeIdToIdx.set(nodes[i].id, i);
+
+    // P3: Throttle projection inside the loop (not just in parent)
+    let lastProjectionTime = 0;
+
     // ── Animation loop ──────────────────────────────────────────────────
     const animate = () => {
       const elapsed = clock.getElapsedTime();
@@ -533,7 +544,7 @@ export default function OrbNeuronal({
 
       // ── Smooth rotation toward active node ────────────────────────────
       if (activeId) {
-        const activeIdx = nodes.findIndex(n => n.id === activeId);
+        const activeIdx = nodeIdToIdx.get(activeId) ?? -1;
         if (activeIdx >= 0) {
           const pos = nodePositions[activeIdx];
           // Calculate angles to bring node to front (z-forward)
@@ -723,7 +734,10 @@ export default function OrbNeuronal({
       }
 
       // ── Project node positions to 2D for HTML labels ──────────────
-      if (onProjectedRef.current) {
+      // P3: Throttled inside the loop — only compute every 100ms
+      const now = performance.now();
+      if (onProjectedRef.current && now - lastProjectionTime > 100) {
+        lastProjectionTime = now;
         const w = mount.clientWidth || 1;
         const h = mount.clientHeight || 1;
         const projected = nodeDatas.map(nd => {

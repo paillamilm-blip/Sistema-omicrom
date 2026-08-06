@@ -367,10 +367,7 @@ export function OrbShell() {
     }
   }, [state, isListening]);
 
-  // ── Expose voice control for OraculoBar ────────────────────────────
-  // OraculoBar can call these to pulse the orb when speaking
-  (OrbShell as any).__setVoiceLevel = setVoiceLevel;
-  (OrbShell as any).__setIsListening = setIsListening;
+  // (Voice control exposed via CustomEvents — see oracle:listening / oracle:voice listeners above)
 
   return (
     <div style={{
@@ -573,25 +570,38 @@ export function OrbShell() {
       {/* ── NODE LABELS (HTML overlay projected from 3D) ────────────── */}
       {state !== 'fullscreen' && (
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2 }}>
+          {/* P1: aria-live announces active node to screen readers */}
+          <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+            {selectedNode ? `${selectedNode.label} seleccionado. ${selectedNode.nextStep || ''}` : 'Orbe de navegación. Usa Tab para explorar.'}
+          </div>
           {nodePositions.map((pos: { id: string; x: number; y: number; depth: number }) => {
             const node = orbNodesWithLevels.find((n: OrbNode) => n.id === pos.id);
             if (!node) return null;
-            const isFront = pos.depth < 0.5; // only show labels for front-facing nodes
+            const isFront = pos.depth < 0.5;
             const isActive = node.id === selectedNode?.id;
+            const isHub = ORB_NODES.findIndex(n => n.id === node.id) < 9;
+            if (!isHub && !isActive) return null;
             return (
-              <div
+              <button
                 key={node.id}
+                onClick={() => { handleNodeTap(node); }}
+                aria-label={`${node.label}${node.level ? ` ${Math.round(node.level * 100)}%` : ''}: ${node.nextStep || 'Explorar'}`}
                 style={{
                   position: 'absolute',
                   left: pos.x,
                   top: pos.y,
                   transform: 'translate(-50%, -140%)',
                   opacity: isFront ? (isActive ? 1 : 0.7) : 0,
-                  transition: 'opacity 0.3s ease',
+                  transition: 'opacity 0.15s ease',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 2,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  pointerEvents: isFront ? 'auto' : 'none',
                 }}
               >
                 <span style={{
@@ -603,11 +613,11 @@ export function OrbShell() {
                   textTransform: 'uppercase',
                   textShadow: isActive ? `0 0 8px ${C.cyan}` : 'none',
                   whiteSpace: 'nowrap',
-                  transition: 'all 0.3s ease',
+                  transition: 'color 0.15s ease, font-size 0.15s ease',
                 }}>
                   {node.label}{node.level !== undefined && node.level > 0 ? ` ${Math.round(node.level * 100)}%` : ''}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>
