@@ -2,23 +2,25 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 // =====================================================================
-// <ParticleOrb /> — ADN de Mercurio Vivo Bioluminiscente
+// <ParticleOrb /> — Esfera de Mercurio Vivo Bioluminiscente (Ω)
 //
-// Dirección visual: Metal líquido orgánico que CONTIENE las competencias
-// del usuario. Cada capacidad es una "cápsula" incrustada en la hélice
-// que se ilumina con bioluminiscencia cuando se activa.
+// Dirección visual: Esfera orgánica de metal líquido que CONTIENE las
+// competencias del usuario. Cada capacidad es una "cápsula" distribuida
+// en la superficie (Fibonacci sphere) que brilla con bioluminiscencia
+// cuando se activa.
 //
 // Estructura:
-//   - Cadenas de mercurio líquido (chrome reflectivo + fluid motion)
-//   - Cápsulas de competencias incrustadas (glow interior orgánico)
-//   - Puentes tipo sinapsis (filamentos que brillan entre activas)
+//   - Esfera central de mercurio (chrome reflectivo + fluid displacement)
+//   - Cápsulas de competencias en la superficie (glow interior orgánico)
+//   - Filamentos de sinapsis entre cápsulas cercanas
 //   - Fondo limpio: negro profundo con breath de color
 //   - Audio-reactivo: todo vibra orgánicamente con la voz
 //
+// Forma coherente con la marca Ω (esférica, no helicoidal/espiral).
 // No cyberpunk. No neón. Orgánico, vivo, premium.
 // =====================================================================
 
-/** Una competencia que vive dentro del ADN */
+/** Una competencia que vive en la esfera */
 export interface HelixSkill {
   id: string;
   label: string;
@@ -29,7 +31,7 @@ export interface HelixSkill {
 export interface ParticleOrbProps {
   audioStream?: MediaStream | null;
   enableMic?: boolean;
-  /** Competencias que existen dentro del ADN */
+  /** Competencias distribuidas en la esfera */
   skills?: HelixSkill[];
   /** IDs de competencias activamente iluminadas (interacción) */
   activeSkillIds?: string[];
@@ -48,11 +50,11 @@ export default function ParticleOrb({
 }: ParticleOrbProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  // Refs para comunicar estado reactivo al loop de animación
   const activeIdsRef = useRef<string[]>(activeSkillIds);
   const glowRef = useRef(glowIntensity);
   activeIdsRef.current = activeSkillIds;
   glowRef.current = glowIntensity;
+
 
 
   // ── Three.js Scene ─────────────────────────────────────────────────
@@ -60,18 +62,18 @@ export default function ParticleOrb({
     const mount = mountRef.current;
     if (!mount) return;
 
-    // ── Palette (no cyberpunk — organic mercury + bioluminescence) ──
-    const MERCURY = new THREE.Color(0.78, 0.8, 0.82);       // chrome/silver
-    const BIO_GREEN = new THREE.Color(0.1, 0.85, 0.55);     // emerald bioluminescence
-    const BIO_CYAN = new THREE.Color(0.15, 0.7, 0.8);       // deep cyan organic
-    const BIO_PULSE = new THREE.Color(0.2, 0.95, 0.65);     // bright pulse
-    const DARK_TEAL = new THREE.Color(0.02, 0.06, 0.08);    // background hint
+    // ── Palette (organic mercury + bioluminescence) ─────────────────
+    const MERCURY = new THREE.Color(0.78, 0.8, 0.82);
+    const BIO_GREEN = new THREE.Color(0.1, 0.85, 0.55);
+    const BIO_CYAN = new THREE.Color(0.15, 0.7, 0.8);
+    const BIO_PULSE = new THREE.Color(0.2, 0.95, 0.65);
+    const DARK_TEAL = new THREE.Color(0.02, 0.06, 0.08);
 
     // ── Scene, Camera, Renderer ─────────────────────────────────────
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0x000000, 8, 18);
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-    camera.position.set(0, 0.3, 5.8);
+    camera.position.set(0, 0.2, 4.8);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -83,19 +85,13 @@ export default function ParticleOrb({
     renderer.domElement.style.display = 'block';
 
     // ── Configuration ───────────────────────────────────────────────
-    const HELIX_TURNS = 4;
-    const HELIX_HEIGHT = 5.0;
-    const HELIX_RADIUS = 0.75;
-    const TUBE_RADIUS = 0.055;
-    const TUBE_SEGMENTS = 180;
-    const CAPSULE_COUNT = Math.max(skills.length, 8); // min 8 capsules
-    const BRIDGE_COUNT = 20;
-    const SYNAPSE_PARTICLES = 40; // sparse organic background
-
+    const SPHERE_RADIUS = 1.4;
+    const CAPSULE_COUNT = Math.max(skills.length, 8);
+    const SYNAPSE_PARTICLES = 40;
 
     // ── Main Group ──────────────────────────────────────────────────
-    const helixGroup = new THREE.Group();
-    scene.add(helixGroup);
+    const orbGroup = new THREE.Group();
+    scene.add(orbGroup);
 
     // ── Glow texture (soft organic) ─────────────────────────────────
     const glowCanvas = document.createElement('canvas');
@@ -112,25 +108,22 @@ export default function ParticleOrb({
     gCtx.fillRect(0, 0, 64, 64);
     const glowTexture = new THREE.CanvasTexture(glowCanvas);
 
-    // ── Helper: helix curve points ──────────────────────────────────
-    const helixPts = (offset: number, segs: number): THREE.Vector3[] => {
-      const pts: THREE.Vector3[] = [];
-      for (let i = 0; i <= segs; i++) {
-        const t = i / segs;
-        const angle = t * Math.PI * 2 * HELIX_TURNS + offset;
-        const y = (t - 0.5) * HELIX_HEIGHT;
-        pts.push(new THREE.Vector3(
-          Math.cos(angle) * HELIX_RADIUS,
-          y,
-          Math.sin(angle) * HELIX_RADIUS,
-        ));
-      }
-      return pts;
-    };
 
 
-    // ── Mercury Shader Material ─────────────────────────────────────
-    // Chrome-like reflective material with organic vertex displacement
+    // ── Fibonacci sphere distribution ───────────────────────────────
+    function fibSpherePoint(index: number, total: number, radius: number): THREE.Vector3 {
+      const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+      const y = 1 - (index / (total - 1)) * 2; // -1 to 1
+      const r = Math.sqrt(1 - y * y);
+      const theta = goldenAngle * index;
+      return new THREE.Vector3(
+        Math.cos(theta) * r * radius,
+        y * radius,
+        Math.sin(theta) * r * radius,
+      );
+    }
+
+    // ── Mercury Sphere (central orb) ────────────────────────────────
     const mercuryVertexShader = `
       uniform float uTime;
       uniform float uAudioLevel;
@@ -138,7 +131,6 @@ export default function ParticleOrb({
       varying vec3 vWorldPos;
       varying float vDisplacement;
 
-      // Simplex-like noise for organic displacement
       float hash(vec3 p) {
         p = fract(p * vec3(443.897, 441.423, 437.195));
         p += dot(p, p.yzx + 19.19);
@@ -159,14 +151,11 @@ export default function ParticleOrb({
       void main() {
         vNormal = normalize(normalMatrix * normal);
         vec3 pos = position;
-
-        // Organic fluid displacement (mercury ripple)
-        float n = noise3D(pos * 3.0 + uTime * 0.8) * 0.5 +
-                  noise3D(pos * 6.0 - uTime * 1.2) * 0.25;
-        float displacement = n * (0.008 + uAudioLevel * 0.015);
+        float n = noise3D(pos * 2.5 + uTime * 0.6) * 0.5 +
+                  noise3D(pos * 5.0 - uTime * 0.9) * 0.25;
+        float displacement = n * (0.03 + uAudioLevel * 0.06);
         pos += normal * displacement;
         vDisplacement = displacement;
-
         vec4 worldPos = modelMatrix * vec4(pos, 1.0);
         vWorldPos = worldPos.xyz;
         gl_Position = projectionMatrix * viewMatrix * worldPos;
@@ -183,40 +172,25 @@ export default function ParticleOrb({
       varying float vDisplacement;
 
       void main() {
-        // Fresnel rim (chrome reflection simulation)
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
         float fresnel = pow(1.0 - abs(dot(viewDir, vNormal)), 3.0);
-
-        // Mercury base: silver with subtle environment color shift
-        vec3 envColor = mix(uMercuryColor, uBioColor, fresnel * 0.3);
-
-        // Subtle rainbow iridescence on edges (organic, not harsh)
+        vec3 envColor = mix(uMercuryColor, uBioColor, fresnel * 0.35);
         float irid = sin(dot(vNormal, vec3(1.0)) * 4.0 + uTime * 0.5) * 0.5 + 0.5;
         vec3 iridescentColor = mix(
           vec3(0.7, 0.8, 0.85),
           mix(uBioColor, vec3(0.3, 0.5, 0.9), irid),
           fresnel * 0.4
         );
-
-        // Combine: chrome center + iridescent edges
         vec3 finalColor = mix(envColor, iridescentColor, fresnel);
-
-        // Audio-reactive glow pulse (organic breathing)
-        float pulse = sin(vWorldPos.y * 2.0 + uTime * 2.0) * 0.5 + 0.5;
-        finalColor += uBioColor * pulse * uAudioLevel * 0.15;
-
-        // Opacity: solid center, slightly transparent at edges
-        float alpha = 0.85 + fresnel * 0.15;
-
+        float pulse = sin(vWorldPos.y * 3.0 + uTime * 1.5) * 0.5 + 0.5;
+        finalColor += uBioColor * pulse * uAudioLevel * 0.12;
+        float alpha = 0.82 + fresnel * 0.18;
         gl_FragColor = vec4(finalColor, alpha);
       }
     `;
 
-
-    // ── Strand A — Mercury Tube ─────────────────────────────────────
-    const curveA = new THREE.CatmullRomCurve3(helixPts(0, TUBE_SEGMENTS), false);
-    const tubeGeomA = new THREE.TubeGeometry(curveA as any, TUBE_SEGMENTS, TUBE_RADIUS, 12, false);
-    const tubeMatA = new THREE.ShaderMaterial({
+    const sphereGeom = new THREE.SphereGeometry(SPHERE_RADIUS * 0.72, 64, 64);
+    const sphereMat = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uAudioLevel: { value: 0 },
@@ -227,57 +201,28 @@ export default function ParticleOrb({
       fragmentShader: mercuryFragmentShader,
       transparent: true,
     });
-    const tubeA = new THREE.Mesh(tubeGeomA, tubeMatA);
-    helixGroup.add(tubeA);
+    const mercurySphere = new THREE.Mesh(sphereGeom, sphereMat);
+    orbGroup.add(mercurySphere);
 
-    // ── Strand B — Mercury Tube ─────────────────────────────────────
-    const curveB = new THREE.CatmullRomCurve3(helixPts(Math.PI, TUBE_SEGMENTS), false);
-    const tubeGeomB = new THREE.TubeGeometry(curveB as any, TUBE_SEGMENTS, TUBE_RADIUS, 12, false);
-    const tubeMatB = new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: { value: 0 },
-        uAudioLevel: { value: 0 },
-        uMercuryColor: { value: MERCURY },
-        uBioColor: { value: BIO_GREEN },
-      },
-      vertexShader: mercuryVertexShader,
-      fragmentShader: mercuryFragmentShader,
-      transparent: true,
-    });
-    const tubeB = new THREE.Mesh(tubeGeomB, tubeMatB);
-    helixGroup.add(tubeB);
-
-    // ── Outer glow (subtle bloom around mercury) ────────────────────
-    const glowTubeGeomA = new THREE.TubeGeometry(curveA as any, TUBE_SEGMENTS, TUBE_RADIUS * 2.5, 8, false);
-    const glowTubeMatA = new THREE.MeshBasicMaterial({
+    // ── Outer glow shell ────────────────────────────────────────────
+    const outerGlowGeom = new THREE.SphereGeometry(SPHERE_RADIUS * 0.82, 32, 32);
+    const outerGlowMat = new THREE.MeshBasicMaterial({
       color: BIO_CYAN,
       transparent: true,
-      opacity: 0.06,
+      opacity: 0.04,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
-    const glowTubeA = new THREE.Mesh(glowTubeGeomA, glowTubeMatA);
-    helixGroup.add(glowTubeA);
-
-    const glowTubeGeomB = new THREE.TubeGeometry(curveB as any, TUBE_SEGMENTS, TUBE_RADIUS * 2.5, 8, false);
-    const glowTubeMatB = new THREE.MeshBasicMaterial({
-      color: BIO_GREEN,
-      transparent: true,
-      opacity: 0.06,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const glowTubeB = new THREE.Mesh(glowTubeGeomB, glowTubeMatB);
-    helixGroup.add(glowTubeB);
+    const outerGlow = new THREE.Mesh(outerGlowGeom, outerGlowMat);
+    orbGroup.add(outerGlow);
 
 
-    // ── Capsules (competencias incrustadas en la hélice) ─────────────
-    // Each capsule is a sphere at a point along the helix, with an inner
-    // glow that activates when the skill is in activeSkillIds
+
+    // ── Capsules (competencias en superficie Fibonacci) ──────────────
     const capsuleFragShader = `
       uniform vec3 uBaseColor;
       uniform vec3 uGlowColor;
-      uniform float uActivation; // 0 = dormant, 1 = full bioluminescence
+      uniform float uActivation;
       uniform float uTime;
       varying vec3 vNormal;
       varying vec3 vPos;
@@ -285,20 +230,13 @@ export default function ParticleOrb({
       void main() {
         vec3 viewDir = normalize(cameraPosition - vPos);
         float fresnel = pow(1.0 - abs(dot(viewDir, vNormal)), 2.5);
-
-        // Dormant: translucent dark crystal
         vec3 dormant = uBaseColor * 0.3 + fresnel * uBaseColor * 0.2;
         float dormantAlpha = 0.25 + fresnel * 0.2;
-
-        // Active: bioluminescent glow from inside
         float pulse = sin(uTime * 3.0) * 0.15 + 0.85;
         vec3 active = uGlowColor * pulse * (0.8 + fresnel * 0.5);
         float activeAlpha = 0.6 + fresnel * 0.4;
-
-        // Mix based on activation
         vec3 color = mix(dormant, active, uActivation);
         float alpha = mix(dormantAlpha, activeAlpha, uActivation);
-
         gl_FragColor = vec4(color, alpha);
       }
     `;
@@ -320,8 +258,8 @@ export default function ParticleOrb({
       material: THREE.ShaderMaterial;
       glowMaterial: THREE.MeshBasicMaterial;
       skillId: string;
-      t: number; // position along helix (0-1)
-      strandIdx: number; // 0 = A, 1 = B
+      basePos: THREE.Vector3;
+      index: number;
     };
 
     const capsules: CapsuleData[] = [];
@@ -330,17 +268,14 @@ export default function ParticleOrb({
 
     for (let i = 0; i < CAPSULE_COUNT; i++) {
       const skill = skills[i] || { id: `empty-${i}`, label: '', level: 0.5 };
-      const t = (i + 0.5) / CAPSULE_COUNT;
-      const strandIdx = i % 2; // alternate between strands
-      const offset = strandIdx === 0 ? 0 : Math.PI;
-      const angle = t * Math.PI * 2 * HELIX_TURNS + offset;
-      const y = (t - 0.5) * HELIX_HEIGHT;
-      const size = 0.5 + (skill.level ?? 0.5) * 0.5; // 0.5-1.0 scale
+      const basePos = fibSpherePoint(i, CAPSULE_COUNT, SPHERE_RADIUS);
+      const size = 0.5 + (skill.level ?? 0.5) * 0.5;
+      const bioColor = i % 2 === 0 ? BIO_CYAN.clone() : BIO_GREEN.clone();
 
       const mat = new THREE.ShaderMaterial({
         uniforms: {
           uBaseColor: { value: new THREE.Color(0.1, 0.2, 0.25) },
-          uGlowColor: { value: strandIdx === 0 ? BIO_CYAN.clone() : BIO_GREEN.clone() },
+          uGlowColor: { value: bioColor },
           uActivation: { value: 0 },
           uTime: { value: 0 },
         },
@@ -352,67 +287,55 @@ export default function ParticleOrb({
       });
 
       const mesh = new THREE.Mesh(capsuleGeom, mat);
-      mesh.position.set(
-        Math.cos(angle) * HELIX_RADIUS,
-        y,
-        Math.sin(angle) * HELIX_RADIUS,
-      );
+      mesh.position.copy(basePos);
       mesh.scale.setScalar(size);
-      helixGroup.add(mesh);
+      orbGroup.add(mesh);
 
-      // Outer bioluminescent glow (only visible when active)
       const glowMat = new THREE.MeshBasicMaterial({
-        color: strandIdx === 0 ? BIO_CYAN : BIO_GREEN,
+        color: bioColor,
         transparent: true,
         opacity: 0,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
       const glowMesh = new THREE.Mesh(capsuleGlowGeom, glowMat);
-      glowMesh.position.copy(mesh.position);
+      glowMesh.position.copy(basePos);
       glowMesh.scale.setScalar(size);
-      helixGroup.add(glowMesh);
+      orbGroup.add(glowMesh);
 
-      capsules.push({ mesh, glowMesh, material: mat, glowMaterial: glowMat, skillId: skill.id, t, strandIdx });
+      capsules.push({ mesh, glowMesh, material: mat, glowMaterial: glowMat, skillId: skill.id, basePos, index: i });
     }
 
 
-    // ── Synapse Bridges (organic filaments between strands) ──────────
-    const bridgePositions = new Float32Array(BRIDGE_COUNT * 2 * 3);
-    const bridgeColors = new Float32Array(BRIDGE_COUNT * 2 * 3);
-    const bridgeGeom = new THREE.BufferGeometry();
-    bridgeGeom.setAttribute('position', new THREE.Float32BufferAttribute(bridgePositions, 3));
-    bridgeGeom.setAttribute('color', new THREE.Float32BufferAttribute(bridgeColors, 3));
-    const bridgeMat = new THREE.LineBasicMaterial({
+
+    // ── Synapse filaments (connections between nearby capsules) ──────
+    const FILAMENT_COUNT = Math.min(CAPSULE_COUNT * 2, 24);
+    const filamentPositions = new Float32Array(FILAMENT_COUNT * 2 * 3);
+    const filamentColors = new Float32Array(FILAMENT_COUNT * 2 * 3);
+    const filamentGeom = new THREE.BufferGeometry();
+    filamentGeom.setAttribute('position', new THREE.Float32BufferAttribute(filamentPositions, 3));
+    filamentGeom.setAttribute('color', new THREE.Float32BufferAttribute(filamentColors, 3));
+    const filamentMat = new THREE.LineBasicMaterial({
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.18,
       blending: THREE.AdditiveBlending,
       vertexColors: true,
       linewidth: 1,
     });
-    const bridgeLines = new THREE.LineSegments(bridgeGeom, bridgeMat);
-    helixGroup.add(bridgeLines);
+    const filamentLines = new THREE.LineSegments(filamentGeom, filamentMat);
+    orbGroup.add(filamentLines);
 
-    // Synapse particles along bridges (organic dots like nerve impulses)
-    const synapseDotsPositions = new Float32Array(BRIDGE_COUNT * 4 * 3); // 4 dots per bridge
-    const synapseDotsColors = new Float32Array(BRIDGE_COUNT * 4 * 3);
-    const synapseDotGeom = new THREE.BufferGeometry();
-    synapseDotGeom.setAttribute('position', new THREE.Float32BufferAttribute(synapseDotsPositions, 3));
-    synapseDotGeom.setAttribute('color', new THREE.Float32BufferAttribute(synapseDotsColors, 3));
-    const synapseDotMat = new THREE.PointsMaterial({
-      size: 0.025,
-      transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      vertexColors: true,
-    });
-    (synapseDotMat as any).map = glowTexture;
-    const synapseDots = new THREE.Points(synapseDotGeom, synapseDotMat);
-    helixGroup.add(synapseDots);
+    // Pre-compute filament pairs (nearest neighbors)
+    const filamentPairs: [number, number][] = [];
+    for (let i = 0; i < CAPSULE_COUNT && filamentPairs.length < FILAMENT_COUNT; i++) {
+      const next = (i + 1) % CAPSULE_COUNT;
+      filamentPairs.push([i, next]);
+      if (i + 3 < CAPSULE_COUNT && filamentPairs.length < FILAMENT_COUNT) {
+        filamentPairs.push([i, i + 3]);
+      }
+    }
 
-
-    // ── Ambient spore particles (sparse organic background) ──────────
+    // ── Ambient spore particles ─────────────────────────────────────
     const sporePositions = new Float32Array(SYNAPSE_PARTICLES * 3);
     const sporeSpeeds: { vx: number; vy: number; vz: number; phase: number }[] = [];
     for (let i = 0; i < SYNAPSE_PARTICLES; i++) {
@@ -443,7 +366,7 @@ export default function ParticleOrb({
     const spores = new THREE.Points(sporeGeom, sporeMat);
     scene.add(spores);
 
-    // ── Ambient halo (very subtle breath) ────────────────────────────
+    // ── Ambient halo (subtle breath) ────────────────────────────────
     const haloGeom = new THREE.SphereGeometry(2.2, 32, 32);
     const haloMat = new THREE.ShaderMaterial({
       transparent: true,
@@ -481,6 +404,7 @@ export default function ParticleOrb({
     scene.add(haloMesh);
 
 
+
     // ── Resize ──────────────────────────────────────────────────────
     const resize = () => {
       const w = mount.clientWidth || 1;
@@ -503,7 +427,7 @@ export default function ParticleOrb({
       const elapsed = clock.getElapsedTime();
 
       // Audio level (0..1)
-      let level = 0.05 + Math.sin(elapsed * 0.8) * 0.02; // organic breath
+      let level = 0.05 + Math.sin(elapsed * 0.8) * 0.02;
       const analyser = analyserRef.current;
       if (analyser) {
         const bins = analyser.frequencyBinCount;
@@ -514,109 +438,65 @@ export default function ParticleOrb({
         level = Math.min(1, (sum / freq.length) / 52);
       }
 
-      // External glow intensity
       const extGlow = glowRef.current;
       const combinedGlow = Math.max(level, extGlow);
 
-      // ── Update mercury shader uniforms ────────────────────────────
-      tubeMatA.uniforms.uTime.value = elapsed;
-      tubeMatA.uniforms.uAudioLevel.value = combinedGlow;
-      tubeMatB.uniforms.uTime.value = elapsed;
-      tubeMatB.uniforms.uAudioLevel.value = combinedGlow;
+      // ── Update mercury sphere ─────────────────────────────────────
+      sphereMat.uniforms.uTime.value = elapsed;
+      sphereMat.uniforms.uAudioLevel.value = combinedGlow;
+      outerGlowMat.opacity = 0.03 + combinedGlow * 0.1;
 
-      // Glow tubes respond to intensity
-      glowTubeMatA.opacity = 0.04 + combinedGlow * 0.12;
-      glowTubeMatB.opacity = 0.04 + combinedGlow * 0.12;
-
-
-      // ── Update capsules (bioluminescence activation) ──────────────
+      // ── Update capsules ───────────────────────────────────────────
       const currentActive = activeIdsRef.current;
       for (const cap of capsules) {
         const isActive = currentActive.includes(cap.skillId);
-        const targetActivation = isActive ? 1.0 : extGlow * 0.15; // dormant still has faint life
-
-        // Smooth lerp toward target
+        const targetActivation = isActive ? 1.0 : extGlow * 0.15;
         const current = cap.material.uniforms.uActivation.value as number;
         cap.material.uniforms.uActivation.value = current + (targetActivation - current) * 0.05;
         cap.material.uniforms.uTime.value = elapsed;
-
-        // Outer glow opacity follows activation
         cap.glowMaterial.opacity = (cap.material.uniforms.uActivation.value as number) * 0.4;
 
         // Pulse scale when active
         const pulseScale = isActive
-          ? 1.0 + Math.sin(elapsed * 4 + cap.t * 10) * 0.15
+          ? 1.0 + Math.sin(elapsed * 4 + cap.index * 1.2) * 0.15
           : 0.9 + combinedGlow * 0.1;
-        const baseScale = 0.5 + ((skills[capsules.indexOf(cap)]?.level ?? 0.5) * 0.5);
+        const baseScale = 0.5 + ((skills[cap.index]?.level ?? 0.5) * 0.5);
         cap.mesh.scale.setScalar(baseScale * pulseScale);
         cap.glowMesh.scale.setScalar(baseScale * pulseScale * 1.6);
 
-        // Update position (rotate with helix)
-        const offset = cap.strandIdx === 0 ? 0 : Math.PI;
-        const angle = cap.t * Math.PI * 2 * HELIX_TURNS + offset;
-        const y = (cap.t - 0.5) * HELIX_HEIGHT;
-        cap.mesh.position.set(Math.cos(angle) * HELIX_RADIUS, y, Math.sin(angle) * HELIX_RADIUS);
+        // Capsules float slightly (organic breath on sphere surface)
+        const breathOffset = Math.sin(elapsed * 0.7 + cap.index * 0.8) * 0.02;
+        const dir = cap.basePos.clone().normalize();
+        cap.mesh.position.copy(cap.basePos).addScaledVector(dir, breathOffset);
         cap.glowMesh.position.copy(cap.mesh.position);
       }
 
+      // ── Update filaments ──────────────────────────────────────────
+      const fPos = filamentGeom.attributes.position as THREE.Float32BufferAttribute;
+      const fCol = filamentGeom.attributes.color as THREE.Float32BufferAttribute;
+      for (let f = 0; f < filamentPairs.length && f < FILAMENT_COUNT; f++) {
+        const [a, b] = filamentPairs[f];
+        const posA = capsules[a]?.mesh.position;
+        const posB = capsules[b]?.mesh.position;
+        if (!posA || !posB) continue;
+        const li = f * 6;
+        fPos.array[li] = posA.x; fPos.array[li + 1] = posA.y; fPos.array[li + 2] = posA.z;
+        fPos.array[li + 3] = posB.x; fPos.array[li + 4] = posB.y; fPos.array[li + 5] = posB.z;
 
-      // ── Update synapse bridges ────────────────────────────────────
-      const bPos = bridgeGeom.attributes.position as THREE.Float32BufferAttribute;
-      const bCol = bridgeGeom.attributes.color as THREE.Float32BufferAttribute;
-      const sdPos = synapseDotGeom.attributes.position as THREE.Float32BufferAttribute;
-      const sdCol = synapseDotGeom.attributes.color as THREE.Float32BufferAttribute;
-
-      for (let b = 0; b < BRIDGE_COUNT; b++) {
-        const t = (b + 0.5) / BRIDGE_COUNT;
-        const angleA = t * Math.PI * 2 * HELIX_TURNS;
-        const angleB = angleA + Math.PI;
-        const y = (t - 0.5) * HELIX_HEIGHT;
-
-        const ax = Math.cos(angleA) * HELIX_RADIUS;
-        const az = Math.sin(angleA) * HELIX_RADIUS;
-        const bx = Math.cos(angleB) * HELIX_RADIUS;
-        const bz = Math.sin(angleB) * HELIX_RADIUS;
-
-        // Bridge pulse (organic wave)
-        const wave = Math.sin(t * Math.PI * 6 + elapsed * 2.5) * 0.5 + 0.5;
-        const bridgeGlow = wave * (0.15 + combinedGlow * 0.5);
-
-        // Line endpoints
-        const li = b * 6;
-        bPos.array[li] = ax; bPos.array[li + 1] = y; bPos.array[li + 2] = az;
-        bPos.array[li + 3] = bx; bPos.array[li + 4] = y; bPos.array[li + 5] = bz;
-
-        // Colors
-        bCol.array[li] = BIO_CYAN.r * bridgeGlow;
-        bCol.array[li + 1] = BIO_CYAN.g * bridgeGlow;
-        bCol.array[li + 2] = BIO_CYAN.b * bridgeGlow;
-        bCol.array[li + 3] = BIO_GREEN.r * bridgeGlow;
-        bCol.array[li + 4] = BIO_GREEN.g * bridgeGlow;
-        bCol.array[li + 5] = BIO_GREEN.b * bridgeGlow;
-
-        // Synapse dots traveling along bridge (nerve impulse effect)
-        for (let d = 0; d < 4; d++) {
-          const impulseT = ((elapsed * 1.5 + b * 0.3 + d * 0.25) % 1.0);
-          const di = (b * 4 + d) * 3;
-          sdPos.array[di] = ax + (bx - ax) * impulseT;
-          sdPos.array[di + 1] = y;
-          sdPos.array[di + 2] = az + (bz - az) * impulseT;
-
-          const impulseGlow = bridgeGlow * (1 - Math.abs(impulseT - 0.5) * 2);
-          sdCol.array[di] = BIO_PULSE.r * impulseGlow;
-          sdCol.array[di + 1] = BIO_PULSE.g * impulseGlow;
-          sdCol.array[di + 2] = BIO_PULSE.b * impulseGlow;
-        }
+        const wave = Math.sin(f * 0.8 + elapsed * 2.0) * 0.5 + 0.5;
+        const glow = wave * (0.12 + combinedGlow * 0.4);
+        fCol.array[li] = BIO_CYAN.r * glow;
+        fCol.array[li + 1] = BIO_CYAN.g * glow;
+        fCol.array[li + 2] = BIO_CYAN.b * glow;
+        fCol.array[li + 3] = BIO_GREEN.r * glow;
+        fCol.array[li + 4] = BIO_GREEN.g * glow;
+        fCol.array[li + 5] = BIO_GREEN.b * glow;
       }
-      bPos.needsUpdate = true;
-      bCol.needsUpdate = true;
-      sdPos.needsUpdate = true;
-      sdCol.needsUpdate = true;
-      bridgeMat.opacity = 0.15 + combinedGlow * 0.35;
-      synapseDotMat.opacity = 0.2 + combinedGlow * 0.5;
+      fPos.needsUpdate = true;
+      fCol.needsUpdate = true;
+      filamentMat.opacity = 0.12 + combinedGlow * 0.3;
 
-
-      // ── Update spore particles (organic float) ────────────────────
+      // ── Update spores ─────────────────────────────────────────────
       const spPos = sporeGeom.attributes.position as THREE.Float32BufferAttribute;
       for (let i = 0; i < SYNAPSE_PARTICLES; i++) {
         const sp = sporeSpeeds[i];
@@ -624,8 +504,6 @@ export default function ParticleOrb({
         spPos.array[idx] += sp.vx;
         spPos.array[idx + 1] += sp.vy + Math.sin(elapsed * 0.4 + sp.phase) * 0.0003;
         spPos.array[idx + 2] += sp.vz;
-
-        // Soft boundary
         const x = spPos.array[idx], y = spPos.array[idx + 1], z = spPos.array[idx + 2];
         const dist = Math.sqrt(x * x + y * y + z * z);
         if (dist > 4.5) {
@@ -642,11 +520,9 @@ export default function ParticleOrb({
       haloMat.uniforms.uTime.value = elapsed;
       haloMat.uniforms.uIntensity.value = 0.02 + combinedGlow * 0.06;
 
-      // ── Rotation — slow organic spin ──────────────────────────────
-      helixGroup.rotation.y = elapsed * 0.08; // very slow — organic, not mechanical
-      helixGroup.rotation.x = 0.12 + Math.sin(elapsed * 0.04) * 0.03;
-
-      // Spores drift independently
+      // ── Rotation — very slow organic spin ─────────────────────────
+      orbGroup.rotation.y = elapsed * 0.06;
+      orbGroup.rotation.x = 0.08 + Math.sin(elapsed * 0.03) * 0.02;
       spores.rotation.y = elapsed * 0.015;
 
       renderer.render(scene, camera);
@@ -655,22 +531,19 @@ export default function ParticleOrb({
     renderer.setAnimationLoop(animate);
 
 
+
     // ── Cleanup ─────────────────────────────────────────────────────
     return () => {
       renderer.setAnimationLoop(null);
       window.removeEventListener('resize', resize);
       ro.disconnect();
 
-      tubeGeomA.dispose(); tubeGeomB.dispose();
-      glowTubeGeomA.dispose(); glowTubeGeomB.dispose();
+      sphereGeom.dispose(); outerGlowGeom.dispose();
       capsuleGeom.dispose(); capsuleGlowGeom.dispose();
-      bridgeGeom.dispose(); synapseDotGeom.dispose();
-      sporeGeom.dispose(); haloGeom.dispose();
+      filamentGeom.dispose(); sporeGeom.dispose(); haloGeom.dispose();
 
-      tubeMatA.dispose(); tubeMatB.dispose();
-      glowTubeMatA.dispose(); glowTubeMatB.dispose();
-      bridgeMat.dispose(); synapseDotMat.dispose();
-      sporeMat.dispose(); haloMat.dispose();
+      sphereMat.dispose(); outerGlowMat.dispose();
+      filamentMat.dispose(); sporeMat.dispose(); haloMat.dispose();
       capsules.forEach(c => { c.material.dispose(); c.glowMaterial.dispose(); });
 
       glowTexture.dispose();
