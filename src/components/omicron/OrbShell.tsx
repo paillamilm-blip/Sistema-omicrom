@@ -42,7 +42,7 @@ const VaultTab      = lazy(() => import('../tabs/VaultTab').then(m => ({ default
 // de integrar conocimiento al Gemelo Digital.
 // ── Hub nodes (always present — the 9 app sections) ─────────────────
 const HUB_NODES: OrbNode[] = [
-  { id: 'inicio',      label: 'Inicio',       tab: 'perfil',     icon: '⬡' },
+  { id: 'inicio',      label: 'Mi ADN',       tab: 'perfil',     icon: '⬡' },
   { id: 'academia',    label: 'Academia',     tab: 'academia',   icon: '◈' },
   { id: 'empleos',     label: 'Empleos',      tab: 'empleos',    icon: '◇' },
   { id: 'mercado',     label: 'Mercado',      tab: 'market',     icon: '⬢' },
@@ -463,15 +463,18 @@ export function OrbShell() {
     recog.start();
   }, [isListening, handleTextInput]);
 
-  // ── Handle node tap → go to preview ─────────────────────────────────
-  // El nodo Inicio abre preview normal como cualquier otro nodo.
-  // Desde la preview del Inicio, el usuario puede acceder a PerfilSkillVisual
-  // tocando el boton "Mi ADN Digital" que se renderiza en el preview panel.
+  // ── Handle node tap → go to preview (or ADN Digital for Inicio) ────
+  // El nodo Inicio abre DIRECTAMENTE "Mi ADN Digital" (PerfilSkillVisual)
+  // si el usuario tiene skills. Si no tiene skills, abre el perfil normal.
   const handleNodeTap = useCallback((node: OrbNode) => {
+    if (node.id === 'inicio' && (sbProfile?.skills?.length ?? 0) > 0) {
+      setShowProfileVisual(true);
+      return;
+    }
     setSelectedNode(node);
     setState('preview');
     setActiveTab(node.tab);
-  }, [setActiveTab]);
+  }, [setActiveTab, sbProfile]);
 
   // ── Handle preview click → fullscreen ───────────────────────────────
   const handlePreviewClick = useCallback(() => {
