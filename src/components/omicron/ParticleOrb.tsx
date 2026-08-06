@@ -495,7 +495,7 @@ export default function ParticleOrb({
     ro.observe(mount);
 
     // ── Animation state ─────────────────────────────────────────────
-    let freq: Uint8Array | null = null;
+    let freq: Uint8Array<ArrayBuffer> | null = null;
     const clock = new THREE.Clock();
 
     // ── Animation loop ──────────────────────────────────────────────
@@ -507,7 +507,7 @@ export default function ParticleOrb({
       const analyser = analyserRef.current;
       if (analyser) {
         const bins = analyser.frequencyBinCount;
-        if (!freq || freq.length !== bins) freq = new Uint8Array(bins);
+        if (!freq || freq.length !== bins) freq = new Uint8Array(bins) as Uint8Array<ArrayBuffer>;
         analyser.getByteFrequencyData(freq);
         let sum = 0;
         for (let i = 0; i < freq.length; i++) sum += freq[i];
