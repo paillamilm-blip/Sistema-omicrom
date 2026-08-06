@@ -1,3 +1,4 @@
+import { OrbShell } from './components/omicron/OrbShell';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { AppProvider, useApp } from './store/AppContext';
 import { AuthOverlay } from './components/auth/AuthOverlay';
@@ -84,43 +85,8 @@ function AppShell() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
-      {/* Navegación fluida con stack */}
-      <NavigationStack>
-        {(currentTab) => (
-          <ErrorBoundary section={TAB_TITLES[currentTab]} key={currentTab}>
-            {currentTab === 'perfil' ? (
-              profileDetail ? (
-                <UnifiedLayout title="Mi Perfil" showBackButton onBack={() => setProfileDetail(false)}>
-                  <Suspense fallback={<TabLoader />}>
-                    <PerfilTab />
-                  </Suspense>
-                </UnifiedLayout>
-              ) : (
-                <OmicronAssistant onOpenPerfil={() => setProfileDetail(true)} />
-              )
-            ) : (
-              <UnifiedLayout
-                showBackButton={false}
-                fullHeight={currentTab === 'chat'}
-              >
-                <Suspense fallback={<TabLoader />}>
-                  {currentTab === 'maxskill'   && <MaxSkillTab />}
-                  {currentTab === 'academia'   && <AcademiaTab />}
-                  {currentTab === 'market'     && <MarketTab />}
-                  {currentTab === 'empleos'    && <EmpleosTab />}
-                  {currentTab === 'chat'       && <ChatTab />}
-                  {currentTab === 'wallet'     && <WalletTab />}
-                  {currentTab === 'gobernanza' && <GobernanzaTab />}
-                  {currentTab === 'vault'      && <VaultTab />}
-                </Suspense>
-              </UnifiedLayout>
-            )}
-          </ErrorBoundary>
-        )}
-      </NavigationStack>
-
-      {/* Navegación inferior — oculta en home (OmicronAssistant tiene su propia nav) */}
-      {activeTab !== 'perfil' && <BottomNav />}
+      {/* ── ORBE NEURONAL: la app es el orbe ──────────────────────── */}
+      <OrbShell />
 
       <LiveNetworkFeed />
       <IncomingJobPush />
