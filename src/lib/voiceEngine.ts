@@ -8,10 +8,10 @@
 
 /** Configuración de voz premium amigable. */
 const VOICE_CONFIG = {
-  // Pitch levemente alto = cálido sin sonar robótico
-  pitch: 1.02,
-  // Rate natural (1.0). La puntuación ya da pausas fluidas.
-  rate: 1.0,
+  // Pitch natural (1.0) — evitar pitch alto que suena artificial
+  pitch: 1.0,
+  // Rate ligeramente más lento = más natural y claro
+  rate: 0.92,
   // Volume: 100% (1.0) para claridad
   volume: 1.0,
 } as const;
