@@ -1,8 +1,6 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding } from './OrbOnboarding';
-import { OraculoBar } from '../OraculoBar';
-import { PerfilSkillVisual } from '../perfil/PerfilSkillVisual';
 import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';
 import { interpret, askCoach } from '../../lib/oraculo';
@@ -42,7 +40,7 @@ const VaultTab      = lazy(() => import('../tabs/VaultTab').then(m => ({ default
 // de integrar conocimiento al Gemelo Digital.
 // ── Hub nodes (always present — the 9 app sections) ─────────────────
 const HUB_NODES: OrbNode[] = [
-  { id: 'inicio',      label: 'Inicio',       tab: 'perfil',     icon: '⬡' },
+  { id: 'inicio',      label: 'Mi ADN',       tab: 'perfil',     icon: '⬡' },
   { id: 'academia',    label: 'Academia',     tab: 'academia',   icon: '◈' },
   { id: 'empleos',     label: 'Empleos',      tab: 'empleos',    icon: '◇' },
   { id: 'mercado',     label: 'Mercado',      tab: 'market',     icon: '⬢' },
@@ -225,7 +223,6 @@ export function OrbShell() {
   const [nodePositions, setNodePositions] = useState<{ id: string; x: number; y: number; depth: number }[]>([]);
   const [inputText, setInputText] = useState('');
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
-  const [showProfileVisual, setShowProfileVisual] = useState(false);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -464,9 +461,8 @@ export function OrbShell() {
   }, [isListening, handleTextInput]);
 
   // ── Handle node tap → go to preview ─────────────────────────────────
-  // El nodo Inicio abre preview normal como cualquier otro nodo.
-  // Desde la preview del Inicio, el usuario puede acceder a PerfilSkillVisual
-  // tocando el boton "Mi ADN Digital" que se renderiza en el preview panel.
+  // Todos los nodos usan el mismo flujo: tap → preview → fullscreen.
+  // El nodo Mi ADN va a renderTab('perfil') que ahora muestra el ADN Digital.
   const handleNodeTap = useCallback((node: OrbNode) => {
     setSelectedNode(node);
     setState('preview');
@@ -713,21 +709,6 @@ export function OrbShell() {
             )}
           </div>
 
-          {/* Botón "Mi ADN Digital" — solo en el nodo Inicio si tiene skills */}
-          {selectedNode.id === 'inicio' && (sbProfile?.skills?.length ?? 0) > 0 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowProfileVisual(true); }}
-              style={{
-                width: '100%', marginTop: 10, padding: '10px 0',
-                borderRadius: 12, border: `1px solid ${C.cyan}44`,
-                background: `linear-gradient(135deg, ${C.cyanGhost}, ${C.purpleFaint})`,
-                cursor: 'pointer', fontFamily: FONT.mono, fontSize: 11,
-                color: C.cyan, letterSpacing: 0.5, fontWeight: 700,
-              }}
-            >
-              Mi ADN Digital →
-            </button>
-          )}
         </div>
       )}
 
@@ -999,32 +980,6 @@ export function OrbShell() {
           *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
       `}</style>
-
-      {/* ── PerfilSkillVisual: vista orbital top 3 skills ────────────── */}
-      <PerfilSkillVisual
-        isOpen={showProfileVisual}
-        onClose={() => setShowProfileVisual(false)}
-        name={sbProfile?.display_name || sbProfile?.full_name || sbProfile?.username || ''}
-        seniorLabel={(() => {
-          const years = sbProfile?.cv_years_experience ?? 0;
-          if (years >= 10) return 'Profesional Senior';
-          if (years >= 5) return 'Profesional Mid-Senior';
-          if (years >= 2) return 'Profesional Mid';
-          return 'Profesional';
-        })()}
-        years={sbProfile?.cv_years_experience ?? 0}
-        skillsDetail={(sbProfile?.skills_detail ?? []).map((s: { name: string; pct: number }) => ({ name: s.name, pct: s.pct }))}
-        axes={{
-          exec: sbProfile?.execution_score ?? 0,
-          qual: sbProfile?.quality_score ?? 0,
-          trans: sbProfile?.transcendence_score ?? 0,
-          fund: sbProfile?.foundation_score ?? 0,
-        }}
-        reputation={sbProfile?.reputation_score ?? 0}
-        synergies={[]}
-        cvSummary={sbProfile?.cv_summary || ''}
-        onExplore={() => setShowProfileVisual(false)}
-      />
     </div>
   );
 }
