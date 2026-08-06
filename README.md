@@ -1,81 +1,61 @@
 <div align="center">
 
-# ⚡ Sistema Ómicrom
+# Sistema Omicrom
 
 **Aprendizaje continuo en tiempo real, para todo el mundo — conectado a oportunidades reales del mercado, al instante.**
 
-`React + Vite` · `Supabase` · `Realtime` · `PWA` · `Industria 5.0`
+`React + Vite` · `Supabase` · `Three.js` · `Realtime` · `PWA` · `Industria 5.0`
 
 </div>
 
 ---
 
-## 🌐 Qué es
+## Que es
 
-Ómicrom es una herramienta de **aprendizaje continuo en tiempo real**, pensada para cualquier
-persona en cualquier lugar, sin restricción geográfica. Construyes una **reputación verificable
-e imposible de falsear** — tu **Gemelo Digital** — y esa reputación se conecta, al instante,
-con **oportunidades reales del mercado laboral**. Rompe el círculo _"sin experiencia no me
-contratan → sin que me contraten no gano experiencia"_.
+Omicron es una herramienta de aprendizaje continuo en tiempo real, pensada para cualquier
+persona en cualquier lugar. Construyes una reputacion verificable e imposible de falsear
+— tu **Gemelo Digital** — y esa reputacion se conecta, al instante, con oportunidades
+reales del mercado laboral.
 
-Es la Industria 5.0 aplicada al talento: en un mundo donde todo es instantáneo, tu capacidad
-real ya no debería tardar meses en ser reconocida.
-
-El corazón es el **Núcleo (Gemelo Digital)**: un núcleo 3D vivo, alimentado por datos reales,
-rodeado por tu red en tiempo real. Un **Oráculo** te guía por voz hacia tu mejor próximo paso,
-y **el trabajo te busca a ti**.
-
-> La visión conceptual completa está en [`DEFINICION_OMICROM.md`](./DEFINICION_OMICROM.md) y
-> [`DEFINICION_OMICROM_v8_BACKEND.md`](./DEFINICION_OMICROM_v8_BACKEND.md).
+El corazon es un **Orbe Neuronal 3D** vivo, alimentado por datos reales de tu CV,
+rodeado por tu red en tiempo real. Un **Oraculo** te guia por voz hacia tu mejor
+proximo paso, y el trabajo te busca a ti.
 
 ---
 
-## 🧬 El Gemelo Digital (una sola reputación)
-
-La reputación se gana con **evidencia real** (regla 80/20) y es **una sola fuente de verdad**
-(`profiles` en Supabase), consistente en toda la app — ranking, presencia, núcleo, header y Oráculo:
+## El Gemelo Digital
 
 ```
-REPUTACIÓN = promedio de 4 ejes → Ejecución · Calidad · Trascendencia · Fundamento
+REPUTACION = 20% credenciales + 80% promedio(Ejecucion, Calidad, Trascendencia, Fundamento)
 ```
 
-- **Convalidar** CV / títulos / experiencia / aportes **sube tu reputación real** (y tu puesto en el ranking).
-- El **Nodo** evoluciona: Operativo → Core → Arquitecto → (Fundador).
+- **Convalidar** CV / titulos / experiencia sube tu reputacion real.
+- Skills con nivel real (% del analisis IA) + sinergia entre nodos relacionados.
+- El Nodo evoluciona: Operativo -> Core -> Arquitecto.
 
 ---
 
-## 🛰️ Red en tiempo real (multiusuario)
+## Stack
 
-Construido sobre **Supabase Realtime** (Presence + Broadcast + `postgres_changes`):
-
-- **Presencia real**: contador de nodos en línea + **satélites orbitando** tu núcleo + tira de conectados.
-- **Panel "Red Ómicron en vivo"** (badge del header): quién está conectado + actividad de la red.
-- **Ranking en vivo**: se actualiza cuando cambian las reputaciones.
-- **Conexión social**: toca un nodo → su credencial → **Conectar** / **DM**.
-- **"El trabajo te busca"**: push en vivo al publicarse una oferta (`job_postings`) y **match personalizado** (`job_matches`).
-- **Oráculo proactivo** por voz: te saluda con la red en vivo + tu mejor próximo paso.
-
----
-
-## 🧱 Stack
-
-| Capa | Tecnología |
+| Capa | Tecnologia |
 |------|------------|
 | Frontend | React 18 + TypeScript + Vite 5 |
-| Estilos | Tailwind CSS + design system propio (`src/theme.ts`) |
-| Animación | Framer Motion + GSAP + canvas puro (núcleo 3D) |
+| 3D | Three.js (OrbNeuronal) + Framer Motion |
+| Estilos | Design system propio (`src/theme.ts`) |
 | Backend | Supabase (Postgres + Auth + Realtime + Edge Functions) |
+| IA | OpenRouter (Gemma 4) + Edge Functions (Coach, Tutor, Examen) |
 | Deploy | Vercel (PWA instalable) |
 
 ---
 
-## 🚀 Puesta en marcha (local)
+## Puesta en marcha (local)
 
 **1. Variables de entorno** — crea `.env.local` (ver `.env.example`):
 
 ```bash
 VITE_SUPABASE_URL=https://<tu-proyecto>.supabase.co
 VITE_SUPABASE_ANON_KEY=<tu-anon-key>
+VITE_OPENROUTER_KEY=<tu-key-openrouter>
 ```
 
 **2. Instalar y correr:**
@@ -85,12 +65,12 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-**3. Scripts disponibles:**
+**3. Scripts:**
 
-| Comando | Qué hace |
+| Comando | Que hace |
 |---------|----------|
 | `npm run dev` | Servidor de desarrollo |
-| `npm run build` | Build de producción |
+| `npm run build` | Build de produccion |
 | `npm run preview` | Previsualiza el build |
 | `npm run typecheck` | Chequeo de tipos (tsc) |
 | `npm run lint` | ESLint |
@@ -98,90 +78,66 @@ npm run dev        # http://localhost:5173
 
 ---
 
-## 🗄️ Base de datos (Supabase)
+## Base de datos (Supabase)
 
-Las migraciones están en `supabase/migrations/` (idempotentes). Aplicarlas con la CLI o el SQL Editor:
+Migraciones en `supabase/migrations/` (63 archivos, idempotentes):
 
 ```bash
 supabase db push
 ```
 
-Claves recientes:
-
-- **`0046_gemelo_profiles.sql`** — tabla del Gemelo convalidado (CV/títulos/años/aportes) con RLS por usuario.
-- **`0047_realtime_publication.sql`** — habilita **Realtime replication** en `profiles`, `job_postings` y `job_matches` (necesario para ranking en vivo y "el trabajo te busca").
-
-Para las funciones de IA (Coach/Tutor/Examinador/etc.) y el despliegue de Edge Functions,
-ver [`GUIA_ACTIVACION_PRODUCCION.md`](./GUIA_ACTIVACION_PRODUCCION.md).
-
-> Presencia, actividad y DM funcionan con Presence/Broadcast (no requieren replication).
-> Ranking y ofertas en vivo requieren la migración `0047`.
+Edge Functions en `supabase/functions/` (21 funciones):
+coach, tutor, examen-ia, carta-ia, chat-assist, arbiter-ai, vault-oracle,
+market-match, stripe-webhook, crear-checkout, verificar-pago, y mas.
 
 ---
 
-## ☁️ Deploy e instalación (PWA)
-
-- **Producción (rama `main`):**
-  `https://sistema-omicrom-git-main-tuprofendustrial-s-projects.vercel.app`
-- Cada push a `main` despliega automáticamente en Vercel.
-- Es una **PWA instalable**: abre el link en el móvil → **"Añadir a pantalla de inicio"** (o el botón **Instalar app** dentro de la app) y queda como una app nativa.
-- Para la voz del Oráculo: Chrome/Edge con sonido activo (el primer toque desbloquea el audio en móvil).
-
----
-
-## 📁 Estructura
+## Estructura
 
 ```
 src/
-├── App.tsx                 Shell + navegación + providers (Realtime)
+├── App.tsx                  Shell + providers
 ├── components/
-│   ├── omicron/ParticleOrb.tsx  Núcleo único (canvas 2.5D, reactivo a voz) — el ÚNICO orbe de toda la app
-│   ├── OraculoBar.tsx      Oráculo por voz (proactivo)
-│   ├── shared/             LivePresence, LiveRanking, IncomingJobs, GemeloBadge…
-│   ├── perfil/             CartaCompetencias, RedSocial, Pasaporte…
-│   └── tabs/               Perfil(Inicio), Academia, Market, Empleos, Wallet…
-├── hooks/                  useGemeloProfile, useRealtimeNetwork
-├── store/                  AppContext, RealtimeContext
-├── lib/                    supabase, gemeloProfile, oraculo
-└── services/               reputationService
-public/prototipos/          Prototipos estáticos (holo-gemelo, núcleo, os…)
-supabase/migrations/        Migraciones SQL
+│   ├── omicron/             OrbShell, OrbNeuronal (3D), OmicronAssistant, ConvalidaOmicron
+│   ├── perfil/              PerfilSkillVisual, ProfileCard, PasaporteGemelo, CartaCompetencias
+│   ├── shared/              BottomNav, ConnectionBanner, Toast, LivePresence
+│   └── tabs/                PerfilTab, AcademiaTab, EmpleosTab, MarketTab, WalletTab...
+├── hooks/                   useGemeloProfile, useGemeloActivation, useRealtimeNetwork
+├── store/                   AppContext, ProfileContext, NavigationContext, RealtimeContext
+├── lib/                     oraculo, voiceEngine, cvAnalyzer, geminiClient, omicronCoach
+└── services/                reputationService
+supabase/
+├── migrations/              63 migraciones SQL
+└── functions/               21 Edge Functions
 ```
 
 ---
 
-## 📚 Documentos del proyecto
+## Deploy (PWA)
 
-| Documento | Contenido |
-|-----------|-----------|
-| [`ROADMAP.md`](./ROADMAP.md) | 🗺️ Roadmap estratégico: milestones, timeline, dependencias, KPIs |
-| [`CHANGELOG.md`](./CHANGELOG.md) | 📝 Historial de cambios por fecha (formato Keep a Changelog) |
-| [`PLAN_PRODUCCION.md`](./PLAN_PRODUCCION.md) | 🚀 Plan de producción vivo: fases, progreso real, PRs asociados |
-| [`DEFINICION_OMICROM.md`](./DEFINICION_OMICROM.md) | Visión y definición del sistema |
-| [`DEFINICION_OMICROM_v8_BACKEND.md`](./DEFINICION_OMICROM_v8_BACKEND.md) | Definición técnica del backend (con estado de implementación) |
-| [`DEFINICION_REPUTACION_OMICROM.md`](./DEFINICION_REPUTACION_OMICROM.md) | Fórmula canónica de reputación (fuente única de verdad) |
-| [`VISION_OMICROM.md`](./VISION_OMICROM.md) | Norte de producto: el asistente que empuja a la mejora |
-| [`GUIA_ACTIVACION_PRODUCCION.md`](./GUIA_ACTIVACION_PRODUCCION.md) | Guía paso a paso para activar producción (pagos, monitoreo, correo) |
-| [`PANEL_DE_CONTROL.md`](./PANEL_DE_CONTROL.md) | Dónde van las claves/secretos + checklist maestro |
-
-> 📌 **Pendientes de documentar** (no existen aún en el repo, se están priorizando):
-> Bitácora histórica de decisiones, auditoría técnica formal, y revisión de UX.
-> Ver [`PLAN_PRODUCCION.md`](./PLAN_PRODUCCION.md) para el detalle operativo y
-> [`ROADMAP.md`](./ROADMAP.md) para la visión estratégica con timeline.
+- Cada push a `main` despliega automaticamente en Vercel.
+- PWA instalable: abre en el movil > "Anadir a pantalla de inicio".
+- Para produccion (Stripe, Sentry, SMTP): ver `GUIA_ACTIVACION_PRODUCCION.md`.
 
 ---
 
-## 🔭 Prototipos
+## Documentos del proyecto
 
-Experiencias estáticas navegables (sin build) en `public/prototipos/`, servidas por el mismo deploy:
-
-`/prototipos/index.html` · `/prototipos/holo-gemelo.html` · `/prototipos/nucleo.html` ·
-`/prototipos/os.html` · `/prototipos/aprendizaje.html` …
+| Documento | Contenido |
+|-----------|-----------|
+| `DEFINICION_OMICROM.md` | Vision, pilares, modelo economico, norte del producto |
+| `DEFINICION_OMICROM_v8_BACKEND.md` | Arquitectura tecnica backend (con estado de implementacion) |
+| `DEFINICION_REPUTACION_OMICROM.md` | Formula canonica del Gemelo Digital (fuente unica de verdad) |
+| `PLAN_PRODUCCION.md` | Roadmap + estado operativo + milestones + KPIs |
+| `GUIA_ACTIVACION_PRODUCCION.md` | Pasos para activar produccion (Stripe, Sentry, SMTP, claves) |
+| `CHANGELOG.md` | Historial de cambios |
+| `TERMINOS_SERVICIO.md` | Terminos legales de uso |
+| `POLITICA_PRIVACIDAD.md` | Politica de privacidad |
 
 ---
 
 <div align="center">
 
-Hecho con ⚡ para la Industria 5.0 · Aprendizaje continuo en tiempo real · Sin fronteras · Confianza Cero
+Hecho con fuerza para la Industria 5.0 · Aprendizaje continuo en tiempo real · Sin fronteras
 
 </div>
