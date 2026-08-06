@@ -7,6 +7,7 @@ import {
   CyberCard, CyberButton, SectionLabel,
   StatGrid, StatCard, ScanlineOverlay, CyberToast, Divider, DetailPanel, LoadingScreen,
 } from '../shared/CyberComponents';
+import { GemeloGuidance } from '../shared/GemeloGuidance';
 import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import { openBlackbox, type BlackboxResult } from '../../lib/secureChat';
 interface Contract { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; amount: number; }
@@ -197,6 +198,7 @@ export function GobernanzaTab() {
         title="Gobernanza"
         subtitle="Justicia descentralizada · Staking"
       />
+      <GemeloGuidance tab="gobernanza" />
 
       <div style={cx(BASE.scrollArea, { paddingBottom: 20 })}>
         {/* TRIBUNAL */}

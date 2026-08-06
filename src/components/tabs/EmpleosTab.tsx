@@ -8,6 +8,7 @@ import { C as T, FONT as TF } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
+import { GemeloGuidance } from '../shared/GemeloGuidance';
 import { TrabajoTeEncuentra } from '../empleos/TrabajoTeEncuentra';
 import { RutaCarrera } from '../empleos/RutaCarrera';
 import { oc, OmicronHeader, OmicronAction } from '../omicron/OmicronChrome';
@@ -144,6 +145,7 @@ export function EmpleosTab() {
         subtitle="Matchmaking 80/20 · Terna Express"
         action={<OmicronAction onClick={() => setShowPublish(true)}><Plus size={14} /> Publicar</OmicronAction>}
       />
+      <GemeloGuidance tab="empleos" />
 
       {/* Filtros */}
       <div style={styles.filterRow}>
