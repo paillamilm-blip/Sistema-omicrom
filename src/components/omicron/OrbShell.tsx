@@ -617,6 +617,60 @@ export function OrbShell() {
       </div>
 
 
+      {/* ── PROFILE AVATAR BUTTON (sutil, esquina superior derecha) ──── */}
+      {state !== 'fullscreen' && (
+        <button
+          onClick={() => {
+            const node = orbNodesWithLevels.find((n: OrbNode) => n.id === 'inicio');
+            if (node) { setSelectedNode(node); setState('fullscreen'); }
+            setActiveTab('perfil');
+          }}
+          aria-label="Ver mi perfil"
+          title="Mi perfil"
+          style={{
+            position: 'absolute',
+            top: 'calc(env(safe-area-inset-top, 12px) + 14px)',
+            right: 16,
+            zIndex: 4,
+            width: 38,
+            height: 38,
+            borderRadius: '50%',
+            border: `1.5px solid ${C.cyanDim}`,
+            background: 'radial-gradient(circle at 32% 26%, rgba(92,200,255,0.14), rgba(6,10,22,0.85))',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            boxShadow: `0 0 12px ${C.cyanFaint}, 0 4px 14px rgba(0,0,0,0.4)`,
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            padding: 0,
+          }}
+        >
+          {sbProfile?.avatar_url ? (
+            <img
+              src={sbProfile.avatar_url}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+            />
+          ) : (
+            <span style={{
+              fontFamily: FONT.display,
+              fontWeight: 800,
+              fontSize: 13,
+              color: C.cyan,
+              letterSpacing: -0.3,
+            }}>
+              {(sbProfile?.display_name || sbProfile?.full_name || sbProfile?.username || 'N')
+                .trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()}
+            </span>
+          )}
+        </button>
+      )}
+
+
       {/* ── PREVIEW PANEL (floating card when node selected) ─────────── */}
       {state === 'preview' && selectedNode && (
         <div
