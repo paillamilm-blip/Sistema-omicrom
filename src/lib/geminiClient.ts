@@ -1,11 +1,12 @@
 // src/lib/geminiClient.ts
-// Llama a Gemini DIRECTO desde el browser (sin Edge Function).
-// Las keys AQ. de Google AI Studio funcionan como Bearer token.
-// 100% gratis — tier gratuito de Gemini.
+// Llama a un LLM via OpenRouter (gratis, sin tarjeta).
+// Modelo: google/gemma-4-31b-it:free (256K contexto, multilingüe).
+// Fallback: google/gemma-4-26b-a4b-it:free
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const MODEL = 'gemini-2.5-flash';
-const FALLBACK = 'gemini-2.0-flash';
+const API_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
+const MODEL = 'google/gemma-4-31b-it:free';
+const FALLBACK = 'google/gemma-4-26b-a4b-it:free';
+const URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 const SYS = [
   'Eres el Motor de ADN Digital de Omicron.',
@@ -27,12 +28,19 @@ const SYS = [
   '5. Years = suma TOTAL de experiencia laboral.',
   '6. Funciona para CUALQUIER industria.',
   '',
-  'Responde SOLO JSON con estos campos:',
-  'name (string), seniorLabel (string), seniorLevel (1-5), years (int),',
-  'skills (array max 12 strings), skillsDetail (array {name,pct}),',
-  'arch (estudiante/junior/mid/senior/lead/pro),',
-  'axes ({exec,qual,trans,fund} cada uno 0-100),',
-  'summary (2 parrafos en espanol: P1 quien es, P2 justificacion ejes).',
+  'Responde SOLO JSON valido con estos campos (sin texto extra):',
+  '{"name":"","seniorLabel":"","seniorLevel":0,"years":0,"skills":[],"skillsDetail":[{"name":"","pct":0}],"arch":"","axes":{"exec":0,"qual":0,"trans":0,"fund":0},"summary":""}',
+  '',
+  'Donde:',
+  '- name: nombre completo',
+  '- seniorLabel: posicionamiento como especialista (1 frase especifica)',
+  '- seniorLevel: 1=estudiante, 2=junior, 3=semi-senior, 4=senior, 5=experto/director',
+  '- years: anios TOTALES de experiencia (entero)',
+  '- skills: array max 12 strings con habilidades/areas principales en espanol',
+  '- skillsDetail: array de {name, pct} con nivel de dominio 0-100',
+  '- arch: uno de estudiante, junior, mid, senior, lead, pro',
+  '- axes: {exec, qual, trans, fund} cada uno 0-100',
+  '- summary: 2 parrafos en espanol. P1: quien es. P2: justificacion de ejes.',
 ].join('\n');
 
 export interface GeminiAnalysis {
@@ -47,60 +55,61 @@ export interface GeminiAnalysis {
   summary?: string;
 }
 
-async function callGemini(model: string, cvText: string): Promise<Response> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-  return fetch(url, {
+async function callModel(model: string, cvText: string): Promise<Response> {
+  return fetch(URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${API_KEY}`,
+      'HTTP-Referer': 'https://sistema-omicrom.vercel.app',
+      'X-Title': 'Sistema Omicron',
     },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYS }] },
-      contents: [{ role: 'user', parts: [{ text: 'CV COMPLETO:\n\n' + cvText }] }],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 2000,
-        responseMimeType: 'application/json',
-      },
+      model,
+      messages: [
+        { role: 'system', content: SYS },
+        { role: 'user', content: 'CV COMPLETO:\n\n' + cvText },
+      ],
+      temperature: 0.3,
+      max_tokens: 2000,
     }),
   });
 }
 
 export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean; analysis?: GeminiAnalysis; error?: string }> {
   if (!API_KEY) {
-    return { ok: false, error: 'Falta VITE_GEMINI_API_KEY.' };
+    return { ok: false, error: 'Falta VITE_OPENROUTER_KEY. Registrate gratis en openrouter.ai' };
   }
 
   const text = cvText.slice(0, 15000);
 
-  // Intentar modelo principal, fallback si falla
   for (const model of [MODEL, FALLBACK]) {
     try {
-      const resp = await callGemini(model, text);
+      const resp = await callModel(model, text);
 
       if (!resp.ok) {
         const err = await resp.text();
-        console.warn(`[gemini] ${model} falló (${resp.status}):`, err.slice(0, 200));
-        continue; // probar fallback
+        console.warn(`[openrouter] ${model} falló (${resp.status}):`, err.slice(0, 200));
+        continue;
       }
 
       const data = await resp.json();
-      const parts = data?.candidates?.[0]?.content?.parts;
-      const raw = Array.isArray(parts)
-        ? parts.map((p: { text?: string }) => p.text ?? '').join('').trim()
-        : '';
+      const content = data?.choices?.[0]?.message?.content ?? '';
 
-      if (!raw) continue;
+      if (!content) continue;
 
-      const parsed = JSON.parse(raw) as GeminiAnalysis;
-      console.log('[gemini] OK:', model, parsed.name ?? '?');
+      // Extraer JSON del contenido (puede venir con texto antes/después)
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) continue;
+
+      const parsed = JSON.parse(jsonMatch[0]) as GeminiAnalysis;
+      console.log('[openrouter] OK:', model, parsed.name ?? '?');
       return { ok: true, analysis: parsed };
     } catch (e) {
-      console.warn(`[gemini] ${model} error:`, e);
+      console.warn(`[openrouter] ${model} error:`, e);
       continue;
     }
   }
 
-  return { ok: false, error: 'No se pudo conectar con Gemini.' };
+  return { ok: false, error: 'No se pudo conectar con la IA. Intentá de nuevo.' };
 }
