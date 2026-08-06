@@ -12,7 +12,7 @@
 // Diseño: "sistema solar personal" — cada persona tiene un perfil
 // visualmente ÚNICO basado en sus habilidades reales.
 // ═══════════════════════════════════════════════════════════════════════
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2 } from 'lucide-react';
 import { C, FONT } from '../../theme';
@@ -86,12 +86,39 @@ export function PerfilSkillVisual({
     onClose();
   }, [onExplore, onClose]);
 
+  // Focus trap: move focus into overlay on open, trap Tab inside
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    // Focus the overlay container on open
+    const el = overlayRef.current;
+    if (el) el.focus();
+    // Trap Tab key inside the overlay
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key !== 'Tab' || !el) return;
+      const focusable = el.querySelectorAll<HTMLElement>('button, [href], input, [tabindex]:not([tabindex="-1"])');
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          ref={overlayRef}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mi ADN Digital — Perfil visual basado en top skills"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -105,6 +132,7 @@ export function PerfilSkillVisual({
             alignItems: 'center',
             overflow: 'auto',
             WebkitOverflowScrolling: 'touch',
+            outline: 'none',
           }}
         >
           {/* Close button */}
@@ -154,7 +182,7 @@ export function PerfilSkillVisual({
           >
             {/* Outer ring (skill #3) */}
             {hasThree && (
-              <div style={{
+              <div aria-hidden="true" style={{
                 position: 'absolute', inset: 0,
                 borderRadius: '50%',
                 border: `1px solid ${SKILL_COLORS[2]}33`,
@@ -175,7 +203,7 @@ export function PerfilSkillVisual({
 
             {/* Middle ring (skill #2) */}
             {hasTwo && (
-              <div style={{
+              <div aria-hidden="true" style={{
                 position: 'absolute', inset: 40,
                 borderRadius: '50%',
                 border: `1.5px solid ${SKILL_COLORS[1]}44`,
@@ -226,7 +254,7 @@ export function PerfilSkillVisual({
 
             {/* Synergy connection lines (decorative SVG) */}
             {hasTwo && (
-              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+              <svg aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                 <line x1="50%" y1="20%" x2="50%" y2="38%" stroke={C.cyan} strokeWidth="0.5" opacity="0.3" strokeDasharray="3 3">
                   <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2.5s" repeatCount="indefinite" />
                 </line>
@@ -239,7 +267,7 @@ export function PerfilSkillVisual({
             )}
 
             {/* Reputation ring (outer glow) */}
-            <div style={{
+            <div aria-hidden="true" style={{
               position: 'absolute', inset: -8,
               borderRadius: '50%',
               border: `1px solid ${C.line}`,

@@ -524,11 +524,12 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     if (!started) setState('idle');
   }, []);
 
-  // Saludo + motivación al entrar (una vez). Espera a que profile esté
-  // cargado para no saludar con datos vacíos (fix race condition).
+  // Saludo + motivación al entrar (una vez). Espera a que profile Y gemelo estén
+  // cargados para no saludar con datos vacíos (fix race condition con top stale).
   useEffect(() => {
     if (greetedRef.current) return;
     if (!profile) return; // Esperar a que el perfil se cargue
+    if (!gemelo && profile.skills && profile.skills.length > 0) return; // Esperar gemelo si ya tiene CV
     greetedRef.current = true;
     const name = profile.display_name || profile.full_name || profile.username || 'Nodo';
     const base = `Hola ${name}. Soy Ómicron, tu Gemelo Digital.`;
@@ -536,7 +537,7 @@ export default function OmicronAssistant({ onOpenPerfil }: Props) {
     const t = setTimeout(() => omicronSay(base + push), 500);
     const t2 = setTimeout(() => notifyOrb('Gemelo sincronizado · datos cargados', 'success'), 900);
     return () => { clearTimeout(t); clearTimeout(t2); };
-  }, [profile, top, omicronSay]);
+  }, [profile, gemelo, top, omicronSay]);
 
   // Cuando llegan alertas nuevas, la orbe "carga" el aviso.
   const prevUnread = useRef(0);
