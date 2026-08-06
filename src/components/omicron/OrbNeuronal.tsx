@@ -34,6 +34,8 @@ export interface OrbNeuronalProps {
   voiceLevel?: number;
   /** Si el Oráculo está escuchando */
   isListening?: boolean;
+  /** Callback con posiciones 2D proyectadas de cada nodo (para labels HTML) */
+  onProjectedPositions?: (positions: { id: string; x: number; y: number; depth: number }[]) => void;
   className?: string;
 }
 
@@ -60,6 +62,7 @@ export default function OrbNeuronal({
   onNodeTap,
   voiceLevel = 0,
   isListening = false,
+  onProjectedPositions,
   className,
 }: OrbNeuronalProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -67,12 +70,14 @@ export default function OrbNeuronal({
   const isListeningRef = useRef(isListening);
   const activeNodeRef = useRef(activeNodeId);
   const onNodeTapRef = useRef(onNodeTap);
+  const onProjectedRef = useRef(onProjectedPositions);
 
   // Keep refs in sync without re-triggering effect
   voiceLevelRef.current = voiceLevel;
   isListeningRef.current = isListening;
   activeNodeRef.current = activeNodeId;
   onNodeTapRef.current = onNodeTap;
+  onProjectedRef.current = onProjectedPositions;
 
 
   // ── Three.js Scene ───────────────────────────────────────────────────
@@ -492,6 +497,27 @@ export default function OrbNeuronal({
       } else {
         particleMat.color.lerp(COL_CONN, 0.03);
         shellMat.color.lerp(COL_CONN, 0.03);
+      }
+
+      // ── Project node positions to 2D for HTML labels ──────────────
+      if (onProjectedRef.current) {
+        const w = mount.clientWidth || 1;
+        const h = mount.clientHeight || 1;
+        const projected = nodeDatas.map(nd => {
+          const pos = nd.mesh.position.clone();
+          // Apply group rotation
+          pos.applyEuler(orbGroup.rotation as any);
+          // Project to NDC
+          const ndc = pos.clone();
+          ndc.project(camera);
+          return {
+            id: nd.node.id,
+            x: (ndc.x * 0.5 + 0.5) * w,
+            y: (-ndc.y * 0.5 + 0.5) * h,
+            depth: ndc.z, // -1 (near) to 1 (far)
+          };
+        });
+        onProjectedRef.current(projected);
       }
 
       renderer.render(scene, camera);

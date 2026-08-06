@@ -43,6 +43,8 @@ declare module 'three' {
     distanceTo(v: Vector3): number;
     clone(): Vector3;
     lerp(v: Vector3, alpha: number): this;
+    project(camera: PerspectiveCamera): this;
+    applyEuler(euler: any): this;
   }
   export class Color {
     constructor(r?: number | string, g?: number, b?: number);
