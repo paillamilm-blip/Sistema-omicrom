@@ -374,7 +374,7 @@ export function AcademiaTab() {
               {/* Sistema Solar del Aprendizaje · mismo Núcleo de partículas de toda la app (Ómicron unificado) */}
               <div style={{ position: 'relative', width: 180, height: 180, margin: '0 auto 6px' }}
                 role="img" aria-label={`Progreso de aprendizaje ${totalAll ? Math.round((totalDone / totalAll) * 100) : 0} por ciento`}>
-                <ParticleOrb colorA={[92, 200, 255]} colorB={totalAll && totalDone >= totalAll ? [63, 208, 201] : [94, 92, 230]} />
+                <ParticleOrb glowIntensity={totalAll && totalDone >= totalAll ? 0.9 : 0.2} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <div style={{ textAlign: 'center', lineHeight: 1 }}>
                     <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 8, color: C.cyan, letterSpacing: 2 }}>NÚCLEO</span>

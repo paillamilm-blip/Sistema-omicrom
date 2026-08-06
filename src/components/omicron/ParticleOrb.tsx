@@ -2,51 +2,76 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 // =====================================================================
-// <ParticleOrb /> — ADN Digital 3D con Three.js
+// <ParticleOrb /> — ADN de Mercurio Vivo Bioluminiscente
 //
-// Doble hélice neón 3D que rota y vibra con audio. Usa WebGL para
-// renderizar: cadenas helicoidales con glow, puentes luminosos entre
-// strands, y una red de partículas de datos flotando en el espacio.
+// Dirección visual: Metal líquido orgánico que CONTIENE las competencias
+// del usuario. Cada capacidad es una "cápsula" incrustada en la hélice
+// que se ilumina con bioluminiscencia cuando se activa.
 //
-// Estructura visual:
-//   - 2 cadenas helicoidales (strand A cyan / strand B purple) con glow
-//   - Puentes neón entre cadenas (base pairs) con efecto bloom
-//   - Red de partículas de datos conectadas por líneas tenues
-//   - Halo volumétrico central que respira con la voz
+// Estructura:
+//   - Cadenas de mercurio líquido (chrome reflectivo + fluid motion)
+//   - Cápsulas de competencias incrustadas (glow interior orgánico)
+//   - Puentes tipo sinapsis (filamentos que brillan entre activas)
+//   - Fondo limpio: negro profundo con breath de color
+//   - Audio-reactivo: todo vibra orgánicamente con la voz
+//
+// No cyberpunk. No neón. Orgánico, vivo, premium.
 // =====================================================================
+
+/** Una competencia que vive dentro del ADN */
+export interface HelixSkill {
+  id: string;
+  label: string;
+  /** 0-1: nivel de dominio (afecta tamaño de la cápsula) */
+  level?: number;
+}
 
 export interface ParticleOrbProps {
   audioStream?: MediaStream | null;
   enableMic?: boolean;
-  colorA?: [number, number, number]; // strand A (RGB 0-255) — SKY cyan
-  colorB?: [number, number, number]; // strand B (RGB 0-255) — INDIGO purple
+  /** Competencias que existen dentro del ADN */
+  skills?: HelixSkill[];
+  /** IDs de competencias activamente iluminadas (interacción) */
+  activeSkillIds?: string[];
+  /** Intensidad global de bioluminiscencia (0-1). Default 0 = reposo */
+  glowIntensity?: number;
   className?: string;
 }
 
 export default function ParticleOrb({
   audioStream = null,
   enableMic = false,
-  colorA = [92, 200, 255],
-  colorB = [94, 92, 230],
+  skills = [],
+  activeSkillIds = [],
+  glowIntensity = 0,
   className,
 }: ParticleOrbProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  // Refs para comunicar estado reactivo al loop de animación
+  const activeIdsRef = useRef<string[]>(activeSkillIds);
+  const glowRef = useRef(glowIntensity);
+  activeIdsRef.current = activeSkillIds;
+  glowRef.current = glowIntensity;
 
-  // ── Three.js scene setup + animation ─────────────────────────────
+
+  // ── Three.js Scene ─────────────────────────────────────────────────
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
 
-    // Normalize colors to 0-1
-    const cA = new THREE.Color(colorA[0] / 255, colorA[1] / 255, colorA[2] / 255);
-    const cB = new THREE.Color(colorB[0] / 255, colorB[1] / 255, colorB[2] / 255);
+    // ── Palette (no cyberpunk — organic mercury + bioluminescence) ──
+    const MERCURY = new THREE.Color(0.78, 0.8, 0.82);       // chrome/silver
+    const BIO_GREEN = new THREE.Color(0.1, 0.85, 0.55);     // emerald bioluminescence
+    const BIO_CYAN = new THREE.Color(0.15, 0.7, 0.8);       // deep cyan organic
+    const BIO_PULSE = new THREE.Color(0.2, 0.95, 0.65);     // bright pulse
+    const DARK_TEAL = new THREE.Color(0.02, 0.06, 0.08);    // background hint
 
-
-    // ── Scene, Camera, Renderer ──────────────────────────────────────
+    // ── Scene, Camera, Renderer ─────────────────────────────────────
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-    camera.position.set(0, 0, 5.5);
+    scene.fog = new THREE.Fog(0x000000, 8, 18);
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    camera.position.set(0, 0.3, 5.8);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -57,246 +82,377 @@ export default function ParticleOrb({
     renderer.domElement.style.height = '100%';
     renderer.domElement.style.display = 'block';
 
-    // ── Configuration ────────────────────────────────────────────────
-    const STRAND_POINTS = 200;
+    // ── Configuration ───────────────────────────────────────────────
     const HELIX_TURNS = 4;
-    const HELIX_HEIGHT = 6;
-    const HELIX_RADIUS = 1.0;
-    const BRIDGE_COUNT = 32;
-    const BRIDGE_SEGMENTS = 6;
-    const NET_PARTICLES = 300;
-    const NET_CONNECTIONS = 180;
+    const HELIX_HEIGHT = 5.0;
+    const HELIX_RADIUS = 0.75;
+    const TUBE_RADIUS = 0.055;
+    const TUBE_SEGMENTS = 180;
+    const CAPSULE_COUNT = Math.max(skills.length, 8); // min 8 capsules
+    const BRIDGE_COUNT = 20;
+    const SYNAPSE_PARTICLES = 40; // sparse organic background
 
 
-    // ── Main Group (for rotation) ────────────────────────────────────
+    // ── Main Group ──────────────────────────────────────────────────
     const helixGroup = new THREE.Group();
     scene.add(helixGroup);
 
-    // ── Custom glow point texture ────────────────────────────────────
+    // ── Glow texture (soft organic) ─────────────────────────────────
     const glowCanvas = document.createElement('canvas');
     glowCanvas.width = 64;
     glowCanvas.height = 64;
     const gCtx = glowCanvas.getContext('2d')!;
-    const gradient = gCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    gradient.addColorStop(0, 'rgba(255,255,255,1)');
-    gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
-    gradient.addColorStop(0.5, 'rgba(255,255,255,0.3)');
-    gradient.addColorStop(1, 'rgba(255,255,255,0)');
-    gCtx.fillStyle = gradient;
+    const grd = gCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grd.addColorStop(0, 'rgba(255,255,255,1)');
+    grd.addColorStop(0.1, 'rgba(255,255,255,0.85)');
+    grd.addColorStop(0.35, 'rgba(255,255,255,0.25)');
+    grd.addColorStop(0.7, 'rgba(255,255,255,0.05)');
+    grd.addColorStop(1, 'rgba(255,255,255,0)');
+    gCtx.fillStyle = grd;
     gCtx.fillRect(0, 0, 64, 64);
     const glowTexture = new THREE.CanvasTexture(glowCanvas);
 
+    // ── Helper: helix curve points ──────────────────────────────────
+    const helixPts = (offset: number, segs: number): THREE.Vector3[] => {
+      const pts: THREE.Vector3[] = [];
+      for (let i = 0; i <= segs; i++) {
+        const t = i / segs;
+        const angle = t * Math.PI * 2 * HELIX_TURNS + offset;
+        const y = (t - 0.5) * HELIX_HEIGHT;
+        pts.push(new THREE.Vector3(
+          Math.cos(angle) * HELIX_RADIUS,
+          y,
+          Math.sin(angle) * HELIX_RADIUS,
+        ));
+      }
+      return pts;
+    };
 
-    // ── Strand A & B — helix point clouds ────────────────────────────
-    const strandAPositions = new Float32Array(STRAND_POINTS * 3);
-    const strandBPositions = new Float32Array(STRAND_POINTS * 3);
-    const strandColors = new Float32Array(STRAND_POINTS * 3);
-    const strandBColors = new Float32Array(STRAND_POINTS * 3);
 
-    const strandAGeom = new THREE.BufferGeometry();
-    strandAGeom.setAttribute('position', new THREE.Float32BufferAttribute(strandAPositions, 3));
-    strandAGeom.setAttribute('color', new THREE.Float32BufferAttribute(strandColors, 3));
+    // ── Mercury Shader Material ─────────────────────────────────────
+    // Chrome-like reflective material with organic vertex displacement
+    const mercuryVertexShader = `
+      uniform float uTime;
+      uniform float uAudioLevel;
+      varying vec3 vNormal;
+      varying vec3 vWorldPos;
+      varying float vDisplacement;
 
-    const strandBGeom = new THREE.BufferGeometry();
-    strandBGeom.setAttribute('position', new THREE.Float32BufferAttribute(strandBPositions, 3));
-    strandBGeom.setAttribute('color', new THREE.Float32BufferAttribute(strandBColors, 3));
+      // Simplex-like noise for organic displacement
+      float hash(vec3 p) {
+        p = fract(p * vec3(443.897, 441.423, 437.195));
+        p += dot(p, p.yzx + 19.19);
+        return fract((p.x + p.y) * p.z);
+      }
+      float noise3D(vec3 p) {
+        vec3 i = floor(p);
+        vec3 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(
+          mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x),
+              mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+          mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x),
+              mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y),
+          f.z);
+      }
 
-    const strandMaterialA = new THREE.PointsMaterial({
-      size: 0.08,
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vec3 pos = position;
+
+        // Organic fluid displacement (mercury ripple)
+        float n = noise3D(pos * 3.0 + uTime * 0.8) * 0.5 +
+                  noise3D(pos * 6.0 - uTime * 1.2) * 0.25;
+        float displacement = n * (0.008 + uAudioLevel * 0.015);
+        pos += normal * displacement;
+        vDisplacement = displacement;
+
+        vec4 worldPos = modelMatrix * vec4(pos, 1.0);
+        vWorldPos = worldPos.xyz;
+        gl_Position = projectionMatrix * viewMatrix * worldPos;
+      }
+    `;
+
+    const mercuryFragmentShader = `
+      uniform vec3 uMercuryColor;
+      uniform vec3 uBioColor;
+      uniform float uTime;
+      uniform float uAudioLevel;
+      varying vec3 vNormal;
+      varying vec3 vWorldPos;
+      varying float vDisplacement;
+
+      void main() {
+        // Fresnel rim (chrome reflection simulation)
+        vec3 viewDir = normalize(cameraPosition - vWorldPos);
+        float fresnel = pow(1.0 - abs(dot(viewDir, vNormal)), 3.0);
+
+        // Mercury base: silver with subtle environment color shift
+        vec3 envColor = mix(uMercuryColor, uBioColor, fresnel * 0.3);
+
+        // Subtle rainbow iridescence on edges (organic, not harsh)
+        float irid = sin(dot(vNormal, vec3(1.0)) * 4.0 + uTime * 0.5) * 0.5 + 0.5;
+        vec3 iridescentColor = mix(
+          vec3(0.7, 0.8, 0.85),
+          mix(uBioColor, vec3(0.3, 0.5, 0.9), irid),
+          fresnel * 0.4
+        );
+
+        // Combine: chrome center + iridescent edges
+        vec3 finalColor = mix(envColor, iridescentColor, fresnel);
+
+        // Audio-reactive glow pulse (organic breathing)
+        float pulse = sin(vWorldPos.y * 2.0 + uTime * 2.0) * 0.5 + 0.5;
+        finalColor += uBioColor * pulse * uAudioLevel * 0.15;
+
+        // Opacity: solid center, slightly transparent at edges
+        float alpha = 0.85 + fresnel * 0.15;
+
+        gl_FragColor = vec4(finalColor, alpha);
+      }
+    `;
+
+
+    // ── Strand A — Mercury Tube ─────────────────────────────────────
+    const curveA = new THREE.CatmullRomCurve3(helixPts(0, TUBE_SEGMENTS), false);
+    const tubeGeomA = new THREE.TubeGeometry(curveA as any, TUBE_SEGMENTS, TUBE_RADIUS, 12, false);
+    const tubeMatA = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uAudioLevel: { value: 0 },
+        uMercuryColor: { value: MERCURY },
+        uBioColor: { value: BIO_CYAN },
+      },
+      vertexShader: mercuryVertexShader,
+      fragmentShader: mercuryFragmentShader,
       transparent: true,
+    });
+    const tubeA = new THREE.Mesh(tubeGeomA, tubeMatA);
+    helixGroup.add(tubeA);
+
+    // ── Strand B — Mercury Tube ─────────────────────────────────────
+    const curveB = new THREE.CatmullRomCurve3(helixPts(Math.PI, TUBE_SEGMENTS), false);
+    const tubeGeomB = new THREE.TubeGeometry(curveB as any, TUBE_SEGMENTS, TUBE_RADIUS, 12, false);
+    const tubeMatB = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uAudioLevel: { value: 0 },
+        uMercuryColor: { value: MERCURY },
+        uBioColor: { value: BIO_GREEN },
+      },
+      vertexShader: mercuryVertexShader,
+      fragmentShader: mercuryFragmentShader,
+      transparent: true,
+    });
+    const tubeB = new THREE.Mesh(tubeGeomB, tubeMatB);
+    helixGroup.add(tubeB);
+
+    // ── Outer glow (subtle bloom around mercury) ────────────────────
+    const glowTubeGeomA = new THREE.TubeGeometry(curveA as any, TUBE_SEGMENTS, TUBE_RADIUS * 2.5, 8, false);
+    const glowTubeMatA = new THREE.MeshBasicMaterial({
+      color: BIO_CYAN,
+      transparent: true,
+      opacity: 0.06,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      vertexColors: true,
     });
-    // Assign map via any-cast since our shim doesn't declare it
-    (strandMaterialA as any).map = glowTexture;
+    const glowTubeA = new THREE.Mesh(glowTubeGeomA, glowTubeMatA);
+    helixGroup.add(glowTubeA);
 
-    const strandMaterialB = new THREE.PointsMaterial({
-      size: 0.08,
+    const glowTubeGeomB = new THREE.TubeGeometry(curveB as any, TUBE_SEGMENTS, TUBE_RADIUS * 2.5, 8, false);
+    const glowTubeMatB = new THREE.MeshBasicMaterial({
+      color: BIO_GREEN,
       transparent: true,
+      opacity: 0.06,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      vertexColors: true,
     });
-    (strandMaterialB as any).map = glowTexture;
+    const glowTubeB = new THREE.Mesh(glowTubeGeomB, glowTubeMatB);
+    helixGroup.add(glowTubeB);
 
 
-    const strandAPoints = new THREE.Points(strandAGeom, strandMaterialA);
-    const strandBPoints = new THREE.Points(strandBGeom, strandMaterialB);
-    helixGroup.add(strandAPoints);
-    helixGroup.add(strandBPoints);
+    // ── Capsules (competencias incrustadas en la hélice) ─────────────
+    // Each capsule is a sphere at a point along the helix, with an inner
+    // glow that activates when the skill is in activeSkillIds
+    const capsuleFragShader = `
+      uniform vec3 uBaseColor;
+      uniform vec3 uGlowColor;
+      uniform float uActivation; // 0 = dormant, 1 = full bioluminescence
+      uniform float uTime;
+      varying vec3 vNormal;
+      varying vec3 vPos;
 
-    // ── Strand trail lines (glow backbone) ───────────────────────────
-    const trailAGeom = new THREE.BufferGeometry();
-    trailAGeom.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(STRAND_POINTS * 3), 3));
-    const trailAMat = new THREE.LineBasicMaterial({
-      color: cA,
-      transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending,
-    });
-    const trailA = new THREE.Line(trailAGeom, trailAMat);
-    helixGroup.add(trailA);
+      void main() {
+        vec3 viewDir = normalize(cameraPosition - vPos);
+        float fresnel = pow(1.0 - abs(dot(viewDir, vNormal)), 2.5);
 
-    const trailBGeom = new THREE.BufferGeometry();
-    trailBGeom.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(STRAND_POINTS * 3), 3));
-    const trailBMat = new THREE.LineBasicMaterial({
-      color: cB,
-      transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending,
-    });
-    const trailB = new THREE.Line(trailBGeom, trailBMat);
-    helixGroup.add(trailB);
+        // Dormant: translucent dark crystal
+        vec3 dormant = uBaseColor * 0.3 + fresnel * uBaseColor * 0.2;
+        float dormantAlpha = 0.25 + fresnel * 0.2;
+
+        // Active: bioluminescent glow from inside
+        float pulse = sin(uTime * 3.0) * 0.15 + 0.85;
+        vec3 active = uGlowColor * pulse * (0.8 + fresnel * 0.5);
+        float activeAlpha = 0.6 + fresnel * 0.4;
+
+        // Mix based on activation
+        vec3 color = mix(dormant, active, uActivation);
+        float alpha = mix(dormantAlpha, activeAlpha, uActivation);
+
+        gl_FragColor = vec4(color, alpha);
+      }
+    `;
+
+    const capsuleVertShader = `
+      varying vec3 vNormal;
+      varying vec3 vPos;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vPos = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `;
+
+    type CapsuleData = {
+      mesh: THREE.Mesh;
+      glowMesh: THREE.Mesh;
+      material: THREE.ShaderMaterial;
+      glowMaterial: THREE.MeshBasicMaterial;
+      skillId: string;
+      t: number; // position along helix (0-1)
+      strandIdx: number; // 0 = A, 1 = B
+    };
+
+    const capsules: CapsuleData[] = [];
+    const capsuleGeom = new THREE.SphereGeometry(0.06, 16, 16);
+    const capsuleGlowGeom = new THREE.SphereGeometry(0.12, 12, 12);
+
+    for (let i = 0; i < CAPSULE_COUNT; i++) {
+      const skill = skills[i] || { id: `empty-${i}`, label: '', level: 0.5 };
+      const t = (i + 0.5) / CAPSULE_COUNT;
+      const strandIdx = i % 2; // alternate between strands
+      const offset = strandIdx === 0 ? 0 : Math.PI;
+      const angle = t * Math.PI * 2 * HELIX_TURNS + offset;
+      const y = (t - 0.5) * HELIX_HEIGHT;
+      const size = 0.5 + (skill.level ?? 0.5) * 0.5; // 0.5-1.0 scale
+
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          uBaseColor: { value: new THREE.Color(0.1, 0.2, 0.25) },
+          uGlowColor: { value: strandIdx === 0 ? BIO_CYAN.clone() : BIO_GREEN.clone() },
+          uActivation: { value: 0 },
+          uTime: { value: 0 },
+        },
+        vertexShader: capsuleVertShader,
+        fragmentShader: capsuleFragShader,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+
+      const mesh = new THREE.Mesh(capsuleGeom, mat);
+      mesh.position.set(
+        Math.cos(angle) * HELIX_RADIUS,
+        y,
+        Math.sin(angle) * HELIX_RADIUS,
+      );
+      mesh.scale.setScalar(size);
+      helixGroup.add(mesh);
+
+      // Outer bioluminescent glow (only visible when active)
+      const glowMat = new THREE.MeshBasicMaterial({
+        color: strandIdx === 0 ? BIO_CYAN : BIO_GREEN,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const glowMesh = new THREE.Mesh(capsuleGlowGeom, glowMat);
+      glowMesh.position.copy(mesh.position);
+      glowMesh.scale.setScalar(size);
+      helixGroup.add(glowMesh);
+
+      capsules.push({ mesh, glowMesh, material: mat, glowMaterial: glowMat, skillId: skill.id, t, strandIdx });
+    }
 
 
-    // ── Bridges (base pairs between strands) ─────────────────────────
-    const bridgePositions = new Float32Array(BRIDGE_COUNT * BRIDGE_SEGMENTS * 3);
-    const bridgeColors = new Float32Array(BRIDGE_COUNT * BRIDGE_SEGMENTS * 3);
+    // ── Synapse Bridges (organic filaments between strands) ──────────
+    const bridgePositions = new Float32Array(BRIDGE_COUNT * 2 * 3);
+    const bridgeColors = new Float32Array(BRIDGE_COUNT * 2 * 3);
     const bridgeGeom = new THREE.BufferGeometry();
     bridgeGeom.setAttribute('position', new THREE.Float32BufferAttribute(bridgePositions, 3));
     bridgeGeom.setAttribute('color', new THREE.Float32BufferAttribute(bridgeColors, 3));
-
-    const bridgeMat = new THREE.PointsMaterial({
-      size: 0.06,
+    const bridgeMat = new THREE.LineBasicMaterial({
       transparent: true,
+      opacity: 0.2,
+      blending: THREE.AdditiveBlending,
+      vertexColors: true,
+      linewidth: 1,
+    });
+    const bridgeLines = new THREE.LineSegments(bridgeGeom, bridgeMat);
+    helixGroup.add(bridgeLines);
+
+    // Synapse particles along bridges (organic dots like nerve impulses)
+    const synapseDotsPositions = new Float32Array(BRIDGE_COUNT * 4 * 3); // 4 dots per bridge
+    const synapseDotsColors = new Float32Array(BRIDGE_COUNT * 4 * 3);
+    const synapseDotGeom = new THREE.BufferGeometry();
+    synapseDotGeom.setAttribute('position', new THREE.Float32BufferAttribute(synapseDotsPositions, 3));
+    synapseDotGeom.setAttribute('color', new THREE.Float32BufferAttribute(synapseDotsColors, 3));
+    const synapseDotMat = new THREE.PointsMaterial({
+      size: 0.025,
+      transparent: true,
+      opacity: 0.4,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       vertexColors: true,
     });
-    (bridgeMat as any).map = glowTexture;
-    const bridgePoints = new THREE.Points(bridgeGeom, bridgeMat);
-    helixGroup.add(bridgePoints);
-
-    // Bridge lines (thin neon connections)
-    const bridgeLineIndices: number[] = [];
-    for (let b = 0; b < BRIDGE_COUNT; b++) {
-      for (let s = 0; s < BRIDGE_SEGMENTS - 1; s++) {
-        bridgeLineIndices.push(b * BRIDGE_SEGMENTS + s, b * BRIDGE_SEGMENTS + s + 1);
-      }
-    }
-    const bridgeLineGeom = new THREE.BufferGeometry();
-    bridgeLineGeom.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(BRIDGE_COUNT * BRIDGE_SEGMENTS * 3), 3));
-    bridgeLineGeom.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(BRIDGE_COUNT * BRIDGE_SEGMENTS * 3), 3));
-    bridgeLineGeom.setIndex(new THREE.Uint16BufferAttribute(bridgeLineIndices, 1));
-    const bridgeLineMat = new THREE.LineBasicMaterial({
-      transparent: true,
-      opacity: 0.6,
-      blending: THREE.AdditiveBlending,
-      vertexColors: true,
-    });
-    const bridgeLines = new THREE.LineSegments(bridgeLineGeom, bridgeLineMat);
-    helixGroup.add(bridgeLines);
+    (synapseDotMat as any).map = glowTexture;
+    const synapseDots = new THREE.Points(synapseDotGeom, synapseDotMat);
+    helixGroup.add(synapseDots);
 
 
-    // ── Particle network (floating data particles + connections) ──────
-    const netPositions = new Float32Array(NET_PARTICLES * 3);
-    const netColors = new Float32Array(NET_PARTICLES * 3);
-    const netSpeeds: { vx: number; vy: number; vz: number; orbit: number; phase: number }[] = [];
-
-    for (let i = 0; i < NET_PARTICLES; i++) {
+    // ── Ambient spore particles (sparse organic background) ──────────
+    const sporePositions = new Float32Array(SYNAPSE_PARTICLES * 3);
+    const sporeSpeeds: { vx: number; vy: number; vz: number; phase: number }[] = [];
+    for (let i = 0; i < SYNAPSE_PARTICLES; i++) {
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
-      const r = 2.0 + Math.random() * 1.8;
-      netPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      netPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      netPositions[i * 3 + 2] = r * Math.cos(phi);
-      // Color mix between cyan and purple with variance
-      const mix = Math.random();
-      netColors[i * 3] = cA.r * (1 - mix) + cB.r * mix;
-      netColors[i * 3 + 1] = cA.g * (1 - mix) + cB.g * mix;
-      netColors[i * 3 + 2] = cA.b * (1 - mix) + cB.b * mix;
-      netSpeeds.push({
-        vx: (Math.random() - 0.5) * 0.003,
-        vy: (Math.random() - 0.5) * 0.003,
-        vz: (Math.random() - 0.5) * 0.003,
-        orbit: 0.1 + Math.random() * 0.4,
+      const r = 2.0 + Math.random() * 2.5;
+      sporePositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      sporePositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      sporePositions[i * 3 + 2] = r * Math.cos(phi);
+      sporeSpeeds.push({
+        vx: (Math.random() - 0.5) * 0.0008,
+        vy: (Math.random() - 0.5) * 0.0005,
+        vz: (Math.random() - 0.5) * 0.0008,
         phase: Math.random() * Math.PI * 2,
       });
     }
-
-    const netGeom = new THREE.BufferGeometry();
-    netGeom.setAttribute('position', new THREE.Float32BufferAttribute(netPositions, 3));
-    netGeom.setAttribute('color', new THREE.Float32BufferAttribute(netColors, 3));
-    const netMat = new THREE.PointsMaterial({
-      size: 0.04,
+    const sporeGeom = new THREE.BufferGeometry();
+    sporeGeom.setAttribute('position', new THREE.Float32BufferAttribute(sporePositions, 3));
+    const sporeMat = new THREE.PointsMaterial({
+      size: 0.02,
+      color: BIO_GREEN,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.25,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      vertexColors: true,
     });
-    (netMat as any).map = glowTexture;
-    const netPoints = new THREE.Points(netGeom, netMat);
-    scene.add(netPoints);
+    (sporeMat as any).map = glowTexture;
+    const spores = new THREE.Points(sporeGeom, sporeMat);
+    scene.add(spores);
 
-
-    // ── Network connection lines ─────────────────────────────────────
-    const connLinePositions = new Float32Array(NET_CONNECTIONS * 2 * 3);
-    const connLineColors = new Float32Array(NET_CONNECTIONS * 2 * 3);
-    const connGeom = new THREE.BufferGeometry();
-    connGeom.setAttribute('position', new THREE.Float32BufferAttribute(connLinePositions, 3));
-    connGeom.setAttribute('color', new THREE.Float32BufferAttribute(connLineColors, 3));
-    const connMat = new THREE.LineBasicMaterial({
-      transparent: true,
-      opacity: 0.15,
-      blending: THREE.AdditiveBlending,
-      vertexColors: true,
-    });
-    const connLines = new THREE.LineSegments(connGeom, connMat);
-    scene.add(connLines);
-
-    // ── Central glow sphere (breath halo) ────────────────────────────
-    const glowSphereGeom = new THREE.SphereGeometry(0.4, 32, 32);
-    const glowSphereMat = new THREE.ShaderMaterial({
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      uniforms: {
-        uColor1: { value: cA },
-        uColor2: { value: cB },
-        uIntensity: { value: 0.3 },
-        uTime: { value: 0 },
-      },
-      vertexShader: `
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          vPosition = position;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 uColor1;
-        uniform vec3 uColor2;
-        uniform float uIntensity;
-        uniform float uTime;
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          float rim = 1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0)));
-          rim = pow(rim, 2.5);
-          vec3 color = mix(uColor1, uColor2, sin(uTime * 0.5) * 0.5 + 0.5);
-          float pulse = 0.8 + sin(uTime * 2.0) * 0.2;
-          gl_FragColor = vec4(color, rim * uIntensity * pulse);
-        }
-      `,
-    });
-    const glowSphere = new THREE.Mesh(glowSphereGeom, glowSphereMat);
-    helixGroup.add(glowSphere);
-
-
-    // ── Outer glow halo (large sphere) ───────────────────────────────
-    const haloGeom = new THREE.SphereGeometry(2.8, 32, 32);
+    // ── Ambient halo (very subtle breath) ────────────────────────────
+    const haloGeom = new THREE.SphereGeometry(2.2, 32, 32);
     const haloMat = new THREE.ShaderMaterial({
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       uniforms: {
-        uColor1: { value: cA },
-        uColor2: { value: cB },
-        uIntensity: { value: 0.08 },
+        uColor: { value: DARK_TEAL },
+        uBioColor: { value: BIO_GREEN },
+        uIntensity: { value: 0.03 },
         uTime: { value: 0 },
       },
       vertexShader: `
@@ -307,16 +463,17 @@ export default function ParticleOrb({
         }
       `,
       fragmentShader: `
-        uniform vec3 uColor1;
-        uniform vec3 uColor2;
+        uniform vec3 uColor;
+        uniform vec3 uBioColor;
         uniform float uIntensity;
         uniform float uTime;
         varying vec3 vNormal;
         void main() {
           float rim = 1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0)));
           rim = pow(rim, 4.0);
-          vec3 color = mix(uColor1, uColor2, 0.5 + sin(uTime * 0.3) * 0.5);
-          gl_FragColor = vec4(color, rim * uIntensity);
+          float breath = sin(uTime * 0.8) * 0.3 + 0.7;
+          vec3 color = mix(uColor, uBioColor, rim * 0.5);
+          gl_FragColor = vec4(color, rim * uIntensity * breath);
         }
       `,
     });
@@ -324,7 +481,7 @@ export default function ParticleOrb({
     scene.add(haloMesh);
 
 
-    // ── Resize handler ───────────────────────────────────────────────
+    // ── Resize ──────────────────────────────────────────────────────
     const resize = () => {
       const w = mount.clientWidth || 1;
       const h = mount.clientHeight || 1;
@@ -337,16 +494,16 @@ export default function ParticleOrb({
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
 
-    // ── Audio analysis state ─────────────────────────────────────────
+    // ── Animation state ─────────────────────────────────────────────
     let freq: Uint8Array | null = null;
     const clock = new THREE.Clock();
 
-    // ── Animation loop ───────────────────────────────────────────────
+    // ── Animation loop ──────────────────────────────────────────────
     const animate = () => {
       const elapsed = clock.getElapsedTime();
 
       // Audio level (0..1)
-      let level = 0.12 + Math.sin(elapsed * 1.2) * 0.04;
+      let level = 0.05 + Math.sin(elapsed * 0.8) * 0.02; // organic breath
       const analyser = analyserRef.current;
       if (analyser) {
         const bins = analyser.frequencyBinCount;
@@ -357,217 +514,140 @@ export default function ParticleOrb({
         level = Math.min(1, (sum / freq.length) / 52);
       }
 
+      // External glow intensity
+      const extGlow = glowRef.current;
+      const combinedGlow = Math.max(level, extGlow);
 
-      // ── Update helix strands ─────────────────────────────────────────
-      const posA = strandAGeom.attributes.position as THREE.Float32BufferAttribute;
-      const posB = strandBGeom.attributes.position as THREE.Float32BufferAttribute;
-      const colA = strandAGeom.attributes.color as THREE.Float32BufferAttribute;
-      const colB = strandBGeom.attributes.color as THREE.Float32BufferAttribute;
-      const trailAPos = trailAGeom.attributes.position as THREE.Float32BufferAttribute;
-      const trailBPos = trailBGeom.attributes.position as THREE.Float32BufferAttribute;
+      // ── Update mercury shader uniforms ────────────────────────────
+      tubeMatA.uniforms.uTime.value = elapsed;
+      tubeMatA.uniforms.uAudioLevel.value = combinedGlow;
+      tubeMatB.uniforms.uTime.value = elapsed;
+      tubeMatB.uniforms.uAudioLevel.value = combinedGlow;
 
-      for (let i = 0; i < STRAND_POINTS; i++) {
-        const progress = i / (STRAND_POINTS - 1);
-        const angle = progress * Math.PI * 2 * HELIX_TURNS + elapsed * 0.8;
-        const y = (progress - 0.5) * HELIX_HEIGHT;
+      // Glow tubes respond to intensity
+      glowTubeMatA.opacity = 0.04 + combinedGlow * 0.12;
+      glowTubeMatB.opacity = 0.04 + combinedGlow * 0.12;
 
-        // Energy wave along the helix
-        const wave = Math.sin(progress * Math.PI * 6 - elapsed * 3) * 0.5 + 0.5;
-        const energy = wave * (0.4 + level * 0.6);
-        const radiusMod = HELIX_RADIUS * (1 + energy * 0.15 * level);
 
-        // Strand A
-        const ax = Math.cos(angle) * radiusMod;
-        const az = Math.sin(angle) * radiusMod;
-        posA.array[i * 3] = ax;
-        posA.array[i * 3 + 1] = y;
-        posA.array[i * 3 + 2] = az;
-        trailAPos.array[i * 3] = ax;
-        trailAPos.array[i * 3 + 1] = y;
-        trailAPos.array[i * 3 + 2] = az;
+      // ── Update capsules (bioluminescence activation) ──────────────
+      const currentActive = activeIdsRef.current;
+      for (const cap of capsules) {
+        const isActive = currentActive.includes(cap.skillId);
+        const targetActivation = isActive ? 1.0 : extGlow * 0.15; // dormant still has faint life
 
-        // Strand B (180 degrees offset)
-        const bx = Math.cos(angle + Math.PI) * radiusMod;
-        const bz = Math.sin(angle + Math.PI) * radiusMod;
-        posB.array[i * 3] = bx;
-        posB.array[i * 3 + 1] = y;
-        posB.array[i * 3 + 2] = bz;
-        trailBPos.array[i * 3] = bx;
-        trailBPos.array[i * 3 + 1] = y;
-        trailBPos.array[i * 3 + 2] = bz;
+        // Smooth lerp toward target
+        const current = cap.material.uniforms.uActivation.value as number;
+        cap.material.uniforms.uActivation.value = current + (targetActivation - current) * 0.05;
+        cap.material.uniforms.uTime.value = elapsed;
 
-        // Colors with energy glow
-        const brightness = 0.5 + energy * 0.5;
-        colA.array[i * 3] = cA.r * brightness;
-        colA.array[i * 3 + 1] = cA.g * brightness;
-        colA.array[i * 3 + 2] = cA.b * brightness;
-        colB.array[i * 3] = cB.r * brightness;
-        colB.array[i * 3 + 1] = cB.g * brightness;
-        colB.array[i * 3 + 2] = cB.b * brightness;
+        // Outer glow opacity follows activation
+        cap.glowMaterial.opacity = (cap.material.uniforms.uActivation.value as number) * 0.4;
+
+        // Pulse scale when active
+        const pulseScale = isActive
+          ? 1.0 + Math.sin(elapsed * 4 + cap.t * 10) * 0.15
+          : 0.9 + combinedGlow * 0.1;
+        const baseScale = 0.5 + ((skills[capsules.indexOf(cap)]?.level ?? 0.5) * 0.5);
+        cap.mesh.scale.setScalar(baseScale * pulseScale);
+        cap.glowMesh.scale.setScalar(baseScale * pulseScale * 1.6);
+
+        // Update position (rotate with helix)
+        const offset = cap.strandIdx === 0 ? 0 : Math.PI;
+        const angle = cap.t * Math.PI * 2 * HELIX_TURNS + offset;
+        const y = (cap.t - 0.5) * HELIX_HEIGHT;
+        cap.mesh.position.set(Math.cos(angle) * HELIX_RADIUS, y, Math.sin(angle) * HELIX_RADIUS);
+        cap.glowMesh.position.copy(cap.mesh.position);
       }
-      posA.needsUpdate = true;
-      posB.needsUpdate = true;
-      colA.needsUpdate = true;
-      colB.needsUpdate = true;
-      trailAPos.needsUpdate = true;
-      trailBPos.needsUpdate = true;
 
 
-      // ── Update bridges ───────────────────────────────────────────────
+      // ── Update synapse bridges ────────────────────────────────────
       const bPos = bridgeGeom.attributes.position as THREE.Float32BufferAttribute;
       const bCol = bridgeGeom.attributes.color as THREE.Float32BufferAttribute;
-      const blPos = bridgeLineGeom.attributes.position as THREE.Float32BufferAttribute;
-      const blCol = bridgeLineGeom.attributes.color as THREE.Float32BufferAttribute;
+      const sdPos = synapseDotGeom.attributes.position as THREE.Float32BufferAttribute;
+      const sdCol = synapseDotGeom.attributes.color as THREE.Float32BufferAttribute;
 
       for (let b = 0; b < BRIDGE_COUNT; b++) {
-        const progress = (b + 0.5) / BRIDGE_COUNT;
-        const angle = progress * Math.PI * 2 * HELIX_TURNS + elapsed * 0.8;
-        const y = (progress - 0.5) * HELIX_HEIGHT;
-        const bridgeWave = Math.sin(b * 1.5 + elapsed * 4) * 0.5 + 0.5;
-        const bridgeEnergy = bridgeWave * (0.3 + level * 0.7);
+        const t = (b + 0.5) / BRIDGE_COUNT;
+        const angleA = t * Math.PI * 2 * HELIX_TURNS;
+        const angleB = angleA + Math.PI;
+        const y = (t - 0.5) * HELIX_HEIGHT;
 
-        for (let s = 0; s < BRIDGE_SEGMENTS; s++) {
-          const lerp = s / (BRIDGE_SEGMENTS - 1);
-          const bridgeAngle = angle + lerp * Math.PI;
-          const r = HELIX_RADIUS * (1 + bridgeEnergy * 0.08);
-          const idx = (b * BRIDGE_SEGMENTS + s) * 3;
+        const ax = Math.cos(angleA) * HELIX_RADIUS;
+        const az = Math.sin(angleA) * HELIX_RADIUS;
+        const bx = Math.cos(angleB) * HELIX_RADIUS;
+        const bz = Math.sin(angleB) * HELIX_RADIUS;
 
-          const px = Math.cos(bridgeAngle) * r;
-          const pz = Math.sin(bridgeAngle) * r;
+        // Bridge pulse (organic wave)
+        const wave = Math.sin(t * Math.PI * 6 + elapsed * 2.5) * 0.5 + 0.5;
+        const bridgeGlow = wave * (0.15 + combinedGlow * 0.5);
 
-          bPos.array[idx] = px;
-          bPos.array[idx + 1] = y;
-          bPos.array[idx + 2] = pz;
-          blPos.array[idx] = px;
-          blPos.array[idx + 1] = y;
-          blPos.array[idx + 2] = pz;
+        // Line endpoints
+        const li = b * 6;
+        bPos.array[li] = ax; bPos.array[li + 1] = y; bPos.array[li + 2] = az;
+        bPos.array[li + 3] = bx; bPos.array[li + 4] = y; bPos.array[li + 5] = bz;
 
-          // Bridge color — golden/white at center, strand colors at edges
-          const centerFade = 1 - Math.abs(lerp - 0.5) * 2;
-          const glow = bridgeEnergy * centerFade;
-          bCol.array[idx] = cA.r * (1 - lerp) + cB.r * lerp + glow * 0.5;
-          bCol.array[idx + 1] = cA.g * (1 - lerp) + cB.g * lerp + glow * 0.3;
-          bCol.array[idx + 2] = cA.b * (1 - lerp) + cB.b * lerp + glow * 0.1;
-          blCol.array[idx] = bCol.array[idx];
-          blCol.array[idx + 1] = bCol.array[idx + 1];
-          blCol.array[idx + 2] = bCol.array[idx + 2];
+        // Colors
+        bCol.array[li] = BIO_CYAN.r * bridgeGlow;
+        bCol.array[li + 1] = BIO_CYAN.g * bridgeGlow;
+        bCol.array[li + 2] = BIO_CYAN.b * bridgeGlow;
+        bCol.array[li + 3] = BIO_GREEN.r * bridgeGlow;
+        bCol.array[li + 4] = BIO_GREEN.g * bridgeGlow;
+        bCol.array[li + 5] = BIO_GREEN.b * bridgeGlow;
+
+        // Synapse dots traveling along bridge (nerve impulse effect)
+        for (let d = 0; d < 4; d++) {
+          const impulseT = ((elapsed * 1.5 + b * 0.3 + d * 0.25) % 1.0);
+          const di = (b * 4 + d) * 3;
+          sdPos.array[di] = ax + (bx - ax) * impulseT;
+          sdPos.array[di + 1] = y;
+          sdPos.array[di + 2] = az + (bz - az) * impulseT;
+
+          const impulseGlow = bridgeGlow * (1 - Math.abs(impulseT - 0.5) * 2);
+          sdCol.array[di] = BIO_PULSE.r * impulseGlow;
+          sdCol.array[di + 1] = BIO_PULSE.g * impulseGlow;
+          sdCol.array[di + 2] = BIO_PULSE.b * impulseGlow;
         }
       }
       bPos.needsUpdate = true;
       bCol.needsUpdate = true;
-      blPos.needsUpdate = true;
-      blCol.needsUpdate = true;
+      sdPos.needsUpdate = true;
+      sdCol.needsUpdate = true;
+      bridgeMat.opacity = 0.15 + combinedGlow * 0.35;
+      synapseDotMat.opacity = 0.2 + combinedGlow * 0.5;
 
 
-      // ── Update network particles ────────────────────────────────────
-      const nPos = netGeom.attributes.position as THREE.Float32BufferAttribute;
-      for (let i = 0; i < NET_PARTICLES; i++) {
-        const sp = netSpeeds[i];
+      // ── Update spore particles (organic float) ────────────────────
+      const spPos = sporeGeom.attributes.position as THREE.Float32BufferAttribute;
+      for (let i = 0; i < SYNAPSE_PARTICLES; i++) {
+        const sp = sporeSpeeds[i];
         const idx = i * 3;
-        // Orbit around center
-        const x = nPos.array[idx];
-        const y = nPos.array[idx + 1];
-        const z = nPos.array[idx + 2];
-        const orbitAngle = elapsed * sp.orbit + sp.phase;
+        spPos.array[idx] += sp.vx;
+        spPos.array[idx + 1] += sp.vy + Math.sin(elapsed * 0.4 + sp.phase) * 0.0003;
+        spPos.array[idx + 2] += sp.vz;
+
+        // Soft boundary
+        const x = spPos.array[idx], y = spPos.array[idx + 1], z = spPos.array[idx + 2];
         const dist = Math.sqrt(x * x + y * y + z * z);
-        const targetDist = 2.0 + Math.sin(elapsed * 0.5 + sp.phase) * 0.5 + level * 0.8;
-
-        // Gentle drift + orbit
-        nPos.array[idx] += sp.vx + Math.cos(orbitAngle) * 0.002 * (1 + level);
-        nPos.array[idx + 1] += sp.vy + Math.sin(orbitAngle * 0.7) * 0.001;
-        nPos.array[idx + 2] += sp.vz + Math.sin(orbitAngle) * 0.002 * (1 + level);
-
-        // Keep particles in bounds (soft constraint)
-        if (dist > 4.0) {
-          const scale = targetDist / dist;
-          nPos.array[idx] *= 0.99 * scale + 0.01;
-          nPos.array[idx + 1] *= 0.99 * scale + 0.01;
-          nPos.array[idx + 2] *= 0.99 * scale + 0.01;
-        } else if (dist < 1.5) {
-          const scale = 1.8 / Math.max(dist, 0.1);
-          nPos.array[idx] *= 1.01 * scale;
-          nPos.array[idx + 1] *= 1.01 * scale;
-          nPos.array[idx + 2] *= 1.01 * scale;
+        if (dist > 4.5) {
+          const s = 3.0 / dist;
+          spPos.array[idx] *= s;
+          spPos.array[idx + 1] *= s;
+          spPos.array[idx + 2] *= s;
         }
       }
-      nPos.needsUpdate = true;
+      spPos.needsUpdate = true;
+      sporeMat.opacity = 0.15 + combinedGlow * 0.15;
 
-
-      // ── Update connection lines (nearest neighbors) ─────────────────
-      const cPos = connGeom.attributes.position as THREE.Float32BufferAttribute;
-      const cCol = connGeom.attributes.color as THREE.Float32BufferAttribute;
-      let connIdx = 0;
-      const maxDist = 1.2 + level * 0.5;
-
-      for (let i = 0; i < NET_PARTICLES && connIdx < NET_CONNECTIONS; i++) {
-        const x1 = nPos.array[i * 3];
-        const y1 = nPos.array[i * 3 + 1];
-        const z1 = nPos.array[i * 3 + 2];
-
-        for (let j = i + 1; j < NET_PARTICLES && connIdx < NET_CONNECTIONS; j++) {
-          const dx = x1 - nPos.array[j * 3];
-          const dy = y1 - nPos.array[j * 3 + 1];
-          const dz = z1 - nPos.array[j * 3 + 2];
-          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-          if (dist < maxDist) {
-            const fade = 1 - dist / maxDist;
-            const ci = connIdx * 6; // 2 points * 3 components
-
-            cPos.array[ci] = x1;
-            cPos.array[ci + 1] = y1;
-            cPos.array[ci + 2] = z1;
-            cPos.array[ci + 3] = nPos.array[j * 3];
-            cPos.array[ci + 4] = nPos.array[j * 3 + 1];
-            cPos.array[ci + 5] = nPos.array[j * 3 + 2];
-
-            // Color fades with distance
-            const cr = (cA.r + cB.r) * 0.5 * fade;
-            const cg = (cA.g + cB.g) * 0.5 * fade;
-            const cb = (cA.b + cB.b) * 0.5 * fade;
-            cCol.array[ci] = cr; cCol.array[ci + 1] = cg; cCol.array[ci + 2] = cb;
-            cCol.array[ci + 3] = cr; cCol.array[ci + 4] = cg; cCol.array[ci + 5] = cb;
-
-            connIdx++;
-          }
-        }
-      }
-      // Zero out unused connections
-      for (let i = connIdx * 6; i < NET_CONNECTIONS * 6; i++) {
-        cPos.array[i] = 0;
-        cCol.array[i] = 0;
-      }
-      cPos.needsUpdate = true;
-      cCol.needsUpdate = true;
-
-
-      // ── Update glow sphere and halo ──────────────────────────────────
-      glowSphereMat.uniforms.uTime.value = elapsed;
-      glowSphereMat.uniforms.uIntensity.value = 0.2 + level * 0.6;
-      glowSphere.scale.set(1 + level * 0.4, 1 + level * 0.4, 1 + level * 0.4);
-
+      // ── Update halo ───────────────────────────────────────────────
       haloMat.uniforms.uTime.value = elapsed;
-      haloMat.uniforms.uIntensity.value = 0.04 + level * 0.12;
+      haloMat.uniforms.uIntensity.value = 0.02 + combinedGlow * 0.06;
 
-      // ── Rotate helix group (slow majestic rotation) ────────────────
-      helixGroup.rotation.y = elapsed * 0.15;
-      helixGroup.rotation.x = 0.3 + Math.sin(elapsed * 0.08) * 0.06;
+      // ── Rotation — slow organic spin ──────────────────────────────
+      helixGroup.rotation.y = elapsed * 0.08; // very slow — organic, not mechanical
+      helixGroup.rotation.x = 0.12 + Math.sin(elapsed * 0.04) * 0.03;
 
-      // Network particles gentle rotation
-      netPoints.rotation.y = elapsed * 0.03;
-      connLines.rotation.y = elapsed * 0.03;
-
-      // Strand material size pulse with audio
-      strandMaterialA.size = 0.06 + level * 0.06;
-      strandMaterialB.size = 0.06 + level * 0.06;
-      bridgeMat.size = 0.04 + level * 0.05;
-      netMat.size = 0.03 + level * 0.03;
-
-      // Trail opacity with audio
-      trailAMat.opacity = 0.25 + level * 0.35;
-      trailBMat.opacity = 0.25 + level * 0.35;
-      bridgeLineMat.opacity = 0.3 + level * 0.5;
-      connMat.opacity = 0.08 + level * 0.15;
+      // Spores drift independently
+      spores.rotation.y = elapsed * 0.015;
 
       renderer.render(scene, camera);
     };
@@ -575,40 +655,25 @@ export default function ParticleOrb({
     renderer.setAnimationLoop(animate);
 
 
-    // ── Cleanup ──────────────────────────────────────────────────────
+    // ── Cleanup ─────────────────────────────────────────────────────
     return () => {
       renderer.setAnimationLoop(null);
       window.removeEventListener('resize', resize);
       ro.disconnect();
 
-      // Dispose geometries
-      strandAGeom.dispose();
-      strandBGeom.dispose();
-      trailAGeom.dispose();
-      trailBGeom.dispose();
-      bridgeGeom.dispose();
-      bridgeLineGeom.dispose();
-      netGeom.dispose();
-      connGeom.dispose();
-      glowSphereGeom.dispose();
-      haloGeom.dispose();
+      tubeGeomA.dispose(); tubeGeomB.dispose();
+      glowTubeGeomA.dispose(); glowTubeGeomB.dispose();
+      capsuleGeom.dispose(); capsuleGlowGeom.dispose();
+      bridgeGeom.dispose(); synapseDotGeom.dispose();
+      sporeGeom.dispose(); haloGeom.dispose();
 
-      // Dispose materials
-      strandMaterialA.dispose();
-      strandMaterialB.dispose();
-      trailAMat.dispose();
-      trailBMat.dispose();
-      bridgeMat.dispose();
-      bridgeLineMat.dispose();
-      netMat.dispose();
-      connMat.dispose();
-      glowSphereMat.dispose();
-      haloMat.dispose();
+      tubeMatA.dispose(); tubeMatB.dispose();
+      glowTubeMatA.dispose(); glowTubeMatB.dispose();
+      bridgeMat.dispose(); synapseDotMat.dispose();
+      sporeMat.dispose(); haloMat.dispose();
+      capsules.forEach(c => { c.material.dispose(); c.glowMaterial.dispose(); });
 
-      // Dispose texture
       glowTexture.dispose();
-
-      // Remove from DOM
       renderer.dispose();
       if (renderer.domElement.parentNode === mount) {
         mount.removeChild(renderer.domElement);
@@ -617,7 +682,6 @@ export default function ParticleOrb({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
 
   // ── Audio setup (Oracle voice or microphone) ─────────────────────
   useEffect(() => {

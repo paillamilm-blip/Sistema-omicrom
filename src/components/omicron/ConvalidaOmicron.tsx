@@ -39,7 +39,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
         </div>
 
         <div style={{ position: 'relative', zIndex: 2, height: 160, flexShrink: 0 }}>
-          <ParticleOrb colorA={[92, 200, 255]} colorB={[94, 92, 230]} />
+          <ParticleOrb />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
             <motion.div key={rep} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 36, color: '#fff', textShadow: `0 0 24px ${C.cyan}` }}>
@@ -124,7 +124,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
         </div>
 
         <div style={{ position: 'relative', zIndex: 2, height: 130, flexShrink: 0 }}>
-          <ParticleOrb colorA={[255, 176, 46]} colorB={[92, 200, 255]} />
+          <ParticleOrb glowIntensity={0.6} />
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 2, padding: '4px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', textAlign: 'center' }}>
