@@ -115,8 +115,10 @@ export default function OrbNeuronal({
     // ── Config ──────────────────────────────────────────────────────────
     const ORB_RADIUS = 1.4;
     const NODE_SIZE = 0.12;
-    const PARTICLE_COUNT = 120; // neural network ambient particles
+    const NODE_SIZE_SMALL = 0.055; // knowledge nodes are smaller
+    const PARTICLE_COUNT = 80; // reduced since nodes themselves fill the orb
     const nodeCount = nodes.length;
+    const HUB_COUNT = 9; // first 9 nodes are main hubs (larger)
 
 
     // ── Glow texture ────────────────────────────────────────────────────
@@ -182,15 +184,21 @@ export default function OrbNeuronal({
       basePos: THREE.Vector3;
       node: OrbNode;
       activation: number; // 0-1 current
+      isHub: boolean; // true for main navigation hubs
     };
 
     const nodeDatas: NodeData[] = [];
     const nodeGeom = new THREE.SphereGeometry(NODE_SIZE, 20, 20);
+    const nodeSmallGeom = new THREE.SphereGeometry(NODE_SIZE_SMALL, 12, 12);
     const nodeGlowGeom = new THREE.SphereGeometry(NODE_SIZE * 2.5, 12, 12);
+    const nodeSmallGlowGeom = new THREE.SphereGeometry(NODE_SIZE_SMALL * 2.0, 8, 8);
 
     for (let i = 0; i < nodeCount; i++) {
       const pos = nodePositions[i];
       const node = nodes[i];
+      const isHub = i < HUB_COUNT;
+      const geom = isHub ? nodeGeom : nodeSmallGeom;
+      const glowGeomUsed = isHub ? nodeGlowGeom : nodeSmallGlowGeom;
 
       const mat = new THREE.ShaderMaterial({
         uniforms: {
@@ -205,24 +213,24 @@ export default function OrbNeuronal({
         depthWrite: false,
       });
 
-      const mesh = new THREE.Mesh(nodeGeom, mat);
+      const mesh = new THREE.Mesh(geom, mat);
       mesh.position.copy(pos);
       (mesh as any).userData = { nodeIndex: i };
       orbGroup.add(mesh);
 
-      // Outer glow
+      // Outer glow (smaller for knowledge nodes)
       const glowMat = new THREE.MeshBasicMaterial({
-        color: COL_NODE,
+        color: isHub ? COL_NODE : COL_CONN,
         transparent: true,
-        opacity: 0.08,
+        opacity: isHub ? 0.08 : 0.04,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
-      const glowMesh = new THREE.Mesh(nodeGlowGeom, glowMat);
+      const glowMesh = new THREE.Mesh(glowGeomUsed, glowMat);
       glowMesh.position.copy(pos);
       orbGroup.add(glowMesh);
 
-      nodeDatas.push({ mesh, glowMesh, material: mat, glowMat, basePos: pos.clone(), node, activation: 0 });
+      nodeDatas.push({ mesh, glowMesh, material: mat, glowMat, basePos: pos.clone(), node, activation: 0, isHub });
     }
 
     // ── D: Icon sprites on each node (billboard labels) ─────────────────
@@ -699,7 +707,9 @@ export default function OrbNeuronal({
       ro.disconnect();
 
       nodeGeom.dispose();
+      nodeSmallGeom.dispose();
       nodeGlowGeom.dispose();
+      nodeSmallGlowGeom.dispose();
       connGeom.dispose();
       dataGeom.dispose();
       particleGeom.dispose();
