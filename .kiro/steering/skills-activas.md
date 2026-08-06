@@ -4,7 +4,7 @@ inclusion: always
 
 # Skills Activas — Sistema Ómicron
 
-> Este archivo activa los principios y comportamientos de las 16 skills instaladas
+> Este archivo activa los principios y comportamientos de las 19 skills instaladas
 > en `.kiro/skills/`. Todas están disponibles en toda sesión.
 
 ---
@@ -91,11 +91,26 @@ inclusion: always
 **Comportamiento:** Verificación visual (CSS determinístico contra DOM) + verificación de flows (Gherkin via Nova Act). 5 categorías: Visual Style, Components, Accessibility, Project Rules, Platform Conventions. Produce reporte con screenshots anotados.
 **Referencia:** #[[file:.kiro/skills/ui-verification/SKILL.md]]
 
+### 15. Taste Skill (Anti-Slop Frontend)
+**Trigger:** Landing pages, portfolios, redesigns. Cuando se necesita diseño con "gusto" y sin AI-tells.
+**Comportamiento:** Anti-slop frontend con 3 dials (DESIGN_VARIANCE / MOTION_INTENSITY / VISUAL_DENSITY). Brief inference automática. Design system mapping. 60+ items Pre-Flight Check obligatorio. Reglas anti-AI-tells (em-dash ban, premium palette ban, serif discipline, eyebrow restraint). Block library con patrones de referencia (hero, features, scroll, navigation). Redesign protocol con audit-first.
+**Referencia:** #[[file:.kiro/skills/taste-skill/SKILL.md]]
+
+### 16. Animate (Construcción de Animaciones)
+**Trigger:** "animar", "animate", "agregar motion", "hacer que se sienta vivo", "transición".
+**Comportamiento:** Skill de construcción de animación con filosofía Emil Kowalski. Secuencia de decisión: ¿Debe animarse? → Propósito → Tool (CSS transition > @starting-style > CSS animation > WAAPI > Motion) → Propiedades (solo transform + opacity) → Easing/duration con tablas exactas → Interrupción/exit → Reduced motion. Recetas para button press, dropdown, tooltip, modal, drawer, toast, accordion, stagger. Never-ship checklist.
+**Referencia:** #[[file:.kiro/skills/animate/SKILL.md]]
+
+### 17. Impeccable (Diseño UI de Nivel Director)
+**Trigger:** "impeccable", "craft", "critique", "audit", "polish", "bolder", "quieter", "distill", "harden", "animate UI", "colorize", "typeset", "layout", "delight", "overdrive", "clarify", "adapt", "optimize".
+**Comportamiento:** Skill completa de diseño UI nivel award-winning design director. 4 modos (Persuade/Operate/Read/Experience). 18 commands con playbooks dedicados. Pipeline: context.mjs → command reference → craft-floor.md → ejecución. Quality floor con absolute bans. Brief wins siempre. Refinement preserva; redesign reemplaza. Verificación bounded (no loops infinitos de QA).
+**Referencia:** #[[file:.kiro/skills/impeccable/SKILL.md]]
+
 ---
 
 ## Skills de Automatización
 
-### 15. Nova Act (Browser Automation)
+### 18. Nova Act (Browser Automation)
 **Trigger:** Automatizar navegadores, web scraping, testing de apps web, workflows de automatización.
 **Comportamiento:** SDK de Amazon para browser automation con AI. Browser CLI para exploración interactiva. Python scripts para automatización repetible. Soporte para headed/headless, extraction estructurada, Gherkin testing, parallel sessions.
 **Referencia:** #[[file:.kiro/skills/nova-act/SKILL.md]]
@@ -104,7 +119,7 @@ inclusion: always
 
 ## Skill Core del Producto
 
-### 16. ADN Digital Técnico (Motor de Convalidación)
+### 19. ADN Digital Técnico (Motor de Convalidación)
 **Trigger:** Siempre activo cuando se procesa un CV, certificado, diploma, o cualquier documento de acreditación técnica. Es el corazón de la convalidación del Gemelo Digital.
 **Comportamiento:** Recibe texto extraído de documentos y lo transforma en un ADN Digital profundamente conectado. Ejecuta bucle de refinamiento (máx 4 iteraciones) hasta coherencia ≥ 9.2. Devuelve JSON estructurado con esencia profesional, stack de competencias, sinergias, firma técnica única. NUNCA inventa información. TODO queda conectado.
 **Referencia:** #[[file:.kiro/skills/adn-digital/skill.md]]
@@ -129,10 +144,10 @@ inclusion: always
 **Efecto:** Ejecución inmediata sin preguntas innecesarias. Tracking de subtareas pero sin confirmación. Fases 1/2/4 se mantienen (no se pierde el control), pero todo va rápido. Decisiones pragmáticas automáticas.
 
 ### FORJA — Pipeline completo de diseño visual
-**Skills:** Brand + Design System + UI/UX Pro Max + UI Styling + Banner Design
+**Skills:** Brand + Design System + UI/UX Pro Max + UI Styling + Banner Design + Taste Skill + Animate + Impeccable
 **Trigger:** "modo FORJA", "FORJA"
 **Auto-activa cuando:** Crear identidad visual, redesign de UI, nuevo design system, generar assets de marca, o cuando la tarea involucra diseño integral.
-**Efecto:** Pipeline: definir marca → generar tokens (3 capas) → design intelligence (84 estilos, 192 paletas) → implementación con Tailwind/shadcn → export de assets. Todo coherente y sistémico.
+**Efecto:** Pipeline: definir marca → generar tokens (3 capas) → design intelligence (84 estilos, 192 paletas) → anti-slop check (taste-skill 3 dials + pre-flight) → animación con filosofía Emil Kowalski → craft de nivel director (impeccable commands) → implementación con Tailwind/shadcn → export de assets. Todo coherente, sistémico y libre de AI-tells.
 
 ### GUARDIAN — Auditoría y verificación total
 **Skills:** Code Review Ultra + UI Verification + Superpowers + Nova Act
@@ -197,3 +212,6 @@ Para activar una skill específica fuera de un combo:
 | "automatizar browser" | Nova Act |
 | "crear skill" | Skill Creator |
 | "UI de [página]" | UI/UX Pro Max + UI Styling |
+| "taste" / "anti-slop" / "landing page" | Taste Skill |
+| "animar" / "motion" / "animate" | Animate |
+| "impeccable" / "craft" / "critique" / "polish" / "bolder" | Impeccable |
