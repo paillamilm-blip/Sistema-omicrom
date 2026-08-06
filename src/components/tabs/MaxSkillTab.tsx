@@ -1,664 +1,637 @@
 // components/tabs/MaxSkillTab.tsx
-// Aprender — mapa robotico tipo placa de circuito (PCB) con chip-nucleo central,
-// trazas con energia fluyendo y nodos-chip que se ramifican.
+// ═══════════════════════════════════════════════════════════════════════
+// SKILL GENOME v2 — Pantalla unificada de habilidades.
+// NO depende de skill_tree_nodes (tabla vacía). Usa datos REALES del perfil:
+// profile.skills, profile.skills_detail, gemelo (4 ejes), cv_summary.
+// Incluye: Radar del Gemelo, Skills Duras con %, Skills Blandas inferidas,
+// Ruta de Mejora (Coach IA), y Examen integrado por skill.
+// ═══════════════════════════════════════════════════════════════════════
 
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { Play, Trophy, BookOpen, ArrowRight, Brain } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Brain, Zap, Shield, TrendingUp, Sparkles, Target,
+  ChevronRight, BookOpen, Briefcase, Award, Star,
+  Loader2, MessageCircle,
+} from 'lucide-react';
 import { useApp } from '../../store/AppContext';
-import { supabase } from '../../lib/supabase';
-import { C as T } from '../../theme';
-import { oc, OmicronHeader } from '../omicron/OmicronChrome';
-import { useToast } from '../shared/Toast';
+import { C, FONT, RADIUS } from '../../theme';
+import {
+  oc, OmicronHeader, OmicronCard, ProgressBar,
+  ProgressRing, SectionTitle, Chip, OmicronEyebrow,
+} from '../omicron/OmicronChrome';
+import { askCoach, type CoachContext } from '../../lib/oraculo';
 import { UniversalSimulator } from '../shared/UniversalSimulator';
-import { CourseFlowModal } from '../shared/CourseFlow';
-import type { SkillTreeNode, UserSkillProgress, ActaEvidencia } from '../../types';
+import type { SkillTreeNode } from '../../types';
 
-const NODE_W = 136;
-const NODE_H = 58;
-const TIER_GAP_Y = 124;
-const PEER_GAP_X = 22;
-const TOP = 160;
-const CORE_W = 120;
-const CORE_H = 88;
-const CORE_CY = 78;
 
-// ♿ Accesibilidad: tonos oscurecidos respecto a la versión original para
-// mejorar el contraste y no forzar la vista.
-// DERIVADO del tema (theme.ts) → un cambio de tema se propaga solo.
-const COLORS = {
-  cyan:       T.cyan,
-  cyanDim:    T.cyanDim,
-  cyanFaint:  T.cyanFaint,
-  gold:       T.gold,
-  goldDim:    T.goldDim,
-  purple:     T.purple,
-  green:      T.green,
-  greenDim:   T.greenDim,
-  locked:     T.lockedBg,
-  lockedBorder: 'rgba(255,255,255,0.10)',
-  copper:     T.cyanFaint,
-  copperLock: 'rgba(255,255,255,0.06)',
-  bg:         T.bg,
-  panel:      'rgba(8,16,38,0.65)',
-  grid:       T.grid,
-} as const;
+// ── Constantes ───────────────────────────────────────────────────────
+const SYNERGY_GROUPS: Record<string, RegExp> = {
+  Frontend: /\b(react|vue|angular|svelte|next|nuxt|html|css|tailwind|framer)\b/i,
+  Backend: /\b(node|express|fastify|nest|django|flask|spring|rails|go|rust|java|python|php)\b/i,
+  Data: /\b(sql|postgres|mongo|redis|elastic|bigquery|spark|pandas|numpy|tensorflow|pytorch)\b/i,
+  Cloud: /\b(aws|azure|gcp|docker|kubernetes|terraform|ci.?cd|devops|jenkins|github.?actions)\b/i,
+  Mobile: /\b(react.?native|flutter|swift|kotlin|ios|android|expo)\b/i,
+  Design: /\b(figma|sketch|ux|ui|design|adobe|photoshop|illustrator)\b/i,
+};
 
-function nodeColor(status: string, depth: number) {
-  if (status === 'VALIDATED' || status === 'MASTERED') return COLORS.green;
-  if (status === 'IN_PROGRESS' || status === 'AVAILABLE') return COLORS.cyan;
-  if (depth === 0) return COLORS.cyan;
-  if (depth === 1) return COLORS.cyanDim;
-  if (depth === 2) return COLORS.gold;
-  return COLORS.purple;
+const SOFT_SKILL_KEYWORDS: Record<string, string[]> = {
+  Liderazgo: ['liderar', 'liderazgo', 'dirigir', 'equipo', 'gestión de equipo', 'manager', 'lead', 'jefatura', 'coordinar'],
+  Comunicación: ['comunicación', 'presentar', 'negociar', 'cliente', 'stakeholder', 'reporting'],
+  'Resolución de problemas': ['resolver', 'solución', 'analítico', 'debugging', 'troubleshoot', 'problema'],
+  Adaptabilidad: ['adaptab', 'aprender', 'autodidacta', 'versátil', 'multidisciplin'],
+  'Trabajo en equipo': ['colaborar', 'equipo', 'agile', 'scrum', 'pair', 'mob programming'],
+  Creatividad: ['creativ', 'innovar', 'diseñ', 'prototip', 'ideación'],
+  'Gestión de proyectos': ['proyecto', 'deadline', 'planific', 'roadmap', 'sprint', 'kanban', 'jira'],
+  Mentoría: ['mentor', 'enseñar', 'capacitar', 'onboarding', 'formación'],
+};
+
+function getSynergyGroup(skillName: string): string | null {
+  const lower = skillName.toLowerCase();
+  for (const [group, regex] of Object.entries(SYNERGY_GROUPS)) {
+    if (regex.test(lower)) return group;
+  }
+  return null;
 }
 
-function hexVerts(cx: number, cy: number, w: number, h: number) {
-  return [
-    { x: cx - 0.25 * w, y: cy - h / 2 },
-    { x: cx + 0.25 * w, y: cy - h / 2 },
-    { x: cx + w / 2,    y: cy },
-    { x: cx + 0.25 * w, y: cy + h / 2 },
-    { x: cx - 0.25 * w, y: cy + h / 2 },
-    { x: cx - w / 2,    y: cy },
-  ];
-}
-function hexPoints(cx: number, cy: number, w: number, h: number) {
-  return hexVerts(cx, cy, w, h).map(p => `${p.x},${p.y}`).join(' ');
-}
-function tracePath(px: number, py: number, cx: number, cy: number) {
-  const midY = (py + cy) / 2;
-  return `M ${px} ${py} L ${px} ${midY} L ${cx} ${midY} L ${cx} ${cy}`;
+function getSkillLevel(pct: number): { label: string; color: string } {
+  if (pct >= 90) return { label: 'Experto', color: C.gold };
+  if (pct >= 75) return { label: 'Avanzado', color: C.green };
+  if (pct >= 55) return { label: 'Intermedio', color: C.cyan };
+  if (pct >= 30) return { label: 'Junior', color: C.purple };
+  return { label: 'Aprendiz', color: C.mut };
 }
 
-interface LayoutNode {
-  node: SkillTreeNode;
-  x: number;
-  y: number;
-  depth: number;
-  children: LayoutNode[];
-}
 
-function buildLayout(
-  roots: SkillTreeNode[],
-  allNodes: SkillTreeNode[],
-  depth = 0,
-  startX = 0
-): { nodes: LayoutNode[]; totalWidth: number } {
-  const result: LayoutNode[] = [];
-  let curX = startX;
-
-  for (const root of roots) {
-    const children = allNodes.filter(n => n.parent_node_id === root.id);
-    const y = depth * TIER_GAP_Y;
-
-    if (children.length === 0) {
-      result.push({ node: root, x: curX + NODE_W / 2, y, depth, children: [] });
-      curX += NODE_W + PEER_GAP_X;
-    } else {
-      const sub = buildLayout(children, allNodes, depth + 1, curX);
-      const leftmost = sub.nodes[0].x;
-      const rightmost = sub.nodes[sub.nodes.length - 1].x;
-      const centerX = (leftmost + rightmost) / 2;
-      result.push({ node: root, x: centerX, y, depth, children: sub.nodes });
-      curX += sub.totalWidth;
+function detectSoftSkills(cvSummary: string, skills: string[]): { name: string; confidence: number }[] {
+  const text = `${cvSummary} ${skills.join(' ')}`.toLowerCase();
+  const detected: { name: string; confidence: number }[] = [];
+  for (const [skill, keywords] of Object.entries(SOFT_SKILL_KEYWORDS)) {
+    const matches = keywords.filter(k => text.includes(k.toLowerCase()));
+    if (matches.length > 0) {
+      const confidence = Math.min(95, 40 + matches.length * 18);
+      detected.push({ name: skill, confidence });
     }
   }
-  return { nodes: result, totalWidth: curX - startX };
+  return detected.sort((a, b) => b.confidence - a.confidence);
 }
 
-function flattenLayout(nodes: LayoutNode[]): LayoutNode[] {
-  const out: LayoutNode[] = [];
-  for (const n of nodes) {
-    out.push(n);
-    out.push(...flattenLayout(n.children));
-  }
-  return out;
+/** Crea un SkillTreeNode virtual para que UniversalSimulator funcione */
+function makeVirtualNode(skillName: string): SkillTreeNode {
+  return {
+    id: `virtual-${skillName.toLowerCase().replace(/\s+/g, '-')}`,
+    title: skillName,
+    description: `Validación IA de ${skillName}`,
+    category: 'SPECIALIZATION',
+    difficulty_level: 3,
+    pe_reward: 15,
+    estimated_hours: 1,
+    icon: 'brain',
+    color: C.cyan,
+    order_index: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
 }
 
-function svgDimensions(flat: LayoutNode[]) {
-  const maxX = Math.max(...flat.map(n => n.x + NODE_W / 2));
-  const maxY = Math.max(...flat.map(n => n.y + NODE_H));
-  return { width: maxX + 24, height: maxY + 40 };
-}
+// ── Animaciones Framer Motion ────────────────────────────────────────
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06 } },
+};
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 28 } },
+};
+const expand = {
+  hidden: { height: 0, opacity: 0 },
+  show: { height: 'auto', opacity: 1, transition: { type: 'spring', stiffness: 260, damping: 26 } },
+  exit: { height: 0, opacity: 0, transition: { duration: 0.2 } },
+};
 
+
+// ── Componente Principal ─────────────────────────────────────────────
 export function MaxSkillTab() {
-  const { profile, refreshProfile, setActiveTab } = useApp();
-  const { toast } = useToast();
-  // ✅ El módulo de Aprendizaje (Árbol de Habilidades) es de libre acceso
-  // para siempre: todas las funciones de IA (Examinador, Examen de Rango)
-  // son gratuitas, sin candado Premium.
-  const [nodes, setNodes]             = useState<SkillTreeNode[]>([]);
-  const [progress, setProgress]       = useState<Map<string, UserSkillProgress>>(new Map());
-  const [isLoading, setIsLoading]     = useState(true);
-  const [selectedNode, setSelectedNode] = useState<SkillTreeNode | null>(null);
+  const { profile, gemelo, setActiveTab, refreshProfile } = useApp();
+  const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const [examNode, setExamNode] = useState<SkillTreeNode | null>(null);
-  const [actas, setActas] = useState<Map<string, ActaEvidencia>>(new Map());
-  const [lastPeEarned, setLastPeEarned]   = useState<number | null>(null);
-  const [courseByNode, setCourseByNode]   = useState<Map<string, string>>(new Map());
-  const [courseNode, setCourseNode]       = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [coachAdvice, setCoachAdvice] = useState<string | null>(null);
+  const [coachLoading, setCoachLoading] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('skill_tree_nodes')
-          .select('*')
-          .order('order_index', { ascending: true });
-        if (!error) setNodes(data || []);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    load();
-  }, []);
+  // ── Datos derivados ──────────────────────────────────────────────
+  const skillsDetail = useMemo(() => {
+    const details = profile?.skills_detail ?? [];
+    if (details.length > 0) return details.map(d => ({ ...d, estimated: false }));
+    // Fallback: si no hay skills_detail, crear desde skills[] con % estimado
+    return (profile?.skills ?? []).map((s, i) => ({
+      name: s,
+      pct: Math.max(30, 85 - i * 8),
+      estimated: true,
+    }));
+  }, [profile?.skills_detail, profile?.skills]);
 
-  useEffect(() => {
-    supabase.from('academy_courses').select('title,node_id').eq('is_published', true)
-      .then(({ data }) => {
-        const m = new Map<string, string>();
-        ((data as { title: string; node_id: string | null }[]) ?? []).forEach(c => {
-          if (c.node_id) m.set(c.node_id, c.title);
-        });
-        setCourseByNode(m);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (!profile?.id) return;
-    const load = async () => {
-      const { data, error } = await supabase
-        .from('user_skill_progress')
-        .select('*')
-        .eq('user_id', profile.id);
-      if (!error && data)
-        setProgress(new Map(data.map(p => [p.node_id, p])));
-    };
-    load();
-
-    const channel = supabase
-      .channel(`skill-progress-${profile.id}`)
-      .on('postgres_changes', {
-        event: '*', schema: 'public',
-        table: 'user_skill_progress',
-        filter: `user_id=eq.${profile.id}`,
-      }, (payload) => {
-        const updated = payload.new as UserSkillProgress;
-        setProgress(prev => new Map(prev).set(updated.node_id, updated));
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [profile?.id]);
-
-  const getStatus = useCallback((id: string): string => {
-    const p = progress.get(id);
-    if (p) return p.status;
-    const node = nodes.find(n => n.id === id);
-    if (!node) return 'LOCKED';
-    if (!node.parent_node_id) return 'AVAILABLE';
-    const parentNode = nodes.find(n => n.id === node.parent_node_id);
-    const parentStatus = progress.get(node.parent_node_id)?.status
-      ?? (parentNode && !parentNode.parent_node_id ? 'AVAILABLE' : 'LOCKED');
-    return (parentStatus === 'VALIDATED' || parentStatus === 'MASTERED') ? 'AVAILABLE' : 'LOCKED';
-  }, [progress, nodes]);
-  const getPercentage = (id: string) => progress.get(id)?.progress_percentage || 0;
-
-  // Conectar Skill Tree con CV: detectar nodos que coinciden con skills del perfil
-  const cvSkills = (profile?.skills ?? []).map((s: string) => s.toLowerCase());
-  const isFromCV = useCallback((node: SkillTreeNode): boolean => {
-    const title = node.title.toLowerCase();
-    return cvSkills.some((s: string) => title.includes(s) || s.includes(title));
-  }, [cvSkills]);
-
-  const loadActas = useCallback(async () => {
-    if (!profile?.id) return;
-    const { data } = await supabase
-      .from('actas_evidencia').select('*')
-      .eq('user_id', profile.id)
-      .order('created_at', { ascending: false });
-    const m = new Map<string, ActaEvidencia>();
-    ((data as ActaEvidencia[]) ?? []).forEach(a => { if (!m.has(a.node_id)) m.set(a.node_id, a); });
-    setActas(m);
-  }, [profile?.id]);
-
-  const handleStartChallenge = useCallback((node: SkillTreeNode) => {
-    setExamNode(node);
-  }, []);
-
-  const handleRangeChallenge = useCallback(() => {
-    if (nodes.length === 0) { toast('Aún no hay nodos disponibles. 🛠️', 'info'); return; }
-    const byStatus = (want: string) => nodes.find(n => getStatus(n.id) === want);
-    const target = byStatus('VALIDATED') || byStatus('MASTERED') || byStatus('AVAILABLE') || nodes[0];
-    setExamNode(target);
-  }, [nodes, getStatus, toast]);
-
-  useEffect(() => { loadActas(); }, [loadActas]);
-
-  const roots = useMemo(() => nodes.filter(n => !n.parent_node_id), [nodes]);
-  const { nodes: layoutRoots } = useMemo(
-    () => buildLayout(roots, nodes, 0, 24),
-    [roots, nodes]
+  const softSkills = useMemo(
+    () => detectSoftSkills(profile?.cv_summary ?? '', profile?.skills ?? []),
+    [profile?.cv_summary, profile?.skills],
   );
-  const flat    = useMemo(() => flattenLayout(layoutRoots), [layoutRoots]);
-  const { width: svgW, height: svgH } = useMemo(() => svgDimensions(flat), [flat]);
 
-  const totalPe = useMemo(() =>
-    [...progress.values()]
-      .filter(p => p.status === 'VALIDATED' || p.status === 'MASTERED')
-      .reduce((sum, p) => sum + (nodes.find(n => n.id === p.node_id)?.pe_reward || 0), 0),
-    [progress, nodes]
-  );
-  const maxPe = useMemo(() => nodes.reduce((s, n) => s + n.pe_reward, 0), [nodes]);
+  const totalSkills = skillsDetail.length + softSkills.length;
+  const avgDominio = skillsDetail.length > 0
+    ? Math.round(skillsDetail.reduce((s, sk) => s + sk.pct, 0) / skillsDetail.length)
+    : 0;
 
-  if (isLoading) {
-    return (
-      <div style={styles.loadingWrap}>
-        <div style={styles.spinnerBox}><div style={styles.spinner} /></div>
-        <p style={styles.loadingText}>Inicializando protocolo...</p>
-      </div>
-    );
-  }
+  // ── Handlers ─────────────────────────────────────────────────────
+  const handleValidateSkill = useCallback((skillName: string) => {
+    setExamNode(makeVirtualNode(skillName));
+  }, []);
 
-  const W = Math.max(svgW, 320);
-  const corePct = maxPe > 0 ? Math.round((totalPe / maxPe) * 100) : 0;
-  const rootXs = layoutRoots.map(r => r.x);
-  const coreX = rootXs.length ? (Math.min(...rootXs) + Math.max(...rootXs)) / 2 : W / 2;
-  const coreBottomY = CORE_CY + CORE_H / 2;
+  const handleAskCoach = useCallback(async () => {
+    if (coachLoading) return;
+    setCoachLoading(true);
+    setCoachAdvice(null);
+    try {
+      const ctx: CoachContext = {
+        skills: profile?.skills ?? [],
+        cv_summary: profile?.cv_summary ?? '',
+        execution: gemelo?.execution,
+        quality: gemelo?.quality,
+        transcendence: gemelo?.transcendence,
+        foundation: gemelo?.foundation,
+        reputation: gemelo?.overallReputation,
+        pe: profile?.pe_points,
+      };
+      const result = await askCoach(ctx);
+      setCoachAdvice(result.advice ?? result.error ?? 'Sin respuesta');
+    } catch {
+      setCoachAdvice('Error al consultar al Coach. Intenta de nuevo.');
+    } finally {
+      setCoachLoading(false);
+    }
+  }, [profile, gemelo, coachLoading]);
 
+  const toggleSkill = useCallback((name: string) => {
+    setExpandedSkill(prev => prev === name ? null : name);
+  }, []);
+
+
+  // ── Render ───────────────────────────────────────────────────────
   return (
     <div style={oc.root}>
+      {/* HEADER */}
       <OmicronHeader
         onBack={() => setActiveTab('perfil')}
         icon={<Brain size={17} />}
-        title="Habilidades"
-        subtitle={`Circuito unificado · ${totalPe}/${maxPe} PE`}
+        title="Skill Genome"
+        subtitle={`${totalSkills} competencias · ${profile?.cv_years_experience ?? 0} años XP`}
       />
-      <div style={{ padding: '8px 2px 0', flexShrink: 0 }}>
-        <div style={{ height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${corePct}%`, background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.cyan})`, borderRadius: 4, transition: 'width 0.5s ease' }} />
-        </div>
-      </div>
 
-      <div style={styles.rangeCard}>
-        <div style={styles.rangeCardInner}>
-          <div style={styles.rangeIcon}>🧬</div>
-          <div>
-            <div style={styles.rangeTitle}>Examen de Rango · Defiende tu Gemelo</div>
-            <div style={styles.rangeSub}>La IA te toma un examen exigente de tus competencias para mantener tu reputación vigente y validada.</div>
-          </div>
-        </div>
-        <button style={styles.rangeBtn} onClick={handleRangeChallenge}>
-          <Brain size={15} />
-          Iniciar Examen de Rango
-        </button>
-      </div>
+      <div style={oc.scroll}>
+        <div style={{ padding: '0 14px 100px' }}>
 
-      <div style={styles.treeLabel}>PLACA DE COMPETENCIAS · NÚCLEO ACTIVO</div>
-      <div style={styles.treeScroll} ref={scrollRef}>
-        {flat.length === 0 ? (
-          <p style={{ color: COLORS.cyanDim, fontFamily: 'monospace', fontSize: 12, padding: 20 }}>No hay nodos cargados.</p>
-        ) : (
-          <svg width="100%" viewBox={`0 0 ${W} ${svgH + TOP}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block', overflow: 'visible', maxWidth: '100%', height: 'auto' }}>
-            <defs>
-              <pattern id="cp-grid" width="22" height="22" patternUnits="userSpaceOnUse">
-                <path d="M 22 0 L 0 0 0 22" fill="none" stroke={COLORS.grid} strokeWidth="0.5" />
-              </pattern>
-              <linearGradient id="core-grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor={COLORS.cyan} />
-                <stop offset="100%" stopColor={COLORS.gold} />
-              </linearGradient>
-              <radialGradient id="core-inner" cx="50%" cy="40%" r="70%">
-                <stop offset="0%" stopColor="rgba(92, 200, 255,0.18)" />
-                <stop offset="100%" stopColor={COLORS.bg} />
-              </radialGradient>
-              <radialGradient id="core-halo" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="rgba(92, 200, 255,0.28)" />
-                <stop offset="65%" stopColor="rgba(92, 200, 255,0.07)" />
-                <stop offset="100%" stopColor="rgba(92, 200, 255,0)" />
-              </radialGradient>
-              <filter id="cp-glow-cyan" x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="2.6" result="b" />
-                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-              <filter id="cp-glow-gold" x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="2.2" result="b" />
-                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-              <filter id="cp-glow-green" x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="2.2" result="b" />
-                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-              <pattern id="cp-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(92, 200, 255,0.06)" strokeWidth="1.5" />
-              </pattern>
-            </defs>
+          {/* ════════════ SECCIÓN 1: RADAR DEL GEMELO ════════════ */}
+          <SectionTitle icon={<Target size={15} />} color={C.cyan}>
+            ADN del Gemelo Digital
+          </SectionTitle>
 
-            <rect width={W} height={svgH + TOP} fill={COLORS.bg} rx="12" />
-            <rect width={W} height={svgH + TOP} fill="url(#cp-grid)" rx="12" />
-
-            {layoutRoots.map(r => {
-              const rootTop = r.y + TOP;
-              const d = tracePath(coreX, coreBottomY, r.x, rootTop);
-              return (
-                <g key={`coretrace-${r.node.id}`}>
-                  <path d={d} fill="none" stroke={COLORS.copper} strokeWidth={3.2} strokeLinecap="round" />
-                  <path d={d} fill="none" stroke={COLORS.cyan} strokeWidth={1.6} strokeLinecap="round" strokeDasharray="5 11" filter="url(#cp-glow-cyan)" style={{ animation: 'dash 1.1s linear infinite' }} />
-                  <circle r={2.8} fill={COLORS.cyan} filter="url(#cp-glow-cyan)">
-                    <animateMotion dur="2.1s" repeatCount="indefinite" path={d} />
-                  </circle>
-                </g>
-              );
-            })}
-
-            <g style={{ animation: 'cp-breathe 3s ease-in-out infinite' }}>
-              {/* Halo / resplandor exterior */}
-              <circle cx={coreX} cy={CORE_CY} r={76} fill="url(#core-halo)" />
-              {/* Anillo exterior girando */}
-              <g>
-                <circle cx={coreX} cy={CORE_CY} r={62} fill="none" stroke={COLORS.cyanFaint} strokeWidth={1} />
-                <animateTransform attributeName="transform" type="rotate" from={`0 ${coreX} ${CORE_CY}`} to={`360 ${coreX} ${CORE_CY}`} dur="22s" repeatCount="indefinite" />
-              </g>
-              {/* Anillo interior girando al revés */}
-              <g>
-                <circle cx={coreX} cy={CORE_CY} r={56} fill="none" stroke={COLORS.cyanDim} strokeWidth={1.2} strokeDasharray="4 10" />
-                <animateTransform attributeName="transform" type="rotate" from={`360 ${coreX} ${CORE_CY}`} to={`0 ${coreX} ${CORE_CY}`} dur="14s" repeatCount="indefinite" />
-              </g>
-              <polygon points={hexPoints(coreX, CORE_CY, CORE_W, CORE_H)} fill="url(#core-grad)" filter="url(#cp-glow-cyan)" />
-              <polygon points={hexPoints(coreX, CORE_CY, CORE_W - 11, CORE_H - 11)} fill="url(#core-inner)" stroke={COLORS.cyanFaint} strokeWidth={0.6} />
-              {hexVerts(coreX, CORE_CY, CORE_W, CORE_H).map((p, i) => (
-                <circle key={`pad-${i}`} cx={p.x} cy={p.y} r={3.6} fill={COLORS.cyan} filter="url(#cp-glow-cyan)" style={{ animation: `cp-breathe ${1.6 + (i % 3) * 0.3}s ease-in-out infinite` }} />
+          <OmicronCard accent={C.cyan} glow style={{ marginBottom: 16 }}>
+            <div style={S.radarGrid}>
+              {([
+                { key: 'execution', label: 'Ejecución', icon: <Zap size={13} />, color: C.cyan },
+                { key: 'quality', label: 'Calidad', icon: <Shield size={13} />, color: C.green },
+                { key: 'transcendence', label: 'Trascendencia', icon: <TrendingUp size={13} />, color: C.purple },
+                { key: 'foundation', label: 'Fundamento', icon: <BookOpen size={13} />, color: C.gold },
+              ] as const).map(axis => (
+                <div key={axis.key} style={S.radarItem}>
+                  <ProgressRing
+                    pct={gemelo?.[axis.key] ?? 0}
+                    size={52}
+                    stroke={5}
+                    color={axis.color}
+                  >
+                    {gemelo?.[axis.key] ?? 0}
+                  </ProgressRing>
+                  <div style={S.radarLabel}>
+                    <span style={{ color: axis.color, display: 'flex' }}>{axis.icon}</span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.ink, letterSpacing: 0.4 }}>
+                      {axis.label}
+                    </span>
+                  </div>
+                </div>
               ))}
-              <text x={coreX} y={CORE_CY - 6} textAnchor="middle" dominantBaseline="central" fontFamily="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif" fontWeight="700" fontSize="36" fill="#eaf4ff" style={{ filter: 'drop-shadow(0 0 8px rgba(92, 200, 255,0.6))' }}>{corePct}%</text>
-              <text x={coreX} y={CORE_CY + 20} textAnchor="middle" fontFamily="'SF Mono', monospace" fontSize="8" letterSpacing="2" fill={COLORS.cyanDim}>GEMELO · NÚCLEO</text>
-            </g>
+            </div>
+            {/* Resumen */}
+            <div style={S.radarSummary}>
+              <div style={S.radarStat}>
+                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 1 }}>REPUTACIÓN</span>
+                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 22, color: C.ink }}>
+                  {gemelo?.overallReputation ?? 0}
+                </span>
+              </div>
+              <div style={S.radarStat}>
+                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 1 }}>DOMINIO PROM.</span>
+                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 22, color: C.cyan }}>
+                  {avgDominio}%
+                </span>
+              </div>
+              <div style={S.radarStat}>
+                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 1 }}>PE TOTALES</span>
+                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 22, color: C.gold }}>
+                  {profile?.pe_points ?? 0}
+                </span>
+              </div>
+            </div>
+          </OmicronCard>
 
-            <g transform={`translate(0 ${TOP})`}>
-            {flat.map(layoutNode =>
-              layoutNode.children.map(child => {
-                const d = tracePath(layoutNode.x, layoutNode.y + NODE_H, child.x, child.y);
-                const status = getStatus(child.node.id);
-                const color = nodeColor(status, child.depth);
-                const isActive = status !== 'LOCKED';
+
+          {/* ════════════ SECCIÓN 2: SKILLS DURAS ════════════ */}
+          <SectionTitle icon={<Zap size={15} />} color={C.cyan}
+            right={<Chip color={C.cyan}>{skillsDetail.length} skills</Chip>}
+          >
+            Competencias Técnicas
+          </SectionTitle>
+
+          {skillsDetail.length === 0 ? (
+            <OmicronCard style={{ marginBottom: 16 }}>
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <Sparkles size={28} style={{ color: C.mut, marginBottom: 8 }} />
+                <p style={{ fontFamily: FONT.body, fontSize: 14, color: C.mut, margin: 0 }}>
+                  Sube tu CV para desbloquear tu mapa de habilidades
+                </p>
+                <button
+                  onClick={() => setActiveTab('perfil')}
+                  style={S.btnCta}
+                >
+                  Ir a Perfil
+                </button>
+              </div>
+            </OmicronCard>
+          ) : (
+            <motion.div variants={stagger} initial="hidden" animate="show"
+              style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}
+            >
+              {skillsDetail.map(skill => {
+                const level = getSkillLevel(skill.pct);
+                const synergy = getSynergyGroup(skill.name);
+                const isExpanded = expandedSkill === skill.name;
+
                 return (
-                  <g key={`branch-${layoutNode.node.id}-${child.node.id}`}>
-                    <path d={d} fill="none" stroke={isActive ? COLORS.copper : COLORS.copperLock} strokeWidth={isActive ? 3 : 1.4} strokeLinecap="round" />
-                    {isActive && (
-                      <path d={d} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeDasharray="5 11" filter="url(#cp-glow-cyan)" style={{ animation: 'dash 1.2s linear infinite' }} />
-                    )}
-                    {isActive && (
-                      <circle r={2.6} fill={color} filter="url(#cp-glow-cyan)">
-                        <animateMotion dur="2.4s" repeatCount="indefinite" path={d} />
-                      </circle>
-                    )}
-                  </g>
+                  <motion.div key={skill.name} variants={fadeUp}>
+                    <OmicronCard
+                      onClick={() => toggleSkill(skill.name)}
+                      accent={level.color}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {/* Fila principal */}
+                      <div style={S.skillRow}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={S.skillName}>{skill.name}</div>
+                          <div style={S.skillMeta}>
+                            <Chip color={level.color} filled>{level.label}</Chip>
+                            {synergy && <Chip color={C.purple} icon={<Star size={9} />}>{synergy}</Chip>}
+                            {skill.estimated && <Chip color={C.mut}>Estimado</Chip>}
+                          </div>
+                        </div>
+                        <ProgressRing pct={skill.pct} size={44} stroke={4} color={level.color}>
+                          {skill.pct}
+                        </ProgressRing>
+                      </div>
+
+                      {/* Barra de progreso */}
+                      <div style={{ marginTop: 10 }}>
+                        <ProgressBar pct={skill.pct} color={level.color} height={6} />
+                      </div>
+
+                      {/* Panel expandido */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            variants={expand}
+                            initial="hidden"
+                            animate="show"
+                            exit="exit"
+                            style={{ overflow: 'hidden' }}
+                          >
+                            <div style={S.expandedContent}>
+                              <div style={S.expandedInfo}>
+                                <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>
+                                  Dominio: {skill.pct}% · Nivel: {level.label}
+                                  {synergy && ` · Sinergia: ${synergy}`}
+                                </span>
+                              </div>
+                              <button
+                                style={S.btnValidar}
+                                onClick={(e) => { e.stopPropagation(); handleValidateSkill(skill.name); }}
+                              >
+                                <Brain size={14} />
+                                Validar con Examen IA
+                              </button>
+                              <button
+                                style={S.btnAcademia}
+                                onClick={(e) => { e.stopPropagation(); setActiveTab('academia'); }}
+                              >
+                                <BookOpen size={14} />
+                                Buscar cursos de {skill.name}
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Chevron */}
+                      <div style={{ ...S.chevron, transform: isExpanded ? 'rotate(90deg)' : 'none' }}>
+                        <ChevronRight size={14} />
+                      </div>
+                    </OmicronCard>
+                  </motion.div>
                 );
-              })
-            )}
+              })}
+            </motion.div>
+          )}
 
-            {flat.map(layoutNode =>
-              layoutNode.children.length > 1 ? (
-                <circle
-                  key={`junction-${layoutNode.node.id}`}
-                  cx={layoutNode.x}
-                  cy={layoutNode.y + NODE_H + (TIER_GAP_Y - NODE_H) / 2}
-                  r={3.2}
-                  fill={nodeColor(getStatus(layoutNode.node.id), layoutNode.depth)}
-                  filter="url(#cp-glow-cyan)"
-                  opacity={0.8}
-                />
-              ) : null
-            )}
 
-            {flat.map(({ node, x, y, depth }) => {
-              const status  = getStatus(node.id);
-              const pct     = getPercentage(node.id);
-              const color   = nodeColor(status, depth);
-              const locked  = status === 'LOCKED';
-              const isSelected = selectedNode?.id === node.id;
-              const validated = status === 'VALIDATED' || status === 'MASTERED';
-              const glowFilter =
-                validated ? 'url(#cp-glow-green)'
-                : locked   ? undefined
-                : depth >= 2 ? 'url(#cp-glow-gold)'
-                : 'url(#cp-glow-cyan)';
-              const nodeX = x - NODE_W / 2;
-              const ledColor = validated ? COLORS.green : locked ? 'rgba(255,255,255,0.22)' : color;
+          {/* ════════════ SECCIÓN 3: SKILLS BLANDAS ════════════ */}
+          {softSkills.length > 0 && (
+            <>
+              <SectionTitle icon={<MessageCircle size={15} />} color={C.green}
+                right={<Chip color={C.green}>{softSkills.length} detectadas</Chip>}
+              >
+                Habilidades Blandas
+              </SectionTitle>
 
-              return (
-                <g key={node.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedNode(isSelected ? null : node)}>
-                  {[0.3, 0.5, 0.7].map((f, pi) => (
-                    <g key={`pin-${pi}`}>
-                      <rect x={nodeX - 6} y={y + NODE_H * f - 3} width={6} height={6} rx={1} fill={color} opacity={locked ? 0.18 : 0.55} />
-                      <rect x={nodeX + NODE_W} y={y + NODE_H * f - 3} width={6} height={6} rx={1} fill={color} opacity={locked ? 0.18 : 0.55} />
-                    </g>
+              <OmicronCard accent={C.green} style={{ marginBottom: 16 }}>
+                <OmicronEyebrow color={C.mut} style={{ padding: '0 0 10px' }}>
+                  Inferidas de tu CV y experiencia
+                </OmicronEyebrow>
+                <motion.div variants={stagger} initial="hidden" animate="show"
+                  style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+                >
+                  {softSkills.map(ss => (
+                    <motion.div key={ss.name} variants={fadeUp}>
+                      <div style={S.softPill}>
+                        <span style={S.softPillName}>{ss.name}</span>
+                        <span style={S.softPillPct}>{ss.confidence}%</span>
+                        <div style={{ ...S.softPillBar, width: `${ss.confidence}%` }} />
+                      </div>
+                    </motion.div>
                   ))}
+                </motion.div>
+              </OmicronCard>
+            </>
+          )}
 
-                  {isSelected && (
-                    <rect x={nodeX - 3} y={y - 3} width={NODE_W + 6} height={NODE_H + 6} rx="9" fill="none" stroke={color} strokeWidth="2" opacity="0.45" filter={glowFilter} />
-                  )}
+          {/* ════════════ SECCIÓN 4: RUTA DE MEJORA (COACH IA) ════════════ */}
+          <SectionTitle icon={<Sparkles size={15} />} color={C.gold}>
+            Ruta de Mejora
+          </SectionTitle>
 
-                  <rect x={nodeX} y={y} width={NODE_W} height={NODE_H} rx="7"
-                    fill={locked ? COLORS.locked : COLORS.panel}
-                    stroke={isSelected ? color : locked ? COLORS.lockedBorder : color}
-                    strokeWidth={isSelected ? 1.6 : locked ? 0.5 : 1}
-                    filter={!locked && !isSelected ? glowFilter : undefined}
-                    opacity={locked ? 0.7 : 1} />
+          <OmicronCard accent={C.gold} glow style={{ marginBottom: 16 }}>
+            <div style={S.coachHeader}>
+              <div style={S.coachIcon}>
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.ink }}>
+                  Coach IA Personal
+                </div>
+                <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut, marginTop: 2 }}>
+                  Recibe un consejo personalizado basado en tu perfil
+                </div>
+              </div>
+            </div>
 
-                  {locked && (
-                    <rect x={nodeX} y={y} width={NODE_W} height={NODE_H} rx="7" fill="url(#cp-hatch)" />
-                  )}
+            {coachAdvice && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={S.coachResult}
+              >
+                <p style={S.coachText}>{coachAdvice}</p>
+              </motion.div>
+            )}
 
-                  <rect x={nodeX} y={y} width={NODE_W} height={3} rx="3" fill={color} opacity={locked ? 0.3 : 0.85} />
-                  <circle cx={x} cy={y + 6} r={2} fill={color} opacity={locked ? 0.3 : 0.9} />
+            <button
+              style={S.btnCoach}
+              onClick={handleAskCoach}
+              disabled={coachLoading}
+            >
+              {coachLoading ? (
+                <><Loader2 size={15} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> Analizando...</>
+              ) : (
+                <><Sparkles size={15} /> {coachAdvice ? 'Pedir otro consejo' : 'Pedir consejo de mejora'}</>
+              )}
+            </button>
 
-                  <circle cx={nodeX + 13} cy={y + 15} r={3.4} fill={ledColor}
-                    filter={locked ? undefined : glowFilter}
-                    style={!locked ? { animation: 'cp-breathe 1.8s ease-in-out infinite' } : undefined} />
-                  {locked && (
-                    <text x={nodeX + 9} y={y + 19} fontSize="9" fill={color} style={{ animation: 'lockPulse 2.2s ease-in-out infinite' }}>🔒</text>
-                  )}
+            {/* Accesos directos */}
+            <div style={S.shortcuts}>
+              <button style={S.shortcutBtn} onClick={() => setActiveTab('academia')}>
+                <BookOpen size={13} /> Academia
+              </button>
+              <button style={S.shortcutBtn} onClick={() => setActiveTab('empleos')}>
+                <Briefcase size={13} /> Mercado laboral
+              </button>
+            </div>
+          </OmicronCard>
 
-                  {status === 'IN_PROGRESS' && pct > 0 && (
-                    <>
-                      <rect x={nodeX + 10} y={y + NODE_H - 9} width={NODE_W - 20} height={3} rx="1.5" fill="rgba(92, 200, 255,0.15)" />
-                      <rect x={nodeX + 10} y={y + NODE_H - 9} width={(NODE_W - 20) * (pct / 100)} height={3} rx="1.5" fill={COLORS.cyan} />
-                    </>
-                  )}
 
-                  <text x={x + 6} y={y + (status === 'IN_PROGRESS' && pct > 0 ? NODE_H / 2 - 3 : NODE_H / 2 + 1)}
-                    textAnchor="middle" dominantBaseline="central"
-                    fontFamily="'SF Pro Display', 'SF Mono', monospace" fontWeight="700" fontSize="12"
-                    fill={locked ? color : '#eaf4ff'} opacity={locked ? 0.5 : 1}>
-                    {node.title.toUpperCase()}
-                  </text>
+          {/* ════════════ SECCIÓN 5: EXAMEN DE RANGO GENERAL ════════════ */}
+          <SectionTitle icon={<Award size={15} />} color={C.purple}>
+            Examen de Rango
+          </SectionTitle>
 
-                  <text x={x + 6} y={y + NODE_H - 11} textAnchor="middle"
-                    fontFamily="'SF Mono', monospace" fontSize="8" fill={color} opacity={locked ? 0.25 : 0.6}>
-                    {(() => {
-                      const a = actas.get(node.id);
-                      if (a) return `IA ${a.puntaje_global}%${a.veredicto === 'APROBADO' ? ' ✓' : ''}`;
-                      return '+' + node.pe_reward + ' PE · ' + node.estimated_hours + 'h ' + '★'.repeat(node.difficulty_level);
-                    })()}
-                  </text>
-                </g>
-              );
-            })}
-            </g>
-          </svg>
-        )}
+          <OmicronCard accent={C.purple} style={{ marginBottom: 24 }}>
+            <div style={S.rangeInfo}>
+              <div style={S.rangeIconWrap}>
+                <Award size={22} style={{ color: C.purple }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.ink }}>
+                  Defiende tu Gemelo Digital
+                </div>
+                <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut, marginTop: 3, lineHeight: 1.5 }}>
+                  La IA evalúa tus competencias principales con un examen exigente.
+                  Valida tu reputación y sube tu Ejecución.
+                </div>
+              </div>
+            </div>
+            <button
+              style={S.btnRange}
+              onClick={() => {
+                const topSkill = skillsDetail[0]?.name ?? 'General';
+                handleValidateSkill(topSkill);
+              }}
+            >
+              <Brain size={15} /> Iniciar Examen de Rango
+            </button>
+          </OmicronCard>
+
+        </div>
       </div>
 
-      {selectedNode && (
-        <div style={styles.detailPanel}>
-          <div style={styles.detailHeader}>
-            <div>
-              <div style={styles.detailTitle}>{selectedNode.title}</div>
-              <div style={styles.detailSub}>{selectedNode.description}</div>
-              {isFromCV(selectedNode) && (
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 999, background: 'rgba(63,208,201,0.12)', border: '1px solid rgba(63,208,201,0.35)' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: COLORS.green }} />
-                  <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: COLORS.green, letterSpacing: 1 }}>RECONOCIDO POR TU CV</span>
-                </div>
-              )}
-            </div>
-            <button style={styles.closeBtn} onClick={() => setSelectedNode(null)}>×</button>
-          </div>
-
-          <div style={styles.detailSectionTitle}>⬡ DETALLES DEL NODO</div>
-          <div style={styles.detailGrid}>
-            {[
-              { label: 'Dificultad', value: '·'.repeat(selectedNode.difficulty_level) },
-              { label: 'Recompensa', value: `${selectedNode.pe_reward} PE` },
-              { label: 'Categoría', value: selectedNode.category },
-              { label: 'Horas Est.', value: `${selectedNode.estimated_hours}h` },
-            ].map(item => (
-              <div key={item.label} style={styles.detailCard}>
-                <div style={styles.detailCardLabel}>{item.label}</div>
-                <div style={styles.detailCardValue}>{item.value}</div>
-              </div>
-            ))}
-          </div>
-
-          {actas.get(selectedNode.id) && (() => {
-            const a = actas.get(selectedNode.id)!;
-            const ok = a.veredicto === 'APROBADO';
-            return (
-              <div style={{ borderRadius: 10, padding: '12px 14px', marginBottom: 12, background: 'rgba(92, 200, 255,0.06)', border: `1px solid ${ok ? COLORS.greenDim : 'rgba(255, 92, 122,0.4)'}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontFamily: "'SF Mono', monospace", fontSize: 9, letterSpacing: 1.5, color: COLORS.cyan }}>📜 ACTA DE EVIDENCIA · IA</span>
-                  <span style={{ fontFamily: "'SF Mono', monospace", fontSize: 10, fontWeight: 700, color: ok ? COLORS.green : '#ff5c7a' }}>{ok ? 'VALIDADO' : 'PENDIENTE'} · {a.puntaje_global}%</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontFamily: "'SF Mono', monospace", fontSize: 10, color: '#dbeafe' }}>
-                  <span>Ejecución: <strong style={{ color: COLORS.cyan }}>{a.ejecucion}</strong></span>
-                  <span>Calidad: <strong style={{ color: COLORS.cyan }}>{a.calidad}</strong></span>
-                  <span>Trascendencia: <strong style={{ color: COLORS.cyan }}>{a.trascendencia}</strong></span>
-                  <span>Fundamento: <strong style={{ color: COLORS.cyan }}>{a.fundamento}</strong></span>
-                </div>
-                {a.resumen && <p style={{ margin: '8px 0 0', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 12.5, color: '#cfe6ff', lineHeight: 1.5 }}>{a.resumen}</p>}
-                <p style={{ margin: '6px 0 0', fontFamily: "'SF Mono', monospace", fontSize: 8.5, color: COLORS.cyanDim }}>Emitida {new Date(a.created_at).toLocaleDateString('es-CL')}</p>
-              </div>
-            );
-          })()}
-
-          <div style={{ borderRadius: 10, padding: '12px 14px', marginBottom: 12, background: 'rgba(63, 208, 201,0.07)', border: `1px solid ${COLORS.greenDim}` }}>
-            <div style={{ fontFamily: "'SF Mono', monospace", fontSize: 9, letterSpacing: 1.5, color: COLORS.green, marginBottom: 8 }}>⬡ LO QUE GANAS AL COMPLETARLO</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#dbeafe' }}>
-              <div>⚡ <strong style={{ color: COLORS.gold }}>+{selectedNode.pe_reward} PE</strong> de experiencia</div>
-              <div>🧬 Sube tu <strong style={{ color: COLORS.cyan }}>Fundamento</strong> en el Gemelo Digital</div>
-              <div>🎯 Validas la habilidad <strong style={{ color: COLORS.green }}>{selectedNode.title}</strong></div>
-              <div>⏱️ Inversión: <strong>{selectedNode.estimated_hours}h</strong> · Dificultad {'·'.repeat(selectedNode.difficulty_level)}</div>
-            </div>
-          </div>
-
-          <div style={styles.detailSectionTitle}>⬡ TU PROGRESO EN ESTE NODO</div>
-          <div style={styles.progressBox}>
-            <div style={styles.progressRow}>
-              <span style={styles.progressStatus}>{getStatus(selectedNode.id)}</span>
-              <span style={styles.progressPct}>{getPercentage(selectedNode.id)}%</span>
-            </div>
-            <div style={styles.progressBg}>
-              <div style={{ ...styles.progressFill, width: `${getPercentage(selectedNode.id)}%` }} />
-            </div>
-          </div>
-
-          {getStatus(selectedNode.id) === 'LOCKED' ? (
-            <button style={{ ...styles.challengeBtn, opacity: 0.4, cursor: 'not-allowed' }} disabled>
-              🔒 Completa el nodo anterior para desbloquear
-            </button>
-          ) : (
-            <button style={styles.challengeBtn} onClick={() => handleStartChallenge(selectedNode)}>
-              <Play size={14} fill="currentColor" /> Rendir Examen IA
-            </button>
-          )}
-
-          {courseByNode.get(selectedNode.id) && (
-            <button onClick={() => setCourseNode(selectedNode.id)} style={{
-              width: '100%', marginTop: 10, padding: '11px', borderRadius: 10, cursor: 'pointer',
-              background: 'rgba(255, 176, 46,0.12)', border: '1px solid rgba(255, 176, 46,0.45)', color: '#ffb02e',
-              fontFamily: "'SF Mono', monospace", fontSize: 11.5, fontWeight: 700, letterSpacing: 0.5,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
-              <BookOpen size={14} /> APRENDER ESTE NODO
-            </button>
-          )}
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 12, fontFamily: "'SF Mono', monospace", fontSize: 8.5, letterSpacing: 0.5 }}>
-            {(() => {
-              const st = getStatus(selectedNode.id);
-              const validated = st === 'VALIDATED' || st === 'MASTERED';
-              const steps = [{ k: 'APRENDE', on: true, col: '#5cc8ff' }, { k: 'DESAFÍA', on: st !== 'LOCKED', col: '#5cc8ff' }, { k: 'VALIDA', on: validated, col: '#3fd0c9' }];
-              return steps.map((s, i) => (
-                <span key={s.k} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ color: s.on ? s.col : 'rgba(255,255,255,0.25)' }}>{s.k}</span>
-                  {i < 2 && <ArrowRight size={9} style={{ color: 'rgba(255,255,255,0.25)' }} />}
-                </span>
-              ));
-            })()}
-          </div>
-        </div>
-      )}
-
-      {lastPeEarned !== null && (
-        <div style={styles.peToast}><Trophy size={16} /> +{lastPeEarned} PE ganados</div>
-      )}
-
+      {/* ════════════ MODAL: EXAMEN IA ════════════ */}
       {examNode && (
         <UniversalSimulator
           node={examNode}
           onClose={() => setExamNode(null)}
           onSuccess={(pe) => {
-            loadActas();
-            void refreshProfile?.();
-            if (pe > 0) {
-              setLastPeEarned(pe);
-              setTimeout(() => setLastPeEarned(null), 3500);
-            }
+            void refreshProfile();
+            setExamNode(null);
           }}
         />
-      )}
-
-      {courseNode && (
-        <CourseFlowModal nodeId={courseNode} onClose={() => setCourseNode(null)} onValidated={() => {}} />
       )}
     </div>
   );
 }
 
-const FONT_MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
-const FONT_RAJDHANI = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
 
-const styles: Record<string, React.CSSProperties> = {
-  root: { display: 'flex', flexDirection: 'column', height: '100%', background: COLORS.bg, overflow: 'hidden', position: 'relative' },
-  loadingWrap: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', background: COLORS.bg, gap: 12 },
-  spinnerBox: { width: 44, height: 44, borderRadius: 10, background: 'rgba(92, 200, 255,0.08)', border: `1px solid rgba(92, 200, 255,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  spinner: { width: 20, height: 20, borderRadius: '50%', border: `2px solid ${COLORS.cyan}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' },
-  loadingText: { fontFamily: FONT_MONO, fontSize: 12, color: COLORS.cyanDim, letterSpacing: 2 },
-  rangeCard: { margin: '12px 14px 8px', padding: '12px 14px', borderRadius: 12, border: `1px solid ${COLORS.cyanDim}`, background: 'linear-gradient(135deg, rgba(92, 200, 255,0.10), rgba(8,16,38,0.55))', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', boxShadow: '0 0 18px rgba(92, 200, 255,0.15), inset 0 1px 1px rgba(255,255,255,0.05)', flexShrink: 0 },
-  rangeCardInner: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 },
-  rangeIcon: { fontSize: 18, filter: 'drop-shadow(0 0 6px rgba(92, 200, 255,0.7))' },
-  rangeTitle: { fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 13, color: COLORS.cyan },
-  rangeSub: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.cyanDim, marginTop: 2, lineHeight: 1.4 },
-  rangeBtn: { width: '100%', padding: '10px 0', background: `linear-gradient(90deg, ${COLORS.cyan}, #5ad6ff)`, color: '#000206', border: 'none', borderRadius: 8, fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5, boxShadow: '0 0 16px rgba(92, 200, 255,0.4)' },
-  treeLabel: { fontFamily: FONT_MONO, fontSize: 9, color: 'rgba(92, 200, 255,0.3)', letterSpacing: 2, textTransform: 'uppercase', padding: '4px 16px', flexShrink: 0 },
-  treeScroll: { flex: 1, overflowY: 'auto', overflowX: 'auto', padding: '8px 12px 20px', WebkitOverflowScrolling: 'touch' },
-  detailPanel: { flexShrink: 0, borderTop: `1px solid rgba(92, 200, 255,0.18)`, padding: '14px 16px', background: 'rgba(2,6,19,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', maxHeight: '38vh', overflowY: 'auto', boxShadow: '0 -8px 30px rgba(92, 200, 255,0.08)' },
-  detailHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  detailTitle: { fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 16, color: COLORS.cyan },
-  detailSub: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.cyanDim, marginTop: 3, maxWidth: '80%' },
-  closeBtn: { background: 'none', border: 'none', color: 'rgba(92, 200, 255,0.4)', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 },
-  detailSectionTitle: { fontFamily: FONT_MONO, fontSize: 9.5, letterSpacing: 1.5, color: COLORS.cyanDim, marginBottom: 8, textTransform: 'uppercase' },
-  detailGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 },
-  detailCard: { padding: '8px 10px', borderRadius: 6, background: 'rgba(92, 200, 255,0.04)', border: '1px solid rgba(92, 200, 255,0.08)' },
-  detailCardLabel: { fontFamily: FONT_MONO, fontSize: 9, color: COLORS.cyanDim, letterSpacing: 1, marginBottom: 4 },
-  detailCardValue: { fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 15, color: COLORS.cyan },
-  progressBox: { padding: '8px 10px', borderRadius: 6, background: 'rgba(92, 200, 255,0.04)', border: '1px solid rgba(92, 200, 255,0.08)', marginBottom: 12 },
-  progressRow: { display: 'flex', justifyContent: 'space-between', marginBottom: 6 },
-  progressStatus: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.cyan, letterSpacing: 1 },
-  progressPct: { fontFamily: FONT_MONO, fontSize: 10, color: COLORS.cyanDim },
-  progressBg: { height: 4, background: 'rgba(92, 200, 255,0.1)', borderRadius: 2, overflow: 'hidden' },
-  progressFill: { height: '100%', background: `linear-gradient(90deg, ${COLORS.cyan}, ${COLORS.purple})`, borderRadius: 2, transition: 'width 0.3s ease' },
-  challengeBtn: { width: '100%', padding: '10px 0', background: 'rgba(92, 200, 255,0.10)', border: `1px solid ${COLORS.cyanDim}`, color: COLORS.cyan, borderRadius: 8, fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: 0.5, boxShadow: '0 0 15px rgba(92, 200, 255,0.25)', transition: 'box-shadow 0.3s ease, background 0.15s' },
-  peToast: { position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 12, background: COLORS.gold, color: COLORS.bg, fontFamily: FONT_RAJDHANI, fontWeight: 700, fontSize: 14, boxShadow: `0 4px 20px rgba(255, 176, 46,0.45)`, whiteSpace: 'nowrap', zIndex: 50 },
+// ── Estilos inline (design system: C, FONT, RADIUS) ──────────────────
+const S: Record<string, React.CSSProperties> = {
+  // Radar
+  radarGrid: {
+    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14,
+    padding: '4px 0 14px',
+  },
+  radarItem: {
+    display: 'flex', alignItems: 'center', gap: 10,
+  },
+  radarLabel: {
+    display: 'flex', flexDirection: 'column', gap: 3,
+  },
+  radarSummary: {
+    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
+    borderTop: `1px solid ${C.line}`, paddingTop: 12,
+  },
+  radarStat: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+  },
+
+  // Skills duras
+  skillRow: {
+    display: 'flex', alignItems: 'center', gap: 12,
+  },
+  skillName: {
+    fontFamily: FONT.display, fontWeight: 700, fontSize: 14.5,
+    color: C.ink, letterSpacing: -0.2,
+  },
+  skillMeta: {
+    display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap',
+  },
+  chevron: {
+    position: 'absolute', top: 16, right: 14, color: C.mut,
+    transition: 'transform 0.2s ease',
+  },
+  expandedContent: {
+    paddingTop: 14, marginTop: 12,
+    borderTop: `1px solid ${C.line}`,
+    display: 'flex', flexDirection: 'column', gap: 8,
+  },
+  expandedInfo: {
+    padding: '6px 10px', borderRadius: RADIUS.sm,
+    background: C.glass,
+  },
+  btnValidar: {
+    width: '100%', padding: '11px 0', borderRadius: RADIUS.md,
+    background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`,
+    border: 'none', color: '#fff',
+    fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5,
+    cursor: 'pointer', display: 'flex', alignItems: 'center',
+    justifyContent: 'center', gap: 8,
+    boxShadow: `0 8px 24px rgba(92,200,255,0.3)`,
+  },
+  btnAcademia: {
+    width: '100%', padding: '10px 0', borderRadius: RADIUS.md,
+    background: C.glass, border: `1px solid ${C.line}`,
+    color: C.cyan,
+    fontFamily: FONT.display, fontWeight: 600, fontSize: 12.5,
+    cursor: 'pointer', display: 'flex', alignItems: 'center',
+    justifyContent: 'center', gap: 8,
+  },
+  btnCta: {
+    marginTop: 14, padding: '10px 24px', borderRadius: RADIUS.md,
+    background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`,
+    border: 'none', color: '#fff',
+    fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
+    cursor: 'pointer',
+  },
+
+
+  // Skills blandas
+  softPill: {
+    position: 'relative', overflow: 'hidden',
+    padding: '8px 12px', borderRadius: RADIUS.pill,
+    background: C.glass, border: `1px solid ${C.greenDim}`,
+    display: 'flex', alignItems: 'center', gap: 8,
+  },
+  softPillName: {
+    fontFamily: FONT.display, fontWeight: 600, fontSize: 12,
+    color: C.ink, position: 'relative', zIndex: 1,
+  },
+  softPillPct: {
+    fontFamily: FONT.mono, fontSize: 10, fontWeight: 700,
+    color: C.green, position: 'relative', zIndex: 1,
+  },
+  softPillBar: {
+    position: 'absolute', left: 0, top: 0, bottom: 0,
+    background: `linear-gradient(90deg, ${C.greenFaint}, transparent)`,
+    borderRadius: RADIUS.pill,
+  },
+
+  // Coach IA
+  coachHeader: {
+    display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14,
+  },
+  coachIcon: {
+    width: 40, height: 40, borderRadius: RADIUS.md,
+    background: `linear-gradient(135deg, ${C.gold}, ${C.purple})`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: '#fff', flexShrink: 0,
+    boxShadow: `0 6px 20px rgba(255,176,46,0.3)`,
+  },
+  coachResult: {
+    padding: '12px 14px', borderRadius: RADIUS.md,
+    background: C.glass2, border: `1px solid ${C.line}`,
+    marginBottom: 12,
+  },
+  coachText: {
+    fontFamily: FONT.body, fontSize: 13, color: C.ink,
+    lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap',
+  },
+  btnCoach: {
+    width: '100%', padding: '12px 0', borderRadius: RADIUS.md,
+    background: `linear-gradient(135deg, ${C.gold}22, ${C.gold}08)`,
+    border: `1px solid ${C.goldDim}`, color: C.gold,
+    fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5,
+    cursor: 'pointer', display: 'flex', alignItems: 'center',
+    justifyContent: 'center', gap: 8,
+  },
+  shortcuts: {
+    display: 'flex', gap: 8, marginTop: 10,
+  },
+  shortcutBtn: {
+    flex: 1, padding: '9px 0', borderRadius: RADIUS.sm,
+    background: C.glass, border: `1px solid ${C.line}`,
+    color: C.cyan, fontFamily: FONT.mono, fontSize: 11,
+    fontWeight: 600, cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  },
+
+
+  // Examen de Rango
+  rangeInfo: {
+    display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14,
+  },
+  rangeIconWrap: {
+    width: 44, height: 44, borderRadius: RADIUS.md,
+    background: C.purpleFaint, border: `1px solid ${C.purpleDim}`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  btnRange: {
+    width: '100%', padding: '13px 0', borderRadius: RADIUS.md,
+    background: `linear-gradient(135deg, ${C.purple}, ${C.cyan})`,
+    border: 'none', color: '#fff',
+    fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+    cursor: 'pointer', display: 'flex', alignItems: 'center',
+    justifyContent: 'center', gap: 8,
+    boxShadow: `0 10px 28px rgba(94,92,230,0.35)`,
+  },
 };
