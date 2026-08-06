@@ -36,6 +36,8 @@ export interface OrbNeuronalProps {
   isListening?: boolean;
   /** Callback con posiciones 2D proyectadas de cada nodo (para labels HTML) */
   onProjectedPositions?: (positions: { id: string; x: number; y: number; depth: number }[]) => void;
+  /** Map of node id → unread notification count (for badge effect) */
+  notifications?: Record<string, number>;
   className?: string;
 }
 
@@ -63,6 +65,7 @@ export default function OrbNeuronal({
   voiceLevel = 0,
   isListening = false,
   onProjectedPositions,
+  notifications = {},
   className,
 }: OrbNeuronalProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -71,6 +74,7 @@ export default function OrbNeuronal({
   const activeNodeRef = useRef(activeNodeId);
   const onNodeTapRef = useRef(onNodeTap);
   const onProjectedRef = useRef(onProjectedPositions);
+  const notificationsRef = useRef(notifications);
 
   // Keep refs in sync without re-triggering effect
   voiceLevelRef.current = voiceLevel;
@@ -78,6 +82,7 @@ export default function OrbNeuronal({
   activeNodeRef.current = activeNodeId;
   onNodeTapRef.current = onNodeTap;
   onProjectedRef.current = onProjectedPositions;
+  notificationsRef.current = notifications;
 
 
   // ── Three.js Scene ───────────────────────────────────────────────────
@@ -220,6 +225,51 @@ export default function OrbNeuronal({
       nodeDatas.push({ mesh, glowMesh, material: mat, glowMat, basePos: pos.clone(), node, activation: 0 });
     }
 
+    // ── D: Icon sprites on each node (billboard labels) ─────────────────
+    const iconSprites: THREE.Mesh[] = [];
+    for (let i = 0; i < nodeCount; i++) {
+      const node = nodes[i];
+      const pos = nodePositions[i];
+
+      // Create canvas with icon text
+      const iconCanvas = document.createElement('canvas');
+      iconCanvas.width = 64;
+      iconCanvas.height = 64;
+      const ictx = iconCanvas.getContext('2d')!;
+      ictx.clearRect(0, 0, 64, 64);
+      ictx.font = '36px system-ui, sans-serif';
+      ictx.textAlign = 'center';
+      ictx.textBaseline = 'middle';
+      ictx.fillStyle = '#ffffff';
+      ictx.fillText(node.icon, 32, 32);
+
+      const iconTexture = new THREE.CanvasTexture(iconCanvas);
+      const spriteMat = new THREE.MeshBasicMaterial({
+        map: iconTexture,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        opacity: 0.9,
+      } as any);
+      const spriteGeom = new THREE.SphereGeometry(0.06, 4, 4); // tiny plane-like
+      // Use a plane geometry for billboard
+      const planeGeom = new THREE.BufferGeometry();
+      const s = 0.1;
+      const verts = new Float32Array([-s, -s, 0, s, -s, 0, s, s, 0, -s, s, 0]);
+      const uvs = new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]);
+      const indices = new Uint16Array([0, 1, 2, 0, 2, 3]);
+      planeGeom.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+      planeGeom.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      planeGeom.setIndex(new THREE.Uint16BufferAttribute(indices, 1));
+
+      const sprite = new THREE.Mesh(planeGeom, spriteMat);
+      sprite.position.copy(pos);
+      orbGroup.add(sprite);
+      iconSprites.push(sprite);
+      // Clean up unused geom ref
+      spriteGeom.dispose();
+    }
+
 
     // ── Neural connections (lines between nearby nodes) ──────────────────
     const connPairs: [number, number][] = [];
@@ -263,6 +313,34 @@ export default function OrbNeuronal({
     });
     const connLines = new THREE.LineSegments(connGeom, connMat);
     orbGroup.add(connLines);
+
+    // ── A: Data particles traveling along connections ────────────────────
+    const DATA_PARTICLES_PER_CONN = 2;
+    const dataParticleCount = connPairs.length * DATA_PARTICLES_PER_CONN;
+    const dataPositions = new Float32Array(dataParticleCount * 3);
+    const dataColors = new Float32Array(dataParticleCount * 3);
+    const dataSpeeds: number[] = []; // t progress per particle (0-1)
+    for (let i = 0; i < dataParticleCount; i++) {
+      dataSpeeds.push(Math.random()); // random starting position along connection
+      // Initial color = pulse color
+      dataColors[i * 3] = COL_PULSE.r;
+      dataColors[i * 3 + 1] = COL_PULSE.g;
+      dataColors[i * 3 + 2] = COL_PULSE.b;
+    }
+    const dataGeom = new THREE.BufferGeometry();
+    dataGeom.setAttribute('position', new THREE.Float32BufferAttribute(dataPositions, 3));
+    dataGeom.setAttribute('color', new THREE.Float32BufferAttribute(dataColors, 3));
+    const dataMat = new THREE.PointsMaterial({
+      size: 0.035,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      vertexColors: true,
+    });
+    (dataMat as any).map = glowTexture;
+    const dataPoints = new THREE.Points(dataGeom, dataMat);
+    orbGroup.add(dataPoints);
 
 
     // ── Ambient particles (neural dust floating inside orb) ──────────────
@@ -329,10 +407,48 @@ export default function OrbNeuronal({
         if (nodeIndex !== undefined && onNodeTapRef.current) {
           onNodeTapRef.current(nodes[nodeIndex]);
         }
+      } else {
+        // No node hit — start drag
+        handleDragStart(event);
       }
     };
 
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
+
+    // ── E: Drag/swipe gesture to manually rotate orb ────────────────────
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragRotYOffset = 0;
+    let dragRotXOffset = 0;
+    let manualRotY = 0;
+    let manualRotX = 0;
+
+    const handleDragStart = (event: PointerEvent) => {
+      isDragging = true;
+      dragStartX = event.clientX;
+      dragStartY = event.clientY;
+      dragRotYOffset = manualRotY;
+      dragRotXOffset = manualRotX;
+    };
+
+    const handleDragMove = (event: PointerEvent) => {
+      if (!isDragging) return;
+      const dx = event.clientX - dragStartX;
+      const dy = event.clientY - dragStartY;
+      manualRotY = dragRotYOffset + dx * 0.008;
+      manualRotX = dragRotXOffset + dy * 0.005;
+      // Clamp vertical rotation
+      manualRotX = Math.max(-0.8, Math.min(0.8, manualRotX));
+    };
+
+    const handleDragEnd = () => {
+      isDragging = false;
+    };
+
+    renderer.domElement.addEventListener('pointermove', handleDragMove);
+    renderer.domElement.addEventListener('pointerup', handleDragEnd);
+    renderer.domElement.addEventListener('pointerleave', handleDragEnd);
 
     // ── Rotation target (smooth rotation toward active node) ─────────────
     let targetRotY = 0;
@@ -383,9 +499,11 @@ export default function OrbNeuronal({
         targetRotX = Math.sin(elapsed * 0.03) * 0.1;
       }
 
-      // Smooth lerp rotation
-      currentRotY += (targetRotY - currentRotY) * 0.03;
-      currentRotX += (targetRotX - currentRotX) * 0.03;
+      // Smooth lerp rotation (combine auto + manual drag)
+      const effectiveTargetY = isDragging ? manualRotY : targetRotY;
+      const effectiveTargetX = isDragging ? manualRotX : targetRotX;
+      currentRotY += (effectiveTargetY - currentRotY) * (isDragging ? 0.15 : 0.03);
+      currentRotX += (effectiveTargetX - currentRotX) * (isDragging ? 0.15 : 0.03);
       orbGroup.rotation.y = currentRotY;
       orbGroup.rotation.x = currentRotX;
 
@@ -413,7 +531,19 @@ export default function OrbNeuronal({
         const baseScale = 1 + nd.activation * 0.6;
         const breathScale = 1 + Math.sin(elapsed * 2 + i) * 0.04;
         const jarvisScale = 1 + jarvisIntensity * Math.sin(elapsed * 12 + i * 2) * 0.08;
-        const s = baseScale * breathScale * jarvisScale;
+
+        // F: Notification badge — extra pulse for nodes with unread
+        const notifCount = notificationsRef.current[nd.node.id] || 0;
+        const notifPulse = notifCount > 0
+          ? 1 + Math.sin(elapsed * 5 + i) * 0.12  // fast pulse
+          : 1;
+        // Notification color shift (warm amber)
+        if (notifCount > 0 && !isActive) {
+          const notifColor = new THREE.Color(1.0, 0.7, 0.2); // amber
+          col.lerp(notifColor, 0.04 + Math.sin(elapsed * 4) * 0.02);
+        }
+
+        const s = baseScale * breathScale * jarvisScale * notifPulse;
         nd.mesh.scale.set(s, s, s);
 
         // Glow follows activation
@@ -454,6 +584,31 @@ export default function OrbNeuronal({
       cCol.needsUpdate = true;
       connMat.opacity = 0.12 + jarvisIntensity * 0.2;
 
+      // ── A: Update data particles traveling along connections ───────────
+      const dPos = dataGeom.attributes.position as THREE.Float32BufferAttribute;
+      const dCol = dataGeom.attributes.color as THREE.Float32BufferAttribute;
+      const travelSpeed = 0.004 + jarvisIntensity * 0.008; // faster when Jarvis active
+      for (let i = 0; i < dataParticleCount; i++) {
+        dataSpeeds[i] = (dataSpeeds[i] + travelSpeed + Math.random() * 0.001) % 1.0;
+        const connIdx = Math.floor(i / DATA_PARTICLES_PER_CONN);
+        const [aIdx, bIdx] = connPairs[connIdx];
+        const pa = nodePositions[aIdx];
+        const pb = nodePositions[bIdx];
+        const t = dataSpeeds[i];
+        // Lerp position along connection
+        dPos.array[i * 3] = pa.x + (pb.x - pa.x) * t;
+        dPos.array[i * 3 + 1] = pa.y + (pb.y - pa.y) * t;
+        dPos.array[i * 3 + 2] = pa.z + (pb.z - pa.z) * t;
+        // Brightness peaks at center of connection
+        const brightness = 0.5 + (1 - Math.abs(t - 0.5) * 2) * 0.5;
+        dCol.array[i * 3] = COL_PULSE.r * brightness;
+        dCol.array[i * 3 + 1] = COL_PULSE.g * brightness;
+        dCol.array[i * 3 + 2] = COL_PULSE.b * brightness;
+      }
+      dPos.needsUpdate = true;
+      dCol.needsUpdate = true;
+      dataMat.opacity = 0.3 + jarvisIntensity * 0.4;
+
       // ── Update particles (Jarvis vibration) ────────────────────────────
       const pPos = particleGeom.attributes.position as THREE.Float32BufferAttribute;
       for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -484,6 +639,13 @@ export default function OrbNeuronal({
       }
       pPos.needsUpdate = true;
       particleMat.opacity = 0.2 + jarvisIntensity * 0.25;
+
+      // ── D: Billboard sprites face camera ──────────────────────────────
+      for (let i = 0; i < iconSprites.length; i++) {
+        const sprite = iconSprites[i];
+        sprite.position.copy(nodeDatas[i].mesh.position);
+        sprite.lookAt(camera.position);
+      }
 
       // ── Shell breath ──────────────────────────────────────────────────
       const shellBreath = 1 + Math.sin(elapsed * 0.8) * 0.01 + jarvisIntensity * 0.03;
@@ -530,16 +692,21 @@ export default function OrbNeuronal({
     return () => {
       renderer.setAnimationLoop(null);
       renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
+      renderer.domElement.removeEventListener('pointermove', handleDragMove);
+      renderer.domElement.removeEventListener('pointerup', handleDragEnd);
+      renderer.domElement.removeEventListener('pointerleave', handleDragEnd);
       window.removeEventListener('resize', resize);
       ro.disconnect();
 
       nodeGeom.dispose();
       nodeGlowGeom.dispose();
       connGeom.dispose();
+      dataGeom.dispose();
       particleGeom.dispose();
       shellGeom.dispose();
 
       connMat.dispose();
+      dataMat.dispose();
       particleMat.dispose();
       shellMat.dispose();
       nodeDatas.forEach(nd => { nd.material.dispose(); nd.glowMat.dispose(); });

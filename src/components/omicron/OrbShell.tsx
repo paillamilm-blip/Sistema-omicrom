@@ -104,6 +104,26 @@ export function OrbShell() {
     setNodePositions(positions);
   }, []);
 
+  // ── B: Connect real OraculoBar voice state ──────────────────────────
+  // Listen for custom events dispatched by OraculoBar when listening starts/stops
+  useEffect(() => {
+    const handleOracleListening = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setIsListening(detail.listening);
+      if (detail.listening) setVoiceLevel(0.4); // initial pulse when mic activates
+    };
+    const handleOracleVoice = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setVoiceLevel(detail.level);
+    };
+    window.addEventListener('oracle:listening', handleOracleListening);
+    window.addEventListener('oracle:voice', handleOracleVoice);
+    return () => {
+      window.removeEventListener('oracle:listening', handleOracleListening);
+      window.removeEventListener('oracle:voice', handleOracleVoice);
+    };
+  }, []);
+
   // ── Simulated Jarvis breath when idle ──────────────────────────────
   useEffect(() => {
     if (state === 'orb' && !isListening) {
@@ -136,7 +156,7 @@ export function OrbShell() {
         justifyContent: 'center',
         opacity: state === 'fullscreen' ? 0 : 1,
         transform: state === 'fullscreen' ? 'scale(0.8)' : 'scale(1)',
-        transition: 'opacity 0.5s cubic-bezier(0.23,1,0.32,1), transform 0.5s cubic-bezier(0.23,1,0.32,1)',
+        transition: 'opacity 0.5s cubic-bezier(0.34,1.56,0.64,1), transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
         pointerEvents: state === 'fullscreen' ? 'none' : 'auto',
         zIndex: 1,
       }}>
@@ -244,7 +264,7 @@ export function OrbShell() {
         zIndex: state === 'fullscreen' ? 20 : -1,
         opacity: state === 'fullscreen' ? 1 : 0,
         transform: state === 'fullscreen' ? 'translateY(0)' : 'translateY(30px)',
-        transition: 'opacity 0.4s cubic-bezier(0.23,1,0.32,1), transform 0.4s cubic-bezier(0.23,1,0.32,1)',
+        transition: 'opacity 0.45s cubic-bezier(0.34,1.56,0.64,1), transform 0.45s cubic-bezier(0.34,1.56,0.64,1)',
         pointerEvents: state === 'fullscreen' ? 'auto' : 'none',
         display: 'flex',
         flexDirection: 'column',

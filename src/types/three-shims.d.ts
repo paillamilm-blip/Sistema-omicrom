@@ -97,6 +97,8 @@ declare module 'three' {
     rotation: { x: number; y: number; z: number };
     scale: Vector3;
     visible: boolean;
+    lookAt(v: Vector3 | number, y?: number, z?: number): void;
+    userData: Record<string, any>;
   }
   export class Group {
     constructor();
