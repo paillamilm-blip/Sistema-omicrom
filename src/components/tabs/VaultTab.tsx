@@ -141,7 +141,14 @@ export function VaultTab() {
           afinidad: r.similarity,
         }] : [];
       });
-      const { data, error } = await supabase.functions.invoke('vault-oracle', { body: { query: oracleQuery.trim(), candidates } });
+      const { data, error } = await supabase.functions.invoke('vault-oracle', {
+        body: {
+          query: oracleQuery.trim(),
+          candidates,
+          skills: profile?.skills ?? [],
+          cv_summary: profile?.cv_summary ?? '',
+        },
+      });
       const dd = data as { recomendacion?: string; error?: string };
       if (error || dd?.error || !dd?.recomendacion) {
         setOracleErr(await vaultServerError(error, data, 'No se pudo consultar el Oráculo. ¿Está desplegada la función "vault-oracle"?'));

@@ -36,20 +36,32 @@ Deno.serve(async (req) => {
     const lessonTitle: string = (body?.lessonTitle ?? '').toString();
     const lessonContent: string = (body?.lessonContent ?? '').toString();
     const history: Turn[] = Array.isArray(body?.history) ? body.history : [];
+    const userSkills: string[] = Array.isArray(body?.skills) ? body.skills : [];
+    const cvSummary: string = (body?.cv_summary ?? '').toString().trim();
 
     if (!question) {
       return json({ error: 'Escribe una pregunta para el Tutor.' }, 400);
     }
+
+    // Contexto de skills para personalizar la enseñanza
+    const skillCtx = userSkills.length
+      ? `\nSKILLS DEL ESTUDIANTE: ${userSkills.join(', ')}.`
+      : '';
+    const cvCtx = cvSummary
+      ? `\nRESUMEN CV: ${cvSummary}`
+      : '';
 
     const sys =
       'Eres el "Tutor IA" de Ómicrom, un tutor cercano y paciente para estudiantes y técnicos de ingeniería. ' +
       'El estudiante está leyendo una lección y te hará dudas sobre ella. ' +
       'Apóyate SIEMPRE en el contenido de la lección que te paso abajo; si la pregunta se sale del tema, ' +
       'respóndela igual de forma breve pero invita a volver a la lección. ' +
+      'Adapta tus ejemplos al nivel y experiencia del estudiante según sus skills y CV. ' +
       'Explica simple, en español neutro-chileno, con ejemplos concretos y, cuando ayude, pasos numerados. ' +
       'Sé breve (máx ~160 palabras). No inventes datos; si no sabes, dilo con honestidad.\n\n' +
       `LECCIÓN: "${lessonTitle}"\n` +
-      `CONTENIDO DE LA LECCIÓN:\n${lessonContent}`;
+      `CONTENIDO DE LA LECCIÓN:\n${lessonContent}` +
+      skillCtx + cvCtx;
 
     // Historial previo del chat (limitado a los últimos 10 turnos) + pregunta nueva.
     const contents = [

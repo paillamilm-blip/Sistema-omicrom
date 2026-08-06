@@ -38,21 +38,30 @@ Deno.serve(async (req) => {
 
     const userClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
 
+    const body = await req.json().catch(() => ({}));
+    const userSkills: string[] = Array.isArray(body?.skills) ? body.skills : [];
+    const cvSummary: string = (body?.cv_summary ?? '').toString().trim();
+
     const { data: ctx, error } = await userClient.rpc('get_coach_context');
     if (error || !ctx) {
       return json({ error: 'No pude leer tu perfil. Inicia sesion.', detail: error?.message ?? null }, 401);
     }
 
+    // Enriquecer contexto con skills y cv_summary del perfil
+    const enrichedCtx = { ...ctx, skills: userSkills, cv_summary: cvSummary };
+
     const sys =
       'Eres el "Coach IA" de Ómicrom, mentor de carrera para estudiantes y técnicos de ingeniería. ' +
       'Te paso el perfil del usuario en JSON: su Gemelo Digital (4 ejes: ejecución, calidad, trascendencia, fundamento, 0-100), ' +
-      'sus credenciales verificadas, sus habilidades validadas y pendientes, y los cursos disponibles. ' +
-      'Tu tarea: (1) DIAGNÓSTICO breve de fortalezas; (2) TU BRECHA principal (el eje más débil y por qué); ' +
+      'sus credenciales verificadas, sus habilidades validadas y pendientes, los cursos disponibles, ' +
+      'sus SKILLS declaradas y un RESUMEN DE CV (si existe). ' +
+      'Tu tarea: (1) DIAGNÓSTICO breve de fortalezas (basado en ejes Y skills); (2) TU BRECHA principal (el eje más débil, ' +
+      'y qué skills le faltan desarrollar según el CV y las skills declaradas); ' +
       '(3) RECOMENDACIÓN concreta: elige UN curso de "cursos_disponibles" que ataque esa brecha y di por qué; ' +
       '(4) un mensaje motivador de 1 línea. Responde en español neutro-chileno, con esos 4 títulos en MAYÚSCULA, ' +
       'breve (máx ~180 palabras). Si no hay cursos disponibles, sugiere validar un nodo pendiente en el Árbol.';
 
-    const userMsg = 'PERFIL DEL USUARIO (JSON): ' + JSON.stringify(ctx);
+    const userMsg = 'PERFIL DEL USUARIO (JSON): ' + JSON.stringify(enrichedCtx);
 
     const resp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,

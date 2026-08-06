@@ -43,13 +43,29 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const draft: string = (body?.draft ?? '').toString().trim();
+    const userSkills: string[] = Array.isArray(body?.skills) ? body.skills : [];
+    const cvSummary: string = (body?.cv_summary ?? '').toString().trim();
+    const seniority: string = (body?.seniority ?? '').toString().trim();
     if (!draft) return json({ error: 'Escribe un borrador para mejorar.' }, 400);
     if (draft.length > 1200) return json({ error: 'El borrador es muy largo.' }, 400);
 
+    // Contexto de seniority y skills para adaptar el tono
+    const seniorityCtx = seniority
+      ? `El usuario tiene nivel de seniority: ${seniority}. `
+      : '';
+    const skillsCtx = userSkills.length
+      ? `Sus skills son: ${userSkills.join(', ')}. `
+      : '';
+    const cvCtx = cvSummary
+      ? `Resumen CV: ${cvSummary}. `
+      : '';
+
     const sys =
       'Eres el Redactor de Acuerdos de Omicrom. Reescribes el borrador de un usuario para un chat de trabajo ' +
-      'entre quien contrata y quien ejecuta. Objetivo: dejarlo CLARO, PROFESIONAL y CORDIAL, orientado a definir ' +
+      'entre quien contrata y quien ejecuta. ' + seniorityCtx + skillsCtx + cvCtx +
+      'Objetivo: dejarlo CLARO, PROFESIONAL y CORDIAL, orientado a definir ' +
       'bien el acuerdo (que se hara, entregable, plazo o condiciones si el borrador los sugiere). ' +
+      'Adapta la terminología técnica al nivel del usuario. ' +
       'Mantén la MISMA intencion y los datos del borrador; NO inventes compromisos que no estan. ' +
       'Espanol neutro-chileno, breve (1 a 4 frases). Devuelve SOLO el mensaje reescrito, sin comillas ni explicaciones.';
     const user = `BORRADOR DEL USUARIO:\n${draft}\n\nReescríbelo.`;

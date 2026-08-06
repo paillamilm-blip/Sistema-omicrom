@@ -11,7 +11,7 @@ import { oc, OmicronHeader } from '../omicron/OmicronChrome';
 import { openBlackbox, type BlackboxResult } from '../../lib/secureChat';
 interface Contract { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; amount: number; }
 interface Dispute { id: string; reason: string; status: string; created_at: string; resolved_at?: string; appeal_status?: string; appeal_opened_at?: string; appeal_arbiters?: string[]; appeal_resolution?: string; plaintiff_id?: string; defendant_id?: string; }
-interface Candidate { id: string; username: string; node_type: string; pe_points: number; }
+interface Candidate { id: string; username: string; node_type: string; pe_points: number; _overlap?: number; }
 interface Stake { id: string; target_id: string; amount: number; status: string; return_amount: number | null; }
 interface ArbCase { id: string; dispute_id: string; verdict: string | null; dispute: { reason: string; status: string } | null; }
 interface AppealVote { dispute_id: string; arbiter_id: string; verdict: string; created_at: string; }
@@ -79,8 +79,16 @@ export function GobernanzaTab() {
 
   async function openStakeMarket() {
     if (!profile) return;
-    const { data } = await supabase.from('profiles').select('id,username,node_type,pe_points').neq('id', profile.id).order('pe_points', { ascending: true }).limit(12);
-    setCandidates((data as Candidate[]) ?? []);
+    const { data } = await supabase.from('profiles').select('id,username,node_type,pe_points,skills').neq('id', profile.id).order('pe_points', { ascending: true }).limit(20);
+    const raw = (data as (Candidate & { skills?: string[] })[]) ?? [];
+    // Priorizar candidatos cuyo expertise (skills) matchea con el del usuario
+    const mySkills = (profile.skills ?? []).map(s => s.toLowerCase());
+    const sorted = raw.map(c => {
+      const cSkills = (c.skills ?? []).map((s: string) => s.toLowerCase());
+      const overlap = mySkills.filter(s => cSkills.includes(s)).length;
+      return { ...c, _overlap: overlap };
+    }).sort((a, b) => b._overlap - a._overlap).slice(0, 12);
+    setCandidates(sorted);
     setPanel('stake');
   }
 
@@ -469,7 +477,7 @@ export function GobernanzaTab() {
               )}>
                 <div>
                   <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe' }}>@{c.username}</div>
-                  <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>{c.node_type}</div>
+                  <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>{c.node_type}{c._overlap ? ` · ${c._overlap} skills en común` : ''}</div>
                 </div>
                 <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold }}>{c.pe_points} PE</span>
               </button>

@@ -33,6 +33,7 @@ function Bar({ pct, color }: { pct: number; color: string }) {
 
 // Tutor IA: gratis para siempre, sin candado Premium.
 function TutorModal({ lesson, onClose }: { lesson: { title: string; content: string }; onClose: () => void }) {
+  const { profile } = useApp();
   const [msgs, setMsgs] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -46,7 +47,11 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('tutor', {
-        body: { question, lessonTitle: lesson.title, lessonContent: lesson.content, history: msgs },
+        body: {
+          question, lessonTitle: lesson.title, lessonContent: lesson.content, history: msgs,
+          skills: profile?.skills ?? [],
+          cv_summary: profile?.cv_summary ?? '',
+        },
       });
       const answer = error
         ? 'El Tutor IA no está disponible ahora. Avísale a tu equipo que despliegue la función "tutor".'
@@ -143,13 +148,17 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
 
 // Coach IA: gratis para siempre, sin candado Premium.
 function CoachModal({ onClose }: { onClose: () => void }) {
+  const { profile } = useApp();
   const [advice, setAdvice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const run = useCallback(async () => {
     setLoading(true); setAdvice(null);
     try {
-      const { data, error } = await supabase.functions.invoke('coach', { body: {} });
+      const { data, error } = await supabase.functions.invoke('coach', { body: {
+        skills: profile?.skills ?? [],
+        cv_summary: profile?.cv_summary ?? '',
+      } });
       setAdvice(error
         ? 'El Coach IA no está disponible. Avisa a tu equipo que despliegue la función coach.'
         : ((data as { advice?: string; error?: string })?.advice ?? (data as { error?: string })?.error ?? 'Sin respuesta.'));
@@ -158,7 +167,7 @@ function CoachModal({ onClose }: { onClose: () => void }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [profile]);
 
   useEffect(() => { run(); }, [run]);
 
@@ -369,6 +378,47 @@ export function AcademiaTab() {
             />
           ) : (
             <div style={{ position: 'relative' }}>
+              {/* ── Recomendación según skills débiles ── */}
+              {(() => {
+                const weakSkills = (profile?.skills_detail ?? [])
+                  .filter(s => s.pct < 50)
+                  .sort((a, b) => a.pct - b.pct)
+                  .slice(0, 3);
+                if (weakSkills.length === 0) return null;
+                const weakNames = weakSkills.map(s => s.name.toLowerCase());
+                const recommended = courses.filter(c => {
+                  const node = c.node_id ? nodes.get(c.node_id) : null;
+                  const tags = [c.title, c.description, node?.title ?? ''].join(' ').toLowerCase();
+                  return weakNames.some(w => tags.includes(w)) && prog.get(c.id)?.status !== 'COMPLETED';
+                }).slice(0, 2);
+                if (recommended.length === 0) return null;
+                return (
+                  <div style={{
+                    borderRadius: 14, padding: 14, marginBottom: 14,
+                    background: `linear-gradient(135deg, ${C.gold}14, ${C.gold}08)`,
+                    border: `1px solid ${C.gold}44`,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <Target size={15} style={{ color: C.gold }} />
+                      <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12, color: C.gold }}>RECOMENDADO PARA TI</span>
+                    </div>
+                    <div style={{ fontFamily: FONT.body, fontSize: 11.5, color: C.cyanDim, lineHeight: 1.4, marginBottom: 8 }}>
+                      Según tus skills débiles ({weakSkills.map(s => s.name).join(', ')}):
+                    </div>
+                    {recommended.map(c => (
+                      <button key={c.id} onClick={() => openCourse(c)} style={{
+                        display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left',
+                        padding: '8px 10px', borderRadius: 10, cursor: 'pointer', marginBottom: 4,
+                        background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.gold}33`,
+                      }}>
+                        <span style={{ fontSize: 18 }}>{c.cover_emoji}</span>
+                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12, color: '#eaf4ff' }}>{c.title}</span>
+                        <Sparkles size={12} style={{ color: C.gold, marginLeft: 'auto' }} />
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
               <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyan, marginBottom: 12 }}>◆ NÚCLEO DE APRENDIZAJE</div>
 
               {/* Sistema Solar del Aprendizaje · mismo Núcleo de partículas de toda la app (Ómicron unificado) */}
