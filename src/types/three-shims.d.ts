@@ -34,6 +34,7 @@ declare module 'three' {
     constructor(x?: number, y?: number, z?: number);
     x: number; y: number; z: number;
     set(x: number, y: number, z: number): this;
+    setScalar(s: number): this;
     copy(v: Vector3): this;
     add(v: Vector3): this;
     multiplyScalar(s: number): this;
