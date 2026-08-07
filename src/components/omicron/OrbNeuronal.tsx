@@ -273,7 +273,8 @@ export default function OrbNeuronal({
         blending: THREE.AdditiveBlending,
         depthWrite: false,
         opacity: 0.9,
-      } as THREE.MeshBasicMaterialParameters);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
       const spriteGeom = new THREE.SphereGeometry(0.06, 4, 4); // tiny plane-like
       // Use a plane geometry for billboard
       const planeGeom = new THREE.BufferGeometry();
