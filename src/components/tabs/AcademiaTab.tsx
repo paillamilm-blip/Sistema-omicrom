@@ -46,16 +46,12 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
     setMsgs(base);
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('tutor', {
-        body: {
-          question, lessonTitle: lesson.title, lessonContent: lesson.content, history: msgs,
-          skills: profile?.skills ?? [],
-          cv_summary: profile?.cv_summary ?? '',
-        },
-      });
-      const answer = error
-        ? 'El Tutor IA no está disponible ahora. Avísale a tu equipo que despliegue la función "tutor".'
-        : (data?.answer ?? data?.error ?? 'Sin respuesta.');
+      const { askTutor } = await import('../../lib/oraculo');
+      const result = await askTutor(
+        `[Lección: ${lesson.title}] ${question}`,
+        { skills: profile?.skills ?? [], cv_summary: profile?.cv_summary ?? '' },
+      );
+      const answer = result.answer ?? result.error ?? 'Sin respuesta.';
       setMsgs([...base, { role: 'model', text: answer }]);
     } catch {
       setMsgs([...base, { role: 'model', text: 'Error de conexión con el Tutor.' }]);
@@ -155,13 +151,12 @@ function CoachModal({ onClose }: { onClose: () => void }) {
   const run = useCallback(async () => {
     setLoading(true); setAdvice(null);
     try {
-      const { data, error } = await supabase.functions.invoke('coach', { body: {
+      const { askCoach } = await import('../../lib/oraculo');
+      const result = await askCoach({
         skills: profile?.skills ?? [],
         cv_summary: profile?.cv_summary ?? '',
-      } });
-      setAdvice(error
-        ? 'El Coach IA no está disponible. Avisa a tu equipo que despliegue la función coach.'
-        : ((data as { advice?: string; error?: string })?.advice ?? (data as { error?: string })?.error ?? 'Sin respuesta.'));
+      });
+      setAdvice(result.advice ?? result.error ?? 'Sin respuesta del Coach.');
     } catch {
       setAdvice('Error de conexión con el Coach IA.');
     } finally {
