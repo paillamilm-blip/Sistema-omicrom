@@ -80,59 +80,78 @@ export interface CoachContext {
   pe?: number;
 }
 
+// ── Cliente OpenRouter directo (sin depender de Edge Functions) ────────
+const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
+const OR_MODEL = 'google/gemma-4-31b-it:free';
+const OR_FALLBACK = 'google/gemma-4-26b-a4b-it:free';
+const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+async function callOpenRouter(messages: { role: string; content: string }[]): Promise<string> {
+  if (!OR_KEY) throw new Error('Falta VITE_OPENROUTER_KEY');
+  for (const model of [OR_MODEL, OR_FALLBACK]) {
+    try {
+      const resp = await fetch(OR_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OR_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://sistema-omicrom.vercel.app',
+          'X-Title': 'Sistema Omicron',
+        },
+        body: JSON.stringify({ model, messages, max_tokens: 1024, temperature: 0.7 }),
+      });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const text = data?.choices?.[0]?.message?.content ?? '';
+      if (text) return text.trim();
+    } catch { continue; }
+  }
+  throw new Error('OpenRouter no respondió');
+}
+
 /**
- * Pregunta libre a la IA (Edge Function `tutor`, respaldada por Gemini).
- * Ómicron la usa como cerebro conversacional general. Degrada con gracia.
+ * Pregunta libre a la IA — llama DIRECTO a OpenRouter desde el browser.
+ * Ómicron la usa como cerebro conversacional general.
  */
 export async function askTutor(question: string, ctx?: CoachContext): Promise<TutorResult> {
   try {
-    const { data, error } = await supabase.functions.invoke('tutor', {
-      body: {
-        question,
-        skills: ctx?.skills ?? [],
-        cv_summary: ctx?.cv_summary ?? '',
-      },
-    });
-    if (error) {
-      return { error: 'No pude consultar al Tutor IA. ¿Está desplegada la función "tutor" y hay sesión activa?' };
-    }
-    if (data && (data as { error?: string }).error) {
-      return { error: (data as { error: string }).error };
-    }
-    const answer = (data as { answer?: string })?.answer;
-    return { answer: answer || 'No obtuve respuesta. Reformulá tu pregunta.' };
+    const skillCtx = (ctx?.skills ?? []).length ? `\nSkills del usuario: ${ctx!.skills!.join(', ')}.` : '';
+    const cvCtx = ctx?.cv_summary ? `\nResumen CV: ${ctx.cv_summary}` : '';
+    const sys = 'Eres el Tutor IA de Ómicrom, cercano y paciente. Respondes dudas en español neutro-chileno, breve (máx 160 palabras). Si no sabes, dilo.' + skillCtx + cvCtx;
+    const answer = await callOpenRouter([
+      { role: 'system', content: sys },
+      { role: 'user', content: question },
+    ]);
+    return { answer };
   } catch {
-    return { error: 'Error inesperado al consultar al Tutor IA.' };
+    return { error: 'No pude consultar la IA. Verifica tu conexión.' };
   }
 }
 
 /**
- * Consulta al Coach IA (Edge Function `coach`, respaldada por Gemini).
- * Degrada con gracia si la función no está desplegada o falla.
+ * Consulta al Coach IA — llama DIRECTO a OpenRouter desde el browser.
  */
 export async function askCoach(ctx?: CoachContext): Promise<CoachResult> {
   try {
-    const { data, error } = await supabase.functions.invoke('coach', {
-      body: {
-        skills: ctx?.skills ?? [],
-        cv_summary: ctx?.cv_summary ?? '',
-        execution: ctx?.execution,
-        quality: ctx?.quality,
-        transcendence: ctx?.transcendence,
-        foundation: ctx?.foundation,
-        reputation: ctx?.reputation,
-        pe: ctx?.pe,
-      },
+    const profile = JSON.stringify({
+      skills: ctx?.skills ?? [],
+      cv_summary: ctx?.cv_summary ?? '',
+      execution: ctx?.execution ?? 0,
+      quality: ctx?.quality ?? 0,
+      transcendence: ctx?.transcendence ?? 0,
+      foundation: ctx?.foundation ?? 0,
+      reputation: ctx?.reputation ?? 0,
+      pe: ctx?.pe ?? 0,
     });
-    if (error) {
-      return { error: 'No pude consultar al Coach IA. ¿Está desplegada la función "coach" y hay sesión activa?' };
-    }
-    if (data && (data as { error?: string }).error) {
-      return { error: (data as { error: string }).error };
-    }
-    const advice = (data as { advice?: string })?.advice;
-    return { advice: advice || 'El Coach no devolvió respuesta. Inténtalo de nuevo.' };
+    const sys = 'Eres el Coach IA de Ómicrom, mentor de carrera. Te paso el perfil del usuario (Gemelo Digital con 4 ejes 0-100). ' +
+      'Tu tarea: (1) DIAGNÓSTICO breve de fortalezas; (2) BRECHA principal (eje más débil); ' +
+      '(3) RECOMENDACIÓN concreta; (4) mensaje motivador. Español neutro-chileno, máx 180 palabras.';
+    const advice = await callOpenRouter([
+      { role: 'system', content: sys },
+      { role: 'user', content: 'PERFIL: ' + profile },
+    ]);
+    return { advice };
   } catch {
-    return { error: 'Error inesperado al consultar al Coach IA.' };
+    return { error: 'No pude consultar la IA. Verifica tu conexión.' };
   }
 }
