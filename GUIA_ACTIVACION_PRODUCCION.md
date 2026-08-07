@@ -43,7 +43,8 @@
 | `STRIPE_SECRET_KEY` | `sk_test_...` o `sk_live_...` | Si |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...` | Si |
 | `PUBLIC_SITE_URL` | URL de tu app | Si |
-| `GEMINI_API_KEY` | clave de Google Gemini | Ya configurada |
+| `GEMINI_API_KEY` | clave de Google Gemini | Reemplazada por OPENROUTER_KEY |
+| `OPENROUTER_KEY` | clave de OpenRouter (gratis) | Si (para todas las funciones IA) |
 
 **URL del webhook de Stripe (pegar en Stripe > Webhooks > Add endpoint):**
 ```
