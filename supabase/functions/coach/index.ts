@@ -34,18 +34,21 @@ Deno.serve(async (req) => {
     const creditBlock = await checkAndConsumeCredit(_admin, authHeader, 'coach');
     if (creditBlock) return creditBlock;
 
-    const userClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
-
     const body = await req.json().catch(() => ({}));
     const userSkills: string[] = Array.isArray(body?.skills) ? body.skills : [];
     const cvSummary: string = (body?.cv_summary ?? '').toString().trim();
 
-    const { data: ctx, error } = await userClient.rpc('get_coach_context');
-    if (error || !ctx) {
-      return json({ error: 'No pude leer tu perfil. Inicia sesion.', detail: error?.message ?? null }, 401);
-    }
-
-    const enrichedCtx = { ...ctx, skills: userSkills, cv_summary: cvSummary };
+    // Usar datos directamente del body (enviados por el frontend) en vez de depender de la RPC
+    const enrichedCtx = {
+      skills: userSkills,
+      cv_summary: cvSummary,
+      execution: body?.execution ?? 0,
+      quality: body?.quality ?? 0,
+      transcendence: body?.transcendence ?? 0,
+      foundation: body?.foundation ?? 0,
+      reputation: body?.reputation ?? 0,
+      pe: body?.pe ?? 0,
+    };
 
     const sys =
       'Eres el "Coach IA" de Ómicrom, mentor de carrera para estudiantes y técnicos de ingeniería. ' +
@@ -63,7 +66,7 @@ Deno.serve(async (req) => {
       { role: 'user', content: 'PERFIL DEL USUARIO (JSON): ' + JSON.stringify(enrichedCtx) },
     ]);
 
-    return json({ advice: advice || 'No pude generar tu diagnóstico. Intenta de nuevo.', context: ctx });
+    return json({ advice: advice || 'No pude generar tu diagnóstico. Intenta de nuevo.' });
   } catch (e) {
     return json({ error: 'Error inesperado en el Coach IA.', detail: String(e) }, 500);
   }
