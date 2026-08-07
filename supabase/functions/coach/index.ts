@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       { role: 'user', content: 'PERFIL DEL USUARIO (JSON): ' + JSON.stringify(enrichedCtx) },
     ]);
 
-    return json({ advice: advice || 'No pude generar tu diagnóstico. Intenta de nuevo.', context: ctx });
+    return json({ advice: advice || 'No pude generar tu diagnóstico. Intenta de nuevo.' });
   } catch (e) {
     return json({ error: 'Error inesperado en el Coach IA.', detail: String(e) }, 500);
   }
