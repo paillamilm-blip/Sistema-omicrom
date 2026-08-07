@@ -515,6 +515,7 @@ export function OrbShell() {
 
   // ── GAP 3 FIX: Proactive Engine — Gemelo te empuja sin pedirlo ─────
   useEffect(() => {
+    if (!sbProfile) return;
     const timer = setTimeout(() => {
       const context = {
         currentHour: new Date().getHours(),
@@ -523,7 +524,7 @@ export function OrbShell() {
         pe: sbProfile?.pe_points ?? 0,
         onlineCount: 0,
         lastOnlineCount: 0,
-        daysSinceLastLogin: 0,
+        daysSinceLastLogin: 1, // Siempre al menos 1 para que detecte
         currentTab: 'perfil',
         userName: sbProfile?.display_name || sbProfile?.username || 'operador',
       };
@@ -533,12 +534,26 @@ export function OrbShell() {
         setResponseMsg(event.message);
         speak(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
         if (responseTimer.current) clearTimeout(responseTimer.current);
-        responseTimer.current = setTimeout(() => setResponseMsg(null), 10000);
+        responseTimer.current = setTimeout(() => setResponseMsg(null), 12000);
+      } else {
+        // Fallback: siempre habla — usa computeSteps para dar un consejo
+        const steps = computeSteps(sbProfile, gemeloDigital);
+        const name = sbProfile?.display_name || sbProfile?.username || 'Nodo';
+        const hour = new Date().getHours();
+        const saludo = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+        const top = steps[0];
+        const msg = top
+          ? `${saludo}, ${name}. ${top.why.slice(0, 150)}`
+          : `${saludo}, ${name}. Tu Gemelo Digital está sincronizado. Explorá el orbe para ver tus nodos de mejora.`;
+        setResponseMsg(msg);
+        speak(msg.length > 200 ? msg.slice(0, 200) : msg);
+        if (responseTimer.current) clearTimeout(responseTimer.current);
+        responseTimer.current = setTimeout(() => setResponseMsg(null), 12000);
       }
-    }, 2000); // 2s delay to let orbe appear first
+    }, 1500); // 1.5s para que el orbe aparezca primero
 
     return () => clearTimeout(timer);
-  }, [sbProfile]);
+  }, [sbProfile, gemeloDigital]);
 
   // Fix 2: rAF instead of setInterval — no unnecessary re-renders on idle
   useEffect(() => {
@@ -671,104 +686,154 @@ export function OrbShell() {
       )}
 
 
-      {/* ── PREVIEW PANEL (floating card when node selected) ─────────── */}
-      {state === 'preview' && selectedNode && (
-        <div
-          onClick={handlePreviewClick}
-          role="dialog"
-          aria-label={`Vista previa: ${selectedNode.label}. ${selectedNode.nextStep || 'Toca para abrir'}`}
-          aria-modal="false"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '85%',
-            maxWidth: 360,
-            background: C.surface,
-            border: `1px solid ${C.line}`,
-            borderRadius: 20,
-            padding: '20px 24px',
-            cursor: 'pointer',
-            zIndex: 10,
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 30px ${C.cyanFaint}`,
-            animation: 'orbPreviewEnter 0.25s cubic-bezier(0.23,1,0.32,1) both',
-          }}
-        >
-          {/* Node label */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <span style={{ fontSize: 24 }}>{selectedNode.icon}</span>
-            <div>
-              <h3 style={{
-                margin: 0,
-                fontFamily: FONT.display,
-                fontSize: 18,
-                fontWeight: 700,
-                color: C.ink,
-                letterSpacing: -0.3,
-              }}>
-                {selectedNode.label}
-              </h3>
-              <p style={{
-                margin: '2px 0 0',
-                fontFamily: FONT.mono,
-                fontSize: 10,
-                color: C.cyan,
-                letterSpacing: 1.5,
-                textTransform: 'uppercase',
-              }}>
-                {selectedNode.nextStep || 'Toca para abrir'}
-              </p>
-            </div>
-          </div>
+      {/* ── PREVIEW PANEL (swipeable, con mejoras) ─────────────────── */}
+      {state === 'preview' && selectedNode && (() => {
+        // ── Swipe: encontrar nodos adyacentes para navegar
+        const hubNodes = orbNodesWithLevels.filter((n: OrbNode) =>
+          ['inicio','academia','empleos','mercado','mensajes','gobernanza','habilidades','billetera','boveda'].includes(n.id)
+        );
+        const currentIdx = hubNodes.findIndex((n: OrbNode) => n.id === selectedNode.id);
+        const canSwipe = currentIdx >= 0;
 
-          {/* Fix 1: Static preview placeholder — no tab render, no queries */}
+        // ── Guidance: cómo mejorar en este nodo
+        const guidance = nodeGuidance(selectedNode.tab, sbProfile, gemeloDigital);
+
+        // ── Sinergias con este nodo
+        const nodeSkills = (sbProfile?.skills ?? []) as string[];
+        const SYNERGY_MAP: Record<string, string[]> = {
+          habilidades: ['react', 'typescript', 'node', 'python', 'java', 'docker'],
+          academia: ['machine learning', 'data', 'analytics', 'deep learning'],
+          empleos: ['liderazgo', 'gestión', 'scrum', 'agile'],
+          market: ['diseño', 'ux', 'figma', 'freelance'],
+        };
+        const relatedSkills = (SYNERGY_MAP[selectedNode.id] ?? [])
+          .filter(s => nodeSkills.some(sk => sk.toLowerCase().includes(s)));
+
+        return (
           <div
-            role="img"
-            aria-label={`Vista previa de ${selectedNode.label}`}
+            role="dialog"
+            aria-label={`Vista previa: ${selectedNode.label}. ${guidance}`}
+            aria-modal="false"
+            onTouchStart={(e) => { if (canSwipe) (e.currentTarget as any)._touchX = e.touches[0].clientX; }}
+            onTouchEnd={(e) => {
+              if (!canSwipe) return;
+              const startX = (e.currentTarget as any)._touchX;
+              if (startX === undefined) return;
+              const diff = e.changedTouches[0].clientX - startX;
+              if (Math.abs(diff) > 60) {
+                const next = diff < 0
+                  ? hubNodes[(currentIdx + 1) % hubNodes.length]
+                  : hubNodes[(currentIdx - 1 + hubNodes.length) % hubNodes.length];
+                setSelectedNode(next);
+                setActiveTab(next.tab);
+              }
+            }}
             style={{
-              height: 120,
-              borderRadius: 12,
-              background: `linear-gradient(135deg, ${C.bg} 0%, rgba(92,200,255,0.06) 100%)`,
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '88%',
+              maxWidth: 380,
+              background: C.surface,
               border: `1px solid ${C.line}`,
-              overflow: 'hidden',
-              position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
+              borderRadius: 22,
+              padding: '22px 22px 18px',
+              zIndex: 10,
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 30px ${C.cyanFaint}`,
+              animation: 'orbPreviewEnter 0.25s cubic-bezier(0.23,1,0.32,1) both',
+              touchAction: 'pan-y',
             }}
           >
-            <span style={{ fontSize: 32, opacity: 0.7 }}>{selectedNode.icon}</span>
-            <span style={{
-              fontFamily: FONT.mono,
-              fontSize: 9,
-              letterSpacing: 1.5,
-              color: C.cyanDim,
-              textTransform: 'uppercase',
-            }}>
-              Toca para abrir →
-            </span>
-            {selectedNode.level !== undefined && selectedNode.level > 0 && (
-              <div style={{
-                position: 'absolute',
-                bottom: 8,
-                right: 10,
-                fontFamily: FONT.mono,
-                fontSize: 10,
-                color: C.cyan,
-                fontWeight: 700,
-              }}>
-                {Math.round(selectedNode.level * 100)}%
+            {/* Swipe indicator (dots) */}
+            {canSwipe && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 5, marginBottom: 14 }}>
+                {hubNodes.map((n: OrbNode, i: number) => (
+                  <div key={n.id} style={{
+                    width: i === currentIdx ? 16 : 5, height: 5, borderRadius: 3,
+                    background: i === currentIdx ? C.cyan : `${C.cyan}33`,
+                    transition: 'width 0.2s ease, background 0.2s ease',
+                  }} />
+                ))}
               </div>
             )}
-          </div>
 
-        </div>
-      )}
+            {/* Node header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <span style={{ fontSize: 26 }}>{selectedNode.icon}</span>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, fontFamily: FONT.display, fontSize: 18, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
+                  {selectedNode.label}
+                </h3>
+                {selectedNode.level !== undefined && selectedNode.level > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                    <div style={{ flex: 1, height: 4, borderRadius: 2, background: `${C.cyan}22` }}>
+                      <div style={{ height: '100%', width: `${Math.round(selectedNode.level * 100)}%`, borderRadius: 2, background: C.cyan, boxShadow: `0 0 6px ${C.cyan}66` }} />
+                    </div>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyan, fontWeight: 700 }}>
+                      {Math.round(selectedNode.level * 100)}%
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* CÓMO MEJORAR — consejo concreto */}
+            <div style={{
+              padding: '12px 14px', borderRadius: 14, marginBottom: 12,
+              background: `linear-gradient(135deg, ${C.cyanGhost}, ${C.glass})`,
+              border: `1px solid ${C.cyanFaint}`,
+            }}>
+              <div style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 6 }}>
+                ⬡ Cómo mejorar
+              </div>
+              <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 12.5, lineHeight: 1.5, color: C.ink }}>
+                {guidance}
+              </p>
+            </div>
+
+            {/* Sinergias activas */}
+            {relatedSkills.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: C.gold, textTransform: 'uppercase', width: '100%', marginBottom: 2 }}>
+                  ⚡ Sinergias
+                </span>
+                {relatedSkills.map(s => (
+                  <span key={s} style={{
+                    padding: '3px 8px', borderRadius: 999, fontFamily: FONT.mono, fontSize: 9,
+                    background: `${C.gold}14`, border: `1px solid ${C.gold}44`, color: C.ink,
+                  }}>
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* CTA: abrir fullscreen */}
+            <button
+              onClick={handlePreviewClick}
+              style={{
+                width: '100%', padding: '12px 0', borderRadius: 14, border: 'none', cursor: 'pointer',
+                background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`,
+                color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+                boxShadow: `0 8px 24px rgba(92,200,255,0.3)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              Abrir {selectedNode.label} →
+            </button>
+
+            {/* Swipe hint */}
+            {canSwipe && (
+              <p style={{ textAlign: 'center', margin: '10px 0 0', fontFamily: FONT.mono, fontSize: 8, color: C.mut, letterSpacing: 1 }}>
+                ← DESLIZA PARA CAMBIAR DE NODO →
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
 
       {/* ── FULLSCREEN VIEW (tab expanded) ───────────────────────────── */}
