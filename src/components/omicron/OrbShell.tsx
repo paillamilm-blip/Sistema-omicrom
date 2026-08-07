@@ -343,7 +343,7 @@ export function OrbShell() {
   // ── Handle text input — GAP 1 FIX: todos los intents del Oráculo ────
   const handleTextInput = useCallback(async (text: string) => {
     // Limpiar respuesta anterior para mostrar que estamos procesando
-    setResponseMsg('Pensando…');
+    setResponseMsg('Un momento…');
 
     const intent = interpret(text);
 
@@ -380,21 +380,21 @@ export function OrbShell() {
     }
 
     if (intent.kind === 'coach') {
-      flash('Consultando al Coach IA con tu Gemelo…', 20000);
-      speak('Déjame analizar tu Gemelo Digital.');
+      flash('Dame un momento, estoy analizando tu perfil…');
+      speak('Déjame ver tu Gemelo Digital.');
       const r = await askCoach(coachCtx);
-      const msg = r.advice || r.error || 'Sin respuesta del Coach.';
-      flash(msg, 14000);
+      const msg = r.advice || r.error || 'No pude conectarme. Intenta de nuevo.';
+      flash(msg);
       speak(msg.length > 320 ? msg.slice(0, 320) : msg);
       return;
     }
 
     if (intent.kind === 'fact') {
       let msg = '';
-      if (intent.topic === 'reputacion') msg = `Tu reputación es ${Math.round(sbProfile?.reputation_score ?? 0)} sobre 100.`;
-      else if (intent.topic === 'tokens') msg = `Tienes ${(sbProfile?.token_balance ?? 0).toLocaleString()} tokens.`;
-      else if (intent.topic === 'pe') msg = `Tienes ${(sbProfile?.pe_points ?? 0).toLocaleString()} puntos de experiencia.`;
-      else msg = 'Podés decirme: "abre academia", "dame un consejo", "cuánta reputación tengo", o toca un nodo del orbe.';
+      if (intent.topic === 'reputacion') msg = `Tu reputación va en ${Math.round(sbProfile?.reputation_score ?? 0)} de 100. ${(sbProfile?.reputation_score ?? 0) >= 50 ? '¡Vas bien!' : 'Validando skills la subimos juntos.'}`;
+      else if (intent.topic === 'tokens') msg = `Tienes ${(sbProfile?.token_balance ?? 0).toLocaleString()} tokens en tu billetera.`;
+      else if (intent.topic === 'pe') msg = `Llevas ${(sbProfile?.pe_points ?? 0).toLocaleString()} puntos de experiencia. Cada nodo que valides suma más.`;
+      else msg = 'Puedes decirme cosas como: "abre academia", "dame un consejo", "cuánta reputación tengo", o simplemente tocar un nodo del orbe. Estoy acá para lo que necesites.';
       flash(msg);
       speak(msg);
       return;
@@ -416,15 +416,15 @@ export function OrbShell() {
     }
 
     // unknown — consultar al Tutor IA (igual que OmicronAssistant)
-    flash('Consultando al Tutor IA…', 15000);
+    flash('Déjame pensar…');
     try {
       const { askTutor } = await import('../../lib/oraculo');
       const t = await askTutor(text, coachCtx);
-      const msg = t.answer || t.error || 'No pude responder. Probá de nuevo.';
-      flash(msg, 12000);
+      const msg = t.answer || t.error || 'No pude responder. Probá con otra pregunta.';
+      flash(msg);
       speak(msg.length > 320 ? msg.slice(0, 320) : msg);
     } catch {
-      flash('Error al consultar la IA. Probá de nuevo.', 6000);
+      flash('Tuve un problema de conexión. Intenta de nuevo.');
     }
   }, [setActiveTab, sbProfile, orbNodesWithLevels]);
 
@@ -545,13 +545,13 @@ export function OrbShell() {
       } else {
         // Fallback: siempre habla — usa computeSteps para dar un consejo
         const steps = computeSteps(sbProfile, gemeloDigital);
-        const name = sbProfile?.display_name || sbProfile?.username || 'Nodo';
+        const name = sbProfile?.display_name || sbProfile?.full_name || sbProfile?.username || 'amigo';
         const hour = new Date().getHours();
-        const saludo = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+        const saludo = hour < 12 ? 'Hey, buen día' : hour < 19 ? 'Hola' : 'Buenas noches';
         const top = steps[0];
         const msg = top
-          ? `${saludo}, ${name}. ${top.why.slice(0, 150)}`
-          : `${saludo}, ${name}. Tu Gemelo Digital está sincronizado. Explorá el orbe para ver tus nodos de mejora.`;
+          ? `${saludo}, ${name}. ${top.why.slice(0, 140)} ¿Vamos con eso?`
+          : `${saludo}, ${name}. Tu Gemelo está al día. Toca un nodo o pregúntame lo que quieras — estoy acá para ayudarte.`;
         setResponseMsg(msg);
         speak(msg.length > 200 ? msg.slice(0, 200) : msg);
       }
