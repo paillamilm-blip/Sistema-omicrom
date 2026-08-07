@@ -113,6 +113,17 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
   }
 
   steps.sort((a, b) => b.score - a.score);
+
+  // Garantía: SIEMPRE al menos un paso de mejora
+  if (steps.length === 0) {
+    steps.push({
+      id: 'explore', score: 10, tab: 'maxskill', accent: C.cyan,
+      title: 'Explorá tu siguiente nodo',
+      actionLabel: 'Ir a Habilidades',
+      why: 'Tu Gemelo Digital siempre puede mejorar. Validá una habilidad para subir tu Ejecución y desbloquear oportunidades.',
+    });
+  }
+
   return steps.map(({ score: _score, ...s }) => s);
 }
 
@@ -154,7 +165,11 @@ export function nodeGuidance(tab: TabId, profile: Profile | null, gemelo: Gemelo
       return 'Participá como árbitro o votá propuestas: la gobernanza refuerza tu reputación en la red.';
     case 'chat':
       return 'Coordiná tus contratos acá. Cada acuerdo queda protegido en la caja negra.';
+    case 'perfil':
+      return skills.length === 0
+        ? 'Subí tu CV para activar tu Gemelo Digital. Es la base de todo: habilidades, ejes y reputación.'
+        : `Tu Fundamento está en ${gemelo ? r(gemelo.foundation) : '?'}. Convalidá más credenciales para fortalecer tu base.`;
     default:
-      return '';
+      return 'Explorá este nodo para descubrir cómo mejorar tu Gemelo Digital.';
   }
 }

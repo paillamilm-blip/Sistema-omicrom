@@ -21,7 +21,7 @@ const AXIS_META = [
 ] as const;
 
 export function PerfilTab() {
-  const { profile } = useApp();
+  const { profile, setActiveTab } = useApp();
   const gemelo = useGemeloDigital();
 
   const skillsDetail = useMemo(() => {
@@ -288,6 +288,31 @@ export function PerfilTab() {
         <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.ink, letterSpacing: 0.5 }}>Reputación Ómicron</span>
         <span style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 800, color: C.cyan }}>{Math.round(reputation)}</span>
         <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>/100</span>
+      </motion.div>
+
+      {/* ═══ ACCESOS DIRECTOS ═══ */}
+      <motion.div
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.75 }}
+        style={{ display: 'flex', gap: 8, padding: '0 24px', width: '100%', maxWidth: 360, marginBottom: 14 }}
+      >
+        <button onClick={() => setActiveTab('maxskill')} style={{
+          flex: 1, padding: '10px 0', borderRadius: 12, cursor: 'pointer',
+          background: C.glass, border: `1px solid ${C.cyanFaint}`, color: C.cyan,
+          fontFamily: FONT.mono, fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}>
+          <Zap size={12} /> Habilidades
+        </button>
+        <button onClick={() => setActiveTab('academia')} style={{
+          flex: 1, padding: '10px 0', borderRadius: 12, cursor: 'pointer',
+          background: C.glass, border: `1px solid ${C.purpleFaint}`, color: C.purple,
+          fontFamily: FONT.mono, fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}>
+          <TrendingUp size={12} /> Academia
+        </button>
       </motion.div>
     </div>
   );
