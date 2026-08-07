@@ -230,7 +230,7 @@ export default function OrbNeuronal({
 
       const mesh = new THREE.Mesh(geom, mat);
       mesh.position.copy(pos);
-      (mesh as any).userData = { nodeIndex: i };
+      (mesh as THREE.Mesh & { userData: Record<string, unknown> }).userData = { nodeIndex: i };
       orbGroup.add(mesh);
 
       // Outer glow (smaller for knowledge nodes)
@@ -273,7 +273,7 @@ export default function OrbNeuronal({
         blending: THREE.AdditiveBlending,
         depthWrite: false,
         opacity: 0.9,
-      } as any);
+      } as THREE.MeshBasicMaterialParameters);
       const spriteGeom = new THREE.SphereGeometry(0.06, 4, 4); // tiny plane-like
       // Use a plane geometry for billboard
       const planeGeom = new THREE.BufferGeometry();
@@ -365,6 +365,7 @@ export default function OrbNeuronal({
       depthWrite: false,
       vertexColors: true,
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (dataMat as any).map = glowTexture;
     const dataPoints = new THREE.Points(dataGeom, dataMat);
     orbGroup.add(dataPoints);
@@ -397,6 +398,7 @@ export default function OrbNeuronal({
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (particleMat as any).map = glowTexture;
     const particles = new THREE.Points(particleGeom, particleMat);
     orbGroup.add(particles);
@@ -424,11 +426,13 @@ export default function OrbNeuronal({
       pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       raycaster.setFromCamera(pointer as any, camera);
       const meshes = nodeDatas.map(n => n.mesh);
       const intersects = raycaster.intersectObjects(meshes);
 
       if (intersects.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const hit = intersects[0].object as any;
         const nodeIndex = hit.userData?.nodeIndex;
         if (nodeIndex !== undefined && onNodeTapRef.current) {
@@ -641,7 +645,7 @@ export default function OrbNeuronal({
       // ── Update connections (pulse when Jarvis speaks) ──────────────────
       const cCol = connGeom.attributes.color as THREE.Float32BufferAttribute;
       for (let c = 0; c < connPairs.length; c++) {
-        const [a, b] = connPairs[c];
+        const [_a, _b] = connPairs[c];
         // Pulse traveling along connections
         const travel = (elapsed * 2 + c * 0.5) % 3.0;
         const pulse = Math.max(0, 1 - Math.abs(travel - 1.5)) * (0.3 + jarvisIntensity * 0.7);
