@@ -1100,8 +1100,6 @@ export function OrbShell() {
           </button>
         </form>
       </div>
-        </div>
-      )}
 
       {/* ── CSS Animations ──────────────────────────────────────────── */}
       <style>{`
