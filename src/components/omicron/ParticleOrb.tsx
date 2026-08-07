@@ -244,10 +244,10 @@ export default function ParticleOrb({
         vec3 dormant = uBaseColor * 0.3 + fresnel * uBaseColor * 0.2;
         float dormantAlpha = 0.25 + fresnel * 0.2;
         float pulse = sin(uTime * 3.0) * 0.15 + 0.85;
-        vec3 active = uGlowColor * pulse * (0.8 + fresnel * 0.5);
-        float activeAlpha = 0.6 + fresnel * 0.4;
-        vec3 color = mix(dormant, active, uActivation);
-        float alpha = mix(dormantAlpha, activeAlpha, uActivation);
+        vec3 lit = uGlowColor * pulse * (0.8 + fresnel * 0.5);
+        float litAlpha = 0.6 + fresnel * 0.4;
+        vec3 color = mix(dormant, lit, uActivation);
+        float alpha = mix(dormantAlpha, litAlpha, uActivation);
         gl_FragColor = vec4(color, alpha);
       }
     `;
