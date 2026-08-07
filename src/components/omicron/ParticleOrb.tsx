@@ -479,7 +479,7 @@ export default function ParticleOrb({
         // Capsules float slightly (organic breath on sphere surface)
         const breathOffset = Math.sin(elapsed * 0.7 + cap.index * 0.8) * 0.02;
         const dir = cap.basePos.clone().normalize();
-        cap.mesh.position.copy(cap.basePos).addScaledVector(dir, breathOffset);
+        cap.mesh.position.copy(cap.basePos).add(dir.multiplyScalar(breathOffset));
         cap.glowMesh.position.copy(cap.mesh.position);
       }
 
