@@ -171,8 +171,8 @@ describe('nodeGuidance — mensajes por tab', () => {
     expect(msg).toContain('400'); // faltan 500 - 100 = 400
   });
 
-  it('tab desconocido devuelve string vacío (no crashea)', () => {
+  it('tab desconocido devuelve string genérico (no crashea)', () => {
     // @ts-expect-error - probamos un tab inválido a propósito
-    expect(nodeGuidance('inexistente', makeProfile(), null)).toBe('');
+    expect(nodeGuidance('inexistente', makeProfile(), null)).toBe('Explorá este nodo para descubrir cómo mejorar tu Gemelo Digital.');
   });
 });
