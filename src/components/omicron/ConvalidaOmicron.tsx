@@ -11,6 +11,7 @@ import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles, 
 import { useGemeloActivation } from '../../hooks/useGemeloActivation';
 import { PerfilSkillVisual } from '../perfil/PerfilSkillVisual';
 import { C, FONT, RADIUS } from '../../theme';
+import { computeSteps } from '../../lib/omicronCoach';
 import ParticleOrb from './ParticleOrb';
 
 type Kind = 'cv' | 'title' | 'year' | 'vault';
@@ -218,13 +219,12 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
             ⬡ Tu ruta de mejora
           </div>
           {(() => {
-            const { computeSteps } = require('../../lib/omicronCoach');
             const gemelo = {
               execution: dossier.axes?.exec ?? 0, quality: dossier.axes?.qual ?? 0,
               transcendence: dossier.axes?.trans ?? 0, foundation: dossier.axes?.fund ?? 0,
               overallReputation: rep,
             };
-            const fakeProfile = { skills: dossier.labels ?? [], pe_points: 0, traditional_score: 30 };
+            const fakeProfile = { skills: dossier.labels ?? [], pe_points: 0, traditional_score: 30 } as any;
             const steps = computeSteps(fakeProfile, gemelo).slice(0, 3);
             return steps.map((s: { id: string; title: string; why: string; accent: string; actionLabel: string }) => (
               <div key={s.id} style={{
