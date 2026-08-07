@@ -1,23 +1,14 @@
 // supabase/functions/simulador-universal/index.ts
 // ═══════════════════════════════════════════════════════════════════════
 // SIMULADOR UNIVERSAL ADAPTATIVO — Motor único de validación de competencias.
-//
-// Evalúa TODAS las disciplinas con IA adaptativa (Gemini):
-// 1. Detecta la disciplina del nodo (software, ingeniería, diseño, gestión, etc.)
-// 2. Adapta la dificultad al nivel REAL del usuario (Zone of Proximal Development)
-// 3. Genera reto contextualizado: preguntas + caso práctico
-// 4. Defensa: la IA repregunta para verificar comprensión real
-// 5. Evalúa los 4 ejes del Gemelo Digital + feedback accionable
-//
-// NO ejecuta código del usuario. Todo es evaluado por IA.
+// Usa OpenRouter (gratis) para IA.
 // Acciones: 'iniciar' | 'defensa' | 'evaluar'
 // ═══════════════════════════════════════════════════════════════════════
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { checkRateLimit, tooManyRequests, clientIp } from '../_shared/rateLimit.ts';
+import { callLLM, hasKey } from '../_shared/openrouter.ts';
 
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
-const MODEL = 'gemini-2.5-flash';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -35,30 +26,6 @@ const json = (body: unknown, status = 200) =>
 
 
 // ═══ UTILIDADES ═══════════════════════════════════════════════════════
-
-async function gemini(systemText: string, userText: string, jsonMode = true): Promise<string> {
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemText }] },
-        contents: [{ role: 'user', parts: [{ text: userText }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 3000,
-          thinkingConfig: { thinkingBudget: 0 },
-          ...(jsonMode ? { responseMimeType: 'application/json' } : {}),
-        },
-      }),
-    },
-  );
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(data?.error?.message ?? 'Gemini error');
-  const parts = data?.candidates?.[0]?.content?.parts;
-  return Array.isArray(parts) ? parts.map((p: { text?: string }) => p.text ?? '').join('') : '';
-}
 
 function parseJson(text: string): any {
   try { return JSON.parse(text); } catch { /* */ }
@@ -129,7 +96,7 @@ function calculateAdaptiveDifficulty(ctx: DifficultyContext): { level: number; l
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
-    if (!GEMINI_API_KEY) return json({ error: 'Simulador no configurado (falta GEMINI_API_KEY).' }, 500);
+    if (!hasKey()) return json({ error: 'Simulador no configurado (falta OPENROUTER_KEY).' }, 500);
 
     const authHeader = req.headers.get('Authorization') ?? '';
     const uid = await getUserId(authHeader);
@@ -203,7 +170,10 @@ Deno.serve(async (req) => {
         '- Si es diseño, pide decisiones de diseño con trade-offs\n' +
         '- Si es gestión, plantea dilemas de liderazgo con datos';
 
-      const raw = await gemini(sys, user, true);
+      const raw = await callLLM([
+        { role: 'system', content: sys },
+        { role: 'user', content: user },
+      ], true, 3000);
       const reto = parseJson(raw);
       if (!reto?.preguntas || !reto?.caso_practico) {
         return json({ error: 'No pude generar el reto. Reintenta.', detail: (raw ?? '').slice(0, 300) }, 502);
@@ -282,7 +252,7 @@ Deno.serve(async (req) => {
         '"feedback":"QUÉ hacer específicamente para mejorar al siguiente nivel",' +
         '"siguiente_paso":"una acción concreta que el usuario debería practicar"}';
 
-      const raw = await gemini(sys, user, true);
+      const raw = await callLLM([{ role: 'system', content: sys }, { role: 'user', content: user }], true, 2048);
       const ev = parseJson(raw) ?? {};
       const ejecucion = clamp(ev.ejecucion);
       const calidad = clamp(ev.calidad);
@@ -306,6 +276,13 @@ Deno.serve(async (req) => {
       });
       if (re) return json({ error: 'No pude registrar el acta.', detail: re.message }, 500);
 
+      // Obtener PE reward del nodo
+      let peAwarded = 0;
+      if (veredicto === 'APROBADO') {
+        const { data: nodeData } = await admin.from('skill_tree_nodes').select('pe_reward').eq('id', sess.node_id).maybeSingle();
+        peAwarded = nodeData?.pe_reward ?? 15;
+      }
+
       await admin.from('exam_sessions').update({ status: 'EVALUATED' }).eq('id', sessionId);
 
       return json({
@@ -316,6 +293,7 @@ Deno.serve(async (req) => {
         resumen: ev.resumen ?? '',
         feedback: ev.feedback ?? '',
         siguiente_paso: ev.siguiente_paso ?? '',
+        pe_awarded: peAwarded,
         difficulty_applied: difficulty,
       });
     }
@@ -342,7 +320,7 @@ Deno.serve(async (req) => {
         `CASO: ${reto?.caso_practico?.enunciado ?? ''}\n` +
         `RESPUESTA: ${casoRespuesta || '(no respondió)'}\n\n` +
         'Devuelve: {"defensa":"tu repregunta aquí","pista":"una orientación sutil sin dar la respuesta"}';
-      const raw = await gemini(sys, user, true);
+      const raw = await callLLM([{ role: 'system', content: sys }, { role: 'user', content: user }], true, 2048);
       const out = parseJson(raw);
       return json({
         defensa: out?.defensa ?? 'Explica con tus palabras por qué tu enfoque es el correcto.',
