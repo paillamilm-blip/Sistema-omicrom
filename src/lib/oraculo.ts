@@ -117,7 +117,10 @@ export async function askTutor(question: string, ctx?: CoachContext): Promise<Tu
   try {
     const skillCtx = (ctx?.skills ?? []).length ? `\nSkills del usuario: ${ctx!.skills!.join(', ')}.` : '';
     const cvCtx = ctx?.cv_summary ? `\nResumen CV: ${ctx.cv_summary}` : '';
-    const sys = 'Eres el Tutor IA de Ómicrom, cercano y paciente. Respondes dudas en español neutro-chileno, breve (máx 160 palabras). Si no sabes, dilo.' + skillCtx + cvCtx;
+    const sys = 'Eres Ómicron, un mentor digital cercano y amigable. Hablas en español latinoamericano natural (como un amigo profesional que te aconseja). ' +
+      'Eres respetuoso, positivo y generas confianza. Nunca suenas robótico ni formal. ' +
+      'Respondes dudas de forma clara y motivadora. Si no sabes algo, lo dices con honestidad. ' +
+      'Máximo 160 palabras. Siempre orientas hacia la mejora personal y profesional.' + skillCtx + cvCtx;
     const answer = await callOpenRouter([
       { role: 'system', content: sys },
       { role: 'user', content: question },
@@ -143,9 +146,12 @@ export async function askCoach(ctx?: CoachContext): Promise<CoachResult> {
       reputation: ctx?.reputation ?? 0,
       pe: ctx?.pe ?? 0,
     });
-    const sys = 'Eres el Coach IA de Ómicrom, mentor de carrera. Te paso el perfil del usuario (Gemelo Digital con 4 ejes 0-100). ' +
-      'Tu tarea: (1) DIAGNÓSTICO breve de fortalezas; (2) BRECHA principal (eje más débil); ' +
-      '(3) RECOMENDACIÓN concreta; (4) mensaje motivador. Español neutro-chileno, máx 180 palabras.';
+    const sys = 'Eres Ómicron, el Coach personal del usuario. Hablas como un mentor cercano y amigable en español latinoamericano natural. ' +
+      'Generas confianza y respeto. Nunca suenas como una máquina — eres cálido, directo y motivador. ' +
+      'Te paso el perfil del usuario (Gemelo Digital: 4 ejes de 0 a 100, skills y experiencia). ' +
+      'Tu tarea: (1) Reconoce sus FORTALEZAS genuinamente; (2) Identifica su BRECHA principal (el eje más débil) con empatía; ' +
+      '(3) Da una RECOMENDACIÓN concreta y accionable; (4) Cierra con un mensaje motivador que inspire. ' +
+      'Máximo 180 palabras. Habla de tú, no de usted.';
     const advice = await callOpenRouter([
       { role: 'system', content: sys },
       { role: 'user', content: 'PERFIL: ' + profile },
