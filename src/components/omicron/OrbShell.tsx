@@ -342,6 +342,9 @@ export function OrbShell() {
 
   // ── Handle text input — GAP 1 FIX: todos los intents del Oráculo ────
   const handleTextInput = useCallback(async (text: string) => {
+    // Limpiar respuesta anterior para mostrar que estamos procesando
+    setResponseMsg('Pensando…');
+
     const intent = interpret(text);
 
     // Build coach context from real profile
@@ -356,10 +359,11 @@ export function OrbShell() {
       pe: sbProfile?.pe_points,
     };
 
-    const flash = (msg: string, ms = 6000) => {
+    const flash = (msg: string, _ms = 0) => {
       setResponseMsg(msg);
+      // Las respuestas persisten hasta que el usuario envíe otro mensaje
+      // (no se auto-borran — interacción fluida)
       if (responseTimer.current) clearTimeout(responseTimer.current);
-      responseTimer.current = setTimeout(() => setResponseMsg(null), ms);
     };
 
     if (intent.kind === 'navigate') {
@@ -538,8 +542,6 @@ export function OrbShell() {
       if (event) {
         setResponseMsg(event.message);
         speak(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
-        if (responseTimer.current) clearTimeout(responseTimer.current);
-        responseTimer.current = setTimeout(() => setResponseMsg(null), 12000);
       } else {
         // Fallback: siempre habla — usa computeSteps para dar un consejo
         const steps = computeSteps(sbProfile, gemeloDigital);
@@ -552,8 +554,6 @@ export function OrbShell() {
           : `${saludo}, ${name}. Tu Gemelo Digital está sincronizado. Explorá el orbe para ver tus nodos de mejora.`;
         setResponseMsg(msg);
         speak(msg.length > 200 ? msg.slice(0, 200) : msg);
-        if (responseTimer.current) clearTimeout(responseTimer.current);
-        responseTimer.current = setTimeout(() => setResponseMsg(null), 12000);
       }
     }, 1500); // 1.5s para que el orbe aparezca primero
 
@@ -980,126 +980,126 @@ export function OrbShell() {
         </div>
       )}
 
-      {/* ── ORÁCULO INPUT BAR (always visible at bottom) ────────────── */}
-      {state !== 'fullscreen' && (
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 15,
-          padding: '12px 16px',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 12px)',
-          background: 'linear-gradient(0deg, rgba(0,2,6,0.95) 60%, transparent 100%)',
-        }}>
-          {/* Input bar (Hablá o escribí a Ómicron) */}
-          <form
-            onSubmit={(e: { preventDefault: () => void }) => {
-              e.preventDefault();
-              if (!inputText.trim()) return;
-              handleTextInput(inputText.trim());
-              setInputText('');
-            }}
+      {/* ── ORÁCULO INPUT BAR (SIEMPRE visible — overlay flotante) ──── */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        padding: '8px 16px',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 8px)',
+        background: 'linear-gradient(0deg, rgba(0,2,6,0.98) 70%, transparent 100%)',
+      }}>
+        {/* Response bubble (persiste hasta nuevo mensaje) */}
+        {responseMsg && (
+          <div style={{
+            marginBottom: 8,
+            padding: '10px 14px',
+            background: C.surface,
+            border: `1px solid ${C.line}`,
+            borderRadius: 14,
+            fontFamily: FONT.body,
+            fontSize: 13,
+            color: C.ink,
+            lineHeight: 1.5,
+            backdropFilter: 'blur(12px)',
+            maxHeight: 120,
+            overflowY: 'auto',
+          }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>
+              ÓMICRON ▸{' '}
+            </span>
+            {responseMsg}
+          </div>
+        )}
+
+        {/* Input bar */}
+        <form
+          onSubmit={(e: { preventDefault: () => void }) => {
+            e.preventDefault();
+            if (!inputText.trim()) return;
+            handleTextInput(inputText.trim());
+            setInputText('');
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: C.surface,
+            border: `1px solid ${C.line}`,
+            borderRadius: 28,
+            padding: '8px 12px',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+          }}
+        >
+          {/* Mic button */}
+          <button
+            type="button"
+            onClick={toggleListening}
+            aria-label={isListening ? 'Dejar de escuchar' : 'Hablar al Oráculo'}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              background: C.surface,
-              border: `1px solid ${C.line}`,
-              borderRadius: 28,
-              padding: '8px 12px',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              border: `1px solid ${isListening ? '#ff5c7a' : C.line}`,
+              background: isListening ? 'rgba(255,92,122,0.15)' : C.glass2,
+              color: isListening ? '#ff5c7a' : C.cyan,
+              cursor: 'pointer',
+              display: 'grid',
+              placeItems: 'center',
+              fontSize: 14,
+              flexShrink: 0,
+              animation: isListening ? 'cp-pulse 1.2s ease-in-out infinite' : 'none',
             }}
           >
-            {/* Mic button */}
-            <button
-              type="button"
-              onClick={toggleListening}
-              aria-label={isListening ? 'Dejar de escuchar' : 'Hablar al Oráculo'}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                border: `1px solid ${isListening ? '#ff5c7a' : C.line}`,
-                background: isListening ? 'rgba(255,92,122,0.15)' : C.glass2,
-                color: isListening ? '#ff5c7a' : C.cyan,
-                cursor: 'pointer',
-                display: 'grid',
-                placeItems: 'center',
-                fontSize: 14,
-                flexShrink: 0,
-                animation: isListening ? 'cp-pulse 1.2s ease-in-out infinite' : 'none',
-              }}
-            >
-              🎤
-            </button>
+            🎤
+          </button>
 
-            {/* Text input */}
-            <input
-              value={inputText}
-              onChange={(e: { target: { value: string } }) => setInputText(e.target.value)}
-              placeholder="Hablá o escribí a Ómicron…"
-              aria-label="Escribir comando al Oráculo"
-              inputMode="text"
-              autoComplete="off"
-              style={{
-                flex: 1,
-                border: 'none',
-                outline: 'none',
-                background: 'transparent',
-                fontFamily: FONT.body,
-                fontSize: 15,
-                color: C.ink,
-              }}
-            />
-
-            {/* Send button */}
-            <button
-              type="submit"
-              disabled={!inputText.trim()}
-              aria-label="Enviar"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                border: 'none',
-                background: inputText.trim() ? C.cyan : C.glass2,
-                color: inputText.trim() ? '#000' : C.mut,
-                cursor: inputText.trim() ? 'pointer' : 'default',
-                display: 'grid',
-                placeItems: 'center',
-                fontSize: 14,
-                flexShrink: 0,
-                transition: 'background 0.15s ease, color 0.15s ease',
-              }}
-            >
-              ➤
-            </button>
-          </form>
-
-          {/* Response bubble */}
-          {responseMsg && (
-            <div style={{
-              marginTop: 8,
-              padding: '8px 12px',
-              background: C.surface,
-              border: `1px solid ${C.line}`,
-              borderRadius: 12,
+          {/* Text input */}
+          <input
+            value={inputText}
+            onChange={(e: { target: { value: string } }) => setInputText(e.target.value)}
+            placeholder={state === 'fullscreen' ? 'Preguntá a Ómicron…' : 'Hablá o escribí a Ómicron…'}
+            aria-label="Escribir comando al Oráculo"
+            inputMode="text"
+            autoComplete="off"
+            style={{
+              flex: 1,
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
               fontFamily: FONT.body,
-              fontSize: 13,
+              fontSize: 15,
               color: C.ink,
-              lineHeight: 1.5,
-              backdropFilter: 'blur(10px)',
-            }}>
-              <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>
-                ÓMICRON ▸{' '}
-              </span>
-              {responseMsg}
-            </div>
-          )}
-        </div>
-      )}
+            }}
+          />
+
+          {/* Send button */}
+          <button
+            type="submit"
+            disabled={!inputText.trim()}
+            aria-label="Enviar"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              border: 'none',
+              background: inputText.trim() ? C.cyan : C.glass2,
+              color: inputText.trim() ? '#000' : C.mut,
+              cursor: inputText.trim() ? 'pointer' : 'default',
+              display: 'grid',
+              placeItems: 'center',
+              fontSize: 14,
+              flexShrink: 0,
+              transition: 'background 0.15s ease, color 0.15s ease',
+            }}
+          >
+            ➤
+          </button>
+        </form>
+      </div>
 
       {/* ── CSS Animations ──────────────────────────────────────────── */}
       <style>{`
