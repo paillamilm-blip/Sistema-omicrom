@@ -3,7 +3,6 @@ import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding } from './OrbOnboarding';
 import ParticleOrb from './ParticleOrb';
 import { useApp } from '../../store/AppContext';
-import { useRealtime } from '../../store/RealtimeContext';
 import { interpret, askCoach } from '../../lib/oraculo';
 import { speak } from '../../lib/voiceEngine';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
@@ -209,6 +208,7 @@ export function OrbShell() {
   const { profile } = useGemeloProfile();
 
   // ── Build GemeloDigital from Supabase profile for omicronCoach ──────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sbProfile = (useApp() as any).profile;
   const gemeloDigital = useMemo((): GemeloDigital | null => {
     if (!sbProfile) return null;
@@ -234,6 +234,7 @@ export function OrbShell() {
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
   // Now uses skills_detail (from AI analysis) for real domination %.
   const dynamicOrbNodes = useMemo((): OrbNode[] => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userSkills: string[] = sbProfile?.skills ?? (profile as any).skills ?? [];
     const skillsDetail: { name: string; pct: number }[] = sbProfile?.skills_detail ?? [];
     const skillNodes = buildSkillNodes(userSkills, skillsDetail);
@@ -243,6 +244,7 @@ export function OrbShell() {
   // ── Compute node levels from user's Gemelo profile ──────────────────
   // Maps each node to a 0-1 level based on validated skills and axes
   const orbNodesWithLevels = useMemo((): OrbNode[] => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const validatedSkills: string[] = (profile as any).skills ?? [];
     const axes = profile.axes;
     const rep = profile.rep; // 0-100
@@ -435,7 +437,9 @@ export function OrbShell() {
     window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: true } }));
 
     // Use SpeechRecognition if available
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = ((window as unknown as { SpeechRecognition?: any }).SpeechRecognition ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as unknown as { webkitSpeechRecognition?: any }).webkitSpeechRecognition);
     if (!SR) {
       setResponseMsg('Tu navegador no soporta reconocimiento de voz. Prueba en Chrome.');

@@ -646,6 +646,7 @@ export default function OrbNeuronal({
       // ── Update connections (pulse when Jarvis speaks) ──────────────────
       const cCol = connGeom.attributes.color as THREE.Float32BufferAttribute;
       for (let c = 0; c < connPairs.length; c++) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [_a, _b] = connPairs[c];
         // Pulse traveling along connections
         const travel = (elapsed * 2 + c * 0.5) % 3.0;
@@ -748,6 +749,7 @@ export default function OrbNeuronal({
         const projected = nodeDatas.map(nd => {
           const pos = nd.mesh.position.clone();
           // Apply group rotation
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           pos.applyEuler(orbGroup.rotation as any);
           // Project to NDC
           const ndc = pos.clone();
@@ -796,6 +798,7 @@ export default function OrbNeuronal({
 
       // P0 fix: dispose icon sprite textures and materials
       iconSprites.forEach(sprite => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mat = sprite.material as any;
         if (mat.map) mat.map.dispose();
         mat.dispose();
