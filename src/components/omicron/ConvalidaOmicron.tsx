@@ -23,7 +23,7 @@ const STEPS: { kind: Kind; label: string; hint: string; Icon: typeof FileText; c
   { kind: 'vault', label: 'Aporte a la Bóveda', hint: 'Conocimiento integrado', Icon: BookOpen, color: C.green },
 ];
 
-export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: () => void; onViewProfile?: () => void }) {
+export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfile }: { onClose: () => void; onViewProfile?: () => void }) {
   const {
     phase, currentStep, completedSteps, dossier, ai,
     cvText, setCvText, cvFileName, msg, pushes, synergies,
@@ -224,6 +224,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile }: { onClose: 
               transcendence: dossier.axes?.trans ?? 0, foundation: dossier.axes?.fund ?? 0,
               overallReputation: rep,
             };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const fakeProfile = { skills: dossier.labels ?? [], pe_points: 0, traditional_score: 30 } as any;
             const steps = computeSteps(fakeProfile, gemelo).slice(0, 3);
             return steps.map((s: { id: string; title: string; why: string; accent: string; actionLabel: string }) => (
