@@ -6,9 +6,8 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { checkRateLimit, tooManyRequests, clientIp } from '../_shared/rateLimit.ts';
+import { callLLM, hasKey } from '../_shared/openrouter.ts';
 
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
-const MODEL = 'gemini-2.5-flash';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -33,7 +32,7 @@ async function getUserId(authHeader: string): Promise<string | null> {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
-    if (!GEMINI_API_KEY) return json({ error: 'El Redactor IA no está configurado (falta GEMINI_API_KEY).' }, 500);
+    if (!hasKey()) return json({ error: 'El Redactor IA no está configurado (falta OPENROUTER_KEY).' }, 500);
     const authHeader = req.headers.get('Authorization') ?? '';
     const uid = await getUserId(authHeader);
     if (!uid) return json({ error: 'Inicia sesión para usar el Redactor IA.' }, 401);
@@ -70,22 +69,10 @@ Deno.serve(async (req) => {
       'Espanol neutro-chileno, breve (1 a 4 frases). Devuelve SOLO el mensaje reescrito, sin comillas ni explicaciones.';
     const user = `BORRADOR DEL USUARIO:\n${draft}\n\nReescríbelo.`;
 
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: sys }] },
-          contents: [{ role: 'user', parts: [{ text: user }] }],
-          generationConfig: { temperature: 0.6, maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 0 } },
-        }),
-      },
-    );
-    const data = await resp.json();
-    if (!resp.ok) return json({ error: 'Gemini respondió con error.', detail: data?.error?.message ?? null }, 502);
-    const parts = data?.candidates?.[0]?.content?.parts;
-    const texto = Array.isArray(parts) ? parts.map((p: { text?: string }) => p.text ?? '').join('').trim() : '';
+    const texto = await callLLM([
+      { role: 'system', content: sys },
+      { role: 'user', content: user },
+    ], false, 512);
     return json({ texto: texto || draft });
   } catch (e) {
     return json({ error: 'Error inesperado en el Redactor IA.', detail: String(e) }, 500);

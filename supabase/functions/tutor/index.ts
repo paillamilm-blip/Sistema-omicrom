@@ -1,11 +1,9 @@
-// supabase/functions/tutor/index.ts — Tutor IA de Ómicrom.
-// Responde dudas del estudiante sobre la lección que está leyendo en la Academia.
+// supabase/functions/tutor/index.ts — Tutor IA de Ómicrom (OpenRouter).
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { checkRateLimit, tooManyRequests, clientIp } from '../_shared/rateLimit.ts';
+import { callLLM, hasKey } from '../_shared/openrouter.ts';
 
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
-const MODEL = 'gemini-2.5-flash';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -25,8 +23,8 @@ interface Turn { role: 'user' | 'model'; text: string }
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
-    if (!GEMINI_API_KEY) {
-      return json({ error: 'El Tutor IA no está configurado (falta GEMINI_API_KEY).' }, 500);
+    if (!hasKey()) {
+      return json({ error: 'El Tutor IA no está configurado (falta OPENROUTER_KEY).' }, 500);
     }
     const rl = await checkRateLimit(_admin, 'tutor', clientIp(req), 20, 60);
     if (!rl.allowed) return tooManyRequests(rl.reset_at);
@@ -43,13 +41,8 @@ Deno.serve(async (req) => {
       return json({ error: 'Escribe una pregunta para el Tutor.' }, 400);
     }
 
-    // Contexto de skills para personalizar la enseñanza
-    const skillCtx = userSkills.length
-      ? `\nSKILLS DEL ESTUDIANTE: ${userSkills.join(', ')}.`
-      : '';
-    const cvCtx = cvSummary
-      ? `\nRESUMEN CV: ${cvSummary}`
-      : '';
+    const skillCtx = userSkills.length ? `\nSKILLS DEL ESTUDIANTE: ${userSkills.join(', ')}.` : '';
+    const cvCtx = cvSummary ? `\nRESUMEN CV: ${cvSummary}` : '';
 
     const sys =
       'Eres el "Tutor IA" de Ómicrom, un tutor cercano y paciente para estudiantes y técnicos de ingeniería. ' +
@@ -63,34 +56,17 @@ Deno.serve(async (req) => {
       `CONTENIDO DE LA LECCIÓN:\n${lessonContent}` +
       skillCtx + cvCtx;
 
-    // Historial previo del chat (limitado a los últimos 10 turnos) + pregunta nueva.
-    const contents = [
+    // Build messages from history + new question
+    const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+      { role: 'system', content: sys },
       ...history
         .filter(t => t && (t.role === 'user' || t.role === 'model') && typeof t.text === 'string')
         .slice(-10)
-        .map(t => ({ role: t.role, parts: [{ text: t.text }] })),
-      { role: 'user' as const, parts: [{ text: question }] },
+        .map(t => ({ role: (t.role === 'model' ? 'assistant' : 'user') as 'user' | 'assistant', content: t.text })),
+      { role: 'user', content: question },
     ];
 
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: sys }] },
-          contents,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
-        }),
-      },
-    );
-
-    const data = await resp.json();
-    if (!resp.ok) {
-      return json({ error: 'Gemini respondió con error.', detail: data?.error?.message ?? null }, 502);
-    }
-    const parts = data?.candidates?.[0]?.content?.parts;
-    const answer = Array.isArray(parts) ? parts.map((p: { text?: string }) => p.text ?? '').join('').trim() : '';
+    const answer = await callLLM(messages);
     return json({ answer: answer || 'No pude generar una respuesta. Intenta reformular tu duda.' });
   } catch (e) {
     return json({ error: 'Error inesperado en el Tutor IA.', detail: String(e) }, 500);
