@@ -450,6 +450,7 @@ export function OrbShell() {
     recog.lang = 'es-ES';
     recog.interimResults = false;
     recog.continuous = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recog.onresult = (e: any) => {
       const transcript = e.results[e.results.length - 1][0].transcript;
       setInputText(transcript);
@@ -563,6 +564,7 @@ export function OrbShell() {
   useEffect(() => {
     if (state !== 'orb' || isListening) return;
     let running = true;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const loop = () => {
       if (!running) return;
       setVoiceLevel(Math.sin(Date.now() * 0.002) * 0.05 + 0.05);
@@ -718,9 +720,11 @@ export function OrbShell() {
             role="dialog"
             aria-label={`Vista previa: ${selectedNode.label}. ${guidance}`}
             aria-modal="false"
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onTouchStart={(e) => { if (canSwipe) (e.currentTarget as any)._touchX = e.touches[0].clientX; }}
             onTouchEnd={(e) => {
               if (!canSwipe) return;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const startX = (e.currentTarget as any)._touchX;
               if (startX === undefined) return;
               const diff = e.changedTouches[0].clientX - startX;
