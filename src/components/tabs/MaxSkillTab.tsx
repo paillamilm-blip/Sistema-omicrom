@@ -472,7 +472,7 @@ export function MaxSkillTab() {
         <UniversalSimulator
           node={examNode}
           onClose={() => setExamNode(null)}
-          onSuccess={(pe) => {
+          onSuccess={(_pe) => {
             void refreshProfile();
             setExamNode(null);
           }}

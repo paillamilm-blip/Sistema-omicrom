@@ -74,8 +74,8 @@ export function PerfilSkillVisual({
   }, [skillsDetail]);
 
   const nucleus = top3[0];
-  const orbital1 = top3[1];
-  const orbital2 = top3[2];
+  const _orbital1 = top3[1];
+  const _orbital2 = top3[2];
 
   // Orbital ring sizes based on skill count
   const hasThree = top3.length >= 3;

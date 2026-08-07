@@ -66,7 +66,7 @@ export default function ParticleOrb({
     const MERCURY = new THREE.Color(0.18, 0.28, 0.35);       // dark teal-chrome (no blanco)
     const BIO_GREEN = new THREE.Color(0.1, 0.85, 0.55);
     const BIO_CYAN = new THREE.Color(0.15, 0.7, 0.8);
-    const BIO_PULSE = new THREE.Color(0.2, 0.95, 0.65);
+    const _BIO_PULSE = new THREE.Color(0.2, 0.95, 0.65);
     const DARK_TEAL = new THREE.Color(0.02, 0.06, 0.08);
 
     // ── Scene, Camera, Renderer ─────────────────────────────────────
@@ -374,6 +374,7 @@ export default function ParticleOrb({
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (sporeMat as any).map = glowTexture;
     const spores = new THREE.Points(sporeGeom, sporeMat);
     scene.add(spores);
