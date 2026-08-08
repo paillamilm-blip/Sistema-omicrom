@@ -43,7 +43,8 @@ export function getNextProfileQuestion(profile: Profile | null): ProfileQuestion
 
   // Filtrar preguntas cuyo campo YA tiene datos
   const pending = questions.filter(q => {
-    const value = (profile as Record<string, unknown>)[q.field];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const value = (profile as any)[q.field];
     if (Array.isArray(value)) return value.length === 0;
     if (typeof value === 'number') return value === 0;
     return !value;
