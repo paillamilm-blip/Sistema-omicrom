@@ -143,8 +143,8 @@ export function useGemeloActivation() {
         const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
         const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
         const skillsDetail = (ia.skillsDetail ?? [])
-          .filter((s) => s?.name).slice(0, 12)
-          .map((s) => ({ name: s.name!, pct: clamp(s.pct) }));
+          .filter((s: { name?: string }) => s?.name).slice(0, 12)
+          .map((s: { name?: string; pct?: number }) => ({ name: s.name!, pct: clamp(s.pct) }));
         const base = analyzeCV(text);
         analyzed = {
           ...base,
