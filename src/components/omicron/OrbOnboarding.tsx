@@ -21,6 +21,7 @@ const ONBOARDING_KEY = 'omicron_onboarding_done';
 interface OrbOnboardingProps {
   onComplete: (choice: 'examen' | 'cv' | 'ambos') => void;
   onProfileGenerated?: (profile: GeneratedProfile) => void;
+  onSkillsPreview?: (skills: string[]) => void;
 }
 
 export interface GeneratedProfile {
