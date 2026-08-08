@@ -230,6 +230,7 @@ export function OrbShell() {
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
   const hasGreeted = useRef(false);
+  const [previewSkills, setPreviewSkills] = useState<string[]>([]);
 
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
@@ -239,8 +240,21 @@ export function OrbShell() {
     const userSkills: string[] = sbProfile?.skills ?? (profile as any).skills ?? [];
     const skillsDetail: { name: string; pct: number }[] = sbProfile?.skills_detail ?? [];
     const skillNodes = buildSkillNodes(userSkills, skillsDetail);
-    return [...HUB_NODES, ...skillNodes];
-  }, [sbProfile, profile]);
+
+    // R5: Preview skills del onboarding (nodos temporales mientras escribe)
+    const previewNodes: OrbNode[] = previewSkills
+      .filter(s => !userSkills.some(us => us.toLowerCase() === s.toLowerCase()))
+      .map((skill, i) => ({
+        id: `preview-${i}-${skill.toLowerCase().replace(/\s+/g, '-')}`,
+        label: skill,
+        tab: 'maxskill' as const,
+        icon: '✦',
+        level: 0.5,
+        nextStep: 'Detectado en tu perfil',
+      }));
+
+    return [...HUB_NODES, ...skillNodes, ...previewNodes];
+  }, [sbProfile, profile, previewSkills]);
 
   // ── Compute node levels from user's Gemelo profile ──────────────────
   // Maps each node to a 0-1 level based on validated skills and axes
@@ -618,6 +632,7 @@ export function OrbShell() {
       {/* ── ONBOARDING (first time only) ────────────────────────────── */}
       <OrbOnboarding
         onComplete={handleOnboardingComplete}
+        onSkillsPreview={setPreviewSkills}
         onProfileGenerated={async (generated: GeneratedProfile) => {
           // R4: Guardar perfil generado en Supabase
           try {
