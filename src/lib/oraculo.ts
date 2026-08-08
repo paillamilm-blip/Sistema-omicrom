@@ -5,7 +5,6 @@
 // responder un dato simple, o consultar al Coach IA (Edge Function `coach`,
 // respaldada por Gemini). Puro TypeScript, sin dependencias nuevas.
 // ═══════════════════════════════════════════════════════════════════════
-import { supabase } from './supabase';
 import type { TabId } from '../types';
 
 export type OraculoIntent =
