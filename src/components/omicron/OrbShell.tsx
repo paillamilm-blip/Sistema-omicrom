@@ -430,6 +430,7 @@ export function OrbShell() {
   }, [setActiveTab, sbProfile, orbNodesWithLevels]);
 
   // ── Toggle listening (speech recognition) ──────────────────────────
+  // Voz y texto son LA MISMA experiencia — la voz solo cambia el input method.
   const toggleListening = useCallback(() => {
     if (isListening) {
       setIsListening(false);
@@ -437,29 +438,36 @@ export function OrbShell() {
       window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
       return;
     }
-    setIsListening(true);
-    setVoiceLevel(0.4);
-    window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: true } }));
 
-    // Use SpeechRecognition if available
+    // Check if speech recognition is available
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = ((window as unknown as { SpeechRecognition?: any }).SpeechRecognition ||
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as unknown as { webkitSpeechRecognition?: any }).webkitSpeechRecognition);
     if (!SR) {
-      setResponseMsg('Tu navegador no soporta reconocimiento de voz. Prueba en Chrome.');
-      setIsListening(false);
+      // No drama — just focus the text input as fallback
+      setResponseMsg('La voz no está disponible en este navegador. Escríbeme acá abajo — funciona igual.');
       return;
     }
+
+    setIsListening(true);
+    setVoiceLevel(0.4);
+    window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: true } }));
+
     const recog = new SR();
-    recog.lang = 'es-ES';
-    recog.interimResults = false;
+    recog.lang = 'es-CL'; // Español Chile (más natural para el usuario)
+    recog.interimResults = true; // Mostrar texto mientras habla
     recog.continuous = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recog.onresult = (e: any) => {
-      const transcript = e.results[e.results.length - 1][0].transcript;
+      const result = e.results[e.results.length - 1];
+      const transcript = result[0].transcript;
+      // Mostrar el texto en el input bar MIENTRAS habla
       setInputText(transcript);
-      handleTextInput(transcript);
+      // Solo enviar cuando es resultado final (no interim)
+      if (result.isFinal) {
+        handleTextInput(transcript);
+      }
     };
     recog.onerror = () => {
       setIsListening(false);
