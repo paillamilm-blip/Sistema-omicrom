@@ -563,8 +563,7 @@ export function OrbShell() {
     return () => clearTimeout(timer);
   }, [sbProfile, gemeloDigital]);
 
-  // Fix 2: Idle breathing — use ref to avoid re-renders (purely cosmetic)
-  const voiceLevelRef = useRef(0.05);
+  // Fix 2: Idle breathing — throttled state update (2 Hz, cosmetic only)
   useEffect(() => {
     if (state !== 'orb' || isListening) return;
     let running = true;
@@ -573,9 +572,7 @@ export function OrbShell() {
       if (!running) return;
       if (ts - last > 500) {
         last = ts;
-        const v = Math.sin(ts * 0.002) * 0.05 + 0.05;
-        voiceLevelRef.current = v;
-        setVoiceLevel(v);
+        setVoiceLevel(Math.sin(ts * 0.002) * 0.05 + 0.05);
       }
       rafRef.current = requestAnimationFrame(throttled);
     };
