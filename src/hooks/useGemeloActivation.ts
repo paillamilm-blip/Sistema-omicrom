@@ -134,7 +134,7 @@ export function useGemeloActivation() {
 
       try {
         // Llamar a Gemini DIRECTO desde el browser (sin Edge Function)
-        const { analyzeCVWithGemini } = await import('../lib/cvAnalyzer');
+        const { analyzeCVWithGemini } = await import('../lib/geminiClient');
         const geminiResult = await analyzeCVWithGemini(text);
         if (!geminiResult.ok || !geminiResult.analysis?.axes) {
           throw new Error(geminiResult.error || 'La IA no pudo analizar el CV');
