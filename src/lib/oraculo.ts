@@ -79,6 +79,25 @@ export interface CoachContext {
   pe?: number;
 }
 
+// ── Rate limit client-side (protección contra uso excesivo) ───────────
+const DAILY_LIMITS = { coach: 5, tutor: 10 } as const;
+
+function checkDailyLimit(type: 'coach' | 'tutor'): boolean {
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `omicron_rl_${type}_${today}`;
+  const count = parseInt(localStorage.getItem(key) || '0', 10);
+  if (count >= DAILY_LIMITS[type]) return false;
+  localStorage.setItem(key, String(count + 1));
+  return true;
+}
+
+function getRemainingCredits(type: 'coach' | 'tutor'): number {
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `omicron_rl_${type}_${today}`;
+  const count = parseInt(localStorage.getItem(key) || '0', 10);
+  return Math.max(0, DAILY_LIMITS[type] - count);
+}
+
 // ── Cliente OpenRouter directo (sin depender de Edge Functions) ────────
 const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
 const OR_MODEL = 'google/gemma-4-31b-it:free';
@@ -114,6 +133,9 @@ async function callOpenRouter(messages: { role: string; content: string }[]): Pr
  */
 export async function askTutor(question: string, ctx?: CoachContext): Promise<TutorResult> {
   try {
+    if (!checkDailyLimit('tutor')) {
+      return { error: `Llegaste al límite de ${DAILY_LIMITS.tutor} consultas por hoy. Mañana se renueva — mientras tanto, explora los nodos del orbe.` };
+    }
     const skillCtx = (ctx?.skills ?? []).length ? `\nSkills del usuario: ${ctx!.skills!.join(', ')}.` : '';
     const cvCtx = ctx?.cv_summary ? `\nResumen CV: ${ctx.cv_summary}` : '';
     const sys = 'Eres Ómicron, un mentor digital cercano y amigable. Hablas en español latinoamericano natural (como un amigo profesional que te aconseja). ' +
@@ -135,6 +157,9 @@ export async function askTutor(question: string, ctx?: CoachContext): Promise<Tu
  */
 export async function askCoach(ctx?: CoachContext): Promise<CoachResult> {
   try {
+    if (!checkDailyLimit('coach')) {
+      return { error: `Ya usaste tus ${DAILY_LIMITS.coach} consejos de hoy. Mañana tienes más — por ahora, aplica lo que ya te dije. ¡Tú puedes!` };
+    }
     const profile = JSON.stringify({
       skills: ctx?.skills ?? [],
       cv_summary: ctx?.cv_summary ?? '',
