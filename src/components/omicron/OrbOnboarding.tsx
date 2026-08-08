@@ -9,7 +9,7 @@ import { C, FONT, RADIUS } from '../../theme';
 const ONBOARDING_KEY = 'omicron_onboarding_done';
 
 interface OrbOnboardingProps {
-  onComplete: (choice: 'examen' | 'cv' | 'ambos') => void;
+  onComplete: (choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar') => void;
   onProfileGenerated?: (profile: GeneratedProfile) => void;
   onSkillsPreview?: (skills: string[]) => void;
 }
@@ -28,7 +28,7 @@ const PROFILE_PROMPT = 'Eres Ómicron. El usuario te dice a qué se dedica en 1 
 function classifyIntent(text: string): 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar' {
   const t = text.toLowerCase();
   if (/trabajo|empleo|busco|oportunidad|vacante|postular/.test(t)) return 'empleo';
-  if (/aprender|curso|estudiar|mejorar|crecer|capacitar/.test(t)) return 'aprender';
+  if (/aprender|curso|estudiar|mejorar|crecer|capacitar|react|python|node/.test(t)) return 'aprender';
   if (/validar|demostrar|certificar|skill|competencia|examen/.test(t)) return 'validar';
   if (/vender|servicio|freelance|ofrecer|monetizar|cobrar/.test(t)) return 'vender';
   return 'explorar';
@@ -127,7 +127,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
         const msg = `Listo. Veo que dominas ${parsed.skills.slice(0, 3).join(', ')}. Tu perfil ya tiene forma.`;
         setResultMsg(msg); setPhase('result'); speak(msg);
         localStorage.setItem(ONBOARDING_KEY, 'true');
-        setTimeout(() => { setPhase('done'); onComplete(intent === 'empleo' ? 'cv' : intent === 'validar' ? 'examen' : 'ambos'); }, 3500);
+        setTimeout(() => { setPhase('done'); onComplete(intent); }, 3500);
       } else { throw new Error('parse failed'); }
     } catch {
       const fallback: GeneratedProfile = { profession: text.trim().slice(0, 50), years: 3, skills: quickSkills.length > 0 ? quickSkills : ['Profesional', 'Adaptabilidad', 'Trabajo en equipo'], axes: { exec: 40, qual: 35, trans: 25, fund: 30 }, seniorLabel: 'Profesional', summary: `Profesional en ${text.trim().slice(0, 30)}.` };

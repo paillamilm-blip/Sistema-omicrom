@@ -7,6 +7,7 @@ import { interpret, askCoach } from '../../lib/oraculo';
 import { speak } from '../../lib/voiceEngine';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
+import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '../../lib/progressiveProfile';
 import { evaluateProactiveEvents } from '../../lib/proactiveEngine';
 import { C, FONT } from '../../theme';
 import type { TabId, GemeloDigital } from '../../types';
@@ -568,17 +569,29 @@ export function OrbShell() {
         setResponseMsg(event.message);
         speak(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
       } else {
-        // Fallback: siempre habla — usa computeSteps para dar un consejo
-        const steps = computeSteps(sbProfile, gemeloDigital);
+        // R2: PROGRESSIVE PROFILING — si el perfil tiene gaps, PREGUNTAR
+        const question = getNextProfileQuestion(sbProfile);
+
         const name = sbProfile?.display_name || sbProfile?.full_name || sbProfile?.username || 'amigo';
         const hour = new Date().getHours();
         const saludo = hour < 12 ? 'Hey, buen día' : hour < 19 ? 'Hola' : 'Buenas noches';
-        const top = steps[0];
-        const msg = top
-          ? `${saludo}, ${name}. ${top.why.slice(0, 140)} ¿Vamos con eso?`
-          : `${saludo}, ${name}. Tu Gemelo está al día. Toca un nodo o pregúntame lo que quieras — estoy acá para ayudarte.`;
-        setResponseMsg(msg);
-        speak(msg.length > 200 ? msg.slice(0, 200) : msg);
+
+        if (question && !hasAskedToday()) {
+          // Tiene un gap → preguntarle (R2)
+          markAskedToday();
+          const msg = `${saludo}, ${name}. ${question.question}`;
+          setResponseMsg(msg);
+          speak(msg.length > 200 ? msg.slice(0, 200) : msg);
+        } else {
+          // Perfil completo o ya preguntó hoy → consejo de mejora
+          const steps = computeSteps(sbProfile, gemeloDigital);
+          const top = steps[0];
+          const msg = top
+            ? `${saludo}, ${name}. ${top.why.slice(0, 140)} ¿Vamos con eso?`
+            : `${saludo}, ${name}. Tu Gemelo está al día. Toca un nodo o pregúntame lo que quieras — estoy acá para ayudarte.`;
+          setResponseMsg(msg);
+          speak(msg.length > 200 ? msg.slice(0, 200) : msg);
+        }
       }
     }, 1500); // 1.5s para que el orbe aparezca primero
 
@@ -605,18 +618,23 @@ export function OrbShell() {
     };
   }, [state, isListening]);
 
-  // ── Onboarding handler ───────────────────────────────────────────────
-  const handleOnboardingComplete = useCallback((choice: 'examen' | 'cv' | 'ambos') => {
-    if (choice === 'cv' || choice === 'ambos') {
-      setActiveTab('perfil');
-      const node = dynamicOrbNodes[0]; // Inicio hub
-      setSelectedNode(node);
-      setState('fullscreen');
-    } else {
-      setActiveTab('maxskill');
-      const node = dynamicOrbNodes.find((n: OrbNode) => n.id === 'habilidades');
-      if (node) { setSelectedNode(node); setState('fullscreen'); }
-    }
+  // ── Onboarding handler (R3: intent-first routing) ────────────────────
+  const handleOnboardingComplete = useCallback((choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar') => {
+    // R3: La respuesta del usuario define a dónde va
+    const routeMap: Record<string, { tab: TabId; nodeId: string }> = {
+      cv:       { tab: 'perfil', nodeId: 'inicio' },
+      ambos:    { tab: 'perfil', nodeId: 'inicio' },
+      examen:   { tab: 'maxskill', nodeId: 'habilidades' },
+      validar:  { tab: 'maxskill', nodeId: 'habilidades' },
+      empleo:   { tab: 'empleos', nodeId: 'empleos' },
+      aprender: { tab: 'academia', nodeId: 'academia' },
+      vender:   { tab: 'market', nodeId: 'mercado' },
+      explorar: { tab: 'perfil', nodeId: 'inicio' },
+    };
+    const route = routeMap[choice] ?? routeMap.explorar;
+    setActiveTab(route.tab);
+    const node = dynamicOrbNodes.find((n: OrbNode) => n.id === route.nodeId) ?? dynamicOrbNodes[0];
+    if (node) { setSelectedNode(node); setState('fullscreen'); }
   }, [setActiveTab, dynamicOrbNodes]);
 
   // (Voice control exposed via CustomEvents — see oracle:listening / oracle:voice listeners above)
