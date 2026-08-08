@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
-import { OrbOnboarding } from './OrbOnboarding';
+import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
 import ParticleOrb from './ParticleOrb';
 import { useApp } from '../../store/AppContext';
 import { interpret, askCoach } from '../../lib/oraculo';
@@ -616,7 +616,32 @@ export function OrbShell() {
       overflow: 'hidden',
     }}>
       {/* ── ONBOARDING (first time only) ────────────────────────────── */}
-      <OrbOnboarding onComplete={handleOnboardingComplete} />
+      <OrbOnboarding
+        onComplete={handleOnboardingComplete}
+        onProfileGenerated={async (generated: GeneratedProfile) => {
+          // R4: Guardar perfil generado en Supabase
+          try {
+            const { supabase } = await import('../../lib/supabase');
+            if (sbProfile?.id) {
+              await supabase.from('profiles').update({
+                skills: generated.skills,
+                skills_detail: generated.skills.map((s: string, i: number) => ({
+                  name: s,
+                  pct: Math.max(40, 80 - i * 10),
+                })),
+                cv_summary: generated.summary,
+                cv_years_experience: generated.years,
+                execution_score: generated.axes.exec,
+                quality_score: generated.axes.qual,
+                transcendence_score: generated.axes.trans,
+                foundation_score: generated.axes.fund,
+              }).eq('id', sbProfile.id);
+            }
+          } catch (e) {
+            console.warn('[onboarding] Error guardando perfil:', e);
+          }
+        }}
+      />
 
       {/* ── ORB VIEW (always visible, fades when fullscreen) ─────────── */}
       <div style={{
