@@ -229,6 +229,7 @@ export function OrbShell() {
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
+  const hasGreeted = useRef(false);
 
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
@@ -525,6 +526,8 @@ export function OrbShell() {
   // ── GAP 3 FIX: Proactive Engine — Gemelo te empuja sin pedirlo ─────
   useEffect(() => {
     if (!sbProfile) return;
+    if (hasGreeted.current) return;
+    hasGreeted.current = true;
     const timer = setTimeout(() => {
       const context = {
         currentHour: new Date().getHours(),
@@ -560,21 +563,20 @@ export function OrbShell() {
     return () => clearTimeout(timer);
   }, [sbProfile, gemeloDigital]);
 
-  // Fix 2: rAF instead of setInterval — no unnecessary re-renders on idle
+  // Fix 2: Idle breathing — use ref to avoid re-renders (purely cosmetic)
+  const voiceLevelRef = useRef(0.05);
   useEffect(() => {
     if (state !== 'orb' || isListening) return;
     let running = true;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const loop = () => {
-      if (!running) return;
-      setVoiceLevel(Math.sin(Date.now() * 0.002) * 0.05 + 0.05);
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    // Throttle: only update voiceLevel every ~100ms (not every rAF frame)
     let last = 0;
     const throttled = (ts: number) => {
       if (!running) return;
-      if (ts - last > 100) { last = ts; setVoiceLevel(Math.sin(ts * 0.002) * 0.05 + 0.05); }
+      if (ts - last > 500) {
+        last = ts;
+        const v = Math.sin(ts * 0.002) * 0.05 + 0.05;
+        voiceLevelRef.current = v;
+        setVoiceLevel(v);
+      }
       rafRef.current = requestAnimationFrame(throttled);
     };
     rafRef.current = requestAnimationFrame(throttled);
