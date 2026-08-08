@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // SISTEMA DE CRÉDITOS IA — módulo compartido para todas las Edge Functions.
 //
-// Antes de llamar a Gemini, cada función invoca checkAndConsumeCredit().
+// Antes de llamar al LLM, cada función invoca checkAndConsumeCredit().
 // Si no hay créditos disponibles, retorna un Response amigable sin gastar
 // tokens de la API. Si hay créditos, consume 1 y permite continuar.
 //
