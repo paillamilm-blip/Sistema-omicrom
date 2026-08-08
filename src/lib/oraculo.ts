@@ -91,7 +91,7 @@ function checkDailyLimit(type: 'coach' | 'tutor'): boolean {
   return true;
 }
 
-function getRemainingCredits(type: 'coach' | 'tutor'): number {
+export function getRemainingCredits(type: 'coach' | 'tutor'): number {
   const today = new Date().toISOString().slice(0, 10);
   const key = `omicron_rl_${type}_${today}`;
   const count = parseInt(localStorage.getItem(key) || '0', 10);
