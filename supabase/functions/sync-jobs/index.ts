@@ -190,7 +190,6 @@ Deno.serve(async (_req) => {
       const row = {
         title: job.title,
         description: job.description,
-        category: job.category,
         tags: job.tags,
         is_remote: job.remote,
         location: job.location,
