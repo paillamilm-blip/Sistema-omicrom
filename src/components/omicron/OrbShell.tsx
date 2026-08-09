@@ -689,6 +689,11 @@ export function OrbShell() {
                 transcendence_score: generated.axes.trans,
                 foundation_score: generated.axes.fund,
               }).eq('id', sbProfile.id);
+              // CABLE 1: Broadcast "activó su Gemelo Digital" a toda la red
+              try {
+                const ch = supabase.channel('omicron-live');
+                ch.send({ type: 'broadcast', event: 'activity', payload: { text: `${sbProfile.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } });
+              } catch { /* silencioso */ }
             }
           } catch (e) {
             console.warn('[onboarding] Error guardando perfil:', e);

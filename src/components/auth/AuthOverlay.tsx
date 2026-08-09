@@ -47,7 +47,7 @@ function translateAuthError(message?: string): string {
   return 'Ocurrió un error. Intenta nuevamente.';
 }
 
-export function AuthOverlay() {
+export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -334,6 +334,21 @@ export function AuthOverlay() {
         <span className="text-base">🏆</span>
         <span className="font-medium">Etapa Fundacional activa — beneficio Pioneer</span>
       </div>
+
+      {/* Guest mode — explorar sin cuenta */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: 16, width: '100%', padding: '12px', borderRadius: 10,
+            background: 'transparent', border: '1px solid rgba(92,200,255,0.2)',
+            color: 'rgba(234,240,251,0.7)', fontFamily: 'monospace', fontSize: 12,
+            cursor: 'pointer', letterSpacing: 0.5,
+          }}
+        >
+          Explorar sin cuenta →
+        </button>
+      )}
     </div>
   );
 }
