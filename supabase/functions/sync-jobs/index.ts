@@ -190,7 +190,6 @@ Deno.serve(async (_req) => {
       const row = {
         title: job.title,
         description: job.description,
-        tags: job.tags,
         is_remote: job.remote,
         location: job.location,
         status: 'OPEN',
@@ -200,6 +199,7 @@ Deno.serve(async (_req) => {
         external_url: job.external_url,
         salary_range: job.salary_range,
         company_name: job.company_name,
+        required_skills: JSON.stringify(job.tags),
       };
 
       // Primero intentar update si ya existe
