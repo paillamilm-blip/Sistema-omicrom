@@ -13,6 +13,8 @@ import {
   challengeStreak,
 } from '../../lib/dailyChallenge';
 import { applyStreakMultiplier } from './StreakBanner';
+import { supabase } from '../../lib/supabase';
+import { useRealtime } from '../../store/RealtimeContext';
 
 interface Props {
   onNavigate?: (tab: string) => void;
@@ -23,6 +25,7 @@ export function DailyChallengeCard({ onNavigate }: Props) {
   const [completed, setCompleted] = useState(isChallengeCompleted());
   const [justCompleted, setJustCompleted] = useState(false);
   const cStreak = challengeStreak();
+  const { broadcast } = useRealtime();
 
   function handleComplete() {
     const basePe = completeChallenge();
@@ -45,6 +48,10 @@ export function DailyChallengeCard({ onNavigate }: Props) {
 
     // Guardar PE ganados (para mostrar en toast)
     localStorage.setItem('omicron_last_challenge_pe', String(finalPe));
+
+    // CABLE 5: Challenge → PE server-side + Broadcast a la red
+    supabase.rpc('register_daily_activity', { p_challenge: true, p_pe: finalPe }).then(() => {});
+    broadcast(`completó su reto diario (+${finalPe} PE)`, 'action');
   }
 
   if (completed && !justCompleted) {

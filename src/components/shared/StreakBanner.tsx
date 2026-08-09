@@ -33,12 +33,16 @@ export function StreakBanner() {
     setStreak(streakDays());
   }, []);
 
-  // Registrar actividad del día actual
+  // Registrar actividad del día actual + server-side streak
   useEffect(() => {
     const key = 'omicron_streak_today';
     const today = new Date().toISOString().slice(0, 10);
     if (localStorage.getItem(key) !== today) {
       localStorage.setItem(key, today);
+      // CABLE 3: Registrar actividad server-side para streak persistente
+      import('../../lib/supabase').then(({ supabase }) => {
+        supabase.rpc('register_daily_activity', { p_challenge: false, p_pe: 0 }).then(() => {});
+      });
     }
   }, []);
 

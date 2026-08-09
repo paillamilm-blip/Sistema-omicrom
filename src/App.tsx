@@ -65,6 +65,13 @@ function AppShell() {
   // Si no está autenticado, mostrar el orbe en modo guest (sin AuthOverlay bloqueante)
   const isGuest = authStatus === 'unauthenticated';
 
+  // Escuchar evento 'omicron:request-auth' para abrir modal de auth
+  useEffect(() => {
+    const handler = () => setShowAuthModal(true);
+    window.addEventListener('omicron:request-auth', handler);
+    return () => window.removeEventListener('omicron:request-auth', handler);
+  }, []);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 

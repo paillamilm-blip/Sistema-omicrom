@@ -74,3 +74,13 @@ export function getAuthPrompt(action: string): string {
   };
   return prompts[action] ?? 'Crea tu cuenta para continuar — es gratis y toma 10 segundos.';
 }
+
+
+
+/**
+ * Dispara el modal de auth desde cualquier componente.
+ * Usar cuando un guest intenta una acción que requiere cuenta.
+ */
+export function requestAuth(): void {
+  window.dispatchEvent(new CustomEvent('omicron:request-auth'));
+}
