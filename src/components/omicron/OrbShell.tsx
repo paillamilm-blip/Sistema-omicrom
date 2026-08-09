@@ -7,6 +7,7 @@ import { interpret, askCoach } from '../../lib/oraculo';
 import { speak } from '../../lib/voiceEngine';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
+import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '../../lib/progressiveProfile';
 import { evaluateProactiveEvents } from '../../lib/proactiveEngine';
 import { C, FONT } from '../../theme';
 import type { TabId, GemeloDigital } from '../../types';
@@ -569,7 +570,6 @@ export function OrbShell() {
         speak(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
       } else {
         // R2: PROGRESSIVE PROFILING — si el perfil tiene gaps, PREGUNTAR
-        const { getNextProfileQuestion, hasAskedToday, markAskedToday } = await import('../../lib/progressiveProfile');
         const question = getNextProfileQuestion(sbProfile);
 
         const name = sbProfile?.display_name || sbProfile?.full_name || sbProfile?.username || 'amigo';
@@ -619,7 +619,7 @@ export function OrbShell() {
   }, [state, isListening]);
 
   // ── Onboarding handler (R3: intent-first routing) ────────────────────
-  const handleOnboardingComplete = useCallback((choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'vender' | 'explorar') => {
+  const handleOnboardingComplete = useCallback((choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar') => {
     // R3: La respuesta del usuario define a dónde va
     const routeMap: Record<string, { tab: TabId; nodeId: string }> = {
       cv:       { tab: 'perfil', nodeId: 'inicio' },
