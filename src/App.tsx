@@ -24,6 +24,18 @@ function AppShell() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
 
+  // Track visit count for push permission timing
+  useEffect(() => {
+    const key = 'omicron_visit_count';
+    const count = parseInt(localStorage.getItem(key) ?? '0');
+    localStorage.setItem(key, String(count + 1));
+
+    // Register daily activity for streak (server-side)
+    if (authStatus === 'authenticated') {
+      void supabase.rpc('register_daily_activity', { p_challenge: false, p_pe: 0 }).catch(() => {});
+    }
+  }, [authStatus]);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') setShowResetPassword(true);

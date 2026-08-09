@@ -10,6 +10,10 @@ import { motion } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2 } from 'lucide-react';
 import { useApp, useGemeloDigital } from '../../store/AppContext';
 import { C, FONT } from '../../theme';
+import { StreakBanner } from '../shared/StreakBanner';
+import { DailyChallengeCard } from '../shared/DailyChallengeCard';
+import { DashboardVivo } from '../shared/DashboardVivo';
+import { PushPermissionBanner } from '../shared/PushPermissionBanner';
 
 // ── Colores para cada skill orbital ────────────────────────────────────
 const SKILL_COLORS = [C.cyan, C.purple, C.gold, C.green, C.red];
@@ -79,6 +83,14 @@ export function PerfilTab() {
           {seniorLabel}{years > 0 ? ` · ${years} años` : ''}
         </p>
       </motion.div>
+
+      {/* ═══ RETENCIÓN: Streak + Dashboard + Push + Daily Challenge ═══ */}
+      <div style={{ width: '100%', maxWidth: 340, padding: '0 16px' }}>
+        <StreakBanner />
+        <DashboardVivo />
+        <DailyChallengeCard onNavigate={(tab) => setActiveTab(tab as any)} />
+        <PushPermissionBanner />
+      </div>
 
       {/* ═══ ORBITAL VISUALIZATION ═══ */}
       <motion.div
