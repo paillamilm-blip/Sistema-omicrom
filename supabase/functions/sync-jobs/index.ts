@@ -178,14 +178,16 @@ Deno.serve(async (_req) => {
       });
     }
 
-    // Upsert en batch (máximo eficiencia, 1 HTTP call por lote de 50)
+    // Insert individual — PostgREST no soporta onConflict con partial unique index.
+    // Usamos insert individual con manejo de error 409/23505 (duplicate).
     let synced = 0;
     let errors = 0;
+    let skipped = 0;
+    let firstError = '';
     const validJobs = allJobs.filter(job => job.external_id && job.title);
-    const BATCH_SIZE = 50;
 
-    for (let i = 0; i < validJobs.length; i += BATCH_SIZE) {
-      const batch = validJobs.slice(i, i + BATCH_SIZE).map(job => ({
+    for (const job of validJobs) {
+      const row = {
         title: job.title,
         description: job.description,
         category: job.category,
@@ -199,27 +201,50 @@ Deno.serve(async (_req) => {
         external_url: job.external_url,
         salary_range: job.salary_range,
         company_name: job.company_name,
-      }));
+      };
 
-      const { error, count } = await supabase.from('job_postings').upsert(
-        batch,
-        { onConflict: 'source,external_id', ignoreDuplicates: false, count: 'exact' },
-      );
+      // Primero intentar update si ya existe
+      const { data: existing } = await supabase
+        .from('job_postings')
+        .select('id')
+        .eq('source', job.source)
+        .eq('external_id', job.external_id)
+        .maybeSingle();
 
-      if (error) {
-        errors += batch.length;
-        console.error('[sync-jobs] Batch upsert error:', error.message);
+      if (existing) {
+        // Ya existe — actualizar
+        const { error } = await supabase
+          .from('job_postings')
+          .update(row)
+          .eq('id', existing.id);
+        if (error) {
+          errors++;
+          if (!firstError) firstError = `UPDATE: ${error.message} | ${error.code} | ${error.details}`;
+        } else {
+          skipped++;
+        }
       } else {
-        synced += count ?? batch.length;
+        // No existe — insertar
+        const { error } = await supabase
+          .from('job_postings')
+          .insert(row);
+        if (error) {
+          errors++;
+          if (!firstError) firstError = `INSERT: ${error.message} | ${error.code} | ${error.details}`;
+        } else {
+          synced++;
+        }
       }
     }
 
-    console.log(`[sync-jobs] Resultado: ${synced} sincronizados, ${errors} errores`);
+    console.log(`[sync-jobs] Resultado: ${synced} nuevos, ${skipped} actualizados, ${errors} errores`);
 
     return new Response(JSON.stringify({
       ok: true,
       synced,
+      updated: skipped,
       errors,
+      firstError: firstError || null,
       sources: {
         himalayas: himalayasJobs.length,
         remotive: remotiveJobs.length,
