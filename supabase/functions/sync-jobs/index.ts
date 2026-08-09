@@ -178,18 +178,17 @@ Deno.serve(async (_req) => {
       });
     }
 
-    // Upsert en batch (máximo eficiencia, 1 HTTP call por lote de 50)
+    // Insert individual — deduplicación manual (select + insert/update).
+    // PostgREST no soporta onConflict con partial unique index.
     let synced = 0;
     let errors = 0;
+    let skipped = 0;
     const validJobs = allJobs.filter(job => job.external_id && job.title);
-    const BATCH_SIZE = 50;
 
-    for (let i = 0; i < validJobs.length; i += BATCH_SIZE) {
-      const batch = validJobs.slice(i, i + BATCH_SIZE).map(job => ({
+    for (const job of validJobs) {
+      const row = {
         title: job.title,
         description: job.description,
-        category: job.category,
-        tags: job.tags,
         is_remote: job.remote,
         location: job.location,
         status: 'OPEN',
@@ -199,26 +198,37 @@ Deno.serve(async (_req) => {
         external_url: job.external_url,
         salary_range: job.salary_range,
         company_name: job.company_name,
-      }));
+        required_skills: JSON.stringify(job.tags),
+      };
 
-      const { error, count } = await supabase.from('job_postings').upsert(
-        batch,
-        { onConflict: 'source,external_id', ignoreDuplicates: false, count: 'exact' },
-      );
+      // Verificar si ya existe
+      const { data: existing } = await supabase
+        .from('job_postings')
+        .select('id')
+        .eq('source', job.source)
+        .eq('external_id', job.external_id)
+        .maybeSingle();
 
-      if (error) {
-        errors += batch.length;
-        console.error('[sync-jobs] Batch upsert error:', error.message);
+      if (existing) {
+        const { error } = await supabase
+          .from('job_postings')
+          .update(row)
+          .eq('id', existing.id);
+        if (error) { errors++; } else { skipped++; }
       } else {
-        synced += count ?? batch.length;
+        const { error } = await supabase
+          .from('job_postings')
+          .insert(row);
+        if (error) { errors++; } else { synced++; }
       }
     }
 
-    console.log(`[sync-jobs] Resultado: ${synced} sincronizados, ${errors} errores`);
+    console.log(`[sync-jobs] Resultado: ${synced} nuevos, ${skipped} actualizados, ${errors} errores`);
 
     return new Response(JSON.stringify({
       ok: true,
       synced,
+      updated: skipped,
       errors,
       sources: {
         himalayas: himalayasJobs.length,

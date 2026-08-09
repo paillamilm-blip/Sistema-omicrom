@@ -28,12 +28,22 @@ const FM = TF.mono;
 const FR = TF.display;
 
 interface Job {
-  id: string; company_id: string; title: string; description: string; category: string;
-  tags: string[]; required_node_level: number; budget_usd: number; time_limit_hours: number;
+  id: string; company_id: string; title: string; description: string;
+  required_skills?: any; required_node_level: number; budget_usd: number; time_limit_hours: number;
   status: string; published_at: string;
   lat?: number | null; lng?: number | null; location?: string | null; is_remote?: boolean | null;
   source?: string | null; external_id?: string | null; external_url?: string | null;
   salary_range?: string | null; company_name?: string | null;
+}
+
+/** Extrae tags de un Job — soporta required_skills (jsonb) del schema real */
+function getJobTags(j: Job): string[] {
+  if (Array.isArray(j.required_skills)) return j.required_skills.map(String);
+  if (typeof j.required_skills === 'string') {
+    try { const parsed = JSON.parse(j.required_skills); return Array.isArray(parsed) ? parsed : []; }
+    catch { return []; }
+  }
+  return [];
 }
 
 const LEVEL_LABEL = ['', 'N1 Operativo', 'N2 Core', 'N3 Arquitecto'];
@@ -233,9 +243,9 @@ export function EmpleosTab() {
                 {j.time_limit_hours && !j.source ? <div style={styles.statBox}><div style={styles.statLabel}>PLAZO</div><div style={styles.tlimit}><Clock size={12} /> {j.time_limit_hours}h</div></div> : null}
               </div>
 
-              {j.tags?.length > 0 && (
+              {getJobTags(j).length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '10px 0 0' }}>
-                  {j.tags.map(t => <span key={t} style={styles.tag}>{t}</span>)}
+                  {getJobTags(j).map(t => <span key={t} style={styles.tag}>{t}</span>)}
                 </div>
               )}
 
@@ -266,7 +276,7 @@ export function EmpleosTab() {
             title: cartaJob.title,
             description: cartaJob.description,
             company_name: names.get(cartaJob.company_id) ?? cartaJob.company_name ?? 'Empresa',
-            tags: cartaJob.tags ?? [],
+            tags: getJobTags(cartaJob),
             external_url: cartaJob.external_url ?? null,
           }}
           onClose={() => setCartaJob(null)}
@@ -432,9 +442,9 @@ function PublishJobModal({ onClose, onDone }: { onClose: () => void; onDone: () 
     try {
       const { error } = await supabase.from('job_postings').insert({
         company_id: profile.id, title: f.title.trim(), description: f.description.trim(),
-        category: f.category, budget_usd: Number(f.budget), time_limit_hours: Number(f.hours) || 48,
+        budget_usd: Number(f.budget), time_limit_hours: Number(f.hours) || 48,
         required_node_level: f.level,
-        tags: f.tags.split(',').map(t => t.trim()).filter(Boolean),
+        required_skills: f.tags.split(',').map(t => t.trim()).filter(Boolean),
         is_remote: f.is_remote,
         location: f.is_remote ? null : (f.location.trim() || null),
         lat: f.is_remote ? null : (coords?.lat ?? null),
