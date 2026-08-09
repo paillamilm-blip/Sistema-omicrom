@@ -2,10 +2,14 @@ import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } fro
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
 import ParticleOrb from './ParticleOrb';
+import { SuggestionChips } from './SuggestionChips';
+import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
+import { OrbContextLabel } from './OrbContextLabel';
 import { useApp } from '../../store/AppContext';
 import { interpret, askCoach } from '../../lib/oraculo';
 import { speak } from '../../lib/voiceEngine';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
+import { useIdleEscalation } from '../../hooks/useIdleEscalation';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '../../lib/progressiveProfile';
 import { evaluateProactiveEvents } from '../../lib/proactiveEngine';
@@ -228,8 +232,12 @@ export function OrbShell() {
   const [nodePositions, setNodePositions] = useState<{ id: string; x: number; y: number; depth: number }[]>([]);
   const [inputText, setInputText] = useState('');
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
+  const [proactiveActions, setProactiveActions] = useState<ProactiveAction[]>([]);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
+
+  // Idle escalation — si no interactúa, escalamos
+  const { stage: idleStage, helpMessage, resetIdle } = useIdleEscalation(state === 'orb');
   const hasGreeted = useRef(false);
   const [previewSkills, setPreviewSkills] = useState<string[]>([]);
 
@@ -567,6 +575,10 @@ export function OrbShell() {
       const event = evaluateProactiveEvents(context);
       if (event) {
         setResponseMsg(event.message);
+        setProactiveActions([
+          { label: 'Ver empleos', emoji: '💼', primary: true, onClick: () => { setActiveTab('empleos'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'empleos'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
+          { label: 'Mi perfil', emoji: '📈', onClick: () => { setActiveTab('perfil'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'inicio'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
+        ]);
         speak(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
       } else {
         // R2: PROGRESSIVE PROFILING — si el perfil tiene gaps, PREGUNTAR
@@ -581,6 +593,10 @@ export function OrbShell() {
           markAskedToday();
           const msg = `${saludo}, ${name}. ${question.question}`;
           setResponseMsg(msg);
+          setProactiveActions([
+            { label: 'Responder', emoji: '✅', primary: true, onClick: () => { /* focus input */ setResponseMsg(null); } },
+            { label: 'Después', onClick: () => setResponseMsg(null) },
+          ]);
           speak(msg.length > 200 ? msg.slice(0, 200) : msg);
         } else {
           // Perfil completo o ya preguntó hoy → consejo de mejora
@@ -590,6 +606,10 @@ export function OrbShell() {
             ? `${saludo}, ${name}. ${top.why.slice(0, 140)} ¿Vamos con eso?`
             : `${saludo}, ${name}. Tu Gemelo está al día. Toca un nodo o pregúntame lo que quieras — estoy acá para ayudarte.`;
           setResponseMsg(msg);
+          setProactiveActions(top ? [
+            { label: 'Sí, vamos', emoji: '✅', primary: true, onClick: () => { handleTextInput(top.why.includes('CV') ? 'quiero subir mi cv' : 'dame un consejo'); setResponseMsg(null); } },
+            { label: 'Otra cosa', emoji: '🔄', onClick: () => setResponseMsg(null) },
+          ] : []);
           speak(msg.length > 200 ? msg.slice(0, 200) : msg);
         }
       }
@@ -1056,26 +1076,14 @@ export function OrbShell() {
         paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 8px)',
         background: 'linear-gradient(0deg, rgba(0,2,6,0.98) 70%, transparent 100%)',
       }}>
-        {/* Response bubble (persiste hasta nuevo mensaje) */}
-        {responseMsg && (
+        {/* Idle help message (30s sin interacción) */}
+        {helpMessage && !responseMsg && (
           <div style={{
-            marginBottom: 8,
-            padding: '10px 14px',
-            background: C.surface,
-            border: `1px solid ${C.line}`,
-            borderRadius: 14,
-            fontFamily: FONT.body,
-            fontSize: 13,
-            color: C.ink,
-            lineHeight: 1.5,
-            backdropFilter: 'blur(12px)',
-            maxHeight: 120,
-            overflowY: 'auto',
+            marginBottom: 8, padding: '8px 12px', background: 'rgba(255,176,46,0.08)',
+            border: '1px solid rgba(255,176,46,0.2)', borderRadius: 10,
+            fontFamily: FONT.mono, fontSize: 10, color: C.gold, textAlign: 'center',
           }}>
-            <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>
-              ÓMICRON ▸{' '}
-            </span>
-            {responseMsg}
+            {helpMessage}
           </div>
         )}
 
@@ -1086,6 +1094,7 @@ export function OrbShell() {
             if (!inputText.trim()) return;
             handleTextInput(inputText.trim());
             setInputText('');
+            resetIdle();
           }}
           style={{
             display: 'flex',
@@ -1164,13 +1173,37 @@ export function OrbShell() {
             ➤
           </button>
         </form>
+
+        {/* Suggestion Chips (acciones rápidas) */}
+        {state === 'orb' && (
+          <SuggestionChips
+            onChipTap={(text) => { handleTextInput(text); resetIdle(); }}
+            visible={!inputText && idleStage !== 'quiet'}
+          />
+        )}
       </div>
+
+      {/* ── PROACTIVE MESSAGE (con botones — reemplaza la burbuja plana) ── */}
+      {state === 'orb' && responseMsg && (
+        <ProactiveMessage
+          message={responseMsg}
+          actions={proactiveActions}
+          onDismiss={() => { setResponseMsg(null); setProactiveActions([]); }}
+        />
+      )}
+
+      {/* ── ORB CONTEXT LABEL (texto flotante arriba) ──────────────── */}
+      {state === 'orb' && <OrbContextLabel visible={!responseMsg} />}
 
       {/* ── CSS Animations ──────────────────────────────────────────── */}
       <style>{`
         @keyframes orbPreviewEnter {
           from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
           to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translate(-50%, -8px); }
+          to   { opacity: 1; transform: translate(-50%, 0); }
         }
         @media (prefers-reduced-motion: reduce) {
           *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
