@@ -23,6 +23,7 @@ function AppShell() {
   const { authStatus, isLoadingProfile } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Track visit count for push permission timing
   useEffect(() => {
@@ -58,8 +59,11 @@ function AppShell() {
   }
 
   if (showResetPassword) return <ResetPasswordOverlay onDone={() => setShowResetPassword(false)} />;
-  if (authStatus === 'unauthenticated') return <AuthOverlay />;
+  // GUEST MODE: permitir ver el orbe sin auth. Auth se pide cuando quiere guardar/postular/conectar.
   if (authStatus === 'no_access') return <NoAccess />;
+
+  // Si no está autenticado, mostrar el orbe en modo guest (sin AuthOverlay bloqueante)
+  const isGuest = authStatus === 'unauthenticated';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -67,8 +71,11 @@ function AppShell() {
       {/* ── ORBE NEURONAL: la app es el orbe ──────────────────────── */}
       <OrbShell />
 
+      {/* Auth overlay como modal (no bloqueante) — se muestra cuando el guest quiere persistir */}
+      {isGuest && showAuthModal && <AuthOverlay onClose={() => setShowAuthModal(false)} />}
+
       <LiveNetworkFeed />
-      <IncomingJobPush />
+      {!isGuest && <IncomingJobPush />}
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
       <PublicProfileGate />
       <ErrorBoundary section="InstalarApp">

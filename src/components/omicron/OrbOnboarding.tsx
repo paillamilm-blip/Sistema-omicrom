@@ -96,16 +96,45 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     if (preview.length > 0) onSkillsPreview?.(preview);
   }, [input, phase, onSkillsPreview, shouldHide]);
 
-  // Submit handler
+  // Submit handler — INSTANT PROFILE: regex primero, IA refina en background
   const handleSubmit = useCallback(async (overrideText?: string) => {
     const text = overrideText || inputRef.current;
     if (!text.trim() || generating) return;
     setGenerating(true);
-    setPhase('processing');
-    const quickSkills = quickSkillsFromText(text);
-    if (quickSkills.length > 0) onSkillsPreview?.(quickSkills);
-    speak('Déjame conocerte…');
 
+    // PASO 1: INSTANT (0ms) — perfil por regex, sin esperar IA
+    const quickSkills = quickSkillsFromText(text);
+    const yearsMatch = text.match(/(\d+)\s*a[ñn]os?/i);
+    const years = yearsMatch ? parseInt(yearsMatch[1]) : 3;
+    const intent = classifyIntent(text);
+
+    const instantProfile: GeneratedProfile = {
+      profession: text.trim().slice(0, 50),
+      years,
+      skills: quickSkills.length > 0 ? quickSkills : ['Profesional', 'Adaptabilidad', 'Trabajo en equipo'],
+      axes: {
+        exec: Math.min(80, 30 + years * 5),
+        qual: Math.min(75, 25 + years * 4),
+        trans: Math.min(60, 15 + years * 3),
+        fund: Math.min(70, 20 + years * 4),
+      },
+      seniorLabel: years >= 8 ? 'Profesional Senior' : years >= 4 ? 'Profesional Mid-Senior' : years >= 2 ? 'Profesional Mid' : 'Profesional',
+      summary: `Profesional en ${text.trim().slice(0, 40)}.`,
+    };
+
+    // Mostrar resultado INMEDIATAMENTE (sin spinner)
+    onProfileGenerated?.(instantProfile);
+    onSkillsPreview?.(instantProfile.skills);
+    const msg = `Listo. Veo que ${instantProfile.skills.length > 1 ? 'dominas ' + instantProfile.skills.slice(0, 3).join(', ') : 'eres ' + instantProfile.profession}. Tu perfil ya tiene forma.`;
+    setResultMsg(msg);
+    setPhase('result');
+    speak(msg);
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+
+    // Auto-navegar a intent rápido (1.5s en vez de 3.5s)
+    setTimeout(() => { setPhase('done'); onComplete(intent); }, 1500);
+
+    // PASO 2: BACKGROUND — IA refina (sin bloquear al usuario)
     try {
       const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
       if (!OR_KEY) throw new Error('Sin key');
@@ -121,20 +150,12 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
       try { parsed = JSON.parse(raw); } catch { const a = raw.indexOf('{'); const b = raw.lastIndexOf('}'); if (a >= 0 && b > a) parsed = JSON.parse(raw.slice(a, b + 1)); }
 
       if (parsed && parsed.skills) {
-        const intent = classifyIntent(text);
+        // Refinar silenciosamente (el usuario ya está navegando)
         onProfileGenerated?.(parsed);
         onSkillsPreview?.(parsed.skills);
-        const msg = `Listo. Veo que dominas ${parsed.skills.slice(0, 3).join(', ')}. Tu perfil ya tiene forma.`;
-        setResultMsg(msg); setPhase('result'); speak(msg);
-        localStorage.setItem(ONBOARDING_KEY, 'true');
-        setTimeout(() => { setPhase('done'); onComplete(intent); }, 3500);
-      } else { throw new Error('parse failed'); }
+      }
     } catch {
-      const fallback: GeneratedProfile = { profession: text.trim().slice(0, 50), years: 3, skills: quickSkills.length > 0 ? quickSkills : ['Profesional', 'Adaptabilidad', 'Trabajo en equipo'], axes: { exec: 40, qual: 35, trans: 25, fund: 30 }, seniorLabel: 'Profesional', summary: `Profesional en ${text.trim().slice(0, 30)}.` };
-      onProfileGenerated?.(fallback); onSkillsPreview?.(fallback.skills);
-      setResultMsg('Ya tienes tu perfil base. Después lo afinamos.'); setPhase('result'); speak('Ya tienes tu perfil base.');
-      localStorage.setItem(ONBOARDING_KEY, 'true');
-      setTimeout(() => { setPhase('done'); onComplete('cv'); }, 3000);
+      // Silencioso — el perfil instant ya funciona
     } finally { setGenerating(false); }
   }, [generating, onComplete, onProfileGenerated, onSkillsPreview]);
 
