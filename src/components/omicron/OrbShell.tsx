@@ -619,7 +619,7 @@ export function OrbShell() {
   }, [state, isListening]);
 
   // ── Onboarding handler (R3: intent-first routing) ────────────────────
-  const handleOnboardingComplete = useCallback((choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'vender' | 'explorar') => {
+  const handleOnboardingComplete = useCallback((choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar') => {
     // R3: La respuesta del usuario define a dónde va
     const routeMap: Record<string, { tab: TabId; nodeId: string }> = {
       cv:       { tab: 'perfil', nodeId: 'inicio' },
