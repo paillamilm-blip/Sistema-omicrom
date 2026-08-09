@@ -30,7 +30,7 @@ import type { TabId, GemeloDigital } from '../../types';
 
 // ── Lazy tab components ─────────────────────────────────────────────
 const WalletTab     = lazy(() => import('../tabs/WalletTab').then(m => ({ default: m.WalletTab })));
-const ChatTab       = lazy(() => import('../tabs/ChatTab').then(m => ({ default: m.ChatTab })));
+const RedSocialTab  = lazy(() => import('../tabs/RedSocialTab').then(m => ({ default: m.RedSocialTab })));
 const EmpleosTab    = lazy(() => import('../tabs/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
 const MarketTab     = lazy(() => import('../tabs/MarketTab').then(m => ({ default: m.MarketTab })));
 const PerfilTab     = lazy(() => import('../tabs/PerfilTab').then(m => ({ default: m.PerfilTab })));
@@ -49,7 +49,7 @@ const HUB_NODES: OrbNode[] = [
   { id: 'academia',    label: 'Academia',     tab: 'academia',   icon: '◈' },
   { id: 'empleos',     label: 'Empleos',      tab: 'empleos',    icon: '◇' },
   { id: 'mercado',     label: 'Mercado',      tab: 'market',     icon: '⬢' },
-  { id: 'mensajes',    label: 'Mensajes',     tab: 'chat',       icon: '○' },
+  { id: 'mensajes',    label: 'Red Social',   tab: 'chat',       icon: '🌐' },
   { id: 'gobernanza',  label: 'Gobernanza',   tab: 'gobernanza', icon: '△' },
   { id: 'habilidades', label: 'Habilidades',  tab: 'maxskill',   icon: '◎' },
   { id: 'billetera',   label: 'Billetera',    tab: 'wallet',     icon: '▽' },
@@ -199,7 +199,7 @@ function renderTab(tab: TabId) {
     case 'academia':   return <AcademiaTab />;
     case 'market':     return <MarketTab />;
     case 'empleos':    return <EmpleosTab />;
-    case 'chat':       return <ChatTab />;
+    case 'chat':       return <RedSocialTab />;
     case 'wallet':     return <WalletTab />;
     case 'gobernanza': return <GobernanzaTab />;
     case 'vault':      return <VaultTab />;
