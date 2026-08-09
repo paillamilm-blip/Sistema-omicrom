@@ -7,6 +7,7 @@ import { interpret, askCoach } from '../../lib/oraculo';
 import { speak } from '../../lib/voiceEngine';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
+import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '../../lib/progressiveProfile';
 import { evaluateProactiveEvents } from '../../lib/proactiveEngine';
 import { C, FONT } from '../../theme';
 import type { TabId, GemeloDigital } from '../../types';
@@ -569,7 +570,6 @@ export function OrbShell() {
         speak(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
       } else {
         // R2: PROGRESSIVE PROFILING — si el perfil tiene gaps, PREGUNTAR
-        const { getNextProfileQuestion, hasAskedToday, markAskedToday } = await import('../../lib/progressiveProfile');
         const question = getNextProfileQuestion(sbProfile);
 
         const name = sbProfile?.display_name || sbProfile?.full_name || sbProfile?.username || 'amigo';

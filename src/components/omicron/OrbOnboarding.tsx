@@ -9,7 +9,7 @@ import { C, FONT, RADIUS } from '../../theme';
 const ONBOARDING_KEY = 'omicron_onboarding_done';
 
 interface OrbOnboardingProps {
-  onComplete: (choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'vender' | 'explorar') => void;
+  onComplete: (choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'vender' | 'validar' | 'explorar') => void;
   onProfileGenerated?: (profile: GeneratedProfile) => void;
   onSkillsPreview?: (skills: string[]) => void;
 }
