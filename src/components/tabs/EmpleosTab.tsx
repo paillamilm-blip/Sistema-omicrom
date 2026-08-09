@@ -11,6 +11,7 @@ import { useToast } from '../shared/Toast';
 import { GemeloGuidance } from '../shared/GemeloGuidance';
 import { TrabajoTeEncuentra } from '../empleos/TrabajoTeEncuentra';
 import { RutaCarrera } from '../empleos/RutaCarrera';
+import { CartaPostulacionModal } from '../empleos/CartaPostulacionModal';
 import { oc, OmicronHeader, OmicronAction } from '../omicron/OmicronChrome';
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
@@ -31,6 +32,8 @@ interface Job {
   tags: string[]; required_node_level: number; budget_usd: number; time_limit_hours: number;
   status: string; published_at: string;
   lat?: number | null; lng?: number | null; location?: string | null; is_remote?: boolean | null;
+  source?: string | null; external_id?: string | null; external_url?: string | null;
+  salary_range?: string | null; company_name?: string | null;
 }
 
 const LEVEL_LABEL = ['', 'N1 Operativo', 'N2 Core', 'N3 Arquitecto'];
@@ -65,6 +68,7 @@ export function EmpleosTab() {
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'denied'>('idle');
   const [radarJob, setRadarJob] = useState<Job | null>(null);
+  const [cartaJob, setCartaJob] = useState<Job | null>(null);
 
   const requestGeo = useCallback(() => {
     if (!navigator.geolocation) { setGeoStatus('denied'); return; }
@@ -216,12 +220,17 @@ export function EmpleosTab() {
                 <div style={styles.matchBadge}><Star size={9} style={{ fill: C.amber, color: C.amber }} /> MATCH #{rank}</div>
               )}
               <div style={styles.title}>{j.title}</div>
-              <div style={styles.company}>@{names.get(j.company_id) ?? 'empresa'} · {LEVEL_LABEL[j.required_node_level] ?? 'N1'}</div>
+              <div style={styles.company}>@{j.company_name ?? names.get(j.company_id) ?? 'empresa'} · {j.source ? `vía ${j.source}` : LEVEL_LABEL[j.required_node_level] ?? 'N1'}</div>
               {j.description && <p style={styles.desc}>{j.description}</p>}
 
               <div style={styles.statRow}>
-                <div style={styles.statBox}><div style={styles.statLabel}>PRESUPUESTO</div><div style={styles.budget}>🪙 {j.budget_usd}</div></div>
-                <div style={styles.statBox}><div style={styles.statLabel}>PLAZO</div><div style={styles.tlimit}><Clock size={12} /> {j.time_limit_hours}h</div></div>
+                {j.salary_range ? (
+                  <div style={styles.statBox}><div style={styles.statLabel}>SALARIO</div><div style={styles.budget}>💰 {j.salary_range}</div></div>
+                ) : j.budget_usd ? (
+                  <div style={styles.statBox}><div style={styles.statLabel}>PRESUPUESTO</div><div style={styles.budget}>🪙 {j.budget_usd}</div></div>
+                ) : null}
+                {j.is_remote && <div style={styles.statBox}><div style={styles.statLabel}>MODALIDAD</div><div style={{ ...styles.tlimit, color: C.green }}>🌎 Remoto</div></div>}
+                {j.time_limit_hours && !j.source ? <div style={styles.statBox}><div style={styles.statLabel}>PLAZO</div><div style={styles.tlimit}><Clock size={12} /> {j.time_limit_hours}h</div></div> : null}
               </div>
 
               {j.tags?.length > 0 && (
@@ -231,7 +240,7 @@ export function EmpleosTab() {
               )}
 
               <button
-                onClick={() => !isApplied && !mine && apply(j.id)}
+                onClick={() => !isApplied && !mine && setCartaJob(j)}
                 disabled={isApplied || mine || busy === j.id}
                 style={{
                   ...styles.applyBtn,
@@ -241,7 +250,7 @@ export function EmpleosTab() {
                   boxShadow: (isApplied || mine) ? 'none' : '0 0 16px rgba(92, 200, 255,0.35)',
                   cursor: (isApplied || mine) ? 'default' : 'pointer',
                 }}>
-                {isApplied ? <><CheckCircle2 size={14} /> APLICADO</> : mine ? 'TU OFERTA' : <><Send size={13} /> APLICAR</>}
+                {isApplied ? <><CheckCircle2 size={14} /> APLICADO</> : mine ? 'TU OFERTA' : <><Send size={13} /> POSTULAR CON IA</>}
               </button>
             </div>
           );
@@ -249,6 +258,21 @@ export function EmpleosTab() {
       </div>
 
       {showPublish && <PublishJobModal onClose={() => setShowPublish(false)} onDone={() => { setShowPublish(false); load(); }} />}
+
+      {cartaJob && (
+        <CartaPostulacionModal
+          job={{
+            id: cartaJob.id,
+            title: cartaJob.title,
+            description: cartaJob.description,
+            company_name: names.get(cartaJob.company_id) ?? cartaJob.company_name ?? 'Empresa',
+            tags: cartaJob.tags ?? [],
+            external_url: cartaJob.external_url ?? null,
+          }}
+          onClose={() => setCartaJob(null)}
+          onApplyDone={() => { apply(cartaJob.id); setCartaJob(null); }}
+        />
+      )}
 
       {radarJob && (() => {
         const j = radarJob;
@@ -269,9 +293,9 @@ export function EmpleosTab() {
                 <div style={styles.statBox}><div style={styles.statLabel}>PRESUPUESTO</div><div style={styles.budget}>🪙 {j.budget_usd}</div></div>
                 <div style={styles.statBox}><div style={styles.statLabel}>PLAZO</div><div style={styles.tlimit}><Clock size={12} /> {j.time_limit_hours}h</div></div>
               </div>
-              <button onClick={() => { if (!isApplied && !mine) { apply(j.id); setRadarJob(null); } }} disabled={isApplied || mine || busy === j.id}
+              <button onClick={() => { if (!isApplied && !mine) { setCartaJob(j); setRadarJob(null); } }} disabled={isApplied || mine || busy === j.id}
                 style={{ ...styles.applyBtn, background: (isApplied || mine) ? 'transparent' : `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: `1px solid ${isApplied ? C.green : mine ? C.lineSoft : C.blue}`, color: isApplied ? C.green : mine ? C.muted : '#04121f', cursor: (isApplied || mine) ? 'default' : 'pointer' }}>
-                {isApplied ? <><CheckCircle2 size={14} /> APLICADO</> : mine ? 'TU OFERTA' : <><Send size={13} /> APLICAR</>}
+                {isApplied ? <><CheckCircle2 size={14} /> APLICADO</> : mine ? 'TU OFERTA' : <><Send size={13} /> POSTULAR CON IA</>}
               </button>
             </div>
           </div>
