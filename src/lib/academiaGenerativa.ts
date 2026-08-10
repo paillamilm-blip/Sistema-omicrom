@@ -7,7 +7,9 @@
 
 const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'google/gemma-4-31b-it:free';
+
+// Usa aiClient centralizado para compartir rate-limit y fallback
+import { callAI } from './aiClient';
 
 export interface MicroCurso {
   titulo: string;
@@ -35,28 +37,11 @@ Responde SOLO JSON válido:
 export async function generarMicroCurso(skill: string, nivel?: string): Promise<MicroCurso> {
   try {
     if (!OR_KEY) throw new Error('Sin key');
-    const resp = await fetch(OR_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OR_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://sistema-omicrom.vercel.app',
-        'X-Title': 'Sistema Omicron',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: SYS_PROMPT },
-          { role: 'user', content: `Genera un micro-curso sobre: ${skill}. Nivel: ${nivel || 'intermedio'}.` },
-        ],
-        max_tokens: 1024,
-        temperature: 0.7,
-        response_format: { type: 'json_object' },
-      }),
-    });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    const raw = data?.choices?.[0]?.message?.content ?? '';
+    const raw = await callAI([
+      { role: 'system', content: SYS_PROMPT },
+      { role: 'user', content: `Genera un micro-curso sobre: ${skill}. Nivel: ${nivel || 'intermedio'}.` },
+    ], { maxTokens: 1024, temperature: 0.7, jsonMode: true });
+    if (!raw) throw new Error('IA no disponible');
     let parsed: { titulo?: string; concepto?: string; preguntas?: { pregunta: string; opciones: string[]; correcta: number }[] } | null = null;
     try { parsed = JSON.parse(raw); } catch {
       const a = raw.indexOf('{'); const b = raw.lastIndexOf('}');

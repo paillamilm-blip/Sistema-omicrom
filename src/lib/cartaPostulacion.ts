@@ -5,9 +5,9 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 const OPENROUTER_KEY = import.meta.env.VITE_OPENROUTER_KEY ?? '';
-const MODEL = 'google/gemma-4-31b-it:free';
-const FALLBACK = 'google/gemma-4-26b-a4b-it:free';
-const URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+// Usa aiClient centralizado para compartir rate-limit y fallback
+import { callAI } from './aiClient';
 
 export interface CartaInput {
   nombreUsuario: string;
@@ -66,35 +66,15 @@ EMPLEO:
 
 La carta debe destacar la conexión entre las skills del candidato y lo que pide el empleo. Si hay gaps, menciónalos como "áreas en desarrollo" de forma positiva.`;
 
-  // Intentar con IA
+  // Intentar con IA (centralizado vía aiClient — 6 modelos + fallback)
   if (OPENROUTER_KEY) {
-    for (const model of [MODEL, FALLBACK]) {
-      try {
-        const resp = await fetch(URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENROUTER_KEY}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://sistema-omicrom.vercel.app',
-            'X-Title': 'Sistema Omicron',
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-            max_tokens: 600,
-            temperature: 0.7,
-            response_format: { type: 'json_object' },
-          }),
-        });
+    try {
+      const text = await callAI([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ], { maxTokens: 600, temperature: 0.7, jsonMode: true });
 
-        if (!resp.ok) continue;
-        const data = await resp.json();
-        const text = data?.choices?.[0]?.message?.content ?? '';
-        if (!text) continue;
-
+      if (text) {
         const parsed = JSON.parse(text);
         if (parsed.carta) {
           return {
@@ -103,9 +83,9 @@ La carta debe destacar la conexión entre las skills del candidato y lo que pide
             gapsMencionados: parsed.gapsMencionados ?? [],
           };
         }
-      } catch {
-        continue;
       }
+    } catch {
+      // Fall through to template
     }
   }
 

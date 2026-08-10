@@ -201,16 +201,12 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
 
     // PASO 2: BACKGROUND — IA refina (sin bloquear al usuario)
     try {
-      const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
-      if (!OR_KEY) throw new Error('Sin key');
-      const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${OR_KEY}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://sistema-omicrom.vercel.app', 'X-Title': 'Sistema Omicron' },
-        body: JSON.stringify({ model: 'google/gemma-4-31b-it:free', messages: [{ role: 'system', content: PROFILE_PROMPT }, { role: 'user', content: text.trim() }], max_tokens: 512, temperature: 0.5, response_format: { type: 'json_object' } }),
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-      const raw = data?.choices?.[0]?.message?.content ?? '';
+      const { callAI } = await import('../../lib/aiClient');
+      const raw = await callAI([
+        { role: 'system', content: PROFILE_PROMPT },
+        { role: 'user', content: text.trim() },
+      ], { maxTokens: 512, temperature: 0.5, jsonMode: true });
+      if (!raw) throw new Error('IA no disponible');
       let parsed: GeneratedProfile | null = null;
       try { parsed = JSON.parse(raw); } catch { const a = raw.indexOf('{'); const b = raw.lastIndexOf('}'); if (a >= 0 && b > a) parsed = JSON.parse(raw.slice(a, b + 1)); }
 
