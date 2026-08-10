@@ -31,7 +31,7 @@ const FR = TF.display;
 
 interface Job {
   id: string; company_id: string; title: string; description: string;
-  required_skills?: any; required_node_level: number; budget_usd: number; time_limit_hours: number;
+  required_skills?: string[]; required_node_level: number; budget_usd: number; time_limit_hours: number;
   status: string; published_at: string;
   lat?: number | null; lng?: number | null; location?: string | null; is_remote?: boolean | null;
   source?: string | null; external_id?: string | null; external_url?: string | null;
@@ -538,7 +538,7 @@ const styles: Record<string, React.CSSProperties> = {
   matchBadge: { position: 'absolute', top: 12, right: 14, display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FM, fontSize: 8, color: C.amber, background: 'rgba(255, 176, 46,0.1)', border: '1px solid rgba(255, 176, 46,0.3)', padding: '2px 7px', borderRadius: 3 },
   title: { fontFamily: FR, fontWeight: 700, fontSize: 18, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', paddingRight: 70 },
   company: { fontFamily: FM, fontSize: 10, color: C.muted, marginTop: 4 },
-  desc: { fontFamily: FR, fontSize: 13, color: '#b9d4e6', lineHeight: 1.4, margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any, overflow: 'hidden' },
+  desc: { fontFamily: FR, fontSize: 13, color: '#b9d4e6', lineHeight: 1.4, margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' },
   statRow: { display: 'flex', gap: 10, marginTop: 12 },
   statBox: { flex: 1, background: 'rgba(0,0,0,0.25)', border: `1px solid ${C.lineSoft}`, borderRadius: 4, padding: '7px 10px' },
   statLabel: { fontFamily: FM, fontSize: 8, color: C.muted, letterSpacing: 1.5 },

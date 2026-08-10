@@ -48,6 +48,7 @@ export function RedSocialTab() {
 
       if (data) {
         const mySkills = (profile.skills ?? []).map(s => s.toLowerCase());
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const scored = data.map((p: any) => {
           const theirSkills = (p.skills ?? []).map((s: string) => s.toLowerCase());
           // Complementariedad: skills que ellos tienen y tú no
@@ -61,6 +62,7 @@ export function RedSocialTab() {
               ? `Te complementa en: ${complementary.slice(0, 3).join(', ')}`
               : 'Profesional activo en la red';
           return { ...p, score, reason };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }).sort((a: any, b: any) => b.score - a.score).slice(0, 8);
         setSuggestions(scored);
       }
@@ -126,7 +128,7 @@ export function RedSocialTab() {
 }
 
 // ── FEED SECTION ─────────────────────────────────────────────────────
-function FeedSection({ events, onViewUser }: { events: LiveEvent[]; onViewUser: (u: string) => void }) {
+function FeedSection({ events, onViewUser: _onViewUser }: { events: LiveEvent[]; onViewUser: (u: string) => void }) {
   if (events.length === 0) {
     return (
       <div style={S.empty}>

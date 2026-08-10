@@ -640,6 +640,7 @@ export function OrbShell() {
     }, 1500); // 1.5s para que el orbe aparezca primero
 
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sbProfile, gemeloDigital]);
 
   // Cleanup: detener voz al desmontar el componente

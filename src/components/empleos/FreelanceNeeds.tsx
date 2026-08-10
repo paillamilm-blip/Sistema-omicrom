@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Clock, Users, MapPin, Wifi, Send, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { Plus, Clock, Users, MapPin, Wifi, Send, CheckCircle2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../store/AppContext';
 import { C, FONT } from '../../theme';
@@ -71,7 +71,7 @@ export function FreelanceNeeds() {
     const ids = [...new Set(list.map(n => n.publisher_id))];
     if (ids.length) {
       const { data: p } = await supabase.from('profiles').select('id,username').in('id', ids);
-      setNames(new Map(((p as any[]) ?? []).map(x => [x.id, x.username])));
+      setNames(new Map(((p as { id: string; username: string }[]) ?? []).map(x => [x.id, x.username])));
     }
 
     // Mis postulaciones
@@ -80,7 +80,7 @@ export function FreelanceNeeds() {
         .from('freelance_applications')
         .select('need_id')
         .eq('applicant_id', profile.id);
-      setApplied(new Set(((apps as any[]) ?? []).map(a => a.need_id)));
+      setApplied(new Set(((apps as { need_id: string }[]) ?? []).map(a => a.need_id)));
     }
 
     setLoading(false);
