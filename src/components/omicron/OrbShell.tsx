@@ -8,7 +8,8 @@ import { OrbContextLabel } from './OrbContextLabel';
 import { PremiumLock } from '../shared/Premium';
 import { useApp } from '../../store/AppContext';
 import { interpret, askCoach } from '../../lib/oraculo';
-import { speak } from '../../lib/voiceEngine';
+import { speak, stopSpeaking } from '../../lib/voiceEngine';
+import { speakAI, stopAI, isVoiceAIAvailable } from '../../lib/voiceAI';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useIdleEscalation } from '../../hooks/useIdleEscalation';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
@@ -400,18 +401,18 @@ export function OrbShell() {
         setActiveTab(node.tab);
         const msg = `Abriendo ${node.label}.`;
         flash(msg);
-        speak(msg);
+        speakAI(msg);
       }
       return;
     }
 
     if (intent.kind === 'coach') {
       flash('Dame un momento, estoy analizando tu perfil…');
-      speak('Déjame ver tu Gemelo Digital.');
+      speakAI('Déjame ver tu Gemelo Digital.');
       const r = await askCoach(coachCtx);
       const msg = r.advice || r.error || 'No pude conectarme. Intenta de nuevo.';
       flash(msg);
-      speak(msg.length > 320 ? msg.slice(0, 320) : msg);
+      speakAI(msg.length > 320 ? msg.slice(0, 320) : msg);
       // Si es error de límite, mostrar upsell
       if (r.error && (r.error.includes('límite') || r.error.includes('consejos'))) {
         setShowPremium(true);
@@ -426,7 +427,7 @@ export function OrbShell() {
       else if (intent.topic === 'pe') msg = `Llevas ${(sbProfile?.pe_points ?? 0).toLocaleString()} puntos de experiencia. Cada nodo que valides suma más.`;
       else msg = 'Puedes decirme cosas como: "abre academia", "dame un consejo", "cuánta reputación tengo", o simplemente tocar un nodo del orbe. Estoy acá para lo que necesites.';
       flash(msg);
-      speak(msg);
+      speakAI(msg);
       return;
     }
 
@@ -441,7 +442,7 @@ export function OrbShell() {
       const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia', vault: 'un aporte a la Bóveda' };
       const msg = `Para convalidar ${names[intent.item]}, abrí tu perfil y usá el botón de convalidación.`;
       flash(msg);
-      speak(msg);
+      speakAI(msg);
       return;
     }
 
@@ -452,7 +453,7 @@ export function OrbShell() {
       const t = await askTutor(text, coachCtx);
       const msg = t.answer || t.error || 'No pude responder. Probá con otra pregunta.';
       flash(msg);
-      speak(msg.length > 320 ? msg.slice(0, 320) : msg);
+      speakAI(msg.length > 320 ? msg.slice(0, 320) : msg);
       // Si es error de límite, mostrar upsell
       if (t.error && (t.error.includes('límite') || t.error.includes('consultas'))) {
         setShowPremium(true);
