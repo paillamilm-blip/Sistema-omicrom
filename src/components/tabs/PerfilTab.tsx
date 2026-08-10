@@ -84,15 +84,7 @@ export function PerfilTab() {
         </p>
       </motion.div>
 
-      {/* ═══ RETENCIÓN: Streak + Dashboard + Push + Daily Challenge ═══ */}
-      <div style={{ width: '100%', maxWidth: 340, padding: '0 16px' }}>
-        <StreakBanner />
-        <DashboardVivo />
-        <DailyChallengeCard onNavigate={(tab) => setActiveTab(tab as any)} />
-        <PushPermissionBanner />
-      </div>
-
-      {/* ═══ ORBITAL VISUALIZATION ═══ */}
+      {/* ═══ ORBITAL VISUALIZATION (primero = identidad del usuario) ═══ */}
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -326,6 +318,14 @@ export function PerfilTab() {
           <TrendingUp size={12} /> Academia
         </button>
       </motion.div>
+
+      {/* ═══ RETENCIÓN: Streak + Dashboard + Challenge + Push (DESPUÉS del perfil) ═══ */}
+      <div style={{ width: '100%', maxWidth: 340, padding: '0 16px', marginTop: 8 }}>
+        <StreakBanner />
+        <DashboardVivo />
+        <DailyChallengeCard onNavigate={(tab) => setActiveTab(tab as any)} />
+        <PushPermissionBanner />
+      </div>
     </div>
   );
 }

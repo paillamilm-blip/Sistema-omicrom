@@ -162,7 +162,7 @@ export function FreelanceNeeds() {
               <div style={S.cardPublisher}>@{names.get(n.publisher_id) ?? 'usuario'}</div>
 
               {/* Description */}
-              {n.description && <p style={S.cardDesc}>{n.description.slice(0, 150)}{n.description.length > 150 ? '...' : ''}</p>}
+              {n.description && <p style={S.cardDesc}>{n.description.slice(0, 100)}{n.description.length > 100 ? '…' : ''}</p>}
 
               {/* Stats */}
               <div style={S.statsRow}>

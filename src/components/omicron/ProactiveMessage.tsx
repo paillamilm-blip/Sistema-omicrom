@@ -28,8 +28,13 @@ export function ProactiveMessage({ message, actions, onDismiss }: Props) {
   useEffect(() => {
     if (!message) return;
     const t = setTimeout(() => setVisible(true), 200);
-    return () => clearTimeout(t);
-  }, [message]);
+    // Auto-dismiss después de 10s si el usuario no interactúa
+    const autoDismiss = setTimeout(() => {
+      setDismissed(true);
+      onDismiss?.();
+    }, 10000);
+    return () => { clearTimeout(t); clearTimeout(autoDismiss); };
+  }, [message, onDismiss]);
 
   if (!message || dismissed) return null;
 
