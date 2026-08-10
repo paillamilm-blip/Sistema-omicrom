@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../store/AppContext';
-import { speak } from '../../lib/voiceEngine';
+import { speakAI } from '../../lib/voiceAI';
 import { C, FONT, RADIUS } from '../../theme';
 
 const ONBOARDING_KEY = 'omicron_onboarding_done';
@@ -115,11 +115,24 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     if (shouldHide || hasSpoken.current) return;
     hasSpoken.current = true;
     const t = setTimeout(() => {
-      // TTS desactivado por defecto (feedback tester: voz robótica da miedo)
-      // speak(userName ? `Hey ${userName}, soy Ómicron. Cuéntame, ¿a qué te dedicas?` : 'Hey, soy Ómicron. Cuéntame, ¿a qué te dedicas?');
+      // TTS con voz IA natural (Kokoro español) — ya no suena robótica
+      speakAI(userName ? `Hey ${userName}, soy Ómicron. Cuéntame, ¿a qué te dedicas?` : 'Hey, soy Ómicron. Cuéntame, ¿a qué te dedicas?');
     }, 1500);
     return () => clearTimeout(t);
   }, [shouldHide, userName]);
+
+  // Mobile: detectar si el teclado está abierto para ajustar layout
+  const [kbOpen, setKbOpen] = useState(false);
+  useEffect(() => {
+    if (shouldHide) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      setKbOpen(window.innerHeight - vv.height > 100);
+    };
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
+  }, [shouldHide]);
 
   // R5: Preview skills while typing
   useEffect(() => {
@@ -164,7 +177,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     const msg = `Listo. Veo que ${instantProfile.skills.length > 1 ? 'dominas ' + instantProfile.skills.slice(0, 3).join(', ') : 'eres ' + instantProfile.profession}. Tu perfil ya tiene forma.`;
     setResultMsg(msg);
     setPhase('result');
-    // speak(msg); // TTS off por defecto
+    speakAI(msg); // Voz IA natural
     localStorage.setItem(ONBOARDING_KEY, 'true');
 
     // Analytics: track onboarding + profile generation
@@ -224,41 +237,90 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
   return (
     <AnimatePresence>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.2 } }}
-        style={{ position: 'absolute', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', background: 'rgba(0,2,6,0.82)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', padding: '24px 20px', paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 24px)' }}>
+        style={{
+          position: 'absolute', inset: 0, zIndex: 50,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
+          background: 'rgba(0,2,6,0.82)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+          padding: '24px 20px',
+          // Mobile keyboard-aware: cuando el teclado está abierto, reducir padding
+          // para que el form no quede tapado
+          paddingBottom: kbOpen ? '12px' : 'calc(env(safe-area-inset-bottom, 20px) + 24px)',
+          transition: 'padding-bottom 0.2s ease',
+          overflow: 'auto',
+        }}>
         <div style={{ maxWidth: 360, width: '100%', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <motion.div key={phase} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ padding: '14px 18px', borderRadius: RADIUS.lg, background: C.surface, border: `1px solid ${C.line}` }}>
-            <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan, display: 'block', marginBottom: 6 }}>ÓMICRON</span>
-            <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>
-              {phase === 'processing' && <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 10, height: 10, borderRadius: '50%', background: C.cyan, animation: 'cp-pulse 1s ease-in-out infinite' }} />Analizando tu perfil…</span>}
-              {phase === 'result' && resultMsg}
-              {phase === 'ask' && (userName ? `Hey ${userName}, cuéntame ¿a qué te dedicas?` : '¿A qué te dedicas? Cuéntame en una frase.')}
-            </p>
-          </motion.div>
+          {/* Mensaje de Ómicron — se oculta cuando el teclado está abierto para dar espacio */}
+          {!kbOpen && (
+            <motion.div key={phase} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ padding: '16px 20px', borderRadius: RADIUS.lg, background: C.surface, border: `1px solid ${C.line}` }}>
+              <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan, display: 'block', marginBottom: 6 }}>ÓMICRON</span>
+              <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 16, color: C.ink, lineHeight: 1.5 }}>
+                {phase === 'processing' && <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 10, height: 10, borderRadius: '50%', background: C.cyan, animation: 'cp-pulse 1s ease-in-out infinite' }} />Analizando tu perfil…</span>}
+                {phase === 'result' && resultMsg}
+                {phase === 'ask' && (userName ? `Hey ${userName}, cuéntame ¿a qué te dedicas?` : '¿A qué te dedicas? Cuéntame en una frase.')}
+              </p>
+            </motion.div>
+          )}
+          {/* Versión compacta del mensaje cuando el teclado está abierto */}
+          {kbOpen && phase === 'ask' && (
+            <div style={{ padding: '8px 12px', borderRadius: 10, background: `${C.surface}99` }}>
+              <span style={{ fontFamily: FONT.body, fontSize: 13, color: C.mut }}>
+                {userName ? `${userName}, ¿a qué te dedicas?` : '¿A qué te dedicas?'}
+              </span>
+            </div>
+          )}
           {phase === 'ask' && (
             <motion.form initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}
-              onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
+              style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {hasMicSupport() && (
-                <button type="button" onClick={handleMic} aria-label="Hablar" style={{ width: 44, height: 44, borderRadius: '50%', border: `1px solid ${C.cyanDim}`, background: C.glass2, color: C.cyan, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16, flexShrink: 0 }}>🎤</button>
+                <button type="button" onClick={handleMic} aria-label="Hablar"
+                  style={{ width: 48, height: 48, borderRadius: '50%', border: `1px solid ${C.cyanDim}`, background: C.glass2, color: C.cyan, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 18, flexShrink: 0 }}>
+                  🎤
+                </button>
               )}
-              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ej: Ingeniero industrial con 8 años" autoFocus
-                style={{ flex: 1, padding: '14px 16px', borderRadius: RADIUS.pill, background: C.surface, border: `1px solid ${C.cyanDim}`, fontFamily: FONT.body, fontSize: 15, color: C.ink, outline: 'none' }} />
+              <input value={input} onChange={(e) => setInput(e.target.value)}
+                placeholder="Ej: Ingeniero industrial con 8 años"
+                enterKeyHint="send"
+                autoComplete="off"
+                style={{ flex: 1, padding: '14px 16px', borderRadius: RADIUS.pill, background: C.surface, border: `1px solid ${C.cyanDim}`, fontFamily: FONT.body, fontSize: 16, color: C.ink, outline: 'none', WebkitAppearance: 'none' }} />
               <button type="submit" disabled={!input.trim() || generating}
-                style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: input.trim() ? `linear-gradient(135deg, ${C.cyan}, ${C.purple})` : C.glass2, color: input.trim() ? '#000' : C.mut, cursor: input.trim() ? 'pointer' : 'default', display: 'grid', placeItems: 'center', fontSize: 16, flexShrink: 0, boxShadow: input.trim() ? '0 4px 16px rgba(92,200,255,0.3)' : 'none' }}>➤</button>
+                aria-label="Enviar"
+                style={{ width: 48, height: 48, borderRadius: '50%', border: 'none', background: input.trim() ? `linear-gradient(135deg, ${C.cyan}, ${C.purple})` : C.glass2, color: input.trim() ? '#000' : C.mut, cursor: input.trim() ? 'pointer' : 'default', display: 'grid', placeItems: 'center', fontSize: 18, flexShrink: 0, boxShadow: input.trim() ? '0 4px 16px rgba(92,200,255,0.3)' : 'none', transition: 'background 0.2s, box-shadow 0.2s' }}>
+                ➤
+              </button>
             </motion.form>
           )}
-          {phase === 'ask' && !input && (
+          {/* Suggestion chips — más grandes para touch mobile (min 44px height) */}
+          {phase === 'ask' && !input && !kbOpen && (
             <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}
-              style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+              style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
               {['Desarrollador web', 'Diseñadora UX', 'Ingeniero industrial', 'Estudiante', 'Freelancer'].map(s => (
-                <button key={s} onClick={() => setInput(s)} style={{ padding: '7px 14px', borderRadius: RADIUS.pill, background: C.glass, border: `1px solid ${C.line}`, color: C.ink, fontFamily: FONT.body, fontSize: 12, cursor: 'pointer' }}>{s}</button>
+                <button key={s} onClick={() => { setInput(s); handleSubmit(s); }}
+                  style={{
+                    padding: '10px 16px', minHeight: 44, borderRadius: RADIUS.pill,
+                    background: C.glass, border: `1px solid ${C.line}`, color: C.ink,
+                    fontFamily: FONT.body, fontSize: 14, cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                    transition: 'background 0.15s ease',
+                  }}>
+                  {s}
+                </button>
               ))}
             </motion.div>
           )}
           {phase === 'result' && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-              style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 10, color: C.mut, margin: 0, letterSpacing: 1 }}>
-              Preparando tu orbe…
-            </motion.p>
+            <>
+              {!kbOpen && (
+                <motion.div key="result-msg" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ padding: '16px 20px', borderRadius: RADIUS.lg, background: C.surface, border: `1px solid ${C.line}` }}>
+                  <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan, display: 'block', marginBottom: 6 }}>ÓMICRON</span>
+                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 16, color: C.ink, lineHeight: 1.5 }}>{resultMsg}</p>
+                </motion.div>
+              )}
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+                style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 10, color: C.mut, margin: 0, letterSpacing: 1 }}>
+                Preparando tu orbe…
+              </motion.p>
+            </>
           )}
         </div>
       </motion.div>
