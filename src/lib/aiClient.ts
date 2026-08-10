@@ -9,13 +9,16 @@ const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Modelos gratis de OpenRouter (ordenados por preferencia — actualizar si rotan)
-// ACTUALIZADO ago-2026: Meta Llama, Qwen y Mistral free fueron removidos.
-// Solo quedan modelos Google y NVIDIA en capa gratuita.
+// ACTUALIZADO ago-2026: Solo quedan Google y NVIDIA en capa gratuita.
+// Meta Llama, Qwen y Mistral fueron removidos.
+// Más modelos = menos probabilidad de 429 (rate limit distribuido).
 const FREE_MODELS = [
-  'google/gemma-4-31b-it:free',          // Principal: 31B, 256K ctx
-  'google/gemma-4-26b-a4b-it:free',      // Backup: 26B sparse
-  'google/gemma-3n-e4b-it:free',         // Ligero: 4B, rápido
-  'nvidia/nemotron-ultra-253b:free',     // NVIDIA 253B MoE (si disponible)
+  'google/gemma-4-31b-it:free',               // Google 31B, 256K ctx — mejor calidad
+  'nvidia/nemotron-3-super-120b-a12b:free',    // NVIDIA 120B MoE (12B active) — rápido
+  'google/gemma-4-26b-a4b-it:free',            // Google 26B sparse
+  'nvidia/nemotron-3-nano-30b-a3b:free',       // NVIDIA 30B MoE (3B active) — ultra rápido
+  'google/gemma-3n-e4b-it:free',               // Google 4B — ligero, siempre disponible
+  'nvidia/nemotron-3-ultra-550b-a55b:free',    // NVIDIA 550B (55B active) — último recurso
 ];
 
 // Cache de modelos que fallaron recientemente (no reintentar por 1h)
@@ -105,9 +108,9 @@ export async function callAI(
           continue;
         }
         if (status === 429) {
-          // Rate limited — esperar 3s y probar siguiente modelo
-          console.warn(`[aiClient] Rate limit en ${model}. Esperando 3s...`);
-          await new Promise(r => setTimeout(r, 3000));
+          // Rate limited — NO marcar como muerto, solo saltar al siguiente
+          // El siguiente modelo probablemente tiene su propio rate limit separado
+          console.warn(`[aiClient] Rate limit en ${model}. Saltando a siguiente modelo.`);
           continue;
         }
         // Otros errores (500, 503, etc) — probar siguiente
