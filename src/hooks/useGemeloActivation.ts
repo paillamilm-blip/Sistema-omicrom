@@ -226,6 +226,7 @@ export function useGemeloActivation() {
       setMsg('Error al procesar. Intentá de nuevo.');
       setPhase('upload');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cvText, emitPush, runAutoChain, detectSynergies, toast]);
 
   return {

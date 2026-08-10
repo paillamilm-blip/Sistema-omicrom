@@ -99,9 +99,10 @@ export function getRemainingCredits(type: 'coach' | 'tutor'): number {
 }
 
 // ── Cliente OpenRouter directo — usa aiClient resiliente (6 modelos) ────
-import { callAI, checkRateLimit } from './aiClient';
+import { callAI } from './aiClient';
 
 async function callOpenRouter(messages: { role: string; content: string }[]): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = await callAI(messages as any);
   if (!result) throw new Error('IA no disponible');
   return result;

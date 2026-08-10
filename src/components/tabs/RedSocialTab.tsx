@@ -154,6 +154,7 @@ function FeedSection({ events, onViewUser: _onViewUser }: { events: LiveEvent[];
 }
 
 // ── ONLINE SECTION ───────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function OnlineSection({ peers, profile, onViewUser, onDm }: {
   peers: any[]; profile: any;
   onViewUser: (u: string) => void;
@@ -195,6 +196,7 @@ function OnlineSection({ peers, profile, onViewUser, onDm }: {
 
 // ── RANKING SECTION ──────────────────────────────────────────────────
 function RankingSection({ onViewUser }: { onViewUser: (u: string) => void }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [top, setTop] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -213,6 +215,7 @@ function RankingSection({ onViewUser }: { onViewUser: (u: string) => void }) {
   return (
     <div>
       <div style={S.sectionLabel}>🏆 RANKING DE REPUTACIÓN</div>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {top.map((t: any, i: number) => (
         <button key={t.user_id} onClick={() => onViewUser(t.username)} style={S.rankRow}>
           <span style={{ ...S.rankPos, color: i < 3 ? C.gold : C.mut }}>
