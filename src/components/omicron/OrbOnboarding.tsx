@@ -38,12 +38,43 @@ function quickSkillsFromText(text: string): string[] {
   const t = text.toLowerCase();
   const matches: string[] = [];
   const map: [RegExp, string][] = [
+    // Tech
     [/react|frontend|front.?end/, 'React'], [/node|backend|express/, 'Node.js'],
     [/python|django|flask/, 'Python'], [/typescript/, 'TypeScript'],
     [/docker|kubernetes|devops/, 'DevOps'], [/aws|cloud|azure/, 'Cloud'],
     [/figma|ux|ui|diseñ/, 'Diseño UX'], [/data|analyt|machine.?learn/, 'Data/IA'],
-    [/ingenier|industrial|lean|procesos/, 'Ing. Industrial'],
-    [/gesti[oó]n|liderazgo|scrum|agile/, 'Gestión'], [/market|ventas|growth/, 'Marketing'],
+    // Ingeniería
+    [/ingenier|industrial|lean|procesos|manufactur/, 'Ing. Industrial'],
+    [/civil|construcc|estructura/, 'Ing. Civil'],
+    [/electr[oó]n|automat|control/, 'Electrónica'],
+    // Negocios
+    [/gesti[oó]n|liderazgo|scrum|agile|gerente|director/, 'Gestión'],
+    [/market|ventas|growth|comercial|publicidad/, 'Marketing'],
+    [/finanz|contab|audit|tributar|impuesto/, 'Finanzas'],
+    [/rrhh|recursos humanos|talento|selecci[oó]n|reclut/, 'RRHH'],
+    [/emprendedor|startup|negocio|empresa/, 'Emprendimiento'],
+    // Salud
+    [/m[eé]dic|doctor|salud|cl[ií]nic/, 'Medicina'],
+    [/enfermer|paramédic/, 'Enfermería'],
+    [/psic[oó]log|terap/, 'Psicología'],
+    [/nutrici|diet/, 'Nutrición'],
+    // Educación
+    [/profes|docen|pedagog|enseñ|educac/, 'Educación'],
+    [/investig|acad[eé]mic|cient[ií]f/, 'Investigación'],
+    // Derecho
+    [/abogad|derecho|legal|jur[ií]d|notari/, 'Derecho'],
+    // Creativos
+    [/fotograf|video|audiovisual|cine/, 'Audiovisual'],
+    [/period|comunic|prensa|redacc/, 'Comunicaciones'],
+    [/arqu|urbanis/, 'Arquitectura'],
+    [/chef|cocin|gastronom|culinari/, 'Gastronomía'],
+    // Oficios
+    [/electricista|t[eé]cnico|mec[aá]nic|soldad/, 'Técnico'],
+    [/log[ií]stic|transporte|bodega|supply/, 'Logística'],
+    [/administra|secretar|asistente|oficina/, 'Administración'],
+    // Genérico (si dice años de experiencia)
+    [/freelanc|independiente|consul/, 'Consultoría'],
+    [/estudiant|universid|carrera/, 'Estudiante'],
   ];
   for (const [regex, skill] of map) {
     if (regex.test(t) && matches.length < 6) matches.push(skill);
