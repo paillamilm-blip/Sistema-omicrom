@@ -1,10 +1,11 @@
 // src/lib/voiceAI.ts
 // ═══════════════════════════════════════════════════════════════════════
 // VOICE AI — TTS con IA natural via OpenRouter (Kokoro 82M).
-// Reemplaza Web Speech API robótica con voz generada por IA.
-// Usa la MISMA key de OpenRouter que ya tenemos (VITE_OPENROUTER_KEY).
-// Fallback a silencio si no hay key o falla la generación.
+// Voces ESPAÑOLAS reales (ef_dora, em_alex, em_santa).
+// Fallback automático a Web Speech API (voiceEngine.ts) si la API falla.
 // ═══════════════════════════════════════════════════════════════════════
+
+import { speak } from './voiceEngine';
 
 const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY ?? '';
 const TTS_URL = 'https://openrouter.ai/api/v1/audio/speech';
@@ -12,30 +13,74 @@ const TTS_URL = 'https://openrouter.ai/api/v1/audio/speech';
 // Modelos TTS disponibles en OpenRouter (ordenados por preferencia)
 const TTS_MODELS = [
   'kokoro/kokoro-82m',              // Gratis, 82M params, rápido
-  'google/gemini-2.5-flash-tts',    // Si Kokoro no está disponible
+  'google/gemini-2.5-flash-tts',    // Fallback si Kokoro no disponible
 ];
 
-// Voces disponibles en Kokoro (español-compatible)
+// Voces ESPAÑOLAS de Kokoro (prefijo "e" = español)
+// ef_dora = femenina española (la mejor calidad)
+// em_alex = masculino español
+// em_santa = masculino español alternativo
 const VOICES = {
-  default: 'af_sarah',    // Femenina, clara, natural
-  male: 'am_adam',         // Masculina
-  warm: 'af_bella',        // Femenina cálida
+  default: 'ef_dora',     // Femenina española — clara, natural
+  male: 'em_alex',        // Masculino español
+  warm: 'ef_dora',        // Misma femenina (es la de mayor calidad)
 } as const;
 
 // Cache de audio para no regenerar frases repetidas
 const audioCache = new Map<string, string>(); // text → objectURL
+const MAX_CACHE = 30; // Máximo entradas en cache
 
 // Control de reproducción actual
 let currentAudio: HTMLAudioElement | null = null;
 
+// Unlock de autoplay: el browser necesita al menos 1 interacción del usuario
+let audioUnlocked = false;
+
+function unlockAudio(): void {
+  if (audioUnlocked) return;
+  // Crear y reproducir un audio silencioso para desbloquear autoplay
+  const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+  const buf = ctx.createBuffer(1, 1, 22050);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(ctx.destination);
+  src.start(0);
+  audioUnlocked = true;
+  ctx.close().catch(() => { /* ignore */ });
+}
+
+// Registrar unlock en primera interacción del usuario
+if (typeof window !== 'undefined') {
+  const events = ['click', 'touchstart', 'keydown'];
+  const handler = () => {
+    unlockAudio();
+    events.forEach(e => window.removeEventListener(e, handler));
+  };
+  events.forEach(e => window.addEventListener(e, handler, { once: false, passive: true }));
+}
+
+/**
+ * Fallback: usa Web Speech API del navegador.
+ */
+function fallbackToWebSpeech(text: string): void {
+  speak(text);
+}
+
 /**
  * Genera y reproduce voz con IA (OpenRouter Kokoro TTS).
- * Si falla o no hay key → silencio (no crashea).
+ * Si falla → cae a Web Speech API (siempre suena algo).
  */
 export async function speakAI(text: string, voice: keyof typeof VOICES = 'default'): Promise<void> {
-  if (!OR_KEY || !text.trim()) return;
+  if (!text.trim()) return;
 
-  // Truncar texto largo (TTS tiene límite)
+  // Si no hay key → usar Web Speech API directamente
+  if (!OR_KEY) {
+    console.info('[voiceAI] Sin OPENROUTER_KEY → usando Web Speech API');
+    fallbackToWebSpeech(text);
+    return;
+  }
+
+  // Truncar texto largo (TTS tiene límite ~500 chars para buena calidad)
   const input = text.slice(0, 500);
 
   // Detener audio anterior si está sonando
@@ -65,44 +110,96 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
     });
 
     if (!resp.ok) {
-      // Si Kokoro falla, intentar con fallback model
-      if (TTS_MODELS.length > 1) {
-        const resp2 = await fetch(TTS_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OR_KEY}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://sistema-omicrom.vercel.app',
-            'X-Title': 'Sistema Omicron',
-          },
-          body: JSON.stringify({
-            model: TTS_MODELS[1],
-            input,
-            voice: VOICES[voice],
-          }),
-        });
-        if (!resp2.ok) return; // Silencio
-        const blob = await resp2.blob();
-        const url = URL.createObjectURL(blob);
-        audioCache.set(cacheKey, url);
-        playFromURL(url);
-        return;
-      }
-      return; // Silencio
+      console.warn(`[voiceAI] Kokoro falló (${resp.status}), intentando fallback…`);
+      // Intentar segundo modelo
+      const resp2 = await tryFallbackModel(input, voice);
+      if (resp2) return;
+      // Si ambos fallan → Web Speech API
+      fallbackToWebSpeech(text);
+      return;
+    }
+
+    // Verificar que la respuesta sea audio
+    const contentType = resp.headers.get('content-type') ?? '';
+    if (!contentType.includes('audio') && !contentType.includes('octet-stream')) {
+      console.warn('[voiceAI] Respuesta no es audio:', contentType);
+      fallbackToWebSpeech(text);
+      return;
     }
 
     // Convertir response a audio blob y reproducir
     const blob = await resp.blob();
+    if (blob.size < 100) {
+      // Blob vacío o corrupto
+      console.warn('[voiceAI] Audio vacío, fallback a Web Speech');
+      fallbackToWebSpeech(text);
+      return;
+    }
+
     const url = URL.createObjectURL(blob);
-    audioCache.set(cacheKey, url);
+    cacheAudio(cacheKey, url);
     playFromURL(url);
-  } catch {
-    // Silencio si hay error de red
+  } catch (err) {
+    console.warn('[voiceAI] Error de red:', err);
+    fallbackToWebSpeech(text);
   }
 }
 
 /**
- * Detener la voz actual.
+ * Intentar con el modelo de fallback (Gemini TTS).
+ */
+async function tryFallbackModel(input: string, voice: keyof typeof VOICES): Promise<boolean> {
+  if (TTS_MODELS.length < 2) return false;
+
+  try {
+    const resp = await fetch(TTS_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OR_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://sistema-omicrom.vercel.app',
+        'X-Title': 'Sistema Omicron',
+      },
+      body: JSON.stringify({
+        model: TTS_MODELS[1],
+        input,
+        voice: VOICES[voice],
+      }),
+    });
+
+    if (!resp.ok) return false;
+
+    const blob = await resp.blob();
+    if (blob.size < 100) return false;
+
+    const url = URL.createObjectURL(blob);
+    const cacheKey = `${voice}:${input}`;
+    cacheAudio(cacheKey, url);
+    playFromURL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Guardar en cache con límite de tamaño.
+ */
+function cacheAudio(key: string, url: string): void {
+  // Evitar que el cache crezca sin límite
+  if (audioCache.size >= MAX_CACHE) {
+    const firstKey = audioCache.keys().next().value;
+    if (firstKey) {
+      const oldUrl = audioCache.get(firstKey);
+      if (oldUrl) URL.revokeObjectURL(oldUrl);
+      audioCache.delete(firstKey);
+    }
+  }
+  audioCache.set(key, url);
+}
+
+/**
+ * Detener la voz actual (IA o browser).
  */
 export function stopAI(): void {
   if (currentAudio) {
@@ -110,13 +207,21 @@ export function stopAI(): void {
     currentAudio.currentTime = 0;
     currentAudio = null;
   }
+  // También detener Web Speech por si estaba hablando
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
 }
 
 /**
  * ¿Está hablando ahora?
  */
 export function isSpeakingAI(): boolean {
-  return !!currentAudio && !currentAudio.paused;
+  if (currentAudio && !currentAudio.paused) return true;
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    return window.speechSynthesis.speaking;
+  }
+  return false;
 }
 
 /**
@@ -126,11 +231,17 @@ function playFromURL(url: string): void {
   const audio = new Audio(url);
   audio.volume = 0.85;
   currentAudio = audio;
-  audio.play().catch(() => {
-    // Autoplay blocked — necesita interacción previa del usuario
+  audio.play().catch((err) => {
+    console.warn('[voiceAI] Autoplay bloqueado:', err.message);
+    // Autoplay blocked → fallback a Web Speech (no necesita unlock)
     currentAudio = null;
+    // No hacemos fallback aquí para evitar doble voz, ya se intentó antes
   });
   audio.onended = () => { currentAudio = null; };
+  audio.onerror = () => {
+    console.warn('[voiceAI] Error reproduciendo audio');
+    currentAudio = null;
+  };
 }
 
 /**
