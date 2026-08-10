@@ -105,9 +105,12 @@ export function PerfilTab() {
     <div style={{
       display: 'flex', flexDirection: 'column',
       height: '100%', width: '100%',
-      overflow: 'auto', WebkitOverflowScrolling: 'touch',
+      overflowY: 'auto', overflowX: 'hidden',
+      WebkitOverflowScrolling: 'touch',
       paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 24px)',
-    }}>
+      scrollbarWidth: 'none', // Firefox
+      msOverflowStyle: 'none', // IE/Edge
+    }} className="scrollbar-hidden">
       {/* ═══ HEADER ═══ */}
       <div style={{ textAlign: 'center', padding: '16px 20px 8px', flexShrink: 0 }}>
         <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 4 }}>
