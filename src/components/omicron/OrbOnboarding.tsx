@@ -110,14 +110,19 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
 
   const userName = profile?.display_name || profile?.full_name || profile?.username || '';
 
-  // Speak greeting once
+  // Speak greeting once — intenta hablar al entrar.
+  // En iOS puede fallar sin gesto previo (silencioso, no crashea).
+  // En Android/Chrome desktop SÍ funciona.
+  // La confirmación post-submit SIEMPRE funciona (es respuesta a gesto).
   useEffect(() => {
     if (shouldHide || hasSpoken.current) return;
     hasSpoken.current = true;
     const t = setTimeout(() => {
-      // TTS desactivado en carga automática (iOS/Chrome bloquea sin gesto del usuario)
-      // La voz se activa cuando el usuario toca un chip o envía texto
-    }, 1500);
+      const greeting = userName
+        ? `Hey ${userName}, soy Ómicron. Cuéntame, ¿a qué te dedicas?`
+        : 'Hey, soy Ómicron. Cuéntame, ¿a qué te dedicas?';
+      speakAI(greeting);
+    }, 1800);
     return () => clearTimeout(t);
   }, [shouldHide, userName]);
 
@@ -174,10 +179,14 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     import('../../lib/guestMode').then(({ saveGuestProfile }) => {
       saveGuestProfile({ ...instantProfile, createdAt: new Date().toISOString() });
     }).catch(() => {});
-    const msg = `Listo. Veo que ${instantProfile.skills.length > 1 ? 'dominas ' + instantProfile.skills.slice(0, 3).join(', ') : 'eres ' + instantProfile.profession}. Tu perfil ya tiene forma.`;
+    const skillsList = instantProfile.skills.slice(0, 3).join(', ');
+    const msg = instantProfile.skills.length > 1
+      ? `Listo, tu Gemelo Digital ya tiene forma. Veo que dominas ${skillsList}. ¿Quieres afinarlo subiendo tu CV o empezamos así?`
+      : `Listo, tu Gemelo Digital ya tiene forma. Eres ${instantProfile.profession}. ¿Quieres afinarlo subiendo tu CV o empezamos así?`;
     setResultMsg(msg);
     setPhase('result');
-    speakAI(msg); // Voz IA natural
+    // Voz: esta llamada SÍ funciona en iOS porque es respuesta a un gesto (submit/chip tap)
+    speakAI(msg);
     localStorage.setItem(ONBOARDING_KEY, 'true');
 
     // Analytics: track onboarding + profile generation
