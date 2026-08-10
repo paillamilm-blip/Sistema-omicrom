@@ -87,6 +87,11 @@ export function CartaPostulacionModal({ job, onClose, onApplyDone }: Props) {
     if (job.external_url) {
       window.open(job.external_url, '_blank', 'noopener');
     }
+    // Analytics: track job application
+    import('../../lib/analytics').then(({ track }) => {
+      track('job_applied', { job_title: job.title, company: job.company_name ?? '' });
+      track('carta_generated', { job_title: job.title });
+    }).catch(() => {});
     onApplyDone();
     onClose();
   }

@@ -162,6 +162,12 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     speak(msg);
     localStorage.setItem(ONBOARDING_KEY, 'true');
 
+    // Analytics: track onboarding + profile generation
+    import('../../lib/analytics').then(({ track }) => {
+      track('onboarding_completed', { intent, skills_count: instantProfile.skills.length });
+      track('first_profile_generated', { profession: instantProfile.profession });
+    }).catch(() => {});
+
     // Auto-navegar a intent rápido (1.5s en vez de 3.5s)
     setTimeout(() => { setPhase('done'); onComplete(intent); }, 1500);
 
