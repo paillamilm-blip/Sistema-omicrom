@@ -33,7 +33,7 @@ function AppShell() {
 
     // Register daily activity for streak (server-side)
     if (authStatus === 'authenticated') {
-      void supabase.rpc('register_daily_activity', { p_challenge: false, p_pe: 0 }).catch(() => {});
+      supabase.rpc('register_daily_activity', { p_challenge: false, p_pe: 0 }).then(() => {/* ok */});
     }
   }, [authStatus]);
 

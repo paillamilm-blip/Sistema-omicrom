@@ -42,6 +42,7 @@ export function RedSocialTab() {
         .from('profiles')
         .select('id, username, full_name, avatar_url, node_type, reputation_score, skills, cv_summary')
         .neq('id', profile.id)
+        .neq('is_ghost', true)
         .order('reputation_score', { ascending: false })
         .limit(15);
 

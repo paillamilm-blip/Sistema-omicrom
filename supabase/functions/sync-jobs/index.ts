@@ -119,6 +119,35 @@ async function fetchArbeitnow(): Promise<NormalizedJob[]> {
   }
 }
 
+// ── GETONBOARD (Chile/LATAM — tech jobs) ─────────────────────────────
+async function fetchGetOnBoard(): Promise<NormalizedJob[]> {
+  try {
+    const res = await fetch('https://www.getonbrd.com/api/v0/search/jobs?per_page=50&country_id=chile');
+    if (!res.ok) return [];
+    const data = await res.json();
+    const jobs = data.data ?? [];
+    return jobs.map((j: any) => ({
+      source: 'getonboard',
+      external_id: String(j.id ?? ''),
+      external_url: j.attributes?.url ?? `https://www.getonbrd.com/jobs/${j.id}`,
+      title: j.attributes?.title ?? '',
+      description: (j.attributes?.description_headline ?? '').slice(0, 500),
+      company_name: j.attributes?.company?.data?.attributes?.name ?? 'Empresa Chile',
+      category: inferCategory(j.attributes?.title ?? '', j.attributes?.tags ?? []),
+      tags: (j.attributes?.tags ?? []).slice(0, 8),
+      remote: j.attributes?.remote ?? false,
+      salary_range: j.attributes?.min_salary && j.attributes?.max_salary
+        ? `$${j.attributes.min_salary}-$${j.attributes.max_salary} USD`
+        : null,
+      location: j.attributes?.city ?? 'Chile',
+      published_at: j.attributes?.published_at ?? new Date().toISOString(),
+    }));
+  } catch (e) {
+    console.error('[sync-jobs] GetOnBoard error:', e);
+    return [];
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────
 function inferCategory(title: string, tags: string[]): string {
   const t = (title + ' ' + tags.join(' ')).toLowerCase();
@@ -163,14 +192,15 @@ Deno.serve(async (_req) => {
     console.log('[sync-jobs] Iniciando sincronización...');
 
     // Fetch en paralelo
-    const [himalayasJobs, remotiveJobs, arbeitnowJobs] = await Promise.all([
+    const [himalayasJobs, remotiveJobs, arbeitnowJobs, getonboardJobs] = await Promise.all([
       fetchHimalayas(),
       fetchRemotive(),
       fetchArbeitnow(),
+      fetchGetOnBoard(),
     ]);
 
-    const allJobs = [...himalayasJobs, ...remotiveJobs, ...arbeitnowJobs];
-    console.log(`[sync-jobs] Total encontrados: ${allJobs.length} (Himalayas: ${himalayasJobs.length}, Remotive: ${remotiveJobs.length}, Arbeitnow: ${arbeitnowJobs.length})`);
+    const allJobs = [...himalayasJobs, ...remotiveJobs, ...arbeitnowJobs, ...getonboardJobs];
+    console.log(`[sync-jobs] Total encontrados: ${allJobs.length} (Himalayas: ${himalayasJobs.length}, Remotive: ${remotiveJobs.length}, Arbeitnow: ${arbeitnowJobs.length}, GetOnBoard: ${getonboardJobs.length})`);
 
     if (allJobs.length === 0) {
       return new Response(JSON.stringify({ ok: true, synced: 0, message: 'No se encontraron empleos nuevos' }), {
@@ -234,6 +264,7 @@ Deno.serve(async (_req) => {
         himalayas: himalayasJobs.length,
         remotive: remotiveJobs.length,
         arbeitnow: arbeitnowJobs.length,
+        getonboard: getonboardJobs.length,
       },
     }), { headers: { 'Content-Type': 'application/json' } });
 
