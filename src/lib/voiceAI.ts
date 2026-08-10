@@ -1,8 +1,9 @@
 // src/lib/voiceAI.ts
 // ═══════════════════════════════════════════════════════════════════════
-// VOICE AI — TTS con IA natural via OpenRouter (Kokoro 82M).
-// Voces ESPAÑOLAS reales (ef_dora). Fallback directo a Web Speech API.
-// Ultra Review: race conditions, memory leaks, y stuck vibration resueltos.
+// VOICE AI — TTS inteligente.
+// - speakAI(text): usa Kokoro TTS (OpenRouter) — para respuestas IA (valen la pena)
+// - speakLocal(text): usa Web Speech API (gratis, infinito) — para textos fijos
+// Ambas emiten eventos 'omicron:speaking' para vibrar el orbe.
 // ═══════════════════════════════════════════════════════════════════════
 
 import { speak } from './voiceEngine';
@@ -283,4 +284,19 @@ export function clearVoiceCache(): void {
 
 export function isVoiceAIAvailable(): boolean {
   return !!OR_KEY;
+}
+
+
+/**
+ * Habla texto usando Web Speech API del browser (GRATIS, sin gastar API).
+ * Usar para textos fijos/offline: navegación, datos del perfil, saludos.
+ * Emite eventos omicron:speaking para vibrar el orbe.
+ */
+export function speakLocal(text: string): void {
+  if (!text.trim()) return;
+  stopAI(); // Detener cualquier audio previo
+  const started = speak(text, undefined, () => emitSpeaking(false));
+  if (started) {
+    emitSpeaking(true);
+  }
 }
