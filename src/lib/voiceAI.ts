@@ -189,6 +189,9 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
 async function tryFallbackModel(input: string, voice: keyof typeof VOICES): Promise<boolean> {
   if (TTS_MODELS.length < 2) return false;
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
   try {
     const resp = await fetch(TTS_URL, {
       method: 'POST',
@@ -203,7 +206,9 @@ async function tryFallbackModel(input: string, voice: keyof typeof VOICES): Prom
         input,
         voice: VOICES[voice],
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!resp.ok) return false;
 
@@ -216,6 +221,7 @@ async function tryFallbackModel(input: string, voice: keyof typeof VOICES): Prom
     playFromURL(url);
     return true;
   } catch {
+    clearTimeout(timeout);
     return false;
   }
 }
@@ -243,6 +249,16 @@ export function stopAI(): void {
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
+    // Revocar objectURL si no está en el cache (evitar memory leak)
+    const src = currentAudio.src;
+    if (src && src.startsWith('blob:')) {
+      // Solo revocar si no está en cache (el cache maneja su propio lifecycle)
+      let inCache = false;
+      for (const url of audioCache.values()) {
+        if (url === src) { inCache = true; break; }
+      }
+      if (!inCache) URL.revokeObjectURL(src);
+    }
     currentAudio = null;
   }
   // También detener Web Speech por si estaba hablando
