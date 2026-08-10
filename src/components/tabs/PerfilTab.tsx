@@ -357,7 +357,7 @@ function CardCompetencias({ skillsDetail, cvSummary }: {
 
 function CardImpacto({ axes, setActiveTab }: {
   axes: { exec: number; qual: number; trans: number; fund: number };
-  setActiveTab: (tab: string) => void;
+  setActiveTab: (tab: 'maxskill' | 'academia') => void;
 }) {
   return (
     <div style={{
