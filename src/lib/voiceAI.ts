@@ -47,6 +47,15 @@ function unlockAudio(): void {
   src.start(0);
   audioUnlocked = true;
   ctx.close().catch(() => { /* ignore */ });
+  // Emitir evento para que OrbShell sepa que puede hablar libremente
+  window.dispatchEvent(new CustomEvent('omicron:audio-unlocked'));
+}
+
+/**
+ * ¿El audio está desbloqueado? (el usuario ya tocó/clickeó al menos una vez)
+ */
+export function isAudioUnlocked(): boolean {
+  return audioUnlocked;
 }
 
 // Registrar unlock en primera interacción del usuario
