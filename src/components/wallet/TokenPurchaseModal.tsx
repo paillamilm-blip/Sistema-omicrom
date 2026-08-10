@@ -27,6 +27,8 @@ export function TokenPurchaseModal({ onClose }: Props) {
   async function handleCheckout() {
     if (!valid) return;
     setStep('loading');
+    // Analytics: track checkout
+    import('../../lib/analytics').then(({ track }) => track('checkout_started', { tokens })).catch(() => {});
     try {
       const { data, error } = await supabase.functions.invoke('crear-checkout', {
         body: { tokens },

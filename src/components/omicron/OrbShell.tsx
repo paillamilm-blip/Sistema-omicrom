@@ -5,6 +5,7 @@ import ParticleOrb from './ParticleOrb';
 import { SuggestionChips } from './SuggestionChips';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { OrbContextLabel } from './OrbContextLabel';
+import { PremiumLock } from '../shared/Premium';
 import { useApp } from '../../store/AppContext';
 import { interpret, askCoach } from '../../lib/oraculo';
 import { speak } from '../../lib/voiceEngine';
@@ -233,6 +234,7 @@ export function OrbShell() {
   const [inputText, setInputText] = useState('');
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
   const [proactiveActions, setProactiveActions] = useState<ProactiveAction[]>([]);
+  const [showPremium, setShowPremium] = useState(false);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -410,6 +412,10 @@ export function OrbShell() {
       const msg = r.advice || r.error || 'No pude conectarme. Intenta de nuevo.';
       flash(msg);
       speak(msg.length > 320 ? msg.slice(0, 320) : msg);
+      // Si es error de límite, mostrar upsell
+      if (r.error && (r.error.includes('límite') || r.error.includes('consejos'))) {
+        setShowPremium(true);
+      }
       return;
     }
 
@@ -447,6 +453,10 @@ export function OrbShell() {
       const msg = t.answer || t.error || 'No pude responder. Probá con otra pregunta.';
       flash(msg);
       speak(msg.length > 320 ? msg.slice(0, 320) : msg);
+      // Si es error de límite, mostrar upsell
+      if (t.error && (t.error.includes('límite') || t.error.includes('consultas'))) {
+        setShowPremium(true);
+      }
     } catch {
       flash('Tuve un problema de conexión. Intenta de nuevo.');
     }
@@ -1199,6 +1209,9 @@ export function OrbShell() {
 
       {/* ── ORB CONTEXT LABEL (texto flotante arriba) ──────────────── */}
       {state === 'orb' && <OrbContextLabel visible={!responseMsg} />}
+
+      {/* ── PREMIUM UPSELL (cuando llega al límite de IA) ──────────── */}
+      {showPremium && <PremiumLock feature="Coach IA" onClose={() => setShowPremium(false)} />}
 
       {/* ── CSS Animations ──────────────────────────────────────────── */}
       <style>{`
