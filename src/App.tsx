@@ -5,7 +5,6 @@ import { AuthOverlay } from './components/auth/AuthOverlay';
 import { ResetPasswordOverlay } from './components/auth/ResetPasswordOverlay';
 import { supabase } from './lib/supabase';
 import { NoAccess } from './components/shared/NoAccess';
-import { NotificationsPanel } from './components/shared/NotificationsPanel';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { InstallPWA } from './components/shared/InstallPWA';
 import ParticleOrb from './components/omicron/ParticleOrb';
@@ -21,7 +20,6 @@ import { C, FONT } from './theme';
 
 function AppShell() {
   const { authStatus, isLoadingProfile } = useApp();
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -89,7 +87,6 @@ function AppShell() {
 
       <LiveNetworkFeed />
       {!isGuest && <IncomingJobPush />}
-      {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
       <PublicProfileGate />
       <ErrorBoundary section="InstalarApp">
         <InstallPWA />

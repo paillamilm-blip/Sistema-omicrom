@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff, Shield, ArrowLeft, Mail } from 'lucide-react';
 import ParticleOrb from '../omicron/ParticleOrb';
+import { getGuestProfile, clearGuestProfile } from '../../lib/guestMode';
 
 type AuthMode = 'login' | 'register' | 'forgot';
 
@@ -45,6 +46,27 @@ function translateAuthError(message?: string): string {
     if (pattern.test(normalized)) return translated;
   }
   return 'Ocurrió un error. Intenta nuevamente.';
+}
+
+/** Migra el perfil generado como guest a Supabase al autenticarse */
+async function migrateGuestProfile() {
+  try {
+    const guest = getGuestProfile();
+    if (!guest) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('profiles').update({
+      skills: guest.skills,
+      skills_detail: guest.skills.map((s, i) => ({ name: s, pct: Math.max(40, 80 - i * 10) })),
+      cv_summary: guest.summary,
+      cv_years_experience: guest.years,
+      execution_score: guest.axes.exec,
+      quality_score: guest.axes.qual,
+      transcendence_score: guest.axes.trans,
+      foundation_score: guest.axes.fund,
+    }).eq('id', user.id);
+    clearGuestProfile();
+  } catch { /* silencioso */ }
 }
 
 export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
@@ -150,6 +172,8 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
         }
         const { error: err } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
         if (err) throw err;
+        // Migrar perfil guest al autenticarse
+        migrateGuestProfile();
         // El cambio de estado de autenticación redirige automáticamente
       } else {
         const trimmedUsername = username.trim();
@@ -159,6 +183,9 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
           options: { data: { username: trimmedUsername, full_name: trimmedUsername } },
         });
         if (err) throw err;
+        // Analytics + migrar guest
+        import('../../lib/analytics').then(({ track }) => { track('signup_completed'); }).catch(() => {});
+        migrateGuestProfile();
         if (data.user && !data.session) {
           setSuccess('Cuenta creada. Revisa tu correo para confirmar.');
         }

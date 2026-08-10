@@ -156,6 +156,10 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     // Mostrar resultado INMEDIATAMENTE (sin spinner)
     onProfileGenerated?.(instantProfile);
     onSkillsPreview?.(instantProfile.skills);
+    // Guardar como guest profile (para migrar cuando se registre)
+    import('../../lib/guestMode').then(({ saveGuestProfile }) => {
+      saveGuestProfile({ ...instantProfile, createdAt: new Date().toISOString() });
+    }).catch(() => {});
     const msg = `Listo. Veo que ${instantProfile.skills.length > 1 ? 'dominas ' + instantProfile.skills.slice(0, 3).join(', ') : 'eres ' + instantProfile.profession}. Tu perfil ya tiene forma.`;
     setResultMsg(msg);
     setPhase('result');
@@ -164,6 +168,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
 
     // Analytics: track onboarding + profile generation
     import('../../lib/analytics').then(({ track }) => {
+      track('onboarding_started');
       track('onboarding_completed', { intent, skills_count: instantProfile.skills.length });
       track('first_profile_generated', { profession: instantProfile.profession });
     }).catch(() => {});
