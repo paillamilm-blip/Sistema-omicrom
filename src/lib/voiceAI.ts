@@ -54,6 +54,12 @@ if (typeof window !== 'undefined') {
   const events = ['click', 'touchstart', 'keydown'];
   const handler = () => {
     unlockAudio();
+    // También desbloquear Web Speech API en iOS/Safari
+    if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance('');
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    }
     events.forEach(e => window.removeEventListener(e, handler));
   };
   events.forEach(e => window.addEventListener(e, handler, { once: false, passive: true }));
@@ -61,21 +67,38 @@ if (typeof window !== 'undefined') {
 
 /**
  * Fallback: usa Web Speech API del navegador.
+ * Emite evento speaking para vibracion del orbe.
  */
 function fallbackToWebSpeech(text: string): void {
-  speak(text);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { active: true } }));
+  }
+  speak(text, undefined, () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { active: false } }));
+    }
+  });
 }
 
 /**
  * Genera y reproduce voz con IA (OpenRouter Kokoro TTS).
  * Si falla → cae a Web Speech API (siempre suena algo).
+ * Emite evento 'omicron:speaking' para que el orbe vibre.
  */
 export async function speakAI(text: string, voice: keyof typeof VOICES = 'default'): Promise<void> {
   if (!text.trim()) return;
 
+  // Emitir evento para que el orbe vibre mientras habla
+  const emitSpeaking = (active: boolean) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { active } }));
+    }
+  };
+
   // Si no hay key → usar Web Speech API directamente
   if (!OR_KEY) {
-    fallbackToWebSpeech(text);
+    emitSpeaking(true);
+    speak(text, undefined, () => emitSpeaking(false));
     return;
   }
 
@@ -237,16 +260,28 @@ function playFromURL(url: string): void {
   const audio = new Audio(url);
   audio.volume = 0.85;
   currentAudio = audio;
-  audio.play().catch((err) => {
-    console.warn('[voiceAI] Autoplay bloqueado:', err.message);
-    // Autoplay blocked → fallback a Web Speech (no necesita unlock)
+  // Emitir evento de que está hablando
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { active: true } }));
+  }
+  audio.play().catch(() => {
+    // Autoplay blocked → intentar Web Speech como último recurso
     currentAudio = null;
-    // No hacemos fallback aquí para evitar doble voz, ya se intentó antes
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { active: false } }));
+    }
   });
-  audio.onended = () => { currentAudio = null; };
-  audio.onerror = () => {
-    console.warn('[voiceAI] Error reproduciendo audio');
+  audio.onended = () => {
     currentAudio = null;
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { active: false } }));
+    }
+  };
+  audio.onerror = () => {
+    currentAudio = null;
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { active: false } }));
+    }
   };
 }
 

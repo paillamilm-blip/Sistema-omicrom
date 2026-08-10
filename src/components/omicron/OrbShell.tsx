@@ -558,9 +558,16 @@ export function OrbShell() {
     };
     window.addEventListener('oracle:listening', handleOracleListening);
     window.addEventListener('oracle:voice', handleOracleVoice);
+    // Escuchar cuando speakAI está hablando para vibrar el orbe
+    const handleSpeaking = (e: Event) => {
+      const active = (e as CustomEvent).detail?.active;
+      setVoiceLevel(active ? 0.3 : 0);
+    };
+    window.addEventListener('omicron:speaking', handleSpeaking);
     return () => {
       window.removeEventListener('oracle:listening', handleOracleListening);
       window.removeEventListener('oracle:voice', handleOracleVoice);
+      window.removeEventListener('omicron:speaking', handleSpeaking);
     };
   }, []);
 
@@ -590,7 +597,8 @@ export function OrbShell() {
           { label: 'Mi perfil', emoji: '📈', onClick: () => { setActiveTab('perfil'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'inicio'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
         ]);
         // TTS con voz IA natural (Kokoro español) — ya no suena robótica
-        speakAI(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
+        // Nota: NO hablar automáticamente al cargar (iOS bloquea audio sin gesto)
+        // La voz se activa cuando el usuario interactúa (escribe/toca nodo)
       } else {
         // R2: PROGRESSIVE PROFILING — si el perfil tiene gaps, PREGUNTAR
         const question = getNextProfileQuestion(sbProfile);
@@ -608,8 +616,7 @@ export function OrbShell() {
             { label: 'Responder', emoji: '✅', primary: true, onClick: () => { /* focus input */ setResponseMsg(null); } },
             { label: 'Después', onClick: () => setResponseMsg(null) },
           ]);
-          // TTS con voz IA natural
-          speakAI(msg.length > 200 ? msg.slice(0, 200) : msg);
+          // No hablar automáticamente (iOS bloquea sin gesto del usuario)
         } else {
           // Perfil completo o ya preguntó hoy → consejo de mejora
           const steps = computeSteps(sbProfile, gemeloDigital);
@@ -622,8 +629,7 @@ export function OrbShell() {
             { label: 'Sí, vamos', emoji: '✅', primary: true, onClick: () => { handleTextInput(top.why.includes('CV') ? 'quiero subir mi cv' : 'dame un consejo'); setResponseMsg(null); } },
             { label: 'Otra cosa', emoji: '🔄', onClick: () => setResponseMsg(null) },
           ] : []);
-          // TTS con voz IA natural
-          speakAI(msg.length > 200 ? msg.slice(0, 200) : msg);
+          // No hablar automáticamente (iOS bloquea sin gesto del usuario)
         }
       }
     }, 1500); // 1.5s para que el orbe aparezca primero
