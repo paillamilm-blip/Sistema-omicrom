@@ -8,7 +8,7 @@ import { OrbContextLabel } from './OrbContextLabel';
 import { PremiumLock } from '../shared/Premium';
 import { useApp } from '../../store/AppContext';
 import { interpret, askCoach } from '../../lib/oraculo';
-import { speakAI, stopAI } from '../../lib/voiceAI';
+import { speakAI, stopAI, isAudioUnlocked } from '../../lib/voiceAI';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useIdleEscalation } from '../../hooks/useIdleEscalation';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
@@ -598,9 +598,10 @@ export function OrbShell() {
           { label: 'Ver empleos', emoji: '💼', primary: true, onClick: () => { setActiveTab('empleos'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'empleos'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
           { label: 'Mi perfil', emoji: '📈', onClick: () => { setActiveTab('perfil'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'inicio'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
         ]);
-        // TTS con voz IA natural (Kokoro español) — ya no suena robótica
-        // Nota: NO hablar automáticamente al cargar (iOS bloquea audio sin gesto)
-        // La voz se activa cuando el usuario interactúa (escribe/toca nodo)
+        // Voz proactiva: hablar si el audio ya está desbloqueado (el usuario ya tocó)
+        if (isAudioUnlocked()) {
+          speakAI(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
+        }
       } else {
         // R2: PROGRESSIVE PROFILING — si el perfil tiene gaps, PREGUNTAR
         const question = getNextProfileQuestion(sbProfile);
@@ -618,7 +619,8 @@ export function OrbShell() {
             { label: 'Responder', emoji: '✅', primary: true, onClick: () => { /* focus input */ setResponseMsg(null); } },
             { label: 'Después', onClick: () => setResponseMsg(null) },
           ]);
-          // No hablar automáticamente (iOS bloquea sin gesto del usuario)
+          // Voz proactiva si el audio está desbloqueado
+          if (isAudioUnlocked()) speakAI(msg.length > 200 ? msg.slice(0, 200) : msg);
         } else {
           // Perfil completo o ya preguntó hoy → consejo de mejora
           const steps = computeSteps(sbProfile, gemeloDigital);
@@ -631,7 +633,8 @@ export function OrbShell() {
             { label: 'Sí, vamos', emoji: '✅', primary: true, onClick: () => { handleTextInput(top.why.includes('CV') ? 'quiero subir mi cv' : 'dame un consejo'); setResponseMsg(null); } },
             { label: 'Otra cosa', emoji: '🔄', onClick: () => setResponseMsg(null) },
           ] : []);
-          // No hablar automáticamente (iOS bloquea sin gesto del usuario)
+          // Voz proactiva si el audio está desbloqueado
+          if (isAudioUnlocked()) speakAI(msg.length > 200 ? msg.slice(0, 200) : msg);
         }
       }
     }, 1500); // 1.5s para que el orbe aparezca primero
@@ -643,6 +646,27 @@ export function OrbShell() {
   useEffect(() => {
     return () => { stopAI(); };
   }, []);
+
+  // Idle escalation: hablar cuando Ómicron tiene algo que decir y el usuario no interactúa
+  const lastIdleSpoken = useRef('');
+  useEffect(() => {
+    if (!helpMessage || helpMessage === lastIdleSpoken.current) return;
+    if (!isAudioUnlocked()) return;
+    lastIdleSpoken.current = helpMessage;
+    speakAI(helpMessage);
+  }, [helpMessage]);
+
+  // Cuando el audio se desbloquea (primer toque), hablar el mensaje proactivo pendiente
+  useEffect(() => {
+    const handleUnlock = () => {
+      // Si hay un mensaje proactivo pendiente que no se habló, hablarlo ahora
+      if (responseMsg && !lastIdleSpoken.current) {
+        speakAI(responseMsg.length > 200 ? responseMsg.slice(0, 200) : responseMsg);
+      }
+    };
+    window.addEventListener('omicron:audio-unlocked', handleUnlock);
+    return () => window.removeEventListener('omicron:audio-unlocked', handleUnlock);
+  }, [responseMsg]);
 
   // Fix 2: Idle breathing — throttled state update (2 Hz, cosmetic only)
   useEffect(() => {
