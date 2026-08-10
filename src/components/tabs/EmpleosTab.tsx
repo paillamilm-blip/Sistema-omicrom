@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { C as T, FONT as TF } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import { EmptyState } from '../shared/EmptyState';
+import { SkeletonList } from '../shared/Skeleton';
 import { useToast } from '../shared/Toast';
 import { GemeloGuidance } from '../shared/GemeloGuidance';
 import { TrabajoTeEncuentra } from '../empleos/TrabajoTeEncuentra';
@@ -72,6 +73,7 @@ export function EmpleosTab() {
   const [myMatches, setMyMatches] = useState<Map<string, number>>(new Map()); // job_id -> rank
   const [applied, setApplied] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<'all' | 'matched' | 'applied'>('all');
+  const [visibleCount, setVisibleCount] = useState(15);
   const [loading, setLoading] = useState(true);
   const [showPublish, setShowPublish] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -200,7 +202,7 @@ export function EmpleosTab() {
         {view === 'radar' ? (
           <RadarView jobs={jobs} userPos={userPos} geoStatus={geoStatus} onRequestGeo={requestGeo} onPick={setRadarJob} />
         ) : loading ? (
-          <p style={styles.muted}>// CARGANDO OFERTAS...</p>
+          <SkeletonList count={4} />
         ) : filtered.length === 0 ? (
           filter === 'all' ? (
             <EmptyState
@@ -221,7 +223,7 @@ export function EmpleosTab() {
               onCta={() => setFilter('all')}
             />
           )
-        ) : filtered.map(j => {
+        ) : filtered.slice(0, visibleCount).map(j => {
           const rank = myMatches.get(j.id);
           const isApplied = applied.has(j.id);
           const mine = j.company_id === profile?.id;
@@ -267,6 +269,11 @@ export function EmpleosTab() {
             </div>
           );
         })}
+        {filtered.length > visibleCount && (
+          <button onClick={() => setVisibleCount(v => v + 20)} style={{ width: '100%', padding: '12px', borderRadius: 10, background: 'rgba(92,200,255,0.06)', border: `1px solid rgba(92,200,255,0.2)`, color: '#8bd4ff', fontFamily: 'monospace', fontSize: 11, cursor: 'pointer', marginTop: 8 }}>
+            Cargar más ({filtered.length - visibleCount} restantes)
+          </button>
+        )}
       </div>
 
       {showPublish && <PublishJobModal onClose={() => setShowPublish(false)} onDone={() => { setShowPublish(false); load(); }} />}
@@ -531,7 +538,7 @@ const styles: Record<string, React.CSSProperties> = {
   matchBadge: { position: 'absolute', top: 12, right: 14, display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FM, fontSize: 8, color: C.amber, background: 'rgba(255, 176, 46,0.1)', border: '1px solid rgba(255, 176, 46,0.3)', padding: '2px 7px', borderRadius: 3 },
   title: { fontFamily: FR, fontWeight: 700, fontSize: 18, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', paddingRight: 70 },
   company: { fontFamily: FM, fontSize: 10, color: C.muted, marginTop: 4 },
-  desc: { fontFamily: FR, fontSize: 13, color: '#b9d4e6', lineHeight: 1.4, margin: '8px 0 0' },
+  desc: { fontFamily: FR, fontSize: 13, color: '#b9d4e6', lineHeight: 1.4, margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any, overflow: 'hidden' },
   statRow: { display: 'flex', gap: 10, marginTop: 12 },
   statBox: { flex: 1, background: 'rgba(0,0,0,0.25)', border: `1px solid ${C.lineSoft}`, borderRadius: 4, padding: '7px 10px' },
   statLabel: { fontFamily: FM, fontSize: 8, color: C.muted, letterSpacing: 1.5 },
