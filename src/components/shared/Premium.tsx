@@ -2,6 +2,7 @@
 // Candado Premium: las funciones de IA son parte de Ómicrom Premium (de pago).
 // usePremium() lee el flag del perfil; <PremiumLock/> muestra el upsell.
 
+import { useState } from 'react';
 import { X, Lock } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { C, FONT } from '../../theme';
@@ -28,6 +29,30 @@ export function PremiumBadge({ style }: { style?: React.CSSProperties }) {
 }
 
 export function PremiumLock({ feature, onClose }: { feature: string; onClose: () => void }) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleUpgrade() {
+    setLoading(true);
+    try {
+      // Importar supabase dinámicamente
+      const { supabase } = await import('../../lib/supabase');
+      const { data, error } = await supabase.functions.invoke('crear-checkout', {
+        body: { tokens: 5000 }, // Pack básico: $5.000 CLP
+      });
+      if (error || !data?.url) {
+        // Si Stripe no está habilitado, mostrar mensaje
+        alert(data?.error || 'Pagos aún no habilitados. Próximamente.');
+        setLoading(false);
+        return;
+      }
+      // Redirigir a Stripe Checkout
+      window.location.href = data.url;
+    } catch {
+      alert('Error al iniciar el pago. Intenta de nuevo.');
+      setLoading(false);
+    }
+  }
+
   return (
     <div onClick={onClose}
       style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(2,6,19,0.82)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
@@ -37,16 +62,19 @@ export function PremiumLock({ feature, onClose }: { feature: string; onClose: ()
         <div style={{ fontSize: 40, filter: 'drop-shadow(0 0 10px rgba(255, 176, 46,0.6))' }}>💎</div>
         <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: '#ffe6a8', margin: '8px 0 4px' }}>Función Premium</div>
         <p style={{ fontFamily: FONT.body, fontSize: 14, color: '#eadfc4', lineHeight: 1.5, margin: '0 0 4px' }}>
-          <b style={{ color: C.gold }}>{feature}</b> es parte de <b>Ómicrom Premium</b>.
+          <b style={{ color: C.gold }}>{feature}</b> requiere créditos Ómicron.
         </p>
         <p style={{ fontFamily: FONT.mono, fontSize: 10, color: 'rgba(255, 176, 46,0.75)', letterSpacing: 0.5, margin: '0 0 20px' }}>
-          Potencia tu Gemelo con inteligencia artificial.
+          5.000 tokens = $5.000 CLP · Coach IA ilimitado por 1 día.
         </p>
-        <button onClick={onClose}
-          style={{ width: '100%', padding: '13px', borderRadius: 10, cursor: 'pointer', background: `linear-gradient(135deg, #ffd27a, ${C.gold})`, border: 'none', color: '#1a1205', fontFamily: FONT.display, fontWeight: 700, fontSize: 14 }}>
-          Quiero Premium
+        <button onClick={handleUpgrade} disabled={loading}
+          style={{ width: '100%', padding: '13px', borderRadius: 10, cursor: 'pointer', background: `linear-gradient(135deg, #ffd27a, ${C.gold})`, border: 'none', color: '#1a1205', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, opacity: loading ? 0.6 : 1 }}>
+          {loading ? 'Redirigiendo a pago...' : '💎 Comprar tokens'}
         </button>
-        <p style={{ fontFamily: FONT.mono, fontSize: 9, color: 'rgba(255, 176, 46,0.55)', marginTop: 10, letterSpacing: 0.5 }}>Próximamente · activación de pago</p>
+        <button onClick={onClose}
+          style={{ width: '100%', padding: '11px', borderRadius: 10, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255, 176, 46,0.3)', color: 'rgba(255, 176, 46,0.7)', fontFamily: FONT.mono, fontSize: 11, marginTop: 8 }}>
+          Mañana tengo más gratis
+        </button>
       </div>
     </div>
   );

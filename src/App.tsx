@@ -50,6 +50,13 @@ function AppShell() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Escuchar evento 'omicron:request-auth' para abrir modal de auth (DEBE estar antes de returns condicionales)
+  useEffect(() => {
+    const handler = () => setShowAuthModal(true);
+    window.addEventListener('omicron:request-auth', handler);
+    return () => window.removeEventListener('omicron:request-auth', handler);
+  }, []);
+
   if (authStatus === 'loading' || isLoadingProfile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
@@ -70,13 +77,6 @@ function AppShell() {
 
   // Si no está autenticado, mostrar el orbe en modo guest (sin AuthOverlay bloqueante)
   const isGuest = authStatus === 'unauthenticated';
-
-  // Escuchar evento 'omicron:request-auth' para abrir modal de auth
-  useEffect(() => {
-    const handler = () => setShowAuthModal(true);
-    window.addEventListener('omicron:request-auth', handler);
-    return () => window.removeEventListener('omicron:request-auth', handler);
-  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
