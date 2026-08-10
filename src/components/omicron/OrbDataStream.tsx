@@ -42,14 +42,14 @@ function DataBurst({ color }: { color: string }) {
       <motion.div
         initial={{ x: '-50%', y: '-50%', scale: 1.5, opacity: 0.8 }}
         animate={{ x: '-50%', y: '-50%', scale: 0.18, opacity: 0 }}
-        transition={{ duration: 1.1, ease: 'easeIn' }}
+        transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
         style={{ position: 'absolute', left: '50%', top: '50%', width: '72%', height: '72%', borderRadius: '50%', border: `2px solid ${color}`, boxShadow: `0 0 26px ${color}` }}
       />
       {/* Eco expandiéndose (confirmación) */}
       <motion.div
         initial={{ x: '-50%', y: '-50%', scale: 0.3, opacity: 0.5 }}
         animate={{ x: '-50%', y: '-50%', scale: 1.35, opacity: 0 }}
-        transition={{ duration: 1.2, ease: 'easeOut' }}
+        transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
         style={{ position: 'absolute', left: '50%', top: '50%', width: '46%', height: '46%', borderRadius: '50%', border: `1px solid ${color}` }}
       />
       {/* Partículas de datos convergiendo desde el perímetro */}
@@ -60,7 +60,7 @@ function DataBurst({ color }: { color: string }) {
             key={i}
             initial={{ x: Math.cos(a) * R, y: Math.sin(a) * R, opacity: 0 }}
             animate={{ x: 0, y: 0, opacity: [0, 1, 0] }}
-            transition={{ duration: 0.95, ease: 'easeIn', times: [0, 0.35, 1], delay: (i % 4) * 0.05 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94], times: [0, 0.35, 1], delay: (i % 4) * 0.05 }}
             style={{ position: 'absolute', left: '50%', top: '50%', width: 5, height: 5, marginLeft: -2.5, marginTop: -2.5, borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}` }}
           />
         );

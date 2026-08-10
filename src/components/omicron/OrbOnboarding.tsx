@@ -222,7 +222,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
 
   return (
     <AnimatePresence>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.8 } }}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.2 } }}
         style={{ position: 'absolute', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', background: 'rgba(0,2,6,0.82)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', padding: '24px 20px', paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 24px)' }}>
         <div style={{ maxWidth: 360, width: '100%', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <motion.div key={phase} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ padding: '14px 18px', borderRadius: RADIUS.lg, background: C.surface, border: `1px solid ${C.line}` }}>

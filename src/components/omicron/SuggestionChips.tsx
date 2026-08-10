@@ -109,7 +109,7 @@ const S: Record<string, React.CSSProperties> = {
     border: '1px solid rgba(92,200,255,0.2)',
     color: C.ink,
     cursor: 'pointer',
-    transition: 'all 0.15s ease',
+    transition: 'all 0.15s cubic-bezier(0.32, 0.72, 0, 1)',
     WebkitTapHighlightColor: 'transparent',
   },
   emoji: { fontSize: 13 },
