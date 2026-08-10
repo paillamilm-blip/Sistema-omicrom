@@ -19,24 +19,26 @@ export interface GuestProfile {
 
 /** Guarda perfil guest en localStorage */
 export function saveGuestProfile(profile: GuestProfile): void {
-  localStorage.setItem(GUEST_PROFILE_KEY, JSON.stringify(profile));
+  try { localStorage.setItem(GUEST_PROFILE_KEY, JSON.stringify(profile)); } catch { /* full/private */ }
 }
 
 /** Lee perfil guest desde localStorage */
 export function getGuestProfile(): GuestProfile | null {
-  const raw = localStorage.getItem(GUEST_PROFILE_KEY);
-  if (!raw) return null;
-  try { return JSON.parse(raw); } catch { return null; }
+  try {
+    const raw = localStorage.getItem(GUEST_PROFILE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
 }
 
 /** Borra perfil guest (al registrarse, migrar a Supabase) */
 export function clearGuestProfile(): void {
-  localStorage.removeItem(GUEST_PROFILE_KEY);
+  try { localStorage.removeItem(GUEST_PROFILE_KEY); } catch { /* noop */ }
 }
 
 /** ¿Tiene perfil guest guardado? */
 export function hasGuestProfile(): boolean {
-  return !!localStorage.getItem(GUEST_PROFILE_KEY);
+  try { return !!localStorage.getItem(GUEST_PROFILE_KEY); } catch { return false; }
 }
 
 /**
