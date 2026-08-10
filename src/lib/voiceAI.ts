@@ -124,9 +124,9 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
     return;
   }
 
-  // Timeout: si la API no responde en 5s, fallback inmediato
+  // Timeout: si la API no responde en 10s, fallback inmediato
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  const timeout = setTimeout(() => controller.abort(), 10000);
 
   try {
     const resp = await fetch(TTS_URL, {
@@ -178,7 +178,10 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
     playFromURL(url);
   } catch (err) {
     clearTimeout(timeout);
-    console.warn('[voiceAI] Error de red:', err);
+    // AbortError es esperado (timeout) — no loguear como error
+    if ((err as Error)?.name !== 'AbortError') {
+      console.warn('[voiceAI] Error de red:', err);
+    }
     fallbackToWebSpeech(text);
   }
 }
@@ -190,7 +193,7 @@ async function tryFallbackModel(input: string, voice: keyof typeof VOICES): Prom
   if (TTS_MODELS.length < 2) return false;
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  const timeout = setTimeout(() => controller.abort(), 10000);
 
   try {
     const resp = await fetch(TTS_URL, {
