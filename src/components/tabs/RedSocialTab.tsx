@@ -5,7 +5,7 @@
 // Reemplaza el viejo ChatTab como nodo "Red Social" del orbe.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Users, MessageCircle, Trophy, Zap, UserPlus, Radio } from 'lucide-react';
 import { useApp } from '../../store/AppContext';
 import { useRealtime } from '../../store/RealtimeContext';

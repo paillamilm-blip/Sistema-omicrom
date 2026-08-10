@@ -418,7 +418,7 @@ function RadarView({ jobs, userPos, geoStatus, onRequestGeo, onPick }: {
 
 function PublishJobModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const { profile } = useApp();
-  const [f, setF] = useState({ title: '', description: '', category: 'dev', budget: '', hours: '48', level: 1, tags: '', location: '', is_remote: false });
+  const [f, setF] = useState({ title: '', description: '', budget: '', hours: '48', level: 1, tags: '', location: '', is_remote: false });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);

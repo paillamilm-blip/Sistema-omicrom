@@ -112,46 +112,52 @@ export function getTodayChallenge(): DailyChallenge {
 
 /** Verifica si el reto de hoy ya se completó */
 export function isChallengeCompleted(): boolean {
-  const key = `omicron_challenge_${todayKey()}`;
-  return localStorage.getItem(key) === 'done';
+  try {
+    const key = `omicron_challenge_${todayKey()}`;
+    return localStorage.getItem(key) === 'done';
+  } catch { return false; }
 }
 
 /** Marca el reto de hoy como completado */
 export function completeChallenge(): number {
-  const key = `omicron_challenge_${todayKey()}`;
-  localStorage.setItem(key, 'done');
+  try {
+    const key = `omicron_challenge_${todayKey()}`;
+    localStorage.setItem(key, 'done');
 
-  // Registrar en historial para streak
-  const histKey = 'omicron_challenge_history';
-  const history: string[] = JSON.parse(localStorage.getItem(histKey) ?? '[]');
-  history.push(todayKey());
-  // Mantener solo últimos 60 días
-  localStorage.setItem(histKey, JSON.stringify(history.slice(-60)));
+    // Registrar en historial para streak
+    const histKey = 'omicron_challenge_history';
+    const history: string[] = JSON.parse(localStorage.getItem(histKey) ?? '[]');
+    history.push(todayKey());
+    // Mantener solo últimos 60 días
+    localStorage.setItem(histKey, JSON.stringify(history.slice(-60)));
+  } catch { /* Safari private mode — silencioso */ }
 
   return getTodayChallenge().peReward;
 }
 
 /** Racha de challenges completados consecutivos */
 export function challengeStreak(): number {
-  const histKey = 'omicron_challenge_history';
-  const history: string[] = JSON.parse(localStorage.getItem(histKey) ?? '[]');
-  if (history.length === 0) return 0;
+  try {
+    const histKey = 'omicron_challenge_history';
+    const history: string[] = JSON.parse(localStorage.getItem(histKey) ?? '[]');
+    if (history.length === 0) return 0;
 
-  const today = todayKey();
-  const dates = new Set(history);
-  let streak = 0;
-  const cur = new Date();
-  cur.setHours(0, 0, 0, 0);
+    const today = todayKey();
+    const dates = new Set(history);
+    let streak = 0;
+    const cur = new Date();
+    cur.setHours(0, 0, 0, 0);
 
-  // Si hoy no completó, empieza desde ayer
-  if (!dates.has(today)) {
-    cur.setDate(cur.getDate() - 1);
-    if (!dates.has(cur.toISOString().slice(0, 10))) return 0;
-  }
+    // Si hoy no completó, empieza desde ayer
+    if (!dates.has(today)) {
+      cur.setDate(cur.getDate() - 1);
+      if (!dates.has(cur.toISOString().slice(0, 10))) return 0;
+    }
 
-  while (dates.has(cur.toISOString().slice(0, 10))) {
-    streak++;
-    cur.setDate(cur.getDate() - 1);
-  }
-  return streak;
+    while (dates.has(cur.toISOString().slice(0, 10))) {
+      streak++;
+      cur.setDate(cur.getDate() - 1);
+    }
+    return streak;
+  } catch { return 0; }
 }
