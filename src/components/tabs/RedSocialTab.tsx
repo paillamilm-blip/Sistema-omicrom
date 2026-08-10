@@ -242,7 +242,9 @@ function SugerenciasSection({ suggestions, loading, onViewUser, onConnect }: {
   const [connecting, setConnecting] = useState<string | null>(null);
 
   async function handleConnect(userId: string) {
-    if (!profile?.id) { import('../../lib/guestMode').then(m => m.requestAuth()); return; }
+    // Check auth via supabase directly
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { import('../../lib/guestMode').then(m => m.requestAuth()); return; }
     setConnecting(userId);
     try {
       await supabase.rpc('send_connection_request', { p_addressee: userId });

@@ -95,8 +95,6 @@ export function PerfilTab() {
         <div style={{ minWidth: '100%', scrollSnapAlign: 'start', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 16px 24px' }}>
 
       {/* ═══ ORBITAL VISUALIZATION ═══ */}
-      {/* SLIDE 1: Todo el perfil (orbital + skills + ejes) */}
-      <div style={{ minWidth: '100%', scrollSnapAlign: 'start', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 0 24px' }}>
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -332,7 +330,7 @@ export function PerfilTab() {
       </motion.div>
 
       {/* ═══ RETENCIÓN: Streak + Dashboard + Challenge + Push (SLIDE 2 — deslizar →) ═══ */}
-      </div>
+      </div>{/* cierre SLIDE 1 */}
 
       {/* SLIDE 2: Progreso y gamificación */}
       <div style={{ minWidth: '100%', scrollSnapAlign: 'start', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 16px 24px' }}>
