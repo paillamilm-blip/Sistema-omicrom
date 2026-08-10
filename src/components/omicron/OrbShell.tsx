@@ -366,6 +366,22 @@ export function OrbShell() {
     }));
   }, [profile, sbProfile, gemeloDigital, dynamicOrbNodes]);
 
+  // ── Offline coach: consejo basado en perfil local (sin IA) ────────
+  function generateOfflineCoachAdvice(p: typeof sbProfile): string {
+    if (!p) return 'Aún no tengo datos de tu perfil. Sube tu CV o cuéntame a qué te dedicas para poder aconsejarte mejor.';
+    const exec = p.execution_score ?? 0;
+    const qual = p.quality_score ?? 0;
+    const trans = p.transcendence_score ?? 0;
+    const fund = p.foundation_score ?? 0;
+    const lowest = Math.min(exec, qual, trans, fund);
+    const name = p.display_name || p.username || 'amigo';
+
+    if (lowest === exec) return `Hey ${name}, tu eje de Ejecución está en ${exec}. Te recomiendo completar más proyectos prácticos — cada uno que documentes suma puntos reales a tu reputación. Abre la Bóveda y sube algo hoy.`;
+    if (lowest === qual) return `${name}, tu eje de Calidad está en ${qual}. Un buen camino es validar tus skills con exámenes. Toca "Habilidades" y rinde un examen rápido — sube tu calidad en minutos.`;
+    if (lowest === trans) return `${name}, tu Trascendencia está en ${trans}. Esto sube cuando compartes conocimiento. Publica un aporte en la Bóveda o conecta con otro nodo en la Red Social.`;
+    return `${name}, tu Fundamento está en ${fund}. Fortalécelo con cursos estructurados en la Academia. Cada módulo que completes suma puntos de fundamento.`;
+  }
+
   // ── Handle text input — GAP 1 FIX: todos los intents del Oráculo ────
   const handleTextInput = useCallback(async (text: string) => {
     // Limpiar respuesta anterior para mostrar que estamos procesando
@@ -409,10 +425,15 @@ export function OrbShell() {
       flash('Dame un momento, estoy analizando tu perfil…');
       speakAI('Déjame ver tu Gemelo Digital.');
       const r = await askCoach(coachCtx);
-      const msg = r.advice || r.error || 'No pude conectarme. Intenta de nuevo.';
-      flash(msg);
-      speakAI(msg.length > 320 ? msg.slice(0, 320) : msg);
-      // Si es error de límite, mostrar upsell
+      if (r.advice) {
+        flash(r.advice);
+        speakAI(r.advice.length > 320 ? r.advice.slice(0, 320) : r.advice);
+      } else {
+        // IA no disponible → consejo offline basado en el perfil local
+        const offlineAdvice = generateOfflineCoachAdvice(sbProfile);
+        flash(offlineAdvice);
+        speakAI(offlineAdvice);
+      }
       if (r.error && (r.error.includes('límite') || r.error.includes('consejos'))) {
         setShowPremium(true);
       }
@@ -450,15 +471,20 @@ export function OrbShell() {
     try {
       const { askTutor } = await import('../../lib/oraculo');
       const t = await askTutor(text, coachCtx);
-      const msg = t.answer || t.error || 'No pude responder. Probá con otra pregunta.';
-      flash(msg);
-      speakAI(msg.length > 320 ? msg.slice(0, 320) : msg);
-      // Si es error de límite, mostrar upsell
+      if (t.answer) {
+        flash(t.answer);
+        speakAI(t.answer.length > 320 ? t.answer.slice(0, 320) : t.answer);
+      } else {
+        // IA no disponible → respuesta offline contextual
+        const offline = `Entiendo tu pregunta sobre "${text.slice(0, 30)}". Ahora mismo no puedo consultar la IA, pero puedo ayudarte con cosas como: abrir secciones, ver tu reputación, o navegar. Intenta de nuevo en un momento.`;
+        flash(offline);
+        speakAI(offline);
+      }
       if (t.error && (t.error.includes('límite') || t.error.includes('consultas'))) {
         setShowPremium(true);
       }
     } catch {
-      const errorMsg = 'Tuve un problema de conexión. Intenta de nuevo.';
+      const errorMsg = 'Tuve un problema de conexión. Mientras tanto, puedo navegar por ti, decirte tu reputación o abrir cualquier sección. Pregúntame.';
       flash(errorMsg);
       speakAI(errorMsg);
     }
