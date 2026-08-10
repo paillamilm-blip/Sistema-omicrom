@@ -12,7 +12,7 @@ const TTS_URL = 'https://openrouter.ai/api/v1/audio/speech';
 
 // Modelos TTS disponibles en OpenRouter (ordenados por preferencia)
 const TTS_MODELS = [
-  'kokoro/kokoro-82m',              // Gratis, 82M params, rápido
+  'hexgrad/kokoro-82m',             // Gratis, 82M params, español
   'google/gemini-2.5-flash-tts',    // Fallback si Kokoro no disponible
 ];
 
@@ -75,7 +75,6 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
 
   // Si no hay key → usar Web Speech API directamente
   if (!OR_KEY) {
-    console.info('[voiceAI] Sin OPENROUTER_KEY → usando Web Speech API');
     fallbackToWebSpeech(text);
     return;
   }
@@ -93,6 +92,10 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
     return;
   }
 
+  // Timeout: si la API no responde en 5s, fallback inmediato
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
   try {
     const resp = await fetch(TTS_URL, {
       method: 'POST',
@@ -107,7 +110,9 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
         input,
         voice: VOICES[voice],
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!resp.ok) {
       console.warn(`[voiceAI] Kokoro falló (${resp.status}), intentando fallback…`);
@@ -140,6 +145,7 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
     cacheAudio(cacheKey, url);
     playFromURL(url);
   } catch (err) {
+    clearTimeout(timeout);
     console.warn('[voiceAI] Error de red:', err);
     fallbackToWebSpeech(text);
   }
