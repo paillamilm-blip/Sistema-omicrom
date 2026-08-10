@@ -62,29 +62,41 @@ export function PerfilTab() {
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      overflow: 'auto', WebkitOverflowScrolling: 'touch',
-      paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 24px)',
+      display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden',
     }}>
-      {/* ═══ HEADER: ADN Digital ═══ */}
-      <motion.div
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        style={{ textAlign: 'center', paddingTop: 20, marginBottom: 8 }}
-      >
-        <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 6 }}>
+      {/* ═══ HEADER FIJO ═══ */}
+      <div style={{ textAlign: 'center', paddingTop: 16, paddingBottom: 6, flexShrink: 0 }}>
+        <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 4 }}>
           ADN Digital · Perfil Ómicron
         </div>
-        <h1 style={{ margin: 0, fontFamily: FONT.display, fontSize: 22, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
+        <h1 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink }}>
           {name || 'Tu Gemelo Digital'}
         </h1>
-        <p style={{ margin: '4px 0 0', fontFamily: FONT.body, fontSize: 13, color: C.mut }}>
-          {seniorLabel}{years > 0 ? ` · ${years} años` : ''}
+        <p style={{ margin: '3px 0 0', fontFamily: FONT.body, fontSize: 12, color: C.mut }}>
+          {seniorLabel}{years > 0 ? ` · ${years} años` : ''} · Rep {reputation.toFixed(0)}/100
         </p>
-      </motion.div>
+        {/* Hint de swipe */}
+        <p style={{ margin: '6px 0 0', fontFamily: FONT.mono, fontSize: 8, color: C.mut, opacity: 0.6 }}>
+          ← desliza para ver más →
+        </p>
+      </div>
 
-      {/* ═══ ORBITAL VISUALIZATION (primero = identidad del usuario) ═══ */}
+      {/* ═══ CONTENIDO SCROLLEABLE HORIZONTAL (scroll-snap) ═══ */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        scrollSnapType: 'x mandatory',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none',
+      }}>
+        {/* SLIDE 1: Orbital (identidad visual) */}
+        <div style={{ minWidth: '100%', scrollSnapAlign: 'start', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 16px 24px' }}>
+
+      {/* ═══ ORBITAL VISUALIZATION ═══ */}
+      {/* SLIDE 1: Todo el perfil (orbital + skills + ejes) */}
+      <div style={{ minWidth: '100%', scrollSnapAlign: 'start', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 0 24px' }}>
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -319,13 +331,23 @@ export function PerfilTab() {
         </button>
       </motion.div>
 
-      {/* ═══ RETENCIÓN: Streak + Dashboard + Challenge + Push (DESPUÉS del perfil) ═══ */}
-      <div style={{ width: '100%', maxWidth: 340, padding: '0 16px', marginTop: 8 }}>
-        <StreakBanner />
-        <DashboardVivo />
-        <DailyChallengeCard onNavigate={(tab) => setActiveTab(tab as any)} />
-        <PushPermissionBanner />
+      {/* ═══ RETENCIÓN: Streak + Dashboard + Challenge + Push (SLIDE 2 — deslizar →) ═══ */}
       </div>
+
+      {/* SLIDE 2: Progreso y gamificación */}
+      <div style={{ minWidth: '100%', scrollSnapAlign: 'start', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 16px 24px' }}>
+        <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.gold, textTransform: 'uppercase', marginBottom: 12 }}>
+          🔥 TU PROGRESO
+        </div>
+        <div style={{ width: '100%', maxWidth: 340 }}>
+          <StreakBanner />
+          <DashboardVivo />
+          <DailyChallengeCard onNavigate={(tab) => setActiveTab(tab as any)} />
+          <PushPermissionBanner />
+        </div>
+      </div>
+
+      </div>{/* cierre scroll-snap container */}
     </div>
   );
 }
