@@ -11,6 +11,7 @@ import { useToast } from '../shared/Toast';
 import { GemeloGuidance } from '../shared/GemeloGuidance';
 import { TrabajoTeEncuentra } from '../empleos/TrabajoTeEncuentra';
 import { RutaCarrera } from '../empleos/RutaCarrera';
+import { FreelanceNeeds } from '../empleos/FreelanceNeeds';
 import { CartaPostulacionModal } from '../empleos/CartaPostulacionModal';
 import { oc, OmicronHeader, OmicronAction } from '../omicron/OmicronChrome';
 
@@ -195,6 +196,7 @@ export function EmpleosTab() {
       <div style={styles.scroll}>
         {view === 'list' && <TrabajoTeEncuentra />}
         {view === 'list' && <RutaCarrera />}
+        {view === 'list' && <FreelanceNeeds />}
         {view === 'radar' ? (
           <RadarView jobs={jobs} userPos={userPos} geoStatus={geoStatus} onRequestGeo={requestGeo} onPick={setRadarJob} />
         ) : loading ? (
