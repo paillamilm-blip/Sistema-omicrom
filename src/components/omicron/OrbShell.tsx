@@ -1190,6 +1190,9 @@ export function OrbShell() {
             padding: '8px 12px',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
+            // Pulsación suave para indicar que puedes interactuar
+            boxShadow: !inputText && !responseMsg ? `0 0 12px ${C.cyan}22, 0 0 4px ${C.cyan}11` : 'none',
+            animation: !inputText && !responseMsg ? 'cp-breathe 3s ease-in-out infinite' : 'none',
           }}
         >
           {/* Mic button */}
