@@ -98,33 +98,13 @@ export function getRemainingCredits(type: 'coach' | 'tutor'): number {
   return Math.max(0, DAILY_LIMITS[type] - count);
 }
 
-// ── Cliente OpenRouter directo (sin depender de Edge Functions) ────────
-const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
-const OR_MODEL = 'google/gemma-4-31b-it:free';
-const OR_FALLBACK = 'google/gemma-4-26b-a4b-it:free';
-const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// ── Cliente OpenRouter directo — usa aiClient resiliente (6 modelos) ────
+import { callAI, checkRateLimit } from './aiClient';
 
 async function callOpenRouter(messages: { role: string; content: string }[]): Promise<string> {
-  if (!OR_KEY) throw new Error('Falta VITE_OPENROUTER_KEY');
-  for (const model of [OR_MODEL, OR_FALLBACK]) {
-    try {
-      const resp = await fetch(OR_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OR_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://sistema-omicrom.vercel.app',
-          'X-Title': 'Sistema Omicron',
-        },
-        body: JSON.stringify({ model, messages, max_tokens: 1024, temperature: 0.7 }),
-      });
-      if (!resp.ok) continue;
-      const data = await resp.json();
-      const text = data?.choices?.[0]?.message?.content ?? '';
-      if (text) return text.trim();
-    } catch { continue; }
-  }
-  throw new Error('OpenRouter no respondió');
+  const result = await callAI(messages as any);
+  if (!result) throw new Error('IA no disponible');
+  return result;
 }
 
 /**

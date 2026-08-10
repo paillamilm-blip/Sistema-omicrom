@@ -205,6 +205,12 @@ export function useGemeloActivation() {
       emitPush('Calidad', analyzed.axes.qual > 50 ? 10 : 6, C.purple);
       toast('CV analizado y aplicado', 'success');
       speak(`CV analizado. Perfil: ${analyzed.seniorLabel}.`);
+      // Broadcast logro a la red + analytics
+      try {
+        const { supabase: sb } = await import('../lib/supabase');
+        sb.channel('omicron-live').send({ type: 'broadcast', event: 'activity', payload: { text: `${profile?.username ?? 'Un nodo'} activó su Gemelo Digital con CV`, kind: 'action' } });
+        import('../lib/analytics').then(({ track }) => track('cv_uploaded')).catch(() => {});
+      } catch { /* silencioso */ }
       await new Promise((r) => setTimeout(r, 800));
 
       // 3) Auto-chain remaining convalidations
