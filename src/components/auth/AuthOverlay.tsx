@@ -205,7 +205,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   const identifierPlaceholder = mode === 'login' ? 'Tu usuario o correo' : 'nodo@omicron.io';
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-6 bg-omicron-bg">
+    <div className="flex flex-col items-center justify-center min-h-screen px-6" style={{ background: C.bg }}>
       {/* Logo — Orbe 3D */}
       <div className="mb-8 flex flex-col items-center gap-3">
         <div style={{ width: 80, height: 80, borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(92,200,255,0.3)', boxShadow: '0 0 30px rgba(92,200,255,0.2)' }}>

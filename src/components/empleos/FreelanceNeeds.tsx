@@ -106,7 +106,10 @@ export function FreelanceNeeds() {
           <div style={S.sectionTitle}>📋 Necesidades Freelance</div>
           <div style={S.sectionSub}>Publica lo que necesitas · Postula a lo que puedes hacer</div>
         </div>
-        <button onClick={() => setShowPublish(true)} style={S.publishBtn}>
+        <button onClick={() => {
+          if (!profile?.id) { import('../../lib/guestMode').then(m => m.requestAuth()); return; }
+          setShowPublish(true);
+        }} style={S.publishBtn}>
           <Plus size={13} /> Publicar
         </button>
       </div>
@@ -181,7 +184,10 @@ export function FreelanceNeeds() {
 
               {/* CTA */}
               <button
-                onClick={() => !isOwn && !hasApplied && setApplyingTo(n)}
+                onClick={() => {
+                  if (!profile?.id) { import('../../lib/guestMode').then(m => m.requestAuth()); return; }
+                  if (!isOwn && !hasApplied) setApplyingTo(n);
+                }}
                 disabled={isOwn || hasApplied}
                 style={{
                   ...S.applyBtn,

@@ -106,10 +106,6 @@ export function detectNetworkSurge(context: ProactiveContext): ProactiveEvent | 
         priority: 4,
         message,
         emotion: 'excited',
-        actions: [
-          { label: 'Ver red', action: () => { /* navigate to network */ } },
-          { label: 'Más tarde', action: () => { /* dismiss */ } },
-        ],
         timestamp: Date.now(),
       };
     }
@@ -148,11 +144,6 @@ export function detectOpportunity(
         priority: 5,
         message,
         emotion: 'alert',
-        actions: [
-          { label: 'Postular ahora', action: () => { /* apply */ } },
-          { label: 'Ver detalles', action: () => { /* navigate */ } },
-          { label: 'Ignorar', action: () => { /* dismiss */ } },
-        ],
         timestamp: now,
       };
     }
@@ -327,10 +318,6 @@ export function detectSuggestion(context: ProactiveContext): ProactiveEvent | nu
           priority: 3,
           message,
           emotion: 'excited',
-          actions: [
-            { label: 'Ver empleos', action: () => { /* navigate */ } },
-            { label: 'Después', action: () => { /* dismiss */ } },
-          ],
           timestamp: Date.now(),
         };
       }
@@ -348,10 +335,6 @@ export function detectSuggestion(context: ProactiveContext): ProactiveEvent | nu
           priority: 2,
           message,
           emotion: 'thinking',
-          actions: [
-            { label: 'Ir a Academia', action: () => { /* navigate */ } },
-            { label: 'Mañana', action: () => { /* dismiss */ } },
-          ],
           timestamp: Date.now(),
         };
       }

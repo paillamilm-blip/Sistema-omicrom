@@ -115,7 +115,8 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     if (shouldHide || hasSpoken.current) return;
     hasSpoken.current = true;
     const t = setTimeout(() => {
-      speak(userName ? `Hey ${userName}, soy Ómicron. Cuéntame, ¿a qué te dedicas?` : 'Hey, soy Ómicron. Cuéntame, ¿a qué te dedicas?');
+      // TTS desactivado por defecto (feedback tester: voz robótica da miedo)
+      // speak(userName ? `Hey ${userName}, soy Ómicron. Cuéntame, ¿a qué te dedicas?` : 'Hey, soy Ómicron. Cuéntame, ¿a qué te dedicas?');
     }, 1500);
     return () => clearTimeout(t);
   }, [shouldHide, userName]);
@@ -163,7 +164,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     const msg = `Listo. Veo que ${instantProfile.skills.length > 1 ? 'dominas ' + instantProfile.skills.slice(0, 3).join(', ') : 'eres ' + instantProfile.profession}. Tu perfil ya tiene forma.`;
     setResultMsg(msg);
     setPhase('result');
-    speak(msg);
+    // speak(msg); // TTS off por defecto
     localStorage.setItem(ONBOARDING_KEY, 'true');
 
     // Analytics: track onboarding + profile generation
