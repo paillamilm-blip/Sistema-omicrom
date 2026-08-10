@@ -8,6 +8,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══ Emil Kowalski: Active state global ═══ */
+button:active, [role="button"]:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+  transition: transform 60ms cubic-bezier(0.32, 0.72, 0, 1), opacity 60ms cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+/* Tap highlight removal (mobile) */
+button, [role="button"], a {
+  -webkit-tap-highlight-color: transparent;
+}
+
 :root {
   /* ♿ Accesibilidad: tonos oscurecidos respecto a la versión original para
      mejorar el contraste sobre fondo oscuro y evitar que el usuario deba

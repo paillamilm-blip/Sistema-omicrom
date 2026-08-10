@@ -76,6 +76,6 @@ const S: Record<string, React.CSSProperties> = {
     whiteSpace: 'nowrap',
     zIndex: 3,
     pointerEvents: 'none',
-    animation: 'fadeInDown 0.8s ease both',
+    animation: 'fadeInDown 0.3s cubic-bezier(0.32, 0.72, 0, 1) both',
   },
 };

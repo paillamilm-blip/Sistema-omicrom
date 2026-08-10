@@ -99,6 +99,57 @@ export const ANIM = {
   toastIn: 'cp-toast-in 0.2s ease both',
 } as const;
 
+// ═══════════════════════════════════════════════════════════════════════
+// MOTION — Filosofía Emil Kowalski (animations.dev)
+// Reglas: ease-out para entradas, exit más rápido que enter,
+// nunca >1s para UI, spring para interacciones táctiles,
+// active state en todos los botones.
+// ═══════════════════════════════════════════════════════════════════════
+
+/** Curvas de easing — nunca usar 'ease' ni 'ease-in' para UI */
+export const EASE = {
+  /** Default para todo: ease-out con personalidad */
+  default: 'cubic-bezier(0.32, 0.72, 0, 1)',
+  /** Enter: elementos que aparecen */
+  enter: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+  /** Exit: elementos que desaparecen (más agresiva) */
+  exit: 'cubic-bezier(0.55, 0.085, 0.68, 0.53)',
+  /** Spring: overshoot suave para interacciones */
+  spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+  /** Bounce: celebraciones, logros */
+  bounce: 'cubic-bezier(0.34, 1.4, 0.64, 1)',
+  /** iOS drawer: entrada suave de sheet */
+  ios: 'cubic-bezier(0.32, 0.72, 0, 1)',
+} as const;
+
+/** Duraciones — enter siempre más lento que exit */
+export const TIMING = {
+  /** Hovers, active states, micro-feedback */
+  instant: '60ms',
+  /** Transiciones de color, opacity rápida */
+  fast: '150ms',
+  /** Transiciones de UI estándar */
+  normal: '250ms',
+  /** Elementos que entran a la pantalla */
+  enter: '300ms',
+  /** Elementos que salen (25% más rápido que enter) */
+  exit: '200ms',
+  /** Progress bars, gauges */
+  slow: '500ms',
+} as const;
+
+/** Framer Motion spring presets */
+export const SPRING = {
+  /** Default: responsive, sin wobble */
+  default: { type: 'spring' as const, stiffness: 400, damping: 30 },
+  /** Bouncy: para celebraciones */
+  bouncy: { type: 'spring' as const, stiffness: 300, damping: 15 },
+  /** Stiff: para tooltips, popovers */
+  stiff: { type: 'spring' as const, stiffness: 500, damping: 35 },
+  /** Gentle: para layout shifts */
+  gentle: { type: 'spring' as const, stiffness: 200, damping: 25 },
+} as const;
+
 // Radios más redondeados → sensación premium/suave (antes 4/6/10/12/24).
 export const RADIUS = { sm: 8, md: 12, lg: 16, xl: 22, pill: 999 } as const;
 

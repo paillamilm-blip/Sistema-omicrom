@@ -86,7 +86,7 @@ const S: Record<string, React.CSSProperties> = {
     backdropFilter: 'blur(14px)',
     WebkitBackdropFilter: 'blur(14px)',
     boxShadow: '0 12px 40px rgba(0,0,0,0.55), 0 0 20px rgba(92,200,255,0.08)',
-    transition: 'opacity 0.3s ease, transform 0.3s ease',
+    transition: 'opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
     zIndex: 8,
   },
   header: {
