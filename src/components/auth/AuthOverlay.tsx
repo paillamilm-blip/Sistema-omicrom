@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff, Shield, ArrowLeft, Mail } from 'lucide-react';
 import ParticleOrb from '../omicron/ParticleOrb';
 import { getGuestProfile, clearGuestProfile } from '../../lib/guestMode';
+import { C } from '../../theme';
 
 type AuthMode = 'login' | 'register' | 'forgot';
 
