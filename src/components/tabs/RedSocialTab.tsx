@@ -154,12 +154,13 @@ function FeedSection({ events, onViewUser: _onViewUser }: { events: LiveEvent[];
 }
 
 // ── ONLINE SECTION ───────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function OnlineSection({ peers, profile, onViewUser, onDm }: {
   peers: any[]; profile: any;
   onViewUser: (u: string) => void;
   onDm: (u: any) => void;
 }) {
+/* eslint-enable @typescript-eslint/no-explicit-any */
   return (
     <div>
       <div style={S.sectionLabel}>◉ {peers.length + 1} NODOS EN LÍNEA AHORA</div>
