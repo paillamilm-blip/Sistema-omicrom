@@ -8,7 +8,7 @@ import { OrbContextLabel } from './OrbContextLabel';
 import { PremiumLock } from '../shared/Premium';
 import { useApp } from '../../store/AppContext';
 import { interpret, askCoach } from '../../lib/oraculo';
-import { speakAI, stopAI, isAudioUnlocked } from '../../lib/voiceAI';
+import { speakAI, stopAI, isAudioUnlocked, speakLocal } from '../../lib/voiceAI';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useIdleEscalation } from '../../hooks/useIdleEscalation';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
@@ -449,14 +449,14 @@ export function OrbShell() {
         setActiveTab(node.tab);
         const msg = `Abriendo ${node.label}.`;
         flash(msg);
-        speakAI(msg);
+        speakLocal(msg);
       }
       return;
     }
 
     if (intent.kind === 'coach') {
       flash('Dame un momento, estoy analizando tu perfil…');
-      speakAI('Déjame ver tu Gemelo Digital.');
+      speakLocal('Déjame ver tu Gemelo Digital.');
       const r = await askCoach(coachCtx);
       if (r.advice) {
         flash(r.advice);
@@ -465,7 +465,7 @@ export function OrbShell() {
         // IA no disponible → consejo offline basado en el perfil local
         const offlineAdvice = generateOfflineCoachAdvice(sbProfile);
         flash(offlineAdvice);
-        speakAI(offlineAdvice);
+        speakLocal(offlineAdvice);
       }
       if (r.error && (r.error.includes('límite') || r.error.includes('consejos'))) {
         setShowPremium(true);
@@ -480,7 +480,7 @@ export function OrbShell() {
       else if (intent.topic === 'pe') msg = `Llevas ${(sbProfile?.pe_points ?? 0).toLocaleString()} puntos de experiencia. Cada nodo que valides suma más.`;
       else msg = 'Puedes decirme cosas como: "abre academia", "dame un consejo", "cuánta reputación tengo", o simplemente tocar un nodo del orbe. Estoy acá para lo que necesites.';
       flash(msg);
-      speakAI(msg);
+      speakLocal(msg);
       return;
     }
 
@@ -495,13 +495,13 @@ export function OrbShell() {
       const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia', vault: 'un aporte a la Bóveda' };
       const msg = `Para convalidar ${names[intent.item]}, abrí tu perfil y usá el botón de convalidación.`;
       flash(msg);
-      speakAI(msg);
+      speakLocal(msg);
       return;
     }
 
     // unknown — intentar consultar al Tutor IA, con fallback offline robusto
     flash('Déjame pensar…');
-    speakAI('Déjame pensar.');
+    speakLocal('Déjame pensar.');
     try {
       const { askTutor } = await import('../../lib/oraculo');
       const t = await askTutor(text, coachCtx);
@@ -512,7 +512,7 @@ export function OrbShell() {
         // IA no disponible → respuesta offline inteligente
         const offlineResponse = generateOfflineResponse(text, sbProfile);
         flash(offlineResponse);
-        speakAI(offlineResponse);
+        speakLocal(offlineResponse);
       }
       if (t.error && (t.error.includes('límite') || t.error.includes('consultas'))) {
         setShowPremium(true);
@@ -521,7 +521,7 @@ export function OrbShell() {
       // Red caída o error total → respuesta offline
       const offlineResponse = generateOfflineResponse(text, sbProfile);
       flash(offlineResponse);
-      speakAI(offlineResponse);
+      speakLocal(offlineResponse);
     }
   }, [setActiveTab, sbProfile, orbNodesWithLevels]);
 
@@ -661,7 +661,7 @@ export function OrbShell() {
         ]);
         // Voz proactiva: hablar si el audio ya está desbloqueado (el usuario ya tocó)
         if (isAudioUnlocked()) {
-          speakAI(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
+          speakLocal(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
         }
       } else {
         // R2: PROGRESSIVE PROFILING — si el perfil tiene gaps, PREGUNTAR
@@ -681,7 +681,7 @@ export function OrbShell() {
             { label: 'Después', onClick: () => setResponseMsg(null) },
           ]);
           // Voz proactiva si el audio está desbloqueado
-          if (isAudioUnlocked()) speakAI(msg.length > 200 ? msg.slice(0, 200) : msg);
+          if (isAudioUnlocked()) speakLocal(msg.length > 200 ? msg.slice(0, 200) : msg);
         } else {
           // Perfil completo o ya preguntó hoy → consejo de mejora
           const steps = computeSteps(sbProfile, gemeloDigital);
@@ -695,7 +695,7 @@ export function OrbShell() {
             { label: 'Otra cosa', emoji: '🔄', onClick: () => setResponseMsg(null) },
           ] : []);
           // Voz proactiva si el audio está desbloqueado
-          if (isAudioUnlocked()) speakAI(msg.length > 200 ? msg.slice(0, 200) : msg);
+          if (isAudioUnlocked()) speakLocal(msg.length > 200 ? msg.slice(0, 200) : msg);
         }
       }
     }, 1500); // 1.5s para que el orbe aparezca primero
@@ -715,7 +715,7 @@ export function OrbShell() {
     if (!helpMessage || helpMessage === lastIdleSpoken.current) return;
     if (!isAudioUnlocked()) return;
     lastIdleSpoken.current = helpMessage;
-    speakAI(helpMessage);
+    speakLocal(helpMessage);
   }, [helpMessage]);
 
   // Cuando el audio se desbloquea (primer toque), hablar el mensaje proactivo pendiente
@@ -725,7 +725,7 @@ export function OrbShell() {
     const handleUnlock = () => {
       const msg = responseMsgRef.current;
       if (msg && !lastIdleSpoken.current) {
-        speakAI(msg.length > 200 ? msg.slice(0, 200) : msg);
+        speakLocal(msg.length > 200 ? msg.slice(0, 200) : msg);
       }
     };
     window.addEventListener('omicron:audio-unlocked', handleUnlock);
