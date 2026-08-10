@@ -344,8 +344,9 @@ export function PerfilTab() {
           <PushPermissionBanner />
         </div>
       </div>
-
-      </div>{/* cierre scroll-snap container */}
+      </div>
+      </div>
+      </div>
     </div>
   );
 }
