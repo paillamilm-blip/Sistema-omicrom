@@ -31,6 +31,12 @@ function AppShell() {
     const count = parseInt(localStorage.getItem(key) ?? '0');
     localStorage.setItem(key, String(count + 1));
 
+    // Analytics: track open + daily return
+    import('./lib/analytics').then(({ track }) => {
+      track('app_opened');
+      if (count > 0) track('daily_return');
+    }).catch(() => {});
+
     // Register daily activity for streak (server-side)
     if (authStatus === 'authenticated') {
       supabase.rpc('register_daily_activity', { p_challenge: false, p_pe: 0 }).then(() => {/* ok */});
