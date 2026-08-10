@@ -55,7 +55,17 @@ function AppShell() {
     return () => window.removeEventListener('omicron:request-auth', handler);
   }, []);
 
-  if (authStatus === 'loading' || isLoadingProfile) {
+  // Timeout: si auth tarda más de 5s, forzar modo guest (nunca quedarse pegado)
+  const [forceGuest, setForceGuest] = useState(false);
+  useEffect(() => {
+    if (authStatus !== 'loading' && !isLoadingProfile) return;
+    const timer = setTimeout(() => {
+      setForceGuest(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [authStatus, isLoadingProfile]);
+
+  if ((authStatus === 'loading' || isLoadingProfile) && !forceGuest) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(94,92,230,0.14), transparent 60%)', pointerEvents: 'none' }} />
@@ -64,6 +74,9 @@ function AppShell() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
           <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicron...</p>
+          <button onClick={() => setForceGuest(true)} style={{ marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${C.cyan}44`, color: C.cyan, fontFamily: FONT.mono, fontSize: 10, cursor: 'pointer' }}>
+            Entrar sin cuenta →
+          </button>
         </div>
       </div>
     );
@@ -73,8 +86,8 @@ function AppShell() {
   // GUEST MODE: permitir ver el orbe sin auth. Auth se pide cuando quiere guardar/postular/conectar.
   if (authStatus === 'no_access') return <NoAccess />;
 
-  // Si no está autenticado, mostrar el orbe en modo guest (sin AuthOverlay bloqueante)
-  const isGuest = authStatus === 'unauthenticated';
+  // Si no está autenticado O forzamos guest, mostrar el orbe en modo guest
+  const isGuest = authStatus === 'unauthenticated' || forceGuest;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
