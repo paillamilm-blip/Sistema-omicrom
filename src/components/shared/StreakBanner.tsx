@@ -138,6 +138,7 @@ const S: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     color: C.gold,
     textShadow: '0 0 10px rgba(255,176,46,0.4)',
+    fontVariantNumeric: 'tabular-nums',
   },
   days: { fontFamily: FONT.mono, fontSize: 10, color: C.mut, letterSpacing: 1 },
   mult: {

@@ -150,6 +150,35 @@ export const SPRING = {
   gentle: { type: 'spring' as const, stiffness: 200, damping: 25 },
 } as const;
 
+/**
+ * Layered shadows — 2 capas para profundidad real.
+ * Emil: "Una sola sombra se ve plana. Dos capas simulan luz real."
+ * Capa 1 (cercana): definición del borde
+ * Capa 2 (lejana): profundidad ambiental
+ */
+export const SHADOW = {
+  /** Cards sutiles, badges */
+  sm: '0 1px 2px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.2)',
+  /** Cards principales, modals */
+  md: '0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35)',
+  /** Modals flotantes, dropdowns */
+  lg: '0 2px 6px rgba(0,0,0,0.35), 0 16px 48px rgba(0,0,0,0.45)',
+  /** Hero elements, orbe preview */
+  xl: '0 4px 12px rgba(0,0,0,0.4), 0 24px 64px rgba(0,0,0,0.55)',
+  /** Glow cyan (para CTAs principales) */
+  glow: '0 0 16px rgba(92,200,255,0.25), 0 8px 24px rgba(0,0,0,0.3)',
+  /** Glow gold (para premium/rewards) */
+  glowGold: '0 0 16px rgba(255,176,46,0.25), 0 8px 24px rgba(0,0,0,0.3)',
+} as const;
+
+/**
+ * Spacing — grid de 4px (Emil: "espacio consistente = interfaz que respira")
+ * Usar en vez de números mágicos: padding={SP[4]} = 16px
+ */
+export const SP = {
+  0: 0, 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32, 10: 40, 12: 48, 16: 64,
+} as const;
+
 // Radios más redondeados → sensación premium/suave (antes 4/6/10/12/24).
 export const RADIUS = { sm: 8, md: 12, lg: 16, xl: 22, pill: 999 } as const;
 

@@ -130,6 +130,7 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 16,
     fontWeight: 700,
     color: C.ink,
+    fontVariantNumeric: 'tabular-nums',
   },
   statLabel: {
     fontFamily: FONT.mono,
