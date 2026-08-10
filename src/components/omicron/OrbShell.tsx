@@ -589,7 +589,8 @@ export function OrbShell() {
           { label: 'Ver empleos', emoji: '💼', primary: true, onClick: () => { setActiveTab('empleos'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'empleos'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
           { label: 'Mi perfil', emoji: '📈', onClick: () => { setActiveTab('perfil'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'inicio'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
         ]);
-        speak(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
+        // TTS desactivado por defecto (feedback tester: "voz robótica da miedo")
+        // speak(event.message.length > 200 ? event.message.slice(0, 200) : event.message);
       } else {
         // R2: PROGRESSIVE PROFILING — si el perfil tiene gaps, PREGUNTAR
         const question = getNextProfileQuestion(sbProfile);
@@ -607,7 +608,8 @@ export function OrbShell() {
             { label: 'Responder', emoji: '✅', primary: true, onClick: () => { /* focus input */ setResponseMsg(null); } },
             { label: 'Después', onClick: () => setResponseMsg(null) },
           ]);
-          speak(msg.length > 200 ? msg.slice(0, 200) : msg);
+          // TTS off by default
+          // speak(msg.length > 200 ? msg.slice(0, 200) : msg);
         } else {
           // Perfil completo o ya preguntó hoy → consejo de mejora
           const steps = computeSteps(sbProfile, gemeloDigital);
@@ -620,7 +622,8 @@ export function OrbShell() {
             { label: 'Sí, vamos', emoji: '✅', primary: true, onClick: () => { handleTextInput(top.why.includes('CV') ? 'quiero subir mi cv' : 'dame un consejo'); setResponseMsg(null); } },
             { label: 'Otra cosa', emoji: '🔄', onClick: () => setResponseMsg(null) },
           ] : []);
-          speak(msg.length > 200 ? msg.slice(0, 200) : msg);
+          // TTS off by default
+          // speak(msg.length > 200 ? msg.slice(0, 200) : msg);
         }
       }
     }, 1500); // 1.5s para que el orbe aparezca primero
