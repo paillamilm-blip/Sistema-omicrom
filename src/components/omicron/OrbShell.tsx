@@ -367,6 +367,39 @@ export function OrbShell() {
   }, [profile, sbProfile, gemeloDigital, dynamicOrbNodes]);
 
   // ── Offline coach: consejo basado en perfil local (sin IA) ────────
+  // ── Offline responses: SIEMPRE hay interacción (sin depender de IA) ──
+  function generateOfflineResponse(text: string, p: typeof sbProfile): string {
+    const t = text.toLowerCase();
+    const name = p?.display_name || p?.username || 'amigo';
+
+    // Saludos
+    if (/^(hola|hey|buenas|qué tal|que tal|wena|ola|hi|hello)/.test(t)) {
+      return `¡Hola ${name}! Soy Ómicron, tu Gemelo Digital. Puedo abrirte secciones, darte datos de tu perfil, o darte un consejo. ¿Qué necesitas?`;
+    }
+    // Preguntas sobre Ómicron
+    if (/quién eres|quien eres|qué eres|que eres|qué haces|que haces/.test(t)) {
+      return `Soy Ómicron, tu asistente de carrera y Gemelo Digital. Te ayudo a medir tu reputación profesional, buscar empleos, y crecer. Prueba decirme: "abre empleos", "mi reputación", o "dame un consejo".`;
+    }
+    // Gracias
+    if (/gracias|thanks|vale|ok|dale|genial|perfecto/.test(t)) {
+      return `¡De nada, ${name}! Estoy aquí para lo que necesites. Toca un nodo del orbe o escríbeme.`;
+    }
+    // Preguntas sobre qué puede hacer
+    if (/qué puedo|que puedo|cómo funciona|como funciona|para qué sirv|para que sirv/.test(t)) {
+      return `Puedo hacer muchas cosas: abrir Empleos, Academia, tu Perfil. Decirte tu reputación, tokens, o puntos. Darte un consejo de carrera. Generar una carta de postulación. ¡Probá cualquiera!`;
+    }
+    // Frustración
+    if (/no funciona|no sirve|no entiendo|ayuda|help|no puedo/.test(t)) {
+      return `Entiendo, ${name}. Intentá con comandos simples: "abre empleos", "mi reputación", "dame un consejo". También puedes tocar los nodos del orbe directamente. ¿En qué te puedo ayudar?`;
+    }
+    // Default contextual
+    const rep = p?.reputation_score ?? 0;
+    if (rep > 0) {
+      return `${name}, tu reputación va en ${Math.round(rep)} de 100. Puedo abrirte Empleos, Academia, o darte un consejo. ¿Qué te gustaría?`;
+    }
+    return `¡Estoy aquí, ${name}! Soy Ómicron. Dime algo como "abre empleos", "mi reputación", o toca un nodo del orbe. ¿En qué te ayudo?`;
+  }
+
   function generateOfflineCoachAdvice(p: typeof sbProfile): string {
     if (!p) return 'Aún no tengo datos de tu perfil. Sube tu CV o cuéntame a qué te dedicas para poder aconsejarte mejor.';
     const exec = p.execution_score ?? 0;
@@ -466,8 +499,9 @@ export function OrbShell() {
       return;
     }
 
-    // unknown — consultar al Tutor IA (igual que OmicronAssistant)
+    // unknown — intentar consultar al Tutor IA, con fallback offline robusto
     flash('Déjame pensar…');
+    speakAI('Déjame pensar.');
     try {
       const { askTutor } = await import('../../lib/oraculo');
       const t = await askTutor(text, coachCtx);
@@ -475,18 +509,19 @@ export function OrbShell() {
         flash(t.answer);
         speakAI(t.answer.length > 320 ? t.answer.slice(0, 320) : t.answer);
       } else {
-        // IA no disponible → respuesta offline contextual
-        const offline = `Entiendo tu pregunta sobre "${text.slice(0, 30)}". Ahora mismo no puedo consultar la IA, pero puedo ayudarte con cosas como: abrir secciones, ver tu reputación, o navegar. Intenta de nuevo en un momento.`;
-        flash(offline);
-        speakAI(offline);
+        // IA no disponible → respuesta offline inteligente
+        const offlineResponse = generateOfflineResponse(text, sbProfile);
+        flash(offlineResponse);
+        speakAI(offlineResponse);
       }
       if (t.error && (t.error.includes('límite') || t.error.includes('consultas'))) {
         setShowPremium(true);
       }
     } catch {
-      const errorMsg = 'Tuve un problema de conexión. Mientras tanto, puedo navegar por ti, decirte tu reputación o abrir cualquier sección. Pregúntame.';
-      flash(errorMsg);
-      speakAI(errorMsg);
+      // Red caída o error total → respuesta offline
+      const offlineResponse = generateOfflineResponse(text, sbProfile);
+      flash(offlineResponse);
+      speakAI(offlineResponse);
     }
   }, [setActiveTab, sbProfile, orbNodesWithLevels]);
 
