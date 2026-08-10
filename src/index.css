@@ -20,6 +20,44 @@ button, [role="button"], a {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ═══ Emil Kowalski: Taste + Impeccable ═══ */
+
+/* Números tabulares — no "saltan" al cambiar de 9→10 */
+[data-numeric], .tabular-nums,
+[style*="fontFamily: ui-monospace"],
+[style*="fontFamily:ui-monospace"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Focus ring accesible (WCAG AA) — visible solo con teclado */
+:focus-visible {
+  outline: 2px solid rgba(92, 200, 255, 0.5);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* Remover outline default del browser */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Hover sutil en elementos interactivos (no mobile) */
+@media (hover: hover) {
+  button:hover, [role="button"]:hover {
+    transform: translateY(-0.5px);
+  }
+}
+
+/* Smooth scroll global */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Texto: max-width para legibilidad */
+p, .readable {
+  max-width: 65ch;
+}
+
 :root {
   /* ♿ Accesibilidad: tonos oscurecidos respecto a la versión original para
      mejorar el contraste sobre fondo oscuro y evitar que el usuario deba
