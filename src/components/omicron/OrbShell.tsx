@@ -458,7 +458,9 @@ export function OrbShell() {
         setShowPremium(true);
       }
     } catch {
-      flash('Tuve un problema de conexión. Intenta de nuevo.');
+      const errorMsg = 'Tuve un problema de conexión. Intenta de nuevo.';
+      flash(errorMsg);
+      speakAI(errorMsg);
     }
   }, [setActiveTab, sbProfile, orbNodesWithLevels]);
 
