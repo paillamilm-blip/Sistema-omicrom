@@ -115,8 +115,8 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     if (shouldHide || hasSpoken.current) return;
     hasSpoken.current = true;
     const t = setTimeout(() => {
-      // TTS con voz IA natural (Kokoro español) — ya no suena robótica
-      speakAI(userName ? `Hey ${userName}, soy Ómicron. Cuéntame, ¿a qué te dedicas?` : 'Hey, soy Ómicron. Cuéntame, ¿a qué te dedicas?');
+      // TTS desactivado en carga automática (iOS/Chrome bloquea sin gesto del usuario)
+      // La voz se activa cuando el usuario toca un chip o envía texto
     }, 1500);
     return () => clearTimeout(t);
   }, [shouldHide, userName]);
