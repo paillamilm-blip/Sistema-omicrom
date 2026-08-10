@@ -9,13 +9,13 @@ const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Modelos gratis de OpenRouter (ordenados por preferencia — actualizar si rotan)
+// ACTUALIZADO ago-2026: Meta Llama, Qwen y Mistral free fueron removidos.
+// Solo quedan modelos Google y NVIDIA en capa gratuita.
 const FREE_MODELS = [
-  'google/gemma-4-31b-it:free',
-  'google/gemma-4-26b-a4b-it:free',
-  'meta-llama/llama-4-scout:free',
-  'meta-llama/llama-4-maverick:free',
-  'mistralai/mistral-small-3.1-24b-instruct:free',
-  'qwen/qwen3-32b:free',
+  'google/gemma-4-31b-it:free',          // Principal: 31B, 256K ctx
+  'google/gemma-4-26b-a4b-it:free',      // Backup: 26B sparse
+  'google/gemma-3n-e4b-it:free',         // Ligero: 4B, rápido
+  'nvidia/nemotron-ultra-253b:free',     // NVIDIA 253B MoE (si disponible)
 ];
 
 // Cache de modelos que fallaron recientemente (no reintentar por 1h)
@@ -105,10 +105,13 @@ export async function callAI(
           continue;
         }
         if (status === 429) {
-          // Rate limited — esperar 2s y probar siguiente modelo
-          await new Promise(r => setTimeout(r, 2000));
+          // Rate limited — esperar 3s y probar siguiente modelo
+          console.warn(`[aiClient] Rate limit en ${model}. Esperando 3s...`);
+          await new Promise(r => setTimeout(r, 3000));
           continue;
         }
+        // Otros errores (500, 503, etc) — probar siguiente
+        console.warn(`[aiClient] Error ${status} en ${model}.`);
         continue;
       }
 
