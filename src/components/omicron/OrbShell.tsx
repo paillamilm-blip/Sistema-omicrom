@@ -8,8 +8,7 @@ import { OrbContextLabel } from './OrbContextLabel';
 import { PremiumLock } from '../shared/Premium';
 import { useApp } from '../../store/AppContext';
 import { interpret, askCoach } from '../../lib/oraculo';
-import { speak, stopSpeaking } from '../../lib/voiceEngine';
-import { speakAI, stopAI, isVoiceAIAvailable } from '../../lib/voiceAI';
+import { speakAI, stopAI } from '../../lib/voiceAI';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useIdleEscalation } from '../../hooks/useIdleEscalation';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
@@ -631,6 +630,11 @@ export function OrbShell() {
 
     return () => clearTimeout(timer);
   }, [sbProfile, gemeloDigital]);
+
+  // Cleanup: detener voz al desmontar el componente
+  useEffect(() => {
+    return () => { stopAI(); };
+  }, []);
 
   // Fix 2: Idle breathing — throttled state update (2 Hz, cosmetic only)
   useEffect(() => {
