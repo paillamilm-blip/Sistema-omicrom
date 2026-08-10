@@ -9,7 +9,7 @@
 // Cada card ocupa el 100% del ancho visible. Swipe con AnimatePresence.
 // Debajo: sección de retención clara y separada.
 // ═══════════════════════════════════════════════════════════════════════
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp, useGemeloDigital } from '../../store/AppContext';
@@ -43,6 +43,7 @@ export function PerfilTab() {
   const { profile, setActiveTab } = useApp();
   const gemelo = useGemeloDigital();
   const [[currentSlide, direction], setSlide] = useState([0, 0]);
+  const visitedSlides = useRef(new Set([0]));
 
   const skillsDetail = useMemo(() => {
     const details = profile?.skills_detail ?? [];
@@ -77,6 +78,7 @@ export function PerfilTab() {
   // ── Slide navigation ──────────────────────────────────────────────────
   const goToSlide = useCallback((idx: number) => {
     const clamped = Math.max(0, Math.min(2, idx));
+    visitedSlides.current.add(clamped);
     setSlide(([prev]) => [clamped, clamped > prev ? 1 : -1]);
   }, []);
 
@@ -93,10 +95,11 @@ export function PerfilTab() {
 
   // ── Card content renderer ─────────────────────────────────────────────
   const renderCard = (idx: number) => {
+    const isRevisit = visitedSlides.current.has(idx) && idx !== 0; // slide 0 se marca en init
     switch (idx) {
       case 0: return <CardIdentidad nucleus={nucleus} top3={top3} hasTwo={hasTwo} hasThree={hasThree} reputation={reputation} />;
-      case 1: return <CardCompetencias skillsDetail={skillsDetail} cvSummary={cvSummary} />;
-      case 2: return <CardImpacto axes={axes} setActiveTab={setActiveTab} />;
+      case 1: return <CardCompetencias skillsDetail={skillsDetail} cvSummary={cvSummary} skipAnimation={isRevisit} />;
+      case 2: return <CardImpacto axes={axes} setActiveTab={setActiveTab} skipAnimation={isRevisit} />;
       default: return null;
     }
   };
@@ -288,9 +291,10 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation }: {
   );
 }
 
-function CardCompetencias({ skillsDetail, cvSummary }: {
+function CardCompetencias({ skillsDetail, cvSummary, skipAnimation }: {
   skillsDetail: { name: string; pct: number }[];
   cvSummary: string;
+  skipAnimation?: boolean;
 }) {
   return (
     <div style={{
@@ -321,9 +325,9 @@ function CardCompetencias({ skillsDetail, cvSummary }: {
             </div>
             <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
               <motion.div
-                initial={{ width: 0 }}
+                initial={skipAnimation ? false : { width: 0 }}
                 animate={{ width: `${skill.pct}%` }}
-                transition={{ delay: 0.2 + i * 0.06, duration: 0.6, ease: 'easeOut' }}
+                transition={skipAnimation ? { duration: 0 } : { delay: 0.2 + i * 0.06, duration: 0.6, ease: 'easeOut' }}
                 style={{
                   height: '100%', borderRadius: 3,
                   background: `linear-gradient(90deg, ${SKILL_COLORS[i % SKILL_COLORS.length]}cc, ${SKILL_COLORS[(i + 1) % SKILL_COLORS.length]}88)`,
@@ -355,9 +359,10 @@ function CardCompetencias({ skillsDetail, cvSummary }: {
   );
 }
 
-function CardImpacto({ axes, setActiveTab }: {
+function CardImpacto({ axes, setActiveTab, skipAnimation }: {
   axes: { exec: number; qual: number; trans: number; fund: number };
   setActiveTab: (tab: 'maxskill' | 'academia') => void;
+  skipAnimation?: boolean;
 }) {
   return (
     <div style={{
@@ -386,9 +391,9 @@ function CardImpacto({ axes, setActiveTab }: {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ flex: 1, height: 5, borderRadius: 3, background: `${color}22` }}>
                   <motion.div
-                    initial={{ width: 0 }}
+                    initial={skipAnimation ? false : { width: 0 }}
                     animate={{ width: `${val}%` }}
-                    transition={{ delay: 0.3, duration: 0.7, ease: 'easeOut' }}
+                    transition={skipAnimation ? { duration: 0 } : { delay: 0.3, duration: 0.7, ease: 'easeOut' }}
                     style={{ height: '100%', borderRadius: 3, background: color, boxShadow: `0 0 5px ${color}66` }}
                   />
                 </div>

@@ -657,16 +657,18 @@ export function OrbShell() {
   }, [helpMessage]);
 
   // Cuando el audio se desbloquea (primer toque), hablar el mensaje proactivo pendiente
+  const responseMsgRef = useRef(responseMsg);
+  responseMsgRef.current = responseMsg; // Siempre fresco
   useEffect(() => {
     const handleUnlock = () => {
-      // Si hay un mensaje proactivo pendiente que no se habló, hablarlo ahora
-      if (responseMsg && !lastIdleSpoken.current) {
-        speakAI(responseMsg.length > 200 ? responseMsg.slice(0, 200) : responseMsg);
+      const msg = responseMsgRef.current;
+      if (msg && !lastIdleSpoken.current) {
+        speakAI(msg.length > 200 ? msg.slice(0, 200) : msg);
       }
     };
     window.addEventListener('omicron:audio-unlocked', handleUnlock);
     return () => window.removeEventListener('omicron:audio-unlocked', handleUnlock);
-  }, [responseMsg]);
+  }, []); // deps vacío — usa ref para evitar stale closure
 
   // Fix 2: Idle breathing — throttled state update (2 Hz, cosmetic only)
   useEffect(() => {
