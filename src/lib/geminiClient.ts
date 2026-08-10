@@ -4,9 +4,9 @@
 // Fallback: google/gemma-4-26b-a4b-it:free
 
 const API_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
-const MODEL = 'google/gemma-4-31b-it:free';
-const FALLBACK = 'google/gemma-4-26b-a4b-it:free';
-const URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+// Usa aiClient centralizado para compartir rate-limit y fallback entre 6 modelos
+import { callAI } from './aiClient';
 
 const SYS = [
   'Eres el Motor de ADN Digital de Omicron.',
@@ -55,27 +55,6 @@ export interface GeminiAnalysis {
   summary?: string;
 }
 
-async function callModel(model: string, cvText: string): Promise<Response> {
-  return fetch(URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_KEY}`,
-      'HTTP-Referer': 'https://sistema-omicrom.vercel.app',
-      'X-Title': 'Sistema Omicron',
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: SYS },
-        { role: 'user', content: 'CV COMPLETO:\n\n' + cvText },
-      ],
-      temperature: 0.3,
-      max_tokens: 2000,
-    }),
-  });
-}
-
 export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean; analysis?: GeminiAnalysis; error?: string }> {
   if (!API_KEY) {
     return { ok: false, error: 'Falta VITE_OPENROUTER_KEY. Registrate gratis en openrouter.ai' };
@@ -83,33 +62,26 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
 
   const text = cvText.slice(0, 15000);
 
-  for (const model of [MODEL, FALLBACK]) {
-    try {
-      const resp = await callModel(model, text);
+  try {
+    const raw = await callAI([
+      { role: 'system', content: SYS },
+      { role: 'user', content: 'CV COMPLETO:\n\n' + text },
+    ], { maxTokens: 2000, temperature: 0.3, jsonMode: true, timeout: 30000 });
 
-      if (!resp.ok) {
-        const err = await resp.text();
-        console.warn(`[openrouter] ${model} falló (${resp.status}):`, err.slice(0, 200));
-        continue;
-      }
-
-      const data = await resp.json();
-      const content = data?.choices?.[0]?.message?.content ?? '';
-
-      if (!content) continue;
-
-      // Extraer JSON del contenido (puede venir con texto antes/después)
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) continue;
-
-      const parsed = JSON.parse(jsonMatch[0]) as GeminiAnalysis;
-      console.log('[openrouter] OK:', model, parsed.name ?? '?');
-      return { ok: true, analysis: parsed };
-    } catch (e) {
-      console.warn(`[openrouter] ${model} error:`, e);
-      continue;
+    if (!raw) {
+      return { ok: false, error: 'IA no disponible. Intenta de nuevo en unos minutos.' };
     }
-  }
 
-  return { ok: false, error: 'No se pudo conectar con la IA. Intentá de nuevo.' };
+    // Extraer JSON del contenido (puede venir con texto antes/después)
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { ok: false, error: 'La IA respondió pero no pude interpretar el resultado.' };
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]) as GeminiAnalysis;
+    return { ok: true, analysis: parsed };
+  } catch (e) {
+    console.warn('[geminiClient] Error:', e);
+    return { ok: false, error: 'No se pudo conectar con la IA. Intentá de nuevo.' };
+  }
 }
