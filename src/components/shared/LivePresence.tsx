@@ -6,7 +6,7 @@
 // Ambos leen del mismo canal a través de useRealtime() (una sola conexión).
 import { useEffect, useRef, useState } from 'react';
 import { useRealtime } from '../../store/RealtimeContext';
-import { useApp } from '../../store/AppContext';
+import { useProfile } from '../../store/ProfileContext';
 import { PublicCredentialModal, DirectChatModal } from '../perfil/RedSocial';
 import { LiveRanking } from './LiveRanking';
 import type { LiveEvent, LiveEventKind } from '../../hooks/useRealtimeNetwork';
@@ -58,7 +58,7 @@ export function LiveBadge() {
 /** C · Panel "Red Ómicron en vivo": todos los nodos conectados + actividad. */
 export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { nodes, events, onlineCount } = useRealtime();
-  const { profile } = useApp();
+  const { profile } = useProfile();
   const [viewUser, setViewUser] = useState<string | null>(null);
   const [dmWith, setDmWith] = useState<{ id: string; name: string; username: string; avatar: string | null } | null>(null);
   if (!open) return null;
@@ -132,7 +132,7 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
 /** Tira compacta de OTROS nodos en línea AHORA (quién está conectado). */
 export function LivePeersStrip() {
   const { nodes } = useRealtime();
-  const { profile } = useApp();
+  const { profile } = useProfile();
   const [viewUser, setViewUser] = useState<string | null>(null);
   const peers = nodes.filter((n) => n.id !== profile?.id);
   if (peers.length === 0 && !viewUser) return null;

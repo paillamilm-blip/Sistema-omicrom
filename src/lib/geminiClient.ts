@@ -78,8 +78,17 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
       return { ok: false, error: 'La IA respondió pero no pude interpretar el resultado.' };
     }
 
-    const parsed = JSON.parse(jsonMatch[0]) as GeminiAnalysis;
-    return { ok: true, analysis: parsed };
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    // Validar con Zod: si la IA devolvió campos incorrectos, rechazar
+    const { validateGeminiResponse } = await import('./schemas/cvAnalysis');
+    const validation = validateGeminiResponse(parsed);
+    if (!validation.success) {
+      console.warn('[geminiClient] Zod validation failed:', validation.error);
+      return { ok: false, error: 'La IA devolvió datos incompletos. Intentá de nuevo.' };
+    }
+
+    return { ok: true, analysis: validation.data as GeminiAnalysis };
   } catch (e) {
     console.warn('[geminiClient] Error:', e);
     return { ok: false, error: 'No se pudo conectar con la IA. Intentá de nuevo.' };

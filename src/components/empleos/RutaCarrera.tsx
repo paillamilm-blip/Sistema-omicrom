@@ -9,7 +9,7 @@
 // cerrarla (Academia / Empleos / Bóveda). 100% frontend, sin dependencias nuevas.
 import { useMemo } from 'react';
 import { GraduationCap, Compass, ArrowUpRight, Target } from 'lucide-react';
-import { useApp } from '../../store/AppContext';
+import { useNavigation } from '../../store/NavigationContext';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { C, FONT, RADIUS } from '../../theme';
 import type { TabId } from '../../types';
@@ -78,7 +78,7 @@ function analyze(track: Track, ejes: Record<EjeKey, number>, userSkills: string[
 }
 
 export function RutaCarrera() {
-  const { setActiveTab } = useApp();
+  const { setActiveTab } = useNavigation();
   const { profile } = useGemeloProfile();
 
   const ejes: Record<EjeKey, number> = {

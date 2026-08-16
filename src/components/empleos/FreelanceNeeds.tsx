@@ -7,7 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Clock, Users, MapPin, Wifi, Send, CheckCircle2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useApp } from '../../store/AppContext';
+import { useProfile } from '../../store/ProfileContext';
 import { C, FONT } from '../../theme';
 
 interface FreelanceNeed {
@@ -49,7 +49,7 @@ const URGENCY_LABEL: Record<string, { label: string; color: string }> = {
 };
 
 export function FreelanceNeeds() {
-  const { profile } = useApp();
+  const { profile } = useProfile();
   const [needs, setNeeds] = useState<FreelanceNeed[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPublish, setShowPublish] = useState(false);
@@ -215,7 +215,7 @@ export function FreelanceNeeds() {
 
 // ── MODAL: Publicar necesidad ────────────────────────────────────────
 function PublishNeedModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
-  const { profile } = useApp();
+  const { profile } = useProfile();
   const [f, setF] = useState({ title: '', description: '', category: 'desarrollo', budgetMin: '', budgetMax: '', days: '7', skills: '', is_remote: true, urgency: 'normal' });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
