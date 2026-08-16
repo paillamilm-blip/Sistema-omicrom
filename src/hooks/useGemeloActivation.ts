@@ -198,7 +198,6 @@ export function useGemeloActivation() {
         p_summary: analyzed.summary ? String(analyzed.summary) : '',
         p_skills_detail: cleanDetail.length > 0 ? cleanDetail : [],
       });
-      console.log('[Omicron] aplicar_analisis_cv:', { rpcData, error });
       const res = rpcData as { ok?: boolean; error?: string } | null;
       if (error || !res?.ok) {
         const errMsg = error?.message || res?.error || 'Error desconocido';

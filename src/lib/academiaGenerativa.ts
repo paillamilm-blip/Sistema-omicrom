@@ -5,10 +5,7 @@
 // Cada micro-curso tiene: concepto, 3 preguntas, y otorga PE al completar.
 // ═══════════════════════════════════════════════════════════════════════
 
-const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
-const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
-// Usa aiClient centralizado para compartir rate-limit y fallback
+// Usa aiClient centralizado (proxy-ai Edge Function server-side)
 import { callAI } from './aiClient';
 
 export interface MicroCurso {
@@ -36,7 +33,6 @@ Responde SOLO JSON válido:
  */
 export async function generarMicroCurso(skill: string, nivel?: string): Promise<MicroCurso> {
   try {
-    if (!OR_KEY) throw new Error('Sin key');
     const raw = await callAI([
       { role: 'system', content: SYS_PROMPT },
       { role: 'user', content: `Genera un micro-curso sobre: ${skill}. Nivel: ${nivel || 'intermedio'}.` },

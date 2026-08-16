@@ -223,20 +223,19 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
   // Mic handler — stores ref for cleanup
   const recognitionRef = useRef<{ abort: () => void } | null>(null);
   const handleMic = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = ((window as unknown as { SpeechRecognition?: any }).SpeechRecognition || (window as unknown as { webkitSpeechRecognition?: any }).webkitSpeechRecognition);
-    if (!SR) return;
-    const recog = new SR();
-    recognitionRef.current = recog;
-    recog.lang = 'es-CL'; recog.interimResults = true; recog.continuous = false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recog.onresult = (e: any) => {
-      const r = e.results[e.results.length - 1];
-      setInput(r[0].transcript);
-      if (r.isFinal) handleSubmit(r[0].transcript);
-    };
-    recog.onend = () => { recognitionRef.current = null; };
-    recog.start();
+    import('../../lib/speechRecognition').then(({ startSpeechRecognition, isSpeechAvailable }) => {
+      if (!isSpeechAvailable()) return;
+      const handle = startSpeechRecognition({
+        lang: 'es-CL',
+        interimResults: true,
+        onResult: (transcript, isFinal) => {
+          setInput(transcript);
+          if (isFinal) handleSubmit(transcript);
+        },
+        onEnd: () => { recognitionRef.current = null; },
+      });
+      if (handle) recognitionRef.current = handle;
+    });
   }, [handleSubmit]);
 
   // Cleanup: abort recognition on unmount
