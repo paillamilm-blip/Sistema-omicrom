@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useApp } from '../../store/AppContext';
+import { useProfile } from '../../store/ProfileContext';
 import { Modal } from '../shared/Modal';
 
 interface Props {
@@ -18,7 +18,7 @@ const CATEGORIES = [
 ];
 
 export function PublishServiceModal({ onClose, onPublished }: Props) {
-  const { profile } = useApp();
+  const { profile } = useProfile();
   const [form, setForm] = useState({
     title: '',
     description: '',

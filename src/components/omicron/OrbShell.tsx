@@ -6,7 +6,7 @@ import { SuggestionChips } from './SuggestionChips';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { OrbContextLabel } from './OrbContextLabel';
 import { PremiumLock } from '../shared/Premium';
-import { useApp } from '../../store/AppContext';
+import { useNavigation } from '../../store/NavigationContext';
 import { interpret, askCoach } from '../../lib/oraculo';
 import { speakAI, stopAI, isAudioUnlocked, speakLocal } from '../../lib/voiceAI';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
@@ -210,12 +210,11 @@ function renderTab(tab: TabId) {
 
 
 export function OrbShell() {
-  const { setActiveTab, unreadCount } = useApp();
+  const { setActiveTab, unreadCount } = useNavigation();
   const { profile } = useGemeloProfile();
 
   // ── Build GemeloDigital from Supabase profile for omicronCoach ──────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sbProfile = (useApp() as any).profile;
+  const sbProfile = profile;
   const gemeloDigital = useMemo((): GemeloDigital | null => {
     if (!sbProfile) return null;
     return {

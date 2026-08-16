@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react';
 import { X, Copy, ExternalLink, Sparkles, CheckCircle2, FileText } from 'lucide-react';
 import { C as T, FONT as TF } from '../../theme';
-import { useApp } from '../../store/AppContext';
+import { useProfile } from '../../store/ProfileContext';
 import { generarCartaPostulacion, type CartaResult } from '../../lib/cartaPostulacion';
 
 const C = {
@@ -32,7 +32,7 @@ interface Props {
 }
 
 export function CartaPostulacionModal({ job, onClose, onApplyDone }: Props) {
-  const { profile } = useApp();
+  const { profile } = useProfile();
   const [state, setState] = useState<'generating' | 'ready' | 'error'>('generating');
   const [carta, setCarta] = useState<CartaResult | null>(null);
   const [copied, setCopied] = useState(false);

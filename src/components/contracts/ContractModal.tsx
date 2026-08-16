@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Shield, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useApp } from '../../store/AppContext';
+import { useProfile } from '../../store/ProfileContext';
 import { Modal } from '../shared/Modal';
 import type { MarketService } from '../../types';
 
@@ -13,7 +13,7 @@ interface Props {
 type Step = 'confirm' | 'loading' | 'success' | 'error';
 
 export function ContractModal({ service, onClose }: Props) {
-  const { profile, refreshProfile } = useApp();
+  const { profile, refreshProfile } = useProfile();
   const [note, setNote] = useState('');
   const [step, setStep] = useState<Step>('confirm');
   const [errorMsg, setErrorMsg] = useState('');

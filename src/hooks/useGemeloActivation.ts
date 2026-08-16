@@ -32,6 +32,7 @@ export function useGemeloActivation() {
   const [pushes, setPushes] = useState<Push[]>([]);
   const [synergies, setSynergies] = useState<string[]>([]);
   const pushIdRef = useRef(0);
+  const isProcessingRef = useRef(false);
 
   const rep = gemelo ? Math.round(gemelo.overallReputation) : 0;
   const hasExistingCV = (profile?.skills?.length ?? 0) > 0;
@@ -123,6 +124,10 @@ export function useGemeloActivation() {
   const activateGemeloCompleto = useCallback(async () => {
     const text = cvText.trim();
     if (!text) return;
+    // Protección doble-click: si ya estamos procesando, ignorar
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
     setPhase('syncing');
     setCurrentStep(0);
     setMsg('Ómicron está analizando TODO tu CV con IA…');
@@ -165,12 +170,14 @@ export function useGemeloActivation() {
         setMsg('No se pudo analizar tu CV con IA. Verificá tu conexión e intentá de nuevo. Si el problema persiste, contacta soporte.');
         setPhase('upload');
         toast('Error de IA al analizar CV — reintentá en unos segundos', 'error');
+        isProcessingRef.current = false;
         return; // NO proceder con datos imprecisos
       }
 
       if (!analyzed || !usedAI) {
         setMsg('No se obtuvo un análisis confiable. Intentá de nuevo.');
         setPhase('upload');
+        isProcessingRef.current = false;
         return;
       }
 
@@ -197,6 +204,7 @@ export function useGemeloActivation() {
         const errMsg = error?.message || res?.error || 'Error desconocido';
         setMsg(`No se pudo aplicar: ${errMsg}`);
         setPhase('upload');
+        isProcessingRef.current = false;
         return;
       }
 
@@ -221,10 +229,12 @@ export function useGemeloActivation() {
       setDossier(analyzed);
       setAi({ loading: false, text: analyzed.summary });
       setPhase('dossier');
+      isProcessingRef.current = false;
     } catch (err) {
       console.error('[Omicron] activateGemeloCompleto failed:', err);
       setMsg('Error al procesar. Intentá de nuevo.');
       setPhase('upload');
+      isProcessingRef.current = false;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cvText, emitPush, runAutoChain, detectSynergies, toast]);
@@ -234,6 +244,7 @@ export function useGemeloActivation() {
     phase, currentStep, completedSteps, dossier, ai,
     cvText, setCvText, cvFileName, msg, pushes, synergies,
     rep, hasExistingCV, gemelo, profile,
+    isProcessing: isProcessingRef.current,
     // Actions
     onCVFile, activateGemeloCompleto,
   };
