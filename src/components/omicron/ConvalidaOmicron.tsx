@@ -12,7 +12,7 @@ import { useGemeloActivation } from '../../hooks/useGemeloActivation';
 import { PerfilSkillVisual } from '../perfil/PerfilSkillVisual';
 import { C, FONT, RADIUS } from '../../theme';
 import { computeSteps } from '../../lib/omicronCoach';
-import ParticleOrb from './ParticleOrb';
+import ParticleOrb from './ParticleOrbLazy';
 
 type Kind = 'cv' | 'title' | 'year' | 'vault';
 

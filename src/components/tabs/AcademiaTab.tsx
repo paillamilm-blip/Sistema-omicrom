@@ -9,7 +9,7 @@ import { useApp } from '../../store/AppContext';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '../../theme';
 import { ScanlineOverlay, LoadingScreen } from '../shared/CyberComponents';
 import { oc, OmicronHeader } from '../omicron/OmicronChrome';
-import ParticleOrb from '../omicron/ParticleOrb';
+import ParticleOrb from '../omicron/ParticleOrbLazy';
 import { EmptyState } from '../shared/EmptyState';
 import { useToast } from '../shared/Toast';
 
