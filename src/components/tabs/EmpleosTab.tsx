@@ -83,6 +83,9 @@ export function EmpleosTab() {
   const [radarJob, setRadarJob] = useState<Job | null>(null);
   const [cartaJob, setCartaJob] = useState<Job | null>(null);
 
+  // Local fallback: si no hay matches del servidor, calculamos sugerencias locales
+  const [localSuggestions, setLocalSuggestions] = useState<Map<string, number>>(new Map());
+
   const requestGeo = useCallback(() => {
     if (!navigator.geolocation) { setGeoStatus('denied'); return; }
     setGeoStatus('loading');
@@ -116,6 +119,29 @@ export function EmpleosTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  // ── Fallback local: cuando el servidor no tiene matches, calculamos localmente
+  useEffect(() => {
+    if (myMatches.size > 0 || jobs.length === 0 || !profile?.skills?.length) {
+      setLocalSuggestions(new Map());
+      return;
+    }
+    // Calcular match local basado en skill overlap
+    const userSkills = (profile.skills ?? []).map(s => s.toLowerCase());
+    const suggestions = new Map<string, number>();
+
+    for (const job of jobs) {
+      const jobTags = getJobTags(job).map(t => t.toLowerCase());
+      if (jobTags.length === 0) continue;
+      const overlap = userSkills.filter(s =>
+        jobTags.some(jt => jt.includes(s) || s.includes(jt))
+      );
+      const matchPct = Math.round((overlap.length / jobTags.length) * 100);
+      if (matchPct >= 40) suggestions.set(job.id, matchPct);
+    }
+
+    setLocalSuggestions(suggestions);
+  }, [myMatches, jobs, profile]);
+
   // Realtime: actualizar cuando se publican nuevas ofertas
   const loadRef = useRef(load);
   loadRef.current = load;
@@ -147,9 +173,14 @@ export function EmpleosTab() {
   }
 
   const filtered = jobs.filter(j => {
-    if (filter === 'matched') return myMatches.has(j.id);
+    if (filter === 'matched') return myMatches.has(j.id) || localSuggestions.has(j.id);
     if (filter === 'applied') return applied.has(j.id);
     return true;
+  }).sort((a, b) => {
+    // Priorizar: matches del servidor > sugerencias locales > sin match
+    const scoreA = myMatches.has(a.id) ? 1000 - (myMatches.get(a.id) ?? 99) : localSuggestions.has(a.id) ? (localSuggestions.get(a.id) ?? 0) : 0;
+    const scoreB = myMatches.has(b.id) ? 1000 - (myMatches.get(b.id) ?? 99) : localSuggestions.has(b.id) ? (localSuggestions.get(b.id) ?? 0) : 0;
+    return scoreB - scoreA;
   });
 
   return (
@@ -166,7 +197,7 @@ export function EmpleosTab() {
 
       {/* Filtros */}
       <div style={styles.filterRow}>
-        {([['all', `Todos (${jobs.length})`], ['matched', `Match (${myMatches.size})`], ['applied', `Aplicados (${applied.size})`]] as const).map(([k, label]) => {
+        {([['all', `Todos (${jobs.length})`], ['matched', `Match (${myMatches.size || localSuggestions.size})`], ['applied', `Aplicados (${applied.size})`]] as const).map(([k, label]) => {
           const active = filter === k;
           return (
             <button key={k} onClick={() => setFilter(k)} style={{
@@ -232,6 +263,11 @@ export function EmpleosTab() {
               <div style={styles.cardTop} />
               {rank && (
                 <div style={styles.matchBadge}><Star size={9} style={{ fill: C.amber, color: C.amber }} /> MATCH #{rank}</div>
+              )}
+              {!rank && localSuggestions.has(j.id) && (
+                <div style={{ ...styles.matchBadge, background: 'rgba(63,208,201,0.12)', border: '1px solid rgba(63,208,201,0.3)' }}>
+                  <Radar size={9} style={{ color: C.green }} /> {localSuggestions.get(j.id)}% afín
+                </div>
               )}
               <div style={styles.title}>{j.title}</div>
               <div style={styles.company}>@{j.company_name ?? names.get(j.company_id) ?? 'empresa'} · {j.source ? `vía ${j.source}` : LEVEL_LABEL[j.required_node_level] ?? 'N1'}</div>
