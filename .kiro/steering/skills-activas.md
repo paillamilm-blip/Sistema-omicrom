@@ -145,92 +145,118 @@ inclusion: always
 
 ---
 
-## Combos con Nombre (Combinaciones Potentes)
+## 🔥 COMBOS — Combinaciones Potentes
 
-> Invocar por nombre: "activá [NOMBRE DEL COMBO]" o simplemente decir el nombre.
-> Estos combos se activan automáticamente según el tipo de tarea detectada.
+> **Invocar:** di el nombre del combo. Eso es todo.
+> Se auto-activan según la tarea, o se invocan manualmente.
 
-### TITAN — Máxima potencia de análisis y ejecución
-**Skills:** Superpowers + Context Mode + Ultra Review + Claude Mem
-**Trigger:** "modo TITAN", "TITAN"
-**Auto-activa cuando:** Refactoring mayor, features nuevas críticas, cambios de arquitectura, o cuando el usuario dice "esto es importante".
-**Efecto:** Análisis profundo multidimensional (Fase 1 extendida con security/performance/a11y) → Plan detallado → Ejecución con Ultra Review automático al final → Tracking completo de progreso. La combinación más completa posible.
+---
 
-### RAYO — Ejecución brutal sin fricción
-**Skills:** GSD + Claude Mem + Context Mode (sin Fase 3)
-**Trigger:** "modo RAYO", "RAYO", "rápido", "dale nomás"
-**Auto-activa cuando:** Tareas claras y directas, fixes menores, implementaciones obvias, o cuando el usuario muestra urgencia.
-**Efecto:** Ejecución inmediata sin preguntas innecesarias. Tracking de subtareas pero sin confirmación. Fases 1/2/4 se mantienen (no se pierde el control), pero todo va rápido. Decisiones pragmáticas automáticas.
+### 🔥 FUEGO — Ejecución brutal + código mínimo
+**Skills:** GSD + Ponytail (full) + Claude Mem + Context Mode (sin Fase 3)
+**Trigger:** "FUEGO", "fuego", "dale fuego", "rápido", "dale nomás", "hazlo ya"
+**Auto-activa cuando:** Fix rápido, tarea clara y directa, urgencia, implementaciones obvias.
+**Efecto:** Ejecución inmediata sin preguntas. Ponytail fuerza el código mínimo (escalera YAGNI). GSD no pide confirmación. Claude Mem trackea subtareas. Resultado: lo más rápido Y lo más corto posible. Cero charla, puro código funcional.
 
-### FORJA — Pipeline completo de diseño visual
-**Skills:** Brand + Design System + UI/UX Pro Max + UI Styling + Banner Design + Taste Skill + Animate + Impeccable
-**Trigger:** "modo FORJA", "FORJA"
-**Auto-activa cuando:** Crear identidad visual, redesign de UI, nuevo design system, generar assets de marca, o cuando la tarea involucra diseño integral.
-**Efecto:** Pipeline: definir marca → generar tokens (3 capas) → design intelligence (84 estilos, 192 paletas) → anti-slop check (taste-skill 3 dials + pre-flight) → animación con filosofía Emil Kowalski → craft de nivel director (impeccable commands) → implementación con Tailwind/shadcn → export de assets. Todo coherente, sistémico y libre de AI-tells.
+---
 
-### GUARDIAN — Auditoría y verificación total
-**Skills:** Code Review Ultra + UI Verification + Superpowers + Nova Act
-**Trigger:** "modo GUARDIAN", "GUARDIAN", "auditá todo"
-**Auto-activa cuando:** Pre-deploy, revisión de PR crítica, verificación de calidad antes de milestone, o cuando el usuario dice "revisá todo".
-**Efecto:** Ultra Review del código (6 dimensiones) + Verificación visual de la UI contra spec + Análisis profundo de riesgos + Testing automatizado en browser. Reporte completo con scorecard y plan de acción.
+### 🧠 DIOS — Análisis total + ejecución perfecta
+**Skills:** Superpowers + Context Mode + Ultra Review + Claude Mem + Ponytail (lite)
+**Trigger:** "DIOS", "dios", "modo dios", "esto es importante", "hazlo perfecto"
+**Auto-activa cuando:** Feature nueva crítica, cambios de arquitectura, refactoring mayor, o "esto es importante".
+**Efecto:** Análisis profundo multidimensional → Plan detallado → Ejecución con Ultra Review al final → Tracking completo. Ponytail en modo lite sugiere la alternativa mínima sin imponerla. La combinación más completa y potente.
 
-### OMEGA — Presentación y comunicación profesional
-**Skills:** Slides + Design + Brand + Design System
-**Trigger:** "modo OMEGA", "OMEGA", "hacé una presentación"
-**Auto-activa cuando:** Crear pitch decks, presentaciones de producto, reportes visuales, o comunicación de marca.
-**Efecto:** Slides estratégicas con Chart.js + design tokens + copywriting formulas + art direction de marca. Resultado: presentación HTML profesional, consistente con la identidad de Ómicron.
+---
 
-### NEXUS — Memoria y contexto total
+### ✂️ CIRUJANO — Refactoring quirúrgico
+**Skills:** Ponytail (ultra) + Context Mode + Code Review Ultra + Superpowers
+**Trigger:** "CIRUJANO", "cirujano", "limpiá esto", "refactoreá", "cortá la grasa"
+**Auto-activa cuando:** Refactoring, limpiar código existente, reducir complejidad, eliminar sobre-ingeniería.
+**Efecto:** Ponytail ultra + análisis profundo = detecta TODO lo que sobra, lo que se puede borrar, lo que se puede simplificar. Context Mode asegura no romper nada. Ultra Review valida el resultado. Corta sin piedad, pero con bisturí, no con hacha.
+
+---
+
+### 🎨 PIXEL — Pipeline completo de diseño
+**Skills:** Brand + Design System + UI/UX Pro Max + UI Styling + Taste Skill + Animate + Impeccable + Ponytail (lite)
+**Trigger:** "PIXEL", "pixel", "diseñá", "UI completa", "rediseñá"
+**Auto-activa cuando:** Crear identidad visual, redesign de UI, design system nuevo, assets de marca.
+**Efecto:** Pipeline: marca → tokens (3 capas) → design intelligence (84 estilos, 192 paletas) → anti-slop (taste-skill) → animación (Emil Kowalski) → craft nivel director (impeccable) → implementación Tailwind/shadcn. Ponytail lite evita sobre-construir componentes innecesarios. Coherente, sistémico, libre de AI-tells.
+
+---
+
+### 🛡️ BUNKER — Auditoría y seguridad total
+**Skills:** Code Review Ultra + UI Verification + Superpowers + Nova Act + Ponytail Review
+**Trigger:** "BUNKER", "bunker", "auditá todo", "revisá todo", "pre-deploy"
+**Auto-activa cuando:** Pre-deploy, revisión de PR crítica, milestone, o "revisá todo".
+**Efecto:** Ultra Review (6 dimensiones) + Verificación visual contra spec + Testing automatizado en browser + Ponytail Review (detecta sobre-ingeniería en el diff). Reporte completo con scorecard, plan de acción, y lista de qué borrar.
+
+---
+
+### 🎤 PITCH — Presentación profesional
+**Skills:** Slides + Design + Brand + Design System + Banner Design
+**Trigger:** "PITCH", "pitch", "presentación", "hacé slides", "deck"
+**Auto-activa cuando:** Crear pitch decks, presentaciones de producto, reportes visuales, comunicación de marca.
+**Efecto:** Slides estratégicas con Chart.js + design tokens + copywriting + art direction de marca + banners. Resultado: presentación HTML profesional, coherente con la identidad de Ómicron.
+
+---
+
+### 🔄 RESET — Retomar contexto total
 **Skills:** Claude Mem + Context Mode + Superpowers
-**Trigger:** "modo NEXUS", "NEXUS", "dame el panorama"
-**Auto-activa cuando:** Retomar trabajo después de una pausa, sesiones largas, o cuando el usuario necesita entender dónde está parado.
-**Efecto:** Resumen completo del estado (archivos tocados, decisiones, pendientes) + Memoria persistente activa + Análisis profundo del contexto actual. Ideal para retomar sin perder nada.
+**Trigger:** "RESET", "reset", "dónde estábamos", "retomar", "dame el panorama"
+**Auto-activa cuando:** Retomar después de una pausa, sesiones largas, necesidad de entender el estado actual.
+**Efecto:** Resumen completo del estado (archivos tocados, decisiones, pendientes) + Memoria activa + Análisis del contexto. Ideal para retomar sin perder nada.
 
 ---
 
-## Auto-activación Inteligente
+## ⚡ Auto-activación Inteligente
 
-> Las combinaciones se activan **automáticamente** según el tipo de tarea sin necesidad
-> de invocarlas. El agente detecta la intención y aplica el combo correcto.
+> Los combos se activan **automáticamente** según la tarea. No necesitás invocarlos.
 
-### Reglas de auto-activación:
-
-| Tipo de tarea detectada | Combo auto-activado |
-|-------------------------|---------------------|
-| Feature nueva, refactoring, arquitectura | **TITAN** |
-| Fix rápido, tarea simple y clara, urgencia | **RAYO** |
-| Diseño de UI, identidad visual, assets | **FORJA** |
-| Pre-deploy, revisión de código, QA | **GUARDIAN** |
-| Presentación, pitch, comunicación | **OMEGA** |
-| Retomar sesión, "dónde estábamos", contexto | **NEXUS** |
-
-### Regla de override:
-- Si el usuario nombra un combo explícitamente, **ese combo tiene prioridad** sobre la auto-detección.
-- Si el usuario dice "sin [skill]", se excluye esa skill del combo activo.
-- Los combos se pueden combinar entre sí: "TITAN + FORJA" = análisis profundo aplicado a diseño.
+| Tipo de tarea | Combo |
+|---------------|-------|
+| Fix rápido, implementar algo claro | 🔥 **FUEGO** |
+| Feature crítica, arquitectura, "hazlo bien" | 🧠 **DIOS** |
+| Refactoring, limpiar, simplificar | ✂️ **CIRUJANO** |
+| Diseño de UI, identidad, assets | 🎨 **PIXEL** |
+| Pre-deploy, revisión, QA | 🛡️ **BUNKER** |
+| Presentación, pitch, comunicación | 🎤 **PITCH** |
+| Retomar sesión, "dónde estábamos" | 🔄 **RESET** |
 
 ---
 
-## Invocación Manual (Skills individuales)
+## 🎛️ Reglas de Combos
 
-Para activar una skill específica fuera de un combo:
+- **Override:** Nombrar un combo tiene prioridad sobre la auto-detección.
+- **Excluir:** "sin [skill]" excluye esa skill del combo activo.
+- **Combinar:** "DIOS + PIXEL" = análisis profundo aplicado a diseño.
+- **Ponytail global:** Si decís "ponytail" solo, se activa en modo full sobre cualquier combo activo.
 
-| Trigger | Skill |
-|---------|-------|
-| "modo GSD" | GSD |
+---
+
+## 🎯 Invocación Rápida (Skills individuales)
+
+| Di esto | Activa |
+|---------|--------|
+| "fuego" | 🔥 FUEGO |
+| "dios" | 🧠 DIOS |
+| "cirujano" | ✂️ CIRUJANO |
+| "pixel" | 🎨 PIXEL |
+| "bunker" | 🛡️ BUNKER |
+| "pitch" | 🎤 PITCH |
+| "reset" | 🔄 RESET |
+| "ponytail" / "lazy" / "yagni" | Ponytail (full) |
 | "review" / "ultra review" | Code Review Ultra |
-| "modo superpowers" | Superpowers |
-| "contexto" / "resumen" | Context Mode |
-| "recordá X" / "qué sabés de X" | Claude Mem |
-| "diseñá un banner" | Banner Design |
-| "crear slides" | Slides |
-| "diseñá logo" / "crear icono" | Design |
-| "tokens" / "design system" | Design System |
-| "marca" / "brand" | Brand |
+| "superpowers" | Superpowers |
+| "contexto" | Context Mode |
+| "recordá X" | Claude Mem |
+| "banner" | Banner Design |
+| "slides" | Slides |
+| "logo" / "icono" | Design |
+| "tokens" | Design System |
+| "marca" | Brand |
 | "verificar UI" | UI Verification |
-| "automatizar browser" | Nova Act |
+| "automatizar" | Nova Act |
 | "crear skill" | Skill Creator |
-| "UI de [página]" | UI/UX Pro Max + UI Styling |
-| "taste" / "anti-slop" / "landing page" | Taste Skill |
-| "animar" / "motion" / "animate" | Animate |
-| "impeccable" / "craft" / "critique" / "polish" / "bolder" | Impeccable |
+| "animar" / "motion" | Animate |
+| "craft" / "polish" | Impeccable |
+| "taste" / "anti-slop" | Taste Skill |
