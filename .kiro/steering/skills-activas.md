@@ -117,9 +117,28 @@ inclusion: always
 
 ---
 
+## Skill de Eficiencia
+
+### 19. Ponytail (Lazy Senior Dev Mode)
+**Trigger:** "ponytail", "be lazy", "lazy mode", "simplest solution", "minimal solution", "yagni", "do less", "shortest path", o cuando se detecta sobre-ingeniería.
+**Comportamiento:** Fuerza la solución más simple y mínima que funcione. Escalera de decisión: ¿Necesita existir? → ¿Ya existe en el codebase? → ¿Lo hace la stdlib? → ¿Feature nativa? → ¿Dependencia instalada? → ¿Cabe en una línea? → Solo entonces: el mínimo que funciona. 3 niveles: lite, full (default), ultra. Nunca simplifica: validación en trust boundaries, error handling, seguridad, accesibilidad.
+**Referencia:** #[[file:.kiro/skills/ponytail/SKILL.md]]
+
+### 20. Ponytail Review
+**Trigger:** "/ponytail-review", "review el diff"
+**Comportamiento:** Revisa el diff actual en busca de sobre-ingeniería y devuelve una lista de qué eliminar.
+**Referencia:** #[[file:.kiro/skills/ponytail-review/SKILL.md]]
+
+### 21. Ponytail Audit
+**Trigger:** "/ponytail-audit", "audit el repo"
+**Comportamiento:** Audita el repo completo en busca de sobre-ingeniería, no solo el diff.
+**Referencia:** #[[file:.kiro/skills/ponytail-audit/SKILL.md]]
+
+---
+
 ## Skill Core del Producto
 
-### 19. ADN Digital Técnico (Motor de Convalidación)
+### 22. ADN Digital Técnico (Motor de Convalidación)
 **Trigger:** Siempre activo cuando se procesa un CV, certificado, diploma, o cualquier documento de acreditación técnica. Es el corazón de la convalidación del Gemelo Digital.
 **Comportamiento:** Recibe texto extraído de documentos y lo transforma en un ADN Digital profundamente conectado. Ejecuta bucle de refinamiento (máx 4 iteraciones) hasta coherencia ≥ 9.2. Devuelve JSON estructurado con esencia profesional, stack de competencias, sinergias, firma técnica única. NUNCA inventa información. TODO queda conectado.
 **Referencia:** #[[file:.kiro/skills/adn-digital/skill.md]]
