@@ -7,7 +7,7 @@ import { supabase } from './lib/supabase';
 import { NoAccess } from './components/shared/NoAccess';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { InstallPWA } from './components/shared/InstallPWA';
-import ParticleOrb from './components/omicron/ParticleOrb';
+import ParticleOrb from './components/omicron/ParticleOrbLazy';
 import { ToastProvider } from './components/shared/Toast';
 import { ConnectionBanner } from './components/shared/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';

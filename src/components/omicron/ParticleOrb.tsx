@@ -542,10 +542,25 @@ export default function ParticleOrb({
 
     renderer.setAnimationLoop(animate);
 
+    // ── Visibility: pause when off-screen (saves GPU) ───────────────
+    let isVisible = true;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible) {
+          renderer.setAnimationLoop(animate);
+        } else {
+          renderer.setAnimationLoop(null);
+        }
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(mount);
 
 
     // ── Cleanup ─────────────────────────────────────────────────────
     return () => {
+      observer.disconnect();
       renderer.setAnimationLoop(null);
       window.removeEventListener('resize', resize);
       ro.disconnect();

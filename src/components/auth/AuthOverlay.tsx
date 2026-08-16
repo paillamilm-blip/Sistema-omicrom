@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff, Shield, ArrowLeft, Mail } from 'lucide-react';
-import ParticleOrb from '../omicron/ParticleOrb';
+import ParticleOrb from '../omicron/ParticleOrbLazy';
 import { getGuestProfile, clearGuestProfile } from '../../lib/guestMode';
 import { C } from '../../theme';
 

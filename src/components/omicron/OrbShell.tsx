@@ -1,7 +1,7 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
-import ParticleOrb from './ParticleOrb';
+import ParticleOrb from './ParticleOrbLazy';
 import { SuggestionChips } from './SuggestionChips';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { OrbContextLabel } from './OrbContextLabel';
