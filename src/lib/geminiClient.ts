@@ -1,11 +1,8 @@
 // src/lib/geminiClient.ts
-// Llama a un LLM via OpenRouter (gratis, sin tarjeta).
-// Modelo: google/gemma-4-31b-it:free (256K contexto, multilingüe).
-// Fallback: google/gemma-4-26b-a4b-it:free
+// Llama a un LLM via proxy-ai Edge Function (server-side, key protegida).
+// Modelo: elegido server-side (multi-model fallback).
 
-const API_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
-
-// Usa aiClient centralizado para compartir rate-limit y fallback entre 6 modelos
+// Usa aiClient centralizado (proxy-ai Edge Function server-side)
 import { callAI } from './aiClient';
 
 const SYS = [
@@ -56,10 +53,6 @@ export interface GeminiAnalysis {
 }
 
 export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean; analysis?: GeminiAnalysis; error?: string }> {
-  if (!API_KEY) {
-    return { ok: false, error: 'Falta VITE_OPENROUTER_KEY. Registrate gratis en openrouter.ai' };
-  }
-
   const text = cvText.slice(0, 15000);
 
   try {

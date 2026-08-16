@@ -79,7 +79,6 @@ export async function subscribeToPush(userId: string): Promise<boolean> {
       return false;
     }
 
-    console.log('[push] Suscrito exitosamente');
     return true;
   } catch (e) {
     console.error('[push] Error al suscribir:', e);

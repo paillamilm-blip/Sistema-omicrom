@@ -5,8 +5,13 @@
 // - Al tocar "Actualizar": ordena al SW activarse y recarga una sola vez.
 // Así el usuario nunca queda pegado en una versión vieja ni tiene que borrar caché.
 
+let registered = false;
+
 export function registerPWA(): void {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  // Guard: only register once (prevents stacking intervals during HMR)
+  if (registered) return;
+  registered = true;
 
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then((reg) => {

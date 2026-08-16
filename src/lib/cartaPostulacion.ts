@@ -4,9 +4,7 @@
 // Usa OpenRouter (modelo gratis). Combina skills del CV con la oferta.
 // ═══════════════════════════════════════════════════════════════════════
 
-const OPENROUTER_KEY = import.meta.env.VITE_OPENROUTER_KEY ?? '';
-
-// Usa aiClient centralizado para compartir rate-limit y fallback
+// Usa aiClient centralizado (proxy-ai Edge Function server-side)
 import { callAI } from './aiClient';
 
 export interface CartaInput {
@@ -66,8 +64,8 @@ EMPLEO:
 
 La carta debe destacar la conexión entre las skills del candidato y lo que pide el empleo. Si hay gaps, menciónalos como "áreas en desarrollo" de forma positiva.`;
 
-  // Intentar con IA (centralizado vía aiClient — 6 modelos + fallback)
-  if (OPENROUTER_KEY) {
+  // Intentar con IA (centralizado vía proxy-ai Edge Function)
+  {
     try {
       const text = await callAI([
         { role: 'system', content: systemPrompt },

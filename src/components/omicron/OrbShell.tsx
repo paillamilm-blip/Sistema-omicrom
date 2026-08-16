@@ -534,13 +534,9 @@ export function OrbShell() {
       return;
     }
 
-    // Check if speech recognition is available
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = ((window as unknown as { SpeechRecognition?: any }).SpeechRecognition ||
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as unknown as { webkitSpeechRecognition?: any }).webkitSpeechRecognition);
-    if (!SR) {
-      // No drama — just focus the text input as fallback
+    // Speech recognition via shared utility
+    const { startSpeechRecognition, isSpeechAvailable } = await import('../../lib/speechRecognition');
+    if (!isSpeechAvailable()) {
       setResponseMsg('La voz no está disponible en este navegador. Escríbeme acá abajo — funciona igual.');
       return;
     }
@@ -549,32 +545,25 @@ export function OrbShell() {
     setVoiceLevel(0.4);
     window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: true } }));
 
-    const recog = new SR();
-    recog.lang = 'es-CL'; // Español Chile (más natural para el usuario)
-    recog.interimResults = true; // Mostrar texto mientras habla
-    recog.continuous = false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recog.onresult = (e: any) => {
-      const result = e.results[e.results.length - 1];
-      const transcript = result[0].transcript;
-      // Mostrar el texto en el input bar MIENTRAS habla
-      setInputText(transcript);
-      // Solo enviar cuando es resultado final (no interim)
-      if (result.isFinal) {
-        handleTextInput(transcript);
-      }
-    };
-    recog.onerror = () => {
-      setIsListening(false);
-      setVoiceLevel(0);
-      window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
-    };
-    recog.onend = () => {
-      setIsListening(false);
-      setVoiceLevel(0);
-      window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
-    };
-    recog.start();
+    const handle = startSpeechRecognition({
+      lang: 'es-CL',
+      interimResults: true,
+      onResult: (transcript, isFinal) => {
+        setInputText(transcript);
+        if (isFinal) handleTextInput(transcript);
+      },
+      onEnd: () => {
+        setIsListening(false);
+        setVoiceLevel(0);
+        window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
+      },
+      onError: () => {
+        setIsListening(false);
+        setVoiceLevel(0);
+        window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
+      },
+    });
+    if (handle) rafRef.current = null; // store handle if needed for cleanup
   }, [isListening, handleTextInput]);
 
   // ── Handle node tap → go to preview ─────────────────────────────────
