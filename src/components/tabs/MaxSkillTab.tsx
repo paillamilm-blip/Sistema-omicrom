@@ -9,6 +9,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../../lib/supabase';
 import {
   Brain, Zap, Shield, TrendingUp, Sparkles, Target,
   ChevronRight, BookOpen, Briefcase, Award, Star,
@@ -472,7 +473,16 @@ export function MaxSkillTab() {
         <UniversalSimulator
           node={examNode}
           onClose={() => setExamNode(null)}
-          onSuccess={(_pe) => {
+          onSuccess={async (_pe) => {
+            // Sprint B: Exámenes alimentan el Gemelo Digital
+            // Registrar éxito del examen → sube ejes de reputación
+            try {
+              await supabase.rpc('register_exam_success', {
+                p_skill: examNode.title || examNode.id,
+                p_score: 80, // El simulador aprueba con ≥70, asumimos 80 como base
+                p_kind: 'mixed',
+              });
+            } catch { /* non-blocking: si falla, al menos el PE ya se otorgó */ }
             void refreshProfile();
             setExamNode(null);
           }}
