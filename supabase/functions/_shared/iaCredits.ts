@@ -22,7 +22,7 @@ export interface CreditCheckResult {
 }
 
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicrom.vercel.app',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };

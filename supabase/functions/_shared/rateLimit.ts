@@ -43,7 +43,7 @@ export async function checkRateLimit(
   }
 }
 
-/** Respuesta 429 estándar (con CORS abierto). */
+/** Respuesta 429 estándar. */
 export function tooManyRequests(reset?: string): Response {
   return new Response(
     JSON.stringify({
@@ -53,7 +53,7 @@ export function tooManyRequests(reset?: string): Response {
     {
       status: 429,
       headers: {
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": Deno.env.get('PUBLIC_SITE_URL') || "https://sistema-omicrom.vercel.app",
         "Content-Type": "application/json",
         "Retry-After": "10",
       },
