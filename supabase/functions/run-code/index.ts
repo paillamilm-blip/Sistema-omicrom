@@ -17,12 +17,9 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { checkRateLimit, tooManyRequests } from "../_shared/rateLimit.ts";
+import { corsHeaders } from '../_shared/cors.ts';
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const cors = corsHeaders();
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });

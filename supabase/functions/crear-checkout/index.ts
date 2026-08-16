@@ -19,11 +19,8 @@ const PUBLIC_SITE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? '';
 const MIN_TOKENS = 1000;
 const MAX_TOKENS = 500000;
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from '../_shared/cors.ts';
+const CORS = corsHeaders();
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
