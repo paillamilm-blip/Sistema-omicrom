@@ -9,6 +9,7 @@ import { useMemo } from 'react';
 import { C, FONT } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { streakDays } from '@/features/gemelo/services/profile';
+import { greetingCopy, streakCopy } from '@/shared/utils/microcopy';
 
 interface Props {
   visible?: boolean;
@@ -23,17 +24,17 @@ export function OrbContextLabel({ visible = true }: Props) {
     const rep = profile?.reputation_score ?? 0;
     const hour = new Date().getHours();
 
-    // Sin perfil
+    // Sin perfil — personalized greeting
     if (!hasSkills) {
-      return { text: '↓ toca un nodo para empezar', highlight: false };
+      return { text: greetingCopy(profile) + ' · toca un nodo', highlight: false };
     }
 
     // Frases rotativas basadas en hora + estado
-    const seed = new Date().getDate() + hour; // Cambia cada hora
+    const seed = new Date().getDate() + hour;
     const options: { text: string; highlight: boolean }[] = [];
 
     if (streak > 0) {
-      options.push({ text: `🔥 ${streak} días seguidos · toca un nodo`, highlight: true });
+      options.push({ text: streakCopy(streak, profile), highlight: true });
     }
     if (rep > 0) {
       options.push({ text: `Reputación: ${rep.toFixed(0)} · toca para explorar`, highlight: false });
@@ -45,7 +46,7 @@ export function OrbContextLabel({ visible = true }: Props) {
     }
 
     options.push({ text: '↓ toca un nodo para explorar tu ADN', highlight: false });
-    options.push({ text: '↓ desliza o toca · pregúntame algo', highlight: false });
+    options.push({ text: '↓ pregúntame algo', highlight: false });
 
     return options[seed % options.length] ?? options[0];
   }, [profile]);

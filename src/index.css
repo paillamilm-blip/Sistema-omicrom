@@ -396,6 +396,10 @@ body::after {
   0%, 100% { box-shadow: 0 0 14px rgba(245,158,11,0.45); }
   50%      { box-shadow: 0 0 26px rgba(245,158,11,0.7); }
 }
+@keyframes holoSkeleton {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
 
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE LAYOUT

@@ -7,6 +7,7 @@
 
 import { useMemo } from 'react';
 import { C, FONT } from '@/theme';
+import { hapticLight } from '@/shared/utils/haptics';
 import { useApp } from '@/store/AppContext';
 import { streakDays } from '@/features/gemelo/services/profile';
 import { getDailyChallenge, isChallengeCompleted } from '@/features/academia/services/dailyChallenge';
@@ -78,7 +79,7 @@ export function SuggestionChips({ onChipTap, visible = true }: Props) {
       {chips.map((chip) => (
         <button
           key={chip.label}
-          onClick={() => onChipTap(chip.action)}
+          onClick={() => { hapticLight(); onChipTap(chip.action); }}
           style={S.chip}
         >
           <span style={S.emoji}>{chip.emoji}</span>

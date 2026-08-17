@@ -4,6 +4,8 @@
 export { Modal } from './Modal';
 export { ToastProvider, useToast } from './Toast';
 export { Skeleton } from './Skeleton';
+export { HoloSkeleton } from './HoloSkeleton';
+export { DynamicIsland } from './DynamicIsland';
 export { EmptyState } from './EmptyState';
 export { ErrorBoundary } from './ErrorBoundary';
 export { ConnectionBanner } from './ConnectionBanner';
