@@ -7,6 +7,7 @@ import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { OrbContextLabel } from './OrbContextLabel';
 import { PremiumLock } from '../shared/Premium';
 import { useNavigation } from '../../store/NavigationContext';
+import { useProfile } from '../../store/ProfileContext';
 import { interpret } from '../../lib/oraculo';
 import { speakOmicron, stopOmicron } from '../../lib/omicronVoice';
 import { askOmicron, type OmicronContext } from '../../lib/omicronBrain';
@@ -215,19 +216,21 @@ function renderTab(tab: TabId) {
 export function OrbShell() {
   const { setActiveTab, unreadCount } = useNavigation();
   const { profile } = useGemeloProfile();
+  // Get full Supabase profile for fields not on GemeloProfile (skills_detail, display_name, etc.)
+  const { profile: sbFull } = useProfile();
 
   // ── Build GemeloDigital from Supabase profile for omicronCoach ──────
-  const sbProfile = profile;
+  const sbProfile = sbFull; // Supabase profile (has execution_score, skills_detail, etc.)
   const gemeloDigital = useMemo((): GemeloDigital | null => {
     if (!sbProfile) return null;
     return {
-      execution: sbProfile.execution_score ?? 40,
-      quality: sbProfile.quality_score ?? 50,
-      transcendence: sbProfile.transcendence_score ?? 18,
-      foundation: sbProfile.foundation_score ?? 25,
-      overallReputation: sbProfile.reputation_score ?? 0,
+      execution: sbProfile.execution_score ?? profile.axes.execution ?? 40,
+      quality: sbProfile.quality_score ?? profile.axes.quality ?? 50,
+      transcendence: sbProfile.transcendence_score ?? profile.axes.transcendence ?? 18,
+      foundation: sbProfile.foundation_score ?? profile.axes.foundation ?? 25,
+      overallReputation: sbProfile.reputation_score ?? profile.rep ?? 0,
     };
-  }, [sbProfile]);
+  }, [sbProfile, profile]);
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
   const [voiceLevel, setVoiceLevel] = useState(0);
@@ -249,8 +252,7 @@ export function OrbShell() {
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
   // Now uses skills_detail (from AI analysis) for real domination %.
   const dynamicOrbNodes = useMemo((): OrbNode[] => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userSkills: string[] = sbProfile?.skills ?? (profile as any).skills ?? [];
+    const userSkills: string[] = sbProfile?.skills ?? profile.skills ?? [];
     const skillsDetail: { name: string; pct: number }[] = sbProfile?.skills_detail ?? [];
     const skillNodes = buildSkillNodes(userSkills, skillsDetail);
 
@@ -272,8 +274,7 @@ export function OrbShell() {
   // ── Compute node levels from user's Gemelo profile ──────────────────
   // Maps each node to a 0-1 level based on validated skills and axes
   const orbNodesWithLevels = useMemo((): OrbNode[] => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const validatedSkills: string[] = (profile as any).skills ?? [];
+    const validatedSkills: string[] = sbProfile?.skills ?? profile.skills ?? [];
     const axes = profile.axes;
     const rep = profile.rep; // 0-100
 
