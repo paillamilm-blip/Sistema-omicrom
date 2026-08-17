@@ -466,7 +466,7 @@ export function OrbShell() {
 
   // ── Toggle listening (speech recognition) ──────────────────────────
   // Voz y texto son LA MISMA experiencia — la voz solo cambia el input method.
-  const toggleListening = useCallback(() => {
+  const toggleListening = useCallback(async () => {
     if (isListening) {
       setIsListening(false);
       setVoiceLevel(0);

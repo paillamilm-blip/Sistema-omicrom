@@ -7,28 +7,34 @@
 import { useState } from 'react';
 import { C, FONT } from '../../theme';
 import {
-  getTodayChallenge,
+  getDailyChallenge,
   isChallengeCompleted,
-  completeChallenge,
-  challengeStreak,
+  markChallengeCompleted,
+  getCurrentStreak,
 } from '../../lib/dailyChallenge';
 import { applyStreakMultiplier } from './StreakBanner';
 import { supabase } from '../../lib/supabase';
 import { useRealtime } from '../../store/RealtimeContext';
+import { useApp } from '../../store/AppContext';
 
 interface Props {
   onNavigate?: (tab: string) => void;
 }
 
 export function DailyChallengeCard({ onNavigate }: Props) {
-  const challenge = getTodayChallenge();
-  const [completed, setCompleted] = useState(isChallengeCompleted());
+  const { gemelo } = useApp();
+  const challenge = getDailyChallenge(gemelo);
+  const [completed, setCompleted] = useState(challenge ? isChallengeCompleted(challenge.id) : false);
   const [justCompleted, setJustCompleted] = useState(false);
-  const cStreak = challengeStreak();
+  const cStreak = getCurrentStreak();
   const { broadcast } = useRealtime();
 
+  if (!challenge) return null;
+
   function handleComplete() {
-    const basePe = completeChallenge();
+    if (!challenge) return;
+    markChallengeCompleted(challenge.id);
+    const basePe = challenge.reward.pe;
     const finalPe = applyStreakMultiplier(basePe);
     setCompleted(true);
     setJustCompleted(true);
