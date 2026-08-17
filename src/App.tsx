@@ -1,20 +1,25 @@
-import { OrbShell } from './components/omicron/OrbShell';
+import { OrbShell } from '@/features/omicron/components/OrbShell';
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/infrastructure/query/client';
 import { AppProvider, useApp } from './store/AppContext';
-import { AuthOverlay } from './components/auth/AuthOverlay';
-import { ResetPasswordOverlay } from './components/auth/ResetPasswordOverlay';
-import { supabase } from './lib/supabase';
-import { NoAccess } from './components/shared/NoAccess';
-import { ErrorBoundary } from './components/shared/ErrorBoundary';
-import { InstallPWA } from './components/shared/InstallPWA';
-import ParticleOrb from './components/omicron/ParticleOrbLazy';
-import { ToastProvider } from './components/shared/Toast';
-import { ConnectionBanner } from './components/shared/ConnectionBanner';
+import { AuthOverlay } from '@/features/auth/components/AuthOverlay';
+import { ResetPasswordOverlay } from '@/features/auth/components/ResetPasswordOverlay';
+import { supabase } from '@/infrastructure/supabase/client';
+import { NoAccess } from '@/features/auth/components/NoAccess';
+import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
+import { InstallPWA } from '@/shared/components/InstallPWA';
+import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy';
+import { ToastProvider } from '@/shared/components/Toast';
+import { ConnectionBanner } from '@/shared/components/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
-import { LiveNetworkFeed } from './components/shared/LivePresence';
-import { IncomingJobPush } from './components/shared/IncomingJobs';
-import { PublicProfileGate } from './components/perfil/RedSocial';
-import { VerifyCredentialView } from './components/perfil/VerifyCredential';
+import { LiveNetworkFeed } from '@/features/perfil/components/LivePresence';
+import { IncomingJobPush } from '@/features/empleos/components/IncomingJobs';
+import { PublicProfileGate } from '@/features/perfil/components/RedSocial';
+import { VerifyCredentialView } from '@/features/perfil/components/VerifyCredential';
+import { ROUTES } from '@/infrastructure/router/routes';
+import { preloadCriticalTabs } from '@/infrastructure/router/preload';
 import { C, FONT } from './theme';
 
 
@@ -29,8 +34,11 @@ function AppShell() {
     const count = parseInt(localStorage.getItem(key) ?? '0');
     localStorage.setItem(key, String(count + 1));
 
+    // Preload critical tab chunks on idle
+    preloadCriticalTabs();
+
     // Analytics: track open + daily return
-    import('./lib/analytics').then(({ track }) => {
+    import('@/shared/utils/analytics').then(({ track }) => {
       track('app_opened');
       if (count > 0) track('daily_return');
     }).catch(() => {});
@@ -116,13 +124,24 @@ export default function App() {
   if (verifyToken) return <VerifyCredentialView token={verifyToken} />;
 
   return (
-    <AppProvider>
-      <ToastProvider>
-        <RealtimeProvider>
-          <ConnectionBanner />
-          <AppShell />
-        </RealtimeProvider>
-      </ToastProvider>
-    </AppProvider>
+    <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <AppProvider>
+        <ToastProvider>
+          <RealtimeProvider>
+            <ConnectionBanner />
+            <Routes>
+              {/* All app routes render the same shell — the orb handles tab display */}
+              {ROUTES.map(route => (
+                <Route key={route.tab} path={route.path} element={<AppShell />} />
+              ))}
+              {/* Fallback: unknown paths → home */}
+              <Route path="*" element={<AppShell />} />
+            </Routes>
+          </RealtimeProvider>
+        </ToastProvider>
+      </AppProvider>
+    </BrowserRouter>
+    </QueryClientProvider>
   );
 }

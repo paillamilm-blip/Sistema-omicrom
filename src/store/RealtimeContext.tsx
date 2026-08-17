@@ -6,7 +6,7 @@
 import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';
 import { useApp } from './AppContext';
 import { injectKeyframes } from '../theme';
-import { syncFromSupabase } from '../lib/gemeloProfile';
+import { syncFromSupabase } from '@/features/gemelo/services/profile';
 import { useRealtimeNetwork, type RealtimeNetwork } from '../hooks/useRealtimeNetwork';
 
 const RealtimeContext = createContext<RealtimeNetwork | null>(null);

@@ -16,7 +16,7 @@ import {
   tierFor,
   type GemeloProfile,
   type GemeloEvent,
-} from '../lib/gemeloProfile';
+} from '@/features/gemelo/services/profile';
 
 export function useGemeloProfile() {
   const local = useSyncExternalStore(subscribe, getProfile, getProfile) as GemeloProfile;

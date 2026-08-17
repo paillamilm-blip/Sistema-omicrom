@@ -12,7 +12,7 @@
 // (ver nota en el PR); para el volumen actual un lobby único es suficiente.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 
 export interface LiveNode {
   id: string;

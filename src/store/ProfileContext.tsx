@@ -20,7 +20,7 @@ import {
   ReactNode,
 } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { calculateGemeloDigital, updateReputationInDatabase } from '../services/reputationService';
 import type { AuthStatus, Profile, GemeloDigital } from '../types';
 

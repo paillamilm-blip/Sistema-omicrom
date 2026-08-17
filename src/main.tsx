@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import { registerPWA } from './lib/pwaUpdate';
+import { registerPWA } from '@/infrastructure/pwa/update';
 import './index.css';
 import './styles/responsive.css';
 
