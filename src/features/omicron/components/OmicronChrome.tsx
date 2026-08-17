@@ -97,13 +97,13 @@ const S: Record<string, CSSProperties> = {
     backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
   },
   back: {
-    flexShrink: 0, width: 36, height: 36, borderRadius: 12,
+    flexShrink: 0, width: 44, height: 44, borderRadius: 12,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     background: 'rgba(92,200,255,0.10)', border: `1px solid ${C.cyanDim}`,
     color: C.cyan, cursor: 'pointer',
   },
   iconBadge: {
-    flexShrink: 0, width: 38, height: 38, borderRadius: 12,
+    flexShrink: 0, width: 44, height: 44, borderRadius: 12,
     display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#02030a',
   },
   title: {

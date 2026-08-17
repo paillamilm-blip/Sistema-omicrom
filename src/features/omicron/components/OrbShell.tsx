@@ -790,8 +790,8 @@ export function OrbShell() {
             top: 'calc(env(safe-area-inset-top, 12px) + 14px)',
             right: 16,
             zIndex: 4,
-            width: 38,
-            height: 38,
+            width: 44,
+            height: 44,
             borderRadius: '50%',
             border: `1.5px solid ${C.cyanDim}`,
             background: 'radial-gradient(circle at 32% 26%, rgba(92,200,255,0.14), rgba(6,10,22,0.85))',
@@ -1010,8 +1010,8 @@ export function OrbShell() {
             onClick={handleBack}
             aria-label="Volver al orbe"
             style={{
-              width: 36,
-              height: 36,
+              width: 44,
+              height: 44,
               borderRadius: '50%',
               background: C.glass2,
               border: `1px solid ${C.line}`,
@@ -1169,8 +1169,8 @@ export function OrbShell() {
             onClick={toggleListening}
             aria-label={isListening ? 'Dejar de escuchar' : 'Hablar al Oráculo'}
             style={{
-              width: 36,
-              height: 36,
+              width: 44,
+              height: 44,
               borderRadius: '50%',
               border: `1px solid ${isListening ? '#ff5c7a' : C.line}`,
               background: isListening ? 'rgba(255,92,122,0.15)' : C.glass2,
@@ -1211,8 +1211,8 @@ export function OrbShell() {
             disabled={!inputText.trim()}
             aria-label="Enviar"
             style={{
-              width: 36,
-              height: 36,
+              width: 44,
+              height: 44,
               borderRadius: '50%',
               border: 'none',
               background: inputText.trim() ? C.cyan : C.glass2,

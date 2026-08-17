@@ -93,7 +93,7 @@ const S: Record<string, React.CSSProperties> = {
   container: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: 7,
+    gap: 8,
     justifyContent: 'center',
     padding: '8px 16px 4px',
     maxWidth: 380,
@@ -102,9 +102,10 @@ const S: Record<string, React.CSSProperties> = {
   chip: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 5,
-    padding: '7px 12px',
-    borderRadius: 20,
+    gap: 6,
+    padding: '10px 14px',
+    minHeight: 44,
+    borderRadius: 999,
     background: 'rgba(92,200,255,0.06)',
     border: '1px solid rgba(92,200,255,0.2)',
     color: C.ink,
@@ -112,6 +113,6 @@ const S: Record<string, React.CSSProperties> = {
     transition: 'all 0.15s cubic-bezier(0.32, 0.72, 0, 1)',
     WebkitTapHighlightColor: 'transparent',
   },
-  emoji: { fontSize: 13 },
-  label: { fontFamily: FONT.mono, fontSize: 10, letterSpacing: 0.5, color: '#c8ddf0' },
+  emoji: { fontSize: 14 },
+  label: { fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.4, color: '#c8ddf0' },
 };
