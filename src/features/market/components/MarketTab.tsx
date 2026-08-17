@@ -4,13 +4,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ShoppingCart, Star, Plus, Cpu, ShieldCheck, TrendingUp, Sparkles, Loader2, Menu, X, SlidersHorizontal } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { C as T } from '@/theme';
 import { useApp } from '@/store/AppContext';
-import { EmptyState } from '@/components/shared/EmptyState';
-import { ContractModal } from '@/components/contracts/ContractModal';
-import { PublishServiceModal } from '@/components/market/PublishServiceModal';
-import { oc, OmicronHeader, OmicronAction } from '@/components/omicron/OmicronChrome';
+import { EmptyState } from '@/shared/components/EmptyState';
+import { ContractModal } from '@/features/market/components/ContractModal';
+import { PublishServiceModal } from '@/features/market/components/PublishServiceModal';
+import { oc, OmicronHeader, OmicronAction } from '@/features/omicron/components/OmicronChrome';
 import type { MarketService } from '@/types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';

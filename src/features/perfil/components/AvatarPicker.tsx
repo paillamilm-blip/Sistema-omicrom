@@ -7,10 +7,10 @@
 
 import { useRef, useState } from 'react';
 import { Plus, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C } from '@/theme';
-import type { AnalyzedProfile } from '@/lib/cvAnalyzer';
+import type { AnalyzedProfile } from '@/features/perfil/services/cvAnalyzer';
 
 interface Props {
   selected?: AnalyzedProfile['avatar'];

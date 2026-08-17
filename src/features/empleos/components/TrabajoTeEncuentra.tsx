@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Target, Radar, X, Check, Volume2, Mic } from 'lucide-react';
 import { useGemeloProfile } from '@/hooks/useGemeloProfile';
-import { speak } from '@/lib/voiceEngine';
+import { speak } from '@/infrastructure/voice/engine';
 import { C, FONT, RADIUS } from '@/theme';
 
 type Eje = 'execution' | 'quality' | 'transcendence' | 'foundation';

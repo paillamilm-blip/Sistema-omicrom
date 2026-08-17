@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useProfile } from '@/store/ProfileContext';
-import { Modal } from '@/components/shared/Modal';
+import { Modal } from '@/shared/components/Modal';
 
 interface Props {
   onClose: () => void;

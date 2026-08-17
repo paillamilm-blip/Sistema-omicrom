@@ -5,18 +5,18 @@ import ParticleOrb from './ParticleOrbLazy';
 import { SuggestionChips } from './SuggestionChips';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { OrbContextLabel } from './OrbContextLabel';
-import { PremiumLock } from '@/components/shared/Premium';
+import { PremiumLock } from '@/features/wallet/components/Premium';
 import { useNavigation } from '@/store/NavigationContext';
 import { useProfile } from '@/store/ProfileContext';
-import { interpret } from '@/lib/oraculo';
-import { speakOmicron } from '@/lib/omicronVoice';
-import { askOmicron, type OmicronContext } from '@/lib/omicronBrain';
-import { stopAI, isAudioUnlocked, speakLocal } from '@/lib/voiceAI';
+import { interpret } from '@/features/omicron/services/oraculo';
+import { speakOmicron } from '@/features/omicron/services/voice';
+import { askOmicron, type OmicronContext } from '@/features/omicron/services/brain';
+import { stopAI, isAudioUnlocked, speakLocal } from '@/infrastructure/voice/voiceAI';
 import { useGemeloProfile } from '@/hooks/useGemeloProfile';
 import { useIdleEscalation } from '@/hooks/useIdleEscalation';
-import { computeSteps, nodeGuidance } from '@/lib/omicronCoach';
-import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/lib/progressiveProfile';
-import { evaluateProactiveEvents } from '@/lib/proactiveEngine';
+import { computeSteps, nodeGuidance } from '@/features/omicron/services/coach';
+import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
+import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { C, FONT } from '@/theme';
 import type { TabId, GemeloDigital } from '@/types';
 
@@ -33,15 +33,15 @@ import type { TabId, GemeloDigital } from '@/types';
 // =====================================================================
 
 // ── Lazy tab components ─────────────────────────────────────────────
-const WalletTab     = lazy(() => import('../tabs/WalletTab').then(m => ({ default: m.WalletTab })));
-const RedSocialTab  = lazy(() => import('../tabs/RedSocialTab').then(m => ({ default: m.RedSocialTab })));
-const EmpleosTab    = lazy(() => import('../tabs/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
-const MarketTab     = lazy(() => import('../tabs/MarketTab').then(m => ({ default: m.MarketTab })));
-const PerfilTab     = lazy(() => import('../tabs/PerfilTab').then(m => ({ default: m.PerfilTab })));
-const MaxSkillTab   = lazy(() => import('../tabs/MaxSkillTab').then(m => ({ default: m.MaxSkillTab })));
-const AcademiaTab   = lazy(() => import('../tabs/AcademiaTab').then(m => ({ default: m.AcademiaTab })));
-const GobernanzaTab = lazy(() => import('../tabs/GobernanzaTab').then(m => ({ default: m.GobernanzaTab })));
-const VaultTab      = lazy(() => import('../tabs/VaultTab').then(m => ({ default: m.VaultTab })));
+const WalletTab     = lazy(() => import('@/features/wallet/components/WalletTab').then(m => ({ default: m.WalletTab })));
+const RedSocialTab  = lazy(() => import('@/features/perfil/components/RedSocialTab').then(m => ({ default: m.RedSocialTab })));
+const EmpleosTab    = lazy(() => import('@/features/empleos/components/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
+const MarketTab     = lazy(() => import('@/features/market/components/MarketTab').then(m => ({ default: m.MarketTab })));
+const PerfilTab     = lazy(() => import('@/features/perfil/components/PerfilTab').then(m => ({ default: m.PerfilTab })));
+const MaxSkillTab   = lazy(() => import('@/features/academia/components/MaxSkillTab').then(m => ({ default: m.MaxSkillTab })));
+const AcademiaTab   = lazy(() => import('@/features/academia/components/AcademiaTab').then(m => ({ default: m.AcademiaTab })));
+const GobernanzaTab = lazy(() => import('@/features/gobernanza/components/GobernanzaTab').then(m => ({ default: m.GobernanzaTab })));
+const VaultTab      = lazy(() => import('@/features/market/components/VaultTab').then(m => ({ default: m.VaultTab })));
 
 // ── Orb node definitions (the app sections) ─────────────────────────
 // Los primeros 9 son los HUBS navegables de la app.
@@ -474,7 +474,7 @@ export function OrbShell() {
     }
 
     // Speech recognition via shared utility
-    const { startSpeechRecognition, isSpeechAvailable } = await import('../../lib/speechRecognition');
+    const { startSpeechRecognition, isSpeechAvailable } = await import('@/infrastructure/voice/recognition');
     if (!isSpeechAvailable()) {
       setResponseMsg('La voz no está disponible en este navegador. Escríbeme acá abajo — funciona igual.');
       return;
@@ -715,7 +715,7 @@ export function OrbShell() {
         onProfileGenerated={async (generated: GeneratedProfile) => {
           // R4: Guardar perfil generado en Supabase
           try {
-            const { supabase } = await import('../../lib/supabase');
+            const { supabase } = await import('@/infrastructure/supabase/client');
             if (sbProfile?.id) {
               await supabase.from('profiles').update({
                 skills: generated.skills,

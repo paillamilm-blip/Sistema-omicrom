@@ -7,8 +7,8 @@
 
 import { useState, useEffect } from 'react';
 import { X, Briefcase } from 'lucide-react';
-import type { AnalyzedProfile } from '@/lib/cvAnalyzer';
-import { getTopJobs, getJobsByType, getGapSkills, jobTypeLabel, SKILL_LABELS, type JobScore } from '@/lib/jobMatcher';
+import type { AnalyzedProfile } from '@/features/perfil/services/cvAnalyzer';
+import { getTopJobs, getJobsByType, getGapSkills, jobTypeLabel, SKILL_LABELS, type JobScore } from '@/features/empleos/services/matcher';
 import { C, FONT, RADIUS } from '@/theme';
 
 interface Props {

@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { X, Copy, ExternalLink, Sparkles, CheckCircle2, FileText } from 'lucide-react';
 import { C as T, FONT as TF } from '@/theme';
 import { useProfile } from '@/store/ProfileContext';
-import { generarCartaPostulacion, type CartaResult } from '@/lib/cartaPostulacion';
+import { generarCartaPostulacion, type CartaResult } from '@/features/empleos/services/postulacion';
 
 const C = {
   bg: T.bg, panel: 'rgba(8,16,38,0.92)',
@@ -88,7 +88,7 @@ export function CartaPostulacionModal({ job, onClose, onApplyDone }: Props) {
       window.open(job.external_url, '_blank', 'noopener');
     }
     // Analytics: track job application
-    import('../../lib/analytics').then(({ track }) => {
+    import('@/shared/utils/analytics').then(({ track }) => {
       track('job_applied', { job_title: job.title, company: job.company_name ?? '' });
       track('carta_generated', { job_title: job.title });
     }).catch(() => {});

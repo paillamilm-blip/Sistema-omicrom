@@ -9,9 +9,9 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles, Upload, ArrowRight, TrendingUp, Zap } from 'lucide-react';
 import { useGemeloActivation } from '@/hooks/useGemeloActivation';
-import { PerfilSkillVisual } from '@/components/perfil/PerfilSkillVisual';
+import { PerfilSkillVisual } from '@/features/perfil/components/PerfilSkillVisual';
 import { C, FONT, RADIUS } from '@/theme';
-import { computeSteps } from '@/lib/omicronCoach';
+import { computeSteps } from '@/features/omicron/services/coach';
 import ParticleOrb from './ParticleOrbLazy';
 
 type Kind = 'cv' | 'title' | 'year' | 'vault';

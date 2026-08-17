@@ -7,14 +7,14 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useEffect, useRef, useState } from 'react';
 import { Mic, Sparkles, X } from 'lucide-react';
-import { useApp } from '../store/AppContext';
-import { useRealtime } from '../store/RealtimeContext';
-import { interpret } from '../lib/oraculo';
-import { askOmicron } from '../lib/omicronBrain';
-import { gemeloActions, getProfile, bestNextStep } from '../lib/gemeloProfile';
-import { speak } from '../lib/voiceEngine';
-import { remember, inferPersonality, generateContextualGreeting } from '../lib/gemeloMemory';
-import { C, FONT } from '../theme';
+import { useApp } from '@/store/AppContext';
+import { useRealtime } from '@/store/RealtimeContext';
+import { interpret } from '@/features/omicron/services/oraculo';
+import { askOmicron } from '@/features/omicron/services/brain';
+import { gemeloActions, getProfile, bestNextStep } from '@/features/gemelo/services/profile';
+import { speak } from '@/infrastructure/voice/engine';
+import { remember, inferPersonality, generateContextualGreeting } from '@/features/gemelo/services/memory';
+import { C, FONT } from '@/theme';
 
 type SpeechRecognitionCtor = new () => {
   lang: string;

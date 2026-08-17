@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Bell, Check, CheckCheck, FileText, Briefcase, MessageCircle, Star, Info } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { Modal } from './Modal';
 import type { Notification } from '@/types';

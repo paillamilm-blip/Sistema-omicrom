@@ -8,8 +8,8 @@
 // duplicaban el título y estorbaban. La navegación queda integrada y limpia.
 // ═══════════════════════════════════════════════════════════════════════
 import { ReactNode } from 'react';
-import { useApp } from '../store/AppContext';
-import type { TabId } from '../types';
+import { useApp } from '@/store/AppContext';
+import type { TabId } from '@/types';
 
 interface NavigationStackProps {
   children: (currentTab: TabId) => ReactNode;

@@ -3,18 +3,18 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Briefcase, Plus, Flame, Clock, CheckCircle2, X, Star, Send, Radar, MapPin, Navigation, Wifi, LocateFixed } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { C as T, FONT as TF } from '@/theme';
 import { useApp } from '@/store/AppContext';
-import { EmptyState } from '@/components/shared/EmptyState';
-import { SkeletonList } from '@/components/shared/Skeleton';
-import { useToast } from '@/components/shared/Toast';
-import { GemeloGuidance } from '@/components/shared/GemeloGuidance';
-import { TrabajoTeEncuentra } from '@/components/empleos/TrabajoTeEncuentra';
-import { RutaCarrera } from '@/components/empleos/RutaCarrera';
-import { FreelanceNeeds } from '@/components/empleos/FreelanceNeeds';
-import { CartaPostulacionModal } from '@/components/empleos/CartaPostulacionModal';
-import { oc, OmicronHeader, OmicronAction } from '@/components/omicron/OmicronChrome';
+import { EmptyState } from '@/shared/components/EmptyState';
+import { SkeletonList } from '@/shared/components/Skeleton';
+import { useToast } from '@/shared/components/Toast';
+import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
+import { TrabajoTeEncuentra } from '@/features/empleos/components/TrabajoTeEncuentra';
+import { RutaCarrera } from '@/features/empleos/components/RutaCarrera';
+import { FreelanceNeeds } from '@/features/empleos/components/FreelanceNeeds';
+import { CartaPostulacionModal } from '@/features/empleos/components/CartaPostulacionModal';
+import { oc, OmicronHeader, OmicronAction } from '@/features/omicron/components/OmicronChrome';
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
 // "muted" con más contraste para no forzar la vista.

@@ -5,12 +5,12 @@
 // convalidación + detección de sinergias). El componente solo renderiza.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useRef, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '../store/AppContext';
-import { useToast } from '../components/shared/Toast';
-import { speak } from '../lib/voiceEngine';
-import { analyzeCV, type AnalyzedProfile } from '../lib/cvAnalyzer';
-import { extractCVText } from '../lib/cvExtract';
+import { useToast } from '@/shared/components/Toast';
+import { speak } from '@/infrastructure/voice/engine';
+import { analyzeCV, type AnalyzedProfile } from '@/features/perfil/services/cvAnalyzer';
+import { extractCVText } from '@/features/perfil/services/cvExtract';
 import { C } from '../theme';
 
 type Kind = 'cv' | 'title' | 'year' | 'vault';
@@ -139,7 +139,7 @@ export function useGemeloActivation() {
 
       try {
         // Llamar a Gemini DIRECTO desde el browser (sin Edge Function)
-        const { analyzeCVWithGemini } = await import('../lib/geminiClient');
+        const { analyzeCVWithGemini } = await import('@/infrastructure/ai/gemini');
         const geminiResult = await analyzeCVWithGemini(text);
         if (!geminiResult.ok || !geminiResult.analysis?.axes) {
           throw new Error(geminiResult.error || 'La IA no pudo analizar el CV');
@@ -214,9 +214,9 @@ export function useGemeloActivation() {
       speak(`CV analizado. Perfil: ${analyzed.seniorLabel}.`);
       // Broadcast logro a la red + analytics
       try {
-        const { supabase: sb } = await import('../lib/supabase');
+        const { supabase: sb } = await import('@/infrastructure/supabase/client');
         sb.channel('omicron-live').send({ type: 'broadcast', event: 'activity', payload: { text: `${profile?.username ?? 'Un nodo'} activó su Gemelo Digital con CV`, kind: 'action' } });
-        import('../lib/analytics').then(({ track }) => track('cv_uploaded')).catch(() => {});
+        import('@/shared/utils/analytics').then(({ track }) => track('cv_uploaded')).catch(() => {});
       } catch { /* silencioso */ }
       await new Promise((r) => setTimeout(r, 800));
 

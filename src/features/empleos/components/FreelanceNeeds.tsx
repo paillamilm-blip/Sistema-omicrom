@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Clock, Users, MapPin, Wifi, Send, CheckCircle2, X } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useProfile } from '@/store/ProfileContext';
 import { C, FONT } from '@/theme';
 
@@ -107,7 +107,7 @@ export function FreelanceNeeds() {
           <div style={S.sectionSub}>Publica lo que necesitas · Postula a lo que puedes hacer</div>
         </div>
         <button onClick={() => {
-          if (!profile?.id) { import('../../lib/guestMode').then(m => m.requestAuth()); return; }
+          if (!profile?.id) { import('@/shared/utils/guestMode').then(m => m.requestAuth()); return; }
           setShowPublish(true);
         }} style={S.publishBtn}>
           <Plus size={13} /> Publicar
@@ -185,7 +185,7 @@ export function FreelanceNeeds() {
               {/* CTA */}
               <button
                 onClick={() => {
-                  if (!profile?.id) { import('../../lib/guestMode').then(m => m.requestAuth()); return; }
+                  if (!profile?.id) { import('@/shared/utils/guestMode').then(m => m.requestAuth()); return; }
                   if (!isOwn && !hasApplied) setApplyingTo(n);
                 }}
                 disabled={isOwn || hasApplied}
@@ -240,7 +240,7 @@ function PublishNeedModal({ onClose, onDone }: { onClose: () => void; onDone: ()
       });
       if (error) throw error;
       // Analytics
-      import('../../lib/analytics').then(({ track }) => track('service_published', { category: f.category })).catch(() => {});
+      import('@/shared/utils/analytics').then(({ track }) => track('service_published', { category: f.category })).catch(() => {});
       onDone();
     } catch (e) { setErr((e as Error).message); }
     finally { setSaving(false); }
@@ -316,7 +316,7 @@ function ApplyModal({ need, onClose, onDone }: { need: FreelanceNeed; onClose: (
         p_days: Number(days) || null,
       });
       if (error) throw error;
-      import('../../lib/analytics').then(({ track }) => track('job_applied', { type: 'freelance', category: need.category })).catch(() => {});
+      import('@/shared/utils/analytics').then(({ track }) => track('job_applied', { type: 'freelance', category: need.category })).catch(() => {});
       onDone();
     } catch (e) { setErr((e as Error).message); }
     finally { setSending(false); }

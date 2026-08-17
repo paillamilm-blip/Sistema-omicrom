@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { Eye, EyeOff, Zap, CheckCircle } from 'lucide-react';
 
 export function ResetPasswordOverlay({ onDone }: { onDone: () => void }) {

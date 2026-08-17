@@ -3,7 +3,7 @@
 // disparar un aviso que la orbe muestra como una "carga de datos" holográfica.
 //
 // Uso:
-//   import { notifyOrb } from '@/lib/orbNotify';
+//   import { notifyOrb } from '@/features/omicron/services/notify';
 //   notifyOrb('Se acreditaron 5.000 tokens', 'success');
 //
 // La orbe (OrbDataStream) escucha con useOrbNotice() y anima la entrada de datos.

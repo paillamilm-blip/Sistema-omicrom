@@ -5,8 +5,8 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { ReactNode } from 'react';
 import { ArrowLeft, Sparkles } from 'lucide-react';
-import { useApp } from '../store/AppContext';
-import { C, FONT } from '../theme';
+import { useApp } from '@/store/AppContext';
+import { C, FONT } from '@/theme';
 
 interface UnifiedLayoutProps {
   children: ReactNode;

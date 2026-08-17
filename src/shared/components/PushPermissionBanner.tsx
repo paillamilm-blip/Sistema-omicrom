@@ -14,7 +14,7 @@ import {
   getPushPermission,
   subscribeToPush,
   isSubscribed,
-} from '@/lib/pushNotifications';
+} from '@/infrastructure/pwa/push';
 
 export function PushPermissionBanner() {
   const { profile } = useApp();

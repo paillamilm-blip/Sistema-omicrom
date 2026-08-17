@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CreditCard, AlertCircle, ShieldCheck, Sparkles } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { Modal } from '@/components/shared/Modal';
+import { supabase } from '@/infrastructure/supabase/client';
+import { Modal } from '@/shared/components/Modal';
 
 interface Props {
   onClose: () => void;
@@ -28,7 +28,7 @@ export function TokenPurchaseModal({ onClose }: Props) {
     if (!valid) return;
     setStep('loading');
     // Analytics: track checkout
-    import('../../lib/analytics').then(({ track }) => track('checkout_started', { tokens })).catch(() => {});
+    import('@/shared/utils/analytics').then(({ track }) => track('checkout_started', { tokens })).catch(() => {});
     try {
       const { data, error } = await supabase.functions.invoke('crear-checkout', {
         body: { tokens },

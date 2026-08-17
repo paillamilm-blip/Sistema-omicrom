@@ -10,7 +10,7 @@ import {
   Brain, Sparkles, ShieldCheck, CheckCircle, XCircle, Loader2,
   ArrowRight, Send, RotateCcw, Clock, Trophy, Target,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { C as T } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import type { SkillTreeNode } from '@/types';

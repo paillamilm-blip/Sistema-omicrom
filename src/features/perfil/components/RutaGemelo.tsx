@@ -5,7 +5,7 @@
 // recalcula automáticamente (el paso hecho desaparece del tope).
 import { Compass, ArrowUpRight } from 'lucide-react';
 import { useGemeloProfile } from '@/hooks/useGemeloProfile';
-import { routeToNextTier, type NextAction } from '@/lib/gemeloProfile';
+import { routeToNextTier, type NextAction } from '@/features/gemelo/services/profile';
 import { C, FONT, RADIUS } from '@/theme';
 
 const ICON: Record<NextAction, string> = { cv: '📄', title: '🎓', year: '⏱️', vault: '📚' };

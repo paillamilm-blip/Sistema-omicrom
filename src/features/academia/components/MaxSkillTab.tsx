@@ -9,7 +9,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import {
   Brain, Zap, Shield, TrendingUp, Sparkles, Target,
   ChevronRight, BookOpen, Briefcase, Award, Star,
@@ -20,9 +20,9 @@ import { C, FONT, RADIUS } from '@/theme';
 import {
   oc, OmicronHeader, OmicronCard, ProgressBar,
   ProgressRing, SectionTitle, Chip, OmicronEyebrow,
-} from '@/components/omicron/OmicronChrome';
-import { askOmicron, type OmicronContext } from '@/lib/omicronBrain';
-import { UniversalSimulator } from '@/components/shared/UniversalSimulator';
+} from '@/features/omicron/components/OmicronChrome';
+import { askOmicron, type OmicronContext } from '@/features/omicron/services/brain';
+import { UniversalSimulator } from '@/features/academia/components/UniversalSimulator';
 import type { SkillTreeNode } from '@/types';
 
 

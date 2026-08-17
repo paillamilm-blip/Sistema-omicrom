@@ -5,7 +5,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Download, X, CreditCard } from 'lucide-react';
 import { useGemeloProfile } from '@/hooks/useGemeloProfile';
-import type { GemeloProfile, GemeloAxes } from '@/lib/gemeloProfile';
+import type { GemeloProfile, GemeloAxes } from '@/features/gemelo/services/profile';
 import { C, FONT, RADIUS } from '@/theme';
 
 function drawPassport(cv: HTMLCanvasElement, p: GemeloProfile, tierName: string) {

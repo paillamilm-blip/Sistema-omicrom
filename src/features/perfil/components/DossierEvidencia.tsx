@@ -5,7 +5,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { ShieldCheck, FileCheck2, Clock } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, RADIUS } from '@/theme';
 import type { ActaEvidencia } from '@/types';

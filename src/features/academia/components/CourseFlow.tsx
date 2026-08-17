@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, ChevronDown, CheckCircle2, Lock, Award, Loader2, Sparkles, Bot, Send } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { C, FONT, RADIUS } from '@/theme';
 
 interface Course { id: string; title: string; description: string; passing_score: number; }

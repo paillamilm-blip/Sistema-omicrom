@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { ShieldCheck, ShieldAlert, Loader2, TrendingUp, BadgeCheck } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { C, FONT } from '@/theme';
 
 interface Cred { v: number; u: string; n: string; nt: string; nl: string; rep: number; ej: number[]; cv: number; pe: number; iat: number; }

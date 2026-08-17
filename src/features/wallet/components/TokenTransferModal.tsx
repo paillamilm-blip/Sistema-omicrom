@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ArrowUpRight, ArrowDownLeft, CheckCircle2, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
-import { Modal } from '@/components/shared/Modal';
+import { Modal } from '@/shared/components/Modal';
 
 interface Props {
   mode: 'send' | 'receive';

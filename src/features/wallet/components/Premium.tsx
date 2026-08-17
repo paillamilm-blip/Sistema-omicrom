@@ -35,7 +35,7 @@ export function PremiumLock({ feature, onClose }: { feature: string; onClose: ()
     setLoading(true);
     try {
       // Importar supabase dinámicamente
-      const { supabase } = await import('../../lib/supabase');
+      const { supabase } = await import('@/infrastructure/supabase/client');
       const { data, error } = await supabase.functions.invoke('crear-checkout', {
         body: { tokens: 5000 }, // Pack básico: $5.000 CLP
       });

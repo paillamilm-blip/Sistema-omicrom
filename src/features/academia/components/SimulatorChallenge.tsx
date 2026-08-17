@@ -12,7 +12,7 @@ import {
   // Copiloto IA (AIPanel, comentado más abajo).
   // Sparkles, Bot, Loader2,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { C as T } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import type { SkillTest, SkillTestAttempt } from '@/types';

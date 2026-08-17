@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import { C, FONT } from '@/theme';
 import { useApp } from '@/store/AppContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 
 interface DashboardData {
   reputation: number;

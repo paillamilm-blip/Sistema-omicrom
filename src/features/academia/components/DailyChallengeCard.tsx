@@ -11,9 +11,9 @@ import {
   isChallengeCompleted,
   markChallengeCompleted,
   getCurrentStreak,
-} from '@/lib/dailyChallenge';
+} from '@/features/academia/services/dailyChallenge';
 import { applyStreakMultiplier } from './StreakBanner';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useRealtime } from '@/store/RealtimeContext';
 import { useApp } from '@/store/AppContext';
 

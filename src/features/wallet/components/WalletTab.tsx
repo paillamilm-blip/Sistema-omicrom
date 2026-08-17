@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ArrowUpRight, ArrowDownLeft, Clock, Lock, Zap, Wallet, Award, Layers, CreditCard, CheckCircle2, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
-import { EmptyState } from '@/components/shared/EmptyState';
-import { TokenTransferModal } from '@/components/wallet/TokenTransferModal';
-import { TokenPurchaseModal } from '@/components/wallet/TokenPurchaseModal';
-import { notifyOrb } from '@/lib/orbNotify';
+import { EmptyState } from '@/shared/components/EmptyState';
+import { TokenTransferModal } from '@/features/wallet/components/TokenTransferModal';
+import { TokenPurchaseModal } from '@/features/wallet/components/TokenPurchaseModal';
+import { notifyOrb } from '@/features/omicron/services/notify';
 
 // Compra de tokens (Stripe): visible por defecto. Solo se oculta si se pone
 // VITE_STRIPE_ENABLED="false" a propósito. Así el botón aparece sin depender de
@@ -13,7 +13,7 @@ import { notifyOrb } from '@/lib/orbNotify';
 // Si Stripe no está configurado en el backend, el modal muestra un aviso amable.
 const STRIPE_ENABLED = import.meta.env.VITE_STRIPE_ENABLED !== 'false';
 import { C, FONT } from '@/theme';
-import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '@/components/omicron/OmicronChrome';
+import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '@/features/omicron/components/OmicronChrome';
 import type { WalletTransaction } from '@/types';
 
 // ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────

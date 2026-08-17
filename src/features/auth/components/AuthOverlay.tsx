@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { Eye, EyeOff, Shield, ArrowLeft, Mail } from 'lucide-react';
-import ParticleOrb from '@/components/omicron/ParticleOrbLazy';
-import { getGuestProfile, clearGuestProfile } from '@/lib/guestMode';
+import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy';
+import { getGuestProfile, clearGuestProfile } from '@/shared/utils/guestMode';
 import { C } from '@/theme';
 
 type AuthMode = 'login' | 'register' | 'forgot';
@@ -185,7 +185,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
         });
         if (err) throw err;
         // Analytics + migrar guest
-        import('../../lib/analytics').then(({ track }) => { track('signup_completed'); }).catch(() => {});
+        import('@/shared/utils/analytics').then(({ track }) => { track('signup_completed'); }).catch(() => {});
         migrateGuestProfile();
         if (data.user && !data.session) {
           setSuccess('Cuenta creada. Revisa tu correo para confirmar.');

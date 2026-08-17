@@ -14,11 +14,11 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
 import { C, FONT } from '@/theme';
-import { StreakBanner } from '@/components/shared/StreakBanner';
-import { DailyChallengeCard } from '@/components/shared/DailyChallengeCard';
-import { JourneyProgress } from '@/components/shared/JourneyProgress';
-import { DashboardVivo } from '@/components/shared/DashboardVivo';
-import { PushPermissionBanner } from '@/components/shared/PushPermissionBanner';
+import { StreakBanner } from '@/features/academia/components/StreakBanner';
+import { DailyChallengeCard } from '@/features/academia/components/DailyChallengeCard';
+import { JourneyProgress } from '@/features/gemelo/components/JourneyProgress';
+import { DashboardVivo } from '@/features/perfil/components/DashboardVivo';
+import { PushPermissionBanner } from '@/shared/components/PushPermissionBanner';
 
 // ── Colores para cada skill orbital ────────────────────────────────────
 const SKILL_COLORS = [C.cyan, C.purple, C.gold, C.green, C.red];

@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/store/AppContext';
-import { speakOmicron } from '@/lib/omicronVoice';
+import { speakOmicron } from '@/features/omicron/services/voice';
 import { C, FONT, RADIUS } from '@/theme';
 
 const ONBOARDING_KEY = 'omicron_onboarding_done';
@@ -176,7 +176,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     onProfileGenerated?.(instantProfile);
     onSkillsPreview?.(instantProfile.skills);
     // Guardar como guest profile (para migrar cuando se registre)
-    import('../../lib/guestMode').then(({ saveGuestProfile }) => {
+    import('@/shared/utils/guestMode').then(({ saveGuestProfile }) => {
       saveGuestProfile({ ...instantProfile, createdAt: new Date().toISOString() });
     }).catch(() => {});
     const skillsList = instantProfile.skills.slice(0, 3).join(', ');
@@ -190,7 +190,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     localStorage.setItem(ONBOARDING_KEY, 'true');
 
     // Analytics: track onboarding + profile generation
-    import('../../lib/analytics').then(({ track }) => {
+    import('@/shared/utils/analytics').then(({ track }) => {
       track('onboarding_started');
       track('onboarding_completed', { intent, skills_count: instantProfile.skills.length });
       track('first_profile_generated', { profession: instantProfile.profession });
@@ -201,7 +201,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
 
     // PASO 2: BACKGROUND — IA refina (sin bloquear al usuario)
     try {
-      const { callAI } = await import('../../lib/aiClient');
+      const { callAI } = await import('@/infrastructure/ai/client');
       const raw = await callAI([
         { role: 'system', content: PROFILE_PROMPT },
         { role: 'user', content: text.trim() },
@@ -223,7 +223,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
   // Mic handler — stores ref for cleanup
   const recognitionRef = useRef<{ abort: () => void } | null>(null);
   const handleMic = useCallback(() => {
-    import('../../lib/speechRecognition').then(({ startSpeechRecognition, isSpeechAvailable }) => {
+    import('@/infrastructure/voice/recognition').then(({ startSpeechRecognition, isSpeechAvailable }) => {
       if (!isSpeechAvailable()) return;
       const handle = startSpeechRecognition({
         lang: 'es-CL',

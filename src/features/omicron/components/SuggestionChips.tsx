@@ -8,8 +8,8 @@
 import { useMemo } from 'react';
 import { C, FONT } from '@/theme';
 import { useApp } from '@/store/AppContext';
-import { streakDays } from '@/lib/gemeloProfile';
-import { getDailyChallenge, isChallengeCompleted } from '@/lib/dailyChallenge';
+import { streakDays } from '@/features/gemelo/services/profile';
+import { getDailyChallenge, isChallengeCompleted } from '@/features/academia/services/dailyChallenge';
 
 interface Chip {
   emoji: string;

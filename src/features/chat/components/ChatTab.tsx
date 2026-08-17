@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Shield, Timer, MessageCircle, Lock, ShieldCheck, ShieldAlert, Star, X, Plus, Users, Sparkles, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, cx } from '@/theme';
-import { ScanlineOverlay, CyberCard, SectionLabel, LoadingScreen } from '@/components/shared/CyberComponents';
-import { oc, OmicronHeader } from '@/components/omicron/OmicronChrome';
-import { EmptyState } from '@/components/shared/EmptyState';
-import { useToast } from '@/components/shared/Toast';
-import { GemeloGuidance } from '@/components/shared/GemeloGuidance';
-import { sendSecureMessage, loadSecureMessages } from '@/lib/secureChat';
-import { DirectChatModal } from '@/components/perfil/RedSocial';
+import { ScanlineOverlay, CyberCard, SectionLabel, LoadingScreen } from '@/shared/components/CyberComponents';
+import { oc, OmicronHeader } from '@/features/omicron/components/OmicronChrome';
+import { EmptyState } from '@/shared/components/EmptyState';
+import { useToast } from '@/shared/components/Toast';
+import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
+import { sendSecureMessage, loadSecureMessages } from '@/features/chat/services/secureChat';
+import { DirectChatModal } from '@/features/perfil/components/RedSocial';
 import type { Message } from '@/types';
 
 interface Room { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; delivery_declared_at: string | null; rating: number | null; }

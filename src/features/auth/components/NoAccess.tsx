@@ -1,5 +1,5 @@
 import { ShieldOff } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 
 export function NoAccess() {
   return (

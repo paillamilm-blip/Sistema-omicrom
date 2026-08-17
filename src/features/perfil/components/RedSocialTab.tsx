@@ -9,11 +9,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { Users, MessageCircle, Trophy, Zap, UserPlus, Radio } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
 import { useRealtime } from '@/store/RealtimeContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { C, FONT } from '@/theme';
-import { oc, OmicronHeader } from '@/components/omicron/OmicronChrome';
-import { GemeloGuidance } from '@/components/shared/GemeloGuidance';
-import { RedPanel, DirectChatModal, PublicCredentialModal } from '@/components/perfil/RedSocial';
+import { oc, OmicronHeader } from '@/features/omicron/components/OmicronChrome';
+import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
+import { RedPanel, DirectChatModal, PublicCredentialModal } from '@/features/perfil/components/RedSocial';
 import type { LiveEvent } from '@/hooks/useRealtimeNetwork';
 
 type Section = 'feed' | 'online' | 'ranking' | 'dms' | 'sugerencias';
@@ -250,7 +250,7 @@ function SugerenciasSection({ suggestions, loading, onViewUser, onConnect }: {
   async function handleConnect(userId: string) {
     // Check auth via supabase directly
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { import('../../lib/guestMode').then(m => m.requestAuth()); return; }
+    if (!user) { import('@/shared/utils/guestMode').then(m => m.requestAuth()); return; }
     setConnecting(userId);
     try {
       await supabase.rpc('send_connection_request', { p_addressee: userId });

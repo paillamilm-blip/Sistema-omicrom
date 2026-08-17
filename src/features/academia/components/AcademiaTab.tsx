@@ -4,14 +4,14 @@ import {
   ChevronDown, Sparkles, Target,
   Bot, Send, X,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '@/theme';
-import { ScanlineOverlay, LoadingScreen } from '@/components/shared/CyberComponents';
-import { oc, OmicronHeader } from '@/components/omicron/OmicronChrome';
-import ParticleOrb from '@/components/omicron/ParticleOrbLazy';
-import { EmptyState } from '@/components/shared/EmptyState';
-import { useToast } from '@/components/shared/Toast';
+import { ScanlineOverlay, LoadingScreen } from '@/shared/components/CyberComponents';
+import { oc, OmicronHeader } from '@/features/omicron/components/OmicronChrome';
+import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy';
+import { EmptyState } from '@/shared/components/EmptyState';
+import { useToast } from '@/shared/components/Toast';
 
 interface Course {
   id: string; node_id: string | null; title: string; description: string;
@@ -46,7 +46,7 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
     setMsgs(base);
     setLoading(true);
     try {
-      const { askOmicron } = await import('../../lib/omicronBrain');
+      const { askOmicron } = await import('@/features/omicron/services/brain');
       const result = await askOmicron(
         `[Lección: ${lesson.title}] ${question}`,
         { skills: profile?.skills ?? [], cv_summary: profile?.cv_summary ?? '', activeTab: 'academia', displayName: profile?.display_name || profile?.username },
@@ -151,7 +151,7 @@ function CoachModal({ onClose }: { onClose: () => void }) {
   const run = useCallback(async () => {
     setLoading(true); setAdvice(null);
     try {
-      const { askOmicron } = await import('../../lib/omicronBrain');
+      const { askOmicron } = await import('@/features/omicron/services/brain');
       const result = await askOmicron('Dame un consejo de qué estudiar para mejorar', {
         skills: profile?.skills ?? [],
         cv_summary: profile?.cv_summary ?? '',

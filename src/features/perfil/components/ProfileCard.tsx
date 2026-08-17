@@ -6,8 +6,8 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { X, CheckCircle } from 'lucide-react';
-import type { AnalyzedProfile } from '@/lib/cvAnalyzer';
-import { getTopJobs } from '@/lib/jobMatcher';
+import type { AnalyzedProfile } from '@/features/perfil/services/cvAnalyzer';
+import { getTopJobs } from '@/features/empleos/services/matcher';
 import { C, FONT } from '@/theme';
 
 interface Props {

@@ -5,9 +5,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Check, X, FileText, ExternalLink, GraduationCap, Award, Briefcase, FileCheck, QrCode } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
-import { useToast } from '@/components/shared/Toast';
+import { useToast } from '@/shared/components/Toast';
 import { C, FONT, RADIUS } from '@/theme';
 
 interface Pending {

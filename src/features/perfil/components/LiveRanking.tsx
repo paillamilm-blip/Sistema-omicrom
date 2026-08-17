@@ -6,7 +6,7 @@
 // Degradación elegante: si Realtime no está en `profiles`, muestra el estado
 // inicial igualmente (solo no se auto-actualiza).
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT } from '@/theme';
 

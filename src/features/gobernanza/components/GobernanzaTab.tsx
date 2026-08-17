@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Gavel, TrendingUp, Users, ShieldAlert, Scale, Check, Lock, Unlock, ShieldCheck, Sparkles, Loader2, AlertTriangle, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, cx } from '@/theme';
 import {
   CyberCard, CyberButton, SectionLabel,
   StatGrid, StatCard, ScanlineOverlay, CyberToast, Divider, DetailPanel, LoadingScreen,
-} from '@/components/shared/CyberComponents';
-import { GemeloGuidance } from '@/components/shared/GemeloGuidance';
-import { oc, OmicronHeader } from '@/components/omicron/OmicronChrome';
-import { openBlackbox, type BlackboxResult } from '@/lib/secureChat';
+} from '@/shared/components/CyberComponents';
+import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
+import { oc, OmicronHeader } from '@/features/omicron/components/OmicronChrome';
+import { openBlackbox, type BlackboxResult } from '@/features/chat/services/secureChat';
 interface Contract { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; amount: number; }
 interface Dispute { id: string; reason: string; status: string; created_at: string; resolved_at?: string; appeal_status?: string; appeal_opened_at?: string; appeal_arbiters?: string[]; appeal_resolution?: string; plaintiff_id?: string; defendant_id?: string; }
 interface Candidate { id: string; username: string; node_type: string; pe_points: number; _overlap?: number; }

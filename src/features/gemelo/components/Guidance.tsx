@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo } from 'react';
 import { useApp } from '@/store/AppContext';
-import { nodeGuidance } from '@/lib/omicronCoach';
+import { nodeGuidance } from '@/features/omicron/services/coach';
 import { C, FONT } from '@/theme';
 import type { TabId, GemeloDigital } from '@/types';
 

@@ -16,7 +16,7 @@ import {
   useRef,
   ReactNode,
 } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import type { TabId } from '../types';
 
 export interface NavigationContextState {

@@ -8,9 +8,9 @@ import {
   X, Share2, Copy, Check, QrCode, UserPlus, Users, Clock,
   BadgeCheck, MapPin, Shield, ShieldCheck, Loader2, MessageCircle, Send,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
-import { ProgressRadar } from '@/components/shared/ProgressRadar';
+import { ProgressRadar } from '@/features/gemelo/components/ProgressRadar';
 import { C, FONT, RADIUS } from '@/theme';
 import type { GemeloDigital } from '@/types';
 

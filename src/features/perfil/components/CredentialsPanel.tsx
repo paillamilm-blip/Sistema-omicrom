@@ -8,7 +8,7 @@ import {
   Plus, Clock, CheckCircle2, XCircle, Trash2, FileText, ExternalLink,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, RADIUS } from '@/theme';
 

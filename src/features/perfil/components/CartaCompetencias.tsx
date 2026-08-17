@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import { FileText, Sparkles, Loader2, Copy, Check, RotateCcw } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { C, FONT, RADIUS } from '@/theme';
 async function serverError(error: unknown, data: unknown, fallback: string): Promise<string> {
   const d = data as { error?: string; detail?: string } | null;

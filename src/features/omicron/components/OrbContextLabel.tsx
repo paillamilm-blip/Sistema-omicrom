@@ -8,7 +8,7 @@
 import { useMemo } from 'react';
 import { C, FONT } from '@/theme';
 import { useApp } from '@/store/AppContext';
-import { streakDays } from '@/lib/gemeloProfile';
+import { streakDays } from '@/features/gemelo/services/profile';
 
 interface Props {
   visible?: boolean;

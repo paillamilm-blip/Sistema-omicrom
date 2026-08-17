@@ -7,10 +7,10 @@
 // Push accionable con CTA directo a Empleos. Degradación elegante: si Realtime
 // no está habilitado para esas tablas, simplemente no dispara (sin errores).
 import { useEffect, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT } from '@/theme';
-import { notifyOrb } from '@/lib/orbNotify';
+import { notifyOrb } from '@/features/omicron/services/notify';
 
 interface JobRow {
   id?: string;

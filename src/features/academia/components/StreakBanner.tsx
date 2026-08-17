@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { C, FONT } from '@/theme';
-import { streakDays } from '@/lib/gemeloProfile';
+import { streakDays } from '@/features/gemelo/services/profile';
 
 /** Multiplicador PE basado en la racha */
 function getMultiplier(streak: number): { mult: number; label: string; nextAt: number } {
@@ -41,7 +41,7 @@ export function StreakBanner() {
       if (localStorage.getItem(key) !== today) {
         localStorage.setItem(key, today);
         // CABLE 3: Registrar actividad server-side para streak persistente
-        import('../../lib/supabase').then(({ supabase }) => {
+        import('@/infrastructure/supabase/client').then(({ supabase }) => {
           supabase.rpc('register_daily_activity', { p_challenge: false, p_pe: 0 }).then(() => {});
         });
       }
