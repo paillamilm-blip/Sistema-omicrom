@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
-import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
+import { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
 import ParticleOrb from './ParticleOrbLazy';
 import { SuggestionChips } from './SuggestionChips';
@@ -19,6 +19,9 @@ import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/feature
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { C, FONT } from '@/theme';
 import type { TabId, GemeloDigital } from '@/types';
+
+// Lazy-load OrbNeuronal (contains Three.js — ~500KB)
+const OrbNeuronal = lazy(() => import('./OrbNeuronal'));
 
 // =====================================================================
 // <OrbShell /> — La shell completa de la app.
@@ -756,6 +759,7 @@ export function OrbShell() {
         zIndex: 1,
       }}>
         <div style={{ width: '85vmin', height: '85vmin', maxWidth: 420, maxHeight: 420 }}>
+          <Suspense fallback={<ParticleOrb />}>
           <OrbNeuronal
             nodes={orbNodesWithLevels}
             activeNodeId={selectedNode?.id ?? null}
@@ -765,6 +769,7 @@ export function OrbShell() {
             onProjectedPositions={handleProjected}
             notifications={unreadCount > 0 ? { mensajes: unreadCount } : undefined}
           />
+          </Suspense>
         </div>
       </div>
 

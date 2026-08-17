@@ -17,6 +17,7 @@ import { IncomingJobPush } from '@/features/empleos/components/IncomingJobs';
 import { PublicProfileGate } from '@/features/perfil/components/RedSocial';
 import { VerifyCredentialView } from '@/features/perfil/components/VerifyCredential';
 import { ROUTES } from '@/infrastructure/router/routes';
+import { preloadCriticalTabs } from '@/infrastructure/router/preload';
 import { C, FONT } from './theme';
 
 
@@ -30,6 +31,9 @@ function AppShell() {
     const key = 'omicron_visit_count';
     const count = parseInt(localStorage.getItem(key) ?? '0');
     localStorage.setItem(key, String(count + 1));
+
+    // Preload critical tab chunks on idle
+    preloadCriticalTabs();
 
     // Analytics: track open + daily return
     import('@/shared/utils/analytics').then(({ track }) => {

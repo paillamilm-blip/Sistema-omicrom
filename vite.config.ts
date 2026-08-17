@@ -30,9 +30,19 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined;
+          // Three.js ecosystem — HEAVY (~500KB) — lazy loaded via ParticleOrbLazy
+          if (id.includes('three') || id.includes('@react-three') || id.includes('postprocessing')) return 'three';
+          // Supabase client
           if (id.includes('@supabase')) return 'supabase';
+          // Icons (tree-shakeable but still chunky)
           if (id.includes('lucide-react')) return 'icons';
-          if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler')) return 'react';
+          // React core
+          if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler') || id.includes('react-router')) return 'react';
+          // Framer Motion (animation library ~150KB)
+          if (id.includes('framer-motion')) return 'motion';
+          // Zod (validation)
+          if (id.includes('zod')) return 'validation';
+          // Everything else
           return 'vendor';
         },
       },
