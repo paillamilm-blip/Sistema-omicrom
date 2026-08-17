@@ -92,7 +92,23 @@ export function PerfilTab() {
     }
   }, [currentSlide, goToSlide]);
 
-  if (!profile) return null;
+  if (!profile) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, padding: 24, textAlign: 'center' }}>
+        <div style={{ fontSize: 48 }}>⬡</div>
+        <h2 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, color: C.ink }}>Tu Gemelo Digital</h2>
+        <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: C.mut, maxWidth: 280 }}>
+          Creá tu cuenta o iniciá sesión para activar tu ADN Digital y subir tu CV.
+        </p>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('omicron:request-auth'))}
+          style={{ marginTop: 8, padding: '12px 24px', borderRadius: 12, background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: `0 4px 16px ${C.cyan}44` }}
+        >
+          Crear cuenta / Iniciar sesión
+        </button>
+      </div>
+    );
+  }
 
   // ── Card content renderer ─────────────────────────────────────────────
   const renderCard = (idx: number) => {
