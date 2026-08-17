@@ -16,6 +16,7 @@ import { useApp, useGemeloDigital } from '../../store/AppContext';
 import { C, FONT } from '../../theme';
 import { StreakBanner } from '../shared/StreakBanner';
 import { DailyChallengeCard } from '../shared/DailyChallengeCard';
+import { JourneyProgress } from '../shared/JourneyProgress';
 import { DashboardVivo } from '../shared/DashboardVivo';
 import { PushPermissionBanner } from '../shared/PushPermissionBanner';
 
@@ -199,6 +200,7 @@ export function PerfilTab() {
 
       {/* ═══ RETENCIÓN (claro y separado) ═══ */}
       <div style={{ width: '100%', padding: '0 16px', flexShrink: 0 }}>
+        <JourneyProgress profile={profile} onNavigate={(tab) => setActiveTab(tab as Parameters<typeof setActiveTab>[0])} />
         <StreakBanner />
         <DashboardVivo />
         <DailyChallengeCard onNavigate={(tab) => setActiveTab(tab as Parameters<typeof setActiveTab>[0])} />
