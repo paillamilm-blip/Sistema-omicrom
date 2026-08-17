@@ -17,6 +17,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { callAI } from './aiClient';
+import { detectEmotion } from './emotionDetector';
 import type { TabId } from '../types';
 
 // ── Tipos ────────────────────────────────────────────────────────────
@@ -146,11 +147,19 @@ export async function askOmicron(
   message: string,
   context: OmicronContext,
 ): Promise<OmicronResponse> {
+  // Detectar estado emocional
+  const emotion = detectEmotion(message);
+
   // Guardar pregunta en memoria
   addToMemory('user', message);
 
   // Construir mensajes con historial
-  const systemPrompt = buildSystemPrompt(context);
+  let systemPrompt = buildSystemPrompt(context);
+
+  // Inyectar hint emocional si hay confianza suficiente
+  if (emotion.hint && emotion.confidence >= 0.3) {
+    systemPrompt += `\n\nESTADO EMOCIONAL DETECTADO: ${emotion.hint}`;
+  }
   const messages = [
     { role: 'system' as const, content: systemPrompt },
     // Historial conversacional (sin el último mensaje del user que ya va aparte)
