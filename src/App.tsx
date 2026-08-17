@@ -1,5 +1,6 @@
 import { OrbShell } from '@/features/omicron/components/OrbShell';
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider, useApp } from './store/AppContext';
 import { AuthOverlay } from '@/features/auth/components/AuthOverlay';
 import { ResetPasswordOverlay } from '@/features/auth/components/ResetPasswordOverlay';
@@ -15,6 +16,7 @@ import { LiveNetworkFeed } from '@/features/perfil/components/LivePresence';
 import { IncomingJobPush } from '@/features/empleos/components/IncomingJobs';
 import { PublicProfileGate } from '@/features/perfil/components/RedSocial';
 import { VerifyCredentialView } from '@/features/perfil/components/VerifyCredential';
+import { ROUTES } from '@/infrastructure/router/routes';
 import { C, FONT } from './theme';
 
 
@@ -116,13 +118,22 @@ export default function App() {
   if (verifyToken) return <VerifyCredentialView token={verifyToken} />;
 
   return (
-    <AppProvider>
-      <ToastProvider>
-        <RealtimeProvider>
-          <ConnectionBanner />
-          <AppShell />
-        </RealtimeProvider>
-      </ToastProvider>
-    </AppProvider>
+    <BrowserRouter>
+      <AppProvider>
+        <ToastProvider>
+          <RealtimeProvider>
+            <ConnectionBanner />
+            <Routes>
+              {/* All app routes render the same shell — the orb handles tab display */}
+              {ROUTES.map(route => (
+                <Route key={route.tab} path={route.path} element={<AppShell />} />
+              ))}
+              {/* Fallback: unknown paths → home */}
+              <Route path="*" element={<AppShell />} />
+            </Routes>
+          </RealtimeProvider>
+        </ToastProvider>
+      </AppProvider>
+    </BrowserRouter>
   );
 }

@@ -1,12 +1,15 @@
 // store/NavigationContext.tsx
-// Navegación (activeTab) + notificaciones no leídas. Separado de
-// ProfileContext (Fase 0.3 del plan de producción) porque cambia mucho más
-// seguido (cada tap de navegación) que el perfil/reputación — antes,
-// cualquier cambio de activeTab re-renderizaba todo lo que leía useApp(),
-// incluyendo componentes que solo necesitaban profile/gemelo.
+// ═══════════════════════════════════════════════════════════════════════
+// Navegación (activeTab) + notificaciones no leídas.
+//
+// AFTER ROUTER MIGRATION:
+// - activeTab is now DERIVED from the current URL via React Router
+// - setActiveTab calls navigate() under the hood
+// - Fallback: if not inside a Router, uses local state (for tests/SSR)
 //
 // Depende del profile.id de ProfileContext (para el canal de notificaciones),
 // por eso NavigationProvider debe montarse DENTRO de ProfileProvider.
+// ═══════════════════════════════════════════════════════════════════════
 
 import {
   createContext,
@@ -14,9 +17,12 @@ import {
   useState,
   useEffect,
   useRef,
+  useCallback,
   ReactNode,
 } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/infrastructure/supabase/client';
+import { tabFromPath, pathFromTab } from '@/infrastructure/router/routes';
 import type { TabId } from '../types';
 
 export interface NavigationContextState {
@@ -29,31 +35,32 @@ export interface NavigationContextState {
 const NavigationContext = createContext<NavigationContextState | null>(null);
 
 export function NavigationProvider({ profileId, children }: { profileId?: string; children: ReactNode }) {
-  const [activeTab, setActiveTab] = useState<TabId>('perfil');
+  // ── Tab state derived from URL ──────────────────────────────────────
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const activeTab = tabFromPath(location.pathname);
+
+  const setActiveTab = useCallback((tab: TabId) => {
+    const path = pathFromTab(tab);
+    if (location.pathname !== path) {
+      navigate(path);
+    }
+  }, [navigate, location.pathname]);
+
+  // ── Notifications ───────────────────────────────────────────────────
   const [unreadCount, setUnreadCount] = useState(0);
   const isMounted = useRef(true);
 
   useEffect(() => {
     isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
+    return () => { isMounted.current = false; };
   }, []);
 
-  // Al cerrar sesión (profileId pasa a undefined), limpiar el contador.
-  // NOTA: en el AppContext.tsx original, este reset vivía dentro del mismo
-  // handler de SIGNED_OUT que limpiaba profile/gemelo/authStatus. Al separar
-  // los contextos, se movió acá porque unreadCount ahora vive en este
-  // archivo — se dispara igual (cuando profileId pasa a undefined, que
-  // ocurre al hacer sign-out en ProfileContext.tsx), pero por un efecto
-  // separado en vez del mismo bloque. Si se toca el flujo de sign-out en
-  // ProfileContext.tsx, revisar que profileId siga pasando a undefined
-  // correctamente para que este efecto siga disparando.
   useEffect(() => {
     if (!profileId) setUnreadCount(0);
   }, [profileId]);
 
-  // Notificaciones no leídas (con manejo de errores robusto)
   useEffect(() => {
     if (!profileId) return;
 
@@ -70,7 +77,6 @@ export function NavigationProvider({ profileId, children }: { profileId?: string
           setUnreadCount(error ? 0 : (count ?? 0));
         }
       } catch {
-        // Red caída o sesión expirada — no romper la app
         if (!cancelled && isMounted.current) setUnreadCount(0);
       }
     };
