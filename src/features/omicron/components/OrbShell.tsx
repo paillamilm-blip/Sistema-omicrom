@@ -236,6 +236,7 @@ export function OrbShell() {
   const [isListening, setIsListening] = useState(false);
   const [nodePositions, setNodePositions] = useState<{ id: string; x: number; y: number; depth: number }[]>([]);
   const [inputText, setInputText] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
   const [proactiveActions, setProactiveActions] = useState<ProactiveAction[]>([]);
   const [showPremium, setShowPremium] = useState(false);
@@ -1139,7 +1140,7 @@ export function OrbShell() {
           </div>
         )}
 
-        {/* Input bar */}
+        {/* Input bar — morphs on focus */}
         <form
           onSubmit={(e: { preventDefault: () => void }) => {
             e.preventDefault();
@@ -1152,15 +1153,18 @@ export function OrbShell() {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            background: C.surface,
-            border: `1px solid ${C.line}`,
+            background: inputFocused ? 'rgba(12,16,30,0.95)' : C.surface,
+            border: `1px solid ${inputFocused ? C.cyanDim : C.line}`,
             borderRadius: 999,
-            padding: '8px 12px',
+            padding: inputFocused ? '10px 16px' : '8px 12px',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
-            // Pulsación suave para indicar que puedes interactuar
-            boxShadow: !inputText && !responseMsg ? `0 0 12px ${C.cyan}22, 0 0 4px ${C.cyan}11` : 'none',
-            animation: !inputText && !responseMsg ? 'cp-breathe 3s ease-in-out infinite' : 'none',
+            boxShadow: inputFocused
+              ? `0 0 20px ${C.cyan}33, 0 0 8px ${C.cyan}22, 0 8px 32px rgba(0,0,0,0.3)`
+              : (!inputText && !responseMsg ? `0 0 12px ${C.cyan}22, 0 0 4px ${C.cyan}11` : 'none'),
+            transform: inputFocused ? 'scale(1.02)' : 'scale(1)',
+            transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            animation: !inputText && !responseMsg && !inputFocused ? 'cp-breathe 3s ease-in-out infinite' : 'none',
           }}
         >
           {/* Mic button */}
@@ -1190,6 +1194,8 @@ export function OrbShell() {
           <input
             value={inputText}
             onChange={(e: { target: { value: string } }) => setInputText(e.target.value)}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
             placeholder={state === 'fullscreen' ? 'Preguntá a Ómicron…' : 'Hablá o escribí a Ómicron…'}
             aria-label="Escribir comando al Oráculo"
             inputMode="text"
