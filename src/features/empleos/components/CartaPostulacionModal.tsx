@@ -114,7 +114,7 @@ export function CartaPostulacionModal({ job, onClose, onApplyDone }: Props) {
         <div style={{ fontFamily: FR, fontSize: 15, color: C.ink, fontWeight: 700, margin: '12px 0 4px' }}>
           {job.title}
         </div>
-        <div style={{ fontFamily: FM, fontSize: 10, color: C.muted, marginBottom: 16 }}>
+        <div style={{ fontFamily: FM, fontSize: 11, color: C.muted, marginBottom: 16 }}>
           {job.company_name ?? 'Empresa'} · {job.tags?.slice(0, 3).join(', ')}
         </div>
 
@@ -152,7 +152,7 @@ export function CartaPostulacionModal({ job, onClose, onApplyDone }: Props) {
                 <span style={{ fontFamily: FM, fontSize: 9, color: C.green, letterSpacing: 1 }}>
                   ✓ TUS PUNTOS FUERTES PARA ESTE EMPLEO
                 </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
                   {carta.puntosFuertes.map((p, i) => (
                     <span key={i} style={styles.tag}>{p}</span>
                   ))}
@@ -226,7 +226,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   genBox: {
     display: 'flex', flexDirection: 'column' as const, alignItems: 'center',
-    padding: '32px 20px', gap: 10,
+    padding: '32px 20px', gap: 8,
   },
   spinner: {
     width: 28, height: 28, borderRadius: '50%',
@@ -236,16 +236,16 @@ const styles: Record<string, React.CSSProperties> = {
   puntosBox: {
     background: 'rgba(63, 208, 201, 0.06)',
     border: `1px solid rgba(63, 208, 201, 0.2)`,
-    borderRadius: 10, padding: '10px 12px', marginBottom: 12,
+    borderRadius: 12, padding: '10px 12px', marginBottom: 12,
   },
   tag: {
     display: 'inline-flex', padding: '3px 8px', borderRadius: 4,
     background: 'rgba(92, 200, 255, 0.08)', border: `1px solid rgba(92, 200, 255, 0.2)`,
-    fontFamily: FM, fontSize: 10, color: C.cyanHi,
+    fontFamily: FM, fontSize: 11, color: C.cyanHi,
   },
   cartaBox: {
     background: 'rgba(0,2,6,0.5)', border: `1px solid ${C.line}`,
-    borderRadius: 10, padding: '12px', maxHeight: 220, overflowY: 'auto' as const,
+    borderRadius: 12, padding: '12px', maxHeight: 220, overflowY: 'auto' as const,
   },
   cartaText: {
     fontFamily: FR, fontSize: 12.5, color: '#d4e6f4', lineHeight: 1.55,
@@ -262,7 +262,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   primaryBtn: {
     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    gap: 8, padding: '13px', borderRadius: 10, cursor: 'pointer',
+    gap: 8, padding: '13px', borderRadius: 12, cursor: 'pointer',
     background: `linear-gradient(135deg, ${C.cyan}, #008b9e)`,
     border: 'none', color: '#04121f',
     fontFamily: FM, fontSize: 12, fontWeight: 700, letterSpacing: 1,

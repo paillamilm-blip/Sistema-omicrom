@@ -162,8 +162,8 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
 
       {/* Header */}
       <header style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: C.panel, borderBottom: `1px solid ${C.line}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, boxShadow: `0 0 14px ${C.cyan}44` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, boxShadow: `0 0 14px ${C.cyan}44` }}>
             <Brain size={18} style={{ color: C.cyan }} />
           </div>
           <div style={{ minWidth: 0 }}>
@@ -196,7 +196,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
 
         {/* LOADING */}
         {(phase === 'loading' || phase === 'evaluando') && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 14, minHeight: 280 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, minHeight: 280 }}>
             <Loader2 size={30} style={{ color: C.cyan, animation: 'cp-spin 1s linear infinite' }} />
             <p style={{ fontFamily: MONO, fontSize: 12, color: C.sub, letterSpacing: 1, textAlign: 'center' }}>
               {phase === 'evaluando' ? 'Evaluando tu desempeño con IA...' : 'Generando reto adaptativo...'}
@@ -206,7 +206,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
 
         {/* ERROR */}
         {phase === 'error' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 14, minHeight: 280, textAlign: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, minHeight: 280, textAlign: 'center' }}>
             <XCircle size={30} style={{ color: C.red }} />
             <p style={{ fontFamily: DISP, fontSize: 15, color: C.text, maxWidth: 420 }}>{errMsg}</p>
             <button onClick={iniciar} style={btnStyle(C.cyan)}><RotateCcw size={15} /> Reintentar</button>
@@ -230,13 +230,13 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
             {/* Preguntas de opción múltiple */}
             {reto.preguntas.map((q, qi) => (
               <div key={qi} style={cardS}>
-                <p style={{ margin: '0 0 10px', fontFamily: DISP, fontSize: 14, fontWeight: 700, color: C.text, lineHeight: 1.5 }}>{qi + 1}. {q.pregunta}</p>
+                <p style={{ margin: '0 0 10px', fontFamily: DISP, fontSize: 13, fontWeight: 700, color: C.text, lineHeight: 1.5 }}>{qi + 1}. {q.pregunta}</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                   {q.opciones.map((op, oi) => {
                     const sel = respuestas[qi] === oi;
                     return (
                       <button key={oi} onClick={() => setRespuestas(p => p.map((v, i) => i === qi ? oi : v))}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, cursor: 'pointer', textAlign: 'left',
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 9, cursor: 'pointer', textAlign: 'left',
                           background: sel ? C.cyanFaint : 'transparent', border: `1px solid ${sel ? C.cyan : C.line}`, color: sel ? C.text : 'rgba(230,241,251,0.8)', fontFamily: DISP, fontSize: 13 }}>
                         <span style={{ width: 16, height: 16, flexShrink: 0, borderRadius: '50%', border: `2px solid ${sel ? C.cyan : C.sub}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {sel && <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.cyan }} />}
@@ -252,7 +252,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
             {/* Caso práctico */}
             <div style={{ ...cardS, borderColor: C.goldFaint }}>
               <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.gold }}>⬡ CASO PRÁCTICO</p>
-              <p style={{ margin: '0 0 10px', fontFamily: DISP, fontSize: 14, color: C.text, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{reto.caso_practico.enunciado}</p>
+              <p style={{ margin: '0 0 10px', fontFamily: DISP, fontSize: 13, color: C.text, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{reto.caso_practico.enunciado}</p>
               <textarea value={casoRespuesta} onChange={e => setCasoRespuesta(e.target.value)}
                 placeholder="Desarrolla tu solución con criterio técnico..."
                 style={textareaS} />
@@ -325,14 +325,14 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
       {/* Veredicto */}
       <div style={{ borderRadius: 12, border: `1px solid ${accent}66`, background: aprob ? C.greenFaint : C.redFaint, padding: 16, textAlign: 'center' }}>
         {aprob ? <CheckCircle size={30} style={{ color: C.green }} /> : <XCircle size={30} style={{ color: C.red }} />}
-        <p style={{ margin: '8px 0 2px', fontFamily: DISP, fontWeight: 700, fontSize: 18, color: accent }}>
+        <p style={{ margin: '8px 0 2px', fontFamily: DISP, fontWeight: 700, fontSize: 20, color: accent }}>
           {aprob ? 'Competencia validada' : 'Aún no validada'}
         </p>
         <p style={{ margin: 0, fontFamily: MONO, fontSize: 11, color: C.sub }}>
           Puntaje: {resultado.puntaje_global}% · Nivel: {difficulty.level}/5 · Tiempo: {Math.floor(elapsed / 60)}:{(elapsed % 60).toString().padStart(2, '0')}
         </p>
         {(resultado.pe_awarded ?? 0) > 0 && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 10, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,176,46,0.2)', border: `1px solid ${C.gold}55` }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 10, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,176,46,0.2)', border: `1px solid ${C.gold}55` }}>
             <Trophy size={14} style={{ color: C.gold }} />
             <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: C.gold }}>+{resultado.pe_awarded} PE</span>
           </div>
@@ -361,19 +361,19 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
       {resultado.resumen && (
         <div style={cardS}>
           <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>📜 RESUMEN</p>
-          <p style={{ margin: 0, fontFamily: DISP, fontSize: 14, color: C.text, lineHeight: 1.6 }}>{resultado.resumen}</p>
+          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{resultado.resumen}</p>
         </div>
       )}
       {resultado.feedback && (
         <div style={{ ...cardS, borderColor: `${C.gold}55`, background: C.goldFaint }}>
           <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.gold }}>💡 PARA MEJORAR</p>
-          <p style={{ margin: 0, fontFamily: DISP, fontSize: 14, color: C.text, lineHeight: 1.6 }}>{resultado.feedback}</p>
+          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{resultado.feedback}</p>
         </div>
       )}
       {resultado.siguiente_paso && (
         <div style={{ ...cardS, borderColor: `${C.green}44`, background: C.greenFaint }}>
           <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.green }}>🎯 TU SIGUIENTE PASO</p>
-          <p style={{ margin: 0, fontFamily: DISP, fontSize: 14, color: C.text, lineHeight: 1.6 }}>{resultado.siguiente_paso}</p>
+          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{resultado.siguiente_paso}</p>
         </div>
       )}
     </div>
@@ -384,9 +384,9 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
 const cardS: React.CSSProperties = { padding: 16, borderRadius: 12, background: C.card, border: `1px solid ${C.line}` };
 const textareaS: React.CSSProperties = {
   width: '100%', minHeight: 110, padding: 12, boxSizing: 'border-box', background: '#040a18', color: '#c9f6ff',
-  fontFamily: DISP, fontSize: 14, lineHeight: 1.5, resize: 'vertical', outline: 'none', borderRadius: 9, border: `1px solid ${C.line}`,
+  fontFamily: DISP, fontSize: 13, lineHeight: 1.5, resize: 'vertical', outline: 'none', borderRadius: 9, border: `1px solid ${C.line}`,
 };
 function btnStyle(color: string): React.CSSProperties {
-  return { padding: '13px 18px', borderRadius: 12, border: 'none', cursor: 'pointer', fontFamily: DISP, fontWeight: 700, fontSize: 14, color: C.bg, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 0 16px ${color}55` };
+  return { padding: '13px 18px', borderRadius: 12, border: 'none', cursor: 'pointer', fontFamily: DISP, fontWeight: 700, fontSize: 13, color: C.bg, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 0 16px ${color}55` };
 }
-const btnGhostS: React.CSSProperties = { padding: '13px 18px', borderRadius: 12, background: 'transparent', border: `1px solid ${C.line}`, color: C.sub, cursor: 'pointer', fontFamily: DISP, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 };
+const btnGhostS: React.CSSProperties = { padding: '13px 18px', borderRadius: 12, background: 'transparent', border: `1px solid ${C.line}`, color: C.sub, cursor: 'pointer', fontFamily: DISP, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 };

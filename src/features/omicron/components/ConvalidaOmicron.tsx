@@ -65,7 +65,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
                 initial={{ opacity: 0, x: 40, scale: 0.8 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 40, scale: 0.8 }}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, background: `${p.color}22`, border: `1px solid ${p.color}66`, backdropFilter: 'blur(8px)' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 999, background: `${p.color}22`, border: `1px solid ${p.color}66`, backdropFilter: 'blur(8px)' }}>
                 <TrendingUp size={12} color={p.color} />
                 <span style={{ fontFamily: FONT.mono, fontSize: 11, color: p.color, fontWeight: 700 }}>+{p.delta}</span>
                 <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.ink }}>{p.label}</span>
@@ -103,11 +103,11 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
                   initial={{ opacity: 0.5 }}
                   animate={{ opacity: isDone || isActive ? 1 : 0.4 }}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: RADIUS.lg, background: isActive ? `${step.color}14` : isDone ? `${C.green}0a` : C.glass, border: `1px solid ${isActive ? step.color : isDone ? C.green : C.line}44` }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${isDone ? C.green : step.color}18` }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${isDone ? C.green : step.color}18` }}>
                     {isDone ? <Check size={16} color={C.green} /> : isActive ? <Loader2 size={16} color={step.color} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> : <Icon size={16} color={step.color} />}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: isDone ? C.green : isActive ? '#fff' : C.mut }}>{step.label}</div>
+                    <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: isDone ? C.green : isActive ? '#fff' : C.mut }}>{step.label}</div>
                     <div style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.mut, marginTop: 2 }}>{isDone ? '✓ Completado' : step.hint}</div>
                   </div>
                 </motion.div>
@@ -136,7 +136,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 2, padding: '4px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', textAlign: 'center' }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, color: C.mut, textTransform: 'uppercase' }}>Ómicron te reconoce como</div>
+          <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.4, color: C.mut, textTransform: 'uppercase' }}>Ómicron te reconoce como</div>
           <h2 style={{ margin: '6px 0 4px', fontFamily: FONT.display, fontWeight: 800, fontSize: 26, color: '#fff', letterSpacing: -0.4 }}>{dossier.seniorLabel}</h2>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
             <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan, padding: '4px 10px', borderRadius: 999, background: C.cyanGhost, border: `1px solid ${C.cyanFaint}` }}>{ARCH[dossier.arch] ?? dossier.arch}</span>
@@ -144,7 +144,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
           </div>
 
           {/* Skills with % bars */}
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.2, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Skills · % de dominio</div>
+          <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.2, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Skills · % de dominio</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16, textAlign: 'left' }}>
             {(dossier.skillsDetail?.length ? dossier.skillsDetail : dossier.labels.map((name) => ({ name, pct: 60 }))).map((s) => (
               <div key={s.name}>
@@ -177,7 +177,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
             <div style={{ textAlign: 'left', borderRadius: RADIUS.lg, padding: '13px 14px', marginBottom: 14, background: `linear-gradient(135deg, ${C.gold}14, rgba(255,255,255,0.03))`, border: `1px solid ${C.goldDim}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
                 <Zap size={14} color={C.gold} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>Sinergias detectadas</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>Sinergias detectadas</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {synergies.map((s, i) => (
@@ -195,7 +195,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
             <div style={{ textAlign: 'left', borderRadius: RADIUS.lg, padding: '13px 14px', marginTop: 4, background: `linear-gradient(135deg, ${C.cyan}14, rgba(255,255,255,0.03))`, border: `1px solid ${C.cyanFaint}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
                 <Sparkles size={14} color={C.cyan} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: C.cyan }}>Análisis de Ómicron</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: C.cyan }}>Análisis de Ómicron</span>
               </div>
               {ai.loading ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.mut, fontFamily: FONT.body, fontSize: 13 }}>
@@ -208,7 +208,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: 10, padding: '0 18px', position: 'relative', zIndex: 2, marginBottom: 10 }}>
+        <div style={{ display: 'flex', gap: 8, padding: '0 18px', position: 'relative', zIndex: 2, marginBottom: 10 }}>
           <button onClick={() => setShowSkillVisual(true)} style={{ flex: 1, padding: '13px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ver mi perfil completo</button>
           <button onClick={onClose} style={{ padding: '13px 20px', borderRadius: 14, cursor: 'pointer', background: C.glass, border: `1px solid ${C.line}`, color: C.ink, fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Listo</button>
         </div>
@@ -294,19 +294,19 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void onCVFile(f); e.currentTarget.value = ''; }} />
           <Upload size={26} color={C.cyan} />
           <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>{cvFileName || 'Subir CV (PDF · Word · TXT)'}</span>
-          <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>Lee cualquier PDF o Word — sube uno nuevo cuando quieras</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>Lee cualquier PDF o Word — sube uno nuevo cuando quieras</span>
         </label>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
           <div style={{ flex: 1, height: 1, background: C.line }} />
-          <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>o pegá tu experiencia</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>o pegá tu experiencia</span>
           <div style={{ flex: 1, height: 1, background: C.line }} />
         </div>
 
         <label htmlFor="cv-textarea" className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>Experiencia profesional</label>
         <textarea id="cv-textarea" value={cvText} onChange={(e) => setCvText(e.target.value)}
           placeholder="Rol actual, años de experiencia, tecnologías, contratos, certificaciones, empresas donde trabajaste (dependiente o freelance)…"
-          style={{ width: '100%', minHeight: 120, borderRadius: RADIUS.md, border: `1px solid ${C.line}`, background: 'rgba(8,12,22,0.8)', color: C.ink, fontFamily: FONT.body, fontSize: 14, padding: 13, outline: 'none', resize: 'vertical' }} />
+          style={{ width: '100%', minHeight: 120, borderRadius: RADIUS.md, border: `1px solid ${C.line}`, background: 'rgba(8,12,22,0.8)', color: C.ink, fontFamily: FONT.body, fontSize: 13, padding: 13, outline: 'none', resize: 'vertical' }} />
       </div>
 
       <div style={{ padding: '10px 18px calc(env(safe-area-inset-bottom, 0px) + 16px)', position: 'relative', zIndex: 2 }}>

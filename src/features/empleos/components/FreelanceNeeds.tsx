@@ -288,7 +288,7 @@ function PublishNeedModal({ onClose, onDone }: { onClose: () => void; onDone: ()
           <input type="checkbox" checked={f.is_remote} onChange={e => setF({ ...f, is_remote: e.target.checked })} /> Se puede hacer remoto
         </label>
 
-        {err && <div style={{ fontFamily: FONT.mono, fontSize: 10, color: '#ff5c7a', marginBottom: 10 }}>{err}</div>}
+        {err && <div style={{ fontFamily: FONT.mono, fontSize: 11, color: '#ff5c7a', marginBottom: 10 }}>{err}</div>}
 
         <button onClick={submit} disabled={saving} style={S.submitBtn}>
           {saving ? 'Publicando...' : '📋 Publicar necesidad'}
@@ -336,7 +336,7 @@ function ApplyModal({ need, onClose, onDone }: { need: FreelanceNeed; onClose: (
           <div style={{ flex: 1 }}><label style={S.lbl}>Plazo propuesto (días)</label><input style={S.inp} type="number" value={days} onChange={e => setDays(e.target.value)} placeholder="Opcional" /></div>
         </div>
 
-        {err && <div style={{ fontFamily: FONT.mono, fontSize: 10, color: '#ff5c7a', marginBottom: 10 }}>{err}</div>}
+        {err && <div style={{ fontFamily: FONT.mono, fontSize: 11, color: '#ff5c7a', marginBottom: 10 }}>{err}</div>}
 
         <button onClick={submit} disabled={sending} style={S.submitBtn}>
           {sending ? 'Enviando...' : '🚀 Enviar postulación'}
@@ -351,8 +351,8 @@ const S: Record<string, React.CSSProperties> = {
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   sectionTitle: { fontFamily: FONT.display, fontSize: 15, fontWeight: 700, color: C.ink },
   sectionSub: { fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 0.5 },
-  publishBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '8px 13px', borderRadius: 8, background: 'rgba(63,208,201,0.1)', border: `1px solid ${C.green}44`, color: C.green, cursor: 'pointer', fontFamily: FONT.mono, fontSize: 10, fontWeight: 700 },
-  filterRow: { display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 12, paddingBottom: 4 },
+  publishBtn: { display: 'flex', alignItems: 'center', gap: 4, padding: '8px 13px', borderRadius: 8, background: 'rgba(63,208,201,0.1)', border: `1px solid ${C.green}44`, color: C.green, cursor: 'pointer', fontFamily: FONT.mono, fontSize: 11, fontWeight: 700 },
+  filterRow: { display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 4 },
   filterChip: { flexShrink: 0, padding: '6px 11px', borderRadius: 6, border: '1px solid rgba(92,200,255,0.15)', background: 'transparent', color: C.mut, fontFamily: FONT.mono, fontSize: 9, cursor: 'pointer', whiteSpace: 'nowrap' },
   filterActive: { background: 'rgba(92,200,255,0.1)', borderColor: C.cyan, color: C.cyan },
   card: { position: 'relative', background: 'rgba(8,16,38,0.6)', border: `1px solid rgba(92,200,255,0.1)`, borderRadius: 14, padding: '14px', marginBottom: 12, overflow: 'hidden' },
@@ -361,16 +361,16 @@ const S: Record<string, React.CSSProperties> = {
   catBadge: { fontFamily: FONT.mono, fontSize: 9, color: C.mut },
   urgencyBadge: { fontFamily: FONT.mono, fontSize: 8, padding: '2px 7px', borderRadius: 4, border: '1px solid' },
   cardTitle: { fontFamily: FONT.display, fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 3 },
-  cardPublisher: { fontFamily: FONT.mono, fontSize: 10, color: C.mut, marginBottom: 8 },
+  cardPublisher: { fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginBottom: 8 },
   cardDesc: { fontFamily: FONT.body, fontSize: 12, color: '#b9d4e6', lineHeight: 1.4, margin: '0 0 10px' },
-  statsRow: { display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 8 },
-  stat: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 10, color: C.mut },
-  skillsRow: { display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 },
+  statsRow: { display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  stat: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 11, color: C.mut },
+  skillsRow: { display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 },
   skillTag: { padding: '3px 8px', borderRadius: 4, background: 'rgba(92,200,255,0.06)', border: '1px solid rgba(92,200,255,0.15)', fontFamily: FONT.mono, fontSize: 9, color: '#c8ddf0' },
   applyBtn: { width: '100%', padding: '11px', borderRadius: 8, fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  muted: { fontFamily: FONT.mono, fontSize: 10, color: C.mut, textAlign: 'center' },
+  muted: { fontFamily: FONT.mono, fontSize: 11, color: C.mut, textAlign: 'center' },
   empty: { textAlign: 'center', padding: '24px 16px' },
-  emptyTitle: { fontFamily: FONT.display, fontSize: 14, fontWeight: 700, color: C.ink, margin: '0 0 6px' },
+  emptyTitle: { fontFamily: FONT.display, fontSize: 13, fontWeight: 700, color: C.ink, margin: '0 0 6px' },
   emptyHint: { fontFamily: FONT.body, fontSize: 12, color: C.mut, lineHeight: 1.4, margin: '0 0 14px' },
   ctaBtn: { padding: '11px 20px', borderRadius: 8, border: 'none', background: `linear-gradient(135deg, ${C.green}, #1fa30a)`, color: '#04121f', fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, cursor: 'pointer' },
   modalBg: { position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,2,6,0.85)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 },
@@ -380,5 +380,5 @@ const S: Record<string, React.CSSProperties> = {
   modalSub: { fontFamily: FONT.body, fontSize: 12, color: C.mut, marginBottom: 16, lineHeight: 1.4 },
   lbl: { fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, display: 'block' },
   inp: { width: '100%', boxSizing: 'border-box', background: 'rgba(92,200,255,0.04)', border: `1px solid ${C.line}`, borderRadius: 6, padding: '10px 12px', color: C.ink, fontFamily: FONT.mono, fontSize: 12, outline: 'none', marginBottom: 10 },
-  submitBtn: { width: '100%', padding: '13px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${C.cyan}, #008b9e)`, color: '#04121f', fontFamily: FONT.mono, fontSize: 12, fontWeight: 700, cursor: 'pointer', letterSpacing: 0.5 },
+  submitBtn: { width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${C.cyan}, #008b9e)`, color: '#04121f', fontFamily: FONT.mono, fontSize: 12, fontWeight: 700, cursor: 'pointer', letterSpacing: 0.5 },
 };

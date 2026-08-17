@@ -209,7 +209,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
     <div className="flex flex-col items-center justify-center min-h-screen px-6" style={{ background: C.bg }}>
       {/* Logo — Orbe 3D */}
       <div className="mb-8 flex flex-col items-center gap-3">
-        <div style={{ width: 80, height: 80, borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(92,200,255,0.3)', boxShadow: '0 0 30px rgba(92,200,255,0.2)' }}>
+        <div style={{ width: 80, height: 80, borderRadius: 999, overflow: 'hidden', border: '1px solid rgba(92,200,255,0.3)', boxShadow: '0 0 30px rgba(92,200,255,0.2)' }}>
           <ParticleOrb />
         </div>
         <div className="text-center">
@@ -368,7 +368,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
         <button
           onClick={onClose}
           style={{
-            marginTop: 16, width: '100%', padding: '12px', borderRadius: 10,
+            marginTop: 16, width: '100%', padding: '12px', borderRadius: 12,
             background: 'transparent', border: '1px solid rgba(92,200,255,0.2)',
             color: 'rgba(234,240,251,0.7)', fontFamily: 'monospace', fontSize: 12,
             cursor: 'pointer', letterSpacing: 0.5,

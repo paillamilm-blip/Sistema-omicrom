@@ -39,7 +39,7 @@ function RatingModal({
           <X size={18} />
         </button>
 
-        <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 2, color: C.cyan, textTransform: 'uppercase', marginBottom: 4 }}>
+        <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2, color: C.cyan, textTransform: 'uppercase', marginBottom: 4 }}>
           CALIFICAR ENTREGA
         </div>
         <div style={{ fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, marginBottom: 18 }}>
@@ -73,19 +73,19 @@ function RatingModal({
           style={{
             width: '100%', boxSizing: 'border-box', resize: 'none',
             background: 'rgba(0,245,255,0.04)', border: `1px solid ${C.cyanFaint}`,
-            borderRadius: 10, padding: '10px 12px', color: '#e2f3ff',
+            borderRadius: 12, padding: '10px 12px', color: '#e2f3ff',
             fontFamily: FONT.body, fontSize: 13, outline: 'none', marginBottom: 16,
           }}
         />
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{
-            flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer',
+            flex: 1, padding: '11px', borderRadius: 12, cursor: 'pointer',
             background: 'transparent', border: `1px solid ${C.cyanFaint}`,
             color: C.cyanDim, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1,
           }}>CANCELAR</button>
           <button onClick={onSubmit} disabled={saving} style={{
-            flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer',
+            flex: 1, padding: '11px', borderRadius: 12, cursor: 'pointer',
             background: C.gold, border: 'none', color: '#1a1205',
             fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700,
             opacity: saving ? 0.6 : 1,
@@ -124,7 +124,7 @@ function NewMessagePicker({ onPick, onClose }: { onPick: (c: Conn) => void; onCl
         borderRadius: 16, background: 'rgba(10,17,32,0.99)', border: `1px solid ${C.cyanDim}`,
         boxShadow: '0 20px 60px rgba(0,0,0,0.6)', position: 'relative', padding: 18,
       }}>
-        <button onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
+        <button onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
           <X size={16} />
         </button>
 
@@ -137,7 +137,7 @@ function NewMessagePicker({ onPick, onClose }: { onPick: (c: Conn) => void; onCl
         </p>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 24, fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>CARGANDO...</div>
+          <div style={{ textAlign: 'center', padding: 24, fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>CARGANDO...</div>
         ) : list.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 22, fontFamily: FONT.body, fontSize: 12.5, color: C.cyanDim }}>
             Aún no tienes conexiones. Comparte tu QR desde Perfil → Mi Red para empezar tu red. 🔗
@@ -156,8 +156,8 @@ function NewMessagePicker({ onPick, onClose }: { onPick: (c: Conn) => void; onCl
               {c.avatar ? <img src={c.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (c.name || c.username || 'U').slice(0, 1).toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe' }}>{c.name}</div>
-              <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>@{c.username}</div>
+              <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#dbeafe' }}>{c.name}</div>
+              <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>@{c.username}</div>
             </div>
             <Send size={15} style={{ color: C.cyan }} />
           </button>
@@ -384,7 +384,7 @@ export function ChatTab() {
         <div style={cx(BASE.scrollArea, { padding: '10px 14px 20px' })}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <SectionLabel>◆ MENSAJES DIRECTOS ({dmConvos.length})</SectionLabel>
-            <button onClick={() => setPickerOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 9, cursor: 'pointer', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan, fontFamily: FONT.mono, fontSize: 10, letterSpacing: 0.5 }}>
+            <button onClick={() => setPickerOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 11px', borderRadius: 9, cursor: 'pointer', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5 }}>
               <Plus size={13} /> NUEVO
             </button>
           </div>
@@ -394,17 +394,17 @@ export function ChatTab() {
                 <CyberCard key={d.user_id} color={C.cyan} margin="0 0 10px" onClick={() => setChatWith({ id: d.user_id, name: d.full_name, username: d.username, avatar: d.avatar_url })}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{
-                      width: 38, height: 38, borderRadius: 10, overflow: 'hidden', flexShrink: 0,
+                      width: 38, height: 38, borderRadius: 12, overflow: 'hidden', flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       background: d.avatar_url ? '#0a1120' : `linear-gradient(135deg, ${C.cyan}, ${C.green})`,
-                      color: '#060a12', fontWeight: 700, fontFamily: FONT.display, fontSize: 14,
+                      color: '#060a12', fontWeight: 700, fontFamily: FONT.display, fontSize: 13,
                     }}>
                       {d.avatar_url
                         ? <img src={d.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         : (d.full_name || d.username || 'U').slice(0, 1).toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.full_name}</div>
+                      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#dbeafe', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.full_name}</div>
                       <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.last_message}</div>
                     </div>
                     {d.unread > 0 && (
@@ -432,7 +432,7 @@ export function ChatTab() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Lock size={15} style={{ color: ST_COLOR[r.status ?? 'LOCKED'] ?? C.cyan }} />
                   <div>
-                    <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe' }}>{r.title}</div>
+                    <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#dbeafe' }}>{r.title}</div>
                     <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>@{otherName(r)} · {r.status ?? 'LOCKED'}{r.rating ? ` · ${r.rating}★` : ''}</div>
                   </div>
                 </div>
@@ -471,7 +471,7 @@ export function ChatTab() {
         title={room.title}
         subtitle={`@${otherName(room)} · ${integrityOk ? 'Caja negra · cadena OK' : 'Cadena alterada'}`}
         action={
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan, padding: '3px 9px', borderRadius: 12, border: `1px solid ${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}55`, background: `${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}14`, animation: 'liquidPulse 2.6s ease-in-out infinite' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan, padding: '3px 9px', borderRadius: 12, border: `1px solid ${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}55`, background: `${ST_COLOR[room.status ?? 'LOCKED'] ?? C.cyan}14`, animation: 'liquidPulse 2.6s ease-in-out infinite' }}>
             <span className="liquid-dot" />
             {room.status ?? 'LOCKED'}
           </span>
@@ -492,10 +492,10 @@ export function ChatTab() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', flexShrink: 0, background: 'rgba(255, 176, 46,0.08)', borderBottom: `1px solid ${C.cyanFaint}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Timer size={14} style={{ color: C.gold }} />
-            <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: '#dbeafe' }}>GHOST APPROVAL</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: '#dbeafe' }}>GHOST APPROVAL</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontFamily: FONT.mono, fontSize: 14, fontWeight: 700, letterSpacing: 2, color: gl <= 60 ? C.red : C.cyan, textShadow: `0 0 10px ${gl <= 60 ? C.red : C.cyan}`, animation: `liquidPulse ${gl <= 60 ? '1s' : '2.4s'} ease-in-out infinite`, borderRadius: 6, padding: '1px 6px' }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: 13, fontWeight: 700, letterSpacing: 2, color: gl <= 60 ? C.red : C.cyan, textShadow: `0 0 10px ${gl <= 60 ? C.red : C.cyan}`, animation: `liquidPulse ${gl <= 60 ? '1s' : '2.4s'} ease-in-out infinite`, borderRadius: 6, padding: '1px 6px' }}>
               {String(Math.floor(gl / 60)).padStart(2, '0')}:{String(gl % 60).padStart(2, '0')}
             </span>
             {isBuyer && (
@@ -529,15 +529,15 @@ export function ChatTab() {
 
       <div style={cx(BASE.scrollArea, { padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 12 })}>
         {messages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 30, fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>CANAL CIFRADO · INICIA LA CONVERSACIÓN</div>
+          <div style={{ textAlign: 'center', padding: 30, fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>CANAL CIFRADO · INICIA LA CONVERSACIÓN</div>
         )}
         {messages.map((m, i) => {
           const own = m.sender_id === profile?.id;
           return (
             <div key={`${m.id}-${i}`} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
               <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: C.cyanDim, marginBottom: 4 }}>{own ? 'TÚ' : `@${otherName(room)}`} · {fmt(m.created_at)}</span>
-              <div style={{ maxWidth: '85%', padding: '10px 14px', borderRadius: 10, background: own ? 'rgba(0,245,255,0.1)' : C.surface, border: `1px solid ${own ? C.cyanDim : C.cyanFaint}`, borderTopRightRadius: own ? 2 : 10, borderTopLeftRadius: own ? 10 : 2 }}>
-                <p style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, color: '#dbeafe', lineHeight: 1.45 }}>{m.content}</p>
+              <div style={{ maxWidth: '85%', padding: '10px 14px', borderRadius: 12, background: own ? 'rgba(0,245,255,0.1)' : C.surface, border: `1px solid ${own ? C.cyanDim : C.cyanFaint}`, borderTopRightRadius: own ? 2 : 10, borderTopLeftRadius: own ? 10 : 2 }}>
+                <p style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#dbeafe', lineHeight: 1.45 }}>{m.content}</p>
               </div>
             </div>
           );
@@ -547,12 +547,12 @@ export function ChatTab() {
 
       <div style={{ display: 'flex', gap: 8, padding: '10px 14px', flexShrink: 0, borderTop: `1px solid ${C.cyanFaint}` }}>
         <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()} placeholder="Mensaje cifrado..."
-          style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, outline: 'none' }} />
+          style={{ flex: 1, padding: '10px 14px', borderRadius: 12, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, outline: 'none' }} />
         <button onClick={improveDraft} disabled={!input.trim() || aiAssisting} title="Mejorar redacción con IA"
-          style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(255, 176, 46,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || aiAssisting ? 0.4 : 1 }}>
+          style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255, 176, 46,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || aiAssisting ? 0.4 : 1 }}>
           {aiAssisting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
         </button>
-        <button onClick={send} disabled={!input.trim() || sending} style={{ width: 44, height: 44, borderRadius: 10, background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
+        <button onClick={send} disabled={!input.trim() || sending} style={{ width: 44, height: 44, borderRadius: 12, background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
           <Send size={16} />
         </button>
       </div>

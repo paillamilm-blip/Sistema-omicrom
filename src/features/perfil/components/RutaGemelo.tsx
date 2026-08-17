@@ -42,7 +42,7 @@ export function RutaGemelo() {
                 key={`${s.action}-${i}`}
                 onClick={() => actions.run(s.action)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 11, padding: '11px 13px', borderRadius: RADIUS.lg,
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: RADIUS.lg,
                   cursor: 'pointer', textAlign: 'left', width: '100%',
                   background: i === 0 ? `${C.gold}14` : 'rgba(255,255,255,0.03)',
                   border: i === 0 ? `1px solid ${C.goldDim}` : '1px solid rgba(255,255,255,0.08)',

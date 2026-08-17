@@ -43,19 +43,19 @@ function TutorPanel({ lesson, onClose }: { lesson: { title: string; content: str
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(2,6,19,0.82)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column', borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))', border: `1px solid ${C.gold}55`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.gold}18`, border: `1px solid ${C.gold}55` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
+          <div style={{ width: 34, height: 34, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.gold}18`, border: `1px solid ${C.gold}55` }}>
             <Bot size={18} style={{ color: C.gold }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Tutor IA</div>
             <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lesson.title}</div>
           </div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
             <X size={16} />
           </button>
         </div>
-        <div style={{ flex: 1, minHeight: 200, maxHeight: '54vh', overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ flex: 1, minHeight: 200, maxHeight: '54vh', overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {msgs.length === 0 && (
             <div style={{ textAlign: 'center', padding: '10px 0', fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, lineHeight: 1.5 }}>
               👋 Pregúntame lo que no entiendas de <strong style={{ color: '#eaf4ff' }}>{lesson.title}</strong>.
@@ -67,7 +67,7 @@ function TutorPanel({ lesson, onClose }: { lesson: { title: string; content: str
             return (
               <div key={msgKey} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
                 <div style={{ maxWidth: '85%', padding: '10px 13px', borderRadius: 12, background: own ? 'rgba(92, 200, 255,0.12)' : `${C.gold}12`, border: `1px solid ${own ? C.cyanDim : C.gold + '40'}`, borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3 }}>
-                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#e6f1fb', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</p>
+                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: '#e6f1fb', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</p>
                 </div>
               </div>
             );
@@ -75,14 +75,14 @@ function TutorPanel({ lesson, onClose }: { lesson: { title: string; content: str
           {loading && <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.gold, fontFamily: FONT.mono, fontSize: 11 }}><Loader2 size={14} className="animate-spin" /> El tutor está pensando...</div>}
         </div>
         {msgs.length === 0 && (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '0 16px 8px' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '0 16px 8px' }}>
             {chips.map(ch => (
-              <button key={ch} onClick={() => ask(ch)} style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyan, cursor: 'pointer', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, borderRadius: 16, padding: '6px 11px' }}>{ch}</button>
+              <button key={ch} onClick={() => ask(ch)} style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan, cursor: 'pointer', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, borderRadius: 16, padding: '6px 11px' }}>{ch}</button>
             ))}
           </div>
         )}
         <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
-          <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) ask(); }} placeholder="Escribe tu duda..." style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 14, outline: 'none' }} />
+          <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) ask(); }} placeholder="Escribe tu duda..." style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 13, outline: 'none' }} />
           <button onClick={() => ask()} disabled={!input.trim() || loading} style={{ width: 44, height: 44, borderRadius: 11, background: C.gold, border: 'none', color: '#1a1205', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || loading ? 0.4 : 1 }}>
             <Send size={16} />
           </button>
@@ -166,12 +166,12 @@ export function CourseFlowModal({ nodeId, onClose, onValidated }: { nodeId: stri
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1050, background: 'rgba(2,6,19,0.82)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }}>
       <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 460, maxHeight: '92vh', display: 'flex', flexDirection: 'column', borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))', border: `1px solid ${C.cyan}55`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyan, letterSpacing: 1.5 }}>APRENDER</div>
             <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{course?.title ?? 'Curso'}</div>
           </div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
             <X size={16} />
           </button>
         </div>
@@ -195,7 +195,7 @@ export function CourseFlowModal({ nodeId, onClose, onValidated }: { nodeId: stri
               <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, marginTop: 10, lineHeight: 1.5 }}>
                 {result.passed ? '🔓 ¡Nodo validado! Tu Fundamento subió en el Gemelo Digital.' : `Necesitas ${course.passing_score}%. Repasa e inténtalo de nuevo.`}
               </p>
-              <button onClick={result.passed ? onClose : () => setView('lessons')} style={{ marginTop: 18, padding: '11px 22px', borderRadius: 10, cursor: 'pointer', background: `${C.cyan}18`, border: `1px solid ${C.cyan}`, color: C.cyan, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700 }}>
+              <button onClick={result.passed ? onClose : () => setView('lessons')} style={{ marginTop: 18, padding: '11px 22px', borderRadius: 12, cursor: 'pointer', background: `${C.cyan}18`, border: `1px solid ${C.cyan}`, color: C.cyan, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700 }}>
                 {result.passed ? 'CERRAR' : 'REINTENTAR'}
               </button>
             </div>
@@ -207,7 +207,7 @@ export function CourseFlowModal({ nodeId, onClose, onValidated }: { nodeId: stri
                   {q.options.map((opt, oi) => {
                     const sel = answers[q.id] === oi;
                     return (
-                      <button key={oi} onClick={() => setAnswers({ ...answers, [q.id]: oi })} style={{ width: '100%', textAlign: 'left', marginBottom: 7, padding: '11px 13px', borderRadius: 10, cursor: 'pointer', background: sel ? `${C.cyan}18` : 'rgba(20,30,52,0.7)', border: `1px solid ${sel ? C.cyan : 'rgba(255,255,255,0.08)'}`, color: sel ? '#e2f3ff' : '#b9d4e6', fontFamily: FONT.body, fontSize: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <button key={oi} onClick={() => setAnswers({ ...answers, [q.id]: oi })} style={{ width: '100%', textAlign: 'left', marginBottom: 7, padding: '11px 13px', borderRadius: 12, cursor: 'pointer', background: sel ? `${C.cyan}18` : 'rgba(20,30,52,0.7)', border: `1px solid ${sel ? C.cyan : 'rgba(255,255,255,0.08)'}`, color: sel ? '#e2f3ff' : '#b9d4e6', fontFamily: FONT.body, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, border: `2px solid ${sel ? C.cyan : C.cyanDim}`, background: sel ? C.cyan : 'transparent' }} />
                         {opt}
                       </button>
@@ -235,21 +235,21 @@ export function CourseFlowModal({ nodeId, onClose, onValidated }: { nodeId: stri
                         {done ? <CheckCircle2 size={15} style={{ color: C.green }} /> : <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: accent }}>{i + 1}</span>}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#eaf4ff' }}>{l.title}</div>
+                        <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff' }}>{l.title}</div>
                         <div style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.cyanDim, marginTop: 1 }}>LECCIÓN {i + 1}{done ? ' · LEÍDA' : ''}</div>
                       </div>
                       <ChevronDown size={17} style={{ color: C.cyanDim, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s', flexShrink: 0 }} />
                     </button>
                     {isOpen && (
                       <div style={{ padding: '0 14px 14px' }}>
-                        <p style={{ fontFamily: FONT.body, fontSize: 14, color: '#cfe2f0', lineHeight: 1.6, margin: '0 0 12px' }}>{l.content}</p>
+                        <p style={{ fontFamily: FONT.body, fontSize: 13, color: '#cfe2f0', lineHeight: 1.6, margin: '0 0 12px' }}>{l.content}</p>
                         {!done ? (
-                          <button onClick={() => completeLesson(l.id)} style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: '#04110a', background: C.cyan, border: 'none', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={14} /> MARCAR LEÍDA</button>
+                          <button onClick={() => completeLesson(l.id)} style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: '#04110a', background: C.cyan, border: 'none', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={14} /> MARCAR LEÍDA</button>
                         ) : (
-                          <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.green, display: 'inline-flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={14} /> Completada</span>
+                          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.green, display: 'inline-flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={14} /> Completada</span>
                         )}
                         <div style={{ marginTop: 10 }}>
-                          <button onClick={() => setTutorLesson(l)} style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, color: C.gold, background: `${C.gold}14`, border: `1px solid ${C.gold}55`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}><Sparkles size={14} /> PREGÚNTALE AL TUTOR IA</button>
+                          <button onClick={() => setTutorLesson(l)} style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: C.gold, background: `${C.gold}14`, border: `1px solid ${C.gold}55`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}><Sparkles size={14} /> PREGÚNTALE AL TUTOR IA</button>
                         </div>
                       </div>
                     )}

@@ -265,7 +265,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
           {!kbOpen && (
             <motion.div key={phase} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ padding: '16px 20px', borderRadius: RADIUS.lg, background: C.surface, border: `1px solid ${C.line}` }}>
               <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan, display: 'block', marginBottom: 6 }}>ÓMICRON</span>
-              <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 16, color: C.ink, lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>
                 {phase === 'processing' && <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 10, height: 10, borderRadius: '50%', background: C.cyan, animation: 'cp-pulse 1s ease-in-out infinite' }} />Analizando tu perfil…</span>}
                 {phase === 'result' && resultMsg}
                 {phase === 'ask' && (userName ? `Hey ${userName}, cuéntame ¿a qué te dedicas?` : '¿A qué te dedicas? Cuéntame en una frase.')}
@@ -274,7 +274,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
           )}
           {/* Versión compacta del mensaje cuando el teclado está abierto */}
           {kbOpen && phase === 'ask' && (
-            <div style={{ padding: '8px 12px', borderRadius: 10, background: `${C.surface}99` }}>
+            <div style={{ padding: '8px 12px', borderRadius: 12, background: `${C.surface}99` }}>
               <span style={{ fontFamily: FONT.body, fontSize: 13, color: C.mut }}>
                 {userName ? `${userName}, ¿a qué te dedicas?` : '¿A qué te dedicas?'}
               </span>
@@ -286,7 +286,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
               style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {hasMicSupport() && (
                 <button type="button" onClick={handleMic} aria-label="Hablar"
-                  style={{ width: 48, height: 48, borderRadius: '50%', border: `1px solid ${C.cyanDim}`, background: C.glass2, color: C.cyan, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 18, flexShrink: 0 }}>
+                  style={{ width: 48, height: 48, borderRadius: '50%', border: `1px solid ${C.cyanDim}`, background: C.glass2, color: C.cyan, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 20, flexShrink: 0 }}>
                   🎤
                 </button>
               )}
@@ -294,10 +294,10 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                 placeholder="Ej: Ingeniero industrial con 8 años"
                 enterKeyHint="send"
                 autoComplete="off"
-                style={{ flex: 1, padding: '14px 16px', borderRadius: RADIUS.pill, background: C.surface, border: `1px solid ${C.cyanDim}`, fontFamily: FONT.body, fontSize: 16, color: C.ink, outline: 'none', WebkitAppearance: 'none' }} />
+                style={{ flex: 1, padding: '16px', borderRadius: RADIUS.pill, background: C.surface, border: `1px solid ${C.cyanDim}`, fontFamily: FONT.body, fontSize: 15, color: C.ink, outline: 'none', WebkitAppearance: 'none' }} />
               <button type="submit" disabled={!input.trim() || generating}
                 aria-label="Enviar"
-                style={{ width: 48, height: 48, borderRadius: '50%', border: 'none', background: input.trim() ? `linear-gradient(135deg, ${C.cyan}, ${C.purple})` : C.glass2, color: input.trim() ? '#000' : C.mut, cursor: input.trim() ? 'pointer' : 'default', display: 'grid', placeItems: 'center', fontSize: 18, flexShrink: 0, boxShadow: input.trim() ? '0 4px 16px rgba(92,200,255,0.3)' : 'none', transition: 'background 0.2s, box-shadow 0.2s' }}>
+                style={{ width: 48, height: 48, borderRadius: '50%', border: 'none', background: input.trim() ? `linear-gradient(135deg, ${C.cyan}, ${C.purple})` : C.glass2, color: input.trim() ? '#000' : C.mut, cursor: input.trim() ? 'pointer' : 'default', display: 'grid', placeItems: 'center', fontSize: 20, flexShrink: 0, boxShadow: input.trim() ? '0 4px 16px rgba(92,200,255,0.3)' : 'none', transition: 'background 0.2s, box-shadow 0.2s' }}>
                 ➤
               </button>
             </motion.form>
@@ -305,13 +305,13 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
           {/* Suggestion chips — más grandes para touch mobile (min 44px height) */}
           {phase === 'ask' && !input && !kbOpen && (
             <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}
-              style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
+              style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
               {['Desarrollador web', 'Diseñadora UX', 'Ingeniero industrial', 'Estudiante', 'Freelancer'].map(s => (
                 <button key={s} onClick={() => { setInput(s); handleSubmit(s); }}
                   style={{
                     padding: '10px 16px', minHeight: 44, borderRadius: RADIUS.pill,
                     background: C.glass, border: `1px solid ${C.line}`, color: C.ink,
-                    fontFamily: FONT.body, fontSize: 14, cursor: 'pointer',
+                    fontFamily: FONT.body, fontSize: 13, cursor: 'pointer',
                     WebkitTapHighlightColor: 'transparent',
                     transition: 'background 0.15s ease',
                   }}>
@@ -325,11 +325,11 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
               {!kbOpen && (
                 <motion.div key="result-msg" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ padding: '16px 20px', borderRadius: RADIUS.lg, background: C.surface, border: `1px solid ${C.line}` }}>
                   <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan, display: 'block', marginBottom: 6 }}>ÓMICRON</span>
-                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 16, color: C.ink, lineHeight: 1.5 }}>{resultMsg}</p>
+                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>{resultMsg}</p>
                 </motion.div>
               )}
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 10, color: C.mut, margin: 0, letterSpacing: 1 }}>
+                style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 11, color: C.mut, margin: 0, letterSpacing: 1 }}>
                 Preparando tu orbe…
               </motion.p>
             </>

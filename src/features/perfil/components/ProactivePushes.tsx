@@ -177,7 +177,7 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'flex-end',
-    gap: 5,
+    gap: 4,
     pointerEvents: 'none',
     maxHeight: '22vh',
     overflow: 'hidden',
@@ -200,7 +200,7 @@ const S: Record<string, React.CSSProperties> = {
     letterSpacing: 1,
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     marginBottom: 3,
   },
   tagDot: {
@@ -213,7 +213,7 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: FONT.display,
     fontSize: 13,
     fontWeight: 700,
-    marginTop: 3,
+    marginTop: 4,
     lineHeight: 1.25,
     color: C.ink,
   },
@@ -225,7 +225,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   actions: {
     display: 'flex',
-    gap: 6,
+    gap: 8,
     marginTop: 9,
     justifyContent: 'flex-end',
     alignItems: 'center',
@@ -233,7 +233,7 @@ const S: Record<string, React.CSSProperties> = {
   btnPrimary: {
     flex: '0 0 auto',
     padding: '6px 13px',
-    borderRadius: 10,
+    borderRadius: 12,
     border: 'none',
     cursor: 'pointer',
     fontFamily: FONT.display,
@@ -245,7 +245,7 @@ const S: Record<string, React.CSSProperties> = {
   btnGhost: {
     flex: '0 0 auto',
     padding: '6px 9px',
-    borderRadius: 10,
+    borderRadius: 12,
     cursor: 'pointer',
     color: C.mut,
     background: 'transparent',

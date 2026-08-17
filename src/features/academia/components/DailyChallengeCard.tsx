@@ -104,7 +104,7 @@ export function DailyChallengeCard({ onNavigate }: Props) {
 const S: Record<string, React.CSSProperties> = {
   card: {
     margin: '0 0 14px',
-    padding: '14px 16px',
+    padding: '16px',
     borderRadius: 14,
     background: 'linear-gradient(145deg, rgba(92,200,255,0.06), rgba(94,92,230,0.04))',
     border: '1px solid rgba(92,200,255,0.2)',
@@ -153,7 +153,7 @@ const S: Record<string, React.CSSProperties> = {
     border: '1px solid rgba(63,208,201,0.2)',
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   checkEmoji: { fontSize: 18 },
   doneTitle: { fontFamily: FONT.mono, fontSize: 11, color: C.green },
@@ -178,5 +178,5 @@ const S: Record<string, React.CSSProperties> = {
   celebrateEmoji: { fontSize: 32, marginBottom: 6 },
   celebrateTitle: { fontFamily: FONT.display, fontSize: 16, fontWeight: 700, color: C.ink },
   celebratePe: { fontFamily: FONT.mono, fontSize: 13, color: C.green, marginTop: 4 },
-  celebrateStreak: { fontFamily: FONT.mono, fontSize: 10, color: C.gold, marginTop: 6 },
+  celebrateStreak: { fontFamily: FONT.mono, fontSize: 11, color: C.gold, marginTop: 6 },
 };

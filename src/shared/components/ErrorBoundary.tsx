@@ -75,7 +75,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   icon: { fontSize: 26, color: '#ffb02e' },
   title: { fontFamily: MONO, fontSize: 13, letterSpacing: 2, color: '#ffb02e', fontWeight: 700 },
-  section: { fontFamily: MONO, fontSize: 10, letterSpacing: 1, color: 'rgba(255, 176, 46,0.6)', marginTop: 4, textTransform: 'uppercase' },
+  section: { fontFamily: MONO, fontSize: 11, letterSpacing: 1, color: 'rgba(255, 176, 46,0.6)', marginTop: 4, textTransform: 'uppercase' },
   msg: {
     fontFamily: MONO, fontSize: 11, color: '#9fb3cc', margin: '14px 0 20px',
     lineHeight: 1.5, wordBreak: 'break-word',

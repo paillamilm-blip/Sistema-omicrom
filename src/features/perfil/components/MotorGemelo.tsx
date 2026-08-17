@@ -59,11 +59,11 @@ export function MotorGemelo() {
       {/* Historial + racha */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '18px 0 8px' }}>
         <History size={15} style={{ color: C.cyan }} />
-        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#eaf4ff' }}>
+        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff' }}>
           Tu historial
         </span>
         <span style={{
-          marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5,
+          marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 4,
           padding: '3px 10px', borderRadius: 14, background: C.goldFaint, border: `1px solid ${C.goldDim}`,
           fontFamily: FONT.mono, fontSize: 11, color: C.gold,
         }}>

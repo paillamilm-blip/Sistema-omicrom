@@ -204,7 +204,7 @@ export function GobernanzaTab() {
         {/* TRIBUNAL */}
         <SectionLabel>Tribunal de Pares</SectionLabel>
         <CyberCard color={C.red} topBar margin="10px 0 8px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <Gavel size={18} style={{ color: C.red }} />
             <div>
               <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#dbeafe' }}>Arbitraje de Disputas</div>
@@ -231,7 +231,7 @@ export function GobernanzaTab() {
                   <Gavel size={14} style={{ color: C.purple }} />
                   <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.purple }}>CASO ASIGNADO · EMITE TU FALLO</span>
                 </div>
-                <p style={{ margin: '0 0 10px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, color: '#dbeafe', lineHeight: 1.4 }}>
+                <p style={{ margin: '0 0 10px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#dbeafe', lineHeight: 1.4 }}>
                   {a.dispute?.reason ?? 'Disputa sin descripción'}
                 </p>
 
@@ -258,19 +258,19 @@ export function GobernanzaTab() {
             {disputes.map(d => (
               <CyberCard key={d.id} color={DISPUTE_COLOR[d.status] ?? C.cyan} className="oc-rise" margin="0 0 10px">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: DISPUTE_COLOR[d.status] ?? C.cyan }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: DISPUTE_COLOR[d.status] ?? C.cyan }}>
                     <span className="liquid-dot" />{d.status}
                   </span>
                   <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>{new Date(d.created_at).toLocaleDateString('es-CL')}</span>
                 </div>
-                <p style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, color: '#dbeafe' }}>{d.reason}</p>
+                <p style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#dbeafe' }}>{d.reason}</p>
               </CyberCard>
             ))}
           </>
         )}
 
         {disputes.length === 0 && pendientesArb.length === 0 && (
-          <p style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, padding: '2px 28px 6px', lineHeight: 1.6 }}>
+          <p style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, padding: '2px 28px 6px', lineHeight: 1.6 }}>
             Aún no tienes disputas. Si un contrato sale mal, ábrela desde el botón de arriba.
           </p>
         )}
@@ -282,7 +282,7 @@ export function GobernanzaTab() {
         {/* ═══════════════════════════════════════════════════════════════ */}
         <SectionLabel>Apelaciones ⚖️</SectionLabel>
         <CyberCard color={C.gold} topBar margin="10px 0 8px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <AlertTriangle size={18} style={{ color: C.gold }} />
             <div>
               <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#dbeafe' }}>Segunda Instancia</div>
@@ -300,7 +300,7 @@ export function GobernanzaTab() {
             </CyberButton>
           )}
           {appealableDisputes.length === 0 && !isSeniorArbiter && myOpenAppeals.length === 0 && (
-            <p style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, margin: 0, lineHeight: 1.5 }}>
               No tienes disputas resueltas apelables. Tienes 7 días tras un fallo para apelar.
             </p>
           )}
@@ -320,16 +320,16 @@ export function GobernanzaTab() {
                       APELACIÓN · {myVote ? 'YA VOTASTE' : 'EMITE TU VOTO'}
                     </span>
                   </div>
-                  <p style={{ margin: '0 0 6px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, color: '#dbeafe', lineHeight: 1.4 }}>
+                  <p style={{ margin: '0 0 6px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#dbeafe', lineHeight: 1.4 }}>
                     {d.reason}
                   </p>
-                  <p style={{ margin: '0 0 10px', fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>
+                  <p style={{ margin: '0 0 10px', fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>
                     Disputa resuelta el {d.resolved_at ? new Date(d.resolved_at).toLocaleDateString('es-CL') : '—'} · Apelación abierta el {d.appeal_opened_at ? new Date(d.appeal_opened_at).toLocaleDateString('es-CL') : '—'}
                   </p>
 
                   {myVote ? (
                     <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(92, 200, 255, 0.08)', border: `1px solid ${C.cyanFaint}` }}>
-                      <span style={{ fontFamily: FONT.mono, fontSize: 10, color: myVote.verdict === 'UPHOLD' ? C.green : C.gold }}>
+                      <span style={{ fontFamily: FONT.mono, fontSize: 11, color: myVote.verdict === 'UPHOLD' ? C.green : C.gold }}>
                         Tu voto: {myVote.verdict === 'UPHOLD' ? '✓ CONFIRMAR FALLO' : '↩ REVERTIR FALLO'}
                       </span>
                     </div>
@@ -358,16 +358,16 @@ export function GobernanzaTab() {
               return (
                 <CyberCard key={d.id} color={C.gold} className="oc-rise" margin="0 0 10px">
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.gold }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.gold }}>
                       <span className="liquid-dot" />APELACIÓN EN CURSO
                     </span>
                     <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>
                       {d.appeal_opened_at ? new Date(d.appeal_opened_at).toLocaleDateString('es-CL') : ''}
                     </span>
                   </div>
-                  <p style={{ margin: '0 0 6px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, color: '#dbeafe' }}>{d.reason}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0 0' }}>
-                    <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>
+                  <p style={{ margin: '0 0 6px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#dbeafe' }}>{d.reason}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0 0' }}>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>
                       Votos: {votesForThis.length}/3 (necesita 2 para quórum)
                     </span>
                   </div>
@@ -384,7 +384,7 @@ export function GobernanzaTab() {
             {resolvedAppeals.map(d => (
               <CyberCard key={d.id} color={C.cyanDim} className="oc-rise" margin="0 0 10px">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: d.appeal_resolution?.includes('OVERTURN') ? C.gold : C.green }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: d.appeal_resolution?.includes('OVERTURN') ? C.gold : C.green }}>
                     {d.appeal_resolution?.includes('OVERTURN') ? '↩ REVERTIDO' : '✓ CONFIRMADO'}
                   </span>
                 </div>
@@ -399,7 +399,7 @@ export function GobernanzaTab() {
         {/* STAKING */}
         <SectionLabel>Staking de Talento</SectionLabel>
         <CyberCard color={C.green} topBar margin="10px 0 8px">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <TrendingUp size={18} style={{ color: C.green }} />
             <div>
               <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#dbeafe' }}>Venture Capital Humano</div>
@@ -423,7 +423,7 @@ export function GobernanzaTab() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: s.status === 'ACTIVE' ? 10 : 0 }}>
                   <div>
                     <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#dbeafe' }}>🪙 {s.amount}</div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: s.status === 'ACTIVE' ? C.green : C.cyanDim }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: s.status === 'ACTIVE' ? C.green : C.cyanDim }}>
                       {s.status === 'ACTIVE' && <span className="liquid-dot" />}
                       {s.status === 'ACTIVE' ? 'ACTIVO' : `RETORNADO · ${s.return_amount} T`}
                     </div>
@@ -440,7 +440,7 @@ export function GobernanzaTab() {
           </>
         )}
         {stakes.length === 0 && (
-          <p style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, padding: '2px 28px 6px', lineHeight: 1.6 }}>
+          <p style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, padding: '2px 28px 6px', lineHeight: 1.6 }}>
             Aún no tienes inversiones. Financia talento en el Mercado de Staking y gana +15%.
           </p>
         )}
@@ -455,13 +455,13 @@ export function GobernanzaTab() {
                 { textAlign: 'left', padding: '10px 12px', borderRadius: 8, cursor: 'pointer', background: C.surface },
                 selContract?.id === c.id ? { border: `1px solid ${C.red}` } : { border: `1px solid ${C.cyanFaint}` }
               )}>
-                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe' }}>{c.title}</div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#dbeafe' }}>{c.title}</div>
                 <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>{c.status ?? 'LOCKED'} · 🪙 {c.amount}</div>
               </button>
             ))}
           </div>
           <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Motivo de la disputa..." rows={3}
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, outline: 'none', resize: 'none', marginBottom: 12 }} />
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, outline: 'none', resize: 'none', marginBottom: 12 }} />
           <CyberButton variant="danger" onClick={submitDispute} disabled={!selContract || !reason.trim() || busy}>
             {busy ? 'ABRIENDO...' : 'CONFIRMAR DISPUTA'}
           </CyberButton>
@@ -478,15 +478,15 @@ export function GobernanzaTab() {
                 selTarget?.id === c.id ? { border: `1px solid ${C.green}` } : { border: `1px solid ${C.cyanFaint}` }
               )}>
                 <div>
-                  <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe' }}>@{c.username}</div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#dbeafe' }}>@{c.username}</div>
                   <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>{c.node_type}{c._overlap ? ` · ${c._overlap} skills en común` : ''}</div>
                 </div>
-                <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold }}>{c.pe_points} PE</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.gold }}>{c.pe_points} PE</span>
               </button>
             ))}
           </div>
           <input type="number" min="1" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Monto a invertir (T)"
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, outline: 'none', marginBottom: 12 }} />
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, outline: 'none', marginBottom: 12 }} />
           <CyberButton variant="primary" onClick={submitStake} disabled={!selTarget || !amount || busy} style={{ borderColor: C.greenDim, color: C.green }}>
             {busy ? 'INVIRTIENDO...' : 'CONFIRMAR INVERSIÓN'}
           </CyberButton>
@@ -507,7 +507,7 @@ export function GobernanzaTab() {
                   { textAlign: 'left', padding: '10px 12px', borderRadius: 8, cursor: 'pointer', background: C.surface },
                   selDispute?.id === d.id ? { border: `1px solid ${C.gold}` } : { border: `1px solid ${C.cyanFaint}` }
                 )}>
-                  <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#dbeafe' }}>{d.reason}</div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#dbeafe' }}>{d.reason}</div>
                   <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, marginTop: 2 }}>
                     Resuelta: {d.resolved_at ? new Date(d.resolved_at).toLocaleDateString('es-CL') : '—'} · {daysLeft} días restantes para apelar
                   </div>
@@ -516,11 +516,11 @@ export function GobernanzaTab() {
             })}
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, display: 'block', marginBottom: 6 }}>
+            <label style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, display: 'block', marginBottom: 6 }}>
               DEPÓSITO DE APELACIÓN (Ω) — se devuelve si ganas
             </label>
             <input type="number" min="1" value={appealDeposit} onChange={e => setAppealDeposit(e.target.value)} placeholder="50"
-              style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 14, outline: 'none' }} />
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: C.surface, border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, outline: 'none' }} />
           </div>
           <CyberButton variant="primary" onClick={submitAppeal} disabled={!selDispute || !appealDeposit || busy} style={{ borderColor: C.goldDim, color: C.gold }}>
             {busy ? 'PROCESANDO...' : 'CONFIRMAR APELACIÓN'}
@@ -589,13 +589,13 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
 
       {res?.unlocked && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <ShieldCheck size={12} style={{ color: res.integrity_ok ? C.green : C.red }} />
             <span style={{ fontFamily: FONT.mono, fontSize: 8, color: res.integrity_ok ? C.green : C.red }}>
               {res.integrity_ok ? 'CADENA ÍNTEGRA · EVIDENCIA VÁLIDA' : 'CADENA ALTERADA · EVIDENCIA COMPROMETIDA'}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 220, overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
             {(res.transcript ?? []).map(m => (
               <div key={m.id} style={{ borderLeft: `2px solid ${C.cyanFaint}`, paddingLeft: 8 }}>
                 <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyanDim }}>
@@ -613,14 +613,14 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
           <div style={{ marginTop: 10 }}>
             {!analysis && (
               <button onClick={analyze} disabled={aLoading}
-                style={{ width: '100%', padding: '8px', borderRadius: 6, background: 'rgba(255, 176, 46,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: aLoading ? 0.6 : 1 }}>
+                style={{ width: '100%', padding: '8px', borderRadius: 6, background: 'rgba(255, 176, 46,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: aLoading ? 0.6 : 1 }}>
                 {aLoading ? <><Loader2 size={13} className="animate-spin" /> ANALIZANDO…</> : <><Sparkles size={13} /> RELATOR IA · ANALIZAR CASO</>}
               </button>
             )}
             {aErr && <p style={{ fontFamily: FONT.mono, fontSize: 9, color: C.red, marginTop: 6 }}>{aErr}</p>}
             {analysis && (
               <div style={{ marginTop: 8, padding: 10, borderRadius: 8, background: 'rgba(92, 200, 255,0.06)', border: `1px solid ${C.cyanDim}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1.5, color: C.cyan }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1.5, color: C.cyan }}>
                   <Sparkles size={11} /> ANÁLISIS NEUTRAL · RELATOR IA (no es veredicto)
                 </div>
                 <p style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13.5, color: '#dbeafe', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{analysis}</p>

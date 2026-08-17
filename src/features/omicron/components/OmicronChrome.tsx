@@ -81,7 +81,7 @@ export function OmicronAction({ children, onClick }: { children: ReactNode; onCl
 // Etiqueta de sección (eyebrow) mono, consistente en toda la app.
 export function OmicronEyebrow({ children, color = C.mut, style }: { children: ReactNode; color?: string; style?: CSSProperties }) {
   return (
-    <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color, padding: '4px 2px 8px', ...style }}>
+    <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase', color, padding: '4px 2px 8px', ...style }}>
       {children}
     </div>
   );
@@ -89,7 +89,7 @@ export function OmicronEyebrow({ children, color = C.mut, style }: { children: R
 
 const S: Record<string, CSSProperties> = {
   header: {
-    display: 'flex', alignItems: 'center', gap: 11, flexShrink: 0,
+    display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
     padding: '12px 14px', marginBottom: 4,
     borderRadius: RADIUS.lg,
     background: 'rgba(255,255,255,0.045)',
@@ -107,12 +107,12 @@ const S: Record<string, CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#02030a',
   },
   title: {
-    fontFamily: FONT.display, fontWeight: 700, fontSize: 18, color: C.ink,
+    fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.ink,
     letterSpacing: -0.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
   },
   action: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 },
   actionBtn: {
-    display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 12,
+    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 12,
     background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', border: 'none', color: '#fff',
     cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
     boxShadow: '0 8px 20px rgba(10,132,255,0.34)',
@@ -161,7 +161,7 @@ export function OmicronCard({ children, onClick, accent, glow, style, className 
       style={{
         position: 'relative',
         borderRadius: RADIUS.xl,
-        padding: 15,
+        padding: 16,
         background: 'linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
         border: `1px solid ${C.line}`,
         backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
@@ -184,8 +184,8 @@ export function OmicronCard({ children, onClick, accent, glow, style, className 
 export function Chip({ children, color = C.cyan, filled, icon }: { children: ReactNode; color?: string; filled?: boolean; icon?: ReactNode }) {
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px',
-      borderRadius: RADIUS.pill, fontFamily: FONT.mono, fontSize: 10, letterSpacing: 0.4,
+      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px',
+      borderRadius: RADIUS.pill, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.4,
       color: filled ? '#02030a' : color, background: filled ? color : `${color}1c`,
       border: `1px solid ${filled ? color : `${color}55`}`, whiteSpace: 'nowrap', fontWeight: 600,
     }}>
@@ -198,8 +198,8 @@ export function Chip({ children, color = C.cyan, filled, icon }: { children: Rea
 export function Stat({ label, value, color = C.ink, icon }: { label: string; value: ReactNode; color?: string; icon?: ReactNode }) {
   return (
     <div style={{ padding: '11px 12px', borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${C.line}` }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: C.mut, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase' }}>{icon}{label}</div>
-      <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color, marginTop: 3, letterSpacing: -0.5 }}>{value}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.mut, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase' }}>{icon}{label}</div>
+      <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color, marginTop: 4, letterSpacing: -0.5 }}>{value}</div>
     </div>
   );
 }
@@ -235,7 +235,7 @@ export function SectionTitle({ children, icon, right, color = C.cyan }: { childr
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 2px 9px' }}>
       {icon && <span style={{ color, display: 'flex' }}>{icon}</span>}
-      <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.ink, letterSpacing: -0.2 }}>{children}</span>
+      <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.ink, letterSpacing: -0.2 }}>{children}</span>
       {right && <span style={{ marginLeft: 'auto' }}>{right}</span>}
     </div>
   );

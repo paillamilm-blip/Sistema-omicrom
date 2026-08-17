@@ -62,7 +62,7 @@ export function LiveRanking() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '14px 0 6px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '14px 0 6px' }}>
         <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.cyanDim, textTransform: 'uppercase' }}>Ranking en vivo</span>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.gold, boxShadow: `0 0 6px ${C.gold}`, opacity: pulse ? 1 : 0.4, transition: 'opacity .3s' }} />
       </div>
@@ -75,7 +75,7 @@ export function LiveRanking() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
+              gap: 8,
               padding: '6px 6px',
               borderBottom: `1px solid ${C.cyanFaint}`,
               background: isSelf ? 'rgba(255, 176, 46,0.08)' : 'transparent',

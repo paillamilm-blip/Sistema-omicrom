@@ -38,7 +38,7 @@ function FitRing({ pct, color }: { pct: number; color: string }) {
         <circle cx="28" cy="28" r={r} fill="none" stroke="#12203a" strokeWidth="5" />
         <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off} />
       </svg>
-      <span style={{ fontFamily: FONT.mono, fontSize: 14, fontWeight: 700, color }}>{pct}</span>
+      <span style={{ fontFamily: FONT.mono, fontSize: 13, fontWeight: 700, color }}>{pct}</span>
     </span>
   );
 }
@@ -86,7 +86,7 @@ export function TrabajoTeEncuentra() {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>El trabajo te encuentra</div>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, marginTop: 1 }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, marginTop: 1 }}>
             Ómicron postula por ti · Nodo {tierName} · rep {profile.rep}
           </div>
         </div>
@@ -102,7 +102,7 @@ export function TrabajoTeEncuentra() {
           {apps.slice().reverse().map((a, i) => {
             const s = stageOf(a), pct = Math.round(((s + 1) / STAGES.length) * 100);
             return (
-              <div key={`${a.title}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: RADIUS.lg, background: 'rgba(63, 208, 201,0.05)', border: '1px solid rgba(63, 208, 201,0.18)', marginBottom: 7 }}>
+              <div key={`${a.title}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: RADIUS.lg, background: 'rgba(63, 208, 201,0.05)', border: '1px solid rgba(63, 208, 201,0.18)', marginBottom: 7 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 13, color: '#eaf4ff' }}>{a.title}</div>
                   <div style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.cyanDim }}>{a.company} · match {a.fit}%</div>
@@ -136,9 +136,9 @@ export function TrabajoTeEncuentra() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: '#eaf4ff', lineHeight: 1.15 }}>{j.title}</div>
                   <div style={{ fontFamily: FONT.mono, fontSize: 10.5, color: C.cyanDim, marginTop: 2 }}>{j.company} · {j.mode}</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
-                    <span style={{ fontFamily: FONT.mono, fontSize: 9.5, padding: '3px 8px', borderRadius: 10, color: C.green, border: '1px solid rgba(63, 208, 201,0.3)' }}>{j.salary}</span>
-                    {j.tags.map((t) => <span key={t} style={{ fontFamily: FONT.mono, fontSize: 9.5, padding: '3px 8px', borderRadius: 10, color: '#cfe', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>{t}</span>)}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 9.5, padding: '3px 8px', borderRadius: 12, color: C.green, border: '1px solid rgba(63, 208, 201,0.3)' }}>{j.salary}</span>
+                    {j.tags.map((t) => <span key={t} style={{ fontFamily: FONT.mono, fontSize: 9.5, padding: '3px 8px', borderRadius: 12, color: '#cfe', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>{t}</span>)}
                   </div>
                 </div>
               </div>
@@ -212,7 +212,7 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
           <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 17, color: '#eaf4ff' }}>Postulando por ti</span>
           <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: C.cyanDim, cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
         </div>
-        <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, textTransform: 'uppercase', marginBottom: 16 }}>{job.title} · {job.company}</div>
+        <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, textTransform: 'uppercase', marginBottom: 16 }}>{job.title} · {job.company}</div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {steps.map((h, i) => {
@@ -224,24 +224,24 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
                   {doneS ? <Check size={15} /> : i === 3 ? '✓' : i + 1}
                 </div>
                 <div style={{ flex: 1, paddingTop: 3 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: '#eaf4ff' }}>{h}</div>
-                  {i === 0 && (active || doneS) && <div style={{ fontSize: 12, color: C.cyanDim, marginTop: 3, lineHeight: 1.4 }}>Adjunté tu Pasaporte verificable ({repText}). Sin formularios: tus datos ya están validados.</div>}
+                  <div style={{ fontWeight: 700, fontSize: 13, color: '#eaf4ff' }}>{h}</div>
+                  {i === 0 && (active || doneS) && <div style={{ fontSize: 12, color: C.cyanDim, marginTop: 4, lineHeight: 1.4 }}>Adjunté tu Pasaporte verificable ({repText}). Sin formularios: tus datos ya están validados.</div>}
                   {i === 1 && (active || doneS) && (
-                    <div style={{ marginTop: 8, padding: '11px 13px', borderRadius: 10, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.cyanFaint}`, fontSize: 12, lineHeight: 1.5, color: '#dbeafe' }}>
+                    <div style={{ marginTop: 8, padding: '11px 13px', borderRadius: 12, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.cyanFaint}`, fontSize: 12, lineHeight: 1.5, color: '#dbeafe' }}>
                       "Candidato {repText}. Encaje con {job.title}: {fit}%. Fortalezas verificadas en Ómicron, sin necesidad de pruebas adicionales."
                     </div>
                   )}
                   {i === 2 && (active || doneS) && (
                     <div style={{ marginTop: 8 }}>
                       {IQ.map((it, k) => (
-                        <div key={k} style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 7 }}>
+                        <div key={k} style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 7 }}>
                           <div style={{ fontSize: 12.5, fontWeight: 600, color: '#eaf4ff' }}>{k + 1}. {it.q}</div>
                           <div style={{ display: 'flex', gap: 7, marginTop: 8, flexWrap: 'wrap' }}>
                             <button onClick={() => speak(it.q)} style={miniBtn(C.cyan)}><Volume2 size={12} /> Escuchar</button>
                             <button onClick={() => practice(k)} style={miniBtn(C.gold)}><Mic size={12} /> Practicar</button>
                           </div>
-                          <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold, marginTop: 7, lineHeight: 1.4 }}>💡 {it.tip}</div>
-                          {fb[k] && <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.green, marginTop: 6, lineHeight: 1.4 }}>{fb[k]}</div>}
+                          <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.gold, marginTop: 7, lineHeight: 1.4 }}>💡 {it.tip}</div>
+                          {fb[k] && <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.green, marginTop: 6, lineHeight: 1.4 }}>{fb[k]}</div>}
                         </div>
                       ))}
                     </div>
@@ -263,7 +263,7 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
 }
 
 function miniBtn(color: string): React.CSSProperties {
-  return { display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: FONT.mono, fontSize: 9, letterSpacing: .5, textTransform: 'uppercase', padding: '6px 10px', borderRadius: 10, cursor: 'pointer', background: `${color}14`, border: `1px solid ${color}55`, color };
+  return { display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: 9, letterSpacing: .5, textTransform: 'uppercase', padding: '6px 10px', borderRadius: 12, cursor: 'pointer', background: `${color}14`, border: `1px solid ${color}55`, color };
 }
 
 // Tipos mínimos para SpeechRecognition (evita depender de libs de tipos del navegador)

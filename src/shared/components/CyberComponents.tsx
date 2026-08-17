@@ -613,7 +613,7 @@ export function RetoCard({
 }: RetoCardProps) {
   return (
     <CyberCard color={C.gold} topBar style={style}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 20 }}>{icon}</span>
         <div>
           <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.gold }}>

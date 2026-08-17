@@ -72,7 +72,7 @@ export function CartaCompetencias() {
       )}
 
       {loading && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 4px', fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 4px', fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim }}>
           <Loader2 size={16} className="animate-spin" style={{ color: C.cyan }} /> Redactando tu carta con la evidencia...
         </div>
       )}
@@ -87,9 +87,9 @@ export function CartaCompetencias() {
       {carta && !loading && (
         <div>
           <div style={{ padding: 14, borderRadius: RADIUS.lg, background: 'rgba(92, 200, 255,0.05)', border: '1px solid rgba(92, 200, 255,0.18)' }}>
-            <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#eaf4ff', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{carta}</p>
+            <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: '#eaf4ff', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{carta}</p>
           </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <button onClick={copiar} style={{ ...btnGhost, flex: 1 }}>
               {copied ? <><Check size={14} style={{ color: C.green }} /> Copiado</> : <><Copy size={14} /> Copiar</>}
             </button>
@@ -105,6 +105,6 @@ export function CartaCompetencias() {
 }
 
 function btn(color: string): React.CSSProperties {
-  return { width: '100%', padding: '11px 0', borderRadius: 9, border: 'none', cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#000206', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 0 14px ${color}44` };
+  return { width: '100%', padding: '11px 0', borderRadius: 9, border: 'none', cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#000206', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 0 14px ${color}44` };
 }
 const btnGhost: React.CSSProperties = { padding: '10px 0', borderRadius: 9, background: 'rgba(92, 200, 255,0.08)', border: '1px solid rgba(92, 200, 255,0.25)', color: C.cyan, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 };

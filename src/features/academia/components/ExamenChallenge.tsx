@@ -153,8 +153,8 @@ export function ExamenChallenge({ node, onClose, onFinished }: Props) {
 
       {/* Header */}
       <header style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: C.panel, borderBottom: `1px solid ${C.line}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, boxShadow: `0 0 14px ${C.cyan}44` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, boxShadow: `0 0 14px ${C.cyan}44` }}>
             <Brain size={18} style={{ color: C.cyan }} />
           </div>
           <div style={{ minWidth: 0 }}>
@@ -166,13 +166,13 @@ export function ExamenChallenge({ node, onClose, onFinished }: Props) {
       </header>
 
       {/* Pasos */}
-      <div style={{ flex: '0 0 auto', display: 'flex', gap: 6, padding: '10px 16px', background: C.panel, borderBottom: `1px solid ${C.line}`, fontFamily: MONO, fontSize: 9, letterSpacing: 0.5 }}>
+      <div style={{ flex: '0 0 auto', display: 'flex', gap: 8, padding: '10px 16px', background: C.panel, borderBottom: `1px solid ${C.line}`, fontFamily: MONO, fontSize: 9, letterSpacing: 0.5 }}>
         {[['preguntas', 'PREGUNTAS'], ['defensa', 'DEFENSA'], ['resultado', 'ACTA']].map(([key, label], i) => {
           const order = ['preguntas', 'defensa', 'resultado'];
           const cur = phase === 'cargando' ? 0 : phase === 'evaluando' ? 2 : order.indexOf(phase);
           const on = order.indexOf(key) <= cur;
           return (
-            <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: on ? C.cyan : 'rgba(255,255,255,0.25)' }}>
+            <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: on ? C.cyan : 'rgba(255,255,255,0.25)' }}>
               {i + 1}. {label}{i < 2 && <ArrowRight size={9} style={{ color: 'rgba(255,255,255,0.2)' }} />}
             </span>
           );
@@ -183,7 +183,7 @@ export function ExamenChallenge({ node, onClose, onFinished }: Props) {
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: C.bg, padding: 16 }}>
 
         {(phase === 'cargando' || phase === 'evaluando') && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 14, minHeight: 280 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, minHeight: 280 }}>
             <Loader2 size={30} className="animate-spin" style={{ color: C.cyan }} />
             <p style={{ fontFamily: MONO, fontSize: 12, color: C.sub, letterSpacing: 1, textAlign: 'center' }}>
               {phase === 'evaluando' ? 'La IA está evaluando tu desempeño...' : 'Generando tu examen adaptativo...'}
@@ -192,7 +192,7 @@ export function ExamenChallenge({ node, onClose, onFinished }: Props) {
         )}
 
         {phase === 'error' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 14, minHeight: 280, textAlign: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, minHeight: 280, textAlign: 'center' }}>
             <XCircle size={30} style={{ color: C.red }} />
             <p style={{ fontFamily: DISP, fontSize: 15, color: C.text, maxWidth: 420 }}>{errMsg}</p>
             <button onClick={generar} style={btn(C.cyan)}><RotateCcw size={15} /> Reintentar</button>
@@ -209,7 +209,7 @@ export function ExamenChallenge({ node, onClose, onFinished }: Props) {
                     const sel = mcRespuestas[qi] === oi;
                     return (
                       <button key={oi} onClick={() => setMcRespuestas(p => p.map((v, i) => i === qi ? oi : v))}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, cursor: 'pointer', textAlign: 'left',
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 9, cursor: 'pointer', textAlign: 'left',
                           background: sel ? C.cyanFaint : 'transparent', border: `1px solid ${sel ? C.cyan : C.line}`, color: sel ? C.text : 'rgba(230,241,251,0.8)', fontFamily: DISP, fontSize: 13.5 }}>
                         <span style={{ width: 18, height: 18, flexShrink: 0, borderRadius: '50%', border: `2px solid ${sel ? C.cyan : C.sub}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {sel && <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.cyan }} />}
@@ -291,7 +291,7 @@ function ResultadoPanel({ res }: { res: ExamResultado }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ borderRadius: 12, border: `1px solid ${accent}66`, background: aprob ? C.greenFaint : C.redFaint, padding: 16, textAlign: 'center' }}>
         {aprob ? <CheckCircle size={30} style={{ color: C.green }} /> : <XCircle size={30} style={{ color: C.red }} />}
-        <p style={{ margin: '8px 0 2px', fontFamily: DISP, fontWeight: 700, fontSize: 18, color: accent }}>
+        <p style={{ margin: '8px 0 2px', fontFamily: DISP, fontWeight: 700, fontSize: 20, color: accent }}>
           {aprob ? 'Competencia validada' : 'Aún no validada'}
         </p>
         <p style={{ margin: 0, fontFamily: MONO, fontSize: 12, color: C.sub }}>Puntaje global: {res.puntaje_global}% {aprob ? '· Acta emitida ✓' : '· requiere 70%'}</p>
@@ -317,13 +317,13 @@ function ResultadoPanel({ res }: { res: ExamResultado }) {
       {res.resumen && (
         <div style={cardStyle}>
           <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase' }}>📜 Acta de evidencia</p>
-          <p style={{ margin: 0, fontFamily: DISP, fontSize: 14, color: C.text, lineHeight: 1.6 }}>{res.resumen}</p>
+          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{res.resumen}</p>
         </div>
       )}
       {res.feedback && (
         <div style={{ ...cardStyle, borderColor: `${C.gold}55`, background: C.goldFaint }}>
           <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.gold, textTransform: 'uppercase' }}>💡 Para mejorar</p>
-          <p style={{ margin: 0, fontFamily: DISP, fontSize: 14, color: C.text, lineHeight: 1.6 }}>{res.feedback}</p>
+          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{res.feedback}</p>
         </div>
       )}
     </div>
@@ -333,9 +333,9 @@ function ResultadoPanel({ res }: { res: ExamResultado }) {
 const cardStyle: React.CSSProperties = { padding: 16, borderRadius: 12, background: C.card, border: `1px solid ${C.line}` };
 const textareaStyle: React.CSSProperties = {
   width: '100%', minHeight: 110, padding: 12, boxSizing: 'border-box', background: '#040a18', color: '#c9f6ff',
-  fontFamily: DISP, fontSize: 14, lineHeight: 1.5, resize: 'vertical', outline: 'none', borderRadius: 9, border: `1px solid ${C.line}`,
+  fontFamily: DISP, fontSize: 13, lineHeight: 1.5, resize: 'vertical', outline: 'none', borderRadius: 9, border: `1px solid ${C.line}`,
 };
 function btn(color: string): React.CSSProperties {
-  return { padding: '13px 18px', borderRadius: 12, border: 'none', cursor: 'pointer', fontFamily: DISP, fontWeight: 700, fontSize: 14, color: C.bg, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 0 16px ${color}55` };
+  return { padding: '13px 18px', borderRadius: 12, border: 'none', cursor: 'pointer', fontFamily: DISP, fontWeight: 700, fontSize: 13, color: C.bg, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 0 16px ${color}55` };
 }
 const btnGhost: React.CSSProperties = { padding: '13px 20px', borderRadius: 12, background: 'transparent', border: `1px solid ${C.line}`, color: C.sub, cursor: 'pointer', fontFamily: DISP, fontWeight: 700, fontSize: 14 };

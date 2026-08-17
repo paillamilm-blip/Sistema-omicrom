@@ -92,7 +92,7 @@ export function InstallPWA() {
           <button
             onClick={install}
             style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: RADIUS.pill,
+              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: RADIUS.pill,
               cursor: 'pointer', background: `linear-gradient(135deg, #8bd4ff, ${C.cyan})`, border: 'none',
               color: '#000206', fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700,
             }}

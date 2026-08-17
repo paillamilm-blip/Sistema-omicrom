@@ -257,7 +257,7 @@ export function MaxSkillTab() {
             <OmicronCard style={{ marginBottom: 16 }}>
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
                 <Sparkles size={28} style={{ color: C.mut, marginBottom: 8 }} />
-                <p style={{ fontFamily: FONT.body, fontSize: 14, color: C.mut, margin: 0 }}>
+                <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.mut, margin: 0 }}>
                   Sube tu CV para desbloquear tu mapa de habilidades
                 </p>
                 <button
@@ -270,7 +270,7 @@ export function MaxSkillTab() {
             </OmicronCard>
           ) : (
             <motion.div variants={stagger} initial="hidden" animate="show"
-              style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}
             >
               {skillsDetail.map(skill => {
                 const level = getSkillLevel(skill.pct);
@@ -316,7 +316,7 @@ export function MaxSkillTab() {
                           >
                             <div style={S.expandedContent}>
                               <div style={S.expandedInfo}>
-                                <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>
+                                <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>
                                   Dominio: {skill.pct}% · Nivel: {level.label}
                                   {synergy && ` · Sinergia: ${synergy}`}
                                 </span>
@@ -393,10 +393,10 @@ export function MaxSkillTab() {
                 <Sparkles size={18} />
               </div>
               <div>
-                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.ink }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.ink }}>
                   Coach IA Personal
                 </div>
-                <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut, marginTop: 2 }}>
+                <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginTop: 2 }}>
                   Recibe un consejo personalizado basado en tu perfil
                 </div>
               </div>
@@ -447,10 +447,10 @@ export function MaxSkillTab() {
                 <Award size={22} style={{ color: C.purple }} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.ink }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.ink }}>
                   Defiende tu Gemelo Digital
                 </div>
-                <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut, marginTop: 3, lineHeight: 1.5 }}>
+                <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginTop: 4, lineHeight: 1.5 }}>
                   La IA evalúa tus competencias principales con un examen exigente.
                   Valida tu reputación y sube tu Ejecución.
                 </div>
@@ -499,11 +499,11 @@ export function MaxSkillTab() {
 const S: Record<string, React.CSSProperties> = {
   // Radar
   radarGrid: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14,
+    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16,
     padding: '4px 0 14px',
   },
   radarItem: {
-    display: 'flex', alignItems: 'center', gap: 10,
+    display: 'flex', alignItems: 'center', gap: 8,
   },
   radarLabel: {
     display: 'flex', flexDirection: 'column', gap: 3,
@@ -525,7 +525,7 @@ const S: Record<string, React.CSSProperties> = {
     color: C.ink, letterSpacing: -0.2,
   },
   skillMeta: {
-    display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap',
+    display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap',
   },
   chevron: {
     position: 'absolute', top: 16, right: 14, color: C.mut,
@@ -578,7 +578,7 @@ const S: Record<string, React.CSSProperties> = {
     color: C.ink, position: 'relative', zIndex: 1,
   },
   softPillPct: {
-    fontFamily: FONT.mono, fontSize: 10, fontWeight: 700,
+    fontFamily: FONT.mono, fontSize: 11, fontWeight: 700,
     color: C.green, position: 'relative', zIndex: 1,
   },
   softPillBar: {
@@ -623,7 +623,7 @@ const S: Record<string, React.CSSProperties> = {
     background: C.glass, border: `1px solid ${C.line}`,
     color: C.cyan, fontFamily: FONT.mono, fontSize: 11,
     fontWeight: 600, cursor: 'pointer',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
   },
 
 
@@ -641,7 +641,7 @@ const S: Record<string, React.CSSProperties> = {
     width: '100%', padding: '13px 0', borderRadius: RADIUS.md,
     background: `linear-gradient(135deg, ${C.purple}, ${C.cyan})`,
     border: 'none', color: '#fff',
-    fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+    fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
     cursor: 'pointer', display: 'flex', alignItems: 'center',
     justifyContent: 'center', gap: 8,
     boxShadow: `0 10px 28px rgba(94,92,230,0.35)`,

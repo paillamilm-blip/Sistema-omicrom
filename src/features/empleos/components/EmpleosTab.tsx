@@ -284,7 +284,7 @@ export function EmpleosTab() {
               </div>
 
               {getJobTags(j).length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '10px 0 0' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '10px 0 0' }}>
                   {getJobTags(j).map(t => <span key={t} style={styles.tag}>{t}</span>)}
                 </div>
               )}
@@ -306,7 +306,7 @@ export function EmpleosTab() {
           );
         })}
         {filtered.length > visibleCount && (
-          <button onClick={() => setVisibleCount(v => v + 20)} style={{ width: '100%', padding: '12px', borderRadius: 10, background: 'rgba(92,200,255,0.06)', border: `1px solid rgba(92,200,255,0.2)`, color: '#8bd4ff', fontFamily: 'monospace', fontSize: 11, cursor: 'pointer', marginTop: 8 }}>
+          <button onClick={() => setVisibleCount(v => v + 20)} style={{ width: '100%', padding: '12px', borderRadius: 12, background: 'rgba(92,200,255,0.06)', border: `1px solid rgba(92,200,255,0.2)`, color: '#8bd4ff', fontFamily: 'monospace', fontSize: 11, cursor: 'pointer', marginTop: 8 }}>
             Cargar más ({filtered.length - visibleCount} restantes)
           </button>
         )}
@@ -338,9 +338,9 @@ export function EmpleosTab() {
           <div style={styles.modalBg} onClick={() => setRadarJob(null)}>
             <div style={styles.modal} onClick={e => e.stopPropagation()}>
               <button onClick={() => setRadarJob(null)} style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: C.muted, cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
-              <div style={{ fontFamily: FR, fontWeight: 700, fontSize: 18, color: C.ink, textTransform: 'uppercase', paddingRight: 24 }}>{j.title}</div>
-              <div style={{ fontFamily: FM, fontSize: 10, color: C.muted, marginTop: 4 }}>@{names.get(j.company_id) ?? 'empresa'} · {LEVEL_LABEL[j.required_node_level] ?? 'N1'}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontFamily: FM, fontSize: 11, color: j.is_remote ? C.green : C.blueHi }}>
+              <div style={{ fontFamily: FR, fontWeight: 700, fontSize: 20, color: C.ink, textTransform: 'uppercase', paddingRight: 24 }}>{j.title}</div>
+              <div style={{ fontFamily: FM, fontSize: 11, color: C.muted, marginTop: 4 }}>@{names.get(j.company_id) ?? 'empresa'} · {LEVEL_LABEL[j.required_node_level] ?? 'N1'}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontFamily: FM, fontSize: 11, color: j.is_remote ? C.green : C.blueHi }}>
                 {j.is_remote ? <><Wifi size={13} /> Remoto</> : <><MapPin size={13} /> {j.location || 'Ubicación'}{dist != null ? ` · a ${fmtDist(dist)}` : ''}</>}
               </div>
               {j.description && <p style={{ fontFamily: FR, fontSize: 13, color: '#b9d4e6', lineHeight: 1.4, margin: '10px 0 0' }}>{j.description}</p>}
@@ -372,10 +372,10 @@ function RadarView({ jobs, userPos, geoStatus, onRequestGeo, onPick }: {
       <div style={{ textAlign: 'center', padding: '34px 20px' }}>
         <Radar size={34} style={{ color: C.green }} />
         <p style={{ fontFamily: FR, fontSize: 15, color: '#dbeafe', margin: '12px 0 4px' }}>Activa tu ubicación para ver el radar</p>
-        <p style={{ fontFamily: FM, fontSize: 10, color: C.muted, lineHeight: 1.5, marginBottom: 14 }}>Verás las oportunidades cerca tuyo, ordenadas por distancia. Tu ubicación no se guarda.</p>
-        {geoStatus === 'denied' && <p style={{ fontFamily: FM, fontSize: 10, color: '#ff5066', marginBottom: 10 }}>Permiso denegado. Actívalo en el navegador y reintenta.</p>}
+        <p style={{ fontFamily: FM, fontSize: 11, color: C.muted, lineHeight: 1.5, marginBottom: 14 }}>Verás las oportunidades cerca tuyo, ordenadas por distancia. Tu ubicación no se guarda.</p>
+        {geoStatus === 'denied' && <p style={{ fontFamily: FM, fontSize: 11, color: '#ff5066', marginBottom: 10 }}>Permiso denegado. Actívalo en el navegador y reintenta.</p>}
         <button onClick={onRequestGeo} disabled={geoStatus === 'loading'}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 18px', borderRadius: 8, background: `linear-gradient(135deg, ${C.green}, #1fa30a)`, border: 'none', color: '#04110a', fontFamily: FR, fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: geoStatus === 'loading' ? 0.6 : 1 }}>
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 18px', borderRadius: 8, background: `linear-gradient(135deg, ${C.green}, #1fa30a)`, border: 'none', color: '#04110a', fontFamily: FR, fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: geoStatus === 'loading' ? 0.6 : 1 }}>
           <LocateFixed size={15} /> {geoStatus === 'loading' ? 'Localizando...' : 'Activar mi ubicación'}
         </button>
       </div>
@@ -434,10 +434,10 @@ function RadarView({ jobs, userPos, geoStatus, onRequestGeo, onPick }: {
       {items.slice(0, 5).map(({ j, dist }) => (
         <button key={j.id} onClick={() => onPick(j)} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '9px 11px', marginBottom: 8, borderRadius: 8, cursor: 'pointer', background: C.panelA, border: `1px solid ${C.lineSoft}` }}>
           <span style={{ minWidth: 0 }}>
-            <span style={{ display: 'block', fontFamily: FR, fontWeight: 700, fontSize: 14, color: '#dbeafe', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.title}</span>
+            <span style={{ display: 'block', fontFamily: FR, fontWeight: 700, fontSize: 13, color: '#dbeafe', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.title}</span>
             <span style={{ fontFamily: FM, fontSize: 9, color: C.muted }}>🪙 {j.budget_usd}</span>
           </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: FM, fontSize: 10, color: C.green, flexShrink: 0 }}><Navigation size={11} /> {fmtDist(dist)}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: FM, fontSize: 11, color: C.green, flexShrink: 0 }}><Navigation size={11} /> {fmtDist(dist)}</span>
         </button>
       ))}
 
@@ -446,7 +446,7 @@ function RadarView({ jobs, userPos, geoStatus, onRequestGeo, onPick }: {
           <div style={{ fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, margin: '6px 0' }}>🛰️ REMOTAS ({remote.length})</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {remote.map(j => (
-              <button key={j.id} onClick={() => onPick(j)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 20, cursor: 'pointer', background: 'rgba(63, 208, 201,0.08)', border: `1px solid ${C.green}44`, color: '#dbeafe', fontFamily: FR, fontSize: 12 }}>
+              <button key={j.id} onClick={() => onPick(j)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 999, cursor: 'pointer', background: 'rgba(63, 208, 201,0.08)', border: `1px solid ${C.green}44`, color: '#dbeafe', fontFamily: FR, fontSize: 12 }}>
                 <Wifi size={11} style={{ color: C.green }} /> {j.title}
               </button>
             ))}
@@ -522,7 +522,7 @@ function PublishJobModal({ onClose, onDone }: { onClose: () => void; onDone: () 
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           {[1, 2, 3].map(lv => (
             <button key={lv} onClick={() => setF({ ...f, level: lv })} style={{
-              flex: 1, padding: '8px', borderRadius: 6, cursor: 'pointer', fontFamily: FM, fontSize: 10,
+              flex: 1, padding: '8px', borderRadius: 6, cursor: 'pointer', fontFamily: FM, fontSize: 11,
               background: f.level === lv ? 'rgba(92, 200, 255,0.16)' : 'transparent',
               border: `1px solid ${f.level === lv ? C.blue : C.lineSoft}`, color: f.level === lv ? C.blueHi : C.muted,
             }}>{LEVEL_LABEL[lv]}</button>
@@ -546,7 +546,7 @@ function PublishJobModal({ onClose, onDone }: { onClose: () => void; onDone: () 
           <input type="checkbox" checked={f.is_remote} onChange={e => setF({ ...f, is_remote: e.target.checked })} /> Trabajo remoto (sin ubicación)
         </label>
 
-        {err && <div style={{ fontFamily: FM, fontSize: 10, color: '#ff5066', marginBottom: 10 }}>{err}</div>}
+        {err && <div style={{ fontFamily: FM, fontSize: 11, color: '#ff5066', marginBottom: 10 }}>{err}</div>}
 
         <button onClick={submit} disabled={saving} style={{ width: '100%', padding: '12px', borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: 'none', color: '#04121f', fontFamily: FM, fontSize: 12, letterSpacing: 1, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
           {saving ? 'PUBLICANDO…' : 'PUBLICAR · GENERAR TERNA'}
@@ -562,26 +562,26 @@ const styles: Record<string, React.CSSProperties> = {
   iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: '0 0 14px rgba(92, 200, 255,0.5)' },
   hTitle: { fontFamily: FM, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   hSub: { fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
-  pubBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'rgba(92, 200, 255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1 },
+  pubBtn: { display: 'flex', alignItems: 'center', gap: 4, padding: '7px 13px', borderRadius: 8, background: 'rgba(92, 200, 255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 11, letterSpacing: 1 },
   filterRow: { display: 'flex', gap: 8, padding: '12px 0', overflowX: 'auto', flexShrink: 0 },
   viewRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '0 0 10px', flexShrink: 0 },
-  viewPill: { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 13px', borderRadius: 6, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1, whiteSpace: 'nowrap', textTransform: 'uppercase' },
-  fPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 6, cursor: 'pointer', fontFamily: FM, fontSize: 10, letterSpacing: 1, whiteSpace: 'nowrap', textTransform: 'uppercase' },
+  viewPill: { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 13px', borderRadius: 6, cursor: 'pointer', fontFamily: FM, fontSize: 11, letterSpacing: 1, whiteSpace: 'nowrap', textTransform: 'uppercase' },
+  fPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '8px 14px', borderRadius: 6, cursor: 'pointer', fontFamily: FM, fontSize: 11, letterSpacing: 1, whiteSpace: 'nowrap', textTransform: 'uppercase' },
   scroll: { flex: 1, overflowY: 'auto', padding: '4px 0 20px', display: 'flex', flexDirection: 'column', gap: 14 },
   muted: { fontFamily: FM, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
   card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 18, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
   cardTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.steelHi}, ${C.blue}, transparent)` },
   matchBadge: { position: 'absolute', top: 12, right: 14, display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FM, fontSize: 8, color: C.amber, background: 'rgba(255, 176, 46,0.1)', border: '1px solid rgba(255, 176, 46,0.3)', padding: '2px 7px', borderRadius: 3 },
-  title: { fontFamily: FR, fontWeight: 700, fontSize: 18, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', paddingRight: 70 },
-  company: { fontFamily: FM, fontSize: 10, color: C.muted, marginTop: 4 },
+  title: { fontFamily: FR, fontWeight: 700, fontSize: 20, color: C.ink, lineHeight: 1.15, textTransform: 'uppercase', paddingRight: 70 },
+  company: { fontFamily: FM, fontSize: 11, color: C.muted, marginTop: 4 },
   desc: { fontFamily: FR, fontSize: 13, color: '#b9d4e6', lineHeight: 1.4, margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' },
-  statRow: { display: 'flex', gap: 10, marginTop: 12 },
+  statRow: { display: 'flex', gap: 8, marginTop: 12 },
   statBox: { flex: 1, background: 'rgba(0,0,0,0.25)', border: `1px solid ${C.lineSoft}`, borderRadius: 4, padding: '7px 10px' },
   statLabel: { fontFamily: FM, fontSize: 8, color: C.muted, letterSpacing: 1.5 },
   budget: { fontFamily: FR, fontWeight: 700, fontSize: 19, color: C.amberHi, marginTop: 1 },
   tlimit: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FR, fontWeight: 700, fontSize: 17, color: C.ink, marginTop: 1 },
-  tag: { fontFamily: FM, fontSize: 10, color: C.blueHi, background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3 },
+  tag: { fontFamily: FM, fontSize: 11, color: C.blueHi, background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3 },
   applyBtn: { width: '100%', marginTop: 12, padding: '11px 0', borderRadius: 6, fontFamily: FM, fontWeight: 700, fontSize: 12, letterSpacing: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 },
   modalBg: { position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(2,5,11,0.8)', backdropFilter: 'blur(4px)', padding: 20 },
-  modal: { width: '100%', maxWidth: 380, maxHeight: '85vh', overflowY: 'auto', borderRadius: 10, padding: 20, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.blue}`, boxShadow: '0 0 30px rgba(92, 200, 255,0.3)', position: 'relative' },
+  modal: { width: '100%', maxWidth: 380, maxHeight: '85vh', overflowY: 'auto', borderRadius: 12, padding: 20, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.blue}`, boxShadow: '0 0 30px rgba(92, 200, 255,0.3)', position: 'relative' },
 };

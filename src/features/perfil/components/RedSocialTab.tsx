@@ -226,7 +226,7 @@ function RankingSection({ onViewUser }: { onViewUser: (u: string) => void }) {
             <div style={S.peerName}>{t.full_name || t.username}</div>
             <div style={S.peerMeta}>@{t.username}</div>
           </div>
-          <span style={{ fontFamily: FONT.mono, fontSize: 14, fontWeight: 700, color: C.green }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: 13, fontWeight: 700, color: C.green }}>
             {Number(t.reputation_score ?? 0).toFixed(0)}
           </span>
         </button>
@@ -309,10 +309,10 @@ function timeAgo(ts: number): string {
 
 // ── Styles ───────────────────────────────────────────────────────────
 const S: Record<string, React.CSSProperties> = {
-  tabRow: { display: 'flex', gap: 6, padding: '10px 0', overflowX: 'auto', flexShrink: 0 },
+  tabRow: { display: 'flex', gap: 8, padding: '10px 0', overflowX: 'auto', flexShrink: 0 },
   tab: {
-    display: 'flex', alignItems: 'center', gap: 5, padding: '7px 11px', borderRadius: 8,
-    border: '1px solid', cursor: 'pointer', fontFamily: FONT.mono, fontSize: 10,
+    display: 'flex', alignItems: 'center', gap: 4, padding: '7px 11px', borderRadius: 8,
+    border: '1px solid', cursor: 'pointer', fontFamily: FONT.mono, fontSize: 11,
     letterSpacing: 0.5, whiteSpace: 'nowrap',
   },
   badge: {
@@ -325,31 +325,31 @@ const S: Record<string, React.CSSProperties> = {
   feedDot: { width: 7, height: 7, borderRadius: '50%', flexShrink: 0, boxShadow: '0 0 6px currentColor' },
   feedText: { flex: 1, fontFamily: FONT.body, fontSize: 12.5, color: C.ink, lineHeight: 1.4 },
   feedTime: { fontFamily: FONT.mono, fontSize: 9, color: C.mut, flexShrink: 0 },
-  peerRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: `1px solid rgba(92,200,255,0.06)` },
+  peerRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: `1px solid rgba(92,200,255,0.06)` },
   avatar: {
-    width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 38, height: 38, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
     background: 'rgba(63,208,201,0.1)', border: `1px solid ${C.green}44`,
-    color: '#c9ffd0', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, flexShrink: 0,
+    color: '#c9ffd0', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, flexShrink: 0,
   },
   peerName: { fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.ink },
   peerMeta: { fontFamily: FONT.mono, fontSize: 9, color: C.mut, marginTop: 2 },
   onlineDot: { width: 8, height: 8, borderRadius: '50%', boxShadow: `0 0 6px ${C.green}` },
   dmBtn: {
     width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(92,200,255,0.08)', border: `1px solid ${C.cyan}33`, cursor: 'pointer', fontSize: 14,
+    background: 'rgba(92,200,255,0.08)', border: `1px solid ${C.cyan}33`, cursor: 'pointer', fontSize: 13,
   },
   rankRow: {
-    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 4px',
+    display: 'flex', alignItems: 'center', gap: 8, padding: '10px 4px',
     borderBottom: `1px solid rgba(92,200,255,0.06)`,
     background: 'none', border: 'none', width: '100%', cursor: 'pointer', textAlign: 'left',
   },
-  rankPos: { fontFamily: FONT.display, fontWeight: 700, fontSize: 14, width: 28, textAlign: 'center' },
-  sugCard: { display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', borderBottom: `1px solid rgba(92,200,255,0.06)` },
-  sugReason: { fontFamily: FONT.body, fontSize: 11, color: '#8bb8d4', marginTop: 3, lineHeight: 1.3 },
+  rankPos: { fontFamily: FONT.display, fontWeight: 700, fontSize: 13, width: 28, textAlign: 'center' },
+  sugCard: { display: 'flex', alignItems: 'center', gap: 8, padding: '12px 0', borderBottom: `1px solid rgba(92,200,255,0.06)` },
+  sugReason: { fontFamily: FONT.body, fontSize: 11, color: '#8bb8d4', marginTop: 4, lineHeight: 1.3 },
   connectBtn: {
     padding: '7px 12px', borderRadius: 8, border: `1px solid ${C.green}66`,
     background: 'rgba(63,208,201,0.08)', color: C.green,
-    fontFamily: FONT.mono, fontSize: 10, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+    fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
   },
   empty: { textAlign: 'center', padding: '40px 20px' },
   emptyTitle: { fontFamily: FONT.display, fontSize: 15, fontWeight: 700, color: C.ink, margin: '12px 0 4px' },

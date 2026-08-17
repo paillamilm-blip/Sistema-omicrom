@@ -46,10 +46,10 @@ const S: Record<string, React.CSSProperties> = {
     border: '1px solid', background: 'rgba(92, 200, 255,0.04)',
     animation: 'floatY 5s ease-in-out infinite',
   },
-  title: { fontFamily: RAJ, fontWeight: 700, fontSize: 18, color: '#eaf0fb', letterSpacing: 0.5 },
+  title: { fontFamily: RAJ, fontWeight: 700, fontSize: 20, color: '#eaf0fb', letterSpacing: 0.5 },
   hint: { fontFamily: MONO, fontSize: 11, lineHeight: 1.6, color: '#6b7590', margin: '6px 0 0', maxWidth: 260 },
   cta: {
-    marginTop: 18, padding: '11px 22px', borderRadius: 10, border: 'none', cursor: 'pointer',
-    color: '#000206', fontFamily: RAJ, fontWeight: 700, fontSize: 14, letterSpacing: 0.5,
+    marginTop: 18, padding: '11px 22px', borderRadius: 12, border: 'none', cursor: 'pointer',
+    color: '#000206', fontFamily: RAJ, fontWeight: 700, fontSize: 13, letterSpacing: 0.5,
   },
 };

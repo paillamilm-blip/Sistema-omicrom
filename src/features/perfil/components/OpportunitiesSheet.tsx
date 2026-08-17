@@ -707,7 +707,7 @@ const S: Record<string, React.CSSProperties> = {
     padding: `2px 16px calc(20px + env(safe-area-inset-bottom, 0px))`,
     display: 'flex',
     flexDirection: 'column',
-    gap: 10,
+    gap: 8,
   },
   card: {
     padding: '14px 15px',
@@ -734,11 +734,11 @@ const S: Record<string, React.CSSProperties> = {
   },
   oppTag: {
     fontFamily: FONT.mono,
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 0.6,
     color: C.cyan,
     textTransform: 'uppercase',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   jobTitle: {
     fontFamily: FONT.display,
@@ -763,7 +763,7 @@ const S: Record<string, React.CSSProperties> = {
   meta: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 8,
     marginTop: 9,
   },
   metaTag: {
@@ -779,7 +779,7 @@ const S: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 11,
-    gap: 10,
+    gap: 8,
   },
   ring: {
     position: 'relative',
@@ -825,7 +825,7 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 12,
     color: C.green,
     fontWeight: 600,
-    marginTop: 3,
+    marginTop: 4,
   },
   btnPrimary: {
     padding: '10px 16px',

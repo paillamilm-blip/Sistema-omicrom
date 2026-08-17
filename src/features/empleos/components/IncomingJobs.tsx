@@ -107,7 +107,7 @@ export function IncomingJobPush() {
         animation: 'cp-toast-in 0.24s ease both',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: accent }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: accent }}>
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: accent, boxShadow: `0 0 8px ${accent}`, animation: 'cp-breathe 1.2s ease-in-out infinite' }} />
         {label}
       </div>
@@ -120,13 +120,13 @@ export function IncomingJobPush() {
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
         <button
           onClick={() => { setActiveTab('empleos'); setIncoming(null); }}
-          style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#05060f', background: `linear-gradient(135deg, #ffd27a, ${accent})` }}
+          style={{ flex: 1, padding: '9px', borderRadius: 12, border: 'none', cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#05060f', background: `linear-gradient(135deg, #ffd27a, ${accent})` }}
         >
           Ver {isMatch ? 'mi match' : 'oferta'}
         </button>
         <button
           onClick={() => setIncoming(null)}
-          style={{ padding: '9px 12px', borderRadius: 10, border: `1px solid ${C.cyanFaint}`, cursor: 'pointer', fontFamily: FONT.body, fontSize: 12, color: 'rgba(234,242,255,0.55)', background: 'transparent' }}
+          style={{ padding: '9px 12px', borderRadius: 12, border: `1px solid ${C.cyanFaint}`, cursor: 'pointer', fontFamily: FONT.body, fontSize: 12, color: 'rgba(234,242,255,0.55)', background: 'transparent' }}
         >
           Después
         </button>

@@ -89,7 +89,7 @@ const S: Record<string, React.CSSProperties> = {
   banner: {
     position: 'relative',
     margin: '0 0 14px',
-    padding: '14px 16px',
+    padding: '16px',
     borderRadius: 14,
     background: 'linear-gradient(145deg, rgba(94,92,230,0.08), rgba(92,200,255,0.05))',
     border: '1px solid rgba(94,92,230,0.3)',
@@ -104,7 +104,7 @@ const S: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     display: 'flex',
   },
-  row: { display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
+  row: { display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12 },
   icon: {
     width: 32,
     height: 32,

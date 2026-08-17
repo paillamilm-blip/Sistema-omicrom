@@ -50,7 +50,7 @@ export function GemeloGuidance({ tab }: GemeloGuidanceProps) {
         gap: 8,
       }}
     >
-      <span style={{ fontSize: 14, flexShrink: 0 }}>💡</span>
+      <span style={{ fontSize: 13, flexShrink: 0 }}>💡</span>
       <span style={{ opacity: 0.9 }}>{guidance}</span>
     </div>
   );

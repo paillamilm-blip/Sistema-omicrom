@@ -193,7 +193,7 @@ export function AvatarPicker({ selected, onChange }: Props) {
 const S: Record<string, React.CSSProperties> = {
   wrap: {
     display: 'flex',
-    gap: 10,
+    gap: 8,
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',

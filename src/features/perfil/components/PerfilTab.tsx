@@ -102,7 +102,7 @@ export function PerfilTab() {
         </p>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('omicron:request-auth'))}
-          style={{ marginTop: 8, padding: '12px 24px', borderRadius: 12, background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: `0 4px 16px ${C.cyan}44` }}
+          style={{ marginTop: 8, padding: '12px 24px', borderRadius: 12, background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: `0 4px 16px ${C.cyan}44` }}
         >
           Crear cuenta / Iniciar sesión
         </button>
@@ -238,7 +238,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation }: {
 }) {
   return (
     <div style={{
-      borderRadius: 20, padding: '20px 16px',
+      borderRadius: 999, padding: '20px 16px',
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
       backdropFilter: 'blur(12px)',
@@ -282,13 +282,13 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation }: {
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
         {top3.map((skill, i) => (
           <div key={skill.name} style={{
-            display: 'flex', alignItems: 'center', gap: 5,
+            display: 'flex', alignItems: 'center', gap: 4,
             padding: '6px 12px', borderRadius: 999,
             background: `${SKILL_COLORS[i]}14`, border: `1px solid ${SKILL_COLORS[i]}44`,
           }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: SKILL_COLORS[i], boxShadow: `0 0 5px ${SKILL_COLORS[i]}` }} />
-            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.ink }}>{skill.name}</span>
-            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: SKILL_COLORS[i], fontWeight: 700 }}>{skill.pct}%</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.ink }}>{skill.name}</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 11, color: SKILL_COLORS[i], fontWeight: 700 }}>{skill.pct}%</span>
           </div>
         ))}
       </div>
@@ -303,7 +303,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation }: {
         <Sparkles size={14} color={C.gold} />
         <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.ink }}>Reputación</span>
         <span style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 800, color: C.cyan }}>{Math.round(reputation)}</span>
-        <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>/100</span>
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>/100</span>
       </div>
     </div>
   );
@@ -316,7 +316,7 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation }: {
 }) {
   return (
     <div style={{
-      borderRadius: 20, padding: '20px 16px',
+      borderRadius: 999, padding: '20px 16px',
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
       backdropFilter: 'blur(12px)',
@@ -325,7 +325,7 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation }: {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         <FileText size={14} color={C.cyan} />
-        <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase' }}>CV Convalidado</span>
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase' }}>CV Convalidado</span>
         <CheckCircle2 size={12} color={C.green} />
       </div>
 
@@ -384,7 +384,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation }: {
 }) {
   return (
     <div style={{
-      borderRadius: 20, padding: '20px 16px',
+      borderRadius: 999, padding: '20px 16px',
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
       backdropFilter: 'blur(12px)',
@@ -393,16 +393,16 @@ function CardImpacto({ axes, setActiveTab, skipAnimation }: {
       {/* Title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <Globe size={14} color={C.gold} />
-        <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.5, color: C.gold, textTransform: 'uppercase' }}>4 Ejes del Gemelo Digital</span>
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.5, color: C.gold, textTransform: 'uppercase' }}>4 Ejes del Gemelo Digital</span>
       </div>
 
       {/* 4 Axes */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
         {AXIS_META.map(({ key, label, color, Icon }) => {
           const val = axes[key as keyof typeof axes] ?? 0;
           return (
             <div key={key} style={{ padding: '12px 12px', borderRadius: 14, background: `${color}08`, border: `1px solid ${color}33` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <Icon size={13} color={color} />
                 <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
               </div>
@@ -427,16 +427,16 @@ function CardImpacto({ axes, setActiveTab, skipAnimation }: {
         <button onClick={() => setActiveTab('maxskill')} style={{
           flex: 1, padding: '12px 0', borderRadius: 12, cursor: 'pointer',
           background: C.glass, border: `1px solid ${C.cyanFaint}`, color: C.cyan,
-          fontFamily: FONT.mono, fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
           <Zap size={13} /> Habilidades
         </button>
         <button onClick={() => setActiveTab('academia')} style={{
           flex: 1, padding: '12px 0', borderRadius: 12, cursor: 'pointer',
           background: C.glass, border: `1px solid ${C.purpleFaint}`, color: C.purple,
-          fontFamily: FONT.mono, fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
           <TrendingUp size={13} /> Academia
         </button>

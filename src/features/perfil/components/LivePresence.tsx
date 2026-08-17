@@ -26,7 +26,7 @@ export function LiveBadge() {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 5,
+          gap: 4,
           padding: '5px 9px',
           borderRadius: 14,
           background: 'rgba(63, 208, 201,0.08)',
@@ -71,7 +71,7 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 18px 10px' }}>
           <div>
             <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: '#eaf0fb' }}>Red Ómicron en vivo</div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.greenDim }}>◉ {onlineCount} {onlineCount === 1 ? 'nodo' : 'nodos'} en línea ahora</div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.greenDim }}>◉ {onlineCount} {onlineCount === 1 ? 'nodo' : 'nodos'} en línea ahora</div>
           </div>
           <button onClick={onClose} aria-label="Cerrar" style={{ width: 30, height: 30, borderRadius: '50%', border: `1px solid ${C.cyanDim}`, background: 'rgba(255,255,255,0.05)', color: 'rgba(234,242,255,0.55)', cursor: 'pointer' }}>✕</button>
         </div>
@@ -80,13 +80,13 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
           {nodes.map((n) => {
             const isSelf = n.id === profile?.id;
             return (
-              <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 6, borderBottom: `1px solid ${C.cyanFaint}` }}>
+              <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${C.cyanFaint}` }}>
                 <button
                   disabled={isSelf}
                   onClick={() => { if (!isSelf) setViewUser(n.username); }}
-                  style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 4px', background: 'none', border: 'none', cursor: isSelf ? 'default' : 'pointer', textAlign: 'left', opacity: isSelf ? 0.7 : 1 }}
+                  style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px', background: 'none', border: 'none', cursor: isSelf ? 'default' : 'pointer', textAlign: 'left', opacity: isSelf ? 0.7 : 1 }}
                 >
-                  <span style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(63, 208, 201,0.1)', border: `1px solid ${C.greenDim}`, color: '#c9ffd0', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, flex: '0 0 auto' }}>
+                  <span style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(63, 208, 201,0.1)', border: `1px solid ${C.greenDim}`, color: '#c9ffd0', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, flex: '0 0 auto' }}>
                     {(n.username || 'N').charAt(0).toUpperCase()}
                     <span style={{ position: 'absolute', bottom: -2, right: -2, width: 8, height: 8, borderRadius: '50%', background: C.green, boxShadow: `0 0 6px ${C.green}`, border: '1px solid #04121a' }} />
                   </span>
@@ -99,7 +99,7 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
                   <button
                     onClick={() => setDmWith({ id: n.id, name: n.username, username: n.username, avatar: null })}
                     aria-label={`Mensaje a ${n.username}`}
-                    style={{ flex: '0 0 auto', width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'rgba(92, 200, 255,0.1)', border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', fontSize: 15 }}
+                    style={{ flex: '0 0 auto', width: 34, height: 34, borderRadius: 12, display: 'grid', placeItems: 'center', background: 'rgba(92, 200, 255,0.1)', border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', fontSize: 15 }}
                   >
                     💬
                   </button>
@@ -184,7 +184,7 @@ export function LivePeersStrip() {
                     color: '#c9ffd0',
                     fontFamily: FONT.display,
                     fontWeight: 700,
-                    fontSize: 14,
+                    fontSize: 13,
                   }}
                 >
                   {(p.username || 'N').charAt(0).toUpperCase()}
@@ -274,7 +274,7 @@ export function LiveNetworkFeed() {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
+          gap: 8,
           fontFamily: FONT.mono,
           fontSize: 8.5,
           letterSpacing: 1,

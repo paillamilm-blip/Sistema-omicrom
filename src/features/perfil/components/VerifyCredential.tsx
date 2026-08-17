@@ -53,7 +53,7 @@ export function VerifyCredentialView({ token }: { token: string }) {
         {state === 'invalid' && (
           <div style={{ textAlign: 'center', padding: 30 }}>
             <ShieldAlert size={40} style={{ color: C.red }} />
-            <p style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 18, color: C.red, margin: '12px 0 4px' }}>Credencial no válida</p>
+            <p style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.red, margin: '12px 0 4px' }}>Credencial no válida</p>
             <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.cyanDim }}>La firma no coincide: el pasaporte fue **alterado** o el link está incompleto.</p>
           </div>
         )}
@@ -78,7 +78,7 @@ export function VerifyCredentialView({ token }: { token: string }) {
               <div style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim }}>@{cred.u} · {cred.nt} · N{String(cred.nl).replace(/^N/i, '')}</div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
               <span style={{ fontFamily: FONT.body, fontSize: 12, color: C.cyanDim }}>Reputación</span>
               <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 34, color: repColor, textShadow: `0 0 14px ${repColor}55` }}>{cred.rep}</span>
               <span style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim }}>/100</span>
@@ -97,13 +97,13 @@ export function VerifyCredentialView({ token }: { token: string }) {
               ))}
             </div>
 
-            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 8, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.cyanFaint}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontFamily: FONT.display, fontWeight: 700, fontSize: 18, color: C.green }}><BadgeCheck size={15} /> {cred.cv}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.green }}><BadgeCheck size={15} /> {cred.cv}</div>
                 <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyanDim, letterSpacing: 1 }}>COMPETENCIAS VALIDADAS</div>
               </div>
               <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 8, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.cyanFaint}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontFamily: FONT.display, fontWeight: 700, fontSize: 18, color: C.cyan }}><TrendingUp size={15} /> {cred.pe}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.cyan }}><TrendingUp size={15} /> {cred.pe}</div>
                 <div style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyanDim, letterSpacing: 1 }}>PUNTOS DE EXPERIENCIA</div>
               </div>
             </div>
@@ -114,7 +114,7 @@ export function VerifyCredentialView({ token }: { token: string }) {
           </>
         )}
 
-        <button onClick={back} style={{ width: '100%', marginTop: 18, padding: '12px', borderRadius: 10, cursor: 'pointer', background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.cyanDim}`, color: C.cyan, fontFamily: FONT.display, fontWeight: 700, fontSize: 14 }}>
+        <button onClick={back} style={{ width: '100%', marginTop: 18, padding: '12px', borderRadius: 12, cursor: 'pointer', background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.cyanDim}`, color: C.cyan, fontFamily: FONT.display, fontWeight: 700, fontSize: 14 }}>
           Ir a Ómicrom
         </button>
       </div>

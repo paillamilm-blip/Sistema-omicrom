@@ -12,7 +12,7 @@ export function HubSubNav() {
 
   return (
     <div style={{
-      flexShrink: 0, display: 'flex', gap: 8, padding: '9px 14px',
+      flexShrink: 0, display: 'flex', gap: 8, padding: '8px 12px',
       background: 'rgba(2,6,19,0.85)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
       borderBottom: '1px solid rgba(92, 200, 255,0.14)',
       position: 'relative', zIndex: 3,

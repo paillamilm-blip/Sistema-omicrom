@@ -282,16 +282,16 @@ export function PerfilSkillVisual({
           >
             {top3.map((skill, i) => (
               <div key={skill.name} style={{
-                display: 'flex', alignItems: 'center', gap: 6,
+                display: 'flex', alignItems: 'center', gap: 8,
                 padding: '6px 12px', borderRadius: 999,
                 background: `${SKILL_COLORS[i]}14`,
                 border: `1px solid ${SKILL_COLORS[i]}44`,
               }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: SKILL_COLORS[i], boxShadow: `0 0 6px ${SKILL_COLORS[i]}` }} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.ink, letterSpacing: 0.5 }}>
+                <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.ink, letterSpacing: 0.5 }}>
                   {skill.name}
                 </span>
-                <span style={{ fontFamily: FONT.mono, fontSize: 10, color: SKILL_COLORS[i], fontWeight: 700 }}>
+                <span style={{ fontFamily: FONT.mono, fontSize: 11, color: SKILL_COLORS[i], fontWeight: 700 }}>
                   {skill.pct}%
                 </span>
               </div>
@@ -387,7 +387,7 @@ export function PerfilSkillVisual({
             transition={{ delay: 0.5 }}
             style={{
               display: 'grid', gridTemplateColumns: '1fr 1fr',
-              gap: 10, padding: '0 24px', width: '100%', maxWidth: 360,
+              gap: 8, padding: '0 24px', width: '100%', maxWidth: 360,
               marginBottom: 16,
             }}
           >
@@ -398,7 +398,7 @@ export function PerfilSkillVisual({
                   padding: '10px 12px', borderRadius: 14,
                   background: C.glass, border: `1px solid ${color}33`,
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <Icon size={12} color={color} />
                     <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1, color: C.mut, textTransform: 'uppercase' }}>
                       {label}
@@ -428,7 +428,7 @@ export function PerfilSkillVisual({
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.65 }}
             style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '10px 20px', borderRadius: 999,
               background: `linear-gradient(135deg, ${C.cyanGhost}, ${C.purpleFaint})`,
               border: `1px solid ${C.line}`,
@@ -442,7 +442,7 @@ export function PerfilSkillVisual({
             <span style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 800, color: C.cyan }}>
               {reputation}
             </span>
-            <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>/100</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>/100</span>
           </motion.div>
 
           {/* ═══ SINERGIAS DETECTADAS ═══ */}
@@ -459,7 +459,7 @@ export function PerfilSkillVisual({
               {synergies.map((s, i) => (
                 <div key={i} style={{
                   display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '8px 12px', borderRadius: 10, marginBottom: 6,
+                  padding: '8px 12px', borderRadius: 12, marginBottom: 8,
                   background: `${C.goldFaint}`, border: `1px solid ${C.gold}33`,
                 }}>
                   <span style={{ fontSize: 13 }}>⚡</span>
@@ -480,7 +480,7 @@ export function PerfilSkillVisual({
               padding: '14px 28px', borderRadius: 999,
               background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`,
               border: 'none', cursor: 'pointer',
-              fontFamily: FONT.display, fontSize: 14, fontWeight: 700,
+              fontFamily: FONT.display, fontSize: 13, fontWeight: 700,
               color: '#fff', letterSpacing: 0.3,
               boxShadow: `0 4px 20px ${C.cyan}44`,
               marginBottom: 'calc(env(safe-area-inset-bottom, 20px) + 24px)',

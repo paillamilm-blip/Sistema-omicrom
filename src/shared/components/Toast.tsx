@@ -53,8 +53,8 @@ const S: Record<string, React.CSSProperties> = {
     width: 'min(92vw, 380px)', pointerEvents: 'none',
   },
   toast: {
-    display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px',
-    borderRadius: 10, border: '1px solid',
+    display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px',
+    borderRadius: 12, border: '1px solid',
     background: 'rgba(8,16,38,0.92)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
     animation: 'msgEnter 0.28s ease-out',
   },

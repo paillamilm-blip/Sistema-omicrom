@@ -142,7 +142,7 @@ export function WalletTab() {
         subtitle={`Nivel ${node.name}`}
       />
       <div style={oc.scroll}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
 
           {/* ── Tarjeta de saldo (hero) ── */}
           <OmicronCard accent={C.gold} glow className="oc-rise" style={{ padding: 20 }}>
@@ -178,10 +178,10 @@ export function WalletTab() {
             )}
 
             {/* ── Acciones secundarias: enviar / recibir entre usuarios ── */}
-            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
               <button onClick={() => setTransferMode('send')} className="oc-pressable" style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0',
-                borderRadius: 14, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+                borderRadius: 14, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
                 background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', border: 'none', color: '#fff',
                 boxShadow: '0 8px 22px rgba(10,132,255,0.34)',
               }}>
@@ -189,7 +189,7 @@ export function WalletTab() {
               </button>
               <button onClick={() => setTransferMode('receive')} className="oc-pressable" style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0',
-                borderRadius: 14, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+                borderRadius: 14, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
                 background: C.glass2, border: `1px solid ${C.line}`, color: C.ink,
               }}>
                 <ArrowDownLeft size={16} style={{ color: C.cyan }} /> Recibir
@@ -197,13 +197,13 @@ export function WalletTab() {
             </div>
 
             {/* ── Detalles con explicación simple ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
               <div style={{ padding: 12, borderRadius: 14, background: C.glass, border: `1px solid ${C.line}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Lock size={12} style={{ color: C.gold }} />
                   <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12.5, color: C.ink }}>En garantía</span>
                 </div>
-                <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 18, color: C.gold, marginTop: 4 }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color: C.gold, marginTop: 4 }}>
                   {escrow.toLocaleString('es-CL')} T
                 </div>
                 <div style={{ fontFamily: FONT.body, fontSize: 10.5, color: C.mut, marginTop: 2, lineHeight: 1.3 }}>
@@ -215,7 +215,7 @@ export function WalletTab() {
                   <Zap size={12} style={{ color: node.accent }} />
                   <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12.5, color: C.ink }}>Puntos PE</span>
                 </div>
-                <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 18, color: node.accent, marginTop: 4 }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color: node.accent, marginTop: 4 }}>
                   {pe.toLocaleString('es-CL')}
                 </div>
                 <div style={{ fontFamily: FONT.body, fontSize: 10.5, color: C.mut, marginTop: 2, lineHeight: 1.3 }}>
@@ -230,7 +230,7 @@ export function WalletTab() {
             <OmicronCard accent={C.cyan} glow className="oc-rise" style={{ background: `linear-gradient(135deg, ${C.cyan}1e, ${C.cyan}08)` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Loader2 size={20} className="animate-spin" style={{ color: C.cyan, flexShrink: 0 }} />
-                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.ink }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.ink }}>
                   Verificando tu pago…
                 </div>
               </div>
@@ -274,7 +274,7 @@ export function WalletTab() {
                 </div>
                 <div>
                   <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>Programa Pionero</div>
-                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 18, color: C.ink, marginTop: 2 }}>Comisión 10% de por vida</div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color: C.ink, marginTop: 2 }}>Comisión 10% de por vida</div>
                   <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>Beneficio garantizado por ser usuario fundador.</div>
                 </div>
               </div>
@@ -287,7 +287,7 @@ export function WalletTab() {
               const active = view === v;
               return (
                 <button key={v} onClick={() => setView(v)} className="oc-pressable" style={{
-                  flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                  flex: 1, padding: '9px 0', borderRadius: 12, cursor: 'pointer',
                   fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
                   background: active ? 'linear-gradient(135deg,#5cc8ff,#5e5ce6)' : 'transparent',
                   border: 'none', color: active ? '#fff' : C.mut,
@@ -327,7 +327,7 @@ export function WalletTab() {
                 </div>
                 {suggestions.map((s, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: i < suggestions.length - 1 ? 6 : 0 }}>
-                    <span style={{ fontSize: 14, flexShrink: 0 }}>{s.icon}</span>
+                    <span style={{ fontSize: 13, flexShrink: 0 }}>{s.icon}</span>
                     <span style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, lineHeight: 1.4 }}>{s.text}</span>
                   </div>
                 ))}
@@ -395,12 +395,12 @@ export function WalletTab() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Layers size={16} style={{ color: active ? n.accent : C.mut }} />
-                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: active ? C.ink : C.mut }}>{n.name}</span>
+                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: active ? C.ink : C.mut }}>{n.name}</span>
                         {active && <Chip color={n.accent} filled>ACTUAL</Chip>}
                       </div>
-                      <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 14, color: active ? n.accent : C.mut }}>{n.commission}% fee</span>
+                      <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 13, color: active ? n.accent : C.mut }}>{n.commission}% fee</span>
                     </div>
-                    <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut, marginBottom: active && n.maxPE ? 8 : 0 }}>
+                    <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginBottom: active && n.maxPE ? 8 : 0 }}>
                       {n.maxPE ? `${n.minPE.toLocaleString()} – ${n.maxPE.toLocaleString()} PE` : `${n.minPE.toLocaleString()}+ PE`}
                     </div>
                     {active && n.maxPE && (

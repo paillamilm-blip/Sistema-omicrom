@@ -894,7 +894,7 @@ export function OrbShell() {
           >
             {/* Swipe indicator (dots) */}
             {canSwipe && (
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 5, marginBottom: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginBottom: 14 }}>
                 {hubNodes.map((n: OrbNode, i: number) => (
                   <div key={n.id} style={{
                     width: i === currentIdx ? 16 : 5, height: 5, borderRadius: 3,
@@ -909,15 +909,15 @@ export function OrbShell() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <span style={{ fontSize: 26 }}>{selectedNode.icon}</span>
               <div style={{ flex: 1 }}>
-                <h3 style={{ margin: 0, fontFamily: FONT.display, fontSize: 18, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
+                <h3 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
                   {selectedNode.label}
                 </h3>
                 {selectedNode.level !== undefined && selectedNode.level > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                     <div style={{ flex: 1, height: 4, borderRadius: 2, background: `${C.cyan}22` }}>
                       <div style={{ height: '100%', width: `${Math.round(selectedNode.level * 100)}%`, borderRadius: 2, background: C.cyan, boxShadow: `0 0 6px ${C.cyan}66` }} />
                     </div>
-                    <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyan, fontWeight: 700 }}>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan, fontWeight: 700 }}>
                       {Math.round(selectedNode.level * 100)}%
                     </span>
                   </div>
@@ -941,7 +941,7 @@ export function OrbShell() {
 
             {/* Sinergias activas */}
             {relatedSkills.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                 <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: C.gold, textTransform: 'uppercase', width: '100%', marginBottom: 2 }}>
                   ⚡ Sinergias
                 </span>
@@ -962,7 +962,7 @@ export function OrbShell() {
               style={{
                 width: '100%', padding: '12px 0', borderRadius: 14, border: 'none', cursor: 'pointer',
                 background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`,
-                color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+                color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
                 boxShadow: `0 8px 24px rgba(92,200,255,0.3)`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
@@ -1132,8 +1132,8 @@ export function OrbShell() {
         {helpMessage && !responseMsg && (
           <div style={{
             marginBottom: 8, padding: '8px 12px', background: 'rgba(255,176,46,0.08)',
-            border: '1px solid rgba(255,176,46,0.2)', borderRadius: 10,
-            fontFamily: FONT.mono, fontSize: 10, color: C.gold, textAlign: 'center',
+            border: '1px solid rgba(255,176,46,0.2)', borderRadius: 12,
+            fontFamily: FONT.mono, fontSize: 11, color: C.gold, textAlign: 'center',
           }}>
             {helpMessage}
           </div>
@@ -1154,7 +1154,7 @@ export function OrbShell() {
             gap: 8,
             background: C.surface,
             border: `1px solid ${C.line}`,
-            borderRadius: 28,
+            borderRadius: 999,
             padding: '8px 12px',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
@@ -1172,13 +1172,13 @@ export function OrbShell() {
               width: 44,
               height: 44,
               borderRadius: '50%',
-              border: `1px solid ${isListening ? '#ff5c7a' : C.line}`,
+              border: `1px solid ${isListening ? C.red : C.line}`,
               background: isListening ? 'rgba(255,92,122,0.15)' : C.glass2,
-              color: isListening ? '#ff5c7a' : C.cyan,
+              color: isListening ? C.red : C.cyan,
               cursor: 'pointer',
               display: 'grid',
               placeItems: 'center',
-              fontSize: 14,
+              fontSize: 13,
               flexShrink: 0,
               animation: isListening ? 'cp-pulse 1.2s ease-in-out infinite' : 'none',
             }}
@@ -1220,7 +1220,7 @@ export function OrbShell() {
               cursor: inputText.trim() ? 'pointer' : 'default',
               display: 'grid',
               placeItems: 'center',
-              fontSize: 14,
+              fontSize: 13,
               flexShrink: 0,
               transition: 'background 0.15s ease, color 0.15s ease',
             }}

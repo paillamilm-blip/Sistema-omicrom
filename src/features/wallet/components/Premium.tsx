@@ -16,7 +16,7 @@ export function usePremium(): { isPremium: boolean } {
 export function PremiumBadge({ style }: { style?: React.CSSProperties }) {
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 20,
+      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 999,
       background: 'linear-gradient(135deg, rgba(255, 176, 46,0.28), rgba(255, 176, 46,0.08))',
       border: '1px solid rgba(255, 176, 46,0.65)', color: '#ffd27a',
       fontFamily: "'SF Mono', monospace", fontSize: 8.5, letterSpacing: 1, fontWeight: 700,
@@ -61,18 +61,18 @@ export function PremiumLock({ feature, onClose }: { feature: string; onClose: ()
         <button onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: C.gold, cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
         <div style={{ fontSize: 40, filter: 'drop-shadow(0 0 10px rgba(255, 176, 46,0.6))' }}>💎</div>
         <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: '#ffe6a8', margin: '8px 0 4px' }}>Función Premium</div>
-        <p style={{ fontFamily: FONT.body, fontSize: 14, color: '#eadfc4', lineHeight: 1.5, margin: '0 0 4px' }}>
+        <p style={{ fontFamily: FONT.body, fontSize: 13, color: '#eadfc4', lineHeight: 1.5, margin: '0 0 4px' }}>
           <b style={{ color: C.gold }}>{feature}</b> requiere créditos Ómicron.
         </p>
-        <p style={{ fontFamily: FONT.mono, fontSize: 10, color: 'rgba(255, 176, 46,0.75)', letterSpacing: 0.5, margin: '0 0 20px' }}>
+        <p style={{ fontFamily: FONT.mono, fontSize: 11, color: 'rgba(255, 176, 46,0.75)', letterSpacing: 0.5, margin: '0 0 20px' }}>
           5.000 tokens = $5.000 CLP · Coach IA ilimitado por 1 día.
         </p>
         <button onClick={handleUpgrade} disabled={loading}
-          style={{ width: '100%', padding: '13px', borderRadius: 10, cursor: 'pointer', background: `linear-gradient(135deg, #ffd27a, ${C.gold})`, border: 'none', color: '#1a1205', fontFamily: FONT.display, fontWeight: 700, fontSize: 14, opacity: loading ? 0.6 : 1 }}>
+          style={{ width: '100%', padding: '13px', borderRadius: 12, cursor: 'pointer', background: `linear-gradient(135deg, #ffd27a, ${C.gold})`, border: 'none', color: '#1a1205', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, opacity: loading ? 0.6 : 1 }}>
           {loading ? 'Redirigiendo a pago...' : '💎 Comprar tokens'}
         </button>
         <button onClick={onClose}
-          style={{ width: '100%', padding: '11px', borderRadius: 10, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255, 176, 46,0.3)', color: 'rgba(255, 176, 46,0.7)', fontFamily: FONT.mono, fontSize: 11, marginTop: 8 }}>
+          style={{ width: '100%', padding: '11px', borderRadius: 12, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255, 176, 46,0.3)', color: 'rgba(255, 176, 46,0.7)', fontFamily: FONT.mono, fontSize: 11, marginTop: 8 }}>
           Mañana tengo más gratis
         </button>
       </div>

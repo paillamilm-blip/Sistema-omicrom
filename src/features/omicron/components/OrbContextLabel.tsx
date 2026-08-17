@@ -70,7 +70,7 @@ const S: Record<string, React.CSSProperties> = {
     left: '50%',
     transform: 'translateX(-50%)',
     fontFamily: FONT.mono,
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 1,
     textAlign: 'center',
     whiteSpace: 'nowrap',

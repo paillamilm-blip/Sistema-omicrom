@@ -127,14 +127,14 @@ export function RutaCarrera() {
           return (
             <div key={a.track.id} style={{ padding: '11px 13px', borderRadius: RADIUS.lg, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.cyanFaint}` }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
-                <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#eaf4ff' }}>{a.track.name}</span>
+                <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff' }}>{a.track.name}</span>
                 <span style={{ fontFamily: FONT.mono, fontSize: 13, fontWeight: 700, color: col }}>{a.readiness}%</span>
               </div>
               <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', margin: '6px 0 8px' }}>
                 <div style={{ height: '100%', width: `${a.readiness}%`, background: col, transition: 'width .5s ease' }} />
               </div>
               {ready || !eje ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONT.body, fontSize: 12, color: C.green }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: FONT.body, fontSize: 12, color: C.green }}>
                   <ArrowUpRight size={14} /> Estás listo para postular a este rol.
                 </div>
               ) : (
@@ -143,13 +143,13 @@ export function RutaCarrera() {
                     Te falta <b style={{ color: eje.color }}>+{a.gapAmount} en {eje.label}</b>. {eje.study}
                   </div>
                   {a.missingSkills.length > 0 && (
-                    <div style={{ marginTop: 6, fontFamily: FONT.mono, fontSize: 10, color: C.gold }}>
+                    <div style={{ marginTop: 6, fontFamily: FONT.mono, fontSize: 11, color: C.gold }}>
                       Aprende: {a.missingSkills.slice(0, 3).join(', ')}
                     </div>
                   )}
                   <button
                     onClick={() => setActiveTab(eje.tab)}
-                    style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 10, cursor: 'pointer', border: `1px solid ${eje.color}66`, background: `${eje.color}1a`, color: eje.color, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase' }}
+                    style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 12, cursor: 'pointer', border: `1px solid ${eje.color}66`, background: `${eje.color}1a`, color: eje.color, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase' }}
                   >
                     <GraduationCap size={13} /> Estudiar {eje.label} →
                   </button>

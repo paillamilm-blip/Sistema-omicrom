@@ -162,22 +162,22 @@ export function CredentialsPanel() {
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl,
-      padding: '14px 16px', marginBottom: 14,
+      padding: '16px', marginBottom: 14,
       background: 'rgba(10,17,32,0.98)',
       border: '1px solid rgba(0,245,255,0.12)',
       overflow: 'hidden',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyan, letterSpacing: 2, textTransform: 'uppercase' }}>
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan, letterSpacing: 2, textTransform: 'uppercase' }}>
           CREDENCIALES DEL GEMELO
         </span>
         {!adding && (
           <button onClick={() => setAdding(true)} style={{
-            display: 'flex', alignItems: 'center', gap: 5,
+            display: 'flex', alignItems: 'center', gap: 4,
             background: C.cyanGhost, border: `1px solid ${C.cyanDim}`,
             borderRadius: 8, padding: '5px 10px', color: C.cyan,
-            cursor: 'pointer', fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1,
+            cursor: 'pointer', fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1,
           }}>
             <Plus size={13} /> AGREGAR
           </button>
@@ -197,7 +197,7 @@ export function CredentialsPanel() {
         }}>
           {/* Tipo */}
           <label style={labelStyle}>Tipo de credencial</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
             {CRED_TYPES.map(ct => {
               const Icon = ct.icon;
               const active = form.cred_type === ct.value;
@@ -262,7 +262,7 @@ export function CredentialsPanel() {
                 <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }}
                   onChange={e => setFile(e.target.files?.[0] ?? null)} />
                 <FileText size={14} style={{ color: file ? C.green : C.cyanDim }} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 10, color: file ? '#e2f3ff' : C.cyanDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: FONT.mono, fontSize: 11, color: file ? '#e2f3ff' : C.cyanDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {file ? file.name : 'Toca para subir foto o PDF'}
                 </span>
               </label>
@@ -275,7 +275,7 @@ export function CredentialsPanel() {
             onChange={e => setForm({ ...form, issue_date: e.target.value })} />
 
           {err && (
-            <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.red, marginBottom: 10 }}>{err}</div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.red, marginBottom: 10 }}>{err}</div>
           )}
 
           <div style={{ display: 'flex', gap: 8 }}>
@@ -302,7 +302,7 @@ export function CredentialsPanel() {
 
       {/* Lista */}
       {items.length === 0 && !adding && (
-        <div style={{ textAlign: 'center', padding: '18px 0', fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>
+        <div style={{ textAlign: 'center', padding: '18px 0', fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>
           Aún no has cargado credenciales.<br />Agrega tus estudios y certificados para fortalecer tu Gemelo.
         </div>
       )}
@@ -315,7 +315,7 @@ export function CredentialsPanel() {
           const SIcon = sm.icon;
           return (
             <div key={c.id} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
+              display: 'flex', alignItems: 'center', gap: 8,
               padding: '10px 12px', borderRadius: RADIUS.md,
               background: 'rgba(0,245,255,0.03)', border: `1px solid ${C.cyanFaint}`,
             }}>
@@ -331,11 +331,11 @@ export function CredentialsPanel() {
                 <div style={{ fontFamily: FONT.body, fontSize: 13, color: '#e2f3ff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {c.title}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 3,
                     fontFamily: FONT.mono, fontSize: 8, color: sm.color, letterSpacing: 0.5,
-                    padding: '1px 6px', borderRadius: 10,
+                    padding: '1px 6px', borderRadius: 12,
                     background: `${sm.color}14`, border: `1px solid ${sm.color}44`,
                   }}>
                     <SIcon size={9} /> {sm.label}

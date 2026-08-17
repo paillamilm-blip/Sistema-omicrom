@@ -134,12 +134,12 @@ const S: Record<string, React.CSSProperties> = {
   steps: {
     display: 'flex',
     flexWrap: 'wrap' as const,
-    gap: 6,
+    gap: 8,
   },
   step: {
     display: 'flex',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
     padding: '5px 10px',
     borderRadius: 8,
     background: 'rgba(255,255,255,0.03)',

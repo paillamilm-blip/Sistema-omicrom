@@ -67,13 +67,13 @@ export function CredentialReview() {
 
   return (
     <div style={{
-      position: 'relative', borderRadius: RADIUS.xl, padding: '14px 16px', marginBottom: 14,
+      position: 'relative', borderRadius: RADIUS.xl, padding: '16px', marginBottom: 14,
       background: 'rgba(16,23,34,0.97)', border: `1px solid ${C.gold}44`, overflow: 'hidden',
     }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)` }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <ShieldCheck size={15} style={{ color: C.gold }} />
-        <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.gold, letterSpacing: 2, textTransform: 'uppercase' }}>
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.gold, letterSpacing: 2, textTransform: 'uppercase' }}>
           PANEL DE VALIDADOR · DOCENTE
         </span>
       </div>
@@ -82,7 +82,7 @@ export function CredentialReview() {
       </div>
 
       {loaded && items.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '14px 0', fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>
+        <div style={{ textAlign: 'center', padding: '14px 0', fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>
           ✅ No hay credenciales pendientes.
         </div>
       )}
@@ -95,7 +95,7 @@ export function CredentialReview() {
               padding: '10px 12px', borderRadius: RADIUS.md,
               background: 'rgba(92, 200, 255,0.04)', border: `1px solid ${C.cyanFaint}`,
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.cyan}10`, border: `1px solid ${C.cyanFaint}` }}>
                   <Icon size={14} style={{ color: C.cyan }} />
                 </div>
@@ -118,16 +118,16 @@ export function CredentialReview() {
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => review(c.id, true)} disabled={busy === c.id} style={{
-                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   padding: '8px', borderRadius: 8, cursor: 'pointer',
                   background: `${C.green}18`, border: `1px solid ${C.green}`, color: C.green,
-                  fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, fontWeight: 700, opacity: busy === c.id ? 0.5 : 1,
+                  fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700, opacity: busy === c.id ? 0.5 : 1,
                 }}><Check size={13} /> APROBAR</button>
                 <button onClick={() => review(c.id, false)} disabled={busy === c.id} style={{
-                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   padding: '8px', borderRadius: 8, cursor: 'pointer',
                   background: `${C.red}14`, border: `1px solid ${C.red}`, color: C.red,
-                  fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1, fontWeight: 700, opacity: busy === c.id ? 0.5 : 1,
+                  fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700, opacity: busy === c.id ? 0.5 : 1,
                 }}><X size={13} /> RECHAZAR</button>
               </div>
             </div>

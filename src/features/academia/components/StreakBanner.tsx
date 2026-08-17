@@ -128,10 +128,10 @@ const S: Record<string, React.CSSProperties> = {
   row: {
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
-  fire: { fontSize: 18, filter: 'drop-shadow(0 0 6px rgba(255,100,50,0.6))' },
-  fireOff: { fontSize: 14, opacity: 0.5 },
+  fire: { fontSize: 20, filter: 'drop-shadow(0 0 6px rgba(255,100,50,0.6))' },
+  fireOff: { fontSize: 13, opacity: 0.5 },
   streakNum: {
     fontFamily: FONT.mono,
     fontSize: 20,
@@ -140,10 +140,10 @@ const S: Record<string, React.CSSProperties> = {
     textShadow: '0 0 10px rgba(255,176,46,0.4)',
     fontVariantNumeric: 'tabular-nums',
   },
-  days: { fontFamily: FONT.mono, fontSize: 10, color: C.mut, letterSpacing: 1 },
+  days: { fontFamily: FONT.mono, fontSize: 11, color: C.mut, letterSpacing: 1 },
   mult: {
     fontFamily: FONT.mono,
-    fontSize: 10,
+    fontSize: 11,
     color: C.green,
     background: 'rgba(63,208,201,0.1)',
     border: '1px solid rgba(63,208,201,0.3)',
@@ -163,7 +163,7 @@ const S: Record<string, React.CSSProperties> = {
     letterSpacing: 1,
     textTransform: 'uppercase' as const,
   },
-  text0: { fontFamily: FONT.mono, fontSize: 10, color: C.mut },
+  text0: { fontFamily: FONT.mono, fontSize: 11, color: C.mut },
   detail: {
     marginTop: 10,
     paddingTop: 10,
@@ -172,7 +172,7 @@ const S: Record<string, React.CSSProperties> = {
   detailRow: {
     display: 'flex',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   detailLabel: { fontFamily: FONT.mono, fontSize: 9, color: C.mut },
   detailValue: { fontFamily: FONT.mono, fontSize: 9, color: C.ink },

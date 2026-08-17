@@ -66,7 +66,7 @@ function CloseBtn({ onClose }: { onClose: () => void }) {
       aria-label="Cerrar"
       style={{
         position: 'absolute', top: 12, right: 12, zIndex: 2,
-        width: 32, height: 32, borderRadius: 10, cursor: 'pointer',
+        width: 32, height: 32, borderRadius: 12, cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan,
       }}
@@ -133,7 +133,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
       <div style={{ padding: 22 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <Share2 size={16} style={{ color: C.cyan }} />
-          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 18, color: '#eaf4ff' }}>
+          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: '#eaf4ff' }}>
             Comparte tu credencial
           </span>
         </div>
@@ -153,9 +153,9 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, justifyContent: 'center' }}>
           <QrCode size={13} style={{ color: C.cyanDim }} />
-          <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim, letterSpacing: 1 }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1 }}>
             @{username}
           </span>
         </div>
@@ -165,7 +165,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
           style={{
             width: '100%', padding: '13px', borderRadius: RADIUS.lg, cursor: 'pointer',
             background: C.cyan, border: 'none', color: '#021018',
-            fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+            fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10,
           }}
         >
@@ -194,7 +194,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
         </p>
         {!passportUrl ? (
           <button onClick={generatePassport} disabled={issuing}
-            style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(63, 208, 201,0.12)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.display, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(63, 208, 201,0.12)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.display, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             {issuing ? <Loader2 size={16} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> : <ShieldCheck size={16} />}
             {issuing ? 'Firmando...' : 'Generar Pasaporte Verificable'}
           </button>
@@ -335,7 +335,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
         <div style={{ padding: 20 }}>
           <div style={{ height: 3, borderRadius: 3, marginBottom: 16, background: `linear-gradient(90deg, transparent, ${r.color}, transparent)` }} />
 
-          <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16 }}>
             <div style={{
               width: 72, height: 72, borderRadius: 18, overflow: 'hidden', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -352,9 +352,9 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
                 {cred.full_name}
               </div>
               <div style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim, marginTop: 2 }}>@{cred.username}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
                 <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20,
+                  display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 999,
                   background: `${r.color}14`, border: `1px solid ${r.color}44`,
                 }}>
                   <Shield size={11} style={{ color: r.color }} />
@@ -364,7 +364,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
                 </span>
                 {cred.is_verified_professional && (
                   <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 20,
+                    display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 999,
                     background: C.greenFaint, border: `1px solid ${C.greenDim}`,
                   }}>
                     <BadgeCheck size={12} style={{ color: C.green }} />
@@ -391,7 +391,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
               </span>
               <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>/100</span>
               <span style={{
-                padding: '3px 9px', borderRadius: 20, background: `${r.color}18`, border: `1px solid ${r.color}44`,
+                padding: '3px 9px', borderRadius: 999, background: `${r.color}18`, border: `1px solid ${r.color}44`,
                 fontFamily: FONT.mono, fontSize: 9, color: r.color, letterSpacing: 1,
               }}>
                 {r.emoji} {r.label}
@@ -430,7 +430,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             <div style={{
               padding: '13px', borderRadius: RADIUS.lg, background: C.greenFaint, border: `1px solid ${C.greenDim}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: C.green,
+              fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.green,
             }}>
               <Check size={16} /> ¡Conectados!
             </div>
@@ -449,7 +449,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
               style={{
                 width: '100%', padding: '13px', borderRadius: RADIUS.lg, cursor: busy ? 'wait' : 'pointer',
                 background: r.color, border: 'none', color: '#021018',
-                fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+                fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 opacity: busy ? 0.7 : 1,
               }}
@@ -516,11 +516,11 @@ function PersonRow({ name, username, avatar, rep, right }: {
         {avatar ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initialsOf(name)}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {name}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-          <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>@{username}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>@{username}</span>
           <span style={{ fontFamily: FONT.mono, fontSize: 9, color: r.color }}>{r.emoji} {rep.toFixed(0)}</span>
         </div>
       </div>
@@ -595,22 +595,22 @@ export function DirectChatModal({ other, onClose }: {
             width: 40, height: 40, borderRadius: 11, overflow: 'hidden', flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: other.avatar ? '#0a1120' : `linear-gradient(135deg, ${C.cyan}, ${C.green})`,
-            color: '#060a12', fontWeight: 700, fontSize: 14, fontFamily: FONT.display,
+            color: '#060a12', fontWeight: 700, fontSize: 13, fontFamily: FONT.display,
           }}>
             {other.avatar ? <img src={other.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initialsOf(other.name)}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>{other.name}</div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>@{other.username} · mensaje directo</div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>@{other.username} · mensaje directo</div>
           </div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
             <X size={16} />
           </button>
         </div>
 
-        <div style={{ flex: 1, minHeight: 220, maxHeight: '58vh', overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ flex: 1, minHeight: 220, maxHeight: '58vh', overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 24, fontFamily: FONT.mono, fontSize: 10, color: C.cyanDim }}>CARGANDO...</div>
+            <div style={{ textAlign: 'center', padding: 24, fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>CARGANDO...</div>
           ) : msgs.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 24, fontFamily: FONT.body, fontSize: 12.5, color: C.cyanDim }}>
               Inicia la conversación con {other.name} 👋
@@ -625,7 +625,7 @@ export function DirectChatModal({ other, onClose }: {
                   border: `1px solid ${own ? C.cyanDim : 'rgba(255,255,255,0.08)'}`,
                   borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3,
                 }}>
-                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 14, color: '#dbeafe', lineHeight: 1.4 }}>{m.content}</p>
+                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: '#dbeafe', lineHeight: 1.4 }}>{m.content}</p>
                 </div>
               </div>
             );
@@ -639,7 +639,7 @@ export function DirectChatModal({ other, onClose }: {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) send(); }}
             placeholder="Escribe un mensaje..."
-            style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 14, outline: 'none' }}
+            style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 13, outline: 'none' }}
           />
           <button onClick={send} disabled={!input.trim() || sending}
             style={{ width: 44, height: 44, borderRadius: 11, background: C.cyan, border: 'none', color: '#021018', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
@@ -723,7 +723,7 @@ export function RedPanel() {
                 const rr = rango(Number(t.reputation_score) || 0);
                 const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
                 return (
-                  <button key={t.user_id} onClick={() => setViewUser(t.username)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 4px', background: 'none', border: 'none', borderBottom: `1px solid ${C.cyanFaint}`, cursor: 'pointer', textAlign: 'left' }}>
+                  <button key={t.user_id} onClick={() => setViewUser(t.username)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px', background: 'none', border: 'none', borderBottom: `1px solid ${C.cyanFaint}`, cursor: 'pointer', textAlign: 'left' }}>
                     <span style={{ width: 26, textAlign: 'center', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: idx < 3 ? C.gold : C.cyanDim }}>{medal}</span>
                     <div style={{ width: 34, height: 34, borderRadius: 9, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: t.avatar_url ? '#0a1120' : `linear-gradient(135deg, ${rr.color}, ${C.cyan})`, color: '#060a12', fontWeight: 700, fontFamily: FONT.display, fontSize: 13 }}>
                       {t.avatar_url ? <img src={t.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (t.full_name || t.username || 'U').slice(0, 1).toUpperCase()}
@@ -732,7 +732,7 @@ export function RedPanel() {
                       <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.full_name || t.username}</div>
                       <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>@{t.username}</div>
                     </div>
-                    <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 14, color: rr.color }}>{(Number(t.reputation_score) || 0).toFixed(0)}</span>
+                    <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: rr.color }}>{(Number(t.reputation_score) || 0).toFixed(0)}</span>
                   </button>
                 );
               })}
@@ -788,9 +788,9 @@ export function RedPanel() {
                     onClick={() => setDmWith(c)}
                     title={`Enviar mensaje a ${c.full_name}`}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 9, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 9, cursor: 'pointer',
                       background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan,
-                      fontFamily: FONT.mono, fontSize: 10, letterSpacing: 0.5,
+                      fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5,
                     }}
                   >
                     <MessageCircle size={14} /> MENSAJE

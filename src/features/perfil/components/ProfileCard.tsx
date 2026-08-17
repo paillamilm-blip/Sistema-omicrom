@@ -278,10 +278,10 @@ const S: Record<string, React.CSSProperties> = {
   badge: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     margin: '4px auto 6px',
     padding: '5px 12px',
-    borderRadius: 20,
+    borderRadius: 999,
     fontFamily: FONT.mono,
     fontSize: 10.5,
     fontWeight: 700,
@@ -341,7 +341,7 @@ const S: Record<string, React.CSSProperties> = {
   chips: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 8,
     justifyContent: 'center',
     marginTop: 14,
   },

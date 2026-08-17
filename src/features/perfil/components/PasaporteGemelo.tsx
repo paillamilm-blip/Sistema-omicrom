@@ -74,7 +74,7 @@ export function PasaporteGemelo() {
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           padding: '11px 0', marginBottom: 14, borderRadius: RADIUS.lg, cursor: 'pointer',
           background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.cyanDim}`, color: C.cyan,
-          fontFamily: FONT.display, fontWeight: 700, fontSize: 14,
+          fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
         }}
       >
         <CreditCard size={16} /> Ver mi Pasaporte
