@@ -32,7 +32,7 @@ export function detectEmotion(text: string): EmotionSignal {
   lastMessageTime = now;
   messageCount++;
 
-  let scores: Record<Emotion, number> = {
+  const scores: Record<Emotion, number> = {
     neutral: 0.3,
     frustrated: 0,
     motivated: 0,
