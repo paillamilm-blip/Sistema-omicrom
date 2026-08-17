@@ -7,7 +7,10 @@ import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { OrbContextLabel } from './OrbContextLabel';
 import { PremiumLock } from '../shared/Premium';
 import { useNavigation } from '../../store/NavigationContext';
-import { interpret, askCoach } from '../../lib/oraculo';
+import { interpret } from '../../lib/oraculo';
+import { speakOmicron, stopOmicron } from '../../lib/omicronVoice';
+import { askOmicron, type OmicronContext } from '../../lib/omicronBrain';
+import { getDailyChallenge, isChallengeCompleted } from '../../lib/dailyChallenge';
 import { speakAI, stopAI, isAudioUnlocked, speakLocal } from '../../lib/voiceAI';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useIdleEscalation } from '../../hooks/useIdleEscalation';
@@ -365,73 +368,12 @@ export function OrbShell() {
     }));
   }, [profile, sbProfile, gemeloDigital, dynamicOrbNodes]);
 
-  // ── Offline coach: consejo basado en perfil local (sin IA) ────────
-  // ── Offline responses: SIEMPRE hay interacción (sin depender de IA) ──
-  function generateOfflineResponse(text: string, p: typeof sbProfile): string {
-    const t = text.toLowerCase();
-    const name = p?.display_name || p?.username || 'amigo';
-
-    // Saludos
-    if (/^(hola|hey|buenas|qué tal|que tal|wena|ola|hi|hello)/.test(t)) {
-      return `¡Hola ${name}! Soy Ómicron, tu Gemelo Digital. Puedo abrirte secciones, darte datos de tu perfil, o darte un consejo. ¿Qué necesitas?`;
-    }
-    // Preguntas sobre Ómicron
-    if (/quién eres|quien eres|qué eres|que eres|qué haces|que haces/.test(t)) {
-      return `Soy Ómicron, tu asistente de carrera y Gemelo Digital. Te ayudo a medir tu reputación profesional, buscar empleos, y crecer. Prueba decirme: "abre empleos", "mi reputación", o "dame un consejo".`;
-    }
-    // Gracias
-    if (/gracias|thanks|vale|ok|dale|genial|perfecto/.test(t)) {
-      return `¡De nada, ${name}! Estoy aquí para lo que necesites. Toca un nodo del orbe o escríbeme.`;
-    }
-    // Preguntas sobre qué puede hacer
-    if (/qué puedo|que puedo|cómo funciona|como funciona|para qué sirv|para que sirv/.test(t)) {
-      return `Puedo hacer muchas cosas: abrir Empleos, Academia, tu Perfil. Decirte tu reputación, tokens, o puntos. Darte un consejo de carrera. Generar una carta de postulación. ¡Probá cualquiera!`;
-    }
-    // Frustración
-    if (/no funciona|no sirve|no entiendo|ayuda|help|no puedo/.test(t)) {
-      return `Entiendo, ${name}. Intentá con comandos simples: "abre empleos", "mi reputación", "dame un consejo". También puedes tocar los nodos del orbe directamente. ¿En qué te puedo ayudar?`;
-    }
-    // Default contextual
-    const rep = p?.reputation_score ?? 0;
-    if (rep > 0) {
-      return `${name}, tu reputación va en ${Math.round(rep)} de 100. Puedo abrirte Empleos, Academia, o darte un consejo. ¿Qué te gustaría?`;
-    }
-    return `¡Estoy aquí, ${name}! Soy Ómicron. Dime algo como "abre empleos", "mi reputación", o toca un nodo del orbe. ¿En qué te ayudo?`;
-  }
-
-  function generateOfflineCoachAdvice(p: typeof sbProfile): string {
-    if (!p) return 'Aún no tengo datos de tu perfil. Sube tu CV o cuéntame a qué te dedicas para poder aconsejarte mejor.';
-    const exec = p.execution_score ?? 0;
-    const qual = p.quality_score ?? 0;
-    const trans = p.transcendence_score ?? 0;
-    const fund = p.foundation_score ?? 0;
-    const lowest = Math.min(exec, qual, trans, fund);
-    const name = p.display_name || p.username || 'amigo';
-
-    if (lowest === exec) return `Hey ${name}, tu eje de Ejecución está en ${exec}. Te recomiendo completar más proyectos prácticos — cada uno que documentes suma puntos reales a tu reputación. Abre la Bóveda y sube algo hoy.`;
-    if (lowest === qual) return `${name}, tu eje de Calidad está en ${qual}. Un buen camino es validar tus skills con exámenes. Toca "Habilidades" y rinde un examen rápido — sube tu calidad en minutos.`;
-    if (lowest === trans) return `${name}, tu Trascendencia está en ${trans}. Esto sube cuando compartes conocimiento. Publica un aporte en la Bóveda o conecta con otro nodo en la Red Social.`;
-    return `${name}, tu Fundamento está en ${fund}. Fortalécelo con cursos estructurados en la Academia. Cada módulo que completes suma puntos de fundamento.`;
-  }
-
-  // ── Handle text input — GAP 1 FIX: todos los intents del Oráculo ────
+  // ── Handle text input — Ómicron cerebro unificado ───────────────────
   const handleTextInput = useCallback(async (text: string) => {
     // Limpiar respuesta anterior para mostrar que estamos procesando
     setResponseMsg('Un momento…');
 
     const intent = interpret(text);
-
-    // Build coach context from real profile
-    const coachCtx = {
-      skills: sbProfile?.skills ?? [],
-      cv_summary: sbProfile?.cv_summary ?? '',
-      execution: sbProfile?.execution_score,
-      quality: sbProfile?.quality_score,
-      transcendence: sbProfile?.transcendence_score,
-      foundation: sbProfile?.foundation_score,
-      reputation: sbProfile?.reputation_score,
-      pe: sbProfile?.pe_points,
-    };
 
     const flash = (msg: string, _ms = 0) => {
       setResponseMsg(msg);
@@ -456,19 +398,22 @@ export function OrbShell() {
     if (intent.kind === 'coach') {
       flash('Dame un momento, estoy analizando tu perfil…');
       speakLocal('Déjame ver tu Gemelo Digital.');
-      const r = await askCoach(coachCtx);
-      if (r.advice) {
-        flash(r.advice);
-        speakAI(r.advice.length > 320 ? r.advice.slice(0, 320) : r.advice);
-      } else {
-        // IA no disponible → consejo offline basado en el perfil local
-        const offlineAdvice = generateOfflineCoachAdvice(sbProfile);
-        flash(offlineAdvice);
-        speakLocal(offlineAdvice);
-      }
-      if (r.error && (r.error.includes('límite') || r.error.includes('consejos'))) {
-        setShowPremium(true);
-      }
+      const omCtx: OmicronContext = {
+        skills: sbProfile?.skills ?? [],
+        cv_summary: sbProfile?.cv_summary ?? '',
+        execution: sbProfile?.execution_score,
+        quality: sbProfile?.quality_score,
+        transcendence: sbProfile?.transcendence_score,
+        foundation: sbProfile?.foundation_score,
+        reputation: sbProfile?.reputation_score,
+        pe: sbProfile?.pe_points,
+        node_level: sbProfile?.node_type,
+        activeTab: selectedNode?.tab ?? 'perfil',
+        displayName: sbProfile?.display_name || sbProfile?.username,
+      };
+      const r = await askOmicron(text, omCtx);
+      flash(r.text);
+      speakOmicron(r.text);
       return;
     }
 
@@ -498,31 +443,25 @@ export function OrbShell() {
       return;
     }
 
-    // unknown — intentar consultar al Tutor IA, con fallback offline robusto
+    // unknown — Ómicron cerebro unificado (coach + tutor + motivador)
     flash('Déjame pensar…');
-    speakLocal('Déjame pensar.');
-    try {
-      const { askTutor } = await import('../../lib/oraculo');
-      const t = await askTutor(text, coachCtx);
-      if (t.answer) {
-        flash(t.answer);
-        speakAI(t.answer.length > 320 ? t.answer.slice(0, 320) : t.answer);
-      } else {
-        // IA no disponible → respuesta offline inteligente
-        const offlineResponse = generateOfflineResponse(text, sbProfile);
-        flash(offlineResponse);
-        speakLocal(offlineResponse);
-      }
-      if (t.error && (t.error.includes('límite') || t.error.includes('consultas'))) {
-        setShowPremium(true);
-      }
-    } catch {
-      // Red caída o error total → respuesta offline
-      const offlineResponse = generateOfflineResponse(text, sbProfile);
-      flash(offlineResponse);
-      speakLocal(offlineResponse);
-    }
-  }, [setActiveTab, sbProfile, orbNodesWithLevels]);
+    const omCtx: OmicronContext = {
+      skills: sbProfile?.skills ?? [],
+      cv_summary: sbProfile?.cv_summary ?? '',
+      execution: sbProfile?.execution_score,
+      quality: sbProfile?.quality_score,
+      transcendence: sbProfile?.transcendence_score,
+      foundation: sbProfile?.foundation_score,
+      reputation: sbProfile?.reputation_score,
+      pe: sbProfile?.pe_points,
+      node_level: sbProfile?.node_type,
+      activeTab: selectedNode?.tab ?? 'perfil',
+      displayName: sbProfile?.display_name || sbProfile?.username,
+    };
+    const r = await askOmicron(text, omCtx);
+    flash(r.text);
+    speakOmicron(r.text);
+  }, [setActiveTab, sbProfile, orbNodesWithLevels, selectedNode]);
 
   // ── Toggle listening (speech recognition) ──────────────────────────
   // Voz y texto son LA MISMA experiencia — la voz solo cambia el input method.
