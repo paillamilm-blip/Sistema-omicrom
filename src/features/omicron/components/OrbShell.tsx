@@ -18,6 +18,7 @@ import { computeSteps, nodeGuidance } from '@/features/omicron/services/coach';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { C, FONT } from '@/theme';
+import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
 import type { TabId, GemeloDigital } from '@/types';
 
 // =====================================================================
@@ -515,6 +516,7 @@ export function OrbShell() {
   // Todos los nodos usan el mismo flujo: tap → preview → fullscreen.
   // El nodo Mi ADN va a renderTab('perfil') que ahora muestra el ADN Digital.
   const handleNodeTap = useCallback((node: OrbNode) => {
+    hapticMedium();
     setSelectedNode(node);
     setState('preview');
     setActiveTab(node.tab);
@@ -522,6 +524,7 @@ export function OrbShell() {
 
   // ── Handle preview click → fullscreen ───────────────────────────────
   const handlePreviewClick = useCallback(() => {
+    hapticLight();
     setState('fullscreen');
   }, []);
 
