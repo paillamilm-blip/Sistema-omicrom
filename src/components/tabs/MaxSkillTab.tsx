@@ -21,7 +21,7 @@ import {
   oc, OmicronHeader, OmicronCard, ProgressBar,
   ProgressRing, SectionTitle, Chip, OmicronEyebrow,
 } from '../omicron/OmicronChrome';
-import { askCoach, type CoachContext } from '../../lib/oraculo';
+import { askOmicron, type OmicronContext } from '../../lib/omicronBrain';
 import { UniversalSimulator } from '../shared/UniversalSimulator';
 import type { SkillTreeNode } from '../../types';
 
@@ -151,7 +151,7 @@ export function MaxSkillTab() {
     setCoachLoading(true);
     setCoachAdvice(null);
     try {
-      const ctx: CoachContext = {
+      const ctx: OmicronContext = {
         skills: profile?.skills ?? [],
         cv_summary: profile?.cv_summary ?? '',
         execution: gemelo?.execution,
@@ -160,11 +160,13 @@ export function MaxSkillTab() {
         foundation: gemelo?.foundation,
         reputation: gemelo?.overallReputation,
         pe: profile?.pe_points,
+        activeTab: 'maxskill',
+        displayName: profile?.display_name || profile?.username,
       };
-      const result = await askCoach(ctx);
-      setCoachAdvice(result.advice ?? result.error ?? 'Sin respuesta');
+      const result = await askOmicron('Dame un consejo para mejorar mis skills', ctx);
+      setCoachAdvice(result.text);
     } catch {
-      setCoachAdvice('Error al consultar al Coach. Intenta de nuevo.');
+      setCoachAdvice('Error al consultar a Ómicron. Intenta de nuevo.');
     } finally {
       setCoachLoading(false);
     }
