@@ -18,6 +18,8 @@
 
 import { callAI } from './aiClient';
 import { detectEmotion } from './emotionDetector';
+import { getPersonalizationHint, learnFromInteraction } from './aiPersonalization';
+import { TOOL_CATALOG, parseToolCall, type ToolCall } from './omicronTools';
 import type { TabId } from '../types';
 
 // ── Tipos ────────────────────────────────────────────────────────────
@@ -137,6 +139,7 @@ REGLAS:
 export interface OmicronResponse {
   text: string;
   error?: string;
+  toolCall?: ToolCall | null;
 }
 
 /**
@@ -160,6 +163,14 @@ export async function askOmicron(
   if (emotion.hint && emotion.confidence >= 0.3) {
     systemPrompt += `\n\nESTADO EMOCIONAL DETECTADO: ${emotion.hint}`;
   }
+
+  // Inyectar personalización aprendida
+  const personHint = getPersonalizationHint();
+  if (personHint) systemPrompt += personHint;
+
+  // Inyectar catálogo de herramientas
+  systemPrompt += '\n\n' + TOOL_CATALOG;
+
   const messages = [
     { role: 'system' as const, content: systemPrompt },
     // Historial conversacional (sin el último mensaje del user que ya va aparte)
@@ -178,18 +189,28 @@ export async function askOmicron(
     });
 
     if (!text) {
-      // Fallback: respuesta offline basada en contexto
       const fallback = generateOfflineFallback(message, context);
       addToMemory('assistant', fallback);
-      return { text: fallback };
+      return { text: fallback, toolCall: null };
     }
 
     addToMemory('assistant', text);
-    return { text };
+
+    // Aprender de esta interacción
+    learnFromInteraction({
+      messageLength: message.length,
+      emotion: emotion.emotion,
+      hour: new Date().getHours(),
+    });
+
+    // Detectar si Ómicron sugirió una herramienta
+    const toolCall = parseToolCall(text);
+
+    return { text, toolCall };
   } catch {
     const fallback = generateOfflineFallback(message, context);
     addToMemory('assistant', fallback);
-    return { text: fallback, error: 'offline' };
+    return { text: fallback, error: 'offline', toolCall: null };
   }
 }
 
