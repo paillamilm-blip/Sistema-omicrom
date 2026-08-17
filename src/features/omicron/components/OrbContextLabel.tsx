@@ -9,6 +9,7 @@ import { useMemo } from 'react';
 import { C, FONT } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { streakDays } from '@/features/gemelo/services/profile';
+import { greetingCopy, streakCopy } from '@/shared/utils/microcopy';
 
 interface Props {
   visible?: boolean;
@@ -25,7 +26,7 @@ export function OrbContextLabel({ visible = true }: Props) {
 
     // Sin perfil
     if (!hasSkills) {
-      return { text: '↓ toca un nodo para empezar', highlight: false };
+      return { text: greetingCopy(profile) + ' · toca un nodo', highlight: false };
     }
 
     // Frases rotativas basadas en hora + estado
@@ -33,7 +34,7 @@ export function OrbContextLabel({ visible = true }: Props) {
     const options: { text: string; highlight: boolean }[] = [];
 
     if (streak > 0) {
-      options.push({ text: `🔥 ${streak} días seguidos · toca un nodo`, highlight: true });
+      options.push({ text: streakCopy(streak), highlight: true });
     }
     if (rep > 0) {
       options.push({ text: `Reputación: ${rep.toFixed(0)} · toca para explorar`, highlight: false });
