@@ -247,6 +247,11 @@ export function OrbShell() {
   const hasGreeted = useRef(false);
   const [previewSkills, setPreviewSkills] = useState<string[]>([]);
 
+  // ── Track if onboarding is complete (to hide oráculo while onboarding is active)
+  const [onboardingDone, setOnboardingDone] = useState(() =>
+    typeof localStorage !== 'undefined' && !!localStorage.getItem('omicron_onboarding_done')
+  );
+
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
   // Now uses skills_detail (from AI analysis) for real domination %.
@@ -696,6 +701,7 @@ export function OrbShell() {
     setActiveTab(route.tab);
     const node = dynamicOrbNodes.find((n: OrbNode) => n.id === route.nodeId) ?? dynamicOrbNodes[0];
     if (node) { setSelectedNode(node); setState('fullscreen'); }
+    setOnboardingDone(true);
   }, [setActiveTab, dynamicOrbNodes]);
 
   // (Voice control exposed via CustomEvents — see oracle:listening / oracle:voice listeners above)
@@ -1111,8 +1117,8 @@ export function OrbShell() {
         </div>
       )}
 
-      {/* ── ORÁCULO INPUT BAR (SIEMPRE visible — overlay flotante) ──── */}
-      <div style={{
+      {/* ── ORÁCULO INPUT BAR (visible only after onboarding) ──── */}
+      {onboardingDone && <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -1230,7 +1236,7 @@ export function OrbShell() {
             visible={!inputText && idleStage !== 'quiet'}
           />
         )}
-      </div>
+      </div>}
 
       {/* ── PROACTIVE MESSAGE (con botones — reemplaza la burbuja plana) ── */}
       {state === 'orb' && responseMsg && (
