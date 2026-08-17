@@ -1,15 +1,10 @@
 // store/NavigationContext.tsx
-// ═══════════════════════════════════════════════════════════════════════
-// Navegación (activeTab) + notificaciones no leídas.
-//
-// AFTER ROUTER MIGRATION:
-// - activeTab is now DERIVED from the current URL via React Router
-// - setActiveTab calls navigate() under the hood
-// - Fallback: if not inside a Router, uses local state (for tests/SSR)
+// Navegación (activeTab) + notificaciones no leídas. Separado de
+// ProfileContext (Fase 0.3 del plan de producción) porque cambia mucho más
+// seguido (cada tap de navegación) que el perfil/reputación.
 //
 // Depende del profile.id de ProfileContext (para el canal de notificaciones),
 // por eso NavigationProvider debe montarse DENTRO de ProfileProvider.
-// ═══════════════════════════════════════════════════════════════════════
 
 import {
   createContext,
@@ -17,12 +12,9 @@ import {
   useState,
   useEffect,
   useRef,
-  useCallback,
   ReactNode,
 } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/infrastructure/supabase/client';
-import { tabFromPath, pathFromTab } from '@/infrastructure/router/routes';
 import type { TabId } from '../types';
 
 export interface NavigationContextState {
@@ -35,32 +27,22 @@ export interface NavigationContextState {
 const NavigationContext = createContext<NavigationContextState | null>(null);
 
 export function NavigationProvider({ profileId, children }: { profileId?: string; children: ReactNode }) {
-  // ── Tab state derived from URL ──────────────────────────────────────
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const activeTab = tabFromPath(location.pathname);
-
-  const setActiveTab = useCallback((tab: TabId) => {
-    const path = pathFromTab(tab);
-    if (location.pathname !== path) {
-      navigate(path);
-    }
-  }, [navigate, location.pathname]);
-
-  // ── Notifications ───────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<TabId>('perfil');
   const [unreadCount, setUnreadCount] = useState(0);
   const isMounted = useRef(true);
 
   useEffect(() => {
     isMounted.current = true;
-    return () => { isMounted.current = false; };
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   useEffect(() => {
     if (!profileId) setUnreadCount(0);
   }, [profileId]);
 
+  // Notificaciones no leídas (con manejo de errores robusto)
   useEffect(() => {
     if (!profileId) return;
 

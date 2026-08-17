@@ -1,6 +1,5 @@
 import { OrbShell } from '@/features/omicron/components/OrbShell';
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/infrastructure/query/client';
 import { AppProvider, useApp } from './store/AppContext';
@@ -18,8 +17,6 @@ import { LiveNetworkFeed } from '@/features/perfil/components/LivePresence';
 import { IncomingJobPush } from '@/features/empleos/components/IncomingJobs';
 import { PublicProfileGate } from '@/features/perfil/components/RedSocial';
 import { VerifyCredentialView } from '@/features/perfil/components/VerifyCredential';
-import { ROUTES } from '@/infrastructure/router/routes';
-import { preloadCriticalTabs } from '@/infrastructure/router/preload';
 import { C, FONT } from './theme';
 
 
@@ -33,9 +30,6 @@ function AppShell() {
     const key = 'omicron_visit_count';
     const count = parseInt(localStorage.getItem(key) ?? '0');
     localStorage.setItem(key, String(count + 1));
-
-    // Preload critical tab chunks on idle
-    preloadCriticalTabs();
 
     // Analytics: track open + daily return
     import('@/shared/utils/analytics').then(({ track }) => {
@@ -56,14 +50,14 @@ function AppShell() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Escuchar evento 'omicron:request-auth' para abrir modal de auth (DEBE estar antes de returns condicionales)
+  // Escuchar evento 'omicron:request-auth' para abrir modal de auth
   useEffect(() => {
     const handler = () => setShowAuthModal(true);
     window.addEventListener('omicron:request-auth', handler);
     return () => window.removeEventListener('omicron:request-auth', handler);
   }, []);
 
-  // Timeout: si auth tarda más de 5s, forzar modo guest (nunca quedarse pegado)
+  // Timeout: si auth tarda más de 5s, forzar modo guest
   const [forceGuest, setForceGuest] = useState(false);
   useEffect(() => {
     if (authStatus !== 'loading' && !isLoadingProfile) return;
@@ -91,21 +85,14 @@ function AppShell() {
   }
 
   if (showResetPassword) return <ResetPasswordOverlay onDone={() => setShowResetPassword(false)} />;
-  // GUEST MODE: permitir ver el orbe sin auth. Auth se pide cuando quiere guardar/postular/conectar.
   if (authStatus === 'no_access') return <NoAccess />;
 
-  // Si no está autenticado O forzamos guest, mostrar el orbe en modo guest
   const isGuest = authStatus === 'unauthenticated' || forceGuest;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-
-      {/* ── ORBE NEURONAL: la app es el orbe ──────────────────────── */}
       <OrbShell />
-
-      {/* Auth overlay como modal (no bloqueante) — se muestra cuando el guest quiere persistir */}
       {isGuest && showAuthModal && <AuthOverlay onClose={() => setShowAuthModal(false)} />}
-
       <LiveNetworkFeed />
       {!isGuest && <IncomingJobPush />}
       <PublicProfileGate />
@@ -125,23 +112,14 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
       <AppProvider>
         <ToastProvider>
           <RealtimeProvider>
             <ConnectionBanner />
-            <Routes>
-              {/* All app routes render the same shell — the orb handles tab display */}
-              {ROUTES.map(route => (
-                <Route key={route.tab} path={route.path} element={<AppShell />} />
-              ))}
-              {/* Fallback: unknown paths → home */}
-              <Route path="*" element={<AppShell />} />
-            </Routes>
+            <AppShell />
           </RealtimeProvider>
         </ToastProvider>
       </AppProvider>
-    </BrowserRouter>
     </QueryClientProvider>
   );
 }
