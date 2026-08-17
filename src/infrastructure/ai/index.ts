@@ -1,4 +1,4 @@
 export * from './client';
-export * from './stream';
+export { callAIStream, type StreamOptions } from './stream';
 export * from './personalization';
 export * from './gemini';

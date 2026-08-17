@@ -10,6 +10,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/infrastructure/supabase/client';
+import type { AIMessage } from './client';
 
 export interface StreamOptions {
   maxTokens?: number;
@@ -18,10 +19,8 @@ export interface StreamOptions {
   timeout?: number;
 }
 
-export interface AIMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
+// Re-export for consumers that import from stream
+export type { AIMessage };
 
 /**
  * Llama a proxy-ai con streaming. Invoca onToken con cada fragmento.
@@ -111,13 +110,13 @@ export async function callAIStream(
     }
 
     // Fallback: usar callAI normal
-    const { callAI } = await import('./aiClient');
+    const { callAI } = await import('./client');
     const result = await callAI(messages, { maxTokens, temperature, timeout });
     if (result) onToken(result);
     return result ?? '';
   } catch {
     // Fallback silencioso a non-streaming
-    const { callAI } = await import('./aiClient');
+    const { callAI } = await import('./client');
     const result = await callAI(messages, { maxTokens, temperature, timeout });
     if (result) onToken(result);
     return result ?? '';
