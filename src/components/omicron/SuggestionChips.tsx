@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { C, FONT } from '../../theme';
 import { useApp } from '../../store/AppContext';
 import { streakDays } from '../../lib/gemeloProfile';
-import { isChallengeCompleted } from '../../lib/dailyChallenge';
+import { getDailyChallenge, isChallengeCompleted } from '../../lib/dailyChallenge';
 
 interface Chip {
   emoji: string;
@@ -29,7 +29,7 @@ export function SuggestionChips({ onChipTap, visible = true }: Props) {
     const hasSkills = profile?.skills && profile.skills.length > 0;
     const hasCv = !!profile?.cv_summary;
     const streak = streakDays();
-    const challengeDone = isChallengeCompleted();
+    const challengeDone = (() => { const c = getDailyChallenge(null); return c ? isChallengeCompleted(c.id) : true; })();
 
     // Sin perfil / sin skills
     if (!hasSkills) {

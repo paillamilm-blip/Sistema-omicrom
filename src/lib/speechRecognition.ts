@@ -1,22 +1,42 @@
 // src/lib/speechRecognition.ts
 // ═══════════════════════════════════════════════════════════════════════
 // SPEECH RECOGNITION — Utility compartido.
-//
-// Antes: boilerplate de SpeechRecognition repetido en OrbShell.tsx y
-// OrbOnboarding.tsx con 5+ eslint-disable para `as any`.
-// Ahora: un solo archivo tipado, sin `any`, reutilizable.
 // ═══════════════════════════════════════════════════════════════════════
 
+// ponytail: Web Speech API types not in all TS configs — declare minimal interface
+interface SpeechRecognitionResult {
+  readonly isFinal: boolean;
+  readonly [index: number]: { transcript: string };
+}
+interface SpeechRecognitionResultList {
+  readonly length: number;
+  readonly [index: number]: SpeechRecognitionResult;
+}
+interface SpeechRecognitionEventLike {
+  readonly results: SpeechRecognitionResultList;
+}
+interface SpeechRecognitionErrorLike {
+  readonly error: string;
+}
+interface SpeechRecognitionInstance {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  onresult: ((e: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((e: SpeechRecognitionErrorLike) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  abort(): void;
+}
+
 /** Cross-browser SpeechRecognition constructor (or null if unsupported) */
-function getSpeechRecognitionCtor(): (new () => SpeechRecognition) | null {
+function getSpeechRecognitionCtor(): (new () => SpeechRecognitionInstance) | null {
   if (typeof window === 'undefined') return null;
-  // Standard
   if ('SpeechRecognition' in window) {
-    return (window as unknown as { SpeechRecognition: new () => SpeechRecognition }).SpeechRecognition;
+    return (window as unknown as { SpeechRecognition: new () => SpeechRecognitionInstance }).SpeechRecognition;
   }
-  // Webkit prefix (Chrome, Edge, Safari)
   if ('webkitSpeechRecognition' in window) {
-    return (window as unknown as { webkitSpeechRecognition: new () => SpeechRecognition }).webkitSpeechRecognition;
+    return (window as unknown as { webkitSpeechRecognition: new () => SpeechRecognitionInstance }).webkitSpeechRecognition;
   }
   return null;
 }
@@ -59,13 +79,13 @@ export function startSpeechRecognition(options: SpeechOptions): SpeechHandle | n
   recog.interimResults = interimResults;
   recog.continuous = false;
 
-  recog.onresult = (e: SpeechRecognitionEvent) => {
+  recog.onresult = (e: SpeechRecognitionEventLike) => {
     const result = e.results[e.results.length - 1];
     const transcript = result[0].transcript;
     onResult(transcript, result.isFinal);
   };
 
-  recog.onerror = (e: SpeechRecognitionErrorEvent) => {
+  recog.onerror = (e: SpeechRecognitionErrorLike) => {
     onError?.(e.error);
   };
 
