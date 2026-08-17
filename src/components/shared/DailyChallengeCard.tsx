@@ -41,14 +41,7 @@ export function DailyChallengeCard({ onNavigate }: Props) {
 
     // Navegar según el tipo de challenge
     if (onNavigate) {
-      const navMap: Record<string, string> = {
-        job_review: 'empleos',
-        connect: 'chat',
-        quiz: 'maxskill',
-        share: 'chat',
-        review: 'perfil',
-      };
-      const tab = navMap[challenge.type];
+      const tab = challenge.targetTab;
       if (tab) setTimeout(() => onNavigate(tab), 800);
     }
 
@@ -90,12 +83,12 @@ export function DailyChallengeCard({ onNavigate }: Props) {
   return (
     <div style={S.card}>
       <div style={S.header}>
-        <span style={S.emoji}>{challenge.emoji}</span>
+        <span style={S.emoji}>{challenge.icon}</span>
         <div style={S.headerText}>
           <span style={S.label}>RETO DEL DÍA</span>
-          <span style={S.time}>~{challenge.estimatedMinutes} min</span>
+          <span style={S.time}>{challenge.duration}</span>
         </div>
-        <span style={S.reward}>+{challenge.peReward} PE</span>
+        <span style={S.reward}>+{challenge.reward.pe} PE</span>
       </div>
 
       <div style={S.title}>{challenge.title}</div>
