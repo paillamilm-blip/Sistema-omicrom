@@ -111,7 +111,7 @@ const S: Record<string, React.CSSProperties> = {
     border: `1px solid ${C.cyanFaint}`,
     color: C.ink,
     cursor: 'pointer',
-    transition: 'all 0.15s cubic-bezier(0.32, 0.72, 0, 1)',
+    transition: 'all var(--timing-fast) var(--ease-default)',
     WebkitTapHighlightColor: 'transparent',
   },
   emoji: { fontSize: 13 },

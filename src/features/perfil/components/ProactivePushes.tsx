@@ -191,7 +191,7 @@ const S: Record<string, React.CSSProperties> = {
     backdropFilter: 'blur(16px)',
     WebkitBackdropFilter: 'blur(16px)',
     boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-    transition: 'all 0.34s cubic-bezier(0.2, 0.9, 0.25, 1)',
+    transition: 'all 0.34s var(--ease-enter)',
   },
   tag: {
     fontFamily: FONT.mono,

@@ -189,7 +189,7 @@ export function GobernanzaTab() {
   const resolvedAppeals = disputes.filter(d => d.appeal_status === 'RESOLVED');
 
   return (
-    <div style={oc.root}>
+    <div style={oc.root} className="oc-rise">
       <ScanlineOverlay />
       <OmicronHeader
         onBack={() => setActiveTab('perfil')}

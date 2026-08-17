@@ -761,7 +761,7 @@ export function OrbShell() {
         justifyContent: 'center',
         opacity: state === 'fullscreen' ? 0 : 1,
         transform: state === 'fullscreen' ? 'scale(0.8)' : 'scale(1)',
-        transition: 'opacity 0.25s cubic-bezier(0.23,1,0.32,1), transform 0.25s cubic-bezier(0.23,1,0.32,1)',
+        transition: 'opacity var(--timing-normal) var(--ease-default), transform var(--timing-normal) var(--ease-default)',
         pointerEvents: state === 'fullscreen' ? 'none' : 'auto',
         zIndex: 1,
       }}>
@@ -807,7 +807,7 @@ export function OrbShell() {
             justifyContent: 'center',
             overflow: 'hidden',
             boxShadow: `0 0 12px ${C.cyanFaint}, 0 4px 14px rgba(0,0,0,0.4)`,
-            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            transition: 'transform var(--timing-fast) var(--ease-default), box-shadow var(--timing-fast) var(--ease-default)',
             padding: 0,
           }}
         >
@@ -892,7 +892,7 @@ export function OrbShell() {
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 30px ${C.cyanFaint}`,
-              animation: 'orbPreviewEnter 0.25s cubic-bezier(0.23,1,0.32,1) both',
+              animation: 'orbPreviewEnter var(--timing-normal) var(--ease-default) both',
               touchAction: 'pan-y',
             }}
           >
@@ -992,7 +992,7 @@ export function OrbShell() {
         zIndex: state === 'fullscreen' ? 20 : -1,
         opacity: state === 'fullscreen' ? 1 : 0,
         transform: state === 'fullscreen' ? 'translateY(0)' : 'translateY(30px)',
-        transition: 'opacity 0.25s cubic-bezier(0.23,1,0.32,1), transform 0.25s cubic-bezier(0.23,1,0.32,1)',
+        transition: 'opacity var(--timing-normal) var(--ease-default), transform var(--timing-normal) var(--ease-default)',
         pointerEvents: state === 'fullscreen' ? 'auto' : 'none',
         display: 'flex',
         flexDirection: 'column',
@@ -1025,7 +1025,7 @@ export function OrbShell() {
               placeItems: 'center',
               fontSize: 16,
               fontWeight: 700,
-              transition: 'transform 0.15s ease, background 0.15s ease',
+              transition: 'transform var(--timing-fast) var(--ease-default), background var(--timing-fast) var(--ease-default)',
             }}
           >
             ←
@@ -1051,7 +1051,7 @@ export function OrbShell() {
           style={{
             flex: 1,
             overflow: 'auto',
-            animation: 'pageEnter 0.28s cubic-bezier(0.32, 0.72, 0, 1) both',
+            animation: 'pageEnter 0.28s var(--ease-default) both',
           }}
         >
           <Suspense fallback={<TabLoader />}>
@@ -1097,7 +1097,7 @@ export function OrbShell() {
                   top: pos.y,
                   transform: 'translate(-50%, -140%)',
                   opacity: isFront ? (isActive ? 1 : 0.7) : 0,
-                  transition: 'opacity 0.15s ease',
+                  transition: 'opacity var(--timing-fast) var(--ease-default)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -1118,7 +1118,7 @@ export function OrbShell() {
                   textTransform: 'uppercase',
                   textShadow: isActive ? `0 0 8px ${C.cyan}` : 'none',
                   whiteSpace: 'nowrap',
-                  transition: 'color 0.15s ease, font-size 0.15s ease',
+                  transition: 'color var(--timing-fast) var(--ease-default), font-size var(--timing-fast) var(--ease-default)',
                 }}>
                   {node.label}{node.level !== undefined && node.level > 0 ? ` ${Math.round(node.level * 100)}%` : ''}
                 </span>
@@ -1173,7 +1173,7 @@ export function OrbShell() {
               ? `0 0 20px ${C.cyan}33, 0 0 8px ${C.cyan}22, 0 8px 32px rgba(0,0,0,0.3)`
               : (!inputText && !responseMsg ? `0 0 12px ${C.cyan}22, 0 0 4px ${C.cyan}11` : 'none'),
             transform: inputFocused ? 'scale(1.02)' : 'scale(1)',
-            transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transition: 'all var(--timing-normal) var(--ease-spring)',
             animation: !inputText && !responseMsg && !inputFocused ? 'cp-breathe 3s ease-in-out infinite' : 'none',
           }}
         >
@@ -1240,7 +1240,7 @@ export function OrbShell() {
               placeItems: 'center',
               fontSize: 13,
               flexShrink: 0,
-              transition: 'background 0.15s ease, color 0.15s ease',
+              transition: 'background var(--timing-fast) var(--ease-default), color var(--timing-fast) var(--ease-default)',
             }}
           >
             ➤

@@ -184,7 +184,7 @@ export function EmpleosTab() {
   });
 
   return (
-    <div style={oc.root}>
+    <div style={oc.root} className="oc-rise">
       {/* Header Ómicron unificado */}
       <OmicronHeader
         onBack={() => setActiveTab('perfil')}

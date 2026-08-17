@@ -632,7 +632,7 @@ const S: Record<string, React.CSSProperties> = {
     border: `1px solid ${C.line}`,
     borderBottom: 'none',
     boxShadow: '0 -20px 60px rgba(0,0,0,0.65)',
-    transition: 'transform 0.36s cubic-bezier(0.2, 0.9, 0.25, 1)',
+    transition: 'transform 0.36s var(--ease-enter)',
   },
   grip: {
     width: 40,

@@ -24,6 +24,16 @@
   --glass:    rgba(255,255,255,0.045);
 
   --glow-teal:   0 0 16px rgba(63,208,201,0.45);
+
+  /* Motion tokens (mirrors theme/animations.ts) */
+  --ease-default: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-enter:   cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-exit:    cubic-bezier(0.55, 0.085, 0.68, 0.53);
+  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --timing-fast:   150ms;
+  --timing-normal: 250ms;
+  --timing-enter:  300ms;
+  --timing-exit:   200ms;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -324,6 +334,26 @@ body::after {
 }
 @media (min-width: 1100px) {
   #root { height: min(940px, calc(100dvh - 64px)); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STAGGER CHILDREN — cascading enter animation
+   ═══════════════════════════════════════════════════════════ */
+.stagger-item {
+  opacity: 0;
+  animation: ocRise 0.32s var(--ease-default) both;
+}
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 50ms; }
+.stagger-item:nth-child(3) { animation-delay: 100ms; }
+.stagger-item:nth-child(4) { animation-delay: 150ms; }
+.stagger-item:nth-child(5) { animation-delay: 200ms; }
+.stagger-item:nth-child(6) { animation-delay: 250ms; }
+.stagger-item:nth-child(7) { animation-delay: 300ms; }
+.stagger-item:nth-child(8) { animation-delay: 350ms; }
+@keyframes ocRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
 }
 
 /* ═══════════════════════════════════════════════════════════

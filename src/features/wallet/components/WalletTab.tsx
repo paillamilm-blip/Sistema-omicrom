@@ -133,7 +133,7 @@ export function WalletTab() {
   const node    = getNode(pe);
 
   return (
-    <div style={oc.root}>
+    <div style={oc.root} className="oc-rise">
       <OmicronHeader
         onBack={() => setActiveTab('perfil')}
         icon={<Wallet size={17} />}

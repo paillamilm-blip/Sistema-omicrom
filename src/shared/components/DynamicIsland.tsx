@@ -98,7 +98,7 @@ export function DynamicIsland({
         boxShadow: `0 8px 32px rgba(0,0,0,0.5), 0 0 16px ${accent}22`,
         // Animation
         opacity: visible ? 1 : 0,
-        transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        transition: 'all 0.4s var(--ease-spring)',
         // Layout
         display: 'flex',
         alignItems: 'center',
@@ -110,7 +110,7 @@ export function DynamicIsland({
       <span style={{
         fontSize: expanded ? 20 : 13,
         flexShrink: 0,
-        transition: 'font-size 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        transition: 'font-size var(--timing-enter) var(--ease-spring)',
       }}>
         {icon}
       </span>

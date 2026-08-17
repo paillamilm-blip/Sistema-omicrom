@@ -313,7 +313,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                     background: C.glass, border: `1px solid ${C.line}`, color: C.ink,
                     fontFamily: FONT.body, fontSize: 13, cursor: 'pointer',
                     WebkitTapHighlightColor: 'transparent',
-                    transition: 'background 0.15s ease',
+                    transition: 'background var(--timing-fast) var(--ease-default)',
                   }}>
                   {s}
                 </button>

@@ -220,7 +220,7 @@ const S: Record<string, React.CSSProperties> = {
     background: 'linear-gradient(180deg, rgba(16,20,38,0.96), rgba(6,8,18,0.98))',
     border: `1px solid ${C.line}`,
     boxShadow: '0 40px 100px rgba(0,0,0,0.75), inset 0 1px 0 rgba(140,180,255,0.14)',
-    transition: 'all 0.3s cubic-bezier(0.2, 0.9, 0.25, 1)',
+    transition: 'all var(--timing-enter) var(--ease-enter)',
   },
   closeBtn: {
     position: 'absolute',
