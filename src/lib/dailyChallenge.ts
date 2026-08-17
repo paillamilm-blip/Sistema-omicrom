@@ -1,163 +1,143 @@
 // src/lib/dailyChallenge.ts
 // ═══════════════════════════════════════════════════════════════════════
-// DAILY CHALLENGE — Reto diario rotativo que da razón para volver.
-// "El Wordle de tu carrera" — 2 minutos, cada día uno nuevo.
-// Combinado con streak: completar reto mantiene la racha.
+// MICRO-RETOS DIARIOS — "Tu desafío de hoy"
+//
+// Cada día, Ómicron propone UN reto de 5 minutos basado en la brecha más
+// débil del usuario. No es un curso largo — es una acción mínima con
+// impacto medible que mueve los ejes realmente.
+//
+// 100% determinístico (sin IA) — funciona offline, 0 latencia.
+// El reto se genera desde el perfil + fecha (mismo reto todo el día).
 // ═══════════════════════════════════════════════════════════════════════
 
-export type ChallengeType =
-  | 'reflection'    // Lunes: reflexión
-  | 'self_eval'     // Martes: auto-evaluación skill
-  | 'job_review'    // Miércoles: revisar un empleo
-  | 'connect'       // Jueves: conectar con alguien
-  | 'share'         // Viernes: compartir un tip
-  | 'quiz'          // Sábado: speed quiz
-  | 'review';       // Domingo: resumen semanal
+import type { GemeloDigital } from '../types';
 
 export interface DailyChallenge {
   id: string;
-  type: ChallengeType;
   title: string;
   description: string;
-  peReward: number;
-  emoji: string;
-  action: string; // Texto del botón CTA
-  estimatedMinutes: number;
+  action: string;       // Lo que debe hacer
+  duration: string;     // "5 min", "3 min"
+  reward: {
+    pe: number;
+    axis: 'execution' | 'quality' | 'transcendence' | 'foundation';
+    delta: number;      // cuánto sube el eje
+  };
+  icon: string;
+  targetTab?: string;   // A dónde llevarlo
 }
 
-/** Challenges por día de la semana (0=Domingo, 1=Lunes...) */
-const CHALLENGE_TEMPLATES: Record<number, () => DailyChallenge> = {
-  1: () => ({
-    id: `challenge-${todayKey()}`,
-    type: 'reflection',
-    title: 'Reflexión del lunes',
-    description: '¿Qué aprendiste la semana pasada que puedas aplicar hoy? Escríbelo en una frase.',
-    peReward: 5,
-    emoji: '🧠',
-    action: 'Escribir reflexión',
-    estimatedMinutes: 2,
-  }),
-  2: () => ({
-    id: `challenge-${todayKey()}`,
-    type: 'self_eval',
-    title: 'Auto-evaluación rápida',
-    description: 'Evalúa tu skill principal: ¿básico, intermedio o avanzado? Sé honesto — tu Gemelo se ajusta.',
-    peReward: 8,
-    emoji: '🎯',
-    action: 'Evaluar skill',
-    estimatedMinutes: 1,
-  }),
-  3: () => ({
-    id: `challenge-${todayKey()}`,
-    type: 'job_review',
-    title: 'Oportunidad del día',
-    description: 'Revisa una oferta de empleo nueva. ¿Te postularías? Si sí, tu Gemelo te arma la carta.',
-    peReward: 10,
-    emoji: '💼',
-    action: 'Ver oferta',
-    estimatedMinutes: 2,
-  }),
-  4: () => ({
-    id: `challenge-${todayKey()}`,
-    type: 'connect',
-    title: 'Conexión del jueves',
-    description: 'Mira quién está en línea en la red. Conecta con 1 persona — un saludo basta.',
-    peReward: 12,
-    emoji: '🤝',
-    action: 'Ver red',
-    estimatedMinutes: 2,
-  }),
-  5: () => ({
-    id: `challenge-${todayKey()}`,
-    type: 'share',
-    title: 'Comparte un tip',
-    description: 'Escribe un consejo profesional de tu experiencia. Ayudas a otros y sube tu Trascendencia.',
-    peReward: 15,
-    emoji: '💡',
-    action: 'Escribir tip',
-    estimatedMinutes: 3,
-  }),
-  6: () => ({
-    id: `challenge-${todayKey()}`,
-    type: 'quiz',
-    title: 'Speed quiz',
-    description: '3 preguntas rápidas de tu área. Responde bien → +PE directo. Sin presión.',
-    peReward: 20,
-    emoji: '⚡',
-    action: 'Empezar quiz',
-    estimatedMinutes: 2,
-  }),
-  0: () => ({
-    id: `challenge-${todayKey()}`,
-    type: 'review',
-    title: 'Tu semana en 30 segundos',
-    description: 'Mira cuánto avanzaste esta semana: PE ganados, reputación, racha. Descansa — lo mereces.',
-    peReward: 5,
-    emoji: '📊',
-    action: 'Ver resumen',
-    estimatedMinutes: 1,
-  }),
+// ── Catálogo de retos por eje ────────────────────────────────────────
+
+const EXECUTION_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
+  { title: 'Documenta un logro', description: 'Escribe 3 líneas sobre un proyecto que completaste. Cualquiera sirve.', action: 'Escribe en la Bóveda', duration: '3 min', reward: { pe: 5, axis: 'execution', delta: 2 }, icon: '🚀', targetTab: 'vault' },
+  { title: 'Postula a un empleo', description: 'Elige una oferta de la pestaña Empleos y postula con carta IA.', action: 'Postula con carta IA', duration: '5 min', reward: { pe: 8, axis: 'execution', delta: 3 }, icon: '💼', targetTab: 'empleos' },
+  { title: 'Conecta con alguien', description: 'Envía una solicitud de conexión a alguien con skills complementarias.', action: 'Conecta en la Red', duration: '2 min', reward: { pe: 3, axis: 'execution', delta: 1 }, icon: '🤝', targetTab: 'chat' },
+  { title: 'Ofrece un servicio', description: 'Publica un micro-servicio en el Marketplace basado en tu skill más fuerte.', action: 'Publica en Mercado', duration: '5 min', reward: { pe: 10, axis: 'execution', delta: 3 }, icon: '💡', targetTab: 'market' },
+];
+
+const QUALITY_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
+  { title: 'Valida una skill', description: 'Rinde un examen rápido de tu skill principal. 3 preguntas + caso práctico.', action: 'Examen en MaxSkill', duration: '5 min', reward: { pe: 10, axis: 'quality', delta: 3 }, icon: '🎯', targetTab: 'maxskill' },
+  { title: 'Completa una lección', description: 'Toma una lección de la Academia y responde el quiz.', action: 'Lección en Academia', duration: '5 min', reward: { pe: 5, axis: 'quality', delta: 2 }, icon: '📚', targetTab: 'academia' },
+  { title: 'Revisa tu CV', description: 'Si tu CV está desactualizado, vuelve a subirlo. Ómicron re-analiza y actualiza tus ejes.', action: 'Re-subir CV', duration: '3 min', reward: { pe: 5, axis: 'quality', delta: 2 }, icon: '📄', targetTab: 'perfil' },
+];
+
+const TRANSCENDENCE_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
+  { title: 'Publica conocimiento', description: 'Comparte una solución técnica en la Bóveda. Puede ser breve — un truco, un patrón, un aprendizaje.', action: 'Publicar en Bóveda', duration: '5 min', reward: { pe: 12, axis: 'transcendence', delta: 4 }, icon: '💎', targetTab: 'vault' },
+  { title: 'Responde a alguien', description: 'Busca una pregunta en la Red Social y respóndela con tu experiencia.', action: 'Ayuda en la Red', duration: '3 min', reward: { pe: 5, axis: 'transcendence', delta: 2 }, icon: '🌟', targetTab: 'chat' },
+  { title: 'Comparte tu perfil', description: 'Envía tu Pasaporte Gemelo a alguien que pueda validarte.', action: 'Compartir Pasaporte', duration: '2 min', reward: { pe: 3, axis: 'transcendence', delta: 1 }, icon: '🔗', targetTab: 'perfil' },
+];
+
+const FOUNDATION_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
+  { title: 'Micro-curso adaptativo', description: 'Toma un micro-curso generado por IA sobre tu skill más débil.', action: 'Curso en Academia', duration: '5 min', reward: { pe: 8, axis: 'foundation', delta: 3 }, icon: '🧠', targetTab: 'academia' },
+  { title: 'Actualiza tu perfil', description: 'Agrega un dato nuevo: ubicación, bio, o una credencial verificable.', action: 'Editar Perfil', duration: '2 min', reward: { pe: 3, axis: 'foundation', delta: 1 }, icon: '✏️', targetTab: 'perfil' },
+  { title: 'Explora la Gobernanza', description: 'Lee cómo funciona el Tribunal de Pares. Entender el sistema = fundamento.', action: 'Ver Gobernanza', duration: '3 min', reward: { pe: 3, axis: 'foundation', delta: 1 }, icon: '⚖️', targetTab: 'gobernanza' },
+];
+
+const ALL_CHALLENGES: Record<string, Omit<DailyChallenge, 'id'>[]> = {
+  execution: EXECUTION_CHALLENGES,
+  quality: QUALITY_CHALLENGES,
+  transcendence: TRANSCENDENCE_CHALLENGES,
+  foundation: FOUNDATION_CHALLENGES,
 };
 
-function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+// ── API pública ──────────────────────────────────────────────────────
+
+/**
+ * Genera el reto del día basado en el eje más débil del usuario.
+ * Determinístico: misma fecha + mismo perfil = mismo reto (estable).
+ */
+export function getDailyChallenge(gemelo: GemeloDigital | null): DailyChallenge | null {
+  if (!gemelo) return null;
+
+  // Encontrar eje más débil
+  const axes = {
+    execution: gemelo.execution,
+    quality: gemelo.quality,
+    transcendence: gemelo.transcendence,
+    foundation: gemelo.foundation,
+  };
+  const weakest = Object.entries(axes).sort((a, b) => a[1] - b[1])[0][0];
+
+  // Seleccionar reto estable para hoy (basado en fecha)
+  const today = new Date().toISOString().slice(0, 10);
+  const seed = hashCode(today + weakest);
+  const pool = ALL_CHALLENGES[weakest] || EXECUTION_CHALLENGES;
+  const index = Math.abs(seed) % pool.length;
+  const challenge = pool[index];
+
+  return {
+    ...challenge,
+    id: `${today}-${weakest}-${index}`,
+  };
 }
 
-/** Obtiene el reto del día actual */
-export function getTodayChallenge(): DailyChallenge {
-  const dayOfWeek = new Date().getDay();
-  const generator = CHALLENGE_TEMPLATES[dayOfWeek] ?? CHALLENGE_TEMPLATES[1];
-  return generator();
+/**
+ * ¿El usuario ya completó el reto de hoy?
+ */
+export function isChallengeCompleted(challengeId: string): boolean {
+  return localStorage.getItem(`challenge_done_${challengeId}`) === '1';
 }
 
-/** Verifica si el reto de hoy ya se completó */
-export function isChallengeCompleted(): boolean {
+/**
+ * Marca el reto como completado.
+ */
+export function markChallengeCompleted(challengeId: string): void {
+  localStorage.setItem(`challenge_done_${challengeId}`, '1');
+}
+
+/**
+ * Streak actual (días consecutivos completando retos).
+ */
+export function getCurrentStreak(): number {
+  const raw = localStorage.getItem('omicron_challenge_streak');
+  if (!raw) return 0;
   try {
-    const key = `omicron_challenge_${todayKey()}`;
-    return localStorage.getItem(key) === 'done';
-  } catch { return false; }
-}
-
-/** Marca el reto de hoy como completado */
-export function completeChallenge(): number {
-  try {
-    const key = `omicron_challenge_${todayKey()}`;
-    localStorage.setItem(key, 'done');
-
-    // Registrar en historial para streak
-    const histKey = 'omicron_challenge_history';
-    const history: string[] = JSON.parse(localStorage.getItem(histKey) ?? '[]');
-    history.push(todayKey());
-    // Mantener solo últimos 60 días
-    localStorage.setItem(histKey, JSON.stringify(history.slice(-60)));
-  } catch { /* Safari private mode — silencioso */ }
-
-  return getTodayChallenge().peReward;
-}
-
-/** Racha de challenges completados consecutivos */
-export function challengeStreak(): number {
-  try {
-    const histKey = 'omicron_challenge_history';
-    const history: string[] = JSON.parse(localStorage.getItem(histKey) ?? '[]');
-    if (history.length === 0) return 0;
-
-    const today = todayKey();
-    const dates = new Set(history);
-    let streak = 0;
-    const cur = new Date();
-    cur.setHours(0, 0, 0, 0);
-
-    // Si hoy no completó, empieza desde ayer
-    if (!dates.has(today)) {
-      cur.setDate(cur.getDate() - 1);
-      if (!dates.has(cur.toISOString().slice(0, 10))) return 0;
-    }
-
-    while (dates.has(cur.toISOString().slice(0, 10))) {
-      streak++;
-      cur.setDate(cur.getDate() - 1);
-    }
-    return streak;
+    const { date, count } = JSON.parse(raw);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
+    if (date === today || date === yesterday) return count;
+    return 0; // Streak broken
   } catch { return 0; }
+}
+
+/**
+ * Incrementa el streak (llamar al completar el reto).
+ */
+export function incrementStreak(): void {
+  const today = new Date().toISOString().slice(0, 10);
+  const current = getCurrentStreak();
+  localStorage.setItem('omicron_challenge_streak', JSON.stringify({ date: today, count: current + 1 }));
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return hash;
 }
