@@ -1,6 +1,8 @@
 import { OrbShell } from '@/features/omicron/components/OrbShell';
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/infrastructure/query/client';
 import { AppProvider, useApp } from './store/AppContext';
 import { AuthOverlay } from '@/features/auth/components/AuthOverlay';
 import { ResetPasswordOverlay } from '@/features/auth/components/ResetPasswordOverlay';
@@ -122,6 +124,7 @@ export default function App() {
   if (verifyToken) return <VerifyCredentialView token={verifyToken} />;
 
   return (
+    <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AppProvider>
         <ToastProvider>
@@ -139,5 +142,6 @@ export default function App() {
         </ToastProvider>
       </AppProvider>
     </BrowserRouter>
+    </QueryClientProvider>
   );
 }
