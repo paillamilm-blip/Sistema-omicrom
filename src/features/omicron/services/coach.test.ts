@@ -3,8 +3,8 @@
 // sin llamadas a Supabase ni a la IA). Ejecutar: npm run test
 
 import { describe, it, expect } from 'vitest';
-import { computeSteps, topStep, nodeGuidance, levelInfo } from './omicronCoach';
-import type { Profile, GemeloDigital } from '../types';
+import { computeSteps, topStep, nodeGuidance, levelInfo } from './coach';
+import type { Profile, GemeloDigital } from '@/types';
 
 function makeProfile(overrides: Partial<Profile> = {}): Profile {
   return {

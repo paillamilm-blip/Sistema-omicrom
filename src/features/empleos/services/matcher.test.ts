@@ -10,8 +10,8 @@ import {
   getGapSkills,
   jobTypeLabel,
   JOBS,
-} from './jobMatcher';
-import type { AnalyzedProfile } from './cvAnalyzer';
+} from './matcher';
+import type { AnalyzedProfile } from '@/features/perfil/services/cvAnalyzer';
 
 function makeProfile(overrides: Partial<AnalyzedProfile> = {}): AnalyzedProfile {
   return {
