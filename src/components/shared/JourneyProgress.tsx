@@ -32,7 +32,6 @@ interface Props {
 export function JourneyProgress({ profile, hasConnections = false, onNavigate }: Props) {
   const steps = useMemo((): JourneyStep[] => {
     if (!profile) return [];
-    const hasSkills = (profile.skills?.length ?? 0) > 0;
     const hasCv = !!profile.cv_summary;
     const hasRep = (profile.reputation_score ?? 0) > 40;
     const hasPe = (profile.pe_points ?? 0) >= 50;

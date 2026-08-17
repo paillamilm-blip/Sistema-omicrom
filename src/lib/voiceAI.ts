@@ -183,7 +183,7 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
     const url = URL.createObjectURL(blob);
     cacheAudio(cacheKey, url);
     playFromURL(url, gen);
-  } catch (err) {
+  } catch {
     clearTimeout(timeout);
     inFlightController = null;
     // AbortError es esperado (timeout o cancel) — silencio
@@ -195,7 +195,7 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
 
 // ── Audio Playback ───────────────────────────────────────────────────
 
-function playFromURL(url: string, gen: number): void {
+function playFromURL(url: string, _gen: number): void {
   const audio = new Audio(url);
   audio.volume = 0.85;
   currentAudio = audio;
