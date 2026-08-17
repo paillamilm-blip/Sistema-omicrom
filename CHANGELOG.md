@@ -1,123 +1,126 @@
-# Changelog — Sistema Omicron
+# 📋 CHANGELOG — Sesión de Refactorización + UX Premium
 
-Todos los cambios notables del proyecto se documentan en este archivo.
-Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
-
----
-
-## [2026-08-06] — Unificacion de documentacion + fixes conversacionales
-
-### Agregado
-- `PerfilSkillVisual.tsx` — Nueva vista de perfil orbital (top 3 skills como sistema solar).
-- Sinergia entre nodos: 6 grupos detectados automaticamente (+8% bonus visual).
-- CV integrado fluyendo en la tarjeta (barras de dominio + resumen IA).
-
-### Cambiado
-- `buildSkillNodes` usa `skills_detail[].pct` REAL del analisis IA (no mas 70% fijo).
-- `handleQuery` en OmicronAssistant: askCoach/askTutor reciben contexto completo del Gemelo.
-- Safety timeout de 15s para estado 'thinking' (nunca queda colgado).
-- Saludo inicial espera a que profile este cargado (fix race condition).
-- Documentacion unificada: de 12 archivos a 8 (sin redundancia).
-
-### Eliminado
-- `VISION_OMICROM.md` — fusionado en `DEFINICION_OMICROM.md`.
-- `ROADMAP.md` — fusionado en `PLAN_PRODUCCION.md`.
-- `PANEL_DE_CONTROL.md` — fusionado en `GUIA_ACTIVACION_PRODUCCION.md`.
-- 158 ramas remotas obsoletas eliminadas (repo limpio: solo `main`).
-- 3 PRs abiertos obsoletos cerrados (#147, #152, #153).
-
-### PRs
-- #154 — fix: flujo conversacional del orbe (contexto IA + estado robusto)
-- #155 — feat: CV a nodos con sinergia real + vista perfil orbital
+> **Fecha**: 17 agosto 2026  
+> **Scope**: Arquitectura completa + Design System + Innovaciones UX  
+> **Commits**: 12  
+> **Archivos tocados**: ~260+
 
 ---
 
-## [2026-08-05] — Onboarding + nodos desde CV
+## 🏗️ Arquitectura Modular (PR #254)
 
-### Agregado
-- PR #151 — Onboarding de bienvenida con opciones claras + voz natural.
-- PR #150 — Nodos del orbe generados DESDE el CV (cada persona tiene orbe unico).
+La app pasó de una estructura plana a **10 feature modules** independientes.
 
----
+### Antes → Después
+```
+ANTES:                          DESPUÉS:
+src/lib/ (35 archivos flat)     src/features/ (10 dominios)
+src/components/shared/ (31)     src/infrastructure/ (supabase, ai, voice, pwa, query)
+src/components/tabs/ (10)       src/shared/ (solo UI genérico)
+src/types/index.ts (322 líneas) src/theme/ (6 archivos modulares)
+src/theme.ts (230 líneas)       src/types/ (9 archivos por dominio)
+```
 
-## [2026-08-04] — Fase conversacional completa (PRs #141-149)
+### Features modules:
+- `academia/` — cursos, retos, simulador
+- `auth/` — login, reset password
+- `chat/` — mensajería segura
+- `empleos/` — job matching, postulaciones
+- `gemelo/` — perfil digital IA
+- `gobernanza/` — disputas, arbitraje
+- `market/` — servicios marketplace
+- `omicron/` — orbe IA, oráculo, coach
+- `perfil/` — profile, CV, credentials
+- `wallet/` — tokens, transacciones
 
-### Agregado
-- PR #149 — Convalidacion por voz (await + refreshProfile + notifica orbe).
-- PR #148 — Tabs conectadas al Gemelo via GemeloGuidance.
-- PR #146 — ProactiveEngine conectado al orbe (te empuja sin pedirlo).
-- PR #145 — OrbShell procesa TODOS los intents del Oraculo.
-- PR #144 — askCoach/askTutor con contexto completo del Gemelo.
-- PR #143 — omicronCoach conectado al orbe (nextStep dinamico con datos reales).
-- PR #142 — unreadCount al orbe (nodo mensajes pulsa ambar con notifs).
-- PR #141 — GUARDIAN audit: 7 fixes (performance, a11y, UX, dead code).
-
----
-
-## [2026-07-30] — Consolidacion de documentacion
-
-### Agregado
-- `ROADMAP.md` — Roadmap con 6 milestones (ahora fusionado en PLAN_PRODUCCION).
-- `CHANGELOG.md` — Este archivo.
-
-### Actualizado
-- `PLAN_PRODUCCION.md`, `GUIA_ACTIVACION_PRODUCCION.md`, `README.md`.
-
----
-
-## [2026-07-27] — Emergencia UX front-end (PRs #97, #98)
-
-### Corregido
-- Orbe unificado (PR #97): 5 sistemas distintos a 1 unico ParticleOrb.
-- Nodos arrastrables (PR #97): libres, reposicionables, con persistencia.
-- Bug: arrastrar = navegar (PR #98): se distingue drag vs tap.
-- Pantallas planas mejoradas (PR #98): blur, gradiente, glow.
+### Infrastructure:
+- `supabase/` — cliente, realtime
+- `ai/` — OpenRouter, Gemini, streaming
+- `voice/` — TTS, speech recognition
+- `pwa/` — push, install, update
+- `query/` — TanStack Query client + keys
+- `router/` — route config (preparado para React Router futuro)
 
 ---
 
-## [2026-07-26] — Remocion candados Premium (PR #96)
+## 🎨 Design System "Holo-Gemelo Premium"
 
-### Corregido
-- PR #96 re-aplico la remocion de todos los candados Premium (PR #92 nunca llego a main).
+### Tokens (`src/theme/`)
+| Archivo | Contenido |
+|---------|-----------|
+| `tokens.ts` | Paleta de colores (C.cyan, C.gold, C.purple...) |
+| `typography.ts` | Escala SIZE (9→32px), FONT, FONT_STYLE presets |
+| `layout.ts` | SP grid (4px), RADIUS (8→999), Z-index, BORDER, BASE |
+| `animations.ts` | EASE, TIMING, SPRING, KEYFRAMES, ANIM |
+| `shadows.ts` | SHADOW (layered), GLOW (accent) |
 
----
-
-## [2026-07-25] — Refactorizacion contexto (PR #95)
-
-### Cambiado
-- AppContext split en ProfileContext + NavigationContext. useApp() sigue como facade.
-
----
-
-## [2026-07-24] — Tests unitarios (PR #94)
-
-### Agregado
-- 82 tests nuevos: reputationService, cvAnalyzer, jobMatcher, omicronCoach, oraculo.
-
----
-
-## [2026-07-23] — Activacion funcionalidades (PRs #91, #92)
-
-### Agregado
-- Hubs ocultos activados (PR #91).
-- IA gratis para siempre (PR #92): eliminados todos los candados Premium.
+### Reglas del sistema:
+1. Font sizes SOLO de SIZE scale: `9/11/13/15/17/20/24/32`
+2. Spacing SOLO múltiplos de 4px
+3. Border-radius SOLO de RADIUS: `8/12/16/22/999`
+4. Colores SIEMPRE de tokens C.xxx
+5. Touch targets mínimo 44px
+6. Animaciones via CSS variables (`var(--ease-default)`, etc.)
 
 ---
 
-## [2026-07-22] — CI en verde (PR #90)
+## ✨ Innovaciones UX
 
-### Corregido
-- Fix de lint para .cjs + GitHub Actions v5. Pipeline verde.
+| # | Feature | Archivo |
+|---|---------|---------|
+| 1 | **Haptic Feedback** | `shared/utils/haptics.ts` |
+| 2 | **Morphing Input Bar** | OrbShell (spring on focus) |
+| 3 | **HoloSkeleton** | `shared/components/HoloSkeleton.tsx` |
+| 4 | **Dynamic Island** | `shared/components/DynamicIsland.tsx` |
+| 5 | **AI Micro-copy** | `shared/utils/microcopy.ts` |
+| 6 | **Page Transitions** | OrbShell `@keyframes pageEnter` |
+| 7 | **Stagger Children** | `shared/utils/stagger.ts` + CSS |
 
 ---
 
-## Pre-julio 2026 — Fundamentos
+## 🎬 Motion System (Emil Kowalski compliance)
 
-### Implementado (acumulado)
-- 63 migraciones SQL (perfiles, reputacion, skill tree, market, wallet, empleos, chat, boveda, gobernanza, stripe, security).
-- 21 Edge Functions (coach, tutor, examen-ia, arbiter-ai, vault-oracle, market-match, carta-ia, chat-assist, stripe-webhook, crear-checkout, y mas).
-- Frontend completo: React 18 + TypeScript + Vite 5.
-- PWA instalable con deploy automatico en Vercel.
-- Sistema de reputacion canonico (4 ejes + momentum).
-- Red en tiempo real con Supabase Realtime.
-- Documentos legales: TERMINOS_SERVICIO.md, POLITICA_PRIVACIDAD.md.
+### CSS Custom Properties (`:root`)
+```css
+--ease-default: cubic-bezier(0.32, 0.72, 0, 1);
+--ease-enter:   cubic-bezier(0.25, 0.46, 0.45, 0.94);
+--ease-exit:    cubic-bezier(0.55, 0.085, 0.68, 0.53);
+--ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+--timing-fast:   150ms;
+--timing-normal: 250ms;
+--timing-enter:  300ms;
+--timing-exit:   200ms;
+```
+
+### Principios:
+- ✅ ease-out para entradas
+- ✅ Exit más rápido que enter (200ms < 300ms)
+- ✅ Spring para interacciones (overshoot)
+- ✅ Nunca >1s para UI
+- ✅ Active state en todos los botones (scale 0.97, 60ms)
+- ✅ Stagger para listas (50ms step)
+
+---
+
+## 📊 Métricas de limpieza
+
+| Métrica | Antes | Después |
+|---------|-------|---------|
+| CSS (index.css) | ~480 líneas | 339 líneas (-30%) |
+| Clases CSS muertas | 13 | 0 |
+| Fuentes cargadas | 4 familias, 11 weights | 2 familias, 5 weights |
+| Hardcoded cubic-bezier | 16 | 0 |
+| Tabs sin animación | 4 | 0 |
+| Touch targets < 44px | 8 | 0 |
+| Design system tokens no usados | 5/7 | 1/7 (SP still unused inline) |
+
+---
+
+## 🔮 Mejoras futuras recomendadas
+
+1. **Migrar tabs de CyberComponents → OmicronChrome** (un solo UI kit)
+2. **React Router** (URLs reales — requiere refactor cuidadoso del orbe)
+3. **Shared Element Transitions** (ícono vuela al header)
+4. **Adaptive Color** (cyan cambia según skill principal)
+5. **Confetti/Particles** en logros
+6. **Unificar onboarding + oráculo** en una sola barra (intentado, crasheó — needs more work)
