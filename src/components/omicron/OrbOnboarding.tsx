@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../store/AppContext';
-import { speakAI } from '../../lib/voiceAI';
+import { speakOmicron } from '../../lib/omicronVoice';
 import { C, FONT, RADIUS } from '../../theme';
 
 const ONBOARDING_KEY = 'omicron_onboarding_done';
@@ -121,7 +121,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
       const greeting = userName
         ? `Hey ${userName}, soy Ómicron. Cuéntame, ¿a qué te dedicas?`
         : 'Hey, soy Ómicron. Cuéntame, ¿a qué te dedicas?';
-      speakAI(greeting);
+      speakOmicron(greeting);
     }, 1800);
     return () => clearTimeout(t);
   }, [shouldHide, userName]);
@@ -186,7 +186,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     setResultMsg(msg);
     setPhase('result');
     // Voz: esta llamada SÍ funciona en iOS porque es respuesta a un gesto (submit/chip tap)
-    speakAI(msg);
+    speakOmicron(msg);
     localStorage.setItem(ONBOARDING_KEY, 'true');
 
     // Analytics: track onboarding + profile generation

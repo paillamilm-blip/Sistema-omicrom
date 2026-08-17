@@ -46,12 +46,12 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
     setMsgs(base);
     setLoading(true);
     try {
-      const { askTutor } = await import('../../lib/oraculo');
-      const result = await askTutor(
+      const { askOmicron } = await import('../../lib/omicronBrain');
+      const result = await askOmicron(
         `[Lección: ${lesson.title}] ${question}`,
-        { skills: profile?.skills ?? [], cv_summary: profile?.cv_summary ?? '' },
+        { skills: profile?.skills ?? [], cv_summary: profile?.cv_summary ?? '', activeTab: 'academia', displayName: profile?.display_name || profile?.username },
       );
-      const answer = result.answer ?? result.error ?? 'Sin respuesta.';
+      const answer = result.text;
       setMsgs([...base, { role: 'model', text: answer }]);
     } catch {
       setMsgs([...base, { role: 'model', text: 'Error de conexión con el Tutor.' }]);
@@ -151,12 +151,14 @@ function CoachModal({ onClose }: { onClose: () => void }) {
   const run = useCallback(async () => {
     setLoading(true); setAdvice(null);
     try {
-      const { askCoach } = await import('../../lib/oraculo');
-      const result = await askCoach({
+      const { askOmicron } = await import('../../lib/omicronBrain');
+      const result = await askOmicron('Dame un consejo de qué estudiar para mejorar', {
         skills: profile?.skills ?? [],
         cv_summary: profile?.cv_summary ?? '',
+        activeTab: 'academia',
+        displayName: profile?.display_name || profile?.username,
       });
-      setAdvice(result.advice ?? result.error ?? 'Sin respuesta del Coach.');
+      setAdvice(result.text);
     } catch {
       setAdvice('Error de conexión con el Coach IA.');
     } finally {

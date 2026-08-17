@@ -9,7 +9,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Mic, Sparkles, X } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 import { useRealtime } from '../store/RealtimeContext';
-import { interpret, askCoach } from '../lib/oraculo';
+import { interpret } from '../lib/oraculo';
+import { askOmicron } from '../lib/omicronBrain';
 import { gemeloActions, getProfile, bestNextStep } from '../lib/gemeloProfile';
 import { speak } from '../lib/voiceEngine';
 import { remember, inferPersonality, generateContextualGreeting } from '../lib/gemeloMemory';
@@ -29,7 +30,7 @@ type SpeechRecognitionCtor = new () => {
 
 
 export function OraculoBar() {
-  const { setActiveTab, profile, refreshProfile } = useApp();
+  const { setActiveTab, activeTab, profile, refreshProfile } = useApp();
   const { onlineCount } = useRealtime();
   const [open, setOpen] = useState(false);
   const [listening, setListening] = useState(false);
@@ -154,7 +155,7 @@ export function OraculoBar() {
       setBusy(true);
       flash('oraculo', 'Consultando al Coach IA…', 20000);
       speak('Déjame analizar tu Gemelo Digital.');
-      const r = await askCoach({
+      const r = await askOmicron(text, {
         skills: profile?.skills ?? [],
         cv_summary: profile?.cv_summary ?? '',
         execution: profile?.execution_score,
@@ -163,9 +164,11 @@ export function OraculoBar() {
         foundation: profile?.foundation_score,
         reputation: profile?.reputation_score,
         pe: profile?.pe_points,
+        activeTab: activeTab,
+        displayName: profile?.display_name || profile?.username,
       });
       setBusy(false);
-      const t = r.advice || r.error || 'Sin respuesta.';
+      const t = r.text;
       flash('oraculo', t, 14000);
       speak(t.length > 320 ? t.slice(0, 320) : t);
       // ⭐ Recordar consulta al coach (alto valor)

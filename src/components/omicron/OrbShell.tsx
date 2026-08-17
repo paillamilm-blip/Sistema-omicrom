@@ -11,7 +11,7 @@ import { interpret } from '../../lib/oraculo';
 import { speakOmicron, stopOmicron } from '../../lib/omicronVoice';
 import { askOmicron, type OmicronContext } from '../../lib/omicronBrain';
 import { getDailyChallenge, isChallengeCompleted } from '../../lib/dailyChallenge';
-import { speakAI, stopAI, isAudioUnlocked, speakLocal } from '../../lib/voiceAI';
+import { stopAI, isAudioUnlocked, speakLocal } from '../../lib/voiceAI';
 import { useGemeloProfile } from '../../hooks/useGemeloProfile';
 import { useIdleEscalation } from '../../hooks/useIdleEscalation';
 import { computeSteps, nodeGuidance } from '../../lib/omicronCoach';
