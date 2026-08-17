@@ -1,7 +1,6 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
-import { useOnboarding } from './OrbOnboarding';
 import ParticleOrb from './ParticleOrbLazy';
 import { SuggestionChips } from './SuggestionChips';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
@@ -252,38 +251,6 @@ export function OrbShell() {
   const [onboardingDone, setOnboardingDone] = useState(() =>
     typeof localStorage !== 'undefined' && !!localStorage.getItem('omicron_onboarding_done')
   );
-
-  // ── Onboarding hook (unified with input bar) ──────────────────────
-  const onboarding = useOnboarding({
-    onComplete: handleOnboardingComplete,
-    onProfileGenerated: async (generated: GeneratedProfile) => {
-      try {
-        const { supabase } = await import('@/infrastructure/supabase/client');
-        if (sbProfile?.id) {
-          await supabase.from('profiles').update({
-            skills: generated.skills,
-            skills_detail: generated.skills.map((s: string, i: number) => ({
-              name: s,
-              pct: Math.max(40, 80 - i * 10),
-            })),
-            cv_summary: generated.summary,
-            cv_years_experience: generated.years,
-            execution_score: generated.axes.exec,
-            quality_score: generated.axes.qual,
-            transcendence_score: generated.axes.trans,
-            foundation_score: generated.axes.fund,
-          }).eq('id', sbProfile.id);
-          try {
-            const ch = supabase.channel('omicron-live');
-            ch.send({ type: 'broadcast', event: 'activity', payload: { text: `${sbProfile.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } });
-          } catch { /* silencioso */ }
-        }
-      } catch (e) {
-        console.warn('[onboarding] Error guardando perfil:', e);
-      }
-    },
-    onSkillsPreview: setPreviewSkills,
-  });
 
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
@@ -747,22 +714,39 @@ export function OrbShell() {
       background: C.bg,
       overflow: 'hidden',
     }}>
-      {/* ── ONBOARDING MESSAGE BUBBLE (from unified hook) ─────────── */}
-      {onboarding.messageEl && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 45,
-          display: 'flex',
-          justifyContent: 'center',
-          padding: '0 20px',
-          pointerEvents: 'none',
-        }}>
-          {onboarding.messageEl}
-        </div>
-      )}
+      {/* ── ONBOARDING (first time only) ────────────────────────────── */}
+      <OrbOnboarding
+        onComplete={handleOnboardingComplete}
+        onSkillsPreview={setPreviewSkills}
+        onProfileGenerated={async (generated: GeneratedProfile) => {
+          // R4: Guardar perfil generado en Supabase
+          try {
+            const { supabase } = await import('@/infrastructure/supabase/client');
+            if (sbProfile?.id) {
+              await supabase.from('profiles').update({
+                skills: generated.skills,
+                skills_detail: generated.skills.map((s: string, i: number) => ({
+                  name: s,
+                  pct: Math.max(40, 80 - i * 10),
+                })),
+                cv_summary: generated.summary,
+                cv_years_experience: generated.years,
+                execution_score: generated.axes.exec,
+                quality_score: generated.axes.qual,
+                transcendence_score: generated.axes.trans,
+                foundation_score: generated.axes.fund,
+              }).eq('id', sbProfile.id);
+              // CABLE 1: Broadcast "activó su Gemelo Digital" a toda la red
+              try {
+                const ch = supabase.channel('omicron-live');
+                ch.send({ type: 'broadcast', event: 'activity', payload: { text: `${sbProfile.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } });
+              } catch { /* silencioso */ }
+            }
+          } catch (e) {
+            console.warn('[onboarding] Error guardando perfil:', e);
+          }
+        }}
+      />
 
       {/* ── ORB VIEW (always visible, fades when fullscreen) ─────────── */}
       <div style={{
@@ -1133,8 +1117,8 @@ export function OrbShell() {
         </div>
       )}
 
-      {/* ── UNIFIED INPUT BAR (always visible) ──────────────────── */}
-      <div style={{
+      {/* ── ORÁCULO INPUT BAR (visible only after onboarding) ──── */}
+      {onboardingDone && <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -1160,12 +1144,7 @@ export function OrbShell() {
           onSubmit={(e: { preventDefault: () => void }) => {
             e.preventDefault();
             if (!inputText.trim()) return;
-            // Route to onboarding or oráculo based on state
-            if (onboarding.phase === 'ask') {
-              onboarding.submit(inputText.trim());
-            } else {
-              handleTextInput(inputText.trim());
-            }
+            handleTextInput(inputText.trim());
             setInputText('');
             resetIdle();
           }}
@@ -1211,7 +1190,7 @@ export function OrbShell() {
           <input
             value={inputText}
             onChange={(e: { target: { value: string } }) => setInputText(e.target.value)}
-            placeholder={onboarding.phase === 'ask' ? onboarding.placeholder : (state === 'fullscreen' ? 'Preguntá a Ómicron…' : 'Hablá o escribí a Ómicron…')}
+            placeholder={state === 'fullscreen' ? 'Preguntá a Ómicron…' : 'Hablá o escribí a Ómicron…'}
             aria-label="Escribir comando al Oráculo"
             inputMode="text"
             autoComplete="off"
@@ -1250,31 +1229,14 @@ export function OrbShell() {
           </button>
         </form>
 
-        {/* Suggestion Chips — onboarding chips OR oráculo chips */}
+        {/* Suggestion Chips (acciones rápidas) */}
         {state === 'orb' && (
-          onboarding.phase === 'ask' && onboarding.chips.length > 0 ? (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 8 }}>
-              {onboarding.chips.map(chip => (
-                <button key={chip} onClick={() => { onboarding.submit(chip); setInputText(''); resetIdle(); }}
-                  style={{
-                    padding: '8px 14px', borderRadius: 999,
-                    background: C.glass, border: `1px solid ${C.line}`, color: C.ink,
-                    fontFamily: FONT.body, fontSize: 13, cursor: 'pointer',
-                    WebkitTapHighlightColor: 'transparent',
-                    transition: 'background 0.15s ease, border-color 0.15s ease',
-                  }}>
-                  {chip}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <SuggestionChips
-              onChipTap={(text) => { handleTextInput(text); resetIdle(); }}
-              visible={!inputText && idleStage !== 'quiet'}
-            />
-          )
+          <SuggestionChips
+            onChipTap={(text) => { handleTextInput(text); resetIdle(); }}
+            visible={!inputText && idleStage !== 'quiet'}
+          />
         )}
-      </div>
+      </div>}
 
       {/* ── PROACTIVE MESSAGE (con botones — reemplaza la burbuja plana) ── */}
       {state === 'orb' && responseMsg && (
