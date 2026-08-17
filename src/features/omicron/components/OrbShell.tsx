@@ -1045,8 +1045,15 @@ export function OrbShell() {
           )}
         </div>
 
-        {/* Tab content */}
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        {/* Tab content — with page transition */}
+        <div
+          key={selectedNode?.tab ?? 'none'}
+          style={{
+            flex: 1,
+            overflow: 'auto',
+            animation: 'pageEnter 0.28s cubic-bezier(0.32, 0.72, 0, 1) both',
+          }}
+        >
           <Suspense fallback={<TabLoader />}>
             {selectedNode && renderTab(selectedNode.tab)}
           </Suspense>
@@ -1273,6 +1280,10 @@ export function OrbShell() {
         @keyframes fadeInDown {
           from { opacity: 0; transform: translate(-50%, -8px); }
           to   { opacity: 1; transform: translate(-50%, 0); }
+        }
+        @keyframes pageEnter {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
         @media (prefers-reduced-motion: reduce) {
           *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
