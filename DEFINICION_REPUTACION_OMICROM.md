@@ -96,7 +96,7 @@ Ningún eje se auto-declara; todos derivan de evidencia en la base de datos.
 | N3 | 🏛️ Arquitecto | 80–100 | Mentorías, arbitraje (Tribunal de Pares), Bóveda avanzada |
 | N4+ | 🚀 Pioneer | (fase 2, gobernanza/staking) | Apelaciones senior, poder de gobernanza |
 
-> Umbrales de reputación: `determineNodeLevel()` en `reputationService.ts`.
+> Umbrales de reputación: `determineNodeLevel()` en `features/gemelo/services/reputation.ts`.
 > Umbrales de PE para progreso de nivel: `calculatePEThreshold()` (N1→N2 = 1000 PE, N2→N3 = 2500 PE).
 
 ---
@@ -160,7 +160,7 @@ matchScore = clamp( 0.20·traditional_score + 0.80·experience_score + momentum(
 
 Como `experience_score = promedio de los 4 ejes` y el momentum es el mismo bono por PE,
 **el match score y la reputación son el mismo número**. Ya no hay dos verdades.
-(`calculateMatchScore()` / `calculateTotalReputation()` en `reputationService.ts`.)
+(`calculateMatchScore()` / `calculateTotalReputation()` en `features/gemelo/services/reputation.ts`.)
 
 ---
 
