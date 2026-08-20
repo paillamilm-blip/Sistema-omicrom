@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRealtime } from '@/store/RealtimeContext';
 import { useProfile } from '@/store/ProfileContext';
-import { PublicCredentialModal, DirectChatModal } from '@/features/perfil/components/RedSocial';
+import { PublicCredentialModal, DirectChatModal } from '@/features/gemelo/components/RedSocial';
 import { LiveRanking } from './LiveRanking';
 import type { LiveEvent, LiveEventKind } from '@/hooks/useRealtimeNetwork';
 import { C, FONT } from '@/theme';

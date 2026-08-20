@@ -1,7 +1,7 @@
 # Sistema Omicrom — Definicion Maestra + Vision de Producto
 
 > **Fuente unica de verdad** del QUE es Omicron, para QUIEN es, y HACIA DONDE va.
-> Ultima actualizacion: **6 de agosto de 2026**.
+> Ultima actualizacion: **20 de agosto de 2026**.
 
 ---
 
@@ -83,7 +83,7 @@ Lo haces  ->  sube tu capacidad EN VIVO  ->  se abren nuevas puertas y oportunid
 | `OraculoBar` + `oraculo.ts` + `voiceEngine.ts` | Hablar/escribir (voz es-ES + intencion) |
 | Edge Functions (`coach`, `tutor`, `chat-assist`...) | El cerebro IA que responde y aconseja |
 | `activeTab` / `setActiveTab` | Los nodos de navegacion |
-| `reputationService` (4 ejes) | El medidor de capacidades en tiempo real |
+| `gemelo/services/reputation.ts` (4 ejes) | El medidor de capacidades en tiempo real |
 | Empleos, Market, Red Social | Las oportunidades reales de la comunidad |
 
 ---
@@ -137,3 +137,98 @@ Lo haces  ->  sube tu capacidad EN VIVO  ->  se abren nuevas puertas y oportunid
 
 > Vision = bold. MVP = liviano (Aprender + Reputacion + Primeros trabajos).
 > Lo avanzado (Regalias, H-07, Tribunal complejo) se construye con traccion real, no antes.
+
+---
+
+## 8. Arquitectura conceptual: Solo 2 conceptos
+
+> Ultima actualizacion: **20 de agosto de 2026** (refactor de claridad conceptual).
+
+El sistema se entiende con **solo 2 conceptos** claros. No 3, no 5. Dos.
+
+### 🔮 ÓMICRON — Tu asistente de mejora
+
+**Definicion**: Ómicron es la inteligencia que te observa, te entiende y te empuja
+hacia tu siguiente mejora. Es activo, proactivo, y siempre sabe qué decirte.
+
+**Responsabilidades**:
+- La orbe 3D (presencia viva, navegación por nodos)
+- El Oráculo (barra de voz + texto)
+- El Coach (motor determinista de "siguiente mejor paso")
+- Voz y TTS (te habla)
+- Chips de sugerencias proactivas
+- Onboarding (te conoce por primera vez)
+
+**Módulo técnico**: `src/features/omicron/`
+
+**Frase clave**: *"Te empuja."*
+
+---
+
+### 🧬 GEMELO DIGITAL — Todo lo que eres y todo lo que podrías ser
+
+**Definicion**: El Gemelo Digital es TU representación completa en el sistema.
+No solo lo que ya demostraste — también lo que podrías llegar a ser.
+Es tu ADN profesional: identidad, competencias, reputación, credenciales,
+red social, pasaporte, y el motor que calcula tu potencial.
+
+**Responsabilidades**:
+- Tu identidad (nombre, avatar, nivel, nodo)
+- Tus 4 ejes (Ejecución, Calidad, Trascendencia, Fundamento)
+- Tu reputación (20% credenciales + 80% ejes + momentum PE)
+- Tus competencias y skills (análisis de CV, barras de progreso)
+- Tus credenciales verificables (títulos, años, CV)
+- Tu pasaporte digital (descargable, verificable)
+- Tu red social (conexiones, presencia en vivo, ranking)
+- Tu progreso (journey, racha, desafío diario)
+- Tu memoria (patrones, personalidad inferida, metas)
+- Tu ruta de crecimiento (siguiente nodo, siguiente tier)
+
+**Módulo técnico**: `src/features/gemelo/`
+
+**Frase clave**: *"Te mide — lo que eres y lo que podrías ser."*
+
+---
+
+### Relación entre ambos
+
+```
+🧬 GEMELO (pasivo, te mide)          🔮 ÓMICRON (activo, te empuja)
+─────────────────────────────         ─────────────────────────────
+Tu Ejecución = 52                →    "Validá este nodo para subir"
+Tu Calidad = 78                  →    "Rendí el examen de React"
+Tu Trascendencia = 31            →    "Compartí algo en la Bóveda"
+Reputación = 61                  →    "Ya podés postular a estos trabajos"
+```
+
+El Gemelo PRODUCE datos. Ómicron los LEE y decide qué decirte.
+
+---
+
+### Antes vs Después (este refactor)
+
+| Antes (confuso) | Después (claro) |
+|-----------------|-----------------|
+| 3 módulos: omicron + perfil + gemelo | 2 módulos: omicron + gemelo |
+| "Perfil" ≠ "Gemelo" ≠ "Omicron" — ¿quién hace qué? | Ómicron = coach. Gemelo = tú. |
+| Dependencia circular gemelo → omicron → gemelo | Funciones puras en `shared/utils/guidance.ts` |
+| Componentes "Gemelo" vivían en carpeta "perfil" | Todo en `features/gemelo/` |
+| `reputationService.ts` suelto en `src/services/` | Dentro de `features/gemelo/services/reputation.ts` |
+| `useGemeloProfile.ts` suelto en `src/hooks/` | Dentro de `features/gemelo/hooks/` |
+
+---
+
+### Mapa de módulos post-refactor (9 módulos)
+
+| Módulo | Concepto | Frase |
+|--------|----------|-------|
+| `omicron/` | 🔮 El Coach | Te observa y te empuja |
+| `gemelo/` | 🧬 El Gemelo | Todo lo que eres y podrías ser |
+| `academia/` | 🎓 Aprendizaje | Cursos, exámenes, skills |
+| `empleos/` | 💼 Oportunidades | Trabajo te encuentra |
+| `market/` | 🏪 Mercado | Compra/vende servicios |
+| `wallet/` | 💰 Economía | Tokens PE, pagos, nodos |
+| `chat/` | 💬 Comunicación | Mensajería segura |
+| `gobernanza/` | 🏛️ Justicia | Arbitraje, disputas |
+| `auth/` | 🔐 Acceso | Login, registro |
+

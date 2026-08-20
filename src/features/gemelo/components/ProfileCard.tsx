@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { X, CheckCircle } from 'lucide-react';
-import type { AnalyzedProfile } from '@/features/perfil/services/cvAnalyzer';
+import type { AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
 import { getTopJobs } from '@/features/empleos/services/matcher';
 import { C, FONT } from '@/theme';
 

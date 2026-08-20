@@ -13,10 +13,10 @@ import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy';
 import { ToastProvider } from '@/shared/components/Toast';
 import { ConnectionBanner } from '@/shared/components/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
-import { LiveNetworkFeed } from '@/features/perfil/components/LivePresence';
+import { LiveNetworkFeed } from '@/features/gemelo/components/LivePresence';
 import { IncomingJobPush } from '@/features/empleos/components/IncomingJobs';
-import { PublicProfileGate } from '@/features/perfil/components/RedSocial';
-import { VerifyCredentialView } from '@/features/perfil/components/VerifyCredential';
+import { PublicProfileGate } from '@/features/gemelo/components/RedSocial';
+import { VerifyCredentialView } from '@/features/gemelo/components/VerifyCredential';
 import { C, FONT } from './theme';
 
 

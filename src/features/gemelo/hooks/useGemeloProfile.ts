@@ -5,7 +5,7 @@
 // Las acciones de convalidación son ASÍNCRONAS (van al servidor).
 // ═══════════════════════════════════════════════════════════════════════
 import { useSyncExternalStore } from 'react';
-import { useApp } from '../store/AppContext';
+import { useApp } from '@/store/AppContext';
 import {
   subscribe,
   getProfile,

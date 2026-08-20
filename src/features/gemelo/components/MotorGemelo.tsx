@@ -4,7 +4,7 @@
 // (useGemeloProfile), de modo que refleja y actualiza exactamente lo mismo
 // que el resto de la app al convalidar datos.
 import { Target, Flame, ArrowRight, History } from 'lucide-react';
-import { useGemeloProfile } from '@/hooks/useGemeloProfile';
+import { useGemeloProfile } from '@/features/gemelo/hooks/useGemeloProfile';
 import { C, FONT, RADIUS } from '@/theme';
 
 function timeAgo(d: number): string {

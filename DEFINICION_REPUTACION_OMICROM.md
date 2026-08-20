@@ -175,7 +175,7 @@ Como `experience_score = promedio de los 4 ejes` y el momentum es el mismo bono 
 | Eje Trascendencia | `0018_transcendence.sql` |
 | Blindaje anti-escritura del cliente | `0007_protect_profile.sql` / `9999_audit_consolidado.sql` |
 | Convalidación de credenciales (RPC) | `0048_convalidar_credencial.sql` |
-| Cálculos de cliente (deben reflejar, no calcular) | `src/services/reputationService.ts` |
+| Cálculos de cliente (deben reflejar, no calcular) | `src/features/gemelo/services/reputation.ts` |
 | Tipo `Profile` | `src/types/index.ts` |
 
 ---

@@ -10,7 +10,7 @@ import { Plus, Loader2 } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C } from '@/theme';
-import type { AnalyzedProfile } from '@/features/perfil/services/cvAnalyzer';
+import type { AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
 
 interface Props {
   selected?: AnalyzedProfile['avatar'];

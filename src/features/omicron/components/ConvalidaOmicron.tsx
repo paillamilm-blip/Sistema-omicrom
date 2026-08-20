@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles, Upload, ArrowRight, TrendingUp, Zap } from 'lucide-react';
 import { useGemeloActivation } from '@/hooks/useGemeloActivation';
-import { PerfilSkillVisual } from '@/features/perfil/components/PerfilSkillVisual';
+import { PerfilSkillVisual } from '@/features/gemelo/components/PerfilSkillVisual';
 import { C, FONT, RADIUS } from '@/theme';
 import { computeSteps } from '@/features/omicron/services/coach';
 import ParticleOrb from './ParticleOrbLazy';

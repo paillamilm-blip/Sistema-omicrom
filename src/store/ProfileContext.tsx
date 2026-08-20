@@ -21,7 +21,7 @@ import {
 } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/infrastructure/supabase/client';
-import { calculateGemeloDigital, updateReputationInDatabase } from '../services/reputationService';
+import { calculateGemeloDigital, updateReputationInDatabase } from '@/features/gemelo/services/reputation';
 import type { AuthStatus, Profile, GemeloDigital } from '../types';
 
 const DEFAULT_PE_POINTS = 0;

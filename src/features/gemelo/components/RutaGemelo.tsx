@@ -4,7 +4,7 @@
 // ejecuta la acción real; al hacerlo, el perfil avanza y la ruta se
 // recalcula automáticamente (el paso hecho desaparece del tope).
 import { Compass, ArrowUpRight } from 'lucide-react';
-import { useGemeloProfile } from '@/hooks/useGemeloProfile';
+import { useGemeloProfile } from '@/features/gemelo/hooks/useGemeloProfile';
 import { routeToNextTier, type NextAction } from '@/features/gemelo/services/profile';
 import { C, FONT, RADIUS } from '@/theme';
 

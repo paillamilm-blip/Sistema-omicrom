@@ -1,4 +1,4 @@
-// services/reputationService.test.ts
+// features/gemelo/services/reputation.test.ts
 // Tests unitarios de la lógica de reputación / PE (sin base de datos).
 // Ejecutar:  npm run test     (o  npx vitest run)
 
@@ -18,8 +18,8 @@ import {
   formatScore,
   calculateProgressToNextLevel,
   simulateReputationUpdate,
-} from './reputationService';
-import type { Profile } from '../types';
+} from './reputation';
+import type { Profile } from '@/types';
 
 // Helper: perfil mínimo con los campos de score que necesitan los tests.
 function makeProfile(overrides: Partial<Profile> = {}): Profile {

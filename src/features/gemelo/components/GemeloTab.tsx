@@ -1,13 +1,13 @@
-// components/tabs/PerfilTab.tsx
+// features/gemelo/components/GemeloTab.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// PERFIL "MI ADN DIGITAL" — 3 Tarjetas Deslizables (Full-Width)
+// MI GEMELO DIGITAL — 3 Tarjetas Deslizables (Full-Width)
 //
 // Card 1: "Mi Identidad" — Orbital solar + Top 3 Skills + Reputación
 // Card 2: "Mis Competencias" — Skills con barras de progreso + CV Summary
 // Card 3: "Mi Impacto" — 4 Ejes del Gemelo + Accesos directos
 //
+// El Gemelo es TODO lo que eres y todo lo que podrías ser.
 // Cada card ocupa el 100% del ancho visible. Swipe con AnimatePresence.
-// Debajo: sección de retención clara y separada.
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
@@ -17,7 +17,7 @@ import { C, FONT } from '@/theme';
 import { StreakBanner } from '@/features/academia/components/StreakBanner';
 import { DailyChallengeCard } from '@/features/academia/components/DailyChallengeCard';
 import { JourneyProgress } from '@/features/gemelo/components/JourneyProgress';
-import { DashboardVivo } from '@/features/perfil/components/DashboardVivo';
+import { DashboardVivo } from '@/features/gemelo/components/DashboardVivo';
 import { PushPermissionBanner } from '@/shared/components/PushPermissionBanner';
 
 // ── Colores para cada skill orbital ────────────────────────────────────
@@ -40,7 +40,7 @@ const slideVariants = {
   exit: (dir: number) => ({ x: dir > 0 ? '-100%' : '100%', opacity: 0 }),
 };
 
-export function PerfilTab() {
+export function GemeloTab() {
   const { profile, setActiveTab } = useApp();
   const gemelo = useGemeloDigital();
   const [[currentSlide, direction], setSlide] = useState([0, 0]);

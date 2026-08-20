@@ -5,7 +5,7 @@
 // (con voz: leer la pregunta + practicar tu respuesta).
 import { useState, useEffect, useRef } from 'react';
 import { Target, Radar, X, Check, Volume2, Mic } from 'lucide-react';
-import { useGemeloProfile } from '@/hooks/useGemeloProfile';
+import { useGemeloProfile } from '@/features/gemelo/hooks/useGemeloProfile';
 import { speak } from '@/infrastructure/voice/engine';
 import { C, FONT, RADIUS } from '@/theme';
 
