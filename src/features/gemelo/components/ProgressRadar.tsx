@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import { AlertCircle, TrendingUp } from 'lucide-react';
 import type { GemeloDigital } from '@/types';
-import { formatScore, getReputationBadge } from '@/services/reputationService';
+import { formatScore, getReputationBadge } from '@/features/gemelo/services/reputation';
 
 interface ProgressRadarProps {
   gemelo: GemeloDigital;

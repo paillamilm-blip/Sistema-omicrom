@@ -1,8 +1,8 @@
-// services/reputationService.ts
+// features/gemelo/services/reputation.ts
 // Lógica centralizada para cálculos de reputación y Gemelo Digital
 
 import { supabase } from '@/infrastructure/supabase/client';
-import type { Profile, GemeloDigital, ReputationUpdateInput } from '../types';
+import type { Profile, GemeloDigital, ReputationUpdateInput } from '@/types';
 
 /**
  * Calcula el Gemelo Digital a partir del perfil.

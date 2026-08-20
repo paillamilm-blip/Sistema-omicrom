@@ -1,4 +1,4 @@
-// features/perfil/hooks/useProfileQuery.ts
+// features/gemelo/hooks/useProfileQuery.ts
 // TanStack Query hook for fetching and managing user profile data.
 //
 // Usage:

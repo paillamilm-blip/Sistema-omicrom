@@ -9,8 +9,8 @@ import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '../store/AppContext';
 import { useToast } from '@/shared/components/Toast';
 import { speak } from '@/infrastructure/voice/engine';
-import { analyzeCV, type AnalyzedProfile } from '@/features/perfil/services/cvAnalyzer';
-import { extractCVText } from '@/features/perfil/services/cvExtract';
+import { analyzeCV, type AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
+import { extractCVText } from '@/features/gemelo/services/cvExtract';
 import { C } from '../theme';
 
 type Kind = 'cv' | 'title' | 'year' | 'vault';

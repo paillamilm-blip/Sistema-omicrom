@@ -9,7 +9,7 @@ import { EmptyState } from '@/shared/components/EmptyState';
 import { useToast } from '@/shared/components/Toast';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
 import { sendSecureMessage, loadSecureMessages } from '@/features/chat/services/secureChat';
-import { DirectChatModal } from '@/features/perfil/components/RedSocial';
+import { DirectChatModal } from '@/features/gemelo/components/RedSocial';
 import type { Message } from '@/types';
 
 interface Room { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; delivery_declared_at: string | null; rating: number | null; }

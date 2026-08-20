@@ -12,7 +12,7 @@ import { interpret } from '@/features/omicron/services/oraculo';
 import { speakOmicron } from '@/features/omicron/services/voice';
 import { askOmicron, type OmicronContext } from '@/features/omicron/services/brain';
 import { stopAI, isAudioUnlocked, speakLocal } from '@/infrastructure/voice/voiceAI';
-import { useGemeloProfile } from '@/hooks/useGemeloProfile';
+import { useGemeloProfile } from '@/features/gemelo/hooks/useGemeloProfile';
 import { useIdleEscalation } from '@/hooks/useIdleEscalation';
 import { computeSteps, nodeGuidance } from '@/features/omicron/services/coach';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
@@ -35,10 +35,10 @@ import type { TabId, GemeloDigital } from '@/types';
 
 // ── Lazy tab components ─────────────────────────────────────────────
 const WalletTab     = lazy(() => import('@/features/wallet/components/WalletTab').then(m => ({ default: m.WalletTab })));
-const RedSocialTab  = lazy(() => import('@/features/perfil/components/RedSocialTab').then(m => ({ default: m.RedSocialTab })));
+const RedSocialTab  = lazy(() => import('@/features/gemelo/components/RedSocialTab').then(m => ({ default: m.RedSocialTab })));
 const EmpleosTab    = lazy(() => import('@/features/empleos/components/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
 const MarketTab     = lazy(() => import('@/features/market/components/MarketTab').then(m => ({ default: m.MarketTab })));
-const PerfilTab     = lazy(() => import('@/features/perfil/components/PerfilTab').then(m => ({ default: m.PerfilTab })));
+const GemeloTab     = lazy(() => import('@/features/gemelo/components/GemeloTab').then(m => ({ default: m.GemeloTab })));
 const MaxSkillTab   = lazy(() => import('@/features/academia/components/MaxSkillTab').then(m => ({ default: m.MaxSkillTab })));
 const AcademiaTab   = lazy(() => import('@/features/academia/components/AcademiaTab').then(m => ({ default: m.AcademiaTab })));
 const GobernanzaTab = lazy(() => import('@/features/gobernanza/components/GobernanzaTab').then(m => ({ default: m.GobernanzaTab })));
@@ -199,7 +199,7 @@ function TabLoader() {
 
 function renderTab(tab: TabId) {
   switch (tab) {
-    case 'perfil':     return <PerfilTab />;
+    case 'perfil':     return <GemeloTab />;
     case 'maxskill':   return <MaxSkillTab />;
     case 'academia':   return <AcademiaTab />;
     case 'market':     return <MarketTab />;

@@ -16,7 +16,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/infrastructure/supabase/client';
-import { calculateTotalReputation } from '@/services/reputationService';
+import { calculateTotalReputation } from '@/features/gemelo/services/reputation';
 
 export interface GemeloAxes {
   execution: number;

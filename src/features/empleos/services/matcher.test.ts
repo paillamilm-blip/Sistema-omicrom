@@ -11,7 +11,7 @@ import {
   jobTypeLabel,
   JOBS,
 } from './matcher';
-import type { AnalyzedProfile } from '@/features/perfil/services/cvAnalyzer';
+import type { AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
 
 function makeProfile(overrides: Partial<AnalyzedProfile> = {}): AnalyzedProfile {
   return {

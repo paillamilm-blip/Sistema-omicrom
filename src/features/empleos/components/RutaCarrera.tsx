@@ -10,7 +10,7 @@
 import { useMemo } from 'react';
 import { GraduationCap, Compass, ArrowUpRight, Target } from 'lucide-react';
 import { useNavigation } from '@/store/NavigationContext';
-import { useGemeloProfile } from '@/hooks/useGemeloProfile';
+import { useGemeloProfile } from '@/features/gemelo/hooks/useGemeloProfile';
 import { C, FONT, RADIUS } from '@/theme';
 import type { TabId } from '@/types';
 

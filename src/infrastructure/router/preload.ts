@@ -9,7 +9,7 @@ import type { TabId } from '@/types';
 
 // Map of tab → dynamic import function (mirrors OrbShell lazy definitions)
 const TAB_LOADERS: Partial<Record<TabId, () => Promise<unknown>>> = {
-  perfil:     () => import('@/features/perfil/components/PerfilTab'),
+  perfil:     () => import('@/features/gemelo/components/GemeloTab'),
   empleos:    () => import('@/features/empleos/components/EmpleosTab'),
   academia:   () => import('@/features/academia/components/AcademiaTab'),
   market:     () => import('@/features/market/components/MarketTab'),

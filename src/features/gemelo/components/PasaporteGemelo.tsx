@@ -4,7 +4,7 @@
 // (Nodo/Tier, reputación, PE y los 4 ejes).
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Download, X, CreditCard } from 'lucide-react';
-import { useGemeloProfile } from '@/hooks/useGemeloProfile';
+import { useGemeloProfile } from '@/features/gemelo/hooks/useGemeloProfile';
 import type { GemeloProfile, GemeloAxes } from '@/features/gemelo/services/profile';
 import { C, FONT, RADIUS } from '@/theme';
 

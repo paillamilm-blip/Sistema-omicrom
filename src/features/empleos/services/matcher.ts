@@ -4,8 +4,8 @@
 // Calcula % de éxito (afinidad) entre el profesional y cada oportunidad.
 // ═══════════════════════════════════════════════════════════════════════
 
-import type { AnalyzedProfile } from '@/features/perfil/services/cvAnalyzer';
-export { SKILL_LABELS } from '@/features/perfil/services/cvAnalyzer';
+import type { AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
+export { SKILL_LABELS } from '@/features/gemelo/services/cvAnalyzer';
 
 export interface Job {
   id: string;
