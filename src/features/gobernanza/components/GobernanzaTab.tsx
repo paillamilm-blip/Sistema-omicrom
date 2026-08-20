@@ -8,7 +8,7 @@ import {
   StatGrid, StatCard, ScanlineOverlay, CyberToast, Divider, DetailPanel, LoadingScreen,
 } from '@/shared/components/CyberComponents';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
-import { oc, OmicronHeader } from '@/features/omicron/components/OmicronChrome';
+import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import { openBlackbox, type BlackboxResult } from '@/features/chat/services/secureChat';
 interface Contract { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; amount: number; }
 interface Dispute { id: string; reason: string; status: string; created_at: string; resolved_at?: string; appeal_status?: string; appeal_opened_at?: string; appeal_arbiters?: string[]; appeal_resolution?: string; plaintiff_id?: string; defendant_id?: string; }

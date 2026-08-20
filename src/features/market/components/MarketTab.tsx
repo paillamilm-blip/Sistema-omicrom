@@ -10,7 +10,7 @@ import { useApp } from '@/store/AppContext';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { ContractModal } from '@/features/market/components/ContractModal';
 import { PublishServiceModal } from '@/features/market/components/PublishServiceModal';
-import { oc, OmicronHeader, OmicronAction } from '@/features/omicron/components/OmicronChrome';
+import { oc, OmicronHeader, OmicronAction } from '@/shared/components/OmicronChrome';
 import type { MarketService } from '@/types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';

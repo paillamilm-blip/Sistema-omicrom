@@ -8,7 +8,7 @@ import { supabase } from '@/infrastructure/supabase/client';
 import { C as T, FONT as TF } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { useToast } from '@/shared/components/Toast';
-import { oc, OmicronHeader, OmicronAction } from '@/features/omicron/components/OmicronChrome';
+import { oc, OmicronHeader, OmicronAction } from '@/shared/components/OmicronChrome';
 
 // Paleta v5.0 "Neo-Académico Holográfico" — Bóveda = Cajas Negras (azul acero industrial)
 // Paleta DERIVADA del tema (theme.ts) → un cambio de tema se propaga solo.

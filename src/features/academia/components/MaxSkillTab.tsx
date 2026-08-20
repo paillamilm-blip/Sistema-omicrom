@@ -20,7 +20,7 @@ import { C, FONT, RADIUS } from '@/theme';
 import {
   oc, OmicronHeader, OmicronCard, ProgressBar,
   ProgressRing, SectionTitle, Chip, OmicronEyebrow,
-} from '@/features/omicron/components/OmicronChrome';
+} from '@/shared/components/OmicronChrome';
 import { askOmicron, type OmicronContext } from '@/features/omicron/services/brain';
 import { UniversalSimulator } from '@/features/academia/components/UniversalSimulator';
 import type { SkillTreeNode } from '@/types';

@@ -1,10 +1,9 @@
-// components/omicron/OmicronChrome.tsx
+// shared/components/OmicronChrome.tsx
 // ═══════════════════════════════════════════════════════════════════════
 // ÓMICRON · Chrome compartido para TODAS las pestañas (Industria 5.0).
 //
-// El fondo holográfico (radial + grilla + halo) ya lo entrega UnifiedLayout,
-// así que aquí las pantallas son TRANSPARENTES y dejan ver ese fondo unificado
-// (sin repetir fondos ni grillas por pestaña). Provee:
+// Vive en shared/ porque lo usan 8+ módulos (academia, empleos, chat,
+// market, wallet, gobernanza, gemelo, omicron). Es layout reutilizable.
 //   - oc.root / oc.scroll  → scaffold de pantalla (transparente, columna)
 //   - oc.card              → tarjeta glass premium redondeada
 //   - <OmicronHeader/>      → header glass unificado (back + ícono + título + acción)

@@ -7,7 +7,9 @@
 
 import type { TabId } from '@/types';
 
-// Map of tab → dynamic import function (mirrors OrbShell lazy definitions)
+// Map of tab → dynamic import function (mirrors OrbShell lazy definitions).
+// NOTE: These only need to FETCH the chunk (warm the cache), not mount it.
+// That's why we don't use .then(m => ({ default: m.X })) like OrbShell does.
 const TAB_LOADERS: Partial<Record<TabId, () => Promise<unknown>>> = {
   perfil:     () => import('@/features/gemelo/components/GemeloTab'),
   empleos:    () => import('@/features/empleos/components/EmpleosTab'),

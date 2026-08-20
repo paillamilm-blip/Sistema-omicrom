@@ -13,7 +13,7 @@ import { notifyOrb } from '@/features/omicron/services/notify';
 // Si Stripe no está configurado en el backend, el modal muestra un aviso amable.
 const STRIPE_ENABLED = import.meta.env.VITE_STRIPE_ENABLED !== 'false';
 import { C, FONT } from '@/theme';
-import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '@/features/omicron/components/OmicronChrome';
+import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '@/shared/components/OmicronChrome';
 import type { WalletTransaction } from '@/types';
 
 // ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────

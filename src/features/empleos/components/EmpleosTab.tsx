@@ -14,7 +14,7 @@ import { TrabajoTeEncuentra } from '@/features/empleos/components/TrabajoTeEncue
 import { RutaCarrera } from '@/features/empleos/components/RutaCarrera';
 import { FreelanceNeeds } from '@/features/empleos/components/FreelanceNeeds';
 import { CartaPostulacionModal } from '@/features/empleos/components/CartaPostulacionModal';
-import { oc, OmicronHeader, OmicronAction } from '@/features/omicron/components/OmicronChrome';
+import { oc, OmicronHeader, OmicronAction } from '@/shared/components/OmicronChrome';
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
 // "muted" con más contraste para no forzar la vista.

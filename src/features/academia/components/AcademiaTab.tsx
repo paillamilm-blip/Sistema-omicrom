@@ -8,7 +8,7 @@ import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '@/theme';
 import { ScanlineOverlay, LoadingScreen } from '@/shared/components/CyberComponents';
-import { oc, OmicronHeader } from '@/features/omicron/components/OmicronChrome';
+import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { useToast } from '@/shared/components/Toast';

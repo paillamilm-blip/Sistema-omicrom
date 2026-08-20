@@ -11,7 +11,7 @@ import { useApp } from '@/store/AppContext';
 import { useRealtime } from '@/store/RealtimeContext';
 import { supabase } from '@/infrastructure/supabase/client';
 import { C, FONT } from '@/theme';
-import { oc, OmicronHeader } from '@/features/omicron/components/OmicronChrome';
+import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
 import { RedPanel, DirectChatModal, PublicCredentialModal } from '@/features/gemelo/components/RedSocial';
 import type { LiveEvent } from '@/hooks/useRealtimeNetwork';
