@@ -9,6 +9,8 @@ import {
 } from '@/shared/components/CyberComponents';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
+import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
+import { firePulse } from '@/shared/components/LivePulseBar';
 import { openBlackbox, type BlackboxResult } from '@/features/chat/services/secureChat';
 interface Contract { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; amount: number; }
 interface Dispute { id: string; reason: string; status: string; created_at: string; resolved_at?: string; appeal_status?: string; appeal_opened_at?: string; appeal_arbiters?: string[]; appeal_resolution?: string; plaintiff_id?: string; defendant_id?: string; }
@@ -101,7 +103,7 @@ export function GobernanzaTab() {
     setBusy(false);
     if (error) return notify('Error: ' + error.message);
     setPanel(null); setSelContract(null); setReason('');
-    notify('Disputa abierta · 3 árbitros asignados'); load();
+    notify('Disputa abierta · 3 árbitros asignados'); audioPing(); firePulse('alert'); load();
   }
 
   async function submitStake() {

@@ -19,6 +19,8 @@ import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/feature
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { C, FONT } from '@/theme';
 import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
+import { audioSweep, audioTick, audioConfirm } from '@/shared/utils/spatialAudio';
+import { firePulse } from '@/shared/components/LivePulseBar';
 import type { TabId, GemeloDigital } from '@/types';
 
 // =====================================================================
@@ -517,6 +519,8 @@ export function OrbShell() {
   // El nodo Mi ADN va a renderTab('perfil') que ahora muestra el ADN Digital.
   const handleNodeTap = useCallback((node: OrbNode) => {
     hapticMedium();
+    audioSweep();
+    firePulse('user');
     setSelectedNode(node);
     setState('preview');
     setActiveTab(node.tab);
@@ -1148,6 +1152,7 @@ export function OrbShell() {
           onSubmit={(e: { preventDefault: () => void }) => {
             e.preventDefault();
             if (!inputText.trim()) return;
+            audioTick();
             handleTextInput(inputText.trim());
             setInputText('');
             resetIdle();

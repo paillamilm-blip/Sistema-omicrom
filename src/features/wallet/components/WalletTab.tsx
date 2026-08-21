@@ -14,6 +14,9 @@ import { notifyOrb } from '@/features/omicron/services/notify';
 const STRIPE_ENABLED = import.meta.env.VITE_STRIPE_ENABLED !== 'false';
 import { C, FONT } from '@/theme';
 import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '@/shared/components/OmicronChrome';
+import { SmoothNumber } from '@/shared/motion';
+import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
+import { firePulse } from '@/shared/components/LivePulseBar';
 import type { WalletTransaction } from '@/types';
 
 // ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────
@@ -98,6 +101,8 @@ export function WalletTab() {
               const n = typeof data.credited === 'number' ? data.credited : null;
               setCreditedTokens(n);
               setPurchaseState('ok');
+              audioPing();
+              firePulse('success');
               notifyOrb(n != null ? `+${n.toLocaleString('es-CL')} tokens acreditados` : 'Pago confirmado', 'success');
             } else {
               // Aún no confirmado (pendiente o reintentando): NO decimos "confirmado".
@@ -151,7 +156,7 @@ export function WalletTab() {
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 6 }}>
               <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 46, color: C.ink, letterSpacing: -1.5, lineHeight: 0.95, textShadow: `0 0 26px ${C.gold}44` }}>
-                {balance.toLocaleString('es-CL')}
+                <SmoothNumber value={balance} />
               </span>
               <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold, marginBottom: 6 }}>Tokens</span>
             </div>
@@ -161,7 +166,7 @@ export function WalletTab() {
 
             {/* ── Botón principal: Recargar (comprar con tarjeta) ── */}
             {STRIPE_ENABLED && (
-              <button onClick={() => setShowPurchase(true)} className="oc-pressable" style={{
+              <button onClick={() => { audioTick(); setShowPurchase(true); }} className="oc-pressable" style={{
                 width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
                 marginTop: 16, padding: '15px 0', borderRadius: 16, cursor: 'pointer',
                 fontFamily: FONT.display, fontWeight: 800, fontSize: 16,

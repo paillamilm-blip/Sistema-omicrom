@@ -15,6 +15,8 @@ import { RutaCarrera } from '@/features/empleos/components/RutaCarrera';
 import { FreelanceNeeds } from '@/features/empleos/components/FreelanceNeeds';
 import { CartaPostulacionModal } from '@/features/empleos/components/CartaPostulacionModal';
 import { oc, OmicronHeader, OmicronAction } from '@/shared/components/OmicronChrome';
+import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
+import { firePulse } from '@/shared/components/LivePulseBar';
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
 // "muted" con más contraste para no forzar la vista.
@@ -164,6 +166,8 @@ export function EmpleosTab() {
       const { error } = await supabase.rpc('apply_to_job', { p_job_id: jobId, p_cover_note: null });
       if (error) throw error;
       setApplied(prev => new Set(prev).add(jobId));
+      audioPing();
+      firePulse('success');
       toast('¡Aplicación enviada!', 'success');
     } catch (e) {
       toast('Error al aplicar: ' + ((e as Error).message ?? e), 'error');

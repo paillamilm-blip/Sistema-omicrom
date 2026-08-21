@@ -5,6 +5,7 @@ import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, cx } from '@/theme';
 import { ScanlineOverlay, CyberCard, SectionLabel, LoadingScreen } from '@/shared/components/CyberComponents';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
+import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { useToast } from '@/shared/components/Toast';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';

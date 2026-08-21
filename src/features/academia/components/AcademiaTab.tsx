@@ -7,6 +7,8 @@ import {
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '@/theme';
+import { audioTick, audioPing, audioAscend } from '@/shared/utils/spatialAudio';
+import { firePulse } from '@/shared/components/LivePulseBar';
 import { ScanlineOverlay, LoadingScreen } from '@/shared/components/CyberComponents';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy';
@@ -315,7 +317,7 @@ export function AcademiaTab() {
       const r = Array.isArray(data) ? data[0] : data;
       setResult({ score: r.score, passed: r.passed });
       await loadCourses();
-      if (r.passed) await refreshProfile();
+      if (r.passed) { audioAscend(); firePulse('success'); await refreshProfile(); }
     } catch (e) {
       toast('No se pudo enviar el quiz: ' + ((e as Error).message ?? e), 'error');
     } finally {

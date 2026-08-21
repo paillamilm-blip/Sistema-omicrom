@@ -14,6 +14,9 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
 import { C, FONT } from '@/theme';
+import { SmoothNumber } from '@/shared/motion';
+import { audioSweep } from '@/shared/utils/spatialAudio';
+import { AuraBackground } from '@/shared/components/AuraSystem';
 import { StreakBanner } from '@/features/academia/components/StreakBanner';
 import { DailyChallengeCard } from '@/features/academia/components/DailyChallengeCard';
 import { JourneyProgress } from '@/features/gemelo/components/JourneyProgress';
@@ -81,6 +84,7 @@ export function GemeloTab() {
     const clamped = Math.max(0, Math.min(2, idx));
     visitedSlides.current.add(clamped);
     setSlide(([prev]) => [clamped, clamped > prev ? 1 : -1]);
+    audioSweep();
   }, []);
 
   const handleDragEnd = useCallback((_: unknown, info: PanInfo) => {
@@ -132,7 +136,8 @@ export function GemeloTab() {
       msOverflowStyle: 'none', // IE/Edge
     }} className="scrollbar-hidden">
       {/* ═══ HEADER ═══ */}
-      <div style={{ textAlign: 'center', padding: '16px 20px 8px', flexShrink: 0 }}>
+      <div style={{ textAlign: 'center', padding: '16px 20px 8px', flexShrink: 0, position: 'relative' }}>
+        <AuraBackground axes={{ execution: axes.exec, quality: axes.qual, transcendence: axes.trans, foundation: axes.fund }} />
         <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 4 }}>
           ADN Digital · Perfil Ómicron
         </div>

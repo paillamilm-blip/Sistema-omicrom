@@ -11,6 +11,8 @@ import { EmptyState } from '@/shared/components/EmptyState';
 import { ContractModal } from '@/features/market/components/ContractModal';
 import { PublishServiceModal } from '@/features/market/components/PublishServiceModal';
 import { oc, OmicronHeader, OmicronAction } from '@/shared/components/OmicronChrome';
+import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
+import { firePulse } from '@/shared/components/LivePulseBar';
 import type { MarketService } from '@/types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';

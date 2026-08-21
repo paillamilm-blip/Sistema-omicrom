@@ -18,12 +18,23 @@ import { IncomingJobPush } from '@/features/empleos/components/IncomingJobs';
 import { PublicProfileGate } from '@/features/gemelo/components/RedSocial';
 import { VerifyCredentialView } from '@/features/gemelo/components/VerifyCredential';
 import { C, FONT } from './theme';
+import { LivePulseBar, usePulseBar } from '@/shared/components/LivePulseBar';
+import { EmotionProvider } from '@/shared/components/EmotionAwareUI';
+import { omicronAudio } from '@/shared/utils/spatialAudio';
 
 
 function AppShell() {
   const { authStatus, isLoadingProfile } = useApp();
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const { state: pulseState } = usePulseBar();
+
+  // Unlock audio on first user gesture (browser policy)
+  useEffect(() => {
+    const unlock = () => { omicronAudio.unlock(); window.removeEventListener('pointerdown', unlock); };
+    window.addEventListener('pointerdown', unlock, { once: true });
+    return () => window.removeEventListener('pointerdown', unlock);
+  }, []);
 
   // Track visit count for push permission timing
   useEffect(() => {
@@ -91,6 +102,7 @@ function AppShell() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <LivePulseBar state={pulseState} />
       <OrbShell />
       {isGuest && showAuthModal && <AuthOverlay onClose={() => setShowAuthModal(false)} />}
       <LiveNetworkFeed />
@@ -115,8 +127,10 @@ export default function App() {
       <AppProvider>
         <ToastProvider>
           <RealtimeProvider>
-            <ConnectionBanner />
-            <AppShell />
+            <EmotionProvider>
+              <ConnectionBanner />
+              <AppShell />
+            </EmotionProvider>
           </RealtimeProvider>
         </ToastProvider>
       </AppProvider>
