@@ -7,6 +7,7 @@
 import { useMemo } from 'react';
 import { useApp } from '@/store/AppContext';
 import { nodeGuidance } from '@/shared/utils/guidance';
+import { TextReveal } from '@/shared/motion';
 import { C, FONT } from '@/theme';
 import type { TabId, GemeloDigital } from '@/types';
 
@@ -51,7 +52,7 @@ export function GemeloGuidance({ tab }: GemeloGuidanceProps) {
       }}
     >
       <span style={{ fontSize: 13, flexShrink: 0 }}>💡</span>
-      <span style={{ opacity: 0.9 }}>{guidance}</span>
+      <span style={{ opacity: 0.9 }}><TextReveal text={guidance} speed={22} cursor={false} /></span>
     </div>
   );
 }

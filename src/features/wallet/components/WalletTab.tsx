@@ -14,7 +14,7 @@ import { notifyOrb } from '@/features/omicron/services/notify';
 const STRIPE_ENABLED = import.meta.env.VITE_STRIPE_ENABLED !== 'false';
 import { C, FONT } from '@/theme';
 import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '@/shared/components/OmicronChrome';
-import { SmoothNumber } from '@/shared/motion';
+import { SmoothNumber, StaggerList, StaggerItem } from '@/shared/motion';
 import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import type { WalletTransaction } from '@/types';
@@ -209,7 +209,7 @@ export function WalletTab() {
                   <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12.5, color: C.ink }}>En garantía</span>
                 </div>
                 <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color: C.gold, marginTop: 4 }}>
-                  {escrow.toLocaleString('es-CL')} T
+                  <SmoothNumber value={escrow} /> T
                 </div>
                 <div style={{ fontFamily: FONT.body, fontSize: 10.5, color: C.mut, marginTop: 2, lineHeight: 1.3 }}>
                   Guardado mientras dura un trabajo
@@ -221,7 +221,7 @@ export function WalletTab() {
                   <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12.5, color: C.ink }}>Puntos PE</span>
                 </div>
                 <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color: node.accent, marginTop: 4 }}>
-                  {pe.toLocaleString('es-CL')}
+                  <SmoothNumber value={pe} />
                 </div>
                 <div style={{ fontFamily: FONT.body, fontSize: 10.5, color: C.mut, marginTop: 2, lineHeight: 1.3 }}>
                   Tu experiencia en la red
@@ -353,11 +353,12 @@ export function WalletTab() {
                 onCta={() => setActiveTab('market')}
               />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <StaggerList style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {txs.map(tx => {
                   const meta = TX_META[tx.type] ?? { label: tx.type, sign: '', color: C.mut, incoming: true };
                   return (
-                    <OmicronCard key={tx.id} className="oc-rise" style={{ padding: 13 }}>
+                    <StaggerItem key={tx.id}>
+                    <OmicronCard style={{ padding: 13 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <div style={{ width: 38, height: 38, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${meta.color}1c`, border: `1px solid ${meta.color}44` }}>
                           {meta.incoming ? <ArrowDownLeft size={17} style={{ color: meta.color }} /> : <ArrowUpRight size={17} style={{ color: meta.color }} />}
@@ -381,9 +382,10 @@ export function WalletTab() {
                         </div>
                       </div>
                     </OmicronCard>
+                    </StaggerItem>
                   );
                 })}
-              </div>
+              </StaggerList>
             )
           )}
 

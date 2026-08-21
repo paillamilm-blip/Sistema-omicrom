@@ -17,6 +17,7 @@ export { FadeIn } from './FadeIn';
 export { SlideUp } from './SlideUp';
 export { ScaleIn } from './ScaleIn';
 export { StaggerChildren } from './StaggerChildren';
+export { StaggerList, StaggerItem } from './StaggerList';
 export { RevealOnScroll } from './RevealOnScroll';
 export { AnimatedCounter } from './AnimatedCounter';
 export { MagneticButton } from './MagneticButton';

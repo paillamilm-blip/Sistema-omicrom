@@ -19,7 +19,7 @@ import { PublicProfileGate } from '@/features/gemelo/components/RedSocial';
 import { VerifyCredentialView } from '@/features/gemelo/components/VerifyCredential';
 import { C, FONT } from './theme';
 import { SelfManagedPulseBar } from '@/shared/components/LivePulseBar';
-import { EmotionProvider } from '@/shared/components/EmotionAwareUI';
+import { EmotionBridge } from '@/shared/components/EmotionBridge';
 import { omicronAudio } from '@/shared/utils/spatialAudio';
 
 
@@ -126,10 +126,10 @@ export default function App() {
       <AppProvider>
         <ToastProvider>
           <RealtimeProvider>
-            <EmotionProvider>
+            <EmotionBridge>
               <ConnectionBanner />
               <AppShell />
-            </EmotionProvider>
+            </EmotionBridge>
           </RealtimeProvider>
         </ToastProvider>
       </AppProvider>

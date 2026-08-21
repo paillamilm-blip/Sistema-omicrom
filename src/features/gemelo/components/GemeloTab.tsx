@@ -16,6 +16,9 @@ import { useApp, useGemeloDigital } from '@/store/AppContext';
 import { C, FONT } from '@/theme';
 import { audioSweep } from '@/shared/utils/spatialAudio';
 import { AuraBackground } from '@/shared/components/AuraSystem';
+import { GlowCard } from '@/shared/motion';
+import { SmoothNumber } from '@/shared/motion';
+import { MagneticButton } from '@/shared/motion';
 import { StreakBanner } from '@/features/academia/components/StreakBanner';
 import { DailyChallengeCard } from '@/features/academia/components/DailyChallengeCard';
 import { JourneyProgress } from '@/features/gemelo/components/JourneyProgress';
@@ -306,7 +309,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation }: {
       }}>
         <Sparkles size={14} color={C.gold} />
         <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.ink }}>Reputación</span>
-        <span style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 800, color: C.cyan }}>{Math.round(reputation)}</span>
+        <span style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 800, color: C.cyan }}><SmoothNumber value={Math.round(reputation)} /></span>
         <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>/100</span>
       </div>
     </div>
@@ -405,7 +408,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation }: {
         {AXIS_META.map(({ key, label, color, Icon }) => {
           const val = axes[key as keyof typeof axes] ?? 0;
           return (
-            <div key={key} style={{ padding: '12px 12px', borderRadius: 14, background: `${color}08`, border: `1px solid ${color}33` }}>
+            <GlowCard key={key} color={color} intensity={0.1} style={{ padding: '12px 12px', borderRadius: 14, background: `${color}08`, border: `1px solid ${color}33` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <Icon size={13} color={color} />
                 <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
@@ -421,29 +424,29 @@ function CardImpacto({ axes, setActiveTab, skipAnimation }: {
                 </div>
                 <span style={{ fontFamily: FONT.mono, fontSize: 13, fontWeight: 700, color, minWidth: 26, textAlign: 'right' }}>{val}</span>
               </div>
-            </div>
+            </GlowCard>
           );
         })}
       </div>
 
       {/* Accesos directos */}
       <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={() => setActiveTab('maxskill')} style={{
-          flex: 1, padding: '12px 0', borderRadius: 12, cursor: 'pointer',
+        <MagneticButton onClick={() => setActiveTab('maxskill')} style={{
+          flex: 1, padding: '12px 0', borderRadius: 12,
           background: C.glass, border: `1px solid ${C.cyanFaint}`, color: C.cyan,
           fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
           <Zap size={13} /> Habilidades
-        </button>
-        <button onClick={() => setActiveTab('academia')} style={{
-          flex: 1, padding: '12px 0', borderRadius: 12, cursor: 'pointer',
+        </MagneticButton>
+        <MagneticButton onClick={() => setActiveTab('academia')} style={{
+          flex: 1, padding: '12px 0', borderRadius: 12,
           background: C.glass, border: `1px solid ${C.purpleFaint}`, color: C.purple,
           fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
           <TrendingUp size={13} /> Academia
-        </button>
+        </MagneticButton>
       </div>
     </div>
   );

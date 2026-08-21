@@ -9,6 +9,7 @@ import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '@/theme';
 import { audioAscend } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
+import { CelebrationBurst } from '@/shared/motion';
 import { ScanlineOverlay, LoadingScreen } from '@/shared/components/CyberComponents';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy';
@@ -598,7 +599,8 @@ export function AcademiaTab() {
 
       <div style={cx(BASE.scrollArea, { padding: '14px 2px' })}>
         {result ? (
-          <div style={{ textAlign: 'center', padding: '30px 16px' }}>
+          <div style={{ textAlign: 'center', padding: '30px 16px', position: 'relative' }}>
+            <CelebrationBurst trigger={result.passed} />
             <div style={{
               width: 80, height: 80, borderRadius: '50%', margin: '0 auto 16px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',

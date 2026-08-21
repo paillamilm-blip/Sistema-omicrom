@@ -7,6 +7,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRealtime } from '@/store/RealtimeContext';
 import { useProfile } from '@/store/ProfileContext';
+import { firePulse } from '@/shared/components/LivePulseBar';
+import { audioPing } from '@/shared/utils/spatialAudio';
 import { PublicCredentialModal, DirectChatModal } from '@/features/gemelo/components/RedSocial';
 import { LiveRanking } from './LiveRanking';
 import type { LiveEvent, LiveEventKind } from '@/hooks/useRealtimeNetwork';
@@ -242,6 +244,8 @@ export function LiveNetworkFeed() {
     if (e && e.id !== lastId.current) {
       lastId.current = e.id;
       setCurrent(e);
+      firePulse('active');
+      audioPing();
       const t = setTimeout(() => setCurrent(null), 4600);
       return () => clearTimeout(t);
     }
