@@ -14,7 +14,6 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
 import { C, FONT } from '@/theme';
-import { SmoothNumber } from '@/shared/motion';
 import { audioSweep } from '@/shared/utils/spatialAudio';
 import { AuraBackground } from '@/shared/components/AuraSystem';
 import { StreakBanner } from '@/features/academia/components/StreakBanner';

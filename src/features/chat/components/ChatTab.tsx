@@ -254,8 +254,10 @@ export function ChatTab() {
     const other = otherId(room);
     const opt: Message = { id: crypto.randomUUID(), sender_id: profile.id, receiver_id: other, network_id: room.id, content, is_read: false, created_at: new Date().toISOString() };
     setMessages(p => [...p, opt]);
+    audioTick();
     try {
       await sendSecureMessage(room.id, content);
+      audioPing();
       const { messages: msgs, integrity_ok } = await loadSecureMessages(room.id);
       setMessages(msgs); setIntegrityOk(integrity_ok);
     } catch (e) {

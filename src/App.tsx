@@ -18,7 +18,7 @@ import { IncomingJobPush } from '@/features/empleos/components/IncomingJobs';
 import { PublicProfileGate } from '@/features/gemelo/components/RedSocial';
 import { VerifyCredentialView } from '@/features/gemelo/components/VerifyCredential';
 import { C, FONT } from './theme';
-import { LivePulseBar, usePulseBar } from '@/shared/components/LivePulseBar';
+import { SelfManagedPulseBar } from '@/shared/components/LivePulseBar';
 import { EmotionProvider } from '@/shared/components/EmotionAwareUI';
 import { omicronAudio } from '@/shared/utils/spatialAudio';
 
@@ -27,7 +27,6 @@ function AppShell() {
   const { authStatus, isLoadingProfile } = useApp();
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { state: pulseState } = usePulseBar();
 
   // Unlock audio on first user gesture (browser policy)
   useEffect(() => {
@@ -102,7 +101,7 @@ function AppShell() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <LivePulseBar state={pulseState} />
+      <SelfManagedPulseBar />
       <OrbShell />
       {isGuest && showAuthModal && <AuthOverlay onClose={() => setShowAuthModal(false)} />}
       <LiveNetworkFeed />

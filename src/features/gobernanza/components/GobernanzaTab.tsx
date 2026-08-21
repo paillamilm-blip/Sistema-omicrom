@@ -9,7 +9,7 @@ import {
 } from '@/shared/components/CyberComponents';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
-import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
+import { audioPing } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { openBlackbox, type BlackboxResult } from '@/features/chat/services/secureChat';
 interface Contract { id: string; title: string; buyer_id: string; seller_id: string; status: string | null; amount: number; }

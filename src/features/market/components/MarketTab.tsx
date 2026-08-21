@@ -186,7 +186,7 @@ export function MarketTab() {
             <button onClick={() => setFiltersOpen(true)} aria-label="Abrir filtros de búsqueda" style={styles.hamburgerBtn}>
               <Menu size={18} style={{ color: C.blueHi }} />
             </button>
-            <OmicronAction onClick={() => setShowPublish(true)}><Plus size={14} /> Publicar</OmicronAction>
+            <OmicronAction onClick={() => { audioTick(); setShowPublish(true); }}><Plus size={14} /> Publicar</OmicronAction>
           </>
         }
       />
@@ -310,7 +310,7 @@ export function MarketTab() {
         <ContractModal service={selectedService} onClose={() => setSelectedService(null)} />
       )}
       {showPublish && (
-        <PublishServiceModal onClose={() => setShowPublish(false)} onPublished={loadServices} />
+        <PublishServiceModal onClose={() => setShowPublish(false)} onPublished={() => { audioPing(); firePulse('success'); loadServices(); }} />
       )}
     </div>
   );

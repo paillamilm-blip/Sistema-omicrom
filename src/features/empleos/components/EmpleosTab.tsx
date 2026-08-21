@@ -15,7 +15,7 @@ import { RutaCarrera } from '@/features/empleos/components/RutaCarrera';
 import { FreelanceNeeds } from '@/features/empleos/components/FreelanceNeeds';
 import { CartaPostulacionModal } from '@/features/empleos/components/CartaPostulacionModal';
 import { oc, OmicronHeader, OmicronAction } from '@/shared/components/OmicronChrome';
-import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
+import { audioPing } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y

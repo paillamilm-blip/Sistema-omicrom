@@ -19,7 +19,7 @@ import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/feature
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { C, FONT } from '@/theme';
 import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
-import { audioSweep, audioTick, audioConfirm } from '@/shared/utils/spatialAudio';
+import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import type { TabId, GemeloDigital } from '@/types';
 

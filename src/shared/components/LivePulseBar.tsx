@@ -116,6 +116,30 @@ export function LivePulseBar({ state = 'calm', returnDelay = 3000 }: Props) {
 // ── Hook para controlar el Pulse Bar desde cualquier parte ────────────
 let _setState: ((s: PulseState) => void) | null = null;
 
+/**
+ * Self-registering LivePulseBar — manages its own state.
+ * Control it from anywhere with firePulse().
+ * Does NOT require props from parent (no re-render propagation).
+ */
+export function SelfManagedPulseBar() {
+  const [current, setCurrent] = useState<PulseState>('calm');
+  const timeoutRef = useRef<number>(0);
+
+  // Register the setter for firePulse
+  useEffect(() => {
+    _setState = (s: PulseState) => {
+      setCurrent(s);
+      if (s !== 'calm') {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = window.setTimeout(() => setCurrent('calm'), 3000);
+      }
+    };
+    return () => { _setState = null; };
+  }, []);
+
+  return <LivePulseBar state={current} returnDelay={0} />;
+}
+
 export function usePulseBar() {
   const [state, setState] = useState<PulseState>('calm');
   _setState = setState;
