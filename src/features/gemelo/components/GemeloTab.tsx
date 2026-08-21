@@ -16,9 +16,8 @@ import { useApp, useGemeloDigital } from '@/store/AppContext';
 import { C, FONT } from '@/theme';
 import { audioSweep } from '@/shared/utils/spatialAudio';
 import { AuraBackground } from '@/shared/components/AuraSystem';
-import { GlowCard } from '@/shared/motion';
-import { SmoothNumber } from '@/shared/motion';
-import { MagneticButton } from '@/shared/motion';
+import { GlowCard, SmoothNumber, MagneticButton } from '@/shared/motion';
+import { useGemeloAging } from '@/shared/hooks/useGemeloAging';
 import { StreakBanner } from '@/features/academia/components/StreakBanner';
 import { DailyChallengeCard } from '@/features/academia/components/DailyChallengeCard';
 import { JourneyProgress } from '@/features/gemelo/components/JourneyProgress';
@@ -81,6 +80,11 @@ export function GemeloTab() {
   const reputation = gemelo?.overallReputation ?? profile?.reputation_score ?? 0;
   const cvSummary = profile?.cv_summary || '';
 
+  // Gemelo Aging — visual freshness based on activity
+  const lastActiveAt = (profile as unknown as Record<string, unknown>).last_active_at as string | undefined;
+  const streakDays = (profile as unknown as Record<string, unknown>).streak_days as number | undefined;
+  const aging = useGemeloAging({ lastActiveAt, streakDays });
+
   // ── Slide navigation ──────────────────────────────────────────────────
   const goToSlide = useCallback((idx: number) => {
     const clamped = Math.max(0, Math.min(2, idx));
@@ -138,7 +142,7 @@ export function GemeloTab() {
       msOverflowStyle: 'none', // IE/Edge
     }} className="scrollbar-hidden">
       {/* ═══ HEADER ═══ */}
-      <div style={{ textAlign: 'center', padding: '16px 20px 8px', flexShrink: 0, position: 'relative' }}>
+      <div style={{ textAlign: 'center', padding: '16px 20px 8px', flexShrink: 0, position: 'relative', ...aging.style }}>
         <AuraBackground axes={{ execution: axes.exec, quality: axes.qual, transcendence: axes.trans, foundation: axes.fund }} />
         <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 4 }}>
           ADN Digital · Perfil Ómicron

@@ -23,6 +23,7 @@ interface Particle {
   rotation: number;
   rotationSpeed: number;
   opacity: number;
+  shape: 'circle' | 'square';
 }
 
 function createParticles(): Particle[] {
@@ -38,6 +39,7 @@ function createParticles(): Particle[] {
       rotation: Math.random() * 360,
       rotationSpeed: (Math.random() - 0.5) * 15,
       opacity: 1,
+      shape: Math.random() > 0.5 ? 'circle' : 'square',
     };
   });
 }
@@ -133,7 +135,7 @@ export function CelebrationBurst({ trigger, onComplete, style }: Props) {
             position: 'absolute',
             left: '50%', top: '50%',
             width: p.size, height: p.size,
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            borderRadius: p.shape === 'circle' ? '50%' : '2px',
             background: p.color,
             opacity: p.opacity,
             transform: `translate(${p.x}px, ${p.y}px) rotate(${p.rotation}deg)`,

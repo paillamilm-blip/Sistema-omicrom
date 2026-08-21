@@ -186,8 +186,10 @@ export function AuraBackground({ axes, style }: AuraBackgroundProps) {
   );
 }
 
-// Inject aura rotation keyframe
-if (typeof document !== 'undefined' && !document.getElementById('aura-css')) {
+// Inject aura rotation keyframe (lazy — only runs when module is imported client-side)
+function injectAuraStyles(): void {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById('aura-css')) return;
   const s = document.createElement('style');
   s.id = 'aura-css';
   s.textContent = `
@@ -198,3 +200,4 @@ if (typeof document !== 'undefined' && !document.getElementById('aura-css')) {
   `;
   document.head.appendChild(s);
 }
+injectAuraStyles();

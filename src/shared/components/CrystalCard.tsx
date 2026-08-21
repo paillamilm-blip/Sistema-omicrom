@@ -145,8 +145,10 @@ function hexToRgb(hex: string): string {
   return `${r}, ${g}, ${b}`;
 }
 
-// Inject crystal keyframes
-if (typeof document !== 'undefined' && !document.getElementById('crystal-css')) {
+// Inject crystal keyframes (lazy — safe for SSR)
+function injectCrystalStyles(): void {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById('crystal-css')) return;
   const s = document.createElement('style');
   s.id = 'crystal-css';
   s.textContent = `
@@ -166,3 +168,4 @@ if (typeof document !== 'undefined' && !document.getElementById('crystal-css')) 
   `;
   document.head.appendChild(s);
 }
+injectCrystalStyles();

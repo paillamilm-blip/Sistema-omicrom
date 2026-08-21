@@ -17,6 +17,7 @@ import { CartaPostulacionModal } from '@/features/empleos/components/CartaPostul
 import { oc, OmicronHeader, OmicronAction } from '@/shared/components/OmicronChrome';
 import { audioPing } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
+import { useProgressiveBlur } from '@/shared/hooks/useProgressiveBlur';
 
 // ♿ Accesibilidad: tonos oscurecidos respecto a la versión original y
 // "muted" con más contraste para no forzar la vista.
@@ -70,6 +71,7 @@ function fmtDist(km: number): string { return km < 1 ? `${Math.round(km * 1000)}
 export function EmpleosTab() {
   const { profile, setActiveTab } = useApp();
   const { toast } = useToast();
+  const { blurStyle } = useProgressiveBlur('empleos');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [myMatches, setMyMatches] = useState<Map<string, number>>(new Map()); // job_id -> rank
@@ -188,7 +190,7 @@ export function EmpleosTab() {
   });
 
   return (
-    <div style={oc.root}>
+    <div style={{ ...oc.root, ...blurStyle }}>
       {/* Header Ómicron unificado */}
       <OmicronHeader
         onBack={() => setActiveTab('perfil')}

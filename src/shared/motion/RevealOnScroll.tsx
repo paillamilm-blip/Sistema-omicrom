@@ -19,7 +19,8 @@ interface Props {
   delay?: number;
   style?: CSSProperties;
   className?: string;
-  motion?: boolean;
+  /** Set false to disable animation */
+  animated?: boolean;
 }
 
 const VARIANTS = {
@@ -30,7 +31,7 @@ const VARIANTS = {
 
 export function RevealOnScroll({
   children, type = 'slideUp', once = true, threshold = 0.15,
-  delay = 0, style, className, motion: enabled = true,
+  delay = 0, style, className, animated: enabled = true,
 }: Props) {
   const reduced = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
