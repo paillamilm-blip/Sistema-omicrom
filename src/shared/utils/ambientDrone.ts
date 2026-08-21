@@ -61,6 +61,9 @@ class AmbientDrone {
   }
 
   private start(ctx: AudioContext, config: { freq: number; volume: number; harmonic: number }): void {
+    // Resume context if suspended (browser policy)
+    if (ctx.state === 'suspended') ctx.resume();
+
     // Primary oscillator
     this.osc = ctx.createOscillator();
     this.gain = ctx.createGain();
@@ -107,21 +110,33 @@ class AmbientDrone {
     }
   }
 
+  private stopGen = 0;
+
   private stop(): void {
     if (!this.active) return;
+    const gen = ++this.stopGen;
     const ctx = this.ctx;
+    const oscRef = this.osc;
+    const osc2Ref = this.osc2;
+
     if (ctx && this.gain) {
       this.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
     }
     if (ctx && this.gain2) {
       this.gain2.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
     }
-    // Cleanup after fade
-    setTimeout(() => {
-      this.osc?.stop(); this.osc = null; this.gain = null;
-      this.osc2?.stop(); this.osc2 = null; this.gain2 = null;
-    }, 1600);
+
+    // Nullify immediately so start() can create fresh ones
+    this.osc = null; this.gain = null;
+    this.osc2 = null; this.gain2 = null;
     this.active = false;
+
+    // Cleanup after fade — only if not superseded by a new start
+    setTimeout(() => {
+      if (this.stopGen !== gen) return; // superseded by new start/stop
+      try { oscRef?.stop(); } catch { /* already stopped */ }
+      try { osc2Ref?.stop(); } catch { /* already stopped */ }
+    }, 1600);
   }
 
   destroy(): void {

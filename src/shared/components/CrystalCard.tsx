@@ -135,12 +135,13 @@ export function CrystalCard({
   );
 }
 
-// Helper: hex color to rgb string
+// Helper: hex color to rgb string (handles #fff and #ffffff)
 function hexToRgb(hex: string): string {
   const h = hex.replace('#', '');
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
+  const normalized = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+  const r = parseInt(normalized.substring(0, 2), 16) || 0;
+  const g = parseInt(normalized.substring(2, 4), 16) || 0;
+  const b = parseInt(normalized.substring(4, 6), 16) || 0;
   return `${r}, ${g}, ${b}`;
 }
 

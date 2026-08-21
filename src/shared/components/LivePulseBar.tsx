@@ -140,21 +140,6 @@ export function SelfManagedPulseBar() {
   return <LivePulseBar state={current} returnDelay={0} />;
 }
 
-export function usePulseBar() {
-  const [state, setState] = useState<PulseState>('calm');
-  _setState = setState;
-
-  return {
-    state,
-    pulse: (s: PulseState) => setState(s),
-    calm: () => setState('calm'),
-    active: () => setState('active'),
-    user: () => setState('user'),
-    alert: () => setState('alert'),
-    success: () => setState('success'),
-  };
-}
-
 /** Fire-and-forget pulse from anywhere (services, hooks, etc.) */
 export function firePulse(s: PulseState): void {
   _setState?.(s);

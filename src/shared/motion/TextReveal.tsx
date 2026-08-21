@@ -38,29 +38,34 @@ export function TextReveal({
   const reduced = useReducedMotion();
   const [revealed, setRevealed] = useState(reduced ? text.length : 0);
   const [typing, setTyping] = useState(!reduced);
-  const timeoutRef = useRef<number>(0);
+  // Use ref for onComplete to avoid it in the dep array (prevents restart)
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     if (reduced) {
       setRevealed(text.length);
       setTyping(false);
-      onComplete?.();
+      onCompleteRef.current?.();
       return;
     }
 
+    let cancelled = false;
+    let idx = 0;
     setRevealed(0);
     setTyping(true);
 
-    let idx = 0;
     function next() {
+      if (cancelled) return;
       if (idx >= text.length) {
         setTyping(false);
-        onComplete?.();
+        onCompleteRef.current?.();
         return;
       }
       const char = text[idx];
       const ms = idx === 0 ? delay : charDelay(char, speed);
-      timeoutRef.current = window.setTimeout(() => {
+      setTimeout(() => {
+        if (cancelled) return;
         idx++;
         setRevealed(idx);
         next();
@@ -68,8 +73,8 @@ export function TextReveal({
     }
 
     next();
-    return () => clearTimeout(timeoutRef.current);
-  }, [text, speed, delay, reduced, onComplete]);
+    return () => { cancelled = true; };
+  }, [text, speed, delay, reduced]); // onComplete NOT in deps (uses ref)
 
   const displayText = text.slice(0, revealed);
 
