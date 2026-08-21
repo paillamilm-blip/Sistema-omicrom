@@ -131,10 +131,10 @@ export function EmotionProvider({ children, signals }: ProviderProps) {
 
   const config = useMemo(() => EMOTION_CONFIGS[emotion], [emotion]);
 
-  // Update when signals change
+  // Update when signals change (including when signals goes from undefined → defined)
   useEffect(() => {
     if (signals) setEmotion(computeEmotion(signals));
-  }, [signals?.streakDays, signals?.daysSinceLastActivity, signals?.recentAchievement, signals?.recentLevelUp]);
+  }, [signals]);
 
   // Inject CSS custom properties (no re-render needed by consumers)
   const prevRef = useRef<EmotionConfig>(config);

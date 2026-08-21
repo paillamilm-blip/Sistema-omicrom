@@ -56,6 +56,8 @@ export function CelebrationBurst({ trigger, onComplete, style }: Props) {
   const [active, setActive] = useState(false);
   const rafRef = useRef<number>(0);
   const startRef = useRef(0);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     if (!trigger) return;
@@ -63,7 +65,7 @@ export function CelebrationBurst({ trigger, onComplete, style }: Props) {
     if (reduced) {
       // Reduced motion: just show a gentle scale pulse via CSS
       setActive(true);
-      const t = setTimeout(() => { setActive(false); onComplete?.(); }, 600);
+      const t = setTimeout(() => { setActive(false); onCompleteRef.current?.(); }, 600);
       return () => clearTimeout(t);
     }
 
@@ -79,7 +81,7 @@ export function CelebrationBurst({ trigger, onComplete, style }: Props) {
       if (progress >= 1) {
         setActive(false);
         setParticles([]);
-        onComplete?.();
+        onCompleteRef.current?.();
         return;
       }
 
@@ -97,7 +99,7 @@ export function CelebrationBurst({ trigger, onComplete, style }: Props) {
 
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [trigger, reduced, onComplete]);
+  }, [trigger, reduced]); // onComplete uses ref (not in deps)
 
   if (!active) return null;
 

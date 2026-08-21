@@ -6,10 +6,10 @@
 // On first visit, the blur animates away (0.6s ease).
 // Creates a sense of DISCOVERY — you "clear the fog" by exploring.
 //
-// Usage: const { blur, markVisited } = useProgressiveBlur('empleos');
-// Then: style={{ filter: blur }} on the section wrapper.
+// Usage: const { blurStyle, markVisited } = useProgressiveBlur('empleos');
+// Then: style={{ ...blurStyle }} on the section wrapper.
 // ═══════════════════════════════════════════════════════════════════════
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const STORAGE_KEY = 'omicron_visited_sections';
 
@@ -27,20 +27,29 @@ function saveVisited(set: Set<string>): void {
 export function useProgressiveBlur(sectionId: string) {
   const [visited, setVisited] = useState(() => getVisited().has(sectionId));
   const [clearing, setClearing] = useState(false);
+  const timersRef = useRef<number[]>([]);
 
-  // On mount, if not visited, mark as clearing after 300ms (entrance delay)
+  // Cleanup all timers on unmount
+  useEffect(() => {
+    return () => { timersRef.current.forEach(clearTimeout); };
+  }, []);
+
+  // On mount, if not visited, auto-clear after entrance delay
   useEffect(() => {
     if (visited) return;
-    const t = setTimeout(() => {
+
+    const t1 = window.setTimeout(() => {
       setClearing(true);
       const vs = getVisited();
       vs.add(sectionId);
       saveVisited(vs);
-      // After animation, set visited
-      const t2 = setTimeout(() => setVisited(true), 600);
-      return () => clearTimeout(t2);
+
+      const t2 = window.setTimeout(() => setVisited(true), 600);
+      timersRef.current.push(t2);
     }, 300);
-    return () => clearTimeout(t);
+
+    timersRef.current.push(t1);
+    return () => { clearTimeout(t1); };
   }, [sectionId, visited]);
 
   const markVisited = useCallback(() => {
@@ -49,7 +58,8 @@ export function useProgressiveBlur(sectionId: string) {
     const vs = getVisited();
     vs.add(sectionId);
     saveVisited(vs);
-    setTimeout(() => setVisited(true), 600);
+    const t = window.setTimeout(() => setVisited(true), 600);
+    timersRef.current.push(t);
   }, [sectionId, visited]);
 
   // CSS filter value
@@ -62,7 +72,7 @@ export function useProgressiveBlur(sectionId: string) {
   // Style object ready to spread
   const blurStyle = visited
     ? {}
-    : { filter: blur, transition: 'filter 0.6s ease' };
+    : { filter: blur, transition: 'filter 0.6s ease' } as const;
 
   return { visited, clearing, blur, blurStyle, markVisited };
 }

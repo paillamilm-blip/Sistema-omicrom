@@ -70,7 +70,11 @@ export function AnimatedCounter({
     }
 
     rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      // Commit current value to prevRef on cleanup (prevents stale start on remount)
+      prevValueRef.current = value;
+    };
   }, [value, autoDuration, reduced]);
 
   const formatted = display.toFixed(decimals);

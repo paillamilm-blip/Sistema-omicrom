@@ -50,7 +50,10 @@ class OmicronAudio {
     }
   }
 
-  /** Resume audio context (call on first user gesture) */
+  /** Expose the AudioContext for reuse by other audio systems (e.g. ambientDrone) */
+  getContext(): AudioContext | null {
+    return this.init();
+  }
   unlock(): void {
     const ctx = this.init();
     if (ctx?.state === 'suspended') ctx.resume();

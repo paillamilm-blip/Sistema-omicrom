@@ -36,7 +36,8 @@ class AmbientDrone {
   private init(): AudioContext | null {
     if (this.ctx) return this.ctx;
     try {
-      this.ctx = new AudioContext();
+      // Reuse the shared AudioContext from omicronAudio (avoids iOS limit)
+      this.ctx = omicronAudio.getContext();
       return this.ctx;
     } catch { return null; }
   }
@@ -141,7 +142,7 @@ class AmbientDrone {
 
   destroy(): void {
     this.stop();
-    this.ctx?.close();
+    // Don't close ctx — it's shared from omicronAudio
     this.ctx = null;
   }
 }

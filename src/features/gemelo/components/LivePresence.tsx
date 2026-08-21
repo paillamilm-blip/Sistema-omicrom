@@ -238,6 +238,7 @@ export function LiveNetworkFeed() {
   const { events, onlineCount } = useRealtime();
   const [current, setCurrent] = useState<LiveEvent | null>(null);
   const lastId = useRef<string | null>(null);
+  const lastPingTime = useRef(0);
 
   useEffect(() => {
     const e = events[0];
@@ -245,7 +246,12 @@ export function LiveNetworkFeed() {
       lastId.current = e.id;
       setCurrent(e);
       firePulse('active');
-      audioPing();
+      // Throttle audio: max 1 ping every 3 seconds
+      const now = Date.now();
+      if (now - lastPingTime.current > 3000) {
+        audioPing();
+        lastPingTime.current = now;
+      }
       const t = setTimeout(() => setCurrent(null), 4600);
       return () => clearTimeout(t);
     }
