@@ -271,14 +271,80 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
         style={{
           position: 'absolute', inset: 0, zIndex: 50,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
-          background: 'rgba(0,2,6,0.88)',
-          backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+          background: 'radial-gradient(ellipse at 50% 35%, rgba(92,200,255,0.06), rgba(0,2,6,0.94) 70%)',
           padding: '24px 20px',
           paddingBottom: kbOpen ? '12px' : 'calc(env(safe-area-inset-bottom, 20px) + 24px)',
           transition: 'padding-bottom 0.2s ease',
           overflow: 'auto',
         }}
       >
+        {/* ═══ ORBE VISUAL — el corazón de Jarvis, grande y vivo ═══ */}
+        {!kbOpen && (
+          <motion.div
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
+            style={{
+              position: 'absolute',
+              top: '18%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 200,
+              height: 200,
+            }}
+          >
+            {/* Core glow */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              borderRadius: '50%',
+              background: `radial-gradient(circle at 40% 40%, ${C.cyan}44, ${C.purple}22, transparent 70%)`,
+              boxShadow: `0 0 60px ${C.cyan}33, 0 0 120px ${C.purple}18, inset 0 0 40px ${C.cyan}22`,
+              animation: 'cp-breathe 3s ease-in-out infinite',
+            }} />
+            {/* Ring 1 */}
+            <div style={{
+              position: 'absolute', inset: 10,
+              borderRadius: '50%',
+              border: `1px solid ${C.cyan}33`,
+              animation: 'cp-spin 20s linear infinite',
+            }}>
+              <div style={{ position: 'absolute', top: -3, left: '50%', width: 6, height: 6, borderRadius: '50%', background: C.cyan, boxShadow: `0 0 10px ${C.cyan}` }} />
+            </div>
+            {/* Ring 2 */}
+            <div style={{
+              position: 'absolute', inset: 30,
+              borderRadius: '50%',
+              border: `1px solid ${C.purple}33`,
+              animation: 'cp-spin 14s linear infinite reverse',
+            }}>
+              <div style={{ position: 'absolute', bottom: -3, left: '50%', width: 5, height: 5, borderRadius: '50%', background: C.purple, boxShadow: `0 0 8px ${C.purple}` }} />
+            </div>
+            {/* Inner core */}
+            <div style={{
+              position: 'absolute', inset: 60,
+              borderRadius: '50%',
+              background: `radial-gradient(circle at 50% 50%, ${C.cyan}66, ${C.purple}33, transparent)`,
+              boxShadow: `0 0 30px ${C.cyan}44`,
+              animation: 'cp-breathe 2s ease-in-out infinite',
+            }} />
+            {/* Floating particles */}
+            {[...Array(6)].map((_, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                width: 3 + (i % 3),
+                height: 3 + (i % 3),
+                borderRadius: '50%',
+                background: i % 2 === 0 ? C.cyan : C.purple,
+                opacity: 0.5 + (i * 0.08),
+                left: `${20 + i * 12}%`,
+                top: `${15 + (i * 13) % 70}%`,
+                animation: `floatY ${3 + i * 0.5}s ease-in-out infinite`,
+                animationDelay: `${i * 0.3}s`,
+                boxShadow: `0 0 6px ${i % 2 === 0 ? C.cyan : C.purple}88`,
+              }} />
+            ))}
+          </motion.div>
+        )}
         {/* Celebration burst on profile generated */}
         <CelebrationBurst trigger={showCelebration} onComplete={() => setShowCelebration(false)} />
 
