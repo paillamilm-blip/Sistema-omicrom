@@ -21,6 +21,7 @@ import { C, FONT } from '@/theme';
 import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
 import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
+import { getUserColor } from '@/shared/components/ColorPicker';
 import type { TabId, GemeloDigital } from '@/types';
 
 // =====================================================================

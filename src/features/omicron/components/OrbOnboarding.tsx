@@ -1,26 +1,30 @@
 // src/features/omicron/components/OrbOnboarding.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// ONBOARDING CONVERSACIONAL — Jarvis meets you for the first time.
+// ONBOARDING — Landing Pro: Geodesic orb birth narrative.
 //
-// Taste: One question. No wizard. Instant profile.
-// Animate: Everything enters with spring physics.
-// Impeccable: TextReveal types the greeting. Chips stagger in. ScaleIn on orb.
-// Superpowers: audioHum on load, audioTick on chip, audioAscend on complete,
-//              CelebrationBurst on profile generated, PulseBar on submit.
+// Flow:
+//   Step 1: Black screen → core glow appears (single point of light)
+//   Step 2: "Choose your color" → 5 color dots
+//   Step 3: "What do you do?" → profession input
+//   Step 4: Orb GROWS with nodes appearing (skills extracted)
+//   Step 5: Celebration → fade out → reveal full 3D shell
+//
+// The orb starts as NOTHING and becomes YOUR digital twin.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/store/AppContext';
 import { speakOmicron } from '@/features/omicron/services/voice';
 import { C, FONT, RADIUS } from '@/theme';
+import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
+import { ColorPicker, COLOR_OPTIONS, type ColorOption } from '@/shared/components/ColorPicker';
 import { TextReveal } from '@/shared/motion/TextReveal';
-import { ScaleIn } from '@/shared/motion/ScaleIn';
 import { SlideUp } from '@/shared/motion/SlideUp';
 import { CelebrationBurst } from '@/shared/motion/CelebrationBurst';
 import { MagneticButton } from '@/shared/motion/MagneticButton';
 import { audioHum, audioTick, audioAscend, audioConfirm } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
-import { hapticMedium, hapticSuccess } from '@/shared/utils/haptics';
+import { hapticMedium, hapticSuccess, hapticLight } from '@/shared/utils/haptics';
 
 const ONBOARDING_KEY = 'omicron_onboarding_done';
 
@@ -41,6 +45,7 @@ export interface GeneratedProfile {
 
 const PROFILE_PROMPT = 'Eres Ómicron. El usuario te dice a qué se dedica en 1 frase. Extrae un perfil profesional ESTIMADO. Responde SOLO JSON válido: {"profession":"título corto","years":0,"skills":["skill1","skill2","skill3","skill4","skill5"],"axes":{"exec":0,"qual":0,"trans":0,"fund":0},"seniorLabel":"Profesional X","summary":"2 frases de quién es"} Reglas: skills 4-6, axes 0-100 (mínimo 20), seniorLabel real, conservador si no es claro.';
 
+// ── Intent classification ─────────────────────────────────────────────
 function classifyIntent(text: string): 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar' {
   const t = text.toLowerCase();
   if (/trabajo|empleo|busco|oportunidad|vacante|postular/.test(t)) return 'empleo';
@@ -50,6 +55,7 @@ function classifyIntent(text: string): 'empleo' | 'aprender' | 'validar' | 'vend
   return 'explorar';
 }
 
+// ── Quick skill extraction ────────────────────────────────────────────
 function quickSkillsFromText(text: string): string[] {
   const t = text.toLowerCase();
   const matches: string[] = [];
@@ -94,7 +100,6 @@ const hasMicSupport = () => typeof window !== 'undefined' && !!(
   (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
 );
 
-// ── Suggestion chips data ─────────────────────────────────────────────
 const SUGGESTIONS = [
   { label: 'Desarrollador web', emoji: '💻' },
   { label: 'Diseñadora UX', emoji: '🎨' },
@@ -103,11 +108,16 @@ const SUGGESTIONS = [
   { label: 'Freelancer', emoji: '🚀' },
 ];
 
+// ═══════════════════════════════════════════════════════════════════════
+// COMPONENT
+// ═══════════════════════════════════════════════════════════════════════
 export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview }: OrbOnboardingProps) {
   const { profile } = useApp();
-  const [phase, setPhase] = useState<'ask' | 'processing' | 'result' | 'done'>('ask');
+  const [step, setStep] = useState<'awakening' | 'color' | 'ask' | 'growing' | 'born' | 'done'>('awakening');
+  const [chosenColor, setChosenColor] = useState(COLOR_OPTIONS[0].hex);
   const [input, setInput] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [orbNodes, setOrbNodes] = useState(0);
   const [resultMsg, setResultMsg] = useState('');
   const [showCelebration, setShowCelebration] = useState(false);
   const hasSpoken = useRef(false);
@@ -123,42 +133,40 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     }
   }, [profile?.skills]);
 
-  const userName = profile?.display_name || profile?.full_name || profile?.username || '';
-
-  // Speak + audio hum on first appearance
+  // ── Step 1: Awakening — orb appears from nothing ──────────────────
   useEffect(() => {
-    if (shouldHide || hasSpoken.current) return;
-    hasSpoken.current = true;
-    // Jarvis "wakes up" — subtle hum
-    const t1 = setTimeout(() => audioHum(), 800);
+    if (shouldHide || step !== 'awakening') return;
+    // Jarvis wakes up
+    const t1 = setTimeout(() => audioHum(), 600);
     const t2 = setTimeout(() => {
-      const greeting = userName
-        ? `Hey ${userName}, soy Ómicron. Cuéntame, ¿a qué te dedicas?`
-        : 'Hey, soy Ómicron. Cuéntame, ¿a qué te dedicas?';
-      speakOmicron(greeting);
-    }, 1800);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [shouldHide, userName]);
+      setOrbNodes(1); // First point of light
+    }, 800);
+    const t3 = setTimeout(() => {
+      setStep('color'); // Move to color selection
+    }, 2000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [shouldHide, step]);
 
-  // Keyboard detection
-  const [kbOpen, setKbOpen] = useState(false);
-  useEffect(() => {
-    if (shouldHide) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const onResize = () => setKbOpen(window.innerHeight - vv.height > 100);
-    vv.addEventListener('resize', onResize);
-    return () => vv.removeEventListener('resize', onResize);
-  }, [shouldHide]);
+  // ── Step 2: After color chosen → ask profession ───────────────────
+  const handleColorSelect = useCallback((option: ColorOption) => {
+    setChosenColor(option.hex);
+    hapticLight();
+    setOrbNodes(3); // Orb grows slightly with color
+  }, []);
 
-  // Skills preview while typing
-  useEffect(() => {
-    if (shouldHide || phase !== 'ask' || input.length < 3) return;
-    const preview = quickSkillsFromText(input);
-    if (preview.length > 0) onSkillsPreview?.(preview);
-  }, [input, phase, onSkillsPreview, shouldHide]);
+  const handleColorConfirm = useCallback(() => {
+    setStep('ask');
+    setOrbNodes(5);
+    // Speak greeting
+    if (!hasSpoken.current) {
+      hasSpoken.current = true;
+      setTimeout(() => {
+        speakOmicron('Perfecto. Ahora cuéntame, ¿a qué te dedicas?');
+      }, 500);
+    }
+  }, []);
 
-  // Submit
+  // ── Step 3: Submit profession ─────────────────────────────────────
   const handleSubmit = useCallback(async (overrideText?: string) => {
     const text = overrideText || inputRef.current;
     if (!text.trim() || generating) return;
@@ -166,6 +174,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     hapticMedium();
     audioConfirm();
     firePulse('user');
+    setStep('growing');
 
     const quickSkills = quickSkillsFromText(text);
     const yearsMatch = text.match(/(\d+)\s*a[ñn]os?/i);
@@ -186,33 +195,46 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
       summary: `Profesional en ${text.trim().slice(0, 40)}.`,
     };
 
+    // Grow the orb progressively (simulate nodes appearing)
+    const targetNodes = 8 + instantProfile.skills.length * 3; // 14-26 nodes
+    let current = 5;
+    const growInterval = setInterval(() => {
+      current += 2;
+      setOrbNodes(Math.min(current, targetNodes));
+      if (current >= targetNodes) clearInterval(growInterval);
+    }, 120);
+
     onProfileGenerated?.(instantProfile);
     onSkillsPreview?.(instantProfile.skills);
     import('@/shared/utils/guestMode').then(({ saveGuestProfile }) => {
       saveGuestProfile({ ...instantProfile, createdAt: new Date().toISOString() });
     }).catch(() => {});
 
-    const skillsList = instantProfile.skills.slice(0, 3).join(', ');
-    const msg = instantProfile.skills.length > 1
-      ? `Listo, tu Gemelo Digital ya tiene forma. Veo que dominas ${skillsList}. ¿Quieres afinarlo subiendo tu CV o empezamos así?`
-      : `Listo, tu Gemelo Digital ya tiene forma. Eres ${instantProfile.profession}. ¿Quieres afinarlo subiendo tu CV o empezamos así?`;
-    setResultMsg(msg);
-    setPhase('result');
-    setShowCelebration(true);
+    // After growth animation → born
+    setTimeout(() => {
+      clearInterval(growInterval);
+      setOrbNodes(targetNodes);
+      setStep('born');
+      setShowCelebration(true);
+      audioAscend();
+      hapticSuccess();
+      firePulse('success');
 
-    // Audio celebration
-    setTimeout(() => { audioAscend(); hapticSuccess(); firePulse('success'); }, 300);
+      const skillsList = instantProfile.skills.slice(0, 3).join(', ');
+      const msg = `Tu Gemelo Digital ha nacido. Dominas ${skillsList}. Sube tu CV para expandirlo aún más.`;
+      setResultMsg(msg);
+      speakOmicron(msg);
+      localStorage.setItem(ONBOARDING_KEY, 'true');
+    }, 1800);
 
-    speakOmicron(msg);
-    localStorage.setItem(ONBOARDING_KEY, 'true');
+    // Navigate after showing result
+    setTimeout(() => { setStep('done'); onComplete(intent); }, 4000);
 
     import('@/shared/utils/analytics').then(({ track }) => {
       track('onboarding_started');
       track('onboarding_completed', { intent, skills_count: instantProfile.skills.length });
       track('first_profile_generated', { profession: instantProfile.profession });
     }).catch(() => {});
-
-    setTimeout(() => { setPhase('done'); onComplete(intent); }, 2200);
 
     // Background AI refinement
     try {
@@ -229,7 +251,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
         onSkillsPreview?.(parsed.skills);
       }
     } catch {
-      // Silencioso
+      // Silent
     } finally { setGenerating(false); }
   }, [generating, onComplete, onProfileGenerated, onSkillsPreview]);
 
@@ -255,271 +277,201 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     return () => { recognitionRef.current?.abort(); };
   }, []);
 
-  // === RENDER ===
-  if (shouldHide || phase === 'done') return null;
+  // Keyboard detection
+  const [kbOpen, setKbOpen] = useState(false);
+  useEffect(() => {
+    if (shouldHide) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => setKbOpen(window.innerHeight - vv.height > 100);
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
+  }, [shouldHide]);
 
-  const greeting = userName
-    ? `Hey ${userName}, cuéntame ¿a qué te dedicas?`
-    : '¿A qué te dedicas? Cuéntame en una frase.';
+  // === RENDER ===
+  if (shouldHide || step === 'done') return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0, transition: { duration: 0.3 } }}
-        style={{
-          position: 'absolute', inset: 0, zIndex: 50,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
-          background: 'radial-gradient(ellipse at 50% 35%, rgba(92,200,255,0.06), rgba(0,2,6,0.94) 70%)',
-          padding: '24px 20px',
-          paddingBottom: kbOpen ? '12px' : 'calc(env(safe-area-inset-bottom, 20px) + 24px)',
-          transition: 'padding-bottom 0.2s ease',
-          overflow: 'auto',
-        }}
-      >
-        {/* ═══ ORBE VISUAL — el corazón de Jarvis, grande y vivo ═══ */}
-        {!kbOpen && (
-          <motion.div
-            initial={{ scale: 0.6, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
-            style={{
-              position: 'absolute',
-              top: '18%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 200,
-              height: 200,
-            }}
-          >
-            {/* Core glow */}
-            <div style={{
-              position: 'absolute', inset: 0,
-              borderRadius: '50%',
-              background: `radial-gradient(circle at 40% 40%, ${C.cyan}44, ${C.purple}22, transparent 70%)`,
-              boxShadow: `0 0 60px ${C.cyan}33, 0 0 120px ${C.purple}18, inset 0 0 40px ${C.cyan}22`,
-              animation: 'cp-breathe 3s ease-in-out infinite',
-            }} />
-            {/* Ring 1 */}
-            <div style={{
-              position: 'absolute', inset: 10,
-              borderRadius: '50%',
-              border: `1px solid ${C.cyan}33`,
-              animation: 'cp-spin 20s linear infinite',
-            }}>
-              <div style={{ position: 'absolute', top: -3, left: '50%', width: 6, height: 6, borderRadius: '50%', background: C.cyan, boxShadow: `0 0 10px ${C.cyan}` }} />
-            </div>
-            {/* Ring 2 */}
-            <div style={{
-              position: 'absolute', inset: 30,
-              borderRadius: '50%',
-              border: `1px solid ${C.purple}33`,
-              animation: 'cp-spin 14s linear infinite reverse',
-            }}>
-              <div style={{ position: 'absolute', bottom: -3, left: '50%', width: 5, height: 5, borderRadius: '50%', background: C.purple, boxShadow: `0 0 8px ${C.purple}` }} />
-            </div>
-            {/* Inner core */}
-            <div style={{
-              position: 'absolute', inset: 60,
-              borderRadius: '50%',
-              background: `radial-gradient(circle at 50% 50%, ${C.cyan}66, ${C.purple}33, transparent)`,
-              boxShadow: `0 0 30px ${C.cyan}44`,
-              animation: 'cp-breathe 2s ease-in-out infinite',
-            }} />
-            {/* Floating particles */}
-            {[...Array(6)].map((_, i) => (
-              <div key={i} style={{
-                position: 'absolute',
-                width: 3 + (i % 3),
-                height: 3 + (i % 3),
-                borderRadius: '50%',
-                background: i % 2 === 0 ? C.cyan : C.purple,
-                opacity: 0.5 + (i * 0.08),
-                left: `${20 + i * 12}%`,
-                top: `${15 + (i * 13) % 70}%`,
-                animation: `floatY ${3 + i * 0.5}s ease-in-out infinite`,
-                animationDelay: `${i * 0.3}s`,
-                boxShadow: `0 0 6px ${i % 2 === 0 ? C.cyan : C.purple}88`,
-              }} />
-            ))}
-          </motion.div>
-        )}
-        {/* Celebration burst on profile generated */}
-        <CelebrationBurst trigger={showCelebration} onComplete={() => setShowCelebration(false)} />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.5 } }}
+      style={{
+        position: 'absolute', inset: 0, zIndex: 50,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'space-between',
+        background: '#000206',
+        padding: '0 20px',
+        paddingTop: 'calc(env(safe-area-inset-top, 20px) + 20px)',
+        paddingBottom: kbOpen ? '12px' : 'calc(env(safe-area-inset-bottom, 20px) + 24px)',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Celebration */}
+      <CelebrationBurst trigger={showCelebration} onComplete={() => setShowCelebration(false)} />
 
-        <div style={{ maxWidth: 360, width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* ═══ TOP: THE ORB (grows through the journey) ═══ */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+        <motion.div
+          animate={{
+            scale: step === 'awakening' ? 0.4 : step === 'color' ? 0.7 : step === 'ask' ? 0.85 : 1,
+          }}
+          transition={{ type: 'spring', stiffness: 150, damping: 20 }}
+        >
+          <GeodesicOrb
+            nodes={orbNodes}
+            color={chosenColor}
+            size={240}
+            spinning={step === 'awakening' ? 30 : 18}
+            intensity={step === 'awakening' ? 0.3 : step === 'born' ? 1 : 0.7}
+            breathing={true}
+          />
+        </motion.div>
+      </div>
 
-          {/* ═══ MESSAGE BUBBLE ═══ */}
-          {!kbOpen && phase === 'ask' && (
-            <SlideUp offset={20} delay={0.3}>
-              <div style={{
-                padding: '18px 22px', borderRadius: RADIUS.xl,
-                background: `linear-gradient(145deg, ${C.surface}, rgba(12,16,30,0.95))`,
-                border: `1px solid ${C.cyanFaint}`,
-                boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 12px ${C.cyan}11`,
-              }}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+      {/* ═══ BOTTOM: INTERACTION AREA ═══ */}
+      <div style={{ width: '100%', maxWidth: 360, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <AnimatePresence mode="wait">
+
+          {/* ── STEP: COLOR PICKER ── */}
+          {step === 'color' && (
+            <motion.div key="color" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }}>
+              <ColorPicker onSelect={handleColorSelect} selected="cyan" />
+              <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center' }}>
+                <MagneticButton onClick={handleColorConfirm} style={{
+                  padding: '14px 32px', borderRadius: RADIUS.pill,
+                  background: `linear-gradient(135deg, ${chosenColor}, ${chosenColor}aa)`,
+                  border: 'none', color: '#000', fontFamily: FONT.display,
+                  fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                  boxShadow: `0 4px 24px ${chosenColor}55`,
                 }}>
-                  <div style={{
-                    width: 8, height: 8, borderRadius: '50%',
-                    background: C.cyan, boxShadow: `0 0 8px ${C.cyan}`,
-                    animation: 'cp-breathe 2s ease-in-out infinite',
-                  }} />
-                  <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyan, textTransform: 'uppercase' }}>
-                    ÓMICRON
-                  </span>
-                </div>
-                <div style={{ fontFamily: FONT.body, fontSize: 15, color: C.ink, lineHeight: 1.6 }}>
-                  <TextReveal text={greeting} speed={24} cursor={true} />
-                </div>
+                  Continuar
+                </MagneticButton>
               </div>
-            </SlideUp>
+            </motion.div>
           )}
 
-          {/* Compact message when keyboard open */}
-          {kbOpen && phase === 'ask' && (
-            <div style={{ padding: '8px 14px', borderRadius: 12, background: `${C.surface}cc` }}>
-              <span style={{ fontFamily: FONT.body, fontSize: 13, color: C.mut }}>
-                {userName ? `${userName}, ¿a qué te dedicas?` : '¿A qué te dedicas?'}
-              </span>
-            </div>
-          )}
+          {/* ── STEP: ASK PROFESSION ── */}
+          {step === 'ask' && (
+            <motion.div key="ask" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+            >
+              {/* Message */}
+              {!kbOpen && (
+                <div style={{
+                  padding: '16px 20px', borderRadius: RADIUS.xl,
+                  background: `linear-gradient(145deg, rgba(12,16,30,0.95), rgba(8,12,24,0.98))`,
+                  border: `1px solid ${chosenColor}33`,
+                  boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 8px ${chosenColor}11`,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: chosenColor, boxShadow: `0 0 8px ${chosenColor}`, animation: 'cp-breathe 2s ease-in-out infinite' }} />
+                    <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: chosenColor, textTransform: 'uppercase' }}>ÓMICRON</span>
+                  </div>
+                  <div style={{ fontFamily: FONT.body, fontSize: 15, color: C.ink, lineHeight: 1.6 }}>
+                    <TextReveal text="¿A qué te dedicas? Cuéntame en una frase." speed={22} cursor={true} />
+                  </div>
+                </div>
+              )}
 
-          {/* ═══ INPUT FORM ═══ */}
-          {phase === 'ask' && (
-            <SlideUp offset={16} delay={0.8}>
-              <form
-                onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
-                style={{ display: 'flex', gap: 10, alignItems: 'center' }}
-              >
+              {/* Input */}
+              <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 {hasMicSupport() && (
                   <MagneticButton onClick={handleMic} style={{
-                    width: 52, height: 52, borderRadius: '50%',
-                    border: `1.5px solid ${C.cyanDim}`, background: `${C.glass2}`,
-                    color: C.cyan, display: 'grid', placeItems: 'center', fontSize: 22,
-                    boxShadow: `0 0 12px ${C.cyan}15`,
+                    width: 50, height: 50, borderRadius: '50%',
+                    border: `1.5px solid ${chosenColor}55`, background: 'rgba(255,255,255,0.03)',
+                    color: chosenColor, display: 'grid', placeItems: 'center', fontSize: 20,
                   }}>
                     🎤
                   </MagneticButton>
                 )}
                 <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  value={input} onChange={(e) => setInput(e.target.value)}
                   placeholder="Ej: Ingeniero industrial con 8 años"
-                  enterKeyHint="send"
-                  autoComplete="off"
+                  enterKeyHint="send" autoComplete="off"
                   style={{
-                    flex: 1, padding: '16px 18px', borderRadius: RADIUS.pill,
-                    background: C.surface, border: `1.5px solid ${C.cyanDim}`,
+                    flex: 1, padding: '14px 18px', borderRadius: RADIUS.pill,
+                    background: 'rgba(12,16,30,0.9)', border: `1.5px solid ${chosenColor}44`,
                     fontFamily: FONT.body, fontSize: 15, color: C.ink, outline: 'none',
                     WebkitAppearance: 'none',
-                    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
                   }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = C.cyan; e.currentTarget.style.boxShadow = `0 0 16px ${C.cyan}22`; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = C.cyanDim; e.currentTarget.style.boxShadow = 'none'; }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = chosenColor; e.currentTarget.style.boxShadow = `0 0 12px ${chosenColor}22`; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = `${chosenColor}44`; e.currentTarget.style.boxShadow = 'none'; }}
                 />
-                <MagneticButton
-                  onClick={() => handleSubmit()}
-                  disabled={!input.trim() || generating}
-                  style={{
-                    width: 52, height: 52, borderRadius: '50%', border: 'none',
-                    background: input.trim() ? `linear-gradient(135deg, ${C.cyan}, ${C.purple})` : C.glass2,
-                    color: input.trim() ? '#000' : C.mut,
-                    display: 'grid', placeItems: 'center', fontSize: 20,
-                    boxShadow: input.trim() ? `0 4px 20px ${C.cyan}44` : 'none',
-                    transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  }}
-                >
+                <MagneticButton onClick={() => handleSubmit()} disabled={!input.trim() || generating} style={{
+                  width: 50, height: 50, borderRadius: '50%', border: 'none',
+                  background: input.trim() ? `linear-gradient(135deg, ${chosenColor}, ${chosenColor}aa)` : 'rgba(255,255,255,0.05)',
+                  color: input.trim() ? '#000' : C.mut, display: 'grid', placeItems: 'center', fontSize: 18,
+                  boxShadow: input.trim() ? `0 4px 16px ${chosenColor}44` : 'none',
+                }}>
                   ➤
                 </MagneticButton>
               </form>
-            </SlideUp>
-          )}
 
-          {/* ═══ SUGGESTION CHIPS (staggered entrance) ═══ */}
-          {phase === 'ask' && !input && !kbOpen && (
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: {},
-                visible: { transition: { delayChildren: 1.2, staggerChildren: 0.08 } },
-              }}
-              style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}
-            >
-              {SUGGESTIONS.map(({ label, emoji }) => (
-                <motion.button
-                  key={label}
-                  variants={{
-                    hidden: { opacity: 0, y: 14, scale: 0.9 },
-                    visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 400, damping: 25 } },
-                  }}
-                  onClick={() => { audioTick(); hapticMedium(); setInput(label); handleSubmit(label); }}
-                  style={{
-                    padding: '10px 16px', minHeight: 44, borderRadius: RADIUS.pill,
-                    background: `linear-gradient(145deg, ${C.glass}, rgba(92,200,255,0.04))`,
-                    border: `1px solid ${C.line}`,
-                    color: C.ink, fontFamily: FONT.body, fontSize: 13, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    WebkitTapHighlightColor: 'transparent',
-                    transition: 'border-color 0.15s ease, background 0.15s ease',
-                  }}
-                  whileTap={{ scale: 0.95 }}
+              {/* Chips */}
+              {!input && !kbOpen && (
+                <motion.div initial="hidden" animate="visible"
+                  variants={{ hidden: {}, visible: { transition: { delayChildren: 0.6, staggerChildren: 0.07 } } }}
+                  style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}
                 >
-                  <span>{emoji}</span> {label}
-                </motion.button>
-              ))}
+                  {SUGGESTIONS.map(({ label, emoji }) => (
+                    <motion.button key={label}
+                      variants={{ hidden: { opacity: 0, y: 12, scale: 0.92 }, visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 400, damping: 25 } } }}
+                      whileTap={{ scale: 0.94 }}
+                      onClick={() => { audioTick(); hapticMedium(); setInput(label); handleSubmit(label); }}
+                      style={{
+                        padding: '10px 14px', minHeight: 42, borderRadius: RADIUS.pill,
+                        background: 'rgba(255,255,255,0.03)', border: `1px solid ${chosenColor}22`,
+                        color: C.ink, fontFamily: FONT.body, fontSize: 13, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        WebkitTapHighlightColor: 'transparent',
+                      }}
+                    >
+                      <span>{emoji}</span> {label}
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
             </motion.div>
           )}
 
-          {/* ═══ RESULT PHASE ═══ */}
-          {phase === 'result' && (
-            <ScaleIn from={0.9} delay={0.1}>
-              <div style={{
-                padding: '20px 22px', borderRadius: RADIUS.xl,
-                background: `linear-gradient(145deg, ${C.surface}, rgba(12,16,30,0.95))`,
-                border: `1px solid ${C.greenFaint || C.cyanFaint}`,
-                boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(63,208,201,0.08)`,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <div style={{
-                    width: 8, height: 8, borderRadius: '50%',
-                    background: '#3fd0c9', boxShadow: '0 0 8px #3fd0c9',
-                  }} />
-                  <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: '#3fd0c9', textTransform: 'uppercase' }}>
-                    GEMELO ACTIVADO
-                  </span>
-                </div>
-                <div style={{ fontFamily: FONT.body, fontSize: 14, color: C.ink, lineHeight: 1.6 }}>
-                  <TextReveal text={resultMsg} speed={18} cursor={false} />
-                </div>
-              </div>
-            </ScaleIn>
-          )}
-
-          {phase === 'result' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              style={{ textAlign: 'center', padding: '4px 0' }}
+          {/* ── STEP: GROWING (orb expanding) ── */}
+          {step === 'growing' && (
+            <motion.div key="growing" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              style={{ textAlign: 'center', padding: '20px 0' }}
             >
-              <span style={{
-                fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.5, color: C.mut,
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-              }}>
-                <span style={{
-                  width: 6, height: 6, borderRadius: '50%', background: C.cyan,
-                  animation: 'cp-breathe 1.5s ease-in-out infinite',
-                }} />
-                Preparando tu orbe…
+              <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.5, color: chosenColor, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: chosenColor, animation: 'cp-breathe 1.2s ease-in-out infinite' }} />
+                Construyendo tu Gemelo Digital…
               </span>
             </motion.div>
           )}
-        </div>
-      </motion.div>
-    </AnimatePresence>
+
+          {/* ── STEP: BORN (celebration) ── */}
+          {step === 'born' && (
+            <motion.div key="born" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              style={{ textAlign: 'center', padding: '12px 0' }}
+            >
+              <div style={{
+                padding: '18px 22px', borderRadius: RADIUS.xl,
+                background: `linear-gradient(145deg, rgba(12,16,30,0.95), rgba(8,12,24,0.98))`,
+                border: `1px solid ${chosenColor}44`,
+                boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 16px ${chosenColor}15`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, justifyContent: 'center' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: chosenColor, boxShadow: `0 0 10px ${chosenColor}` }} />
+                  <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: chosenColor, textTransform: 'uppercase' }}>GEMELO DIGITAL ACTIVADO</span>
+                </div>
+                <div style={{ fontFamily: FONT.body, fontSize: 14, color: C.ink, lineHeight: 1.6 }}>
+                  <TextReveal text={resultMsg} speed={16} cursor={false} />
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }
