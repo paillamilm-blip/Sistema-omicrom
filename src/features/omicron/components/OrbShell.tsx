@@ -695,23 +695,12 @@ export function OrbShell() {
 
   // ── Onboarding handler (R3: intent-first routing) ────────────────────
   const handleOnboardingComplete = useCallback((choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar') => {
-    // R3: La respuesta del usuario define a dónde va
-    const routeMap: Record<string, { tab: TabId; nodeId: string }> = {
-      cv:       { tab: 'perfil', nodeId: 'inicio' },
-      ambos:    { tab: 'perfil', nodeId: 'inicio' },
-      examen:   { tab: 'maxskill', nodeId: 'habilidades' },
-      validar:  { tab: 'maxskill', nodeId: 'habilidades' },
-      empleo:   { tab: 'empleos', nodeId: 'empleos' },
-      aprender: { tab: 'academia', nodeId: 'academia' },
-      vender:   { tab: 'market', nodeId: 'mercado' },
-      explorar: { tab: 'perfil', nodeId: 'inicio' },
-    };
-    const route = routeMap[choice] ?? routeMap.explorar;
-    setActiveTab(route.tab);
-    const node = dynamicOrbNodes.find((n: OrbNode) => n.id === route.nodeId) ?? dynamicOrbNodes[0];
-    if (node) { setSelectedNode(node); setState('fullscreen'); }
+    // After onboarding: go to orb state (not fullscreen) so user sees their new orb
+    // The orb now has their skills as nodes — let them explore naturally
     setOnboardingDone(true);
-  }, [setActiveTab, dynamicOrbNodes]);
+    setState('orb');
+    setSelectedNode(null);
+  }, []);
 
   // (Voice control exposed via CustomEvents — see oracle:listening / oracle:voice listeners above)
 
@@ -779,6 +768,7 @@ export function OrbShell() {
             isListening={isListening}
             onProjectedPositions={handleProjected}
             notifications={unreadCount > 0 ? { mensajes: unreadCount } : undefined}
+            userColor={getUserColor()}
           />
         </div>
       </div>

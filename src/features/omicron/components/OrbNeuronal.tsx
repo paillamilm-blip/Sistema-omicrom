@@ -42,6 +42,8 @@ export interface OrbNeuronalProps {
   onProjectedPositions?: (positions: { id: string; x: number; y: number; depth: number }[]) => void;
   /** Map of node id → unread notification count (for badge effect) */
   notifications?: Record<string, number>;
+  /** Primary color for the orb wireframe/edges (default cyan) */
+  userColor?: string;
   className?: string;
 }
 
