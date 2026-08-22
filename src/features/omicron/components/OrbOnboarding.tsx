@@ -1,10 +1,26 @@
-// src/components/omicron/OrbOnboarding.tsx
-// ONBOARDING CONVERSACIONAL — R1-R5 completas.
+// src/features/omicron/components/OrbOnboarding.tsx
+// ═══════════════════════════════════════════════════════════════════════
+// ONBOARDING CONVERSACIONAL — Jarvis meets you for the first time.
+//
+// Taste: One question. No wizard. Instant profile.
+// Animate: Everything enters with spring physics.
+// Impeccable: TextReveal types the greeting. Chips stagger in. ScaleIn on orb.
+// Superpowers: audioHum on load, audioTick on chip, audioAscend on complete,
+//              CelebrationBurst on profile generated, PulseBar on submit.
+// ═══════════════════════════════════════════════════════════════════════
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/store/AppContext';
 import { speakOmicron } from '@/features/omicron/services/voice';
 import { C, FONT, RADIUS } from '@/theme';
+import { TextReveal } from '@/shared/motion/TextReveal';
+import { ScaleIn } from '@/shared/motion/ScaleIn';
+import { SlideUp } from '@/shared/motion/SlideUp';
+import { CelebrationBurst } from '@/shared/motion/CelebrationBurst';
+import { MagneticButton } from '@/shared/motion/MagneticButton';
+import { audioHum, audioTick, audioAscend, audioConfirm } from '@/shared/utils/spatialAudio';
+import { firePulse } from '@/shared/components/LivePulseBar';
+import { hapticMedium, hapticSuccess } from '@/shared/utils/haptics';
 
 const ONBOARDING_KEY = 'omicron_onboarding_done';
 
@@ -38,41 +54,32 @@ function quickSkillsFromText(text: string): string[] {
   const t = text.toLowerCase();
   const matches: string[] = [];
   const map: [RegExp, string][] = [
-    // Tech
     [/react|frontend|front.?end/, 'React'], [/node|backend|express/, 'Node.js'],
     [/python|django|flask/, 'Python'], [/typescript/, 'TypeScript'],
     [/docker|kubernetes|devops/, 'DevOps'], [/aws|cloud|azure/, 'Cloud'],
     [/figma|ux|ui|diseñ/, 'Diseño UX'], [/data|analyt|machine.?learn/, 'Data/IA'],
-    // Ingeniería
     [/ingenier|industrial|lean|procesos|manufactur/, 'Ing. Industrial'],
     [/civil|construcc|estructura/, 'Ing. Civil'],
     [/electr[oó]n|automat|control/, 'Electrónica'],
-    // Negocios
     [/gesti[oó]n|liderazgo|scrum|agile|gerente|director/, 'Gestión'],
     [/market|ventas|growth|comercial|publicidad/, 'Marketing'],
     [/finanz|contab|audit|tributar|impuesto/, 'Finanzas'],
     [/rrhh|recursos humanos|talento|selecci[oó]n|reclut/, 'RRHH'],
     [/emprendedor|startup|negocio|empresa/, 'Emprendimiento'],
-    // Salud
     [/m[eé]dic|doctor|salud|cl[ií]nic/, 'Medicina'],
     [/enfermer|paramédic/, 'Enfermería'],
     [/psic[oó]log|terap/, 'Psicología'],
     [/nutrici|diet/, 'Nutrición'],
-    // Educación
     [/profes|docen|pedagog|enseñ|educac/, 'Educación'],
     [/investig|acad[eé]mic|cient[ií]f/, 'Investigación'],
-    // Derecho
     [/abogad|derecho|legal|jur[ií]d|notari/, 'Derecho'],
-    // Creativos
     [/fotograf|video|audiovisual|cine/, 'Audiovisual'],
     [/period|comunic|prensa|redacc/, 'Comunicaciones'],
     [/arqu|urbanis/, 'Arquitectura'],
     [/chef|cocin|gastronom|culinari/, 'Gastronomía'],
-    // Oficios
     [/electricista|t[eé]cnico|mec[aá]nic|soldad/, 'Técnico'],
     [/log[ií]stic|transporte|bodega|supply/, 'Logística'],
     [/administra|secretar|asistente|oficina/, 'Administración'],
-    // Genérico (si dice años de experiencia)
     [/freelanc|independiente|consul/, 'Consultoría'],
     [/estudiant|universid|carrera/, 'Estudiante'],
   ];
@@ -87,21 +94,29 @@ const hasMicSupport = () => typeof window !== 'undefined' && !!(
   (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
 );
 
+// ── Suggestion chips data ─────────────────────────────────────────────
+const SUGGESTIONS = [
+  { label: 'Desarrollador web', emoji: '💻' },
+  { label: 'Diseñadora UX', emoji: '🎨' },
+  { label: 'Ingeniero industrial', emoji: '⚙️' },
+  { label: 'Estudiante', emoji: '📚' },
+  { label: 'Freelancer', emoji: '🚀' },
+];
+
 export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview }: OrbOnboardingProps) {
   const { profile } = useApp();
   const [phase, setPhase] = useState<'ask' | 'processing' | 'result' | 'done'>('ask');
   const [input, setInput] = useState('');
   const [generating, setGenerating] = useState(false);
   const [resultMsg, setResultMsg] = useState('');
+  const [showCelebration, setShowCelebration] = useState(false);
   const hasSpoken = useRef(false);
   const inputRef = useRef('');
-  inputRef.current = input; // Always fresh for mic callback
+  inputRef.current = input;
 
-  // Check if should hide (BEFORE hooks — but hooks still declared below)
   const shouldHide = (typeof localStorage !== 'undefined' && localStorage.getItem(ONBOARDING_KEY))
     || (profile?.skills && profile.skills.length > 0);
 
-  // Mark done if already has skills
   useEffect(() => {
     if (profile?.skills && profile.skills.length > 0) {
       localStorage.setItem(ONBOARDING_KEY, 'true');
@@ -110,49 +125,48 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
 
   const userName = profile?.display_name || profile?.full_name || profile?.username || '';
 
-  // Speak greeting once — intenta hablar al entrar.
-  // En iOS puede fallar sin gesto previo (silencioso, no crashea).
-  // En Android/Chrome desktop SÍ funciona.
-  // La confirmación post-submit SIEMPRE funciona (es respuesta a gesto).
+  // Speak + audio hum on first appearance
   useEffect(() => {
     if (shouldHide || hasSpoken.current) return;
     hasSpoken.current = true;
-    const t = setTimeout(() => {
+    // Jarvis "wakes up" — subtle hum
+    const t1 = setTimeout(() => audioHum(), 800);
+    const t2 = setTimeout(() => {
       const greeting = userName
         ? `Hey ${userName}, soy Ómicron. Cuéntame, ¿a qué te dedicas?`
         : 'Hey, soy Ómicron. Cuéntame, ¿a qué te dedicas?';
       speakOmicron(greeting);
     }, 1800);
-    return () => clearTimeout(t);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [shouldHide, userName]);
 
-  // Mobile: detectar si el teclado está abierto para ajustar layout
+  // Keyboard detection
   const [kbOpen, setKbOpen] = useState(false);
   useEffect(() => {
     if (shouldHide) return;
     const vv = window.visualViewport;
     if (!vv) return;
-    const onResize = () => {
-      setKbOpen(window.innerHeight - vv.height > 100);
-    };
+    const onResize = () => setKbOpen(window.innerHeight - vv.height > 100);
     vv.addEventListener('resize', onResize);
     return () => vv.removeEventListener('resize', onResize);
   }, [shouldHide]);
 
-  // R5: Preview skills while typing
+  // Skills preview while typing
   useEffect(() => {
     if (shouldHide || phase !== 'ask' || input.length < 3) return;
     const preview = quickSkillsFromText(input);
     if (preview.length > 0) onSkillsPreview?.(preview);
   }, [input, phase, onSkillsPreview, shouldHide]);
 
-  // Submit handler — INSTANT PROFILE: regex primero, IA refina en background
+  // Submit
   const handleSubmit = useCallback(async (overrideText?: string) => {
     const text = overrideText || inputRef.current;
     if (!text.trim() || generating) return;
     setGenerating(true);
+    hapticMedium();
+    audioConfirm();
+    firePulse('user');
 
-    // PASO 1: INSTANT (0ms) — perfil por regex, sin esperar IA
     const quickSkills = quickSkillsFromText(text);
     const yearsMatch = text.match(/(\d+)\s*a[ñn]os?/i);
     const years = yearsMatch ? parseInt(yearsMatch[1]) : 3;
@@ -172,34 +186,35 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
       summary: `Profesional en ${text.trim().slice(0, 40)}.`,
     };
 
-    // Mostrar resultado INMEDIATAMENTE (sin spinner)
     onProfileGenerated?.(instantProfile);
     onSkillsPreview?.(instantProfile.skills);
-    // Guardar como guest profile (para migrar cuando se registre)
     import('@/shared/utils/guestMode').then(({ saveGuestProfile }) => {
       saveGuestProfile({ ...instantProfile, createdAt: new Date().toISOString() });
     }).catch(() => {});
+
     const skillsList = instantProfile.skills.slice(0, 3).join(', ');
     const msg = instantProfile.skills.length > 1
       ? `Listo, tu Gemelo Digital ya tiene forma. Veo que dominas ${skillsList}. ¿Quieres afinarlo subiendo tu CV o empezamos así?`
       : `Listo, tu Gemelo Digital ya tiene forma. Eres ${instantProfile.profession}. ¿Quieres afinarlo subiendo tu CV o empezamos así?`;
     setResultMsg(msg);
     setPhase('result');
-    // Voz: esta llamada SÍ funciona en iOS porque es respuesta a un gesto (submit/chip tap)
+    setShowCelebration(true);
+
+    // Audio celebration
+    setTimeout(() => { audioAscend(); hapticSuccess(); firePulse('success'); }, 300);
+
     speakOmicron(msg);
     localStorage.setItem(ONBOARDING_KEY, 'true');
 
-    // Analytics: track onboarding + profile generation
     import('@/shared/utils/analytics').then(({ track }) => {
       track('onboarding_started');
       track('onboarding_completed', { intent, skills_count: instantProfile.skills.length });
       track('first_profile_generated', { profession: instantProfile.profession });
     }).catch(() => {});
 
-    // Auto-navegar a intent rápido (1.5s en vez de 3.5s)
-    setTimeout(() => { setPhase('done'); onComplete(intent); }, 1500);
+    setTimeout(() => { setPhase('done'); onComplete(intent); }, 2200);
 
-    // PASO 2: BACKGROUND — IA refina (sin bloquear al usuario)
+    // Background AI refinement
     try {
       const { callAI } = await import('@/infrastructure/ai/client');
       const raw = await callAI([
@@ -209,18 +224,16 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
       if (!raw) throw new Error('IA no disponible');
       let parsed: GeneratedProfile | null = null;
       try { parsed = JSON.parse(raw); } catch { const a = raw.indexOf('{'); const b = raw.lastIndexOf('}'); if (a >= 0 && b > a) parsed = JSON.parse(raw.slice(a, b + 1)); }
-
       if (parsed && parsed.skills) {
-        // Refinar silenciosamente (el usuario ya está navegando)
         onProfileGenerated?.(parsed);
         onSkillsPreview?.(parsed.skills);
       }
     } catch {
-      // Silencioso — el perfil instant ya funciona
+      // Silencioso
     } finally { setGenerating(false); }
   }, [generating, onComplete, onProfileGenerated, onSkillsPreview]);
 
-  // Mic handler — stores ref for cleanup
+  // Mic handler
   const recognitionRef = useRef<{ abort: () => void } | null>(null);
   const handleMic = useCallback(() => {
     import('@/infrastructure/voice/recognition').then(({ startSpeechRecognition, isSpeechAvailable }) => {
@@ -228,7 +241,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
       const handle = startSpeechRecognition({
         lang: 'es-CL',
         interimResults: true,
-        onResult: (transcript, isFinal) => {
+        onResult: (transcript: string, isFinal: boolean) => {
           setInput(transcript);
           if (isFinal) handleSubmit(transcript);
         },
@@ -238,7 +251,6 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     });
   }, [handleSubmit]);
 
-  // Cleanup: abort recognition on unmount
   useEffect(() => {
     return () => { recognitionRef.current?.abort(); };
   }, []);
@@ -246,93 +258,199 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
   // === RENDER ===
   if (shouldHide || phase === 'done') return null;
 
+  const greeting = userName
+    ? `Hey ${userName}, cuéntame ¿a qué te dedicas?`
+    : '¿A qué te dedicas? Cuéntame en una frase.';
+
   return (
     <AnimatePresence>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.2 } }}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0, transition: { duration: 0.3 } }}
         style={{
           position: 'absolute', inset: 0, zIndex: 50,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
-          background: 'rgba(0,2,6,0.82)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+          background: 'rgba(0,2,6,0.88)',
+          backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
           padding: '24px 20px',
-          // Mobile keyboard-aware: cuando el teclado está abierto, reducir padding
-          // para que el form no quede tapado
           paddingBottom: kbOpen ? '12px' : 'calc(env(safe-area-inset-bottom, 20px) + 24px)',
           transition: 'padding-bottom 0.2s ease',
           overflow: 'auto',
-        }}>
-        <div style={{ maxWidth: 360, width: '100%', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Mensaje de Ómicron — se oculta cuando el teclado está abierto para dar espacio */}
-          {!kbOpen && (
-            <motion.div key={phase} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ padding: '16px 20px', borderRadius: RADIUS.lg, background: C.surface, border: `1px solid ${C.line}` }}>
-              <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan, display: 'block', marginBottom: 6 }}>ÓMICRON</span>
-              <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>
-                {phase === 'processing' && <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 10, height: 10, borderRadius: '50%', background: C.cyan, animation: 'cp-pulse 1s ease-in-out infinite' }} />Analizando tu perfil…</span>}
-                {phase === 'result' && resultMsg}
-                {phase === 'ask' && (userName ? `Hey ${userName}, cuéntame ¿a qué te dedicas?` : '¿A qué te dedicas? Cuéntame en una frase.')}
-              </p>
-            </motion.div>
+        }}
+      >
+        {/* Celebration burst on profile generated */}
+        <CelebrationBurst trigger={showCelebration} onComplete={() => setShowCelebration(false)} />
+
+        <div style={{ maxWidth: 360, width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* ═══ MESSAGE BUBBLE ═══ */}
+          {!kbOpen && phase === 'ask' && (
+            <SlideUp offset={20} delay={0.3}>
+              <div style={{
+                padding: '18px 22px', borderRadius: RADIUS.xl,
+                background: `linear-gradient(145deg, ${C.surface}, rgba(12,16,30,0.95))`,
+                border: `1px solid ${C.cyanFaint}`,
+                boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 12px ${C.cyan}11`,
+              }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+                }}>
+                  <div style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: C.cyan, boxShadow: `0 0 8px ${C.cyan}`,
+                    animation: 'cp-breathe 2s ease-in-out infinite',
+                  }} />
+                  <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyan, textTransform: 'uppercase' }}>
+                    ÓMICRON
+                  </span>
+                </div>
+                <div style={{ fontFamily: FONT.body, fontSize: 15, color: C.ink, lineHeight: 1.6 }}>
+                  <TextReveal text={greeting} speed={24} cursor={true} />
+                </div>
+              </div>
+            </SlideUp>
           )}
-          {/* Versión compacta del mensaje cuando el teclado está abierto */}
+
+          {/* Compact message when keyboard open */}
           {kbOpen && phase === 'ask' && (
-            <div style={{ padding: '8px 12px', borderRadius: 12, background: `${C.surface}99` }}>
+            <div style={{ padding: '8px 14px', borderRadius: 12, background: `${C.surface}cc` }}>
               <span style={{ fontFamily: FONT.body, fontSize: 13, color: C.mut }}>
                 {userName ? `${userName}, ¿a qué te dedicas?` : '¿A qué te dedicas?'}
               </span>
             </div>
           )}
+
+          {/* ═══ INPUT FORM ═══ */}
           {phase === 'ask' && (
-            <motion.form initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}
-              onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
-              style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {hasMicSupport() && (
-                <button type="button" onClick={handleMic} aria-label="Hablar"
-                  style={{ width: 48, height: 48, borderRadius: '50%', border: `1px solid ${C.cyanDim}`, background: C.glass2, color: C.cyan, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 20, flexShrink: 0 }}>
-                  🎤
-                </button>
-              )}
-              <input value={input} onChange={(e) => setInput(e.target.value)}
-                placeholder="Ej: Ingeniero industrial con 8 años"
-                enterKeyHint="send"
-                autoComplete="off"
-                style={{ flex: 1, padding: '16px', borderRadius: RADIUS.pill, background: C.surface, border: `1px solid ${C.cyanDim}`, fontFamily: FONT.body, fontSize: 15, color: C.ink, outline: 'none', WebkitAppearance: 'none' }} />
-              <button type="submit" disabled={!input.trim() || generating}
-                aria-label="Enviar"
-                style={{ width: 48, height: 48, borderRadius: '50%', border: 'none', background: input.trim() ? `linear-gradient(135deg, ${C.cyan}, ${C.purple})` : C.glass2, color: input.trim() ? '#000' : C.mut, cursor: input.trim() ? 'pointer' : 'default', display: 'grid', placeItems: 'center', fontSize: 20, flexShrink: 0, boxShadow: input.trim() ? '0 4px 16px rgba(92,200,255,0.3)' : 'none', transition: 'background 0.2s, box-shadow 0.2s' }}>
-                ➤
-              </button>
-            </motion.form>
+            <SlideUp offset={16} delay={0.8}>
+              <form
+                onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
+                style={{ display: 'flex', gap: 10, alignItems: 'center' }}
+              >
+                {hasMicSupport() && (
+                  <MagneticButton onClick={handleMic} style={{
+                    width: 52, height: 52, borderRadius: '50%',
+                    border: `1.5px solid ${C.cyanDim}`, background: `${C.glass2}`,
+                    color: C.cyan, display: 'grid', placeItems: 'center', fontSize: 22,
+                    boxShadow: `0 0 12px ${C.cyan}15`,
+                  }}>
+                    🎤
+                  </MagneticButton>
+                )}
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ej: Ingeniero industrial con 8 años"
+                  enterKeyHint="send"
+                  autoComplete="off"
+                  style={{
+                    flex: 1, padding: '16px 18px', borderRadius: RADIUS.pill,
+                    background: C.surface, border: `1.5px solid ${C.cyanDim}`,
+                    fontFamily: FONT.body, fontSize: 15, color: C.ink, outline: 'none',
+                    WebkitAppearance: 'none',
+                    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = C.cyan; e.currentTarget.style.boxShadow = `0 0 16px ${C.cyan}22`; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = C.cyanDim; e.currentTarget.style.boxShadow = 'none'; }}
+                />
+                <MagneticButton
+                  onClick={() => handleSubmit()}
+                  disabled={!input.trim() || generating}
+                  style={{
+                    width: 52, height: 52, borderRadius: '50%', border: 'none',
+                    background: input.trim() ? `linear-gradient(135deg, ${C.cyan}, ${C.purple})` : C.glass2,
+                    color: input.trim() ? '#000' : C.mut,
+                    display: 'grid', placeItems: 'center', fontSize: 20,
+                    boxShadow: input.trim() ? `0 4px 20px ${C.cyan}44` : 'none',
+                    transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  }}
+                >
+                  ➤
+                </MagneticButton>
+              </form>
+            </SlideUp>
           )}
-          {/* Suggestion chips — más grandes para touch mobile (min 44px height) */}
+
+          {/* ═══ SUGGESTION CHIPS (staggered entrance) ═══ */}
           {phase === 'ask' && !input && !kbOpen && (
-            <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}
-              style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-              {['Desarrollador web', 'Diseñadora UX', 'Ingeniero industrial', 'Estudiante', 'Freelancer'].map(s => (
-                <button key={s} onClick={() => { setInput(s); handleSubmit(s); }}
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: { transition: { delayChildren: 1.2, staggerChildren: 0.08 } },
+              }}
+              style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}
+            >
+              {SUGGESTIONS.map(({ label, emoji }) => (
+                <motion.button
+                  key={label}
+                  variants={{
+                    hidden: { opacity: 0, y: 14, scale: 0.9 },
+                    visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 400, damping: 25 } },
+                  }}
+                  onClick={() => { audioTick(); hapticMedium(); setInput(label); handleSubmit(label); }}
                   style={{
                     padding: '10px 16px', minHeight: 44, borderRadius: RADIUS.pill,
-                    background: C.glass, border: `1px solid ${C.line}`, color: C.ink,
-                    fontFamily: FONT.body, fontSize: 13, cursor: 'pointer',
+                    background: `linear-gradient(145deg, ${C.glass}, rgba(92,200,255,0.04))`,
+                    border: `1px solid ${C.line}`,
+                    color: C.ink, fontFamily: FONT.body, fontSize: 13, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6,
                     WebkitTapHighlightColor: 'transparent',
-                    transition: 'background 0.15s ease',
-                  }}>
-                  {s}
-                </button>
+                    transition: 'border-color 0.15s ease, background 0.15s ease',
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span>{emoji}</span> {label}
+                </motion.button>
               ))}
             </motion.div>
           )}
+
+          {/* ═══ RESULT PHASE ═══ */}
           {phase === 'result' && (
-            <>
-              {!kbOpen && (
-                <motion.div key="result-msg" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ padding: '16px 20px', borderRadius: RADIUS.lg, background: C.surface, border: `1px solid ${C.line}` }}>
-                  <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan, display: 'block', marginBottom: 6 }}>ÓMICRON</span>
-                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>{resultMsg}</p>
-                </motion.div>
-              )}
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 11, color: C.mut, margin: 0, letterSpacing: 1 }}>
+            <ScaleIn from={0.9} delay={0.1}>
+              <div style={{
+                padding: '20px 22px', borderRadius: RADIUS.xl,
+                background: `linear-gradient(145deg, ${C.surface}, rgba(12,16,30,0.95))`,
+                border: `1px solid ${C.greenFaint || C.cyanFaint}`,
+                boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(63,208,201,0.08)`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <div style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: '#3fd0c9', boxShadow: '0 0 8px #3fd0c9',
+                  }} />
+                  <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: '#3fd0c9', textTransform: 'uppercase' }}>
+                    GEMELO ACTIVADO
+                  </span>
+                </div>
+                <div style={{ fontFamily: FONT.body, fontSize: 14, color: C.ink, lineHeight: 1.6 }}>
+                  <TextReveal text={resultMsg} speed={18} cursor={false} />
+                </div>
+              </div>
+            </ScaleIn>
+          )}
+
+          {phase === 'result' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              style={{ textAlign: 'center', padding: '4px 0' }}
+            >
+              <span style={{
+                fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.5, color: C.mut,
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+              }}>
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%', background: C.cyan,
+                  animation: 'cp-breathe 1.5s ease-in-out infinite',
+                }} />
                 Preparando tu orbe…
-              </motion.p>
-            </>
+              </span>
+            </motion.div>
           )}
         </div>
       </motion.div>
