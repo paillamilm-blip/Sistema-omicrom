@@ -8,8 +8,14 @@ const GEMINI_MODEL = 'gemini-2.0-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OR_MODEL = 'google/gemma-4-31b-it:free';
-const OR_FALLBACK_MODEL = 'google/gemma-4-26b-a4b-it:free';
+const OR_MODELS = [
+  'google/gemma-4-31b-it:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'google/gemma-4-26b-a4b-it:free',
+  'nvidia/nemotron-3-nano-30b-a3b:free',
+  'google/gemma-3n-e4b-it:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+];
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -68,17 +74,27 @@ async function callGemini(
   const body = {
     contents,
     generationConfig: {
-      maxOutputTokens: maxTokens,
-      temperature: 0.7,
+      maxOutputTokens: Math.min(maxTokens, 4096),
+      temperature: Math.min(Math.max(0.7, 0), 1.5),
       responseMimeType: jsonMode ? 'application/json' : 'text/plain',
     },
   };
 
-  const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+  // Use AbortController with 22s timeout to avoid hanging requests
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 22000);
+
+  const resp = await fetch(GEMINI_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': GEMINI_KEY,
+    },
     body: JSON.stringify(body),
+    signal: controller.signal,
   });
+
+  clearTimeout(timer);
 
   if (!resp.ok) {
     const errText = await resp.text().catch(() => '');
@@ -98,8 +114,11 @@ async function callOpenRouter(
   jsonMode: boolean,
   maxTokens: number,
 ): Promise<string> {
-  for (const model of [OR_MODEL, OR_FALLBACK_MODEL]) {
+  for (const model of OR_MODELS) {
     try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 25000);
+
       const resp = await fetch(OR_URL, {
         method: 'POST',
         headers: {
@@ -111,11 +130,14 @@ async function callOpenRouter(
         body: JSON.stringify({
           model,
           messages,
-          max_tokens: maxTokens,
-          temperature: 0.7,
+          max_tokens: Math.min(maxTokens, 4096),
+          temperature: Math.min(Math.max(0.7, 0), 1.5),
           ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timer);
 
       if (!resp.ok) {
         const err = await resp.text().catch(() => '');
@@ -129,10 +151,14 @@ async function callOpenRouter(
       console.error(`[llm/openrouter] ${model} returned empty content`);
       continue;
     } catch (e) {
-      console.error(`[llm/openrouter] ${model} error:`, e);
+      if ((e as Error).name === 'AbortError') {
+        console.error(`[llm/openrouter] ${model} timed out`);
+      } else {
+        console.error(`[llm/openrouter] ${model} error:`, e);
+      }
       continue;
     }
   }
 
-  throw new Error('OpenRouter: ambos modelos fallaron. Intenta mas tarde.');
+  throw new Error('OpenRouter: todos los modelos fallaron. Intenta mas tarde.');
 }

@@ -141,9 +141,12 @@ Deno.serve(async (req) => {
           },
         };
 
-        const geminiResp = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+        const geminiResp = await fetch(GEMINI_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': GEMINI_KEY,
+          },
           body: JSON.stringify(geminiBody),
         });
 

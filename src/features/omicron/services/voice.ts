@@ -164,7 +164,7 @@ async function speakChunk(text: string): Promise<void> {
       abortController?.signal.addEventListener('abort', () => {
         audio.pause();
         reject(new Error('aborted'));
-      });
+      }, { once: true });
       audio.play().catch(() => resolve()); // Autoplay blocked → skip
     });
   } catch {
@@ -203,7 +203,7 @@ function speakWithBrowserTTS(text: string): Promise<void> {
     abortController?.signal.addEventListener('abort', () => {
       window.speechSynthesis.cancel();
       resolve();
-    });
+    }, { once: true });
 
     window.speechSynthesis.speak(utterance);
   });
