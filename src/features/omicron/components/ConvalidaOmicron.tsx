@@ -12,7 +12,6 @@ import { useGemeloActivation } from '@/hooks/useGemeloActivation';
 import { PerfilSkillVisual } from '@/features/gemelo/components/PerfilSkillVisual';
 import { C, FONT, RADIUS } from '@/theme';
 import { computeSteps } from '@/features/omicron/services/coach';
-import ParticleOrb from './ParticleOrbLazy';
 
 type Kind = 'cv' | 'title' | 'year' | 'vault';
 
@@ -46,9 +45,8 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
           <Loader2 size={18} color={C.cyan} style={{ animation: 'cp-spin 0.8s linear infinite' }} />
         </div>
 
-        <div style={{ position: 'relative', zIndex: 2, height: 160, flexShrink: 0 }}>
-          <ParticleOrb />
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ position: 'relative', zIndex: 2, height: 100, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <motion.div key={rep} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 36, color: '#fff', textShadow: `0 0 24px ${C.cyan}` }}>
               {rep}
@@ -131,8 +129,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
           <button onClick={onClose} aria-label="Cerrar" style={{ width: 36, height: 36, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
         </div>
 
-        <div style={{ position: 'relative', zIndex: 2, height: 130, flexShrink: 0 }}>
-          <ParticleOrb glowIntensity={0.6} />
+        <div style={{ position: 'relative', zIndex: 2, height: 80, flexShrink: 0 }}>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 2, padding: '4px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', textAlign: 'center' }}>
@@ -268,9 +265,8 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
         <button onClick={onClose} aria-label="Cerrar" style={{ width: 36, height: 36, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
       </div>
 
-      <div style={{ position: 'relative', zIndex: 2, height: 150, flexShrink: 0 }}>
-        <ParticleOrb />
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+      <div style={{ position: 'relative', zIndex: 2, height: 100, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <motion.div key={rep} initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 38, color: '#fff', textShadow: '0 0 24px rgba(92,200,255,0.6)' }}>
             {rep}
