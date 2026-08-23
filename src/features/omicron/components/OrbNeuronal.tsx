@@ -154,7 +154,7 @@ export default function OrbNeuronal({
     const edgesMat = new THREE.LineBasicMaterial({
       color,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.4,
       fog: true,
     });
     const wireframe = new THREE.LineSegments(edgesGeo, edgesMat);
@@ -193,9 +193,9 @@ export default function OrbNeuronal({
 
     const dotMat = new THREE.PointsMaterial({
       color,
-      size: 0.14,
+      size: 0.18,
       transparent: true,
-      opacity: 0.95,
+      opacity: 1.0,
       sizeAttenuation: true,
       map: glowTexture,
       blending: THREE.AdditiveBlending,
@@ -409,12 +409,12 @@ export default function OrbNeuronal({
         dots.position.set(0, 0, 0);
       }
 
-      // Edge breathing opacity (subtle, range 0.15-0.35)
-      edgesMat.opacity = 0.2 + Math.sin(time * 0.7) * 0.08;
+      // Edge breathing opacity (subtle, range 0.25-0.55)
+      edgesMat.opacity = 0.4 + Math.sin(time * 0.7) * 0.15;
 
-      // Dot subtle pulse
-      dotMat.opacity = 0.9 + Math.sin(time * 0.9) * 0.05;
-      dotMat.size = 0.14 + Math.sin(time * 1.1) * 0.01;
+      // Dot constant full brightness
+      dotMat.opacity = 1.0;
+      dotMat.size = 0.18 + Math.sin(time * 1.1) * 0.02;
 
       // Update color if changed
       const c = new THREE.Color(userColorRef.current);

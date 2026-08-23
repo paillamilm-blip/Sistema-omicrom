@@ -4,6 +4,7 @@ import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
 import ParticleOrb from './ParticleOrbLazy';
 import { SuggestionChips } from './SuggestionChips';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
+import { ProactiveCards } from './ProactiveCards';
 import { OrbContextLabel } from './OrbContextLabel';
 import { PremiumLock } from '@/features/wallet/components/Premium';
 import { useNavigation } from '@/store/NavigationContext';
@@ -528,6 +529,8 @@ export function OrbShell() {
     setSelectedNode(node);
     setState('preview');
     setActiveTab(node.tab);
+    // Dispatch event for ProactiveCards idle/tap tracking
+    window.dispatchEvent(new CustomEvent('omicron:node-tap'));
   }, [setActiveTab]);
 
   // ── Handle preview click → fullscreen ───────────────────────────────
@@ -1252,6 +1255,17 @@ export function OrbShell() {
           message={responseMsg}
           actions={proactiveActions}
           onDismiss={() => { setResponseMsg(null); setProactiveActions([]); }}
+        />
+      )}
+
+      {/* ── PROACTIVE INFO CARDS (floating tips when idle in orb) ──── */}
+      {state === 'orb' && onboardingDone && (
+        <ProactiveCards
+          visible={state === 'orb' && onboardingDone}
+          onNavigate={(tab) => {
+            const node = orbNodesWithLevels.find((n: OrbNode) => n.tab === tab);
+            if (node) handleNodeTap(node);
+          }}
         />
       )}
 
