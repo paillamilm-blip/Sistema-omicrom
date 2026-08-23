@@ -115,20 +115,22 @@ export function ProactiveCards({ visible, onNavigate, onDismiss }: ProactiveCard
       return;
     }
 
-    // Start idle detection
+    // Start idle detection (first card shows after 2s, subsequent after 5s idle)
     const startIdleCheck = () => {
       if (idleTimer.current) clearTimeout(idleTimer.current);
+      const isFirstCard = currentIndex === 0 && !show;
+      const idleThreshold = isFirstCard ? 2000 : 5000;
       idleTimer.current = setTimeout(() => {
         const elapsed = Date.now() - lastInteraction.current;
-        if (elapsed >= 5000) {
+        if (elapsed >= idleThreshold) {
           // User is idle, show card
           showNextCard();
         } else {
           // Not idle yet, check again
-          const remaining = 5000 - elapsed;
+          const remaining = idleThreshold - elapsed;
           idleTimer.current = setTimeout(() => startIdleCheck(), remaining);
         }
-      }, 5000);
+      }, idleThreshold);
     };
 
     const showNextCard = () => {

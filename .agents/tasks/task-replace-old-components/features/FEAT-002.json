@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "chore",
   "description": "Remove dead SuggestionChips component file, remove ScanlineOverlay usage from tabs that use OmicronChrome (it is an old CyberComponent pattern), and clean up dead CyberComponent imports where possible without large refactors",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Delete src/features/omicron/components/SuggestionChips.tsx since it is imported nowhere (only dead import in OrbShell was removed in FEAT-001).",
     "In src/features/academia/components/AcademiaTab.tsx: Remove `ScanlineOverlay` from the CyberComponents import. Remove all `<ScanlineOverlay />` JSX usages. If LoadingScreen is the only remaining import from CyberComponents, keep it. Otherwise if no CyberComponents imports are needed, remove the import line.",
@@ -22,5 +22,5 @@
     "test ! -f /projects/sandbox/Sistema-omicrom/src/features/omicron/components/SuggestionChips.tsx && echo 'PASS: SuggestionChips deleted'"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All ScanlineOverlay usages removed from AcademiaTab (3), ChatTab (2), and GobernanzaTab (1). SuggestionChips.tsx deleted. tsc passes with only pre-existing react-router-dom error."
 }

@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "refactor",
   "description": "Replace all ParticleOrb usages with GeodesicOrb (SVG), remove dead SuggestionChips import from OrbShell, and clean up dead ParticleOrb files",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/App.tsx: Replace `import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy'` with `import { GeodesicOrb } from '@/shared/components/GeodesicOrb'`. Replace `<ParticleOrb />` usage (line 85) with `<GeodesicOrb size={168} nodes={12} spinning={25} intensity={0.7} />`. The container already has width:168 height:168.",
     "In src/features/omicron/components/OrbShell.tsx: Remove `import ParticleOrb from './ParticleOrbLazy'` (line 4). Remove `import { SuggestionChips } from './SuggestionChips'` (line 5). In the TabLoader function (around line 197-201), replace `<ParticleOrb />` with `<GeodesicOrb size={64} nodes={8} spinning={15} />` and add `import { GeodesicOrb } from '@/shared/components/GeodesicOrb'` at the top.",
@@ -24,5 +24,5 @@
     "grep -r 'ParticleOrb' /projects/sandbox/Sistema-omicrom/src/ --include='*.tsx' --include='*.ts' | grep -v '.agents' || echo 'PASS: No ParticleOrb references remain'"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All ParticleOrb references removed successfully. tsc --noEmit passes with only the pre-existing react-router-dom error. The SuggestionChips import was on the same line group as ParticleOrb in OrbShell.tsx and was removed together."
 }
