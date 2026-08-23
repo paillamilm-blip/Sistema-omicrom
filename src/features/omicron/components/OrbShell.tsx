@@ -48,6 +48,7 @@ const MaxSkillTab   = lazy(() => import('@/features/academia/components/MaxSkill
 const AcademiaTab   = lazy(() => import('@/features/academia/components/AcademiaTab').then(m => ({ default: m.AcademiaTab })));
 const GobernanzaTab = lazy(() => import('@/features/gobernanza/components/GobernanzaTab').then(m => ({ default: m.GobernanzaTab })));
 const VaultTab      = lazy(() => import('@/features/market/components/VaultTab').then(m => ({ default: m.VaultTab })));
+const ConvalidaOmicron = lazy(() => import('./ConvalidaOmicron'));
 
 // ── Orb node definitions (the app sections) ─────────────────────────
 // Los primeros 9 son los HUBS navegables de la app.
@@ -248,6 +249,7 @@ export function OrbShell() {
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
   const [proactiveActions, setProactiveActions] = useState<ProactiveAction[]>([]);
   const [showPremium, setShowPremium] = useState(false);
+  const [showConvalida, setShowConvalida] = useState(false);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -1272,6 +1274,10 @@ export function OrbShell() {
             <ProactiveCards
               visible={state === 'orb' && onboardingDone}
               onNavigate={(tab) => {
+                if (tab === 'cv') {
+                  setShowConvalida(true);
+                  return;
+                }
                 const node = orbNodesWithLevels.find((n: OrbNode) => n.tab === tab);
                 if (node) handleNodeTap(node);
               }}
@@ -1282,6 +1288,13 @@ export function OrbShell() {
 
       {/* ── PREMIUM UPSELL (cuando llega al límite de IA) ──────────── */}
       {showPremium && <PremiumLock feature="Coach IA" onClose={() => setShowPremium(false)} />}
+
+      {/* ── CV UPLOAD MODAL (ConvalidaOmicron) ─────────────────────── */}
+      {showConvalida && (
+        <Suspense fallback={null}>
+          <ConvalidaOmicron onClose={() => setShowConvalida(false)} />
+        </Suspense>
+      )}
 
       {/* ── CSS Animations ──────────────────────────────────────────── */}
       <style>{`

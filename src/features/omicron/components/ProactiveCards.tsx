@@ -24,7 +24,7 @@ interface CardMessage {
 }
 
 const MESSAGES: CardMessage[] = [
-  { id: 'cv', icon: '📄', text: 'Sube tu CV para activar tu Gemelo Digital', action: 'perfil' },
+  { id: 'cv', icon: '📄', text: 'Sube tu CV para activar tu Gemelo Digital', action: 'cv' },
   { id: 'nodo', icon: '🎯', text: 'Toca un nodo del orbe para explorar' },
   { id: 'empleos', icon: '💼', text: 'Busca empleos que matchean contigo', action: 'empleos' },
   { id: 'academia', icon: '🎓', text: 'Aprende y sube tu reputación', action: 'academia' },
