@@ -5,7 +5,7 @@ import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, cx } from '@/theme';
 import {
   CyberCard, CyberButton, SectionLabel,
-  StatGrid, StatCard, ScanlineOverlay, CyberToast, Divider, DetailPanel, LoadingScreen,
+  StatGrid, StatCard, CyberToast, Divider, DetailPanel, LoadingScreen,
 } from '@/shared/components/CyberComponents';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
@@ -192,7 +192,6 @@ export function GobernanzaTab() {
 
   return (
     <div style={oc.root}>
-      <ScanlineOverlay />
       <OmicronHeader
         onBack={() => setActiveTab('perfil')}
         icon={<Scale size={18} />}

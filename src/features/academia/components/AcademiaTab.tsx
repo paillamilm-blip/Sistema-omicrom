@@ -10,7 +10,7 @@ import { C, FONT, BASE, RADIUS, GLOW, cx } from '@/theme';
 import { audioAscend } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { CelebrationBurst } from '@/shared/motion';
-import { ScanlineOverlay, LoadingScreen } from '@/shared/components/CyberComponents';
+import { LoadingScreen } from '@/shared/components/CyberComponents';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { EmptyState } from '@/shared/components/EmptyState';
@@ -339,7 +339,6 @@ export function AcademiaTab() {
 
     return (
       <div style={oc.root}>
-        <ScanlineOverlay />
         <OmicronHeader
           onBack={() => setActiveTab('perfil')}
           icon={<GraduationCap size={17} />}
@@ -485,7 +484,6 @@ export function AcademiaTab() {
     const pct = lessons.length ? Math.round((doneLessons.size / lessons.length) * 100) : 0;
     return (
       <div style={oc.root}>
-        <ScanlineOverlay />
         <OmicronHeader
           onBack={backToList}
           title={`${course.cover_emoji} ${course.title}`}
@@ -588,7 +586,6 @@ export function AcademiaTab() {
 
   return (
     <div style={oc.root}>
-      <ScanlineOverlay />
       <OmicronHeader
         onBack={() => setView('course')}
         icon={<Sparkles size={17} />}

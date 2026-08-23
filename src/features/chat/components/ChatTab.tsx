@@ -3,7 +3,7 @@ import { Send, Shield, Timer, MessageCircle, Lock, ShieldCheck, ShieldAlert, Sta
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, cx } from '@/theme';
-import { ScanlineOverlay, CyberCard, SectionLabel, LoadingScreen } from '@/shared/components/CyberComponents';
+import { CyberCard, SectionLabel, LoadingScreen } from '@/shared/components/CyberComponents';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
 import { EmptyState } from '@/shared/components/EmptyState';
@@ -375,7 +375,6 @@ export function ChatTab() {
   if (!room) {
     return (
       <div style={oc.root}>
-        <ScanlineOverlay />
         <OmicronHeader
           onBack={() => setActiveTab('perfil')}
           icon={<Shield size={17} />}
@@ -466,7 +465,6 @@ export function ChatTab() {
   const isBuyer = room.buyer_id === profile?.id;
   return (
     <div style={oc.root}>
-      <ScanlineOverlay />
       <OmicronHeader
         onBack={() => { setRoom(null); setMessages([]); }}
         icon={integrityOk ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
