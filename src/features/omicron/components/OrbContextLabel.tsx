@@ -10,6 +10,7 @@ import { C, FONT } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { streakDays } from '@/features/gemelo/services/profile';
 import { greetingCopy, streakCopy } from '@/shared/utils/microcopy';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 
 interface Props {
   visible?: boolean;
@@ -17,6 +18,7 @@ interface Props {
 
 export function OrbContextLabel({ visible = true }: Props) {
   const { profile } = useApp();
+  const userColor = useUserColor();
 
   const label = useMemo(() => {
     const hasSkills = profile?.skills && profile.skills.length > 0;
@@ -56,8 +58,8 @@ export function OrbContextLabel({ visible = true }: Props) {
   return (
     <div style={{
       ...S.container,
-      color: label.highlight ? C.gold : C.mut,
-      textShadow: label.highlight ? `0 0 8px ${C.gold}44` : 'none',
+      color: label.highlight ? C.gold : userColor,
+      textShadow: label.highlight ? `0 0 8px ${C.gold}44` : `0 0 8px ${userColor}44`,
     }}>
       {label.text}
     </div>

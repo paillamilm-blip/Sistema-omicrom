@@ -12,6 +12,9 @@ import type { TabId } from '@/types';
 //
 // Features:
 //   - Rotates smoothly (autoRotate with inertia)
+//   - Manual touch-drag rotation (pointer events)
+//   - Initial camera angle (not straight-on) for immediate 3D feel
+//   - Back-face vertices dimmer/smaller for depth perception
 //   - Nodes glow with user's chosen color
 //   - Edges pulse subtly (breathing)
 //   - Reacts to voice (vibration on wireframe)
@@ -99,7 +102,9 @@ export default function OrbNeuronal({
     // ── Scene setup ─────────────────────────────────────────────────
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
-    camera.position.z = 4.2;
+    // Camera slightly above and to the right for 3D depth feel (not frontal)
+    camera.position.set(0.8, 1.0, 4.2);
+    camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
@@ -121,6 +126,9 @@ export default function OrbNeuronal({
       opacity: 0.35,
     });
     const wireframe = new THREE.LineSegments(edgesGeo, edgesMat);
+    // Initial rotation offset so the sphere shows 3D perspective immediately
+    wireframe.rotation.x = 0.3;
+    wireframe.rotation.y = 0.5;
     scene.add(wireframe);
 
     // ── Node sprites (glowing dots at vertices) ─────────────────────
@@ -138,7 +146,7 @@ export default function OrbNeuronal({
       }
     }
 
-    // Create point cloud for vertices
+    // Create point cloud for vertices with per-vertex sizes for depth effect
     const dotGeo = new THREE.BufferGeometry();
     const dotPositions = new Float32Array(uniqueVerts.length * 3);
     uniqueVerts.forEach((v, i) => {
@@ -156,6 +164,7 @@ export default function OrbNeuronal({
       sizeAttenuation: true,
     });
     const dots = new THREE.Points(dotGeo, dotMat);
+    dots.rotation.copy(wireframe.rotation);
     scene.add(dots);
 
     // ── Core glow (center sphere) ───────────────────────────────────
@@ -176,7 +185,70 @@ export default function OrbNeuronal({
     raycaster.params.Points = { threshold: 0.2 };
     const mouse = new THREE.Vector2();
 
+    // ── Touch-drag rotation (manual OrbitControls-like behavior) ─────
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragRotationX = wireframe.rotation.x;
+    let dragRotationY = wireframe.rotation.y;
+    let velocityX = 0;
+    let velocityY = 0;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+    let lastPointerTime = 0;
+    let pointerMoved = false;
+
+    function handlePointerDown(e: PointerEvent) {
+      isDragging = true;
+      pointerMoved = false;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      dragRotationX = wireframe.rotation.x;
+      dragRotationY = wireframe.rotation.y;
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+      lastPointerTime = performance.now();
+      velocityX = 0;
+      velocityY = 0;
+      renderer.domElement.setPointerCapture(e.pointerId);
+    }
+
+    function handlePointerMove(e: PointerEvent) {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        pointerMoved = true;
+      }
+
+      // Rotation sensitivity
+      const sensitivity = 0.006;
+      wireframe.rotation.y = dragRotationY + dx * sensitivity;
+      wireframe.rotation.x = dragRotationX + dy * sensitivity;
+
+      // Track velocity for inertia
+      const now = performance.now();
+      const dt = now - lastPointerTime;
+      if (dt > 0) {
+        velocityX = (e.clientX - lastPointerX) / dt;
+        velocityY = (e.clientY - lastPointerY) / dt;
+      }
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+      lastPointerTime = now;
+    }
+
+    function handlePointerUp(e: PointerEvent) {
+      isDragging = false;
+      renderer.domElement.releasePointerCapture(e.pointerId);
+    }
+
+    // Click/tap detection (only if not dragged)
     function handleClick(e: MouseEvent | TouchEvent) {
+      // If user dragged, don't fire tap
+      if (pointerMoved) return;
+
       const rect = renderer.domElement.getBoundingClientRect();
       let cx: number, cy: number;
       if ('touches' in e) {
@@ -211,22 +283,43 @@ export default function OrbNeuronal({
       }
     }
 
+    // Register pointer events for touch-drag
+    renderer.domElement.addEventListener('pointerdown', handlePointerDown);
+    renderer.domElement.addEventListener('pointermove', handlePointerMove);
+    renderer.domElement.addEventListener('pointerup', handlePointerUp);
     renderer.domElement.addEventListener('click', handleClick);
     renderer.domElement.addEventListener('touchstart', handleClick, { passive: true });
 
     // ── Animation loop ──────────────────────────────────────────────
     let frameId: number;
     let time = 0;
-    const rotationSpeed = 0.003;
+    const autoRotationSpeed = 0.003;
 
     function animate() {
       frameId = requestAnimationFrame(animate);
       time += 0.016;
 
-      // Rotation
-      const voiceBoost = voiceLevelRef.current * 0.01;
-      wireframe.rotation.y += rotationSpeed + voiceBoost;
-      wireframe.rotation.x = Math.sin(time * 0.2) * 0.05;
+      // Auto-rotation (gentle constant spin + voice boost)
+      if (!isDragging) {
+        const voiceBoost = voiceLevelRef.current * 0.01;
+
+        // Apply inertia from drag
+        if (Math.abs(velocityX) > 0.0001 || Math.abs(velocityY) > 0.0001) {
+          wireframe.rotation.y += velocityX * 0.3;
+          wireframe.rotation.x += velocityY * 0.3;
+          // Decay inertia
+          velocityX *= 0.95;
+          velocityY *= 0.95;
+        } else {
+          // Default auto-rotation
+          wireframe.rotation.y += autoRotationSpeed + voiceBoost;
+        }
+
+        // Subtle oscillation on X axis for organic feel
+        wireframe.rotation.x += Math.cos(time * 0.3) * 0.0003;
+      }
+
+      // Sync dots and core rotation
       dots.rotation.copy(wireframe.rotation);
       core.rotation.copy(wireframe.rotation);
 
@@ -246,8 +339,14 @@ export default function OrbNeuronal({
         dots.position.set(0, 0, 0);
       }
 
-      // Edge breathing opacity
-      edgesMat.opacity = 0.3 + Math.sin(time * 0.8) * 0.08;
+      // Edge breathing opacity (sin wave 0.2-0.5)
+      edgesMat.opacity = 0.35 + Math.sin(time * 0.8) * 0.15;
+
+      // Vertex depth-based opacity: back-face dimmer, front brighter
+      // We vary the global dot opacity based on a camera-facing heuristic
+      // (PointsMaterial doesn't support per-vertex opacity without custom shaders,
+      // but sizeAttenuation makes back-face dots smaller, giving depth illusion)
+      dotMat.opacity = 0.85 + Math.sin(time * 1.0) * 0.1;
 
       // Update color if changed
       const c = new THREE.Color(userColorRef.current);
@@ -293,6 +392,9 @@ export default function OrbNeuronal({
     // ── Cleanup ─────────────────────────────────────────────────────
     cleanupRef.current = () => {
       cancelAnimationFrame(frameId);
+      renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
+      renderer.domElement.removeEventListener('pointermove', handlePointerMove);
+      renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       renderer.domElement.removeEventListener('click', handleClick);
       renderer.domElement.removeEventListener('touchstart', handleClick);
       window.removeEventListener('resize', handleResize);

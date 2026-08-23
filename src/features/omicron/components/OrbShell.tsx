@@ -22,6 +22,7 @@ import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
 import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { getUserColor } from '@/shared/components/ColorPicker';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import type { TabId, GemeloDigital } from '@/types';
 
 // =====================================================================
@@ -221,6 +222,8 @@ export function OrbShell() {
   const { profile } = useGemeloProfile();
   // Get full Supabase profile for fields not on GemeloProfile (skills_detail, display_name, etc.)
   const { profile: sbFull } = useProfile();
+  // User's accent color for input bar glow and UI accents
+  const orbColor = useUserColor();
 
   // ── Build GemeloDigital from Supabase profile for omicronCoach ──────
   const sbProfile = sbFull; // Supabase profile (has execution_score, skills_detail, etc.)
@@ -1153,14 +1156,14 @@ export function OrbShell() {
             alignItems: 'center',
             gap: 8,
             background: inputFocused ? 'rgba(12,16,30,0.95)' : C.surface,
-            border: `1px solid ${inputFocused ? C.cyanDim : C.line}`,
+            border: `1px solid ${inputFocused ? orbColor + '77' : C.line}`,
             borderRadius: 999,
             padding: inputFocused ? '10px 16px' : '8px 12px',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             boxShadow: inputFocused
-              ? `0 0 20px ${C.cyan}33, 0 0 8px ${C.cyan}22, 0 8px 32px rgba(0,0,0,0.3)`
-              : (!inputText && !responseMsg ? `0 0 12px ${C.cyan}22, 0 0 4px ${C.cyan}11` : 'none'),
+              ? `0 0 20px ${orbColor}33, 0 0 8px ${orbColor}22, 0 8px 32px rgba(0,0,0,0.3)`
+              : (!inputText && !responseMsg ? `0 0 12px ${orbColor}22, 0 0 4px ${orbColor}11` : 'none'),
             transform: inputFocused ? 'scale(1.02)' : 'scale(1)',
             transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
             animation: !inputText && !responseMsg && !inputFocused ? 'cp-breathe 3s ease-in-out infinite' : 'none',

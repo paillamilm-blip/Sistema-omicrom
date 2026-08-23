@@ -11,6 +11,7 @@ import { hapticLight } from '@/shared/utils/haptics';
 import { useApp } from '@/store/AppContext';
 import { streakDays } from '@/features/gemelo/services/profile';
 import { getDailyChallenge, isChallengeCompleted } from '@/features/academia/services/dailyChallenge';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 
 interface Chip {
   emoji: string;
@@ -25,6 +26,7 @@ interface Props {
 
 export function SuggestionChips({ onChipTap, visible = true }: Props) {
   const { profile } = useApp();
+  const userColor = useUserColor();
 
   const chips = useMemo((): Chip[] => {
     const hasSkills = profile?.skills && profile.skills.length > 0;
@@ -80,7 +82,11 @@ export function SuggestionChips({ onChipTap, visible = true }: Props) {
         <button
           key={chip.label}
           onClick={() => { hapticLight(); onChipTap(chip.action); }}
-          style={S.chip}
+          style={{
+            ...S.chip,
+            background: `${userColor}0d`,
+            border: `1px solid ${userColor}28`,
+          }}
         >
           <span style={S.emoji}>{chip.emoji}</span>
           <span style={S.label}>{chip.label}</span>
