@@ -95,7 +95,7 @@ function splitIntoChunks(text: string): string[] {
   return chunks.filter(c => c.length >= 3);
 }
 
-/** Genera audio para un chunk vía proxy-tts y lo reproduce */
+/** Genera audio para un chunk via proxy-tts y lo reproduce. Si falla, usa speechSynthesis. */
 async function speakChunk(text: string): Promise<void> {
   try {
     const { data, error } = await supabase.functions.invoke('proxy-tts', {
@@ -103,8 +103,31 @@ async function speakChunk(text: string): Promise<void> {
     });
 
     if (error || !data) {
-      // TTS falló — skip silencioso, el texto ya está en la UI
+      // TTS fallo — usar browser speechSynthesis como fallback
+      await speakWithBrowserTTS(text);
       return;
+    }
+
+    // Check if response is a JSON fallback signal from proxy-tts
+    if (data instanceof Blob && data.type === 'application/json') {
+      const jsonText = await data.text();
+      try {
+        const parsed = JSON.parse(jsonText);
+        if (parsed.fallback && parsed.text) {
+          await speakWithBrowserTTS(parsed.text);
+          return;
+        }
+      } catch {
+        // Not valid JSON, continue with audio processing
+      }
+    }
+
+    // Check for plain object fallback response (supabase client may parse JSON)
+    if (data && typeof data === 'object' && !(data instanceof Blob) && !(data instanceof ArrayBuffer)) {
+      if ('fallback' in data && (data as { fallback: boolean }).fallback && 'text' in data) {
+        await speakWithBrowserTTS((data as { text: string }).text);
+        return;
+      }
     }
 
     // data viene como Blob (audio/mpeg) desde la Edge Function
@@ -114,7 +137,8 @@ async function speakChunk(text: string): Promise<void> {
     } else if (data instanceof ArrayBuffer) {
       blob = new Blob([data], { type: 'audio/mpeg' });
     } else {
-      // Si viene como base64 o similar, intentar
+      // Si viene como base64 o similar, intentar fallback
+      await speakWithBrowserTTS(text);
       return;
     }
 
@@ -144,6 +168,43 @@ async function speakChunk(text: string): Promise<void> {
       audio.play().catch(() => resolve()); // Autoplay blocked → skip
     });
   } catch {
-    // Silencioso — el texto se mostró, la voz es un bonus
+    // Si todo falla, intentar speechSynthesis como ultimo recurso
+    await speakWithBrowserTTS(text).catch(() => {});
   }
+}
+
+/** Fallback: usa Web Speech API (speechSynthesis) con voz es-ES */
+function speakWithBrowserTTS(text: string): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (!window.speechSynthesis) {
+      resolve();
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'es-ES';
+
+    // Intentar encontrar una voz es-ES
+    const voices = window.speechSynthesis.getVoices();
+    const esVoice = voices.find((v) => v.lang.startsWith('es-ES'))
+      || voices.find((v) => v.lang.startsWith('es'));
+    if (esVoice) {
+      utterance.voice = esVoice;
+    }
+
+    utterance.onend = () => resolve();
+    utterance.onerror = () => resolve();
+
+    // Si el abort controller se activa, cancelar speechSynthesis
+    if (abortController?.signal.aborted) {
+      resolve();
+      return;
+    }
+    abortController?.signal.addEventListener('abort', () => {
+      window.speechSynthesis.cancel();
+      resolve();
+    });
+
+    window.speechSynthesis.speak(utterance);
+  });
 }

@@ -22,7 +22,10 @@ import { checkAndConsumeCredit } from '../_shared/iaCredits.ts';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const OPENROUTER_KEY = Deno.env.get('OPENROUTER_KEY') ?? '';
+const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // Allowed origin for CORS (production domain)
 const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicrom.vercel.app';
@@ -82,8 +85,8 @@ Deno.serve(async (req) => {
 
   try {
     // ── Validate key ──────────────────────────────────────────────────
-    if (!OPENROUTER_KEY) {
-      return json({ error: 'IA no configurada (falta OPENROUTER_KEY en secrets).' }, 503);
+    if (!OPENROUTER_KEY && !GEMINI_KEY) {
+      return json({ error: 'IA no configurada (falta GEMINI_API_KEY y OPENROUTER_KEY en secrets).' }, 503);
     }
 
     // ── Rate limit (15 req/min por IP — más generoso que endpoints específicos) ──
@@ -118,6 +121,45 @@ Deno.serve(async (req) => {
     }
 
     const { maxTokens = 1024, temperature = 0.7, jsonMode = false } = body.options ?? {};
+
+    // ── Try Gemini first ──────────────────────────────────────────────
+    if (GEMINI_KEY) {
+      try {
+        // Gemini no tiene rol 'system' — convertir a user con prefijo
+        const contents = body.messages.map((msg) => {
+          const role = msg.role === 'assistant' ? 'model' : 'user';
+          const text = msg.role === 'system' ? `System: ${msg.content}` : msg.content;
+          return { role, parts: [{ text }] };
+        });
+
+        const geminiBody = {
+          contents,
+          generationConfig: {
+            maxOutputTokens: Math.min(maxTokens, 4096),
+            temperature: Math.min(Math.max(temperature, 0), 1.5),
+            responseMimeType: jsonMode ? 'application/json' : 'text/plain',
+          },
+        };
+
+        const geminiResp = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(geminiBody),
+        });
+
+        if (geminiResp.ok) {
+          const geminiData = await geminiResp.json();
+          const geminiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+          if (geminiText) {
+            return json({ text: geminiText.trim(), model: 'gemini-2.0-flash' });
+          }
+        } else {
+          console.warn(`[proxy-ai] Gemini failed: ${geminiResp.status}, falling back to OpenRouter`);
+        }
+      } catch (e) {
+        console.warn('[proxy-ai] Gemini error, falling back to OpenRouter:', String(e).slice(0, 150));
+      }
+    }
 
     // ── Call OpenRouter with multi-model fallback ──────────────────────
     const aliveModels = FREE_MODELS.filter(isModelAlive);

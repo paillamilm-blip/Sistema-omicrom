@@ -97,8 +97,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ error: 'TTS no disponible. Modelos fallaron.' }), {
-      status: 503, headers: { ...CORS, 'Content-Type': 'application/json' },
+    // All TTS models failed — return fallback for browser speechSynthesis
+    return new Response(JSON.stringify({ fallback: true, text: chunk }), {
+      status: 200, headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e).slice(0, 200) }), {
