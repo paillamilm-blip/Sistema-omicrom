@@ -206,24 +206,24 @@ export default function OrbNeuronal({
     dots.rotation.copy(wireframe.rotation);
     scene.add(dots);
 
-    // ── Core glow (bright center sphere) ────────────────────────────
-    const coreGeo = new THREE.SphereGeometry(0.35, 24, 24);
+    // ── Core: concentrated bright point (not a diffuse sphere) ────────
+    const coreGeo = new THREE.SphereGeometry(0.06, 12, 12);
     const coreMat = new THREE.MeshBasicMaterial({
       color,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.95,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
     const core = new THREE.Mesh(coreGeo, coreMat);
     scene.add(core);
 
-    // Outer ambient glow halo (larger, very subtle)
-    const haloGeo = new THREE.SphereGeometry(0.6, 24, 24);
+    // Tiny glow around the point (very small, concentrated)
+    const haloGeo = new THREE.SphereGeometry(0.15, 12, 12);
     const haloMat = new THREE.MeshBasicMaterial({
       color,
       transparent: true,
-      opacity: 0.06,
+      opacity: 0.12,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
@@ -416,12 +416,12 @@ export default function OrbNeuronal({
       core.rotation.copy(wireframe.rotation);
       halo.rotation.copy(wireframe.rotation);
 
-      // Core breathing pulse (bright center)
-      const breath = 0.2 + Math.sin(time * 1.2) * 0.08;
+      // Core: concentrated point pulse (subtle, not big)
+      const breath = 0.85 + Math.sin(time * 1.5) * 0.1;
       coreMat.opacity = breath;
-      core.scale.setScalar(1 + Math.sin(time * 1.0) * 0.06);
-      halo.scale.setScalar(1 + Math.sin(time * 0.8) * 0.1);
-      haloMat.opacity = 0.04 + Math.sin(time * 0.9) * 0.02;
+      core.scale.setScalar(1 + Math.sin(time * 1.2) * 0.15);
+      halo.scale.setScalar(1 + Math.sin(time * 0.8) * 0.2);
+      haloMat.opacity = 0.08 + Math.sin(time * 0.9) * 0.04;
 
       // Voice vibration
       if (voiceLevelRef.current > 0.1) {
