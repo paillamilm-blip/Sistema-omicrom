@@ -1,28 +1,42 @@
 // components/omicron/ConvalidaOmicron.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · Convalidación REAL del Gemelo — AUTOMATIZACIÓN MÁXIMA.
-// Componente de presentación: toda la lógica vive en useGemeloActivation.
+// OMICRON - Convalidacion REAL del Gemelo - AUTOMATIZACION MAXIMA.
+// Componente de presentacion: toda la logica vive en useGemeloActivation.
 // Al completar la carga, muestra la NUEVA vista PerfilSkillVisual
 // (sistema orbital basado en los top 3 skills del usuario).
+//
+// REDESIGN: Landing Pro + Pixel Perfect design language.
+// - Background: solid #000206 (no grid, no radial gradients)
+// - Colors: getUserColor() for all accents
+// - Cards: OmicronCard glass style
+// - Typography: FONT.display / FONT.body / FONT.mono
+// - Spacing: multiples of 4px only
+// - Border-radius: RADIUS tokens (8/12/16/22/999)
+// - Touch targets: min 44px
 // ═══════════════════════════════════════════════════════════════════════
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles, Upload, ArrowRight, TrendingUp, Zap } from 'lucide-react';
+import { X, FileText, GraduationCap, Clock, BookOpen, Check, Loader2, Sparkles, Upload, ArrowRight, TrendingUp, Zap, RotateCcw } from 'lucide-react';
 import { useGemeloActivation } from '@/hooks/useGemeloActivation';
 import { PerfilSkillVisual } from '@/features/gemelo/components/PerfilSkillVisual';
-import { C, FONT, RADIUS } from '@/theme';
+import { C, FONT, RADIUS, SIZE } from '@/theme';
+import { getUserColor } from '@/shared/components/ColorPicker';
+import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
+import { OmicronCard, ProgressBar, Chip } from '@/shared/components/OmicronChrome';
 import { computeSteps } from '@/features/omicron/services/coach';
 
 type Kind = 'cv' | 'title' | 'year' | 'vault';
 
 const STEPS: { kind: Kind; label: string; hint: string; Icon: typeof FileText; color: string }[] = [
-  { kind: 'cv', label: 'Analizando CV', hint: 'Extrayendo skills y experiencia', Icon: FileText, color: C.cyan },
-  { kind: 'title', label: 'Validando título', hint: 'Grado / certificación', Icon: GraduationCap, color: C.purple },
-  { kind: 'year', label: 'Años de experiencia', hint: 'Trayectoria reconocida', Icon: Clock, color: C.gold },
-  { kind: 'vault', label: 'Aporte a la Bóveda', hint: 'Conocimiento integrado', Icon: BookOpen, color: C.green },
+  { kind: 'cv', label: 'Analizando CV', hint: 'Extrayendo skills y experiencia', Icon: FileText, color: '#5cc8ff' },
+  { kind: 'title', label: 'Validando titulo', hint: 'Grado / certificacion', Icon: GraduationCap, color: '#5e5ce6' },
+  { kind: 'year', label: 'Anos de experiencia', hint: 'Trayectoria reconocida', Icon: Clock, color: '#ffb02e' },
+  { kind: 'vault', label: 'Aporte a la Boveda', hint: 'Conocimiento integrado', Icon: BookOpen, color: '#3fd0c9' },
 ];
 
 export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfile }: { onClose: () => void; onViewProfile?: () => void }) {
+  const uc = getUserColor();
+
   const {
     phase, currentStep, completedSteps, dossier, ai,
     cvText, setCvText, cvFileName, msg, pushes, synergies,
@@ -30,43 +44,44 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
     onCVFile, activateGemeloCompleto,
   } = useGemeloActivation();
 
-  // Estado para la nueva vista PerfilSkillVisual (post-dossier)
+  // State for PerfilSkillVisual (post-dossier)
   const [showSkillVisual, setShowSkillVisual] = useState(false);
+
+  // Detect error state (AI failed, returned to upload with error message)
+  const isError = phase === 'upload' && msg.toLowerCase().includes('no se pudo');
+
+  // Darker variant of user color for gradient
+  const ucDark = uc + 'cc';
 
   // ── PHASE: SYNCING ──────────────────────────────────────────────────
   if (phase === 'syncing') {
     const progress = (completedSteps.length / STEPS.length) * 100;
+    const orbNodes = 5 + Math.round((completedSteps.length / STEPS.length) * 15);
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: 'radial-gradient(130% 100% at 50% 10%, rgba(8,14,30,0.98), #000 70%)' }}>
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `linear-gradient(${C.grid} 1px, transparent 1px), linear-gradient(90deg, ${C.grid} 1px, transparent 1px)`, backgroundSize: '44px 44px', maskImage: 'radial-gradient(circle at 50% 22%, #000, transparent 74%)' }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', position: 'relative', zIndex: 2 }}>
-          <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: C.cyan }}>SINCRONIZANDO GEMELO</span>
-          <Loader2 size={18} color={C.cyan} style={{ animation: 'cp-spin 0.8s linear infinite' }} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: C.bg }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative', zIndex: 2 }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: uc }}>SINCRONIZANDO GEMELO</span>
+          <Loader2 size={18} color={uc} style={{ animation: 'cp-spin 0.8s linear infinite' }} />
         </div>
 
-        <div style={{ position: 'relative', zIndex: 2, height: 100, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <motion.div key={rep} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 36, color: '#fff', textShadow: `0 0 24px ${C.cyan}` }}>
-              {rep}
-            </motion.div>
-            <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.mut, textTransform: 'uppercase' }}>Reputación</span>
-          </div>
+        {/* GeodesicOrb (grows as steps complete) */}
+        <div style={{ position: 'relative', zIndex: 2, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 0 16px' }}>
+          <GeodesicOrb size={120} nodes={orbNodes} color={uc} spinning={20} intensity={0.7} breathing />
         </div>
 
         {/* Push notifications */}
-        <div aria-live="polite" aria-atomic="false" style={{ position: 'fixed', top: 80, right: 16, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div aria-live="polite" aria-atomic="false" style={{ position: 'fixed', top: 80, right: 16, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <AnimatePresence>
             {pushes.map((p) => (
               <motion.div key={p.id}
                 initial={{ opacity: 0, x: 40, scale: 0.8 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 40, scale: 0.8 }}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 999, background: `${p.color}22`, border: `1px solid ${p.color}66`, backdropFilter: 'blur(8px)' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: RADIUS.pill, background: `${p.color}18`, border: `1px solid ${p.color}44`, backdropFilter: 'blur(8px)' }}>
                 <TrendingUp size={12} color={p.color} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 11, color: p.color, fontWeight: 700 }}>+{p.delta}</span>
-                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.ink }}>{p.label}</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: p.color, fontWeight: 700 }}>+{p.delta}</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>{p.label}</span>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -76,43 +91,43 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
         <div style={{ position: 'relative', zIndex: 2, padding: '0 20px', marginBottom: 16 }}
           role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}
           aria-label={`Sincronizando Gemelo Digital: ${Math.round(progress)}% completado`}>
-          <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-            <motion.div
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-              style={{ height: '100%', borderRadius: 3, background: `linear-gradient(90deg, ${C.cyan}, ${C.purple}, ${C.gold})`, boxShadow: `0 0 12px ${C.cyan}66` }}
-            />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-            <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut }}>{Math.round(progress)}% completado</span>
-            <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyan }}>{completedSteps.length}/{STEPS.length}</span>
+          <ProgressBar pct={progress} color={uc} height={6} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>{Math.round(progress)}% completado</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc }}>{completedSteps.length}/{STEPS.length}</span>
           </div>
         </div>
 
         {/* Steps list */}
-        <div style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 2, padding: '0 18px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 2, padding: '0 20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {STEPS.map((step, i) => {
               const isDone = completedSteps.includes(step.kind);
               const isActive = currentStep === i && !isDone;
               const Icon = step.Icon;
               return (
-                <motion.div key={step.kind}
-                  initial={{ opacity: 0.5 }}
-                  animate={{ opacity: isDone || isActive ? 1 : 0.4 }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: RADIUS.lg, background: isActive ? `${step.color}14` : isDone ? `${C.green}0a` : C.glass, border: `1px solid ${isActive ? step.color : isDone ? C.green : C.line}44` }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${isDone ? C.green : step.color}18` }}>
-                    {isDone ? <Check size={16} color={C.green} /> : isActive ? <Loader2 size={16} color={step.color} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> : <Icon size={16} color={step.color} />}
+                <OmicronCard key={step.kind}
+                  accent={isActive ? uc : undefined}
+                  glow={isActive}
+                  style={{
+                    padding: 12,
+                    opacity: isDone || isActive ? 1 : 0.5,
+                    border: isDone ? `1px solid ${C.green}44` : isActive ? `1px solid ${uc}66` : `1px solid ${C.line}`,
+                  }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: RADIUS.md, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${isDone ? C.green : step.color}18`, flexShrink: 0 }}>
+                      {isDone ? <Check size={18} color={C.green} /> : isActive ? <Loader2 size={18} color={step.color} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> : <Icon size={18} color={step.color} />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, color: isDone ? C.green : isActive ? C.ink : C.mut }}>{step.label}</div>
+                      <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, marginTop: 4 }}>{isDone ? '✓ Completado' : step.hint}</div>
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: isDone ? C.green : isActive ? '#fff' : C.mut }}>{step.label}</div>
-                    <div style={{ fontFamily: FONT.mono, fontSize: 9.5, color: C.mut, marginTop: 2 }}>{isDone ? '✓ Completado' : step.hint}</div>
-                  </div>
-                </motion.div>
+                </OmicronCard>
               );
             })}
           </div>
-          <p style={{ textAlign: 'center', margin: '16px 0', fontFamily: FONT.body, fontSize: 13.5, color: C.ink, lineHeight: 1.5 }}>{msg}</p>
+          <p style={{ textAlign: 'center', margin: '16px 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.5 }}>{msg}</p>
         </div>
       </div>
     );
@@ -120,123 +135,124 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
 
   // ── PHASE: DOSSIER ──────────────────────────────────────────────────
   if (phase === 'dossier' && dossier) {
-    const ARCH: Record<string, string> = { estudiante: 'Aprendiz', junior: 'Junior', mid: 'Mid', senior: 'Senior', lead: 'Lead · Arquitecto', pro: 'Profesional' };
+    const ARCH: Record<string, string> = { estudiante: 'Aprendiz', junior: 'Junior', mid: 'Mid', senior: 'Senior', lead: 'Lead - Arquitecto', pro: 'Profesional' };
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: 'radial-gradient(130% 100% at 50% 6%, rgba(8,16,34,0.98), #000 70%)' }}>
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `linear-gradient(${C.grid} 1px, transparent 1px), linear-gradient(90deg, ${C.grid} 1px, transparent 1px)`, backgroundSize: '44px 44px', maskImage: 'radial-gradient(circle at 50% 22%, #000, transparent 74%)' }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', position: 'relative', zIndex: 2 }}>
-          <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: C.gold }}>DOSSIER DE EXPERTICIA</span>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 36, height: 36, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: C.bg }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative', zIndex: 2 }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: C.gold }}>DOSSIER DE EXPERTICIA</span>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 44, height: 44, borderRadius: RADIUS.md, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
         </div>
 
-        <div style={{ position: 'relative', zIndex: 2, height: 80, flexShrink: 0 }}>
-        </div>
-
+        {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 2, padding: '4px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', textAlign: 'center' }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.4, color: C.mut, textTransform: 'uppercase' }}>Ómicron te reconoce como</div>
-          <h2 style={{ margin: '6px 0 4px', fontFamily: FONT.display, fontWeight: 800, fontSize: 26, color: '#fff', letterSpacing: -0.4 }}>{dossier.seniorLabel}</h2>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
-            <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan, padding: '4px 10px', borderRadius: 999, background: C.cyanGhost, border: `1px solid ${C.cyanFaint}` }}>{ARCH[dossier.arch] ?? dossier.arch}</span>
-            {dossier.years > 0 && <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.gold, padding: '4px 10px', borderRadius: 999, background: C.goldFaint, border: `1px solid ${C.goldDim}` }}>{dossier.years} {dossier.years === 1 ? 'año' : 'años'}</span>}
+          <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1.4, color: C.mut, textTransform: 'uppercase' }}>Omicron te reconoce como</div>
+          <h2 style={{ margin: '8px 0 8px', fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color: '#fff', letterSpacing: -0.4 }}>{dossier.seniorLabel}</h2>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+            <Chip color={uc}>{ARCH[dossier.arch] ?? dossier.arch}</Chip>
+            {dossier.years > 0 && <Chip color={C.gold}>{dossier.years} {dossier.years === 1 ? 'ano' : 'anos'}</Chip>}
           </div>
 
-          {/* Skills with % bars */}
-          <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.2, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Skills · % de dominio</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16, textAlign: 'left' }}>
-            {(dossier.skillsDetail?.length ? dossier.skillsDetail : dossier.labels.map((name) => ({ name, pct: 60 }))).map((s) => (
-              <div key={s.name}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                  <span style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 12.5, color: '#eaf4ff' }}>{s.name}</span>
-                  <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan }}>{s.pct}%</span>
+          {/* Skills with ProgressBar */}
+          <OmicronCard style={{ marginBottom: 16, textAlign: 'left' }}>
+            <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1.2, color: C.mut, textTransform: 'uppercase', marginBottom: 12 }}>Skills - % de dominio</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {(dossier.skillsDetail?.length ? dossier.skillsDetail : dossier.labels.map((name) => ({ name, pct: 60 }))).map((s) => (
+                <div key={s.name}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: SIZE.sm, color: C.ink }}>{s.name}</span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: uc }}>{s.pct}%</span>
+                  </div>
+                  <ProgressBar pct={s.pct} color={uc} height={5} />
                 </div>
-                <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${s.pct}%` }} transition={{ duration: 0.8, delay: 0.2 }}
-                    style={{ height: '100%', borderRadius: 3, background: `linear-gradient(90deg, ${C.purple}, ${C.cyan})`, boxShadow: `0 0 8px ${C.cyan}66` }} />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </OmicronCard>
 
           {/* 4 Axes */}
           {gemelo && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 16 }}>
-              {([['Ejecución', gemelo.execution, C.cyan], ['Calidad', gemelo.quality, C.purple], ['Trasc.', gemelo.transcendence, C.gold], ['Fund.', gemelo.foundation, C.green]] as [string, number, string][]).map(([lbl, val, col]) => (
-                <div key={lbl} style={{ padding: '8px', borderRadius: 12, background: C.glass, border: `1px solid ${C.line}` }}>
-                  <div style={{ fontFamily: FONT.mono, fontSize: 8.5, textTransform: 'uppercase', color: C.mut }}>{lbl}</div>
-                  <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: col }}>{Math.round(val)}</div>
-                </div>
+              {([['Ejecucion', gemelo.execution, uc], ['Calidad', gemelo.quality, C.purple], ['Trasc.', gemelo.transcendence, C.gold], ['Fund.', gemelo.foundation, C.green]] as [string, number, string][]).map(([lbl, val, col]) => (
+                <OmicronCard key={lbl} style={{ padding: 8, textAlign: 'center' }}>
+                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, textTransform: 'uppercase', color: C.mut }}>{lbl}</div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.lg, color: col, marginTop: 4 }}>{Math.round(val)}</div>
+                </OmicronCard>
               ))}
             </div>
           )}
 
           {/* Synergies */}
           {synergies.length > 0 && (
-            <div style={{ textAlign: 'left', borderRadius: RADIUS.lg, padding: '13px 14px', marginBottom: 14, background: `linear-gradient(135deg, ${C.gold}14, rgba(255,255,255,0.03))`, border: `1px solid ${C.goldDim}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+            <OmicronCard accent={C.gold} style={{ textAlign: 'left', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <Zap size={14} color={C.gold} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>Sinergias detectadas</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>Sinergias detectadas</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {synergies.map((s, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: C.gold, flexShrink: 0 }} />
-                    <span style={{ fontFamily: FONT.body, fontSize: 12.5, color: C.ink, lineHeight: 1.4 }}>{s}</span>
+                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: C.gold, flexShrink: 0 }} />
+                    <span style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.4 }}>{s}</span>
                   </div>
                 ))}
               </div>
-            </div>
+            </OmicronCard>
           )}
 
           {/* AI Summary */}
           {(ai.loading || ai.text) && (
-            <div style={{ textAlign: 'left', borderRadius: RADIUS.lg, padding: '13px 14px', marginTop: 4, background: `linear-gradient(135deg, ${C.cyan}14, rgba(255,255,255,0.03))`, border: `1px solid ${C.cyanFaint}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-                <Sparkles size={14} color={C.cyan} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: C.cyan }}>Análisis de Ómicron</span>
+            <OmicronCard accent={uc} style={{ textAlign: 'left', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <Sparkles size={14} color={uc} />
+                <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1.4, textTransform: 'uppercase', color: uc }}>Analisis de Omicron</span>
               </div>
               {ai.loading ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.mut, fontFamily: FONT.body, fontSize: 13 }}>
-                  <Loader2 size={14} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> Leyendo tu perfil…
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.mut, fontFamily: FONT.body, fontSize: SIZE.sm }}>
+                  <Loader2 size={14} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> Leyendo tu perfil...
                 </div>
               ) : (
-                <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13.5, lineHeight: 1.55, color: C.ink, whiteSpace: 'pre-wrap' }}>{ai.text}</p>
+                <p style={{ margin: 0, fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.55, color: C.ink, whiteSpace: 'pre-wrap' }}>{ai.text}</p>
               )}
-            </div>
+            </OmicronCard>
           )}
+
+          {/* Opportunities / Coach recommendations */}
+          <OmicronCard accent={uc} style={{ textAlign: 'left', marginBottom: 16 }}>
+            <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: uc, textTransform: 'uppercase', marginBottom: 12 }}>
+              Tu ruta de mejora
+            </div>
+            {(() => {
+              const gData = {
+                execution: dossier.axes?.exec ?? 0, quality: dossier.axes?.qual ?? 0,
+                transcendence: dossier.axes?.trans ?? 0, foundation: dossier.axes?.fund ?? 0,
+                overallReputation: rep,
+              };
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const fakeProfile = { skills: dossier.labels ?? [], pe_points: 0, traditional_score: 30 } as any;
+              const steps = computeSteps(fakeProfile, gData).slice(0, 3);
+              return steps.map((s: { id: string; title: string; why: string; accent: string; actionLabel: string }) => (
+                <div key={s.id} style={{
+                  padding: '12px', borderRadius: RADIUS.md, marginBottom: 8,
+                  background: `${s.accent}08`, border: `1px solid ${s.accent}33`,
+                }}>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, color: C.ink, marginBottom: 4 }}>{s.title}</div>
+                  <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut, lineHeight: 1.4 }}>{s.why.slice(0, 120)}</div>
+                </div>
+              ));
+            })()}
+          </OmicronCard>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, padding: '0 18px', position: 'relative', zIndex: 2, marginBottom: 10 }}>
-          <button onClick={() => setShowSkillVisual(true)} style={{ flex: 1, padding: '13px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ver mi perfil completo</button>
-          <button onClick={onClose} style={{ padding: '13px 20px', borderRadius: 14, cursor: 'pointer', background: C.glass, border: `1px solid ${C.line}`, color: C.ink, fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Listo</button>
+        {/* Bottom CTA */}
+        <div style={{ display: 'flex', gap: 8, padding: '12px 20px calc(env(safe-area-inset-bottom, 0px) + 12px)', position: 'relative', zIndex: 2 }}>
+          <motion.button onClick={() => setShowSkillVisual(true)} whileTap={{ scale: 0.97 }}
+            style={{ flex: 1, padding: '14px 0', borderRadius: RADIUS.lg, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${uc}, ${ucDark})`, color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, minHeight: 52 }}>
+            Ver mi perfil completo
+          </motion.button>
+          <button onClick={onClose} style={{ padding: '14px 20px', borderRadius: RADIUS.lg, cursor: 'pointer', background: C.glass, border: `1px solid ${C.line}`, color: C.ink, fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, minHeight: 52 }}>Listo</button>
         </div>
 
-        {/* ═══ OPORTUNIDADES DE MEJORA (post-CV) ═══ */}
-        <div style={{ padding: '0 18px 16px', position: 'relative', zIndex: 2 }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.gold, textTransform: 'uppercase', marginBottom: 10 }}>
-            ⬡ Tu ruta de mejora
-          </div>
-          {(() => {
-            const gemelo = {
-              execution: dossier.axes?.exec ?? 0, quality: dossier.axes?.qual ?? 0,
-              transcendence: dossier.axes?.trans ?? 0, foundation: dossier.axes?.fund ?? 0,
-              overallReputation: rep,
-            };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const fakeProfile = { skills: dossier.labels ?? [], pe_points: 0, traditional_score: 30 } as any;
-            const steps = computeSteps(fakeProfile, gemelo).slice(0, 3);
-            return steps.map((s: { id: string; title: string; why: string; accent: string; actionLabel: string }) => (
-              <div key={s.id} style={{
-                padding: '10px 12px', borderRadius: 12, marginBottom: 8,
-                background: `${s.accent}08`, border: `1px solid ${s.accent}33`,
-              }}>
-                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.ink, marginBottom: 4 }}>{s.title}</div>
-                <div style={{ fontFamily: FONT.body, fontSize: 11.5, color: C.mut, lineHeight: 1.4 }}>{s.why.slice(0, 120)}</div>
-              </div>
-            ));
-          })()}
-        </div>
-
-        {/* ═══ NUEVA VISTA: Perfil Skill Visual (top 3 skills orbital) ═══ */}
+        {/* Perfil Skill Visual (orbital view) */}
         <PerfilSkillVisual
           isOpen={showSkillVisual}
           onClose={() => setShowSkillVisual(false)}
@@ -257,64 +273,76 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
   // ── PHASE: UPLOAD ───────────────────────────────────────────────────
   const canActivate = !!cvText.trim();
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: 'radial-gradient(130% 100% at 50% 10%, rgba(8,14,30,0.98), rgba(2,3,10,0.99) 60%, #000 100%)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `linear-gradient(${C.grid} 1px, transparent 1px), linear-gradient(90deg, ${C.grid} 1px, transparent 1px)`, backgroundSize: '44px 44px', maskImage: 'radial-gradient(circle at 50% 26%, #000, transparent 74%)' }} />
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', position: 'relative', zIndex: 2 }}>
-        <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: C.ink }}>{hasExistingCV ? 'ACTUALIZAR CV' : 'ACTIVAR GEMELO'}</span>
-        <button onClick={onClose} aria-label="Cerrar" style={{ width: 36, height: 36, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: C.bg }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative', zIndex: 2 }}>
+        <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: C.ink }}>{hasExistingCV ? 'ACTUALIZAR CV' : 'ACTIVAR GEMELO'}</span>
+        <button onClick={onClose} aria-label="Cerrar" style={{ width: 44, height: 44, borderRadius: RADIUS.md, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
       </div>
 
-      <div style={{ position: 'relative', zIndex: 2, height: 100, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-          <motion.div key={rep} initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 38, color: '#fff', textShadow: '0 0 24px rgba(92,200,255,0.6)' }}>
-            {rep}
-          </motion.div>
-          <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.mut, textTransform: 'uppercase' }}>Reputación real</span>
+      {/* GeodesicOrb (small, breathing) */}
+      <div style={{ position: 'relative', zIndex: 2, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 0 12px' }}>
+        <GeodesicOrb size={80} nodes={5} color={uc} spinning={25} intensity={0.6} breathing />
+      </div>
+
+      {/* Message */}
+      <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', margin: '4px 20px 12px', fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.5, color: isError ? C.red : C.ink, minHeight: 40 }}>{msg}</p>
+
+      {/* Error retry button */}
+      {isError && (
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+          <motion.button
+            onClick={() => void activateGemeloCompleto()}
+            whileTap={{ scale: 0.95 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: RADIUS.lg, border: `1px solid ${C.red}44`, background: `${C.red}14`, color: C.red, fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, cursor: 'pointer', minHeight: 44 }}>
+            <RotateCcw size={16} /> Reintentar
+          </motion.button>
         </div>
-      </div>
+      )}
 
-      <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', margin: '6px 20px 10px', fontFamily: FONT.body, fontSize: 13.5, lineHeight: 1.5, color: C.ink, minHeight: 40 }}>{msg}</p>
-
-      <div style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 2, padding: '4px 18px' }}>
+      {/* Content */}
+      <div style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 2, padding: '4px 20px' }}>
         {hasExistingCV && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: RADIUS.md, background: C.greenFaint, border: `1px solid ${C.greenDim}`, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderRadius: RADIUS.md, background: C.greenFaint, border: `1px solid ${C.greenDim}`, marginBottom: 12 }}>
             <Check size={14} color={C.green} />
-            <span style={{ fontFamily: FONT.body, fontSize: 12, color: C.green }}>CV anterior detectado — subí uno nuevo para actualizar tu Gemelo</span>
+            <span style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.green }}>CV anterior detectado - subi uno nuevo para actualizar tu Gemelo</span>
           </div>
         )}
 
-        <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '26px 16px', borderRadius: RADIUS.lg, border: `1.5px dashed ${C.cyanDim}`, background: C.cyanGhost, cursor: 'pointer', marginBottom: 14, textAlign: 'center' }}>
+        {/* Upload area - OmicronCard style with dashed border */}
+        <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '28px 16px', borderRadius: RADIUS.xl, border: `1.5px dashed ${uc}55`, background: C.glass, cursor: 'pointer', marginBottom: 16, textAlign: 'center', backdropFilter: 'blur(14px)' }}>
           <input type="file" accept=".pdf,.doc,.docx,.txt" style={{ display: 'none' }}
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void onCVFile(f); e.currentTarget.value = ''; }} />
-          <Upload size={26} color={C.cyan} />
-          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>{cvFileName || 'Subir CV (PDF · Word · TXT)'}</span>
-          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>Lee cualquier PDF o Word — sube uno nuevo cuando quieras</span>
+          <Upload size={24} color={uc} />
+          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, color: C.ink }}>{cvFileName || 'Subir CV (PDF - Word - TXT)'}</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Lee cualquier PDF o Word</span>
         </label>
 
+        {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
           <div style={{ flex: 1, height: 1, background: C.line }} />
-          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>o pegá tu experiencia</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>o pega tu experiencia</span>
           <div style={{ flex: 1, height: 1, background: C.line }} />
         </div>
 
+        {/* Textarea */}
         <label htmlFor="cv-textarea" className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>Experiencia profesional</label>
         <textarea id="cv-textarea" value={cvText} onChange={(e) => setCvText(e.target.value)}
-          placeholder="Rol actual, años de experiencia, tecnologías, contratos, certificaciones, empresas donde trabajaste (dependiente o freelance)…"
-          style={{ width: '100%', minHeight: 120, borderRadius: RADIUS.md, border: `1px solid ${C.line}`, background: 'rgba(8,12,22,0.8)', color: C.ink, fontFamily: FONT.body, fontSize: 13, padding: 13, outline: 'none', resize: 'vertical' }} />
+          placeholder="Rol actual, anos de experiencia, tecnologias, contratos, certificaciones, empresas donde trabajaste..."
+          style={{ width: '100%', minHeight: 120, borderRadius: RADIUS.md, border: `1px solid ${uc}4d`, background: 'rgba(12,16,30,0.8)', color: C.ink, fontFamily: FONT.body, fontSize: SIZE.sm, padding: 16, outline: 'none', resize: 'vertical' }} />
       </div>
 
-      <div style={{ padding: '10px 18px calc(env(safe-area-inset-bottom, 0px) + 16px)', position: 'relative', zIndex: 2 }}>
+      {/* CTA Button */}
+      <div style={{ padding: '12px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', position: 'relative', zIndex: 2 }}>
         <motion.button
           onClick={() => void activateGemeloCompleto()}
           disabled={!canActivate}
           whileTap={{ scale: 0.97 }}
-          style={{ width: '100%', padding: '15px 0', borderRadius: 14, border: 'none', cursor: canActivate ? 'pointer' : 'default', opacity: canActivate ? 1 : 0.5, background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: canActivate ? '0 8px 32px rgba(92,200,255,0.4)' : 'none' }}>
+          style={{ width: '100%', padding: '16px 0', borderRadius: RADIUS.lg, border: 'none', cursor: canActivate ? 'pointer' : 'default', opacity: canActivate ? 1 : 0.5, background: `linear-gradient(135deg, ${uc}, ${ucDark})`, color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: canActivate ? `0 8px 32px ${uc}44` : 'none', minHeight: 52 }}>
           <Zap size={18} /> Activar Gemelo Completo <ArrowRight size={17} />
         </motion.button>
-        <p style={{ textAlign: 'center', margin: '8px 0 0', fontFamily: FONT.mono, fontSize: 9.5, color: C.mut }}>
-          Analiza CV + valida título + años + aportes — todo automático
+        <p style={{ textAlign: 'center', margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>
+          Analiza CV + valida titulo + anos + aportes - todo automatico
         </p>
       </div>
     </div>
