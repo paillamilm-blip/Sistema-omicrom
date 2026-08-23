@@ -206,29 +206,13 @@ export default function OrbNeuronal({
     dots.rotation.copy(wireframe.rotation);
     scene.add(dots);
 
-    // ── Core: concentrated bright point (not a diffuse sphere) ────────
-    const coreGeo = new THREE.SphereGeometry(0.06, 12, 12);
-    const coreMat = new THREE.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const core = new THREE.Mesh(coreGeo, coreMat);
-    scene.add(core);
-
-    // Tiny glow around the point (very small, concentrated)
-    const haloGeo = new THREE.SphereGeometry(0.15, 12, 12);
-    const haloMat = new THREE.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity: 0.12,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const halo = new THREE.Mesh(haloGeo, haloMat);
-    scene.add(halo);
+    // ── No core — clean wireframe + glowing nodes only ────────────────
+    const coreGeo = null;
+    const coreMat = null;
+    const core = null;
+    const haloGeo = null;
+    const haloMat = null;
+    const halo = null;
 
     // ── Hub node positions (Fibonacci on sphere surface) ─────────────
     const hubPositions = fibonacciSphere(Math.max(nodeCount, 1), radius * 0.98);
@@ -411,17 +395,8 @@ export default function OrbNeuronal({
       wireframe.rotation.x = currentRotationX;
       wireframe.rotation.y = currentRotationY;
 
-      // Sync dots and core rotation
+      // Sync dots rotation
       dots.rotation.copy(wireframe.rotation);
-      core.rotation.copy(wireframe.rotation);
-      halo.rotation.copy(wireframe.rotation);
-
-      // Core: concentrated point pulse (subtle, not big)
-      const breath = 0.85 + Math.sin(time * 1.5) * 0.1;
-      coreMat.opacity = breath;
-      core.scale.setScalar(1 + Math.sin(time * 1.2) * 0.15);
-      halo.scale.setScalar(1 + Math.sin(time * 0.8) * 0.2);
-      haloMat.opacity = 0.08 + Math.sin(time * 0.9) * 0.04;
 
       // Voice vibration
       if (voiceLevelRef.current > 0.1) {
@@ -446,8 +421,6 @@ export default function OrbNeuronal({
       if (!edgesMat.color.equals(c)) {
         edgesMat.color.copy(c);
         dotMat.color.copy(c);
-        coreMat.color.copy(c);
-        haloMat.color.copy(c);
       }
 
       // Project hub positions to 2D for labels
@@ -499,10 +472,6 @@ export default function OrbNeuronal({
       edgesMat.dispose();
       dotGeo.dispose();
       dotMat.dispose();
-      coreGeo.dispose();
-      coreMat.dispose();
-      haloGeo.dispose();
-      haloMat.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
