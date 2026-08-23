@@ -11,12 +11,12 @@ import type { TabId } from '@/types';
 // Style: the reference image — network globe with bright nodes + edges.
 //
 // Features:
-//   - Rotates smoothly (autoRotate with inertia)
-//   - Manual touch-drag rotation (pointer events)
-//   - Initial camera angle (not straight-on) for immediate 3D feel
-//   - Back-face vertices dimmer/smaller for depth perception
-//   - Nodes glow with user's chosen color
-//   - Edges pulse subtly (breathing)
+//   - Buttery smooth rotation with lerp-based interpolation
+//   - Manual touch-drag rotation (pointer events) with long inertia
+//   - Circular glowing nodes (canvas-generated radial gradient texture)
+//   - Strong depth perception (back-face dimmer via fog + additive blending)
+//   - Bright glowing center core with ambient halo
+//   - Subtle thin edges (nodes are the visual stars)
 //   - Reacts to voice (vibration on wireframe)
 //   - Tap detection on nodes (raycasting)
 //   - Grows denser with more skills (subdivisions)
@@ -61,6 +61,33 @@ function fibonacciSphere(count: number, radius: number): THREE.Vector3[] {
   return points;
 }
 
+// ── Create circular glow texture using canvas ───────────────────────
+function createGlowTexture(): THREE.Texture {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+
+  // Radial gradient: bright white center -> transparent edge
+  const gradient = ctx.createRadialGradient(
+    size / 2, size / 2, 0,
+    size / 2, size / 2, size / 2
+  );
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+  gradient.addColorStop(0.15, 'rgba(255, 255, 255, 0.8)');
+  gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.3)');
+  gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.05)');
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
 export default function OrbNeuronal({
   nodes,
   activeNodeId = null,
@@ -101,6 +128,10 @@ export default function OrbNeuronal({
 
     // ── Scene setup ─────────────────────────────────────────────────
     const scene = new THREE.Scene();
+
+    // Atmospheric fog for depth fade (back-face nodes fade into darkness)
+    scene.fog = new THREE.FogExp2(0x000206, 0.15);
+
     const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
     // Camera slightly above and to the right for 3D depth feel (not frontal)
     camera.position.set(0.8, 1.0, 4.2);
@@ -118,12 +149,13 @@ export default function OrbNeuronal({
     const geo = new THREE.IcosahedronGeometry(radius, detail);
     const color = new THREE.Color(userColorRef.current);
 
-    // Wireframe edges
+    // Wireframe edges - thin and subtle (nodes are the stars, not edges)
     const edgesGeo = new THREE.EdgesGeometry(geo);
     const edgesMat = new THREE.LineBasicMaterial({
       color,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.2,
+      fog: true,
     });
     const wireframe = new THREE.LineSegments(edgesGeo, edgesMat);
     // Initial rotation offset so the sphere shows 3D perspective immediately
@@ -131,7 +163,7 @@ export default function OrbNeuronal({
     wireframe.rotation.y = 0.5;
     scene.add(wireframe);
 
-    // ── Node sprites (glowing dots at vertices) ─────────────────────
+    // ── Node sprites (glowing circular dots at vertices) ────────────
     const positions = geo.getAttribute('position');
     const vertexCount = positions.count;
     const uniqueVerts: THREE.Vector3[] = [];
@@ -146,7 +178,7 @@ export default function OrbNeuronal({
       }
     }
 
-    // Create point cloud for vertices with per-vertex sizes for depth effect
+    // Create point cloud for vertices
     const dotGeo = new THREE.BufferGeometry();
     const dotPositions = new Float32Array(uniqueVerts.length * 3);
     uniqueVerts.forEach((v, i) => {
@@ -156,26 +188,47 @@ export default function OrbNeuronal({
     });
     dotGeo.setAttribute('position', new THREE.BufferAttribute(dotPositions, 3));
 
+    // Circular glow texture for round nodes (not squares)
+    const glowTexture = createGlowTexture();
+
     const dotMat = new THREE.PointsMaterial({
       color,
-      size: 0.08,
+      size: 0.14,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.95,
       sizeAttenuation: true,
+      map: glowTexture,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      fog: true,
     });
     const dots = new THREE.Points(dotGeo, dotMat);
     dots.rotation.copy(wireframe.rotation);
     scene.add(dots);
 
-    // ── Core glow (center sphere) ───────────────────────────────────
-    const coreGeo = new THREE.SphereGeometry(0.25, 16, 16);
+    // ── Core glow (bright center sphere) ────────────────────────────
+    const coreGeo = new THREE.SphereGeometry(0.35, 24, 24);
     const coreMat = new THREE.MeshBasicMaterial({
       color,
       transparent: true,
-      opacity: 0.15,
+      opacity: 0.25,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
     const core = new THREE.Mesh(coreGeo, coreMat);
     scene.add(core);
+
+    // Outer ambient glow halo (larger, very subtle)
+    const haloGeo = new THREE.SphereGeometry(0.6, 24, 24);
+    const haloMat = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.06,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const halo = new THREE.Mesh(haloGeo, haloMat);
+    scene.add(halo);
 
     // ── Hub node positions (Fibonacci on sphere surface) ─────────────
     const hubPositions = fibonacciSphere(Math.max(nodeCount, 1), radius * 0.98);
@@ -185,22 +238,27 @@ export default function OrbNeuronal({
     raycaster.params.Points = { threshold: 0.2 };
     const mouse = new THREE.Vector2();
 
-    // ── Touch-drag rotation (manual OrbitControls-like behavior) ─────
+    // ── Touch-drag rotation (buttery smooth with lerp targets) ───────
     let isDragging = false;
     let hasCaptured = false;
     let dragStartX = 0;
     let dragStartY = 0;
-    let dragRotationX = wireframe.rotation.x;
-    let dragRotationY = wireframe.rotation.y;
+    let dragBaseRotationX = wireframe.rotation.x;
+    let dragBaseRotationY = wireframe.rotation.y;
     let velocityX = 0;
     let velocityY = 0;
     let lastPointerX = 0;
     let lastPointerY = 0;
     let lastPointerTime = 0;
     let pointerMoved = false;
-    // Lerp targets for smooth interpolation
+
+    // Separate target rotation values (key to smooth motion)
+    // During drag: we set targets. In animate: we LERP actual toward targets.
     let targetRotationX = wireframe.rotation.x;
     let targetRotationY = wireframe.rotation.y;
+    // Actual rendered rotation (lerps toward target)
+    let currentRotationX = wireframe.rotation.x;
+    let currentRotationY = wireframe.rotation.y;
 
     function handlePointerDown(e: PointerEvent) {
       isDragging = true;
@@ -208,16 +266,15 @@ export default function OrbNeuronal({
       pointerMoved = false;
       dragStartX = e.clientX;
       dragStartY = e.clientY;
-      dragRotationX = wireframe.rotation.x;
-      dragRotationY = wireframe.rotation.y;
-      targetRotationX = wireframe.rotation.x;
-      targetRotationY = wireframe.rotation.y;
+      dragBaseRotationX = currentRotationX;
+      dragBaseRotationY = currentRotationY;
+      targetRotationX = currentRotationX;
+      targetRotationY = currentRotationY;
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
       lastPointerTime = performance.now();
       velocityX = 0;
       velocityY = 0;
-      // Don't capture immediately; wait to determine if horizontal drag
     }
 
     function handlePointerMove(e: PointerEvent) {
@@ -241,12 +298,12 @@ export default function OrbNeuronal({
         pointerMoved = true;
       }
 
-      // Rotation sensitivity (3x more responsive for mobile touch)
-      const sensitivity = 0.015;
-      targetRotationY = dragRotationY + dx * sensitivity;
-      targetRotationX = dragRotationX + dy * sensitivity;
+      // Rotation sensitivity
+      const sensitivity = 0.012;
+      targetRotationY = dragBaseRotationY + dx * sensitivity;
+      targetRotationX = dragBaseRotationX + dy * sensitivity;
 
-      // Track velocity for inertia
+      // Track velocity for inertia after release
       const now = performance.now();
       const dt = now - lastPointerTime;
       if (dt > 0) {
@@ -268,7 +325,6 @@ export default function OrbNeuronal({
 
     // Click/tap detection (only if not dragged)
     function handleClick(e: MouseEvent | TouchEvent) {
-      // If user dragged, don't fire tap
       if (pointerMoved) return;
 
       const rect = renderer.domElement.getBoundingClientRect();
@@ -315,45 +371,57 @@ export default function OrbNeuronal({
     // ── Animation loop ──────────────────────────────────────────────
     let frameId: number;
     let time = 0;
-    const autoRotationSpeed = 0.003;
+    const autoRotationSpeed = 0.002;
+    // Lerp factor for buttery smooth interpolation (lower = smoother/laggier)
+    const lerpFactor = 0.12;
 
     function animate() {
       frameId = requestAnimationFrame(animate);
       time += 0.016;
 
-      // Auto-rotation (gentle constant spin + voice boost)
       if (isDragging) {
-        // Lerp smoothing: interpolate towards target instead of jumping directly
-        const lerpFactor = 0.25;
-        wireframe.rotation.x += (targetRotationX - wireframe.rotation.x) * lerpFactor;
-        wireframe.rotation.y += (targetRotationY - wireframe.rotation.y) * lerpFactor;
+        // During drag: lerp actual rotation toward target (creates smooth feel)
+        currentRotationX += (targetRotationX - currentRotationX) * lerpFactor;
+        currentRotationY += (targetRotationY - currentRotationY) * lerpFactor;
       } else {
-        const voiceBoost = voiceLevelRef.current * 0.01;
+        const voiceBoost = voiceLevelRef.current * 0.008;
 
-        // Apply inertia from drag (keeps spinning longer with 0.98 decay)
-        if (Math.abs(velocityX) > 0.0001 || Math.abs(velocityY) > 0.0001) {
-          wireframe.rotation.y += velocityX * 0.3;
-          wireframe.rotation.x += velocityY * 0.3;
-          // Decay inertia (0.98 = keeps spinning longer, feels more natural)
-          velocityX *= 0.98;
-          velocityY *= 0.98;
+        // Apply inertia from drag (keeps spinning with 0.992 decay = much longer)
+        if (Math.abs(velocityX) > 0.00005 || Math.abs(velocityY) > 0.00005) {
+          targetRotationY += velocityX * 0.25;
+          targetRotationX += velocityY * 0.25;
+          // Long decay for satisfying spin
+          velocityX *= 0.992;
+          velocityY *= 0.992;
         } else {
-          // Default auto-rotation
-          wireframe.rotation.y += autoRotationSpeed + voiceBoost;
+          // Default auto-rotation with slight organic variation
+          const organicWobble = Math.sin(time * 0.2) * 0.0004;
+          targetRotationY += autoRotationSpeed + voiceBoost + organicWobble;
         }
 
-        // Subtle oscillation on X axis for organic feel
-        wireframe.rotation.x += Math.cos(time * 0.3) * 0.0003;
+        // Subtle oscillation on X axis for organic breathing feel
+        targetRotationX += Math.cos(time * 0.25) * 0.00015;
+
+        // Lerp actual toward target (smooth even in auto-rotation mode)
+        currentRotationX += (targetRotationX - currentRotationX) * lerpFactor;
+        currentRotationY += (targetRotationY - currentRotationY) * lerpFactor;
       }
+
+      // Apply smooth rotation
+      wireframe.rotation.x = currentRotationX;
+      wireframe.rotation.y = currentRotationY;
 
       // Sync dots and core rotation
       dots.rotation.copy(wireframe.rotation);
       core.rotation.copy(wireframe.rotation);
+      halo.rotation.copy(wireframe.rotation);
 
-      // Breathing (core pulse)
-      const breath = 0.12 + Math.sin(time * 1.5) * 0.05;
+      // Core breathing pulse (bright center)
+      const breath = 0.2 + Math.sin(time * 1.2) * 0.08;
       coreMat.opacity = breath;
-      core.scale.setScalar(1 + Math.sin(time * 1.2) * 0.08);
+      core.scale.setScalar(1 + Math.sin(time * 1.0) * 0.06);
+      halo.scale.setScalar(1 + Math.sin(time * 0.8) * 0.1);
+      haloMat.opacity = 0.04 + Math.sin(time * 0.9) * 0.02;
 
       // Voice vibration
       if (voiceLevelRef.current > 0.1) {
@@ -366,14 +434,12 @@ export default function OrbNeuronal({
         dots.position.set(0, 0, 0);
       }
 
-      // Edge breathing opacity (sin wave 0.2-0.5)
-      edgesMat.opacity = 0.35 + Math.sin(time * 0.8) * 0.15;
+      // Edge breathing opacity (subtle, range 0.15-0.35)
+      edgesMat.opacity = 0.2 + Math.sin(time * 0.7) * 0.08;
 
-      // Vertex depth-based opacity: back-face dimmer, front brighter
-      // We vary the global dot opacity based on a camera-facing heuristic
-      // (PointsMaterial doesn't support per-vertex opacity without custom shaders,
-      // but sizeAttenuation makes back-face dots smaller, giving depth illusion)
-      dotMat.opacity = 0.85 + Math.sin(time * 1.0) * 0.1;
+      // Dot subtle pulse
+      dotMat.opacity = 0.9 + Math.sin(time * 0.9) * 0.05;
+      dotMat.size = 0.14 + Math.sin(time * 1.1) * 0.01;
 
       // Update color if changed
       const c = new THREE.Color(userColorRef.current);
@@ -381,6 +447,7 @@ export default function OrbNeuronal({
         edgesMat.color.copy(c);
         dotMat.color.copy(c);
         coreMat.color.copy(c);
+        haloMat.color.copy(c);
       }
 
       // Project hub positions to 2D for labels
@@ -426,6 +493,7 @@ export default function OrbNeuronal({
       renderer.domElement.removeEventListener('touchstart', handleClick);
       window.removeEventListener('resize', handleResize);
       renderer.dispose();
+      glowTexture.dispose();
       geo.dispose();
       edgesGeo.dispose();
       edgesMat.dispose();
@@ -433,6 +501,8 @@ export default function OrbNeuronal({
       dotMat.dispose();
       coreGeo.dispose();
       coreMat.dispose();
+      haloGeo.dispose();
+      haloMat.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
