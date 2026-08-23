@@ -75,7 +75,7 @@ async function callGemini(
     contents,
     generationConfig: {
       maxOutputTokens: Math.min(maxTokens, 4096),
-      temperature: Math.min(Math.max(0.7, 0), 1.5),
+      temperature: 0.7,
       responseMimeType: jsonMode ? 'application/json' : 'text/plain',
     },
   };
@@ -131,7 +131,7 @@ async function callOpenRouter(
           model,
           messages,
           max_tokens: Math.min(maxTokens, 4096),
-          temperature: Math.min(Math.max(0.7, 0), 1.5),
+          temperature: 0.7,
           ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
         }),
         signal: controller.signal,

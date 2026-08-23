@@ -141,6 +141,8 @@ Deno.serve(async (req) => {
           },
         };
 
+        const geminiController = new AbortController();
+        const geminiTimer = setTimeout(() => geminiController.abort(), 22000);
         const geminiResp = await fetch(GEMINI_URL, {
           method: 'POST',
           headers: {
@@ -148,7 +150,9 @@ Deno.serve(async (req) => {
             'x-goog-api-key': GEMINI_KEY,
           },
           body: JSON.stringify(geminiBody),
+          signal: geminiController.signal,
         });
+        clearTimeout(geminiTimer);
 
         if (geminiResp.ok) {
           const geminiData = await geminiResp.json();
