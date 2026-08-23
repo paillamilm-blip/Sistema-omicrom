@@ -187,6 +187,7 @@ export default function OrbNeuronal({
 
     // ── Touch-drag rotation (manual OrbitControls-like behavior) ─────
     let isDragging = false;
+    let hasCaptured = false;
     let dragStartX = 0;
     let dragStartY = 0;
     let dragRotationX = wireframe.rotation.x;
@@ -197,20 +198,26 @@ export default function OrbNeuronal({
     let lastPointerY = 0;
     let lastPointerTime = 0;
     let pointerMoved = false;
+    // Lerp targets for smooth interpolation
+    let targetRotationX = wireframe.rotation.x;
+    let targetRotationY = wireframe.rotation.y;
 
     function handlePointerDown(e: PointerEvent) {
       isDragging = true;
+      hasCaptured = false;
       pointerMoved = false;
       dragStartX = e.clientX;
       dragStartY = e.clientY;
       dragRotationX = wireframe.rotation.x;
       dragRotationY = wireframe.rotation.y;
+      targetRotationX = wireframe.rotation.x;
+      targetRotationY = wireframe.rotation.y;
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
       lastPointerTime = performance.now();
       velocityX = 0;
       velocityY = 0;
-      renderer.domElement.setPointerCapture(e.pointerId);
+      // Don't capture immediately; wait to determine if horizontal drag
     }
 
     function handlePointerMove(e: PointerEvent) {
@@ -218,14 +225,26 @@ export default function OrbNeuronal({
       const dx = e.clientX - dragStartX;
       const dy = e.clientY - dragStartY;
 
+      // Smart capture: only capture pointer if clearly horizontal (not vertical scroll)
+      if (!hasCaptured && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        if (Math.abs(dy) > Math.abs(dx)) {
+          // Vertical movement dominates - let the page scroll, cancel drag
+          isDragging = false;
+          return;
+        }
+        // Horizontal movement dominates - capture the pointer
+        hasCaptured = true;
+        try { renderer.domElement.setPointerCapture(e.pointerId); } catch {}
+      }
+
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
         pointerMoved = true;
       }
 
-      // Rotation sensitivity
-      const sensitivity = 0.006;
-      wireframe.rotation.y = dragRotationY + dx * sensitivity;
-      wireframe.rotation.x = dragRotationX + dy * sensitivity;
+      // Rotation sensitivity (3x more responsive for mobile touch)
+      const sensitivity = 0.015;
+      targetRotationY = dragRotationY + dx * sensitivity;
+      targetRotationX = dragRotationX + dy * sensitivity;
 
       // Track velocity for inertia
       const now = performance.now();
@@ -241,7 +260,10 @@ export default function OrbNeuronal({
 
     function handlePointerUp(e: PointerEvent) {
       isDragging = false;
-      renderer.domElement.releasePointerCapture(e.pointerId);
+      if (hasCaptured) {
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch {}
+      }
+      hasCaptured = false;
     }
 
     // Click/tap detection (only if not dragged)
@@ -300,16 +322,21 @@ export default function OrbNeuronal({
       time += 0.016;
 
       // Auto-rotation (gentle constant spin + voice boost)
-      if (!isDragging) {
+      if (isDragging) {
+        // Lerp smoothing: interpolate towards target instead of jumping directly
+        const lerpFactor = 0.25;
+        wireframe.rotation.x += (targetRotationX - wireframe.rotation.x) * lerpFactor;
+        wireframe.rotation.y += (targetRotationY - wireframe.rotation.y) * lerpFactor;
+      } else {
         const voiceBoost = voiceLevelRef.current * 0.01;
 
-        // Apply inertia from drag
+        // Apply inertia from drag (keeps spinning longer with 0.98 decay)
         if (Math.abs(velocityX) > 0.0001 || Math.abs(velocityY) > 0.0001) {
           wireframe.rotation.y += velocityX * 0.3;
           wireframe.rotation.x += velocityY * 0.3;
-          // Decay inertia
-          velocityX *= 0.95;
-          velocityY *= 0.95;
+          // Decay inertia (0.98 = keeps spinning longer, feels more natural)
+          velocityX *= 0.98;
+          velocityY *= 0.98;
         } else {
           // Default auto-rotation
           wireframe.rotation.y += autoRotationSpeed + voiceBoost;

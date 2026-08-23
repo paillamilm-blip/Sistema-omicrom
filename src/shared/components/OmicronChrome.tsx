@@ -12,6 +12,7 @@
 import { ReactNode, CSSProperties } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { C, FONT, RADIUS } from '@/theme';
+import { getUserColor } from '@/shared/components/ColorPicker';
 
 export const oc: Record<string, CSSProperties> = {
   // Pantalla transparente: deja ver el fondo Ómicron de UnifiedLayout.
@@ -42,7 +43,7 @@ interface OmicronHeaderProps {
 
 // Header glass unificado. `onBack` muestra la flecha de volver (integrada,
 // no un segundo bar) y `action` es el slot derecho (ej. botón "Publicar").
-export function OmicronHeader({ title, subtitle, icon, onBack, action, accent = C.cyan }: OmicronHeaderProps) {
+export function OmicronHeader({ title, subtitle, icon, onBack, action, accent = getUserColor() }: OmicronHeaderProps) {
   return (
     <div style={S.header}>
       {onBack && (
@@ -112,9 +113,9 @@ const S: Record<string, CSSProperties> = {
   action: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 },
   actionBtn: {
     display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 12,
-    background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', border: 'none', color: '#fff',
+    background: `linear-gradient(135deg,${getUserColor()},#5e5ce6)`, border: 'none', color: '#fff',
     cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
-    boxShadow: '0 8px 20px rgba(10,132,255,0.34)',
+    boxShadow: `0 8px 20px rgba(10,132,255,0.34)`,
   },
 };
 
@@ -180,7 +181,7 @@ export function OmicronCard({ children, onClick, accent, glow, style, className 
 }
 
 // Chip / etiqueta tipo pill (relleno o contorno).
-export function Chip({ children, color = C.cyan, filled, icon }: { children: ReactNode; color?: string; filled?: boolean; icon?: ReactNode }) {
+export function Chip({ children, color = getUserColor(), filled, icon }: { children: ReactNode; color?: string; filled?: boolean; icon?: ReactNode }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px',
@@ -204,7 +205,7 @@ export function Stat({ label, value, color = C.ink, icon }: { label: string; val
 }
 
 // Barra de progreso con glow.
-export function ProgressBar({ pct, color = C.cyan, height = 7 }: { pct: number; color?: string; height?: number }) {
+export function ProgressBar({ pct, color = getUserColor(), height = 7 }: { pct: number; color?: string; height?: number }) {
   const p = Math.max(0, Math.min(100, pct));
   return (
     <div style={{ height, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
@@ -214,7 +215,7 @@ export function ProgressBar({ pct, color = C.cyan, height = 7 }: { pct: number; 
 }
 
 // Anillo de progreso (SVG) con contenido central.
-export function ProgressRing({ pct, size = 46, stroke = 4, color = C.cyan, children }: { pct: number; size?: number; stroke?: number; color?: string; children?: ReactNode }) {
+export function ProgressRing({ pct, size = 46, stroke = 4, color = getUserColor(), children }: { pct: number; size?: number; stroke?: number; color?: string; children?: ReactNode }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const p = Math.max(0, Math.min(100, pct));
@@ -230,7 +231,7 @@ export function ProgressRing({ pct, size = 46, stroke = 4, color = C.cyan, child
 }
 
 // Título de sección con ícono y slot derecho.
-export function SectionTitle({ children, icon, right, color = C.cyan }: { children: ReactNode; icon?: ReactNode; right?: ReactNode; color?: string }) {
+export function SectionTitle({ children, icon, right, color = getUserColor() }: { children: ReactNode; icon?: ReactNode; right?: ReactNode; color?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 2px 9px' }}>
       {icon && <span style={{ color, display: 'flex' }}>{icon}</span>}
