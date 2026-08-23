@@ -9,7 +9,7 @@ import { supabase } from '@/infrastructure/supabase/client';
 import { NoAccess } from '@/features/auth/components/NoAccess';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { InstallPWA } from '@/shared/components/InstallPWA';
-import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy';
+import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { ToastProvider } from '@/shared/components/Toast';
 import { ConnectionBanner } from '@/shared/components/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
@@ -82,7 +82,7 @@ function AppShell() {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(94,92,230,0.14), transparent 60%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', width: 168, height: 168 }}>
-          <ParticleOrb />
+          <GeodesicOrb size={168} nodes={12} spinning={25} intensity={0.7} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
           <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicron...</p>

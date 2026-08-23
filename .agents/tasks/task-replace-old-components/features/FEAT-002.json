@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-002",
+  "type": "chore",
+  "description": "Remove dead SuggestionChips component file, remove ScanlineOverlay usage from tabs that use OmicronChrome (it is an old CyberComponent pattern), and clean up dead CyberComponent imports where possible without large refactors",
+  "status": "pending",
+  "steps": [
+    "Delete src/features/omicron/components/SuggestionChips.tsx since it is imported nowhere (only dead import in OrbShell was removed in FEAT-001).",
+    "In src/features/academia/components/AcademiaTab.tsx: Remove `ScanlineOverlay` from the CyberComponents import. Remove all `<ScanlineOverlay />` JSX usages. If LoadingScreen is the only remaining import from CyberComponents, keep it. Otherwise if no CyberComponents imports are needed, remove the import line.",
+    "In src/features/chat/components/ChatTab.tsx: Remove `ScanlineOverlay` from the CyberComponents import. Remove all `<ScanlineOverlay />` JSX usages. Keep CyberCard and SectionLabel imports if they are still used in the file.",
+    "In src/features/gobernanza/components/GobernanzaTab.tsx: Remove `ScanlineOverlay` from the CyberComponents import. Remove the `<ScanlineOverlay />` JSX usage. Keep all other CyberComponent imports (CyberCard, CyberButton, StatGrid, StatCard are heavily used there and would be a larger refactor).",
+    "Run tsc --noEmit to confirm no new errors."
+  ],
+  "acceptance_criteria": [
+    "SuggestionChips.tsx file is deleted",
+    "No <ScanlineOverlay /> appears in any tab component",
+    "Remaining CyberComponent imports (CyberCard, StatGrid etc. in GobernanzaTab and ChatTab) are preserved since full refactor is out of scope",
+    "tsc --noEmit shows only the pre-existing react-router-dom error"
+  ],
+  "verification": [
+    "source /root/.nvm/nvm.sh && nvm use 22 && ./node_modules/.bin/tsc --noEmit 2>&1 | grep -v 'react-router-dom' | grep 'error' || echo 'PASS: No new TS errors'",
+    "grep -r 'ScanlineOverlay' /projects/sandbox/Sistema-omicrom/src/ --include='*.tsx' | grep -v 'CyberComponents.tsx' | grep -v '.agents' || echo 'PASS: ScanlineOverlay not used in tabs'",
+    "test ! -f /projects/sandbox/Sistema-omicrom/src/features/omicron/components/SuggestionChips.tsx && echo 'PASS: SuggestionChips deleted'"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

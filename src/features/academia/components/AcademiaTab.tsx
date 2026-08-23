@@ -12,7 +12,7 @@ import { firePulse } from '@/shared/components/LivePulseBar';
 import { CelebrationBurst } from '@/shared/motion';
 import { ScanlineOverlay, LoadingScreen } from '@/shared/components/CyberComponents';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
-import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy';
+import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { useToast } from '@/shared/components/Toast';
 
@@ -424,7 +424,7 @@ export function AcademiaTab() {
               {/* Sistema Solar del Aprendizaje · mismo Núcleo de partículas de toda la app (Ómicron unificado) */}
               <div style={{ position: 'relative', width: 180, height: 180, margin: '0 auto 6px' }}
                 role="img" aria-label={`Progreso de aprendizaje ${totalAll ? Math.round((totalDone / totalAll) * 100) : 0} por ciento`}>
-                <ParticleOrb glowIntensity={totalAll && totalDone >= totalAll ? 0.9 : 0.2} />
+                <GeodesicOrb size={180} nodes={totalAll && totalDone >= totalAll ? 42 : 12} spinning={20} intensity={totalAll && totalDone >= totalAll ? 0.9 : 0.5} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <div style={{ textAlign: 'center', lineHeight: 1 }}>
                     <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 8, color: C.cyan, letterSpacing: 2 }}>NÚCLEO</span>

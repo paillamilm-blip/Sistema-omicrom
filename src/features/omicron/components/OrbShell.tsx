@@ -1,8 +1,7 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
-import ParticleOrb from './ParticleOrbLazy';
-import { SuggestionChips } from './SuggestionChips';
+import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { ProactiveCards } from './ProactiveCards';
 import { OrbContextLabel } from './OrbContextLabel';
@@ -196,7 +195,7 @@ function TabLoader() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: C.bg }}>
       <div style={{ width: 64, height: 64 }}>
-        <ParticleOrb />
+        <GeodesicOrb size={64} nodes={8} spinning={15} />
       </div>
       <p style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Cargando...</p>
     </div>

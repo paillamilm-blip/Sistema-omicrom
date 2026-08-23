@@ -1,0 +1,7 @@
+{
+  "task_id": "task-replace-old-components",
+  "task_description": "Replace all deprecated old components (ParticleOrb, SuggestionChips, ScanlineOverlay) with new design system equivalents and clean up dead code",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

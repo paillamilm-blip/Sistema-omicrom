@@ -30,7 +30,7 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined;
-          // Three.js ecosystem — HEAVY (~500KB) — lazy loaded via ParticleOrbLazy
+          // Three.js ecosystem — HEAVY (~500KB) — lazy loaded via OrbNeuronal
           if (id.includes('three') || id.includes('@react-three') || id.includes('postprocessing')) return 'three';
           // Supabase client
           if (id.includes('@supabase')) return 'supabase';

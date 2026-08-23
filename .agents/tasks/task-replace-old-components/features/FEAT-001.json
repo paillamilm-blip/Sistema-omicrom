@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "refactor",
+  "description": "Replace all ParticleOrb usages with GeodesicOrb (SVG), remove dead SuggestionChips import from OrbShell, and clean up dead ParticleOrb files",
+  "status": "in_progress",
+  "steps": [
+    "In src/App.tsx: Replace `import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy'` with `import { GeodesicOrb } from '@/shared/components/GeodesicOrb'`. Replace `<ParticleOrb />` usage (line 85) with `<GeodesicOrb size={168} nodes={12} spinning={25} intensity={0.7} />`. The container already has width:168 height:168.",
+    "In src/features/omicron/components/OrbShell.tsx: Remove `import ParticleOrb from './ParticleOrbLazy'` (line 4). Remove `import { SuggestionChips } from './SuggestionChips'` (line 5). In the TabLoader function (around line 197-201), replace `<ParticleOrb />` with `<GeodesicOrb size={64} nodes={8} spinning={15} />` and add `import { GeodesicOrb } from '@/shared/components/GeodesicOrb'` at the top.",
+    "In src/features/academia/components/AcademiaTab.tsx: Replace `import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy'` with `import { GeodesicOrb } from '@/shared/components/GeodesicOrb'`. Replace `<ParticleOrb glowIntensity={...} />` (line 427) with `<GeodesicOrb size={180} nodes={totalAll && totalDone >= totalAll ? 42 : 12} spinning={20} intensity={totalAll && totalDone >= totalAll ? 0.9 : 0.5} />`.",
+    "In src/features/auth/components/AuthOverlay.tsx: Replace `import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy'` with `import { GeodesicOrb } from '@/shared/components/GeodesicOrb'`. Replace `<ParticleOrb />` (line 213) with `<GeodesicOrb size={80} nodes={10} spinning={20} intensity={0.6} />`.",
+    "Delete the deprecated ParticleOrb files: src/features/omicron/components/ParticleOrb.tsx, src/features/omicron/components/ParticleOrbLazy.tsx, src/features/omicron/components/ParticleOrbFallback.tsx",
+    "In vite.config.ts (line 33): Update the comment referencing ParticleOrbLazy to just say 'Three.js ecosystem - lazy loaded via OrbNeuronal' or similar.",
+    "Run tsc --noEmit to verify no new errors introduced (only existing react-router-dom error is acceptable)."
+  ],
+  "acceptance_criteria": [
+    "No file in the codebase imports ParticleOrb or ParticleOrbLazy",
+    "GeodesicOrb is used in App.tsx loading screen, OrbShell TabLoader, AcademiaTab orb, and AuthOverlay",
+    "ParticleOrb.tsx, ParticleOrbLazy.tsx, and ParticleOrbFallback.tsx are deleted",
+    "SuggestionChips import is removed from OrbShell.tsx",
+    "tsc --noEmit shows only the pre-existing react-router-dom error"
+  ],
+  "verification": [
+    "source /root/.nvm/nvm.sh && nvm use 22 && ./node_modules/.bin/tsc --noEmit 2>&1 | grep -v 'react-router-dom' | grep 'error' || echo 'PASS: No new TS errors'",
+    "grep -r 'ParticleOrb' /projects/sandbox/Sistema-omicrom/src/ --include='*.tsx' --include='*.ts' | grep -v '.agents' || echo 'PASS: No ParticleOrb references remain'"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

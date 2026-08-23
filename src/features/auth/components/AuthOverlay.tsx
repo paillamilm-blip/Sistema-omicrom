@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { Eye, EyeOff, Shield, ArrowLeft, Mail } from 'lucide-react';
-import ParticleOrb from '@/features/omicron/components/ParticleOrbLazy';
+import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { getGuestProfile, clearGuestProfile } from '@/shared/utils/guestMode';
 import { C } from '@/theme';
 
@@ -210,7 +210,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
       {/* Logo — Orbe 3D */}
       <div className="mb-8 flex flex-col items-center gap-3">
         <div style={{ width: 80, height: 80, borderRadius: 999, overflow: 'hidden', border: '1px solid rgba(92,200,255,0.3)', boxShadow: '0 0 30px rgba(92,200,255,0.2)' }}>
-          <ParticleOrb />
+          <GeodesicOrb size={80} nodes={10} spinning={20} intensity={0.6} />
         </div>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-omicron-text tracking-tight">Sistema Ómicron</h1>
