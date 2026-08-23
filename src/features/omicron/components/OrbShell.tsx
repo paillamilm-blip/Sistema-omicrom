@@ -765,7 +765,7 @@ export function OrbShell() {
         pointerEvents: state === 'fullscreen' ? 'none' : 'auto',
         zIndex: 1,
       }}>
-        <div style={{ width: '85vmin', height: '85vmin', maxWidth: 420, maxHeight: 420 }}>
+        <div style={{ width: '90vmin', height: '90vmin', maxWidth: 460, maxHeight: 460 }}>
           <OrbNeuronal
             nodes={orbNodesWithLevels}
             activeNodeId={selectedNode?.id ?? null}
@@ -1240,13 +1240,7 @@ export function OrbShell() {
           </button>
         </form>
 
-        {/* Suggestion Chips (acciones rápidas) */}
-        {state === 'orb' && (
-          <SuggestionChips
-            onChipTap={(text) => { handleTextInput(text); resetIdle(); }}
-            visible={!inputText && idleStage !== 'quiet'}
-          />
-        )}
+        {/* Suggestion Chips removed — ProactiveCards now guide the user */}
       </div>}
 
       {/* ── PROACTIVE MESSAGE (con botones — reemplaza la burbuja plana) ── */}
@@ -1258,19 +1252,33 @@ export function OrbShell() {
         />
       )}
 
-      {/* ── PROACTIVE INFO CARDS (floating tips when idle in orb) ──── */}
-      {state === 'orb' && onboardingDone && (
-        <ProactiveCards
-          visible={state === 'orb' && onboardingDone}
-          onNavigate={(tab) => {
-            const node = orbNodesWithLevels.find((n: OrbNode) => n.tab === tab);
-            if (node) handleNodeTap(node);
-          }}
-        />
-      )}
-
       {/* ── ORB CONTEXT LABEL (texto flotante arriba) ──────────────── */}
       {state === 'orb' && <OrbContextLabel visible={!responseMsg} />}
+
+      {/* ── PROACTIVE INFO CARDS (above the orb, centered) ──────────── */}
+      {state === 'orb' && onboardingDone && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(env(safe-area-inset-top, 12px) + 70px)',
+          left: 0,
+          right: 0,
+          zIndex: 4,
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '0 20px',
+          pointerEvents: 'none',
+        }}>
+          <div style={{ maxWidth: 300, width: '100%', pointerEvents: 'auto' }}>
+            <ProactiveCards
+              visible={state === 'orb' && onboardingDone}
+              onNavigate={(tab) => {
+                const node = orbNodesWithLevels.find((n: OrbNode) => n.tab === tab);
+                if (node) handleNodeTap(node);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* ── PREMIUM UPSELL (cuando llega al límite de IA) ──────────── */}
       {showPremium && <PremiumLock feature="Coach IA" onClose={() => setShowPremium(false)} />}
