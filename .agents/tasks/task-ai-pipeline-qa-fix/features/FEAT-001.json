@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix critical bugs in the AI pipeline that prevent AI from responding to users. Multiple issues across the call chain: (1) callAI timeout never aborts the request, (2) proxy-ai CORS not passing request object, (3) proxy-ai credit check uses admin client without user context, (4) model name mismatch in response, (5) OraculoBar voice does not call AI for unknown intents, (6) no error indicator when AI fails (shows pre-canned message looking like real response).",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Fix src/infrastructure/ai/client.ts: The AbortController is created but never passed to supabase.functions.invoke(). The Supabase JS v2 client does NOT support abort signals in invoke(). Replace with a Promise.race pattern: race the invoke() call against a setTimeout that rejects after `timeout` ms. This ensures actual timeout behavior.",
     "Fix supabase/functions/proxy-ai/index.ts CORS: Change `const CORS = corsHeaders();` (module level, no req) to compute CORS inside the handler with `const CORS = corsHeaders(req);` so the origin is properly reflected from the actual request.",
@@ -26,5 +26,5 @@
     "source /root/.nvm/nvm.sh && nvm use 22 && npx vitest --run 2>&1 | tail -20"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing test failure: oraculo.test.ts expects interpret('hola') to return {kind:'fact',topic:'ayuda'} but it returns {kind:'unknown'} - this was introduced by a prior commit (102046d) and is unrelated to these fixes. All 7 bugs fixed successfully. TypeScript builds with only the pre-existing react-router-dom error."
 }
