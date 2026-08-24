@@ -4,7 +4,7 @@
 const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const OPENROUTER_KEY = Deno.env.get('OPENROUTER_KEY') ?? '';
 
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-3.6-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
