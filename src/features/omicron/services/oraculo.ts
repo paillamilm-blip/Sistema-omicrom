@@ -50,7 +50,7 @@ export function interpret(raw: string): OraculoIntent {
   if (/(reputaci|confianz|qué tan bueno|que tan bueno)/.test(q)) return { kind: 'fact', topic: 'reputacion' };
   if (/(cuánt|cuant).*(token|saldo|plata|dinero)/.test(q)) return { kind: 'fact', topic: 'tokens' };
   if (/(punto|pe\b|experiencia)/.test(q)) return { kind: 'fact', topic: 'pe' };
-  if (/(ayuda|qué puedo|que puedo|comando|quién eres|quien eres|hola)/.test(q)) return { kind: 'fact', topic: 'ayuda' };
+  if (/(ayuda|qué puedo|que puedo|comando|quién eres|quien eres)/.test(q)) return { kind: 'fact', topic: 'ayuda' };
 
   const nav = NAV.find((n) => n.keys.some((k) => q.includes(k)));
   if (nav) return { kind: 'navigate', tab: nav.tab, label: nav.label };
