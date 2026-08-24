@@ -35,17 +35,20 @@ export async function callAI(
   const { maxTokens = 1024, temperature = 0.7, jsonMode = false, timeout = 30000 } = options;
 
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeout);
-
-    const { data, error } = await supabase.functions.invoke('proxy-ai', {
+    // Promise.race: the Supabase JS v2 invoke() does NOT support AbortSignal,
+    // so we race the call against a timeout to ensure actual timeout behavior.
+    const invokePromise = supabase.functions.invoke('proxy-ai', {
       body: {
         messages,
         options: { maxTokens, temperature, jsonMode },
       },
     });
 
-    clearTimeout(timer);
+    const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) => {
+      setTimeout(() => resolve({ data: null, error: { message: 'Timeout alcanzado' } }), timeout);
+    });
+
+    const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
 
     if (error) {
       console.warn('[aiClient] Edge Function error:', error.message ?? error);
@@ -62,11 +65,7 @@ export async function callAI(
 
     return null;
   } catch (e) {
-    if ((e as Error).name === 'AbortError') {
-      console.warn('[aiClient] Timeout alcanzado.');
-    } else {
-      console.error('[aiClient] Error:', e);
-    }
+    console.error('[aiClient] Error:', e);
     return null;
   }
 }

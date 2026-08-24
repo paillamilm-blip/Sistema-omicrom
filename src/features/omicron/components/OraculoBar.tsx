@@ -175,11 +175,27 @@ export function OraculoBar() {
       remember(text, t, { ...contextData, coachAdvice: true });
       return;
     }
-    const t = 'No te entendí. Puedes decir: abre mi billetera, ve a gobernanza, o pídeme un consejo.';
-    flash('oraculo', t);
-    speak(t);
-    // ⭐ Recordar comandos no reconocidos (para aprender)
-    remember(text, t, { ...contextData, unrecognized: true });
+    // unknown — send to Ómicron AI (same as OrbShell)
+    setBusy(true);
+    flash('oraculo', 'Déjame pensar…', 20000);
+    const r = await askOmicron(text, {
+      skills: profile?.skills ?? [],
+      cv_summary: profile?.cv_summary ?? '',
+      execution: profile?.execution_score,
+      quality: profile?.quality_score,
+      transcendence: profile?.transcendence_score,
+      foundation: profile?.foundation_score,
+      reputation: profile?.reputation_score,
+      pe: profile?.pe_points,
+      activeTab: activeTab,
+      displayName: profile?.display_name || profile?.username,
+    });
+    setBusy(false);
+    const t = r.text;
+    flash('oraculo', t, 14000);
+    speak(t.length > 320 ? t.slice(0, 320) : t);
+    // Recordar interacción con IA
+    remember(text, t, { ...contextData, aiResponse: true });
   }
 
   function toggleListen() {

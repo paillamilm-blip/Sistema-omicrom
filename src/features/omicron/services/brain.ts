@@ -191,7 +191,7 @@ export async function askOmicron(
     if (!text) {
       const fallback = generateOfflineFallback(message, context);
       addToMemory('assistant', fallback);
-      return { text: fallback, toolCall: null };
+      return { text: fallback, error: 'ai_unavailable', toolCall: null };
     }
 
     addToMemory('assistant', text);

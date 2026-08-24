@@ -31,7 +31,6 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicrom.vercel.app';
 
 import { corsHeaders } from '../_shared/cors.ts';
-const CORS = corsHeaders();
 
 // Modelos gratis ordenados por preferencia (mismo orden que aiClient.ts tenía)
 const FREE_MODELS = [
@@ -59,6 +58,10 @@ function isModelAlive(model: string): boolean {
 
 const _admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
+// CORS headers are computed per-request inside the handler to reflect the
+// correct origin. This variable is set at the top of each request.
+let CORS: Record<string, string> = {};
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -80,6 +83,9 @@ interface RequestBody {
 }
 
 Deno.serve(async (req) => {
+  // Compute CORS from the actual request origin
+  CORS = corsHeaders(req);
+
   // CORS preflight
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
@@ -96,8 +102,12 @@ Deno.serve(async (req) => {
 
     // ── Auth check + credits ──────────────────────────────────────────
     const authHeader = req.headers.get('Authorization') ?? '';
-    const creditBlock = await checkAndConsumeCredit(_admin, authHeader, 'proxy-ai');
-    if (creditBlock) return creditBlock;
+    // Only check credits for authenticated users with a real JWT.
+    // If authHeader is empty or blank (guest user), skip credit check entirely.
+    if (authHeader.trim() && authHeader.trim() !== 'Bearer') {
+      const creditBlock = await checkAndConsumeCredit(_admin, authHeader, 'proxy-ai');
+      if (creditBlock) return creditBlock;
+    }
 
     // ── Parse body ────────────────────────────────────────────────────
     const body: RequestBody = await req.json().catch(() => ({ messages: [] }));
@@ -142,7 +152,7 @@ Deno.serve(async (req) => {
         };
 
         const geminiController = new AbortController();
-        const geminiTimer = setTimeout(() => geminiController.abort(), 22000);
+        const geminiTimer = setTimeout(() => geminiController.abort(), 25000);
         const geminiResp = await fetch(GEMINI_URL, {
           method: 'POST',
           headers: {
@@ -158,7 +168,7 @@ Deno.serve(async (req) => {
           const geminiData = await geminiResp.json();
           const geminiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
           if (geminiText) {
-            return json({ text: geminiText.trim(), model: 'gemini-2.0-flash' });
+            return json({ text: geminiText.trim(), model: GEMINI_MODEL });
           }
         } else {
           console.warn(`[proxy-ai] Gemini failed: ${geminiResp.status}, falling back to OpenRouter`);

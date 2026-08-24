@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix critical bugs in the AI pipeline that prevent AI from responding to users. Multiple issues across the call chain: (1) callAI timeout never aborts the request, (2) proxy-ai CORS not passing request object, (3) proxy-ai credit check uses admin client without user context, (4) model name mismatch in response, (5) OraculoBar voice does not call AI for unknown intents, (6) no error indicator when AI fails (shows pre-canned message looking like real response).",
+  "status": "in_progress",
+  "steps": [
+    "Fix src/infrastructure/ai/client.ts: The AbortController is created but never passed to supabase.functions.invoke(). The Supabase JS v2 client does NOT support abort signals in invoke(). Replace with a Promise.race pattern: race the invoke() call against a setTimeout that rejects after `timeout` ms. This ensures actual timeout behavior.",
+    "Fix supabase/functions/proxy-ai/index.ts CORS: Change `const CORS = corsHeaders();` (module level, no req) to compute CORS inside the handler with `const CORS = corsHeaders(req);` so the origin is properly reflected from the actual request.",
+    "Fix supabase/functions/proxy-ai/index.ts credit check: The checkAndConsumeCredit is called with adminClient (service_role). The RPC check_and_consume_credit likely uses auth.uid() which is NULL for service_role. Pass the user's JWT to create a user-scoped client, OR pass the auth header to the RPC. The simplest fix: create a user-scoped client from the Authorization header and use that for the credit check. If auth header is empty/invalid (guest user), skip the credit check entirely (allow guest access to AI).",
+    "Fix supabase/functions/proxy-ai/index.ts model response: Change the hardcoded `model: 'gemini-2.0-flash'` to use the actual GEMINI_MODEL constant for consistency.",
+    "Fix src/features/omicron/components/OraculoBar.tsx: When intent.kind is 'unknown', call askOmicron() instead of showing a static 'No te entendi' message. This makes voice and text input behave identically.",
+    "Fix src/features/omicron/services/brain.ts fallback indication: When callAI returns null and generateOfflineFallback() is used, set the error field to 'ai_unavailable' so the UI can optionally show a subtle indicator. Currently it sets error only in the catch block but not when text is null from callAI.",
+    "Fix supabase/functions/proxy-ai/index.ts timeout: Increase the Gemini timeout from 22s to 25s to better handle cold starts, and increase the overall Edge Function timeout tolerance."
+  ],
+  "acceptance_criteria": [
+    "callAI() properly times out after the specified timeout using Promise.race pattern",
+    "proxy-ai correctly reflects CORS origin from the actual request",
+    "proxy-ai allows guest users (no auth header) to use AI without being blocked by credit check",
+    "proxy-ai returns the actual model name used (GEMINI_MODEL constant) instead of hardcoded 'gemini-2.0-flash'",
+    "OraculoBar calls askOmicron for unknown intents just like OrbShell does",
+    "askOmicron response includes error: 'ai_unavailable' when fallback is used",
+    "TypeScript builds without new errors (pre-existing react-router-dom error is acceptable)"
+  ],
+  "verification": [
+    "source /root/.nvm/nvm.sh && nvm use 22 && ./node_modules/.bin/tsc --noEmit 2>&1 | grep -v 'react-router-dom' | grep error || echo 'No new TS errors'",
+    "source /root/.nvm/nvm.sh && nvm use 22 && npx vitest --run 2>&1 | tail -20"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
