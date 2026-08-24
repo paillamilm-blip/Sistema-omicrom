@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Address v2 QA review issues: (1) Static CORS in shared helpers rateLimit.ts and iaCredits.ts bypass per-request CORS computed in proxy-ai, (2) No try-catch in OraculoBar unknown-intent branch leaves UI stuck in busy state on error.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Fix supabase/functions/_shared/rateLimit.ts: Make tooManyRequests() accept an optional corsHeaders parameter (Record<string,string>). If provided, use those headers; if not, fall back to the existing static default.",
     "Fix supabase/functions/_shared/iaCredits.ts: Make checkAndConsumeCredit() accept an optional corsOverride parameter (Record<string,string>). If provided, use those headers in the Response it builds instead of the static CORS constant.",
@@ -22,5 +22,5 @@
     "source /root/.nvm/nvm.sh && nvm use 22 && npx vitest --run 2>&1 | tail -20"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All v2 review issues addressed. Build passes (only pre-existing react-router-dom error). All 127 tests pass. CORS helpers are now backwards-compatible (optional param with static fallback)."
 }
