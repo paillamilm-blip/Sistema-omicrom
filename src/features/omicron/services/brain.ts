@@ -185,7 +185,7 @@ export async function askOmicron(
     const text = await callAI(messages, {
       maxTokens: 512,
       temperature: 0.75,
-      timeout: 20000,
+      timeout: 28000,
     });
 
     if (!text) {

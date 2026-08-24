@@ -92,8 +92,8 @@ describe('interpret — datos simples (fact)', () => {
     expect(interpret('cuántos puntos tengo')).toEqual({ kind: 'fact', topic: 'pe' });
   });
 
-  it('"hola" → fact ayuda', () => {
-    expect(interpret('hola')).toEqual({ kind: 'fact', topic: 'ayuda' });
+  it('"hola" → unknown (goes to AI brain)', () => {
+    expect(interpret('hola')).toEqual({ kind: 'unknown' });
   });
 
   it('"qué puedo hacer" → fact ayuda', () => {

@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix 3 QA review issues: (1) CORS race condition from mutable module-level state in proxy-ai, (2) Client timeout shorter than server timeout in brain.ts, (3) Timeout inconsistency between llm.ts and proxy-ai.",
+  "status": "in_progress",
+  "steps": [
+    "Fix supabase/functions/proxy-ai/index.ts: Remove module-level mutable CORS variable and the module-level json() helper. Instead, compute CORS as a const local inside the handler and define json() inside the handler where it closes over the local const.",
+    "Fix src/features/omicron/services/brain.ts: Change timeout from 20000 to 28000 to accommodate the server's 25s Gemini timeout plus network overhead.",
+    "Fix supabase/functions/_shared/llm.ts: Change the Gemini timeout from 22000 to 25000 to align with proxy-ai's 25s timeout."
+  ],
+  "acceptance_criteria": [
+    "proxy-ai no longer has shared mutable CORS state - CORS is a const local inside the handler",
+    "brain.ts callAI timeout is 28000ms",
+    "llm.ts Gemini timeout is 25000ms",
+    "TypeScript builds without new errors",
+    "All tests pass"
+  ],
+  "verification": [
+    "source /root/.nvm/nvm.sh && nvm use 22 && ./node_modules/.bin/tsc --noEmit 2>&1 | grep -v 'react-router-dom' | grep error || echo 'No new TS errors'",
+    "source /root/.nvm/nvm.sh && nvm use 22 && npx vitest --run 2>&1 | tail -20"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}

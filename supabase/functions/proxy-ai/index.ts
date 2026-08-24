@@ -58,15 +58,7 @@ function isModelAlive(model: string): boolean {
 
 const _admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-// CORS headers are computed per-request inside the handler to reflect the
-// correct origin. This variable is set at the top of each request.
-let CORS: Record<string, string> = {};
 
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
-  });
 
 interface AIMessage {
   role: 'system' | 'user' | 'assistant';
@@ -83,11 +75,18 @@ interface RequestBody {
 }
 
 Deno.serve(async (req) => {
-  // Compute CORS from the actual request origin
-  CORS = corsHeaders(req);
+  // Compute CORS from the actual request origin as a local const to avoid
+  // race conditions under concurrent requests in the same Deno isolate.
+  const cors = corsHeaders(req);
+
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    });
 
   // CORS preflight
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
 
   try {
     // ── Validate key ──────────────────────────────────────────────────
