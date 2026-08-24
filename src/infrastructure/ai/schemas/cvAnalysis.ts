@@ -16,21 +16,21 @@ export const SkillDetailSchema = z.object({
 
 /** Schema para los 4 ejes del Gemelo Digital */
 export const AxesSchema = z.object({
-  exec: z.number().min(0).max(100),
-  qual: z.number().min(0).max(100),
-  trans: z.number().min(0).max(100),
-  fund: z.number().min(0).max(100),
+  exec: z.number().default(40),
+  qual: z.number().default(40),
+  trans: z.number().default(20),
+  fund: z.number().default(30),
 });
 
 /** Schema completo de la respuesta del análisis de CV con IA */
 export const GeminiAnalysisSchema = z.object({
   name: z.string().optional().default(''),
   seniorLabel: z.string().optional().default('Profesional'),
-  seniorLevel: z.number().min(1).max(5).optional().default(2),
-  years: z.number().min(0).max(50).optional().default(0),
-  skills: z.array(z.string()).max(12).optional().default([]),
-  skillsDetail: z.array(SkillDetailSchema).max(12).optional().default([]),
-  arch: z.enum(['estudiante', 'junior', 'mid', 'senior', 'lead', 'pro']).optional().default('mid'),
+  seniorLevel: z.number().optional().default(2),
+  years: z.number().optional().default(0),
+  skills: z.array(z.string()).optional().default([]),
+  skillsDetail: z.array(SkillDetailSchema).optional().default([]),
+  arch: z.string().optional().default('mid'),
   axes: AxesSchema,
   summary: z.string().optional().default(''),
 });
