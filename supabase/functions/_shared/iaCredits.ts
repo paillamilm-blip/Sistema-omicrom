@@ -35,12 +35,15 @@ const CORS = {
  * @param adminClient - Cliente con service_role (para ejecutar la RPC)
  * @param userAuthHeader - Header Authorization del request del usuario
  * @param functionName - Nombre de la función (para tracking)
+ * @param corsOverride - Headers CORS calculados por el handler (per-request).
+ *                       Si se omite, usa el default estatico (retrocompatible).
  * @returns Response si debe bloquearse, null si puede continuar
  */
 export async function checkAndConsumeCredit(
   adminClient: SupabaseClient,
   userAuthHeader: string,
-  functionName: string
+  functionName: string,
+  corsOverride?: Record<string, string>
 ): Promise<Response | null> {
   try {
     // Llamar la RPC con el contexto del usuario (auth.uid() se resuelve internamente)
@@ -62,6 +65,9 @@ export async function checkAndConsumeCredit(
     }
 
     // Sin créditos — retornar respuesta amigable
+    const headers = corsOverride
+      ? { ...corsOverride, 'Content-Type': 'application/json' }
+      : { ...CORS, 'Content-Type': 'application/json' };
     return new Response(
       JSON.stringify({
         error: 'Créditos IA agotados',
@@ -79,7 +85,7 @@ export async function checkAndConsumeCredit(
       }),
       {
         status: 429,
-        headers: { ...CORS, 'Content-Type': 'application/json' },
+        headers,
       }
     );
   } catch (err) {

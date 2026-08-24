@@ -178,24 +178,32 @@ export function OraculoBar() {
     // unknown — send to Ómicron AI (same as OrbShell)
     setBusy(true);
     flash('oraculo', 'Déjame pensar…', 20000);
-    const r = await askOmicron(text, {
-      skills: profile?.skills ?? [],
-      cv_summary: profile?.cv_summary ?? '',
-      execution: profile?.execution_score,
-      quality: profile?.quality_score,
-      transcendence: profile?.transcendence_score,
-      foundation: profile?.foundation_score,
-      reputation: profile?.reputation_score,
-      pe: profile?.pe_points,
-      activeTab: activeTab,
-      displayName: profile?.display_name || profile?.username,
-    });
-    setBusy(false);
-    const t = r.text;
-    flash('oraculo', t, 14000);
-    speak(t.length > 320 ? t.slice(0, 320) : t);
-    // Recordar interacción con IA
-    remember(text, t, { ...contextData, aiResponse: true });
+    try {
+      const r = await askOmicron(text, {
+        skills: profile?.skills ?? [],
+        cv_summary: profile?.cv_summary ?? '',
+        execution: profile?.execution_score,
+        quality: profile?.quality_score,
+        transcendence: profile?.transcendence_score,
+        foundation: profile?.foundation_score,
+        reputation: profile?.reputation_score,
+        pe: profile?.pe_points,
+        activeTab: activeTab,
+        displayName: profile?.display_name || profile?.username,
+      });
+      const t = r.text;
+      flash('oraculo', t, 14000);
+      speak(t.length > 320 ? t.slice(0, 320) : t);
+      // Recordar interacción con IA
+      remember(text, t, { ...contextData, aiResponse: true });
+    } catch (err) {
+      console.error('[OraculoBar] unknown-intent AI error:', err);
+      const t = 'Lo siento, hubo un error al consultar la IA. Intenta de nuevo.';
+      flash('oraculo', t, 8000);
+      speak(t);
+    } finally {
+      setBusy(false);
+    }
   }
 
   function toggleListen() {

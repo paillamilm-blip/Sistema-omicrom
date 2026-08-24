@@ -97,14 +97,14 @@ Deno.serve(async (req) => {
     // ── Rate limit (15 req/min por IP — más generoso que endpoints específicos) ──
     const ip = clientIp(req);
     const rl = await checkRateLimit(_admin, 'proxy-ai', ip, 15, 60);
-    if (!rl.allowed) return tooManyRequests(rl.reset_at);
+    if (!rl.allowed) return tooManyRequests(rl.reset_at, cors);
 
     // ── Auth check + credits ──────────────────────────────────────────
     const authHeader = req.headers.get('Authorization') ?? '';
     // Only check credits for authenticated users with a real JWT.
     // If authHeader is empty or blank (guest user), skip credit check entirely.
     if (authHeader.trim() && authHeader.trim() !== 'Bearer') {
-      const creditBlock = await checkAndConsumeCredit(_admin, authHeader, 'proxy-ai');
+      const creditBlock = await checkAndConsumeCredit(_admin, authHeader, 'proxy-ai', cors);
       if (creditBlock) return creditBlock;
     }
 

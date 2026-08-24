@@ -43,8 +43,16 @@ export async function checkRateLimit(
   }
 }
 
-/** Respuesta 429 estándar. */
-export function tooManyRequests(reset?: string): Response {
+/** Respuesta 429 estándar.
+ * @param reset      - Timestamp ISO indicando cuándo se renueva el límite.
+ * @param corsOverride - Headers CORS calculados por el handler (per-request).
+ *                       Si se omite, usa el default estático (retrocompatible).
+ */
+export function tooManyRequests(reset?: string, corsOverride?: Record<string, string>): Response {
+  const defaultCors: Record<string, string> = {
+    "Access-Control-Allow-Origin": Deno.env.get('PUBLIC_SITE_URL') || "https://sistema-omicrom.vercel.app",
+  };
+  const cors = corsOverride ?? defaultCors;
   return new Response(
     JSON.stringify({
       error: "Demasiadas solicitudes en poco tiempo. Espera unos segundos e intenta de nuevo.",
@@ -53,7 +61,7 @@ export function tooManyRequests(reset?: string): Response {
     {
       status: 429,
       headers: {
-        "Access-Control-Allow-Origin": Deno.env.get('PUBLIC_SITE_URL') || "https://sistema-omicrom.vercel.app",
+        ...cors,
         "Content-Type": "application/json",
         "Retry-After": "10",
       },
