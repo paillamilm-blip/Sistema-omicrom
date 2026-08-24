@@ -82,7 +82,7 @@ async function callGemini(
 
   // Use AbortController with 25s timeout to avoid hanging requests
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 25000);
+  const timer = setTimeout(() => controller.abort(), 40000);
 
   const resp = await fetch(GEMINI_URL, {
     method: 'POST',

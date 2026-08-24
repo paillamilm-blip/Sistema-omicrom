@@ -59,7 +59,7 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
     const raw = await callAI([
       { role: 'system', content: SYS },
       { role: 'user', content: 'CV COMPLETO:\n\n' + text },
-    ], { maxTokens: 2000, temperature: 0.3, jsonMode: true, timeout: 30000 });
+    ], { maxTokens: 2000, temperature: 0.3, jsonMode: true, timeout: 45000 });
 
     if (!raw) {
       return { ok: false, error: 'IA no disponible. Intenta de nuevo en unos minutos.' };

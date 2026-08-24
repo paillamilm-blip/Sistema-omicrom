@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
         };
 
         const geminiController = new AbortController();
-        const geminiTimer = setTimeout(() => geminiController.abort(), 25000);
+        const geminiTimer = setTimeout(() => geminiController.abort(), 40000);
         const geminiResp = await fetch(GEMINI_URL, {
           method: 'POST',
           headers: {

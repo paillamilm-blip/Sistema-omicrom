@@ -139,6 +139,7 @@ export function useGemeloActivation() {
 
       try {
         // Llamar a Gemini DIRECTO desde el browser (sin Edge Function)
+        setMsg('Conectando con Gemini IA… puede tardar hasta 30 segundos.');
         const { analyzeCVWithGemini } = await import('@/infrastructure/ai/gemini');
         const geminiResult = await analyzeCVWithGemini(text);
         if (!geminiResult.ok || !geminiResult.analysis?.axes) {
