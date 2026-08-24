@@ -38,6 +38,16 @@
 
 ---
 
+---
+
+## COMBO EXTRA: SINERGIA
+
+| # | Combo | Trigger | Acción |
+|---|-------|---------|--------|
+| 11 | 🧬 **SINERGIA** | "Sinergia" / "Está todo conectado?" / "Hay algo muerto?" | Escaneo total: huérfanos, ciclos, código muerto, cohesión, conexiones |
+
+---
+
 ## Reglas de ejecución
 
 1. Cuando el usuario dice un **nombre de combo** (ej: "HACER: botón de logout"), ejecutar directamente.
