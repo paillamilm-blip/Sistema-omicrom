@@ -155,24 +155,30 @@ export function OraculoBar() {
       setBusy(true);
       flash('oraculo', 'Consultando al Coach IA…', 20000);
       speak('Déjame analizar tu Gemelo Digital.');
-      const r = await askOmicron(text, {
-        skills: profile?.skills ?? [],
-        cv_summary: profile?.cv_summary ?? '',
-        execution: profile?.execution_score,
-        quality: profile?.quality_score,
-        transcendence: profile?.transcendence_score,
-        foundation: profile?.foundation_score,
-        reputation: profile?.reputation_score,
-        pe: profile?.pe_points,
-        activeTab: activeTab,
-        displayName: profile?.display_name || profile?.username,
-      });
-      setBusy(false);
-      const t = r.text;
-      flash('oraculo', t, 14000);
-      speak(t.length > 320 ? t.slice(0, 320) : t);
-      // ⭐ Recordar consulta al coach (alto valor)
-      remember(text, t, { ...contextData, coachAdvice: true });
+      try {
+        const r = await askOmicron(text, {
+          skills: profile?.skills ?? [],
+          cv_summary: profile?.cv_summary ?? '',
+          execution: profile?.execution_score,
+          quality: profile?.quality_score,
+          transcendence: profile?.transcendence_score,
+          foundation: profile?.foundation_score,
+          reputation: profile?.reputation_score,
+          pe: profile?.pe_points,
+          activeTab: activeTab,
+          displayName: profile?.display_name || profile?.username,
+        });
+        const t = r.text;
+        flash('oraculo', t, 14000);
+        speak(t.length > 320 ? t.slice(0, 320) : t);
+        // ⭐ Recordar consulta al coach (alto valor)
+        remember(text, t, { ...contextData, coachAdvice: true });
+      } catch (err) {
+        console.error('[OraculoBar] coach AI error:', err);
+        flash('oraculo', 'No pude conectar con la IA. Intentá de nuevo en unos segundos.');
+      } finally {
+        setBusy(false);
+      }
       return;
     }
     // unknown — send to Ómicron AI (same as OrbShell)
