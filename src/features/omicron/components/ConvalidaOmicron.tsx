@@ -10,7 +10,7 @@
 //
 // Ya no existe la fase "dossier" vieja. GemeloReveal la reemplaza completamente.
 // ═══════════════════════════════════════════════════════════════════════
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Upload, ArrowRight, TrendingUp, Zap, RotateCcw } from 'lucide-react';
 import { useGemeloActivation } from '@/hooks/useGemeloActivation';
@@ -26,12 +26,20 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   const {
     phase, currentStep, completedSteps, dossier,
     cvText, setCvText, cvFileName, msg, pushes, lastError,
-    hasExistingCV, profile,
+    hasExistingCV, profile, persisted,
     onCVFile, activateGemeloCompleto, cancelActivation, persistAnalysis,
   } = useGemeloActivation();
 
   const [retryCount, setRetryCount] = useState(0);
   const [retryCooldown, setRetryCooldown] = useState(false);
+
+  // Auto-close after successful persist (small delay for toast to show)
+  useEffect(() => {
+    if (persisted) {
+      const timer = setTimeout(() => onClose(), 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [persisted, onClose]);
 
   // Detect error state
   const isError = phase === 'upload' && lastError !== null;

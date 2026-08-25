@@ -52,6 +52,7 @@ export function useGemeloActivation() {
   const [synergies, setSynergies] = useState<string[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
   const [pendingPersist, setPendingPersist] = useState(false);
+  const [persisted, setPersisted] = useState(false);
   const dossierRef = useRef<AnalyzedProfile | null>(null);
   const pushIdRef = useRef(0);
   const isProcessingRef = useRef(false);
@@ -344,11 +345,21 @@ export function useGemeloActivation() {
       const res = rpcData as { ok?: boolean; error?: string } | null;
       if (error || !res?.ok) {
         const errMsg = error?.message || res?.error || 'Error desconocido';
-        toast(`No se pudo guardar: ${errMsg}`, 'error');
+        // Provide actionable messages based on common errors
+        if (errMsg.includes('Could not find') || errMsg.includes('function') || errMsg.includes('does not exist')) {
+          toast('La base de datos necesita actualizarse. Ejecutá: supabase db push', 'error');
+          console.error('[Omicron] RPC not found — migrations not applied?', errMsg);
+        } else if (errMsg.includes('sin sesión') || errMsg.includes('JWT')) {
+          toast('Tu sesión expiró. Refrescá la página e intentá de nuevo.', 'error');
+        } else {
+          toast(`No se pudo guardar: ${errMsg}`, 'error');
+        }
+        console.error('[Omicron] persistAnalysis RPC failed:', { error, rpcData });
         return;
       }
 
       // Success!
+      setPersisted(true);
       setCompletedSteps(['cv']);
       emitPush('Ejecución', data.axes.exec > 50 ? 12 : 8, C.cyan);
       emitPush('Calidad', data.axes.qual > 50 ? 10 : 6, C.purple);
@@ -380,7 +391,7 @@ export function useGemeloActivation() {
     cvText, setCvText, cvFileName, msg, pushes, synergies,
     rep, hasExistingCV, gemelo, profile, lastError,
     isProcessing: isProcessingRef.current,
-    pendingPersist,
+    pendingPersist, persisted,
     // Actions
     onCVFile, activateGemeloCompleto, cancelActivation, persistAnalysis,
   };
