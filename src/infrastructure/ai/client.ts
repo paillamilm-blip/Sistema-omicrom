@@ -62,37 +62,58 @@ export async function callAI(
 
     if (error) {
       const msg = typeof error === 'string' ? error : (error.message ?? String(error));
-      console.warn('[aiClient] Edge Function error:', msg);
+      console.warn('[aiClient] Edge Function error:', msg, error);
 
       // Propagate specific error types so callers can show better messages
       if (msg === 'TIMEOUT') {
         throw new AIError('La IA tardó demasiado en responder.', 'timeout');
       }
-      // Supabase JS v2 puts HTTP non-2xx response body into error context.
-      // Try to extract the JSON message from the error.
-      const errorBody = (error as { context?: { body?: string } })?.context?.body;
-      if (errorBody) {
-        try {
-          const parsed = JSON.parse(errorBody);
-          if (parsed.error?.includes('Créditos') || parsed.error?.includes('créditos')) {
-            throw new AIError(parsed.message || parsed.error, 'credits');
-          }
-          if (parsed.error) {
-            throw new AIError(parsed.error, 'server');
-          }
-        } catch (parseErr) {
-          if (parseErr instanceof AIError) throw parseErr;
-          // Not JSON, continue with generic
+
+      // Supabase JS v2 FunctionsHttpError: the context is the Response object.
+      // Try multiple approaches to extract the JSON error body.
+      let serverMessage: string | null = null;
+      try {
+        // Approach 1: error.context is a Response object (v2 standard)
+        if (error.context && typeof error.context.json === 'function') {
+          const body = await error.context.json();
+          serverMessage = body?.error || body?.message || null;
         }
+        // Approach 2: error.context.body is a string (some versions)
+        else if (error.context?.body && typeof error.context.body === 'string') {
+          const body = JSON.parse(error.context.body);
+          serverMessage = body?.error || body?.message || null;
+        }
+        // Approach 3: error itself has the parsed data (newer versions)
+        else if ((error as { data?: { error?: string } }).data?.error) {
+          serverMessage = (error as { data: { error: string } }).data.error;
+        }
+      } catch {
+        // Could not parse server message — continue with generic
       }
-      throw new AIError(msg, 'network');
+
+      if (serverMessage) {
+        if (serverMessage.includes('Créditos') || serverMessage.includes('créditos') || serverMessage.includes('límite')) {
+          throw new AIError(serverMessage, 'credits');
+        }
+        if (serverMessage.includes('no configurada') || serverMessage.includes('no disponible')) {
+          throw new AIError(serverMessage, 'server');
+        }
+        throw new AIError(serverMessage, 'server');
+      }
+
+      // If msg indicates connection failure vs server error
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('fetch')) {
+        throw new AIError('Sin conexión al servidor. Verificá tu internet.', 'network');
+      }
+
+      throw new AIError(msg || 'Error al contactar el servicio de IA.', 'server');
     }
 
     // La Edge Function retorna { text: string, model: string } on success
-    // o { error: string } on failure
+    // o { error: string } on failure (even with 200 status in some cases)
     if (data?.text) return data.text;
     if (data?.error) {
-      console.warn('[aiClient] Server error:', data.error);
+      console.warn('[aiClient] Server error in data:', data.error);
       if (data.error.includes('Créditos') || data.error.includes('créditos')) {
         throw new AIError(data.message || data.error, 'credits');
       }
@@ -103,6 +124,11 @@ export async function callAI(
   } catch (e) {
     if (e instanceof AIError) throw e; // re-throw typed errors
     console.error('[aiClient] Error:', e);
+    // Distinguish network errors from other errors
+    const errMsg = (e as Error)?.message || '';
+    if (errMsg.includes('Failed to fetch') || errMsg.includes('NetworkError') || errMsg.includes('ERR_')) {
+      throw new AIError('Sin conexión al servidor. Verificá tu internet.', 'network');
+    }
     throw new AIError('Error de conexión con la IA.', 'network');
   }
 }

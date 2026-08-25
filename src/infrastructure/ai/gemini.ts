@@ -95,7 +95,9 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
         case 'server':
           return { ok: false, error: e.message || 'Servicio de IA con problemas. Reintentá en unos minutos.', errorCode: 'server' };
         case 'network':
-          return { ok: false, error: 'Sin conexión al servidor de IA. Verificá tu internet.', errorCode: 'network' };
+          return { ok: false, error: 'Error al comunicarse con el servidor de IA. Verificá tu conexión.', errorCode: 'network' };
+        default:
+          return { ok: false, error: e.message || 'Error desconocido de IA.', errorCode: e.code };
       }
     }
     console.warn('[geminiClient] Error:', e);
