@@ -196,7 +196,7 @@ export function useGemeloActivation() {
     }, 6000);
 
     try {
-      // 1) Analyze CV — SOLO con IA. Si la IA falla, no proceder con datos imprecisos.
+      // 1) Analyze CV — intenta con IA primero, fallback a análisis local si IA no disponible.
       let analyzed: AnalyzedProfile | null = null;
       let usedAI = false;
 
@@ -208,32 +208,42 @@ export function useGemeloActivation() {
         if (cancelledRef.current || !isProcessingRef.current) return;
 
         if (!geminiResult.ok || !geminiResult.analysis?.axes) {
-          // Use specific error message from gemini.ts (includes credit/timeout/network info)
-          const errorMsg = geminiResult.error || 'La IA no pudo analizar el CV';
+          // If server/network error (not credits), try local fallback
           const errorCode = (geminiResult as { errorCode?: string }).errorCode || 'unknown';
-          throw Object.assign(new Error(errorMsg), { errorCode });
+          if (errorCode === 'server' || errorCode === 'network' || errorCode === 'timeout') {
+            // Fallback to local heuristic analysis
+            console.warn('[Omicron] AI unavailable, using local analysis as fallback');
+            analyzed = analyzeCV(text);
+            usedAI = false; // Mark as non-AI to show disclaimer
+            toast('IA no disponible — se usó análisis local (menos preciso)', 'info');
+          } else {
+            // Credits or other blocking error — surface to user
+            const errorMsg = geminiResult.error || 'La IA no pudo analizar el CV';
+            throw Object.assign(new Error(errorMsg), { errorCode });
+          }
+        } else {
+          const ia = geminiResult.analysis;
+          const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+          const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
+          const skillsDetail = (ia.skillsDetail ?? [])
+            .filter((s: { name?: string }) => s?.name).slice(0, 12)
+            .map((s: { name?: string; pct?: number }) => ({ name: s.name!, pct: clamp(s.pct) }));
+          const base = analyzeCV(text);
+          analyzed = {
+            ...base,
+            name: ia.name || base.name,
+            seniorLabel: ia.seniorLabel || base.seniorLabel,
+            seniorLevel: (ia.seniorLevel as AnalyzedProfile['seniorLevel']) || base.seniorLevel,
+            years: typeof ia.years === 'number' ? ia.years : base.years,
+            skills: skills.length ? skills : base.skills,
+            labels: skills.length ? skills : base.labels,
+            skillsDetail: skillsDetail.length ? skillsDetail : base.skillsDetail,
+            summary: ia.summary || base.summary,
+            arch: (ia.arch as AnalyzedProfile['arch']) || base.arch,
+            axes: { exec: clamp(ia.axes!.exec), qual: clamp(ia.axes!.qual), trans: clamp(ia.axes!.trans), fund: clamp(ia.axes!.fund) },
+          };
+          usedAI = true;
         }
-        const ia = geminiResult.analysis;
-        const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
-        const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
-        const skillsDetail = (ia.skillsDetail ?? [])
-          .filter((s: { name?: string }) => s?.name).slice(0, 12)
-          .map((s: { name?: string; pct?: number }) => ({ name: s.name!, pct: clamp(s.pct) }));
-        const base = analyzeCV(text);
-        analyzed = {
-          ...base,
-          name: ia.name || base.name,
-          seniorLabel: ia.seniorLabel || base.seniorLabel,
-          seniorLevel: (ia.seniorLevel as AnalyzedProfile['seniorLevel']) || base.seniorLevel,
-          years: typeof ia.years === 'number' ? ia.years : base.years,
-          skills: skills.length ? skills : base.skills,
-          labels: skills.length ? skills : base.labels,
-          skillsDetail: skillsDetail.length ? skillsDetail : base.skillsDetail,
-          summary: ia.summary || base.summary,
-          arch: (ia.arch as AnalyzedProfile['arch']) || base.arch,
-          axes: { exec: clamp(ia.axes!.exec), qual: clamp(ia.axes!.qual), trans: clamp(ia.axes!.trans), fund: clamp(ia.axes!.fund) },
-        };
-        usedAI = true;
       } catch (err) {
         // Clear timers on error
         if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
@@ -274,8 +284,8 @@ export function useGemeloActivation() {
 
       if (cancelledRef.current) return;
 
-      if (!analyzed || !usedAI) {
-        setMsg('No se obtuvo un análisis confiable. Intentá de nuevo.');
+      if (!analyzed) {
+        setMsg('No se obtuvo un análisis. Intentá de nuevo.');
         setPhase('upload');
         isProcessingRef.current = false;
         return;
