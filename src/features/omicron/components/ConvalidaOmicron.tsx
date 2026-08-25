@@ -41,17 +41,29 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
     phase, currentStep, completedSteps, dossier, ai,
     cvText, setCvText, cvFileName, msg, pushes, synergies,
     rep, hasExistingCV, gemelo,
-    onCVFile, activateGemeloCompleto,
+    onCVFile, activateGemeloCompleto, cancelActivation,
   } = useGemeloActivation();
 
   // State for PerfilSkillVisual (post-dossier)
   const [showSkillVisual, setShowSkillVisual] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [retryCooldown, setRetryCooldown] = useState(false);
 
   // Detect error state (AI failed, returned to upload with error message)
-  const isError = phase === 'upload' && msg.toLowerCase().includes('no se pudo');
+  const isError = phase === 'upload' && (msg.toLowerCase().includes('no se pudo') || msg.toLowerCase().includes('tardó demasiado') || msg.toLowerCase().includes('timeout'));
 
   // Darker variant of user color for gradient
   const ucDark = uc + 'cc';
+
+  // Retry with cooldown (exponential: 2s, 4s, 8s)
+  const handleRetry = () => {
+    if (retryCooldown) return;
+    setRetryCount((c) => c + 1);
+    const delay = Math.min(8000, 2000 * Math.pow(2, retryCount));
+    setRetryCooldown(true);
+    setTimeout(() => setRetryCooldown(false), delay);
+    void activateGemeloCompleto();
+  };
 
   // ── PHASE: SYNCING ──────────────────────────────────────────────────
   if (phase === 'syncing') {
@@ -62,7 +74,20 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative', zIndex: 2 }}>
           <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: uc }}>SINCRONIZANDO GEMELO</span>
-          <Loader2 size={18} color={uc} style={{ animation: 'cp-spin 0.8s linear infinite' }} />
+          <button
+            onClick={cancelActivation}
+            aria-label="Cancelar análisis"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: RADIUS.pill,
+              background: `${C.red}14`, border: `1px solid ${C.red}44`,
+              color: C.red, fontFamily: FONT.mono, fontSize: SIZE.xxs,
+              cursor: 'pointer', minHeight: 36,
+            }}
+          >
+            <X size={14} />
+            Cancelar
+          </button>
         </div>
 
         {/* GeodesicOrb (grows as steps complete) */}
@@ -127,7 +152,29 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
               );
             })}
           </div>
-          <p style={{ textAlign: 'center', margin: '16px 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.5 }}>{msg}</p>
+          <p style={{ textAlign: 'center', margin: '16px 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.5 }}>
+            {msg}
+          </p>
+          {/* Pulsing indicator during AI wait (step 0, no completions yet) */}
+          {completedSteps.length === 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 }}>
+              <motion.div
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ width: 8, height: 8, borderRadius: '50%', background: uc }}
+              />
+              <motion.div
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+                style={{ width: 8, height: 8, borderRadius: '50%', background: uc }}
+              />
+              <motion.div
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+                style={{ width: 8, height: 8, borderRadius: '50%', background: uc }}
+              />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -290,13 +337,20 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
 
       {/* Error retry button */}
       {isError && (
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <motion.button
-            onClick={() => void activateGemeloCompleto()}
+            onClick={handleRetry}
+            disabled={retryCooldown}
             whileTap={{ scale: 0.95 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: RADIUS.lg, border: `1px solid ${C.red}44`, background: `${C.red}14`, color: C.red, fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, cursor: 'pointer', minHeight: 44 }}>
-            <RotateCcw size={16} /> Reintentar
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: RADIUS.lg, border: `1px solid ${retryCooldown ? C.mut : C.red}44`, background: `${retryCooldown ? C.mut : C.red}14`, color: retryCooldown ? C.mut : C.red, fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, cursor: retryCooldown ? 'default' : 'pointer', minHeight: 44, opacity: retryCooldown ? 0.6 : 1 }}>
+            <RotateCcw size={16} style={retryCooldown ? { animation: 'cp-spin 0.8s linear infinite' } : undefined} />
+            {retryCooldown ? 'Esperando…' : retryCount > 0 ? `Reintentar (${retryCount + 1}º intento)` : 'Reintentar'}
           </motion.button>
+          {retryCount >= 2 && (
+            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textAlign: 'center' }}>
+              Si el problema persiste, verificá tu conexión o intentá más tarde.
+            </span>
+          )}
         </div>
       )}
 
