@@ -52,7 +52,7 @@ export interface GeminiAnalysis {
   summary?: string;
 }
 
-export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean; analysis?: GeminiAnalysis; error?: string }> {
+export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean; analysis?: GeminiAnalysis; error?: string; errorCode?: string }> {
   const text = cvText.slice(0, 15000);
 
   try {
@@ -62,13 +62,13 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
     ], { maxTokens: 2000, temperature: 0.3, jsonMode: true, timeout: 25000 });
 
     if (!raw) {
-      return { ok: false, error: 'IA no disponible. Intenta de nuevo en unos minutos.' };
+      return { ok: false, error: 'IA no disponible. Intenta de nuevo en unos minutos.', errorCode: 'empty_response' };
     }
 
     // Extraer JSON del contenido (puede venir con texto antes/después)
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return { ok: false, error: 'La IA respondió pero no pude interpretar el resultado.' };
+      return { ok: false, error: 'La IA respondió pero no pude interpretar el resultado.', errorCode: 'parse_error' };
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
@@ -78,12 +78,27 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
     const validation = validateGeminiResponse(parsed);
     if (!validation.success) {
       console.warn('[geminiClient] Zod validation failed:', validation.error);
-      return { ok: false, error: 'La IA devolvió datos incompletos. Intentá de nuevo.' };
+      return { ok: false, error: 'La IA devolvió datos incompletos. Intentá de nuevo.', errorCode: 'validation_error' };
     }
 
     return { ok: true, analysis: validation.data as GeminiAnalysis };
-  } catch (e) {
+  } catch (e: unknown) {
+    // Import AIError type for typed error handling
+    const { AIError } = await import('./client');
+    if (e instanceof AIError) {
+      console.warn(`[geminiClient] AIError [${e.code}]:`, e.message);
+      switch (e.code) {
+        case 'timeout':
+          return { ok: false, error: 'La IA tardó demasiado. Los servidores pueden estar ocupados.', errorCode: 'timeout' };
+        case 'credits':
+          return { ok: false, error: e.message || 'Créditos IA agotados. Esperá a mañana o mejorá tu plan.', errorCode: 'credits' };
+        case 'server':
+          return { ok: false, error: e.message || 'Servicio de IA con problemas. Reintentá en unos minutos.', errorCode: 'server' };
+        case 'network':
+          return { ok: false, error: 'Sin conexión al servidor de IA. Verificá tu internet.', errorCode: 'network' };
+      }
+    }
     console.warn('[geminiClient] Error:', e);
-    return { ok: false, error: 'No se pudo conectar con la IA. Intentá de nuevo.' };
+    return { ok: false, error: 'No se pudo conectar con la IA. Intentá de nuevo.', errorCode: 'unknown' };
   }
 }

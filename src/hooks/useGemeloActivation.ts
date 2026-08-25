@@ -173,7 +173,7 @@ export function useGemeloActivation() {
     safetyTimerRef.current = setTimeout(() => {
       if (!isProcessingRef.current || cancelledRef.current) return; // already handled
       console.warn('[Omicron] Safety timeout reached (30s). Resetting.');
-      isProcessingRef.current = false;
+      isProcessingRef.current = false; // This also signals the pending promise to bail out
       if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
       setLastError('timeout');
       setMsg('La IA tardó demasiado. Reintentá — a veces los modelos están ocupados.');
@@ -204,11 +204,14 @@ export function useGemeloActivation() {
         const { analyzeCVWithGemini } = await import('@/infrastructure/ai/gemini');
         const geminiResult = await analyzeCVWithGemini(text);
 
-        // Check if cancelled during await
-        if (cancelledRef.current) return;
+        // Check if cancelled during await OR if safety timeout already fired
+        if (cancelledRef.current || !isProcessingRef.current) return;
 
         if (!geminiResult.ok || !geminiResult.analysis?.axes) {
-          throw new Error(geminiResult.error || 'La IA no pudo analizar el CV');
+          // Use specific error message from gemini.ts (includes credit/timeout/network info)
+          const errorMsg = geminiResult.error || 'La IA no pudo analizar el CV';
+          const errorCode = (geminiResult as { errorCode?: string }).errorCode || 'unknown';
+          throw Object.assign(new Error(errorMsg), { errorCode });
         }
         const ia = geminiResult.analysis;
         const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
@@ -235,13 +238,32 @@ export function useGemeloActivation() {
         // Clear timers on error
         if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
         if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
-        if (cancelledRef.current) return;
+        if (cancelledRef.current || !isProcessingRef.current) return;
 
+        const errorCode = (err as { errorCode?: string })?.errorCode || 'unknown';
         console.error('[Omicron] AI analysis failed:', err);
-        setLastError('ai_failed');
-        setMsg('No se pudo analizar tu CV con IA. Verificá tu conexión e intentá de nuevo.');
+
+        // Specific error messages based on error type
+        let userMsg = 'No se pudo analizar tu CV con IA. Verificá tu conexión e intentá de nuevo.';
+        let toastMsg = 'Error de IA al analizar CV — reintentá en unos segundos';
+        if (errorCode === 'credits') {
+          userMsg = (err as Error).message || 'Créditos IA agotados. Se renuevan mañana a las 00:00 UTC.';
+          toastMsg = 'Créditos IA agotados';
+        } else if (errorCode === 'timeout') {
+          userMsg = 'La IA tardó demasiado. Los servidores pueden estar ocupados — reintentá.';
+          toastMsg = 'Timeout — reintentá';
+        } else if (errorCode === 'network') {
+          userMsg = 'Sin conexión al servidor. Verificá tu internet e intentá de nuevo.';
+          toastMsg = 'Error de conexión';
+        } else if (errorCode === 'server') {
+          userMsg = (err as Error).message || 'El servicio de IA tiene problemas. Reintentá en unos minutos.';
+          toastMsg = 'Servicio IA con problemas';
+        }
+
+        setLastError(errorCode);
+        setMsg(userMsg);
         setPhase('upload');
-        toast('Error de IA al analizar CV — reintentá en unos segundos', 'error');
+        toast(toastMsg, 'error');
         isProcessingRef.current = false;
         return; // NO proceder con datos imprecisos
       }

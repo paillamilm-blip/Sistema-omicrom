@@ -338,15 +338,23 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
       {/* Error retry button */}
       {isError && (
         <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <motion.button
-            onClick={handleRetry}
-            disabled={retryCooldown}
-            whileTap={{ scale: 0.95 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: RADIUS.lg, border: `1px solid ${retryCooldown ? C.mut : C.red}44`, background: `${retryCooldown ? C.mut : C.red}14`, color: retryCooldown ? C.mut : C.red, fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, cursor: retryCooldown ? 'default' : 'pointer', minHeight: 44, opacity: retryCooldown ? 0.6 : 1 }}>
-            <RotateCcw size={16} style={retryCooldown ? { animation: 'cp-spin 0.8s linear infinite' } : undefined} />
-            {retryCooldown ? 'Esperando…' : retryCount > 0 ? `Reintentar (${retryCount + 1}º intento)` : 'Reintentar'}
-          </motion.button>
-          {retryCount >= 2 && (
+          {/* Specific help based on error type */}
+          {lastError === 'credits' && (
+            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.gold, textAlign: 'center', padding: '0 20px' }}>
+              💡 Tus créditos IA se renuevan cada día a las 00:00 UTC.
+            </span>
+          )}
+          {lastError !== 'credits' && (
+            <motion.button
+              onClick={handleRetry}
+              disabled={retryCooldown}
+              whileTap={{ scale: 0.95 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: RADIUS.lg, border: `1px solid ${retryCooldown ? C.mut : C.red}44`, background: `${retryCooldown ? C.mut : C.red}14`, color: retryCooldown ? C.mut : C.red, fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, cursor: retryCooldown ? 'default' : 'pointer', minHeight: 44, opacity: retryCooldown ? 0.6 : 1 }}>
+              <RotateCcw size={16} style={retryCooldown ? { animation: 'cp-spin 0.8s linear infinite' } : undefined} />
+              {retryCooldown ? 'Esperando…' : retryCount > 0 ? `Reintentar (${retryCount + 1}º intento)` : 'Reintentar'}
+            </motion.button>
+          )}
+          {retryCount >= 2 && lastError !== 'credits' && (
             <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textAlign: 'center' }}>
               Si el problema persiste, verificá tu conexión o intentá más tarde.
             </span>

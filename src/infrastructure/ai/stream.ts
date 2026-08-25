@@ -116,9 +116,13 @@ export async function callAIStream(
     return result ?? '';
   } catch {
     // Fallback silencioso a non-streaming
-    const { callAI } = await import('./client');
-    const result = await callAI(messages, { maxTokens, temperature, timeout });
-    if (result) onToken(result);
-    return result ?? '';
+    try {
+      const { callAI } = await import('./client');
+      const result = await callAI(messages, { maxTokens, temperature, timeout });
+      if (result) onToken(result);
+      return result ?? '';
+    } catch {
+      return '';
+    }
   }
 }

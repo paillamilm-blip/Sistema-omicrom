@@ -25,9 +25,19 @@ export interface AIOptions {
 }
 
 /**
- * Llama a la IA vía Edge Function proxy-ai (server-side).
- * Si falla, retorna null (el caller decide qué hacer).
+ * Error class that carries the specific server message through to callers.
+ * This allows upstream code to distinguish between timeout, credits exhausted,
+ * model unavailable, etc. and show the user an actionable message.
  */
+export class AIError extends Error {
+  code: 'timeout' | 'credits' | 'server' | 'network';
+  constructor(message: string, code: AIError['code']) {
+    super(message);
+    this.name = 'AIError';
+    this.code = code;
+  }
+}
+
 export async function callAI(
   messages: AIMessage[],
   options: AIOptions = {},
@@ -45,14 +55,37 @@ export async function callAI(
     });
 
     const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) => {
-      setTimeout(() => resolve({ data: null, error: { message: 'Timeout alcanzado' } }), timeout);
+      setTimeout(() => resolve({ data: null, error: { message: 'TIMEOUT' } }), timeout);
     });
 
     const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
 
     if (error) {
-      console.warn('[aiClient] Edge Function error:', error.message ?? error);
-      return null;
+      const msg = typeof error === 'string' ? error : (error.message ?? String(error));
+      console.warn('[aiClient] Edge Function error:', msg);
+
+      // Propagate specific error types so callers can show better messages
+      if (msg === 'TIMEOUT') {
+        throw new AIError('La IA tardó demasiado en responder.', 'timeout');
+      }
+      // Supabase JS v2 puts HTTP non-2xx response body into error context.
+      // Try to extract the JSON message from the error.
+      const errorBody = (error as { context?: { body?: string } })?.context?.body;
+      if (errorBody) {
+        try {
+          const parsed = JSON.parse(errorBody);
+          if (parsed.error?.includes('Créditos') || parsed.error?.includes('créditos')) {
+            throw new AIError(parsed.message || parsed.error, 'credits');
+          }
+          if (parsed.error) {
+            throw new AIError(parsed.error, 'server');
+          }
+        } catch (parseErr) {
+          if (parseErr instanceof AIError) throw parseErr;
+          // Not JSON, continue with generic
+        }
+      }
+      throw new AIError(msg, 'network');
     }
 
     // La Edge Function retorna { text: string, model: string } on success
@@ -60,13 +93,17 @@ export async function callAI(
     if (data?.text) return data.text;
     if (data?.error) {
       console.warn('[aiClient] Server error:', data.error);
-      return null;
+      if (data.error.includes('Créditos') || data.error.includes('créditos')) {
+        throw new AIError(data.message || data.error, 'credits');
+      }
+      throw new AIError(data.error, 'server');
     }
 
     return null;
   } catch (e) {
+    if (e instanceof AIError) throw e; // re-throw typed errors
     console.error('[aiClient] Error:', e);
-    return null;
+    throw new AIError('Error de conexión con la IA.', 'network');
   }
 }
 
