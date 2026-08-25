@@ -52,6 +52,7 @@ export function useGemeloActivation() {
   const [synergies, setSynergies] = useState<string[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
   const [pendingPersist, setPendingPersist] = useState(false);
+  const dossierRef = useRef<AnalyzedProfile | null>(null);
   const pushIdRef = useRef(0);
   const isProcessingRef = useRef(false);
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,10 +70,13 @@ export function useGemeloActivation() {
     };
   }, []);
 
+  // Keep dossierRef in sync (avoids stale closure in pendingPersist effect)
+  useEffect(() => { dossierRef.current = dossier; }, [dossier]);
+
   // ── Auto-persist when user authenticates after reveal ────────────
   useEffect(() => {
-    if (pendingPersist && profile?.id && dossier) {
-      void persistAnalysis(dossier);
+    if (pendingPersist && profile?.id && dossierRef.current) {
+      void persistAnalysis(dossierRef.current);
       setPendingPersist(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -284,11 +288,17 @@ export function useGemeloActivation() {
       if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
       if (cancelledRef.current) return;
       console.error('[Omicron] activateGemeloCompleto failed:', err);
-      // Even on catastrophic failure, try local
-      const localResult = analyzeCV(cvText.trim());
-      setDossier(localResult);
-      setSynergies(detectSynergies(localResult));
-      setPhase('reveal');
+      // Even on catastrophic failure, try local fallback safely
+      try {
+        const localResult = analyzeCV(cvText.trim());
+        setDossier(localResult);
+        setSynergies(detectSynergies(localResult));
+        setPhase('reveal');
+      } catch (fallbackErr) {
+        console.error('[Omicron] Local fallback also failed:', fallbackErr);
+        setMsg('Error al procesar. Intentá de nuevo.');
+        setPhase('upload');
+      }
       isProcessingRef.current = false;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

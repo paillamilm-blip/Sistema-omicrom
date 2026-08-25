@@ -93,6 +93,7 @@ function generateSyntheticJob(analyzed: AnalyzedProfile): SyntheticJob {
   // Build matches list
   const matches = labels.slice(0, 3).map(l => `${l} — cumple`);
   if (years > 0) matches.push(`${years} años experiencia — cumple`);
+  if (matches.length === 0) matches.push('Perfil en construcción — potencial detectado');
 
   // Find the gap (weakest axis below 60)
   const weakest = Object.entries(axes).reduce((min, [k, v]) => v < min.val ? { key: k, val: v } : min, { key: 'trans', val: 100 });
@@ -136,6 +137,9 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
 
   // ── Countdown timer (desvanecimiento) ────────────────────────────────
   useEffect(() => {
+    // Don't create/restart countdown if user already persisted
+    if (isAuthenticated) { setCountdown(''); return; }
+
     const EXPIRE_KEY = 'omicron_gemelo_phantom_expire';
     let expire = localStorage.getItem(EXPIRE_KEY);
     if (!expire) {
@@ -152,7 +156,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
       setCountdown(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, []);
+  }, [isAuthenticated]);
 
   // ── Auto-progress through acts ───────────────────────────────────────
   useEffect(() => {
@@ -184,6 +188,10 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
         speak(`${analyzed.name || 'Tu perfil'}. ${analyzed.seniorLabel}. Tu ${AXIS_LABELS[strongAxis.key]?.name || 'Ejecución'} es fuerte. Pero tu ${weakName} está en ${weakAxis.val}. Ómicron puede ayudarte a subirla.`);
       }).catch(() => {});
     }
+    // Cleanup: stop speaking when act changes or component unmounts
+    return () => {
+      import('@/infrastructure/voice/engine').then(({ stopSpeaking }) => { if (stopSpeaking) stopSpeaking(); }).catch(() => {});
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAct]);
 

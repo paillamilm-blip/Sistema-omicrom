@@ -12,7 +12,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, Check, Loader2, Upload, ArrowRight, TrendingUp, Zap, RotateCcw } from 'lucide-react';
+import { X, Check, Upload, ArrowRight, TrendingUp, Zap, RotateCcw } from 'lucide-react';
 import { useGemeloActivation } from '@/hooks/useGemeloActivation';
 import { GemeloReveal } from './GemeloReveal';
 import { C, FONT, RADIUS, SIZE } from '@/theme';
