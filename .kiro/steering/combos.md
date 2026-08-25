@@ -44,7 +44,18 @@
 
 | # | Combo | Trigger | Acción |
 |---|-------|---------|--------|
-| 11 | 🧬 **SINERGIA** | "Sinergia" / "Está todo conectado?" / "Hay algo muerto?" | Escaneo total: huérfanos, ciclos, código muerto, cohesión, conexiones |
+| 11 | 🔬 **SINERGIA** | "Sinergia" / "Está todo conectado?" / "Hay algo muerto?" | Escaneo total: huérfanos, ciclos, código muerto, cohesión, conexiones |
+| 12 | 🌐 **NAVEGAR** | "Navegá [URL]" / "Abrí [sitio]" / "Mirá [página]" | Abrir browser, navegar, ver snapshots, interactuar con la web |
+
+---
+
+## CADENA EXTRA: TESTEAR LIVE
+
+| # | Nombre | Pasos |
+|---|--------|-------|
+| 11 | 🌐 **TESTEAR LIVE** | Navegá [URL] → Snapshot → Verificar elementos → Reportar bugs |
+
+> Usa agent-browser para abrir la app en browser real, tomar snapshots, clickear, rellenar forms y verificar que funciona.
 
 ---
 
