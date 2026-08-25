@@ -200,6 +200,25 @@ inclusion: always
 
 ---
 
+## 🔗 CONEXIÓN Y QA (3 skills)
+
+### 32. Sinergia (Verificación de Conexión Total)
+**Trigger:** "sinergia", "todo conectado?", "verificar conexiones", después de cambios multi-capa
+**Efecto:** 7 verificaciones: tipos e2e, providers, Edge Functions, reputación, realtime, navegación, orbe. Detecta eslabones rotos entre capas.
+**Ref:** #[[file:.kiro/skills/sinergia/SKILL.md]]
+
+### 33. QA Memoria (Base de Conocimiento de Bugs)
+**Trigger:** "QA", "ese bug ya lo vimos", "guardar error", "memoria de bugs", "historial de fixes"
+**Efecto:** Registra cada bug + intentos fallidos + solución final. Busca en memoria cuando aparece bug similar. Sugiere solución probada. Nunca reinventa la rueda.
+**Ref:** #[[file:.kiro/skills/qa-memoria/SKILL.md]]
+
+### 34. Investigación (Deep Debug para Bugs Complejos)
+**Trigger:** "investigar", "deep debug", "bug complejo", "no tiene sentido", "a veces funciona", "solo falla en producción"
+**Efecto:** 6 fases forenses: reproducir → aislar capa → hipotetizar → instrumentar → verificar → documentar. Para race conditions, bugs intermitentes, problemas cross-layer.
+**Ref:** #[[file:.kiro/skills/investigacion/SKILL.md]]
+
+---
+
 ---
 
 # 🔥 COMBOS — 10 Combinaciones de Máxima Potencia
@@ -278,9 +297,16 @@ inclusion: always
 
 ---
 
+### 🔬 FORENSE — Investigación profunda + memoria + sinergia
+**Skills:** Investigación + QA Memoria + Sinergia + Systematic Debugging + Dispatching Parallel Agents
+**Trigger:** "forense", "investigar profundo", "bug complejo", "no tiene sentido", "a veces funciona"
+**Efecto:** Reproducir → aislar capa → hipotetizar → instrumentar → verificar → documentar en memoria. Si es cross-layer, verifica sinergia. Si hay múltiples bugs, paraleliza agentes.
+
 ---
 
-# ⛓️ CADENAS ENCADENADAS — 5 Secuencias de Máxima Potencia
+---
+
+# ⛓️ CADENAS ENCADENADAS — 6 Secuencias de Máxima Potencia
 
 > Las cadenas ejecutan combos EN SECUENCIA. La salida de uno alimenta al siguiente.
 > Son para tareas complejas multi-fase que requieren el arsenal completo.
@@ -364,6 +390,22 @@ inclusion: always
 
 ---
 
+### ⛓️🔬 CADENA FORENSE — Bug imposible → investigación total → prevención
+```
+🔬 FORENSE → ⚡ RAYO (fix) → 🔗 SINERGIA (verificar) → 🛡️ BUNKER → 🎯 LANZAR
+```
+**Trigger:** "cadena forense", "investigación completa", "bug imposible"
+**Flujo:**
+1. **FORENSE**: Investigación profunda (6 fases) + consultar QA Memoria
+2. **RAYO**: Fix mínimo una vez encontrada la causa raíz
+3. **SINERGIA**: Verificar que el fix no rompió conexiones entre capas
+4. **BUNKER**: Auditoría post-fix (seguridad + performance)
+5. **LANZAR**: Deploy seguro + registrar en QA Memoria para el futuro
+
+**Para:** Bugs que resisten 2+ intentos de fix, intermitentes, cross-layer.
+
+---
+
 ---
 
 # 🎛️ REGLAS DEL SISTEMA
@@ -381,6 +423,7 @@ Los combos se activan automáticamente según la tarea detectada. No necesitás 
 | Feature end-to-end nueva | 🚀 ORBITAL |
 | CV / Gemelo Digital / IA | 🧬 GENESIS |
 | Bug de producción urgente | ⚡ RAYO |
+| Bug complejo / intermitente | 🔬 FORENSE |
 | Decisión de arquitectura | 📐 ARQUITECTO |
 | Release a producción | 🎯 LANZAR |
 
@@ -406,14 +449,21 @@ Los combos se activan automáticamente según la tarea detectada. No necesitás 
 | "rayo" / "hotfix" | ⚡ RAYO |
 | "arquitecto" | 📐 ARQUITECTO |
 | "lanzar" / "deploy" | 🎯 LANZAR |
+| "forense" / "investigar" | 🔬 FORENSE |
+| "sinergia" / "conectado?" | Sinergia (verificación) |
+| "QA" / "bugs" / "memoria" | QA Memoria |
 | "nuclear" | ⛓️ CADENA NUCLEAR |
 | "depuración" | ⛓️ CADENA DEPURACIÓN |
 | "experiencia" | ⛓️ CADENA EXPERIENCIA |
 | "evolución" | ⛓️ CADENA EVOLUCIÓN |
 | "emergencia" / "SOS" | ⛓️ CADENA EMERGENCIA |
+| "cadena forense" / "bug imposible" | ⛓️ CADENA FORENSE |
 
 ## Reglas de hierro
 1. **Verification Before Completion** está SIEMPRE activa — nunca se declara "listo" sin verificar
 2. **Claude Mem** trackea progreso en TODO momento — si la sesión se interrumpe, se retoma
 3. **Ponytail** como guardián — si cualquier combo genera over-engineering, Ponytail lo detecta
 4. **ADN Digital** se activa siempre que se procese un CV o credencial — es el corazón del producto
+5. **QA Memoria** registra SIEMPRE cada bug antes de fixearlo — el historial es sagrado
+6. **Sinergia** se activa después de cualquier cambio multi-capa — verificar que todo sigue conectado
+7. **Investigación** se activa cuando un fix falla 2+ veces — no insistir con lo obvio
