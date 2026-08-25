@@ -40,7 +40,7 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
   const {
     phase, currentStep, completedSteps, dossier, ai,
     cvText, setCvText, cvFileName, msg, pushes, synergies,
-    rep, hasExistingCV, gemelo,
+    rep, hasExistingCV, gemelo, lastError,
     onCVFile, activateGemeloCompleto, cancelActivation,
   } = useGemeloActivation();
 
@@ -49,8 +49,8 @@ export default function ConvalidaOmicron({ onClose, onViewProfile: _onViewProfil
   const [retryCount, setRetryCount] = useState(0);
   const [retryCooldown, setRetryCooldown] = useState(false);
 
-  // Detect error state (AI failed, returned to upload with error message)
-  const isError = phase === 'upload' && (msg.toLowerCase().includes('no se pudo') || msg.toLowerCase().includes('tardó demasiado') || msg.toLowerCase().includes('timeout'));
+  // Detect error state (AI failed, returned to upload)
+  const isError = phase === 'upload' && lastError !== null;
 
   // Darker variant of user color for gradient
   const ucDark = uc + 'cc';

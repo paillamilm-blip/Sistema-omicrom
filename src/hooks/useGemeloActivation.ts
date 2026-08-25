@@ -42,6 +42,7 @@ export function useGemeloActivation() {
   const [msg, setMsg] = useState('Subí tu CV y Ómicron activa todo automáticamente.');
   const [pushes, setPushes] = useState<Push[]>([]);
   const [synergies, setSynergies] = useState<string[]>([]);
+  const [lastError, setLastError] = useState<string | null>(null);
   const pushIdRef = useRef(0);
   const isProcessingRef = useRef(false);
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -65,6 +66,7 @@ export function useGemeloActivation() {
     isProcessingRef.current = false;
     if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
     if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
+    setLastError(null);
     setPhase('upload');
     setMsg('Cancelado. Podés reintentar cuando quieras.');
     toast('Análisis cancelado', 'info');
@@ -165,17 +167,18 @@ export function useGemeloActivation() {
     setPhase('syncing');
     setCurrentStep(0);
     setMsg('Ómicron está analizando TODO tu CV con IA…');
+    setLastError(null);
 
     // ── Safety timeout: forcibly reset if AI hangs ────────────────────
     safetyTimerRef.current = setTimeout(() => {
-      if (isProcessingRef.current && !cancelledRef.current) {
-        console.warn('[Omicron] Safety timeout reached (30s). Resetting.');
-        isProcessingRef.current = false;
-        if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
-        setMsg('La IA tardó demasiado. Reintentá — a veces los modelos están ocupados.');
-        setPhase('upload');
-        toast('Timeout: la IA no respondió a tiempo. Reintentá.', 'error');
-      }
+      if (!isProcessingRef.current || cancelledRef.current) return; // already handled
+      console.warn('[Omicron] Safety timeout reached (30s). Resetting.');
+      isProcessingRef.current = false;
+      if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
+      setLastError('timeout');
+      setMsg('La IA tardó demasiado. Reintentá — a veces los modelos están ocupados.');
+      setPhase('upload');
+      toast('Timeout: la IA no respondió a tiempo. Reintentá.', 'error');
     }, SAFETY_TIMEOUT_MS);
 
     // ── Animated progress messages (rotate every 6s) ─────────────────
@@ -185,6 +188,11 @@ export function useGemeloActivation() {
       if (cancelledRef.current) return;
       msgIndex = Math.min(msgIndex + 1, PROGRESS_MESSAGES.length - 1);
       setMsg(PROGRESS_MESSAGES[msgIndex]);
+      // Self-clear once all messages shown (avoids wasteful ticks)
+      if (msgIndex >= PROGRESS_MESSAGES.length - 1 && progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
+        progressTimerRef.current = null;
+      }
     }, 6000);
 
     try {
@@ -230,6 +238,7 @@ export function useGemeloActivation() {
         if (cancelledRef.current) return;
 
         console.error('[Omicron] AI analysis failed:', err);
+        setLastError('ai_failed');
         setMsg('No se pudo analizar tu CV con IA. Verificá tu conexión e intentá de nuevo.');
         setPhase('upload');
         toast('Error de IA al analizar CV — reintentá en unos segundos', 'error');
@@ -316,7 +325,7 @@ export function useGemeloActivation() {
     // State
     phase, currentStep, completedSteps, dossier, ai,
     cvText, setCvText, cvFileName, msg, pushes, synergies,
-    rep, hasExistingCV, gemelo, profile,
+    rep, hasExistingCV, gemelo, profile, lastError,
     isProcessing: isProcessingRef.current,
     // Actions
     onCVFile, activateGemeloCompleto, cancelActivation,
