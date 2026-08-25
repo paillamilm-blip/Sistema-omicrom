@@ -127,6 +127,13 @@ Usuario: "ese error ya lo vi" / "qué hicimos con X"
 - **Solución:** `isProcessingRef.current` check al inicio de la función
 - **Patrón:** Toda acción async que muta estado necesita un ref guard
 
+### BUG-006: CV analysis se queda pegado (recurrencia — cache viejo + errores genéricos)
+- **Tags:** service-worker, cache, error-propagation, race-condition, credits
+- **Causa:** Múltiple: (1) SW v3 servía build OLD con mensaje antiguo, (2) callAI tragaba errores específicos (créditos, timeout) y retornaba genérico, (3) race condition entre safety timeout y promise resolve
+- **Solución:** SW bump a v4 + force update on load + AIError typed class + mensajes diferenciados por errorCode + check isProcessingRef post-await
+- **Patrón:** (1) Siempre bumpar SW version en cada fix crítico. (2) Nunca tragar errores tipados — propagarlos hasta la UI. (3) Después de cada await, verificar que el state guard sigue activo.
+- **PR:** #265
+
 ---
 
 ## Patrones Aprendidos (Anti-Patterns → Patterns)
@@ -140,6 +147,9 @@ Usuario: "ese error ya lo vi" / "qué hicimos con X"
 | Canal Realtime sin filtro | Siempre `filter: campo=eq.valor` | BUG-003 |
 | Error silencioso (catch vacío) | Log + estado de error visible | Todos |
 | `await` sin timeout | Siempre `Promise.race` o AbortController | BUG-001 |
+| SW cache sin versionamiento activo | Bumpar version + force update en cada fix | BUG-006 |
+| Tragar errores tipados (retornar null) | Propagar AIError/typed errors hasta la UI | BUG-006 |
+| No verificar state guards post-await | Check `isProcessingRef` después de cada await | BUG-006 |
 
 ---
 
