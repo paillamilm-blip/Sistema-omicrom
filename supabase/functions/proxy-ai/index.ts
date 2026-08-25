@@ -32,11 +32,11 @@ const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicr
 
 import { corsHeaders } from '../_shared/cors.ts';
 
-// Modelos gratis ordenados por preferencia (mismo orden que aiClient.ts tenía)
+// Modelos gratis ordenados por preferencia (actualizado agosto 2026)
 const FREE_MODELS = [
   'google/gemma-4-31b-it:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
   'google/gemma-4-26b-a4b-it:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
   'nvidia/nemotron-3-nano-30b-a3b:free',
   'google/gemma-3n-e4b-it:free',
   'nvidia/nemotron-3-ultra-550b-a55b:free',
@@ -175,6 +175,11 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.warn('[proxy-ai] Gemini error, falling back to OpenRouter:', String(e).slice(0, 150));
       }
+    }
+
+    // ── If no OPENROUTER_KEY and Gemini failed, return clear error ────
+    if (!OPENROUTER_KEY) {
+      return json({ error: 'Gemini falló y no hay fallback disponible (OPENROUTER_KEY no configurada). Reintentá en unos segundos.' }, 503);
     }
 
     // ── Call OpenRouter with multi-model fallback ──────────────────────

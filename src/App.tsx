@@ -28,6 +28,31 @@ function AppShell() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // Force Service Worker update on app load (fixes stale cache serving old builds)
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (reg) {
+          reg.update().catch(() => {});
+          // If a new SW is waiting, tell it to activate immediately
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+          reg.addEventListener('updatefound', () => {
+            const newSW = reg.installing;
+            if (newSW) {
+              newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                  newSW.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+  }, []);
+
   // Unlock audio on first user gesture (browser policy)
   useEffect(() => {
     const unlock = () => { omicronAudio.unlock(); window.removeEventListener('pointerdown', unlock); };
