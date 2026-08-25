@@ -185,67 +185,7 @@ export async function updateReputationInDatabase(
 }
 
 
-/**
- * @deprecated Igual que `updateReputationInDatabase`: el cliente NO puede
- * escribir los ejes (el trigger `protect_profile_columns` los revierte).
- * Los ejes se actualizan server-side a partir de eventos reales. No-op efectivo.
- */
-export async function updateReputationScores(
-  userId: string,
-  updates: {
-    execution_score?: number;
-    quality_score?: number;
-    transcendence_score?: number;
-    foundation_score?: number;
-  }
-): Promise<boolean> {
-  try {
-    const sanitized = Object.entries(updates).reduce((acc, [key, value]) => {
-      if (value !== undefined) acc[key] = clamp(value);
-      return acc;
-    }, {} as Record<string, number>);
 
-    const { error } = await supabase
-      .from('profiles')
-      .update(sanitized)
-      .eq('id', userId);
-
-    return !error;
-  } catch (err) {
-    console.error('Error in updateReputationScores:', err);
-    return false;
-  }
-}
-
-
-/**
- * OTORGAR PE (Puntos de Experiencia) — SOLO gamificación / niveles.
- *
- * Modelo canónico (ver DEFINICION_REPUTACION_OMICROM.md):
- *  - Los PE mueven el NIVEL del nodo, NO la reputación directamente.
- *  - `experience_score` es una columna DERIVADA (promedio de los 4 ejes)
- *    que mantiene el servidor; el cliente ya NO la escribe. La formación
- *    impacta la reputación a través del eje Fundamento (nodos validados).
- *
- * Nota: la escritura directa de pe_points/experience_score desde el cliente
- * la revierte el trigger `protect_profile_columns`. El otorgamiento real de
- * PE debe hacerse vía RPC SECURITY DEFINER en el servidor (p. ej. exámenes,
- * skill tests). Esta función queda como utilidad/no-op defensiva.
- */
-export async function awardPEPoints(
-  userId: string,
-  peAmount: number,
-  reason: string
-): Promise<boolean> {
-  // reason está disponible para logging futuro
-  void reason;
-  void userId;
-  void peAmount;
-
-  // Los PE se otorgan server-side (RPC SECURITY DEFINER). experience_score
-  // es derivado y no se toca desde el cliente. Ver definición canónica.
-  return true;
-}
 
 
 /**

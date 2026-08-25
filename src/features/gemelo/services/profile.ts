@@ -331,16 +331,4 @@ export async function syncFromSupabase(): Promise<void> {
   } catch { /* sin backend: se ignora */ }
 }
 
-/** @deprecated — Las escrituras ahora van via RPCs. Este método se conserva
- * solo para compatibilidad temporal. NO escribe scores de reputación. */
-export async function pushToSupabase(): Promise<void> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase.from('gemelo_profiles').upsert({
-      user_id: user.id,
-      cv: current.cv, titles: current.titles, years: current.years, vault: current.vault,
-      pe: current.pe, rep: current.rep, axes: current.axes,
-    });
-  } catch { /* sin backend/tabla: se ignora */ }
-}
+
