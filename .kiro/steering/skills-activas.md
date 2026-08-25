@@ -221,188 +221,199 @@ inclusion: always
 
 ---
 
-# 🔥 COMBOS — 10 Combinaciones de Máxima Potencia
+# 🔥 COMBOS — 12 Combinaciones de Máxima Potencia
 
-> **Invocar:** Di el nombre. Se auto-activan según la tarea.
+> **Invocar:** Di el nombre (1 palabra). Se auto-activan según la tarea.
+> Nombres cortos, fáciles de recordar, en español.
 
 ---
 
-### 🔥 FUEGO — Ejecución brutal + código mínimo
+### 🔥 DALE — Ejecución brutal + código mínimo
 **Skills:** GSD + Ponytail + Claude Mem + Verification
-**Trigger:** "fuego", "dale", "hazlo ya", "rápido"
-**Efecto:** Ejecución inmediata. Ponytail fuerza YAGNI. GSD no pregunta. Claude Mem trackea. Verification confirma. Resultado: lo más rápido Y lo más corto que funciona.
+**Trigger:** "dale", "hazlo", "ya", "rápido", "fuego"
+**Efecto:** Ejecución inmediata. YAGNI. Sin preguntas. Tracking. Verificación. Lo más rápido Y corto que funciona.
 
 ---
 
-### 🧠 DIOS — Análisis total + ejecución perfecta
-**Skills:** Superpowers + Context Mode + Doubt-Driven + Code Review Ultra + Claude Mem + Verification
-**Trigger:** "dios", "modo dios", "hazlo perfecto", "esto es crítico"
-**Efecto:** Análisis multidimensional → Plan con adversarial review → Ejecución con tracking → Ultra Review al final → Verificación end-to-end. La combinación más completa.
+### 🧠 MÁXIMO — Análisis total + ejecución perfecta
+**Skills:** Superpowers + Context Mode + Doubt-Driven + Code Review Ultra + Claude Mem + Sinergia + Verification
+**Trigger:** "máximo", "perfecto", "esto es crítico", "100%"
+**Efecto:** Análisis multidimensional → adversarial review → ejecución con tracking → ultra review → sinergia check → verificación. TODAS las capas cubiertas. Potencia 100%.
 
 ---
 
-### ✂️ CIRUJANO — Refactoring quirúrgico sin piedad
-**Skills:** Ponytail Audit + Code Simplification + Ponytail Review + Systematic Debugging + Verification
-**Trigger:** "cirujano", "limpiá", "cortá la grasa", "refactoreá"
-**Efecto:** Audit del repo → detecta TODO lo que sobra → simplifica sin romper → verifica cada corte. Corta con bisturí, no con hacha.
+### ✂️ CORTE — Refactoring quirúrgico
+**Skills:** Ponytail Audit + Code Simplification + Ponytail Review + Systematic Debugging + Sinergia + Verification
+**Trigger:** "corte", "limpiá", "cortá", "simplificá"
+**Efecto:** Audit → detecta sobras → simplifica → verifica conexiones → confirma. Bisturí, no hacha.
 
 ---
 
-### 🎨 PIXEL — UI de nivel premio
+### 🎨 ARTE — UI de nivel premio
 **Skills:** Design System + UI/UX Pro Max + Taste Skill + Animate + Impeccable + UI Styling
-**Trigger:** "pixel", "diseñá", "UI perfecta", "rediseñá"
-**Efecto:** Tokens 3 capas → intelligence (84 estilos, 192 paletas) → anti-slop → animación → craft director → implementación. Sistémico, coherente, libre de AI-tells.
+**Trigger:** "arte", "diseñá", "bonito", "UI"
+**Efecto:** Tokens 3 capas → inteligencia de diseño → anti-slop → animación → craft director → implementación.
 
 ---
 
-### 🛡️ BUNKER — Auditoría y seguridad total
-**Skills:** CSO + Security & Hardening + Code Review Ultra + Performance Optimization + Ponytail Audit
-**Trigger:** "bunker", "auditá todo", "pre-deploy", "seguridad total"
-**Efecto:** Security audit infra-first + OWASP + Ultra Review 6D + Performance profiling + detección de bloat. Reporte completo con plan de acción.
+### 🛡️ MURO — Seguridad y auditoría total
+**Skills:** CSO + Security & Hardening + Code Review Ultra + Performance Optimization + Ponytail Audit + QA Memoria
+**Trigger:** "muro", "seguridad", "auditá", "pre-deploy"
+**Efecto:** Security audit + OWASP + review 6D + performance + bloat detection + registro en memoria.
 
 ---
 
-### 🚀 ORBITAL — Feature nueva end-to-end
-**Skills:** Context Mode + Superpowers + Incremental Implementation + API Design + Verification + Ship
-**Trigger:** "orbital", "feature completa", "construí esto end-to-end"
-**Efecto:** Análisis completo → diseño de API/interfaz → implementación incremental (cada paso compila) → verificación → ship. De idea a producción en un arco.
+### 🚀 NAVE — Feature nueva end-to-end
+**Skills:** Context Mode + Superpowers + Incremental Implementation + API Design + Sinergia + Verification + Ship
+**Trigger:** "nave", "feature", "construí esto", "end to end"
+**Efecto:** Análisis → API design → implementación incremental → sinergia check → verificación → ship. De idea a prod.
 
 ---
 
-### 🧬 GENESIS — Activación del Gemelo Digital
-**Skills:** ADN Digital + Superpowers + Systematic Debugging + Performance Optimization + Verification
-**Trigger:** "genesis", "activar gemelo", "analizar CV profundo"
-**Efecto:** Análisis de CV con máxima profundidad → refinamiento iterativo → debug de cualquier fallo → optimización del pipeline → verificación del resultado.
+### 🧬 ADN — Activación del Gemelo Digital
+**Skills:** ADN Digital + Superpowers + Systematic Debugging + Performance Optimization + Sinergia + Verification
+**Trigger:** "adn", "gemelo", "CV", "analizar perfil"
+**Efecto:** Análisis de CV profundo → refinamiento → debug de fallos → optimización → sinergia → verificación.
 
 ---
 
-### ⚡ RAYO — Fix de bug en producción
-**Skills:** Systematic Debugging + GSD + Ponytail + Dispatching Parallel Agents + Verification
-**Trigger:** "rayo", "fix urgente", "producción rota", "hotfix"
-**Efecto:** Root cause primero (Iron Law) → fix mínimo viable → parallelizar si hay múltiples issues → verificar → ship inmediato. Zero over-engineering en emergencia.
+### ⚡ FIX — Bug de producción
+**Skills:** Systematic Debugging + GSD + Ponytail + QA Memoria + Dispatching Parallel Agents + Verification
+**Trigger:** "fix", "bug", "hotfix", "arreglar"
+**Efecto:** Buscar en memoria → root cause → fix mínimo → parallelizar si multi-issue → verificar → registrar solución.
 
 ---
 
-### 📐 ARQUITECTO — Decisiones de arquitectura
-**Skills:** Superpowers + Doubt-Driven + API Design + Autoplan + Code Review Ultra + Ponytail
-**Trigger:** "arquitecto", "decisión de diseño", "cómo estructuro esto"
-**Efecto:** Análisis profundo → adversarial review de cada decisión → diseño de interfaces → pipeline de revisión → anti over-engineering. Arquitectura robusta y simple.
+### 📐 PLAN — Decisiones de arquitectura
+**Skills:** Superpowers + Doubt-Driven + API Design + Autoplan + Code Review Ultra + Ponytail + Sinergia
+**Trigger:** "plan", "arquitectura", "cómo hago esto", "diseño técnico"
+**Efecto:** Análisis profundo → adversarial → API design → pipeline review → anti over-eng → sinergia check.
 
 ---
 
-### 🎯 LANZAR — Deploy a producción
-**Skills:** Ship + Shipping & Launch + Security & Hardening + Performance Optimization + QA Skill + Verification
-**Trigger:** "lanzar", "go live", "deploy producción", "release"
-**Efecto:** Pre-launch checklist → security scan → performance check → QA completo → staged rollout → monitoring → rollback plan ready. Ship with confidence.
+### 🎯 SHIP — Deploy a producción
+**Skills:** Ship + Shipping & Launch + Security & Hardening + Performance Optimization + QA Skill + Sinergia + Verification
+**Trigger:** "ship", "deploy", "lanzar", "producción"
+**Efecto:** Pre-launch → security → performance → QA → sinergia → staged rollout → monitoring. Ship with confidence.
 
 ---
 
-### 🔬 FORENSE — Investigación profunda + memoria + sinergia
-**Skills:** Investigación + QA Memoria + Sinergia + Systematic Debugging + Dispatching Parallel Agents
-**Trigger:** "forense", "investigar profundo", "bug complejo", "no tiene sentido", "a veces funciona"
-**Efecto:** Reproducir → aislar capa → hipotetizar → instrumentar → verificar → documentar en memoria. Si es cross-layer, verifica sinergia. Si hay múltiples bugs, paraleliza agentes.
+### 🔬 CSI — Investigación de bugs complejos
+**Skills:** Investigación + QA Memoria + Sinergia + Systematic Debugging + Dispatching Parallel Agents + Superpowers
+**Trigger:** "csi", "investigar", "no tiene sentido", "bug imposible"
+**Efecto:** 6 fases forenses + memoria + sinergia + paralelismo. Para bugs que resisten todo.
+
+---
+
+### 🌐 NAVEGAR — Testear y automatizar en browser
+**Skills:** Nova Act + QA Skill + Systematic Debugging + QA Memoria + Performance Optimization + Verification
+**Trigger:** "navegar", "testear en vivo", "probar la app", "verificar en browser", "automatizar"
+**Efecto:** Abre browser → navega la app → verifica flujos → detecta bugs visuales → mide performance → registra issues en memoria. Testing real en browser vivo.
 
 ---
 
 ---
 
-# ⛓️ CADENAS ENCADENADAS — 6 Secuencias de Máxima Potencia
+# ⛓️ CADENAS — 7 Secuencias Encadenadas
 
-> Las cadenas ejecutan combos EN SECUENCIA. La salida de uno alimenta al siguiente.
-> Son para tareas complejas multi-fase que requieren el arsenal completo.
+> Ejecutan combos EN SECUENCIA. La salida de uno alimenta al siguiente.
+> Nombres de 1-2 palabras, fáciles de recordar.
 
 ---
 
-### ⛓️🔥 CADENA NUCLEAR — De idea a producción (máxima potencia)
+### ⛓️ FULL SEND — De idea a producción (potencia total)
 ```
-🧠 DIOS → 🚀 ORBITAL → 🛡️ BUNKER → 🎯 LANZAR
+🧠 MÁXIMO → 🚀 NAVE → 🛡️ MURO → 🌐 NAVEGAR → 🎯 SHIP
 ```
-**Trigger:** "nuclear", "cadena completa", "de cero a producción"
+**Trigger:** "full send", "todo", "de cero a producción"
 **Flujo:**
-1. **DIOS**: Análisis total + plan perfecto con adversarial review
-2. **ORBITAL**: Implementación end-to-end incremental con API design
-3. **BUNKER**: Auditoría de seguridad + performance + over-engineering
-4. **LANZAR**: Deploy seguro con rollback plan
-
-**Para:** Features nuevas críticas que deben salir perfectas a producción.
-
----
-
-### ⛓️✂️ CADENA DEPURACIÓN — Limpiar + hardener + shipear
-```
-✂️ CIRUJANO → 🛡️ BUNKER → ⚡ RAYO (fixes) → 🎯 LANZAR
-```
-**Trigger:** "depuración", "limpiar y deployar", "deuda técnica + ship"
-**Flujo:**
-1. **CIRUJANO**: Eliminar toda la grasa del código (audit + simplify)
-2. **BUNKER**: Auditoría de seguridad post-limpieza
-3. **RAYO**: Fix rápido de cualquier issue que surja
-4. **LANZAR**: Deploy con confianza
-
-**Para:** Cuando el repo acumula deuda y hay que limpiar antes de un release.
+1. **MÁXIMO**: Análisis perfecto + adversarial review
+2. **NAVE**: Implementación incremental end-to-end
+3. **MURO**: Auditoría de seguridad + performance
+4. **NAVEGAR**: Testing real en browser
+5. **SHIP**: Deploy con confidence
 
 ---
 
-### ⛓️🎨 CADENA EXPERIENCIA — UI perfecta de principio a fin
+### ⛓️ LIMPIEZA — Deuda técnica + ship
 ```
-🎨 PIXEL → 🧬 GENESIS → ⚡ RAYO (fixes) → 🛡️ BUNKER → 🎯 LANZAR
+✂️ CORTE → 🛡️ MURO → ⚡ FIX → 🎯 SHIP
 ```
-**Trigger:** "experiencia", "UX completa", "redesign + deploy"
+**Trigger:** "limpieza", "limpiar todo", "deuda técnica"
 **Flujo:**
-1. **PIXEL**: Diseño UI de nivel premio (tokens → anti-slop → animate → craft)
-2. **GENESIS**: Verificar que el Gemelo Digital funciona con la nueva UI
-3. **RAYO**: Fixear cualquier bug que surja en la integración
-4. **BUNKER**: Auditoría de performance (Core Web Vitals) + a11y + security
-5. **LANZAR**: Deploy con QA completo
-
-**Para:** Redesigns, nuevas pantallas, o mejoras de UX que deben ser impecables.
+1. **CORTE**: Eliminar toda la grasa
+2. **MURO**: Auditoría post-limpieza
+3. **FIX**: Arreglar lo que se rompa
+4. **SHIP**: Deploy limpio
 
 ---
 
-### ⛓️🧠 CADENA EVOLUCIÓN — Refactoring mayor seguro
+### ⛓️ VITRINA — UX perfecta de principio a fin
 ```
-📐 ARQUITECTO → ✂️ CIRUJANO → 🧠 DIOS (implementar) → 🛡️ BUNKER → 🎯 LANZAR
+🎨 ARTE → 🧬 ADN → ⚡ FIX → 🌐 NAVEGAR → 🎯 SHIP
 ```
-**Trigger:** "evolución", "refactoring mayor", "cambio de arquitectura"
+**Trigger:** "vitrina", "UX completa", "redesign"
 **Flujo:**
-1. **ARQUITECTO**: Decidir la nueva estructura con adversarial review
-2. **CIRUJANO**: Eliminar lo viejo sin piedad (pero con tracking)
-3. **DIOS**: Implementar la nueva arquitectura con máxima calidad
-4. **BUNKER**: Verificar que nada se rompió (security + perf + tests)
-5. **LANZAR**: Deploy incremental seguro
-
-**Para:** Cuando hay que cambiar la arquitectura de un módulo sin romper producción.
+1. **ARTE**: Diseño UI nivel premio
+2. **ADN**: Verificar Gemelo funciona con nueva UI
+3. **FIX**: Bugs de integración
+4. **NAVEGAR**: Testing visual en browser real
+5. **SHIP**: Deploy con QA completo
 
 ---
 
-### ⛓️⚡ CADENA EMERGENCIA — Producción rota → fix → hardening
+### ⛓️ MUTACIÓN — Refactoring mayor seguro
 ```
-⚡ RAYO → 🛡️ BUNKER (light) → 🎯 LANZAR (hotfix) → ✂️ CIRUJANO (post-mortem)
+📐 PLAN → ✂️ CORTE → 🧠 MÁXIMO → 🛡️ MURO → 🎯 SHIP
 ```
-**Trigger:** "emergencia", "producción caída", "SOS", "todo roto"
+**Trigger:** "mutación", "refactoring mayor", "cambiar arquitectura"
 **Flujo:**
-1. **RAYO**: Root cause + fix mínimo viable AHORA (parallelizar si es multi-issue)
-2. **BUNKER light**: Security scan rápido del fix (no full audit)
-3. **LANZAR hotfix**: Deploy inmediato con rollback ready
-4. **CIRUJANO post-mortem**: Después del fix, limpiar el code path que causó el issue
-
-**Para:** Emergencias de producción. Primero arreglar, después limpiar.
+1. **PLAN**: Decidir nueva estructura
+2. **CORTE**: Eliminar lo viejo
+3. **MÁXIMO**: Implementar con máxima calidad
+4. **MURO**: Verificar que nada se rompió
+5. **SHIP**: Deploy incremental
 
 ---
 
-### ⛓️🔬 CADENA FORENSE — Bug imposible → investigación total → prevención
+### ⛓️ SOS — Producción rota
 ```
-🔬 FORENSE → ⚡ RAYO (fix) → 🔗 SINERGIA (verificar) → 🛡️ BUNKER → 🎯 LANZAR
+⚡ FIX → 🛡️ MURO (light) → 🎯 SHIP (hotfix) → ✂️ CORTE (post-mortem)
 ```
-**Trigger:** "cadena forense", "investigación completa", "bug imposible"
+**Trigger:** "SOS", "producción caída", "emergencia"
 **Flujo:**
-1. **FORENSE**: Investigación profunda (6 fases) + consultar QA Memoria
-2. **RAYO**: Fix mínimo una vez encontrada la causa raíz
-3. **SINERGIA**: Verificar que el fix no rompió conexiones entre capas
-4. **BUNKER**: Auditoría post-fix (seguridad + performance)
-5. **LANZAR**: Deploy seguro + registrar en QA Memoria para el futuro
+1. **FIX**: Root cause + fix mínimo AHORA
+2. **MURO light**: Security scan rápido
+3. **SHIP hotfix**: Deploy inmediato
+4. **CORTE post-mortem**: Limpiar después
 
-**Para:** Bugs que resisten 2+ intentos de fix, intermitentes, cross-layer.
+---
+
+### ⛓️ AUTOPSIA — Bug imposible → investigación total
+```
+🔬 CSI → ⚡ FIX → 🔗 SINERGIA → 🛡️ MURO → 🎯 SHIP
+```
+**Trigger:** "autopsia", "bug imposible", "investigación completa"
+**Flujo:**
+1. **CSI**: Investigación forense (6 fases)
+2. **FIX**: Fix mínimo con causa raíz encontrada
+3. **SINERGIA**: Verificar conexiones
+4. **MURO**: Auditoría post-fix
+5. **SHIP**: Deploy + registrar en memoria
+
+---
+
+### ⛓️ TESTEAR LIVE — Verificar la app funcionando
+```
+🌐 NAVEGAR → 🔬 CSI (si hay bugs) → ⚡ FIX → 🌐 NAVEGAR (re-verify) → 🎯 SHIP
+```
+**Trigger:** "testear live", "probar todo en vivo", "QA real"
+**Flujo:**
+1. **NAVEGAR**: Abrir browser, recorrer todos los flujos
+2. **CSI**: Investigar bugs encontrados
+3. **FIX**: Arreglar
+4. **NAVEGAR**: Re-verificar que el fix funciona en browser
+5. **SHIP**: Deploy cuando todo pase
 
 ---
 
@@ -411,59 +422,58 @@ inclusion: always
 # 🎛️ REGLAS DEL SISTEMA
 
 ## Auto-activación
-Los combos se activan automáticamente según la tarea detectada. No necesitás invocarlos.
-
 | Tipo de tarea | Combo |
 |---------------|-------|
-| Fix rápido, implementar algo claro | 🔥 FUEGO |
-| Feature crítica, "hazlo bien" | 🧠 DIOS |
-| Refactoring, limpiar | ✂️ CIRUJANO |
-| UI, diseño, animaciones | 🎨 PIXEL |
-| Pre-deploy, QA | 🛡️ BUNKER |
-| Feature end-to-end nueva | 🚀 ORBITAL |
-| CV / Gemelo Digital / IA | 🧬 GENESIS |
-| Bug de producción urgente | ⚡ RAYO |
-| Bug complejo / intermitente | 🔬 FORENSE |
-| Decisión de arquitectura | 📐 ARQUITECTO |
-| Release a producción | 🎯 LANZAR |
+| Fix rápido, implementar algo claro | 🔥 **DALE** |
+| Feature crítica, "hazlo perfecto" | 🧠 **MÁXIMO** |
+| Refactoring, limpiar | ✂️ **CORTE** |
+| UI, diseño, animaciones | 🎨 **ARTE** |
+| Pre-deploy, auditoría | 🛡️ **MURO** |
+| Feature end-to-end nueva | 🚀 **NAVE** |
+| CV / Gemelo Digital / IA | 🧬 **ADN** |
+| Bug de producción | ⚡ **FIX** |
+| Decisión de arquitectura | 📐 **PLAN** |
+| Release a producción | 🎯 **SHIP** |
+| Bug complejo / intermitente | 🔬 **CSI** |
+| Testear en browser / automatizar | 🌐 **NAVEGAR** |
 
 ## Override y modificadores
 - **Nombrar un combo** tiene prioridad sobre auto-detección
 - **"sin [skill]"** excluye esa skill del combo activo
 - **"+ [skill]"** agrega una skill extra al combo
-- **"DIOS + PIXEL"** combina dos combos (merge de skills)
-- **"ponytail"** solo → activa Ponytail full sobre cualquier combo activo
-- **Cadena** → ejecuta combos secuencialmente, la salida de uno alimenta al siguiente
+- **"MÁXIMO + ARTE"** combina dos combos (merge de skills)
+- **"ponytail"** solo → activa Ponytail full sobre cualquier combo
+- **Cadena** → ejecuta combos secuencialmente
 
 ## Invocación rápida
 
 | Di esto | Activa |
 |---------|--------|
-| "fuego" / "dale" | 🔥 FUEGO |
-| "dios" / "perfecto" | 🧠 DIOS |
-| "cirujano" / "limpiá" | ✂️ CIRUJANO |
-| "pixel" / "diseñá" | 🎨 PIXEL |
-| "bunker" / "auditá" | 🛡️ BUNKER |
-| "orbital" / "feature e2e" | 🚀 ORBITAL |
-| "genesis" / "gemelo" | 🧬 GENESIS |
-| "rayo" / "hotfix" | ⚡ RAYO |
-| "arquitecto" | 📐 ARQUITECTO |
-| "lanzar" / "deploy" | 🎯 LANZAR |
-| "forense" / "investigar" | 🔬 FORENSE |
-| "sinergia" / "conectado?" | Sinergia (verificación) |
-| "QA" / "bugs" / "memoria" | QA Memoria |
-| "nuclear" | ⛓️ CADENA NUCLEAR |
-| "depuración" | ⛓️ CADENA DEPURACIÓN |
-| "experiencia" | ⛓️ CADENA EXPERIENCIA |
-| "evolución" | ⛓️ CADENA EVOLUCIÓN |
-| "emergencia" / "SOS" | ⛓️ CADENA EMERGENCIA |
-| "cadena forense" / "bug imposible" | ⛓️ CADENA FORENSE |
+| "dale" / "ya" / "hazlo" | 🔥 DALE |
+| "máximo" / "perfecto" / "100%" | 🧠 MÁXIMO |
+| "corte" / "limpiá" | ✂️ CORTE |
+| "arte" / "bonito" / "UI" | 🎨 ARTE |
+| "muro" / "seguridad" | 🛡️ MURO |
+| "nave" / "feature" | 🚀 NAVE |
+| "adn" / "gemelo" / "CV" | 🧬 ADN |
+| "fix" / "bug" / "arreglar" | ⚡ FIX |
+| "plan" / "arquitectura" | 📐 PLAN |
+| "ship" / "deploy" / "lanzar" | 🎯 SHIP |
+| "csi" / "investigar" | 🔬 CSI |
+| "navegar" / "testear" / "browser" | 🌐 NAVEGAR |
+| "full send" / "todo" | ⛓️ FULL SEND |
+| "limpieza" | ⛓️ LIMPIEZA |
+| "vitrina" | ⛓️ VITRINA |
+| "mutación" | ⛓️ MUTACIÓN |
+| "SOS" / "emergencia" | ⛓️ SOS |
+| "autopsia" | ⛓️ AUTOPSIA |
+| "testear live" | ⛓️ TESTEAR LIVE |
 
 ## Reglas de hierro
-1. **Verification Before Completion** está SIEMPRE activa — nunca se declara "listo" sin verificar
-2. **Claude Mem** trackea progreso en TODO momento — si la sesión se interrumpe, se retoma
-3. **Ponytail** como guardián — si cualquier combo genera over-engineering, Ponytail lo detecta
-4. **ADN Digital** se activa siempre que se procese un CV o credencial — es el corazón del producto
-5. **QA Memoria** registra SIEMPRE cada bug antes de fixearlo — el historial es sagrado
-6. **Sinergia** se activa después de cualquier cambio multi-capa — verificar que todo sigue conectado
-7. **Investigación** se activa cuando un fix falla 2+ veces — no insistir con lo obvio
+1. **Verification** — nunca "listo" sin verificar
+2. **Claude Mem** — trackea progreso siempre
+3. **Ponytail** — guardián anti over-engineering
+4. **ADN Digital** — activo con cualquier CV/credencial
+5. **QA Memoria** — registra cada bug antes de fixear
+6. **Sinergia** — verifica conexiones tras cambios multi-capa
+7. **Investigación** — se activa si un fix falla 2+ veces
