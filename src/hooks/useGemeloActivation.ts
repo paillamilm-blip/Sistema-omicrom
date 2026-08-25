@@ -161,6 +161,16 @@ export function useGemeloActivation() {
     if (!text) return;
     // Protección doble-click: si ya estamos procesando, ignorar
     if (isProcessingRef.current) return;
+
+    // Auth check: RPCs require authenticated user
+    if (!profile?.id) {
+      toast('Necesitás una cuenta para activar tu Gemelo Digital', 'error');
+      setMsg('Iniciá sesión para activar tu Gemelo Digital.');
+      // Dispatch auth request event so AuthOverlay opens
+      window.dispatchEvent(new Event('omicron:request-auth'));
+      return;
+    }
+
     isProcessingRef.current = true;
     cancelledRef.current = false;
 
@@ -253,32 +263,26 @@ export function useGemeloActivation() {
         const errorCode = (err as { errorCode?: string })?.errorCode || 'unknown';
         console.error('[Omicron] AI analysis failed:', err);
 
-        // Specific error messages based on error type
-        let userMsg = 'No se pudo analizar tu CV con IA. Verificá tu conexión e intentá de nuevo.';
-        let toastMsg = 'Error de IA al analizar CV — reintentá en unos segundos';
+        // Credits exhausted → block (user must wait, no point retrying)
         if (errorCode === 'credits') {
-          userMsg = (err as Error).message || 'Créditos IA agotados. Se renuevan mañana a las 00:00 UTC.';
-          toastMsg = 'Créditos IA agotados';
-        } else if (errorCode === 'timeout') {
-          userMsg = 'La IA tardó demasiado. Los servidores pueden estar ocupados — reintentá.';
-          toastMsg = 'Timeout — reintentá';
-        } else if (errorCode === 'network') {
-          userMsg = 'Sin conexión al servidor. Verificá tu internet e intentá de nuevo.';
-          toastMsg = 'Error de conexión';
-        } else if (errorCode === 'server') {
-          userMsg = (err as Error).message || 'El servicio de IA tiene problemas. Reintentá en unos minutos.';
-          toastMsg = 'Servicio IA con problemas';
+          const userMsg = (err as Error).message || 'Créditos IA agotados. Se renuevan mañana a las 00:00 UTC.';
+          setLastError(errorCode);
+          setMsg(userMsg);
+          setPhase('upload');
+          toast('Créditos IA agotados', 'error');
+          isProcessingRef.current = false;
+          return;
         }
 
-        setLastError(errorCode);
-        setMsg(userMsg);
-        setPhase('upload');
-        toast(toastMsg, 'error');
-        isProcessingRef.current = false;
-        return; // NO proceder con datos imprecisos
+        // For ALL other errors (network, server, timeout, unknown):
+        // USE LOCAL FALLBACK — never leave the user stuck
+        console.warn('[Omicron] Using local fallback after AI error:', errorCode);
+        analyzed = analyzeCV(text);
+        usedAI = false;
+        toast('IA no disponible — se usó análisis local (menos preciso)', 'info');
       }
 
-      // Clear timers — AI responded successfully
+      // Clear timers — AI responded (or fallback used)
       if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
       if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
 
@@ -351,7 +355,7 @@ export function useGemeloActivation() {
       isProcessingRef.current = false;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cvText, emitPush, runAutoChain, detectSynergies, toast]);
+  }, [cvText, emitPush, runAutoChain, detectSynergies, toast, profile?.id]);
 
   return {
     // State

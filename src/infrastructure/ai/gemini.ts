@@ -83,21 +83,21 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
 
     return { ok: true, analysis: validation.data as GeminiAnalysis };
   } catch (e: unknown) {
-    // Import AIError type for typed error handling
-    const { AIError } = await import('./client');
-    if (e instanceof AIError) {
-      console.warn(`[geminiClient] AIError [${e.code}]:`, e.message);
-      switch (e.code) {
+    // Check if the error is an AIError by duck-typing (avoids dynamic import instanceof issues)
+    const aiErr = e as { name?: string; code?: string; message?: string };
+    if (aiErr?.name === 'AIError' && aiErr.code) {
+      console.warn(`[geminiClient] AIError [${aiErr.code}]:`, aiErr.message);
+      switch (aiErr.code) {
         case 'timeout':
           return { ok: false, error: 'La IA tardó demasiado. Los servidores pueden estar ocupados.', errorCode: 'timeout' };
         case 'credits':
-          return { ok: false, error: e.message || 'Créditos IA agotados. Esperá a mañana o mejorá tu plan.', errorCode: 'credits' };
+          return { ok: false, error: aiErr.message || 'Créditos IA agotados. Esperá a mañana o mejorá tu plan.', errorCode: 'credits' };
         case 'server':
-          return { ok: false, error: e.message || 'Servicio de IA con problemas. Reintentá en unos minutos.', errorCode: 'server' };
+          return { ok: false, error: aiErr.message || 'Servicio de IA con problemas. Reintentá en unos minutos.', errorCode: 'server' };
         case 'network':
           return { ok: false, error: 'Error al comunicarse con el servidor de IA. Verificá tu conexión.', errorCode: 'network' };
         default:
-          return { ok: false, error: e.message || 'Error desconocido de IA.', errorCode: e.code };
+          return { ok: false, error: aiErr.message || 'Error desconocido de IA.', errorCode: aiErr.code };
       }
     }
     console.warn('[geminiClient] Error:', e);
