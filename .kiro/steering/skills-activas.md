@@ -4,7 +4,7 @@ inclusion: always
 
 # ⚡ Sistema de Comandos — Sistema Ómicron
 
-> **34 skills · Máxima potencia · Verbos simples**
+> **46 skills · Máxima potencia · Verbos simples**
 > Vos escribís UNA COSA y yo hago el trabajo con TODAS las skills necesarias.
 
 ---
@@ -24,10 +24,13 @@ inclusion: always
 | **CV:** [pegas el texto] | Genero el ADN Digital completo | ADN Digital + Superpowers + Systematic Debugging + Performance + Sinergia + Verification |
 | **SINERGIA** | Verifico que todo esté conectado (7 checks) | Sinergia + Verification |
 | **LIMPIAR:** [módulo/todo] | Elimino código muerto y simplifico | Ponytail Audit + Code Simplification + Ponytail Review + Ponytail Debt + Sinergia |
-| **NAVEGAR:** [url/flujo] | Abro browser, testeo en vivo, reporto bugs | Nova Act + QA Skill + QA Memoria + Performance + Verification |
+| **NAVEGAR:** [url/flujo] | Abro browser, testeo en vivo, reporto bugs | Nova Act + Agent Browser + QA Skill + QA Memoria + Performance + Verification |
 | **INVESTIGAR:** [bug] | Investigación forense profunda (6 fases) | Investigación + QA Memoria + Sinergia + Systematic Debugging + Parallel Agents + Superpowers |
 | **PLANEAR:** [feature/cambio] | Diseño la arquitectura con adversarial review | Superpowers + Doubt-Driven + API Design + Autoplan + Code Review Ultra + Ponytail |
 | **TESTEAR** | Corro tests + verifico calidad | QA Skill + Verification + Performance + Sinergia |
+| **SCRAPEAR:** [sitio/datos] | Extraigo datos de cualquier web | Firecrawl + Scrape + Browse + Agent Browser |
+| **ESPIAR:** [url competencia] | Analizo sitio/app de la competencia | Agent Browser + Browse + Superpowers + Performance |
+| **AUTOMATIZAR:** [flujo] | Creo automatización de browser repetible | Agent Browser + Nova Act + Firecrawl + QA Skill |
 
 ---
 
@@ -48,6 +51,8 @@ inclusion: always
 | **COMUNICAR:** [feature] | Preparar para mostrar/vender | "COMUNICAR: la nueva feature de chat" |
 | **EMERGENCIA:** [qué pasó] | Producción rota AHORA | "EMERGENCIA: el CV no carga" |
 | **EVOLUCIONAR:** [módulo] | Refactoring mayor sin romper nada | "EVOLUCIONAR: el sistema de reputación" |
+| **ESPIONAJE:** [competidor] | Analizar competencia a fondo | "ESPIONAJE: plataforma X de empleo" |
+| **EXTRAER:** [datos de sitio] | Scraping masivo estructurado | "EXTRAER: todos los empleos de LinkedIn Chile" |
 
 ---
 
@@ -111,8 +116,8 @@ PENSAR (profundo) → PLANEAR (si vale la pena) → estimar esfuerzo
 ```
 PENSAR → PLANEAR → DISEÑAR → HACER (incremental) → PROTEGER → REVISAR → SINERGIA → NAVEGAR → LANZAR
 ```
-**Skills:** Superpowers + Context + Doubt-Driven + Autoplan + API Design + Design System + UI/UX Pro Max + Taste + Animate + Impeccable + UI Styling + GSD + Claude Mem + Ponytail + Incremental + CSO + Security + Code Review Ultra + Ponytail Review + Performance + QA + QA Memoria + Sinergia + Nova Act + Ship + Shipping & Launch + Verification
-**Potencia:** 27/34 skills — ¡MÁXIMA POTENCIA! 🔥🔥🔥
+**Skills:** Superpowers + Context + Doubt-Driven + Autoplan + API Design + Design System + UI/UX Pro Max + Taste + Animate + Impeccable + UI Styling + GSD + Claude Mem + Ponytail + Incremental + CSO + Security + Code Review Ultra + Ponytail Review + Performance + QA + QA Memoria + Sinergia + Agent Browser + Nova Act + Ship + Shipping & Launch + Verification
+**Potencia:** 28/46 skills — ¡MÁXIMA POTENCIA! 🔥🔥🔥
 
 ---
 
@@ -140,6 +145,24 @@ PLANEAR → LIMPIAR → HACER (nueva arquitectura) → REVISAR → SINERGIA → 
 ```
 **Skills:** Superpowers + Doubt-Driven + API Design + Autoplan + Ponytail Audit + Code Simplification + GSD + Claude Mem + Incremental + Code Review Ultra + Ponytail Review + Performance + Sinergia + Nova Act + Ship + Verification
 **Potencia:** 19/34 skills
+
+---
+
+### ESPIONAJE: [competidor/sitio]
+```
+ESPIAR (analizar sitio) → SCRAPEAR (extraer datos) → PENSAR (comparar con Ómicron) → PLANEAR (ventajas)
+```
+**Skills:** Agent Browser + Browse + Firecrawl + Scrape + Superpowers + Context Mode + Doubt-Driven + Performance
+**Potencia:** 10/46 skills — inteligencia competitiva pura
+
+---
+
+### EXTRAER: [datos de sitio]
+```
+SCRAPEAR (extraer todo) → AUTOMATIZAR (repetir periódicamente) → PENSAR (qué hacer con los datos)
+```
+**Skills:** Firecrawl + Scrape + Browse + Agent Browser + Nova Act + Superpowers + Context Mode
+**Potencia:** 9/46 skills — data acquisition pipeline
 
 ---
 
@@ -232,6 +255,18 @@ BLINDAR: el flujo de pagos con Stripe
 | 32 | sinergia | Conexión |
 | 33 | qa-memoria | QA |
 | 34 | investigacion | QA |
+| 35 | agent-browser/core | Automatización |
+| 36 | agent-browser/dogfood | Automatización |
+| 37 | agent-browser/electron | Automatización |
+| 38 | agent-browser/slack | Automatización |
+| 39 | agent-browser (main) | Automatización |
+| 40 | browse | Automatización |
+| 41 | firecrawl-build | Automatización |
+| 42 | firecrawl-build-interact | Automatización |
+| 43 | firecrawl-build-onboarding | Automatización |
+| 44 | firecrawl-build-scrape | Automatización |
+| 45 | firecrawl-build-search | Automatización |
+| 46 | scrape | Automatización |
 
 </details>
 
