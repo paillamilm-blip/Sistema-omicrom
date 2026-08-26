@@ -279,6 +279,15 @@ export function useGemeloActivation() {
       setPhase('reveal');
       isProcessingRef.current = false;
 
+      // ── 3) AUTO-PERSIST if user is already authenticated ───────────
+      // Don't make the user wait for Act 5 — save NOW and show the reveal
+      // as a celebration, not a gate. Guest users still see the full reveal
+      // and persist after registering (via pendingPersist).
+      if (profile?.id) {
+        // Small delay so the reveal starts rendering first
+        setTimeout(() => { void persistAnalysis(analyzed); }, 500);
+      }
+
       // Analytics
       try {
         import('@/shared/utils/analytics').then(({ track }) => track('cv_analyzed')).catch(() => {});
@@ -303,7 +312,7 @@ export function useGemeloActivation() {
       isProcessingRef.current = false;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cvText, detectSynergies, toast]);
+  }, [cvText, detectSynergies, toast, profile?.id, persistAnalysis]);
 
   // ══════════════════════════════════════════════════════════════════
   // PERSIST — Called from GemeloReveal CTA. Requires auth.
@@ -366,6 +375,9 @@ export function useGemeloActivation() {
       toast('¡Gemelo Digital activado!', 'success');
       speak(`Gemelo Digital activado. Perfil: ${data.seniorLabel}.`);
 
+      // Force profile refresh IMMEDIATELY (don't wait for runAutoChain)
+      await refreshProfile();
+
       // Broadcast to network
       try {
         supabase.channel('omicron-live').send({ type: 'broadcast', event: 'activity', payload: { text: `${profile?.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } });
@@ -383,7 +395,7 @@ export function useGemeloActivation() {
       toast('Error al guardar. Intentá de nuevo.', 'error');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossier, profile?.id, emitPush, runAutoChain, toast]);
+  }, [dossier, profile?.id, emitPush, runAutoChain, toast, refreshProfile]);
 
   return {
     // State
