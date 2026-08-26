@@ -182,10 +182,16 @@ export function analyzeCV(text: string): AnalyzedProfile {
       line.length < 50 &&
       /[a-záéíóúñ]/i.test(line) &&
       !NAME_EXCLUDES.test(line) &&
-      // Línea que parece nombre: tiene mayúsculas, no tiene números excesivos
-      /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+){1,5}$/.test(line)
+      // Nombre: "Juan Pérez" (title case) OR "MATÍAS ALONSO PAILLAMILM" (all caps)
+      (
+        /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+){1,5}$/.test(line) ||
+        /^[A-ZÁÉÍÓÚÑ]{2,}(\s+[A-ZÁÉÍÓÚÑ]{2,}){1,5}$/.test(line)
+      )
     ) {
-      name = line;
+      // Normalize ALL CAPS to Title Case
+      name = line.includes(' ') && line === line.toUpperCase()
+        ? line.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')
+        : line;
       break;
     }
   }

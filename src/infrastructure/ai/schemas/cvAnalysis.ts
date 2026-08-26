@@ -20,7 +20,7 @@ export const AxesSchema = z.object({
   qual: z.number().default(40),
   trans: z.number().default(20),
   fund: z.number().default(30),
-});
+}).default({ exec: 40, qual: 40, trans: 20, fund: 30 });
 
 /** Schema completo de la respuesta del análisis de CV con IA */
 export const GeminiAnalysisSchema = z.object({
