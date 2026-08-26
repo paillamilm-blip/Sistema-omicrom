@@ -216,6 +216,8 @@ CREATE TABLE IF NOT EXISTS public.rate_limits (
   PRIMARY KEY (bucket, identifier)
 );
 
+DROP FUNCTION IF EXISTS public.check_rate_limit(text, text, integer, integer);
+
 CREATE OR REPLACE FUNCTION public.check_rate_limit(
   p_bucket text,
   p_identifier text,
@@ -260,6 +262,8 @@ GRANT EXECUTE ON FUNCTION public.check_rate_limit(text, text, integer, integer) 
 -- ═══════════════════════════════════════════════════════════════════════
 -- PASO 7: Créditos IA (necesario para proxy-ai)
 -- ═══════════════════════════════════════════════════════════════════════
+DROP FUNCTION IF EXISTS public.check_and_consume_credit(text);
+
 CREATE OR REPLACE FUNCTION public.check_and_consume_credit(
   p_function_name text
 )
