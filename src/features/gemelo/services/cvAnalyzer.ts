@@ -52,12 +52,13 @@ const SKILLS: Record<string, string[]> = {
   agile: ['agile', 'scrum', 'kanban', 'jira'],
   testing: ['test', 'jest', 'vitest', 'cypress', 'tdd', 'qa ', 'playwright'],
   // Skills no-tech / operaciones / industria
-  operations: ['operacion', 'planta', 'producción', 'produccion', 'logística', 'logistica', 'bodega', 'inventario', 'abastecimiento', 'supply chain', 'calidad', 'turno', 'manufactura'],
-  leadership: ['liderazgo', 'líder', 'lider', 'equipo', 'coordinación', 'coordinacion', 'supervisión', 'supervision', 'gestión', 'gestion', 'jefatura'],
+  operations: ['operacion', 'planta', 'producción', 'produccion', 'logística', 'logistica', 'bodega', 'inventario', 'abastecimiento', 'supply chain', 'calidad', 'turno', 'manufactura', 'lean', 'six sigma', 'mejora continua', 'kaizen', 'kanban', 'tpm', 'oee', '5s', 'iso 9001', 'iso 14001', 'indicadores', 'kpi', 'eficiencia', 'productividad', 'merma', 'rendimiento', 'proceso'],
+  leadership: ['liderazgo', 'líder', 'lider', 'equipo', 'coordinación', 'coordinacion', 'supervisión', 'supervision', 'gestión', 'gestion', 'jefatura', 'gerencia', 'dirección', 'direccion', 'a cargo', 'personas a cargo', 'reportes directos'],
   agriculture: ['agrícola', 'agricola', 'vendimia', 'fruta', 'viña', 'vino', 'cosecha', 'campo', 'riego'],
   hospitality: ['turismo', 'hotel', 'recepción', 'recepcion', 'atención al cliente', 'atencion al cliente', 'servicio', 'gastronomía', 'gastronomia'],
   sales: ['ventas', 'comercial', 'negociación', 'negociacion', 'cliente', 'marketing', 'retail'],
   safety: ['seguridad', 'prevención', 'prevencion', 'riesgo', 'emergencia', 'salud ocupacional', 'sso', 'iso'],
+  engineering: ['ingenier', 'ingeniería', 'ingenieria', 'industrial', 'mecánic', 'mecanica', 'eléctric', 'electrica', 'civil', 'químic', 'quimica', 'proyectos', 'planificación', 'planificacion', 'presupuesto', 'capex', 'opex', 'roi', 'cronograma', 'gantt', 'pmbok', 'pmp'],
 };
 
 // Etiquetas legibles para cada skill
@@ -87,6 +88,7 @@ export const SKILL_LABELS: Record<string, string> = {
   hospitality: 'Turismo / Hotelería',
   sales: 'Ventas / Comercial',
   safety: 'Seguridad / Prevención',
+  engineering: 'Ingeniería / Proyectos',
 };
 
 function clamp(v: number, min: number, max: number): number {
@@ -172,14 +174,31 @@ export function analyzeCV(text: string): AnalyzedProfile {
 
   // 5. EXTRAER NOMBRE (primera línea si es válida)
   let name = '';
-  const firstLine = (String(text).split('\n')[0] || '').trim();
-  if (
-    firstLine.length > 2 &&
-    firstLine.length < 38 &&
-    /[a-záéíóúñ]/i.test(firstLine) &&
-    !/curriculum|resume|^cv\b|desarroll|ingenier/i.test(firstLine)
-  ) {
-    name = firstLine;
+  const lines = String(text).split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  for (const line of lines.slice(0, 5)) {
+    if (
+      line.length > 2 &&
+      line.length < 50 &&
+      /[a-záéíóúñ]/i.test(line) &&
+      !/curriculum|resume|^cv\b|perfil profesional|datos personales|informaci[oó]n/i.test(line) &&
+      // Línea que parece nombre: tiene mayúsculas, no tiene números excesivos
+      /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+){1,5}$/.test(line)
+    ) {
+      name = line;
+      break;
+    }
+  }
+  // Fallback: primera línea corta que no sea título de sección
+  if (!name) {
+    const firstLine = (lines[0] || '').trim();
+    if (
+      firstLine.length > 2 &&
+      firstLine.length < 38 &&
+      /[a-záéíóúñ]/i.test(firstLine) &&
+      !/curriculum|resume|^cv\b|desarroll|ingenier|perfil|datos/i.test(firstLine)
+    ) {
+      name = firstLine;
+    }
   }
 
   // Si no detectó skills, asignar defaults básicos
@@ -276,16 +295,28 @@ export function analyzeCV(text: string): AnalyzedProfile {
     return { name: labels[i], pct };
   });
 
-  // 10. RESUMEN HEURÍSTICO en 2 párrafos (se sobreescribe si la IA responde
-  // con uno más específico — ver ConvalidaOmicron.tsx).
-  const topSkills = labels.slice(0, 3).join(', ') || 'tecnologías generales';
+  // 10. RESUMEN HEURÍSTICO en 2 párrafos — usa datos REALES del CV.
+  // Si la IA responde con un resumen mejor, este se sobreescribe (ver gemini.ts).
+  const topSkills = labels.slice(0, 4).join(', ') || 'áreas generales';
+  const yearText = years > 0 ? `, con ${years} ${years === 1 ? 'año' : 'años'} de experiencia declarada` : '';
+  
+  // Extraer empresas/instituciones mencionadas (líneas con mayúsculas que parecen organizaciones)
+  const orgHints: string[] = [];
+  const orgRegex = /(?:en|para|empresa|compañía|organización|universidad)\s+([A-ZÁÉÍÓÚÑ][A-Za-záéíóúñ\s&.]+)/g;
+  let orgMatch: RegExpExecArray | null;
+  while ((orgMatch = orgRegex.exec(String(text))) !== null && orgHints.length < 2) {
+    const org = orgMatch[1].trim();
+    if (org.length > 3 && org.length < 40) orgHints.push(org);
+  }
+  const orgText = orgHints.length > 0 ? ` Experiencia en: ${orgHints.join(', ')}.` : '';
+
   const summary =
-    `${name || 'Este perfil'} se posiciona como ${seniorLabel.toLowerCase()}` +
-    `${years > 0 ? `, con ${years} ${years === 1 ? 'año' : 'años'} de experiencia declarada` : ''}` +
-    `, con foco principal en ${topSkills}.\n\n` +
-    `Ejecución ${axes.exec}/100 y Calidad ${axes.qual}/100 según la profundidad técnica detectada; ` +
-    `Trascendencia ${axes.trans}/100 y Fundamento ${axes.fund}/100 según la evidencia de impacto y base ` +
-    `formal encontrada en el CV. Estos valores suben con evidencia real adicional (contratos, aportes, nodos validados).`;
+    `${name || 'Este profesional'} se posiciona como ${seniorLabel.toLowerCase()}` +
+    `${yearText}, con foco principal en ${topSkills}.${orgText}\n\n` +
+    `Ejecución ${axes.exec}/100 · Calidad ${axes.qual}/100 · ` +
+    `Trascendencia ${axes.trans}/100 · Fundamento ${axes.fund}/100. ` +
+    `Estos valores se calculan de la evidencia encontrada en el CV. ` +
+    `Suben con contratos completados, aportes a la Bóveda y validaciones de pares.`;
 
   return {
     name,

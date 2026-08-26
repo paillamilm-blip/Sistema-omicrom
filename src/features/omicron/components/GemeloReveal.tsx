@@ -213,11 +213,11 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
           {currentAct === 'reading' && (
             <motion.div key="reading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ padding: '0 24px', flex: 1 }}>
               <TerminalLine text="Detectando identidad..." delay={200} color={C.mut} />
-              <TerminalLine text={analyzed.name || 'Profesional detectado'} delay={800} color={C.ink} />
+              <TerminalLine text={analyzed.name || analyzed.seniorLabel || 'Profesional detectado'} delay={800} color={C.ink} />
               <TerminalLine text={analyzed.seniorLabel} delay={1400} color={uc} />
-              <TerminalLine text={`${analyzed.years} años en entornos productivos`} delay={2000} color={C.ink} />
-              <TerminalLine text={analyzed.labels.slice(0, 4).join(' · ')} delay={2600} color={C.gold} />
-              <TerminalLine text="Gemelo Digital calibrado." delay={3600} color={C.green} />
+              <TerminalLine text={`${analyzed.years > 0 ? analyzed.years + ' años' : 'Experiencia'} en entornos productivos`} delay={2000} color={C.ink} />
+              <TerminalLine text={analyzed.labels.slice(0, 4).join(' · ') || 'Analizando competencias…'} delay={2600} color={C.gold} />
+              <TerminalLine text={`Gemelo Digital calibrado. ${analyzed.labels.length} competencias detectadas.`} delay={3600} color={C.green} />
             </motion.div>
           )}
 

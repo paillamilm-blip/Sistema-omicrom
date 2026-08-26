@@ -262,17 +262,22 @@ export function useGemeloActivation() {
     setMsg('Leyendo tu documento…');
     try {
       const text = await extractCVText(file);
+      console.info(`[Omicron] CV extracted: ${text.length} chars. Preview: "${text.slice(0, 200)}…"`);
       if (text.length >= 30) {
         setCvText(text);
-        setMsg(`"${file.name}" leído. Tocá "Activar Gemelo Completo".`);
+        const preview = text.slice(0, 60).replace(/\s+/g, ' ').trim();
+        setMsg(`✓ "${file.name}" leído (${text.length} caracteres). Tocá "Activar Gemelo Completo".`);
+        toast(`CV leído: "${preview}…"`, 'success');
       } else {
-        setMsg('No pude extraer texto. Pegá tu experiencia abajo.');
+        setMsg(`No pude extraer texto del archivo (solo ${text.length} caracteres). Pegá tu experiencia abajo.`);
+        toast('El archivo no tiene texto legible. Probá pegando tu experiencia.', 'error');
       }
     } catch (err) {
       console.warn('[Omicron] CV file read failed:', err);
       setMsg('No pude leer el archivo. Pegá tu experiencia abajo.');
+      toast('Error leyendo el archivo. Intentá con otro formato.', 'error');
     }
-  }, []);
+  }, [toast]);
 
   // ══════════════════════════════════════════════════════════════════
   // ANALYZE CV — NO requiere auth. Cualquier usuario puede analizar.
@@ -386,6 +391,14 @@ export function useGemeloActivation() {
       if (cancelledRef.current) return;
 
       // ── 3) Show GemeloReveal — user decides when to persist ────────
+      console.info('[Omicron] Analysis complete:', {
+        name: analyzed.name,
+        seniorLabel: analyzed.seniorLabel,
+        years: analyzed.years,
+        skills: analyzed.labels,
+        axes: analyzed.axes,
+        summaryPreview: analyzed.summary?.slice(0, 100),
+      });
       setSynergies(detectSynergies(analyzed));
       setDossier(analyzed);
       setAi({ loading: false, text: analyzed.summary });
