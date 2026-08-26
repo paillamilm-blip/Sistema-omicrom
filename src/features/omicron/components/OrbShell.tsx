@@ -364,6 +364,7 @@ export function OrbShell() {
     if (intent.kind === 'coach') {
       flash('Dame un momento, estoy analizando tu perfil…');
       speakLocal('Déjame ver tu Gemelo Digital.');
+      const coachTimer = setTimeout(() => flash('Analizando… la IA puede demorar unos segundos.'), 8000);
       const omCtx: OmicronContext = {
         skills: sbProfile?.skills ?? [],
         cv_summary: sbProfile?.cv_summary ?? '',
@@ -381,7 +382,13 @@ export function OrbShell() {
         flash('Alcanzaste el límite diario de consultas. Volvé mañana con energía recargada.');
         return;
       }
+      if (!checkOmicronLimit()) {
+        flash('Alcanzaste el límite diario de consultas. Volvé mañana con energía recargada.');
+        clearTimeout(coachTimer);
+        return;
+      }
       const r = await askOmicron(text, omCtx);
+      clearTimeout(coachTimer);
       flash(r.text);
       speakOmicron(r.text);
       return;
@@ -415,6 +422,8 @@ export function OrbShell() {
 
     // unknown — Ómicron cerebro unificado (coach + tutor + motivador)
     flash('Déjame pensar…');
+    // Show timeout indicator if AI takes too long
+    const slowTimer = setTimeout(() => flash('Ómicron está tardando más de lo normal… seguí esperando.'), 8000);
     const omCtx: OmicronContext = {
       skills: sbProfile?.skills ?? [],
       cv_summary: sbProfile?.cv_summary ?? '',
@@ -430,9 +439,11 @@ export function OrbShell() {
     };
     if (!checkOmicronLimit()) {
       flash('Alcanzaste el límite diario de consultas. Volvé mañana con energía recargada.');
+      clearTimeout(slowTimer);
       return;
     }
     const r = await askOmicron(text, omCtx);
+    clearTimeout(slowTimer);
     flash(r.text);
     speakOmicron(r.text);
   }, [setActiveTab, sbProfile, orbNodesWithLevels, selectedNode]);

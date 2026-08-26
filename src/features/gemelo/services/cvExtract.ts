@@ -14,8 +14,14 @@ function loadScript(src: string): Promise<void> {
     s.src = src;
     s.async = true;
     s.setAttribute('data-cv', src);
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error('No se pudo cargar ' + src));
+    // Timeout: if CDN doesn't respond in 8s, fail gracefully
+    const timeout = setTimeout(() => {
+      s.onload = null;
+      s.onerror = null;
+      reject(new Error(`CDN timeout loading ${src.split('/').pop()}`));
+    }, 8000);
+    s.onload = () => { clearTimeout(timeout); resolve(); };
+    s.onerror = () => { clearTimeout(timeout); reject(new Error('CDN unavailable: ' + src.split('/').pop())); };
     document.head.appendChild(s);
   });
 }
@@ -60,6 +66,8 @@ async function docxText(buffer: ArrayBuffer): Promise<string> {
 export async function extractCVText(file: File): Promise<string> {
   const name = file.name.toLowerCase();
   const buffer = await file.arrayBuffer();
+
+  // Attempt specialized extraction (PDF.js for PDF, Mammoth for DOCX)
   try {
     if (name.endsWith('.pdf')) {
       const t = await pdfText(buffer.slice(0));
@@ -68,14 +76,23 @@ export async function extractCVText(file: File): Promise<string> {
       const t = await docxText(buffer.slice(0));
       if (t.length > 15) return t.slice(0, 15000);
     }
-  } catch {
-    /* cae al fallback de texto plano */
+  } catch (err) {
+    // CDN failed or library error — log and fall through to text fallback
+    console.warn('[cvExtract] Specialized extraction failed (CDN may be down):', (err as Error).message);
   }
+
+  // Fallback 1: Try reading as plain text (works for .txt, .doc with text, and some PDFs)
   try {
     const t = (await file.text()).trim();
-    if (t.length > 15) return t.slice(0, 15000);
+    // Filter out binary garbage: if >30% of chars are non-printable, it's binary
+    const printable = t.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF\n\r\t]/g, '');
+    if (printable.length > 30 && printable.length / t.length > 0.7) {
+      return printable.slice(0, 15000);
+    }
   } catch {
     /* noop */
   }
+
+  // Fallback 2: Return empty — caller will show "paste your experience" message
   return '';
 }
