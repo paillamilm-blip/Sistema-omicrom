@@ -25,6 +25,7 @@ export type EventName =
   | 'challenge_completed'
   | 'skill_validated'
   | 'cv_uploaded'
+  | 'cv_analyzed'
   | 'service_published'
   // Retention
   | 'daily_return'
