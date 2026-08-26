@@ -1,24 +1,23 @@
 // src/lib/voiceAI.ts
 // ═══════════════════════════════════════════════════════════════════════
 // VOICE AI — TTS inteligente.
-// - speakAI(text): usa Kokoro TTS (OpenRouter) — para respuestas IA (valen la pena)
+// - speakAI(text): usa proxy-tts Edge Function (key SOLO server-side)
 // - speakLocal(text): usa Web Speech API (gratis, infinito) — para textos fijos
 // Ambas emiten eventos 'omicron:speaking' para vibrar el orbe.
+//
+// SEGURIDAD: La OPENROUTER_KEY NUNCA llega al browser. El frontend
+// invoca supabase.functions.invoke('proxy-tts') → la Edge Function
+// llama a OpenRouter con la key protegida server-side.
 // ═══════════════════════════════════════════════════════════════════════
 
 import { speak } from '@/infrastructure/voice/engine';
+import { supabase } from '@/infrastructure/supabase/client';
 
-const OR_KEY = import.meta.env.VITE_OPENROUTER_KEY ?? '';
-const TTS_URL = 'https://openrouter.ai/api/v1/audio/speech';
-
-// Solo Kokoro (Gemini fallback removido: no acepta voces Kokoro → siempre 400)
-const TTS_MODEL = 'hexgrad/kokoro-82m';
-
-// Voces ESPAÑOLAS de Kokoro
+// Voces disponibles (deben coincidir con proxy-tts)
 const VOICES = {
-  default: 'ef_dora',
-  male: 'em_alex',
-  warm: 'ef_dora',
+  default: 'default',
+  male: 'male',
+  warm: 'default',
 } as const;
 
 // Cache de audio
@@ -95,8 +94,9 @@ function fallbackToWebSpeech(text: string): void {
 // ── Main TTS Function ────────────────────────────────────────────────
 
 /**
- * Genera y reproduce voz con IA (Kokoro TTS).
- * Si falla → cae directo a Web Speech API (sin Gemini intermedio).
+ * Genera y reproduce voz con IA via proxy-tts Edge Function.
+ * La API key vive SOLO server-side (nunca en el bundle del browser).
+ * Si falla → cae directo a Web Speech API.
  * Thread-safe: cancela llamadas anteriores automáticamente.
  */
 export async function speakAI(text: string, voice: keyof typeof VOICES = 'default'): Promise<void> {
@@ -104,12 +104,6 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
 
   // Incrementar generación para detectar stale callbacks
   const gen = ++speakGeneration;
-
-  // Si no hay key → usar Web Speech API directamente
-  if (!OR_KEY) {
-    fallbackToWebSpeech(text);
-    return;
-  }
 
   const input = text.slice(0, 500);
 
@@ -129,56 +123,43 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
     return;
   }
 
-  // Fetch Kokoro TTS con timeout 10s
+  // Call proxy-tts Edge Function (key protegida server-side)
   const controller = new AbortController();
   inFlightController = controller;
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), 12000);
 
   try {
-    const resp = await fetch(TTS_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OR_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://sistema-omicrom.vercel.app',
-        'X-Title': 'Sistema Omicron',
-      },
-      body: JSON.stringify({
-        model: TTS_MODEL,
-        input,
-        voice: VOICES[voice],
-      }),
-      signal: controller.signal,
+    const { data, error } = await supabase.functions.invoke('proxy-tts', {
+      body: { text: input, voice: VOICES[voice], format: 'mp3' },
     });
+
     clearTimeout(timeout);
     inFlightController = null;
 
     // Si esta llamada ya fue superada por otra, no hacer nada
     if (gen !== speakGeneration) return;
 
-    if (!resp.ok) {
-      // Ir directo a Web Speech (sin Gemini intermedio que siempre falla)
+    if (error) {
+      console.warn('[voiceAI] proxy-tts error:', error);
       fallbackToWebSpeech(text);
       return;
     }
 
-    const contentType = resp.headers.get('content-type') ?? '';
-    if (!contentType.includes('audio') && !contentType.includes('octet-stream')) {
+    // Si el server devolvió JSON con fallback: true → usar Web Speech
+    if (data && typeof data === 'object' && 'fallback' in data) {
       fallbackToWebSpeech(text);
       return;
     }
 
-    const blob = await resp.blob();
+    // data es un Blob (audio)
+    const blob = data instanceof Blob ? data : new Blob([data], { type: 'audio/mpeg' });
     if (blob.size < 100) {
       fallbackToWebSpeech(text);
       return;
     }
 
     // Si ya fue superada, no reproducir
-    if (gen !== speakGeneration) {
-      URL.revokeObjectURL(URL.createObjectURL(blob));
-      return;
-    }
+    if (gen !== speakGeneration) return;
 
     const url = URL.createObjectURL(blob);
     cacheAudio(cacheKey, url);
@@ -283,7 +264,9 @@ export function clearVoiceCache(): void {
 }
 
 export function isVoiceAIAvailable(): boolean {
-  return !!OR_KEY;
+  // Siempre disponible — la key está server-side en la Edge Function.
+  // Si la Edge Function no tiene la key, retorna fallback: true y se usa Web Speech.
+  return true;
 }
 
 
