@@ -13,7 +13,7 @@ const PRODUCTION_ORIGIN = 'https://sistema-omicrom.vercel.app';
 const SITE_URL = Deno.env.get('PUBLIC_SITE_URL') || '';
 
 function getAllowedOrigin(requestOrigin?: string | null): string {
-  // Lista de orígenes permitidos
+  // Lista de orígenes permitidos exactos
   const allowed = [
     PRODUCTION_ORIGIN,
     SITE_URL,
@@ -21,8 +21,21 @@ function getAllowedOrigin(requestOrigin?: string | null): string {
     'http://localhost:3000',   // Fallback dev
   ].filter(Boolean);
 
-  // Si el request viene de un origen permitido, reflejarlo (para cookies/auth)
-  if (requestOrigin && allowed.includes(requestOrigin)) {
+  if (!requestOrigin) return PRODUCTION_ORIGIN;
+
+  // Si el request viene de un origen permitido exacto, reflejarlo
+  if (allowed.includes(requestOrigin)) {
+    return requestOrigin;
+  }
+
+  // Permitir preview deployments de Vercel (*.vercel.app)
+  // Patrón: https://<project>-<hash>-<team>.vercel.app
+  if (/^https:\/\/[a-z0-9-]+-[a-z0-9]+-[a-z0-9-]+(\.vercel\.app)$/.test(requestOrigin)) {
+    return requestOrigin;
+  }
+
+  // Permitir cualquier subdominio de sistema-omicrom en Vercel
+  if (requestOrigin.endsWith('.vercel.app') && requestOrigin.includes('sistema-omicrom')) {
     return requestOrigin;
   }
 
