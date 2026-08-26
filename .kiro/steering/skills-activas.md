@@ -4,415 +4,186 @@ inclusion: always
 
 # ⚡ Sistema de Comandos — Sistema Ómicron
 
-> **46 skills · Máxima potencia · Verbos simples**
-> Vos escribís UNA COSA y yo hago el trabajo con TODAS las skills necesarias.
+> **46 skills · 10 combos por área · 3 LOOPs · Lenguaje natural**
+> Hablá como quieras — yo detecto la intención y activo el combo correcto.
 
 ---
 
-## 🎯 COMANDOS (verbos directos)
-
-| Vos escribís | Yo hago | Skills activadas |
-|--------------|---------|------------------|
-| **HACER:** [qué] | Lo implemento inmediato | GSD + Ponytail + Claude Mem + Verification + Sinergia |
-| **PENSAR:** [idea/problema] | Te digo si conviene, cómo, y el plan | Superpowers + Context Mode + Doubt-Driven + Autoplan |
-| **DISEÑAR:** [pantalla/componente] | Te diseño una UI increíble | Design System + UI/UX Pro Max + Taste Skill + Animate + Impeccable + UI Styling |
-| **REVISAR** | Reviso tu código buscando bugs y mejoras | Code Review Ultra + Ponytail Review + Performance + Security + Sinergia |
-| **LANZAR** | Preparo todo para producción | Ship + Shipping & Launch + Security + Performance + QA + Sinergia + Verification |
-| **ARREGLAR:** [problema] | Encuentro el problema y lo soluciono | Systematic Debugging + QA Memoria + GSD + Ponytail + Verification |
-| **PROTEGER:** [módulo/feature] | Verifico seguridad completa | CSO + Security & Hardening + Code Review Ultra |
-| **ANIMACIÓN:** [elemento] | Le agrego movimiento profesional | Animate + Taste Skill + Impeccable + Performance |
-| **CV:** [pegas el texto] | Genero el ADN Digital completo | ADN Digital + Superpowers + Systematic Debugging + Performance + Sinergia + Verification |
-| **SINERGIA** | Verifico que todo esté conectado (7 checks) | Sinergia + Verification |
-| **LIMPIAR:** [módulo/todo] | Elimino código muerto y simplifico | Ponytail Audit + Code Simplification + Ponytail Review + Ponytail Debt + Sinergia |
-| **NAVEGAR:** [url/flujo] | Abro browser, testeo en vivo, reporto bugs | Nova Act + Agent Browser + QA Skill + QA Memoria + Performance + Verification |
-| **INVESTIGAR:** [bug] | Investigación forense profunda (6 fases) | Investigación + QA Memoria + Sinergia + Systematic Debugging + Parallel Agents + Superpowers |
-| **PLANEAR:** [feature/cambio] | Diseño la arquitectura con adversarial review | Superpowers + Doubt-Driven + API Design + Autoplan + Code Review Ultra + Ponytail |
-| **TESTEAR** | Corro tests + verifico calidad | QA Skill + Verification + Performance + Sinergia |
-| **SCRAPEAR:** [sitio/datos] | Extraigo datos de cualquier web | Firecrawl + Scrape + Browse + Agent Browser |
-| **ESPIAR:** [url competencia] | Analizo sitio/app de la competencia | Agent Browser + Browse + Superpowers + Performance |
-| **AUTOMATIZAR:** [flujo] | Creo automatización de browser repetible | Agent Browser + Nova Act + Firecrawl + QA Skill |
+## 🎯 10 COMBOS POR ÁREA (1 verbo = todas las skills del área)
 
 ---
 
-## ⛓️ CADENAS (combos encadenados — máxima potencia)
-
-> Las cadenas ejecutan MÚLTIPLES comandos en secuencia.
-> La salida de uno alimenta al siguiente. Para tareas grandes.
-
-| Vos escribís | Cuándo | Ejemplo |
-|--------------|--------|---------|
-| **CONSTRUIR:** [feature] | Feature nueva completa | "CONSTRUIR: chat con IA" |
-| **EMBELLECER:** [pantalla] | Mejorar diseño existente | "EMBELLECER: el onboarding" |
-| **REPARAR:** [problema] | Algo se rompió y no sabés por qué | "REPARAR: login falla en Android" |
-| **BLINDAR:** [feature] | Feature con datos sensibles o crítica | "BLINDAR: sistema de pagos" |
-| **PERFIL:** [pegar CV] | Crear/actualizar gemelo digital | "PERFIL: [texto del CV]" |
-| **EXPLORAR:** [idea] | No sabés qué hacer, necesitás guía | "EXPLORAR: quiero monetizar la app" |
-| **COMPLETO:** [feature] | Feature con TODO: plan + code + test + deploy | "COMPLETO: marketplace de servicios" |
-| **COMUNICAR:** [feature] | Preparar para mostrar/vender | "COMUNICAR: la nueva feature de chat" |
-| **EMERGENCIA:** [qué pasó] | Producción rota AHORA | "EMERGENCIA: el CV no carga" |
-| **EVOLUCIONAR:** [módulo] | Refactoring mayor sin romper nada | "EVOLUCIONAR: el sistema de reputación" |
-| **ESPIONAJE:** [competidor] | Analizar competencia a fondo | "ESPIONAJE: plataforma X de empleo" |
-| **EXTRAER:** [datos de sitio] | Scraping masivo estructurado | "EXTRAER: todos los empleos de LinkedIn Chile" |
-| **LOOP:** [problema complejo] | Bug/problema que NO se resuelve. ITERA hasta arreglarlo | "LOOP: el CV no se analiza en celular" |
-| **LOOP TOTAL:** [tema] | Busca TODOS los bugs de un tema y no para hasta resolver todos | "LOOP TOTAL: el sistema de reputación" |
+### 🎨 DISEÑAR — UI de nivel premio
+**Skills:** taste-skill + impeccable + animate + design-system + ui-ux-pro-max + ui-styling
+**Se activa con:** "diseñar", "diseñá", "UI", "bonito", "rediseñá", "arte", "que se vea mejor", "pantalla"
+**Efecto:** Anti-slop + craft director + animación pro + tokens 3 capas + 192 paletas + accesibilidad
 
 ---
 
-## 🔥 Detalle de cada CADENA (qué pasa internamente)
-
-### CONSTRUIR: [feature]
-```
-PENSAR → PLANEAR → HACER (incremental) → SINERGIA → TESTEAR → LANZAR
-```
-**Skills:** Superpowers + Context + Doubt-Driven + API Design + Incremental + GSD + Ponytail + Sinergia + QA + Ship + Verification
-**Potencia:** 16/34 skills activas simultáneamente
+### 🚀 HACER — Ejecución brutal
+**Skills:** gsd + ponytail + incremental-implementation + claude-mem + verification-before-completion + sinergia
+**Se activa con:** "hacer", "hacé", "dale", "implementá", "ya", "rápido", "código"
+**Efecto:** Implementar inmediato + YAGNI + pasos atómicos + tracking + verificar + conexiones OK
 
 ---
 
-### EMBELLECER: [pantalla]
-```
-DISEÑAR → ANIMACIÓN → CV (si toca gemelo) → NAVEGAR (verificar) → LANZAR
-```
-**Skills:** Design System + UI/UX Pro Max + Taste + Animate + Impeccable + UI Styling + Nova Act + QA + Performance + Verification + Ship
-**Potencia:** 14/34 skills
+### 🧠 PENSAR — Análisis profundo
+**Skills:** superpowers + doubt-driven-development + context-mode + autoplan + api-and-interface-design
+**Se activa con:** "pensar", "pensá", "conviene?", "cómo hago", "analizar", "plan", "arquitectura", "explorar"
+**Efecto:** Análisis multidimensional + adversarial review + protocolo 4 fases + diseño de interfaces
 
 ---
 
-### REPARAR: [problema]
-```
-INVESTIGAR → ARREGLAR → SINERGIA → NAVEGAR (verificar) → LANZAR
-```
-**Skills:** Investigación + QA Memoria + Sinergia + Systematic Debugging + Parallel Agents + Superpowers + GSD + Ponytail + Nova Act + Verification + Ship
-**Potencia:** 14/34 skills
+### 🔍 REVISAR — Calidad total
+**Skills:** code-review-ultra + ponytail-audit + ponytail-review + performance-optimization + code-simplification
+**Se activa con:** "revisar", "revisá", "review", "auditá", "calidad", "mejorar código"
+**Efecto:** Review 6D + detectar bloat + over-engineering + performance + simplificar
 
 ---
 
-### BLINDAR: [feature]
-```
-PROTEGER → REVISAR → TESTEAR → NAVEGAR (penetration) → LANZAR
-```
-**Skills:** CSO + Security & Hardening + Code Review Ultra + Ponytail Review + Performance + QA + Nova Act + Sinergia + Ship + Verification
-**Potencia:** 13/34 skills
+### 🧪 ARREGLAR — Debug inteligente
+**Skills:** systematic-debugging + investigacion + qa-memoria + sinergia + dispatching-parallel-agents + ponytail
+**Se activa con:** "arreglar", "arreglá", "fix", "bug", "no funciona", "se rompió", "error"
+**Efecto:** Root cause (Iron Law) + consultar memoria + verificar conexiones + paralelizar + fix mínimo
 
 ---
 
-### PERFIL: [CV]
-```
-CV (análisis IA) → SINERGIA → NAVEGAR (verificar flujo) → ARREGLAR (si falla)
-```
-**Skills:** ADN Digital + Superpowers + Systematic Debugging + Performance + Sinergia + Nova Act + QA Memoria + GSD + Verification
-**Potencia:** 12/34 skills
+### 🛡️ PROTEGER — Seguridad completa
+**Skills:** cso + security-and-hardening + code-review-ultra + performance-optimization
+**Se activa con:** "proteger", "protegé", "seguridad", "es seguro?", "vulnerabilidades", "blindar"
+**Efecto:** CSO mode + OWASP + secrets + supply chain + STRIDE + hardening + review seguridad
 
 ---
 
-### EXPLORAR: [idea]
-```
-PENSAR (profundo) → PLANEAR (si vale la pena) → estimar esfuerzo
-```
-**Skills:** Superpowers + Context Mode + Doubt-Driven + Autoplan + API Design + Ponytail
-**Potencia:** 7/34 skills (análisis puro, sin ejecutar)
+### 🚢 LANZAR — Deploy con confianza
+**Skills:** ship + shipping-and-launch + security-and-hardening + performance-optimization + sinergia + verification-before-completion
+**Se activa con:** "lanzar", "deploy", "ship", "producción", "go live", "release"
+**Efecto:** Pre-launch checklist + security scan + performance + sinergia + staged rollout + monitoring
 
 ---
 
-### COMPLETO: [feature] ← MÁXIMA POTENCIA (usa casi todo)
-```
-PENSAR → PLANEAR → DISEÑAR → HACER (incremental) → PROTEGER → REVISAR → SINERGIA → NAVEGAR → LANZAR
-```
-**Skills:** Superpowers + Context + Doubt-Driven + Autoplan + API Design + Design System + UI/UX Pro Max + Taste + Animate + Impeccable + UI Styling + GSD + Claude Mem + Ponytail + Incremental + CSO + Security + Code Review Ultra + Ponytail Review + Performance + QA + QA Memoria + Sinergia + Agent Browser + Nova Act + Ship + Shipping & Launch + Verification
-**Potencia:** 28/46 skills — ¡MÁXIMA POTENCIA! 🔥🔥🔥
+### 🌐 NAVEGAR — Testear en browser real
+**Skills:** agent-browser/core + browse + nova-act + qa-memoria + performance-optimization + verification-before-completion
+**Se activa con:** "navegar", "navegá", "testear en vivo", "probar la app", "browser", "verificar en vivo"
+**Efecto:** Abrir browser → navegar flujos → detectar bugs visuales → medir performance → registrar issues
 
 ---
 
-### COMUNICAR: [feature]
-```
-PENSAR (qué comunicar) → DISEÑAR (assets) → NAVEGAR (verificar que funciona)
-```
-**Skills:** Superpowers + Context + Design System + UI/UX Pro Max + Taste + Impeccable + Nova Act + Verification
-**Potencia:** 10/34 skills
+### 🧬 CV — Activar Gemelo Digital
+**Skills:** adn-digital + superpowers + systematic-debugging + performance-optimization + sinergia + verification-before-completion
+**Se activa con:** "CV", "gemelo", "perfil", "analizar CV", pegas texto de un CV
+**Efecto:** Análisis de CV profundo → ADN Digital → refinamiento → debug si falla → verificar
 
 ---
 
-### EMERGENCIA: [qué pasó]
-```
-INVESTIGAR (rápido) → ARREGLAR (mínimo) → LANZAR (hotfix) → LIMPIAR (post-mortem)
-```
-**Skills:** Systematic Debugging + QA Memoria + Parallel Agents + GSD + Ponytail + Sinergia + Ship + Verification + Code Simplification + Ponytail Review
-**Potencia:** 13/34 skills (velocidad > perfección)
-
----
-
-### EVOLUCIONAR: [módulo]
-```
-PLANEAR → LIMPIAR → HACER (nueva arquitectura) → REVISAR → SINERGIA → NAVEGAR → LANZAR
-```
-**Skills:** Superpowers + Doubt-Driven + API Design + Autoplan + Ponytail Audit + Code Simplification + GSD + Claude Mem + Incremental + Code Review Ultra + Ponytail Review + Performance + Sinergia + Nova Act + Ship + Verification
-**Potencia:** 19/34 skills
-
----
-
-### ESPIONAJE: [competidor/sitio]
-```
-ESPIAR (analizar sitio) → SCRAPEAR (extraer datos) → PENSAR (comparar con Ómicron) → PLANEAR (ventajas)
-```
-**Skills:** Agent Browser + Browse + Firecrawl + Scrape + Superpowers + Context Mode + Doubt-Driven + Performance
-**Potencia:** 10/46 skills — inteligencia competitiva pura
-
----
-
-### EXTRAER: [datos de sitio]
-```
-SCRAPEAR (extraer todo) → AUTOMATIZAR (repetir periódicamente) → PENSAR (qué hacer con los datos)
-```
-**Skills:** Firecrawl + Scrape + Browse + Agent Browser + Nova Act + Superpowers + Context Mode
-**Potencia:** 9/46 skills — data acquisition pipeline
-
----
-
-### LOOP: [problema complejo] ← 🔁 MÁXIMO NIVEL — ITERA HASTA RESOLVER
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  LOOP — Ciclo iterativo de resolución de máximo nivel               │
-│                                                                     │
-│  INVESTIGAR → ARREGLAR → SINERGIA → NAVEGAR (verificar)            │
-│       ↑                                        │                    │
-│       │         ¿Funciona?                     ↓                    │
-│       │            NO ←────────────────── TESTEAR                   │
-│       │                                        │                    │
-│       └─── registrar en QA Memoria ←───────────┘                   │
-│                                                                     │
-│            SÍ funciona → LANZAR ✅                                   │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-**Trigger:** "LOOP: [problema]", "no se arregla", "ya intenté todo", "iterar hasta resolver"
-
-**Skills activadas (32/46 — MÁXIMO NIVEL):**
-- Investigación + Systematic Debugging + QA Memoria (investigar + recordar)
-- Superpowers + Doubt-Driven + Context Mode (pensar profundo)
-- Dispatching Parallel Agents (paralelizar si hay múltiples causas)
-- GSD + Ponytail + Incremental Implementation (ejecutar fix mínimo)
-- Sinergia (verificar conexiones post-fix)
-- Agent Browser + Nova Act + QA Skill (testear en browser real)
-- Code Review Ultra + Performance Optimization (validar calidad del fix)
-- Security & Hardening (no introducir vulnerabilidades)
-- Claude Mem (trackear cada iteración)
-- Ship + Verification (deploy cuando funcione)
-- Code Simplification + Ponytail Review (no dejar deuda en el fix)
-
-**Protocolo de ejecución:**
-
-```
-ITERACIÓN 1:
-  1. INVESTIGAR: Reproducir + aislar capa + formular hipótesis
-  2. Consultar QA MEMORIA: ¿ya vimos algo similar?
-  3. ARREGLAR: Fix mínimo basado en la hipótesis
-  4. SINERGIA: ¿El fix rompió alguna conexión?
-  5. NAVEGAR: Verificar en browser real que funciona
-  6. TESTEAR: ¿Pasan los tests? ¿Performance OK?
-  
-  → SI FUNCIONA: LANZAR ✅ (registrar solución en QA Memoria)
-  → SI NO FUNCIONA: Registrar intento fallido → siguiente iteración
-
-ITERACIÓN 2 (con más contexto):
-  1. INVESTIGAR: Nueva hipótesis (la anterior fue refutada)
-  2. DOUBT-DRIVEN: ¿Estoy mirando el lugar correcto?
-  3. PARALLEL AGENTS: Si hay pistas en múltiples archivos, paralelizar
-  4. ARREGLAR: Fix basado en nueva evidencia
-  5. SINERGIA + NAVEGAR + TESTEAR
-  
-  → SI FUNCIONA: LANZAR ✅
-  → SI NO FUNCIONA: Siguiente iteración
-
-ITERACIÓN 3+ (escalada):
-  1. SUPERPOWERS: Análisis profundo desde cero (fresh eyes)
-  2. PERFORMANCE: ¿Es un tema de timing/race condition?
-  3. SECURITY: ¿Hay un trigger/RLS bloqueando silenciosamente?
-  4. CODE REVIEW: ¿Hay un bug oculto en código que "se ve bien"?
-  5. ARREGLAR + SINERGIA + NAVEGAR + TESTEAR
-
-  → SI FUNCIONA: LANZAR ✅
-  → MÁXIMO 5 ITERACIONES: Si después de 5 no se resuelve,
-    generar REPORTE COMPLETO con todo lo intentado + hipótesis
-    restantes + pedir input del usuario.
-```
-
-**Reglas del LOOP:**
-1. Cada iteración se REGISTRA en QA Memoria (intentos fallidos = oro)
-2. NUNCA repetir la misma hipótesis dos veces
-3. Cada iteración DEBE tener una hipótesis NUEVA (no "probar a ver")
-4. El fix debe ser MÍNIMO (Ponytail) — no over-engineer el parche
-5. SIEMPRE verificar con SINERGIA + NAVEGAR (no solo "compila")
-6. Máximo 5 iteraciones — después se para y reporta
-7. Si en iteración 1 se resuelve = ⚡ rápido. Si toma 3+ = 🔬 profundo
-
-**Potencia:** 32/46 skills — el combo más poderoso del sistema 🔥🔥🔥🔥
-
----
-
-### LOOP TOTAL: [tema] ← 🔁🔁 NIVEL ABSOLUTO — ESCANEA TODO + ARREGLA TODO + NO PARA
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│  LOOP TOTAL — Resolución completa de un tema                             │
-│                                                                          │
-│  FASE 1: ESCANEAR                                                        │
-│    Ultra Review + Sinergia + Performance → lista de TODOS los issues     │
-│                                                                          │
-│  FASE 2: CICLO (por cada issue encontrado)                               │
-│    ┌─────────────────────────────────────────────────────────────┐       │
-│    │  INVESTIGAR → ARREGLAR → ULTRA REVIEW → SINERGIA → NAVEGAR │       │
-│    │       ↑                                          │         │       │
-│    │       │    ¿Este issue está resuelto?             ↓         │       │
-│    │       │         NO ←──────────────────── TESTEAR           │       │
-│    │       │                                          │         │       │
-│    │       └── nueva hipótesis (máx 3 intentos) ←─────┘         │       │
-│    │                                                             │       │
-│    │         SÍ → registrar en QA Memoria → siguiente issue     │       │
-│    └─────────────────────────────────────────────────────────────┘       │
-│                                                                          │
-│  FASE 3: RE-ESCANEAR                                                     │
-│    Ultra Review + Sinergia otra vez → ¿aparecieron issues nuevos?        │
-│    SÍ → volver a FASE 2                                                  │
-│    NO → LANZAR ✅ (tema 100% limpio)                                      │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-**Trigger:** "LOOP TOTAL: [tema]", "arreglar todo de [tema]", "limpiar todos los bugs de [tema]"
-
-**Skills activadas (38/46 — NIVEL ABSOLUTO):**
-- **Escaneo:** Code Review Ultra + Ponytail Review + Performance Optimization + Sinergia (7 checks) + Security & Hardening
-- **Investigación:** Investigación + Systematic Debugging + QA Memoria + Superpowers + Doubt-Driven + Dispatching Parallel Agents
-- **Ejecución:** GSD + Ponytail + Incremental Implementation + Claude Mem + Context Mode
-- **Verificación:** Agent Browser + Nova Act + QA Skill + Verification + Performance
-- **Conexión:** Sinergia (post-fix) + Code Simplification + Ponytail Review (no dejar deuda)
-- **Deploy:** Ship + Shipping & Launch
-- **Memoria:** Claude Mem (contexto entre issues) + QA Memoria (registro permanente)
-
-**Protocolo de ejecución:**
-
-```
-FASE 1 — ESCANEO TOTAL DEL TEMA:
-  1. Identificar TODOS los archivos relacionados con el tema
-  2. ULTRA REVIEW: buscar bugs, edge cases, errores de tipos, dead code
-  3. SINERGIA: verificar las 7 conexiones (tipos, providers, Edge Functions, etc.)
-  4. PERFORMANCE: detectar bottlenecks, N+1, memory leaks
-  5. SECURITY: vulnerabilidades en ese módulo
-  6. Generar LISTA PRIORIZADA de issues (crítico → menor)
-  7. Claude Mem: registrar la lista completa como checkpoint
-
-FASE 2 — CICLO DE RESOLUCIÓN (por cada issue):
-  Para cada issue de la lista, de mayor a menor severidad:
-  
-  Iteración 1:
-    1. INVESTIGAR: root cause del issue específico
-    2. Consultar QA MEMORIA: ¿hay patrón aplicable?
-    3. ARREGLAR: fix mínimo (Ponytail guard)
-    4. ULTRA REVIEW: ¿el fix es correcto? ¿introdujo algo nuevo?
-    5. SINERGIA: ¿rompió alguna conexión?
-    6. NAVEGAR: verificar en browser real
-    7. TESTEAR: ¿pasan tests? ¿performance OK?
-    
-    → RESUELTO: Registrar en QA Memoria → siguiente issue
-    → NO RESUELTO: Nueva hipótesis → iteración 2 (máx 3 por issue)
-  
-  Después de CADA fix:
-    - Claude Mem: actualizar progreso (X/N resueltos)
-    - Si el fix de un issue resolvió otros → marcarlos como resueltos
-    - Si el fix de un issue CREÓ otro → agregarlo a la lista
-
-FASE 3 — RE-ESCANEO (verificación final):
-  1. ULTRA REVIEW completo otra vez sobre todo el tema
-  2. SINERGIA: 7 checks completos
-  3. PERFORMANCE: sin regresiones
-  4. NAVEGAR: recorrer flujos del tema en browser
-  
-  → Si aparecen issues NUEVOS: volver a FASE 2 con los nuevos
-  → Si CERO issues: ✅ TEMA LIMPIO → LANZAR
-
-FASE 4 — CIERRE:
-  1. Claude Mem: reporte final (total issues encontrados, resueltos, patrones)
-  2. QA Memoria: registrar TODOS los fixes como base de conocimiento
-  3. LANZAR: deploy con confianza
-```
-
-**Reglas del LOOP TOTAL:**
-1. **CONTEXTO PERSISTENTE** — Claude Mem trackea TODO entre issues (no pierde el hilo)
-2. **ULTRA REVIEW en cada fix** — no solo "compila", sino calidad real
-3. **SINERGIA en cada fix** — ningún fix puede romper otra cosa
-4. **QA MEMORIA acumula** — cada solución alimenta la siguiente
-5. **Máximo 3 intentos por issue** — si no se resuelve, lo marca como "necesita input" y sigue
-6. **Re-escaneo final obligatorio** — un fix puede crear bugs nuevos, hay que verificar
-7. **No para hasta que el re-escaneo devuelva CERO** — esa es la garantía
-8. **Reporte final** — al terminar, resume todo lo que hizo (para futuras sesiones)
-
-**Ejemplo de uso:**
-```
-LOOP TOTAL: el análisis de CV
-→ Escanea: gemini.ts, useGemeloActivation.ts, ConvalidaOmicron.tsx, proxy-ai, analizar-cv
-→ Encuentra: 4 issues (timeout sin retry, validación Zod incompleta, error silencioso, memory leak)
-→ Resuelve uno por uno con ultra review + sinergia cada vez
-→ Re-escanea: 0 issues nuevos
-→ Lanza ✅
-```
-
-**Potencia:** 38/46 skills — NIVEL ABSOLUTO 🔥🔥🔥🔥🔥
+### 🕷️ SCRAPEAR — Extraer datos de la web
+**Skills:** agent-browser/core + browse + firecrawl + scrape + nova-act
+**Se activa con:** "scrapear", "scraping", "extraer datos", "automatizar web", "espiar competencia"
+**Efecto:** Browser automation + Firecrawl SDK + extracción estructurada + stealth
 
 ---
 
 ---
 
-## 🎛️ REGLAS DEL SISTEMA
+## 🔁 3 LOOPs (resuelven solos, iterando hasta terminar)
 
-### Auto-activación
-No necesitás decir el comando exacto. El sistema detecta la intención:
+---
 
-| Detecta que querés... | Activa |
-|-----------------------|--------|
-| Implementar algo rápido | HACER |
-| Analizar/decidir | PENSAR |
-| Crear UI bonita | DISEÑAR |
-| Review de código | REVISAR |
-| Ir a producción | LANZAR |
-| Fixear un bug | ARREGLAR |
-| Bug complejo/raro | INVESTIGAR |
-| Testing en browser | NAVEGAR |
-| Feature nueva grande | CONSTRUIR |
-| Producción rota | EMERGENCIA |
+### 🔁 LOOP: [problema] — Arregla 1 bug, itera hasta resolverlo
+```
+INVESTIGAR → ARREGLAR → SINERGIA → NAVEGAR → TESTEAR
+     ↑                                    │
+     │    ¿Funciona?    NO ←───────────────┘
+     └── nueva hipótesis ←─────────────────┘
+              SÍ → LANZAR ✅
+```
+**Se activa con:** "loop: [problema]", "no se arregla", "iterar hasta resolver"
+**Skills:** 32/46 activas · Máx 5 iteraciones · Registra todo en QA Memoria
+**Ejemplo:** `LOOP: el CV no carga en celular`
+
+---
+
+### 🔁🔁 LOOP TOTAL: [tema] — Busca TODOS los bugs de un tema, no para hasta 0
+```
+ESCANEAR (Ultra Review + Sinergia) → lista de issues
+     ↓
+POR CADA ISSUE: INVESTIGAR → ARREGLAR → ULTRA REVIEW → SINERGIA → NAVEGAR
+     ↓
+RE-ESCANEAR → ¿nuevos issues? → SÍ: volver arriba · NO: LANZAR ✅
+```
+**Se activa con:** "loop total: [tema]", "arreglar todo de [tema]", "resolver todos los bugs de [tema]"
+**Skills:** 38/46 activas · No para hasta que re-escaneo = 0 issues · Contexto persistente
+**Ejemplo:** `LOOP TOTAL: el sistema de reputación`
+
+---
+
+### 🔁🔁🔁 LOOP TOTAL (sin tema) — Escanea TODA la app
+**Se activa con:** "loop total" (sin tema), "arreglar todo", "que no quede ningún bug"
+**Igual que LOOP TOTAL pero escanea el repo completo, no solo un tema.**
+**Ejemplo:** `LOOP TOTAL` (escanea todo)
+
+---
+
+---
+
+## ⛓️ CADENAS (tareas grandes multi-fase)
+
+| Escribís | Qué hace | Secuencia |
+|----------|----------|-----------|
+| **CONSTRUIR:** [feature] | Feature nueva completa | PENSAR → HACER (incremental) → SINERGIA → LANZAR |
+| **EMBELLECER:** [pantalla] | Mejorar diseño | DISEÑAR → NAVEGAR (verificar) → LANZAR |
+| **REPARAR:** [problema] | Algo se rompió | ARREGLAR → SINERGIA → NAVEGAR → LANZAR |
+| **BLINDAR:** [feature] | Seguridad total | PROTEGER → REVISAR → NAVEGAR → LANZAR |
+| **COMPLETO:** [feature] | TODO: plan+diseño+código+test+deploy | PENSAR → DISEÑAR → HACER → PROTEGER → REVISAR → NAVEGAR → LANZAR |
+| **EMERGENCIA:** [qué pasó] | Producción rota | ARREGLAR (rápido) → LANZAR (hotfix) → REVISAR (post-mortem) |
+| **EVOLUCIONAR:** [módulo] | Refactoring mayor | PENSAR → REVISAR → HACER → SINERGIA → LANZAR |
+
+---
+
+---
+
+## 🎛️ REGLAS
+
+### Lenguaje natural
+No necesitás memorizar comandos exactos. Hablá como quieras:
+
+| Decís algo como... | Yo activo... |
+|---------------------|-------------|
+| "haceme un botón de logout" | 🚀 HACER |
+| "esto se ve feo" | 🎨 DISEÑAR |
+| "es seguro esto?" | 🛡️ PROTEGER |
+| "por qué no funciona el orbe" | 🧪 ARREGLAR |
+| "revisá el código" | 🔍 REVISAR |
+| "quiero deployar" | 🚢 LANZAR |
+| "probá la app en el browser" | 🌐 NAVEGAR |
+| [pegas texto de un CV] | 🧬 CV |
+| "quiero los empleos de esa web" | 🕷️ SCRAPEAR |
+| "necesito analizar esto bien" | 🧠 PENSAR |
+| "esto no se arregla nunca" | 🔁 LOOP |
+| "limpiá todos los bugs del CV" | 🔁🔁 LOOP TOTAL |
 
 ### Modificadores
-- **"rápido"** o **"ya"** después de cualquier comando → activa GSD + Ponytail (máxima velocidad)
-- **"perfecto"** o **"100%"** → activa TODAS las skills del comando al máximo (Superpowers + Doubt-Driven)
-- **"sin diseño"** → excluye las skills de diseño
-- **"+ navegar"** → agrega testing en browser a cualquier comando
-- **"+ proteger"** → agrega auditoría de seguridad
+- **"rápido"** → prioriza velocidad (GSD + Ponytail dominan)
+- **"perfecto"** → prioriza calidad (Ultra Review + Doubt-Driven dominan)
+- **"+ proteger"** → agrega seguridad a cualquier combo
+- **"+ navegar"** → agrega testing en browser a cualquier combo
 
-### Ejemplos de uso real
-
-```
-HACER: un botón de logout en el header
-PENSAR: cómo debería funcionar el auto-postulación
-DISEÑAR: la pantalla de wallet con animaciones
-REVISAR
-ARREGLAR: el orbe no muestra mis skills
-INVESTIGAR: a veces el CV no carga en celular
-CONSTRUIR: sistema de notificaciones push
-COMPLETO: módulo de chat entre usuarios
-EMERGENCIA: la app no carga después del último deploy
-LIMPIAR: features/empleos
-NAVEGAR: verificar el flujo de onboarding completo
-PERFIL: [texto del CV pegado]
-EVOLUCIONAR: el store de reputación
-BLINDAR: el flujo de pagos con Stripe
-```
+### Reglas de hierro (siempre activas)
+1. **Verification** — NUNCA digo "listo" sin verificar
+2. **Claude Mem** — Trackeo progreso siempre
+3. **Ponytail** — Si genero over-engineering, me auto-corrijo
+4. **QA Memoria** — Registro cada bug (el historial es sagrado)
+5. **Sinergia** — Después de cambios multi-capa, verifico conexiones
 
 ---
 
-## 📋 Skills disponibles (34 total)
+## 📋 46 Skills instaladas
 
 <details>
-<summary>Ver lista completa de skills</summary>
+<summary>Ver lista completa</summary>
 
-| # | Skill | Categoría |
-|---|-------|-----------|
+| # | Skill | Área |
+|---|-------|------|
 | 1 | superpowers | Estrategia |
 | 2 | context-mode | Estrategia |
 | 3 | autoplan | Estrategia |
@@ -443,32 +214,22 @@ BLINDAR: el flujo de pagos con Stripe
 | 28 | ship | Deploy |
 | 29 | shipping-and-launch | Deploy |
 | 30 | nova-act | Automatización |
-| 31 | adn-digital | Producto |
-| 32 | sinergia | Conexión |
-| 33 | qa-memoria | QA |
-| 34 | investigacion | QA |
-| 35 | agent-browser/core | Automatización |
-| 36 | agent-browser/dogfood | Automatización |
-| 37 | agent-browser/electron | Automatización |
-| 38 | agent-browser/slack | Automatización |
-| 39 | agent-browser (main) | Automatización |
-| 40 | browse | Automatización |
-| 41 | firecrawl-build | Automatización |
-| 42 | firecrawl-build-interact | Automatización |
-| 43 | firecrawl-build-onboarding | Automatización |
-| 44 | firecrawl-build-scrape | Automatización |
-| 45 | firecrawl-build-search | Automatización |
-| 46 | scrape | Automatización |
+| 31 | agent-browser/core | Automatización |
+| 32 | agent-browser/dogfood | Automatización |
+| 33 | agent-browser/electron | Automatización |
+| 34 | agent-browser/slack | Automatización |
+| 35 | agent-browser (main) | Automatización |
+| 36 | browse | Automatización |
+| 37 | firecrawl | Automatización |
+| 38 | firecrawl/build | Automatización |
+| 39 | firecrawl/interact | Automatización |
+| 40 | firecrawl/onboarding | Automatización |
+| 41 | firecrawl/scrape | Automatización |
+| 42 | firecrawl/search | Automatización |
+| 43 | scrape | Automatización |
+| 44 | adn-digital | Producto |
+| 45 | sinergia | Conexión |
+| 46 | qa-memoria | QA |
+| 47 | investigacion | QA |
 
 </details>
-
----
-
-## 🔒 Reglas de hierro (siempre activas, no se apagan)
-
-1. **Verification** — NUNCA digo "listo" sin verificar que funciona
-2. **Claude Mem** — Trackeo progreso siempre. Si se corta la sesión, retomo
-3. **Ponytail** — Si genero over-engineering, me auto-corrijo
-4. **QA Memoria** — Registro cada bug antes de fixear. El historial es sagrado
-5. **Sinergia** — Después de cambios multi-capa, verifico conexiones
-6. **ADN Digital** — Se activa con cualquier CV o credencial (corazón del producto)
