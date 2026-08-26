@@ -14,12 +14,12 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase } from '@/infrastructure/supabase/client';
-import { useApp } from '../store/AppContext';
+import { useApp } from '@/store/AppContext';
 import { useToast } from '@/shared/components/Toast';
 import { speak } from '@/infrastructure/voice/engine';
 import { analyzeCV, type AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
 import { extractCVText } from '@/features/gemelo/services/cvExtract';
-import { C } from '../theme';
+import { C } from '@/theme';
 
 type Kind = 'cv' | 'title' | 'year' | 'vault';
 export type Phase = 'upload' | 'syncing' | 'reveal';
