@@ -53,6 +53,7 @@ inclusion: always
 | **EVOLUCIONAR:** [módulo] | Refactoring mayor sin romper nada | "EVOLUCIONAR: el sistema de reputación" |
 | **ESPIONAJE:** [competidor] | Analizar competencia a fondo | "ESPIONAJE: plataforma X de empleo" |
 | **EXTRAER:** [datos de sitio] | Scraping masivo estructurado | "EXTRAER: todos los empleos de LinkedIn Chile" |
+| **LOOP:** [problema complejo] | Bug/problema que NO se resuelve. ITERA hasta arreglarlo | "LOOP: el CV no se analiza en celular" |
 
 ---
 
@@ -163,6 +164,87 @@ SCRAPEAR (extraer todo) → AUTOMATIZAR (repetir periódicamente) → PENSAR (qu
 ```
 **Skills:** Firecrawl + Scrape + Browse + Agent Browser + Nova Act + Superpowers + Context Mode
 **Potencia:** 9/46 skills — data acquisition pipeline
+
+---
+
+### LOOP: [problema complejo] ← 🔁 MÁXIMO NIVEL — ITERA HASTA RESOLVER
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  LOOP — Ciclo iterativo de resolución de máximo nivel               │
+│                                                                     │
+│  INVESTIGAR → ARREGLAR → SINERGIA → NAVEGAR (verificar)            │
+│       ↑                                        │                    │
+│       │         ¿Funciona?                     ↓                    │
+│       │            NO ←────────────────── TESTEAR                   │
+│       │                                        │                    │
+│       └─── registrar en QA Memoria ←───────────┘                   │
+│                                                                     │
+│            SÍ funciona → LANZAR ✅                                   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Trigger:** "LOOP: [problema]", "no se arregla", "ya intenté todo", "iterar hasta resolver"
+
+**Skills activadas (32/46 — MÁXIMO NIVEL):**
+- Investigación + Systematic Debugging + QA Memoria (investigar + recordar)
+- Superpowers + Doubt-Driven + Context Mode (pensar profundo)
+- Dispatching Parallel Agents (paralelizar si hay múltiples causas)
+- GSD + Ponytail + Incremental Implementation (ejecutar fix mínimo)
+- Sinergia (verificar conexiones post-fix)
+- Agent Browser + Nova Act + QA Skill (testear en browser real)
+- Code Review Ultra + Performance Optimization (validar calidad del fix)
+- Security & Hardening (no introducir vulnerabilidades)
+- Claude Mem (trackear cada iteración)
+- Ship + Verification (deploy cuando funcione)
+- Code Simplification + Ponytail Review (no dejar deuda en el fix)
+
+**Protocolo de ejecución:**
+
+```
+ITERACIÓN 1:
+  1. INVESTIGAR: Reproducir + aislar capa + formular hipótesis
+  2. Consultar QA MEMORIA: ¿ya vimos algo similar?
+  3. ARREGLAR: Fix mínimo basado en la hipótesis
+  4. SINERGIA: ¿El fix rompió alguna conexión?
+  5. NAVEGAR: Verificar en browser real que funciona
+  6. TESTEAR: ¿Pasan los tests? ¿Performance OK?
+  
+  → SI FUNCIONA: LANZAR ✅ (registrar solución en QA Memoria)
+  → SI NO FUNCIONA: Registrar intento fallido → siguiente iteración
+
+ITERACIÓN 2 (con más contexto):
+  1. INVESTIGAR: Nueva hipótesis (la anterior fue refutada)
+  2. DOUBT-DRIVEN: ¿Estoy mirando el lugar correcto?
+  3. PARALLEL AGENTS: Si hay pistas en múltiples archivos, paralelizar
+  4. ARREGLAR: Fix basado en nueva evidencia
+  5. SINERGIA + NAVEGAR + TESTEAR
+  
+  → SI FUNCIONA: LANZAR ✅
+  → SI NO FUNCIONA: Siguiente iteración
+
+ITERACIÓN 3+ (escalada):
+  1. SUPERPOWERS: Análisis profundo desde cero (fresh eyes)
+  2. PERFORMANCE: ¿Es un tema de timing/race condition?
+  3. SECURITY: ¿Hay un trigger/RLS bloqueando silenciosamente?
+  4. CODE REVIEW: ¿Hay un bug oculto en código que "se ve bien"?
+  5. ARREGLAR + SINERGIA + NAVEGAR + TESTEAR
+
+  → SI FUNCIONA: LANZAR ✅
+  → MÁXIMO 5 ITERACIONES: Si después de 5 no se resuelve,
+    generar REPORTE COMPLETO con todo lo intentado + hipótesis
+    restantes + pedir input del usuario.
+```
+
+**Reglas del LOOP:**
+1. Cada iteración se REGISTRA en QA Memoria (intentos fallidos = oro)
+2. NUNCA repetir la misma hipótesis dos veces
+3. Cada iteración DEBE tener una hipótesis NUEVA (no "probar a ver")
+4. El fix debe ser MÍNIMO (Ponytail) — no over-engineer el parche
+5. SIEMPRE verificar con SINERGIA + NAVEGAR (no solo "compila")
+6. Máximo 5 iteraciones — después se para y reporta
+7. Si en iteración 1 se resuelve = ⚡ rápido. Si toma 3+ = 🔬 profundo
+
+**Potencia:** 32/46 skills — el combo más poderoso del sistema 🔥🔥🔥🔥
 
 ---
 
