@@ -460,13 +460,25 @@ export default function OrbNeuronal({
       renderer.domElement.removeEventListener('click', handleClick);
       renderer.domElement.removeEventListener('touchstart', handleClick);
       window.removeEventListener('resize', handleResize);
-      renderer.dispose();
+      // Dispose all scene children (meshes, materials, geometries)
+      scene.traverse((obj) => {
+        if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
+        const mat = (obj as THREE.Mesh).material;
+        if (mat) {
+          if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+          else mat.dispose();
+        }
+      });
+      scene.clear();
       glowTexture.dispose();
       geo.dispose();
       edgesGeo.dispose();
       edgesMat.dispose();
       dotGeo.dispose();
       dotMat.dispose();
+      renderer.dispose();
+      // Force release WebGL context to prevent "too many contexts" warning
+      renderer.forceContextLoss();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
