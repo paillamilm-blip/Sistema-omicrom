@@ -38,8 +38,11 @@ export default defineConfig({
           if (id.includes('lucide-react')) return 'icons';
           // React core
           if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler') || id.includes('react-router')) return 'react';
-          // Framer Motion (animation library ~150KB)
-          if (id.includes('framer-motion')) return 'motion';
+          // Framer Motion — included in vendor chunk to avoid TDZ issues
+          // with lazy-loaded components that import it (ConvalidaOmicron, etc.)
+          // Previously in its own 'motion' chunk which caused:
+          // "Cannot access 'de' before initialization" on code-split boundaries.
+          if (id.includes('framer-motion')) return 'vendor';
           // Zod (validation)
           if (id.includes('zod')) return 'validation';
           // Everything else
