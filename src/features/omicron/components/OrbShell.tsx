@@ -725,24 +725,26 @@ export function OrbShell() {
         onComplete={handleOnboardingComplete}
         onSkillsPreview={setPreviewSkills}
         onProfileGenerated={async (generated: GeneratedProfile) => {
-          // R4: Guardar perfil generado en Supabase
+          // Guardar perfil del onboarding via RPC (respeta lógica aditiva + trigger de protección)
           try {
             const { supabase } = await import('@/infrastructure/supabase/client');
             if (sbProfile?.id) {
-              await supabase.from('profiles').update({
-                skills: generated.skills,
-                skills_detail: generated.skills.map((s: string, i: number) => ({
-                  name: s,
-                  pct: Math.max(40, 80 - i * 10),
-                })),
-                cv_summary: generated.summary,
-                cv_years_experience: generated.years,
-                execution_score: generated.axes.exec,
-                quality_score: generated.axes.qual,
-                transcendence_score: generated.axes.trans,
-                foundation_score: generated.axes.fund,
-              }).eq('id', sbProfile.id);
-              // CABLE 1: Broadcast "activó su Gemelo Digital" a toda la red
+              const skillsDetail = generated.skills.map((s: string, i: number) => ({
+                name: s,
+                pct: Math.max(40, 80 - i * 10),
+              }));
+              await supabase.rpc('aplicar_analisis_cv', {
+                p_name: '',
+                p_skills: generated.skills,
+                p_exec: Math.round(generated.axes.exec),
+                p_qual: Math.round(generated.axes.qual),
+                p_trans: Math.round(generated.axes.trans),
+                p_fund: Math.round(generated.axes.fund),
+                p_years: generated.years || 0,
+                p_summary: generated.summary || '',
+                p_skills_detail: skillsDetail,
+              });
+              // Broadcast "activó su Gemelo Digital" a toda la red
               try {
                 const ch = supabase.channel('omicron-live');
                 ch.send({ type: 'broadcast', event: 'activity', payload: { text: `${sbProfile.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } });

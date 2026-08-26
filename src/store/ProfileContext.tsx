@@ -208,6 +208,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         setGemelo(null);
         setAuthStatus('unauthenticated');
         setIsLoadingProfile(false);
+        // Clean up session-specific caches to prevent data leaking between users
+        import('@/features/omicron/services/brain').then(({ clearConversationMemory }) => clearConversationMemory()).catch(() => {});
+        import('@/features/gemelo/services/memory').then(({ clearMemory }) => clearMemory()).catch(() => {});
+        import('@/infrastructure/voice/voiceAI').then(({ clearVoiceCache }) => clearVoiceCache()).catch(() => {});
       }
     });
 
