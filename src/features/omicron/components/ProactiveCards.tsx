@@ -164,6 +164,7 @@ export function ProactiveCards({ visible, onNavigate, onDismiss }: ProactiveCard
       if (dismissTimer.current) clearTimeout(dismissTimer.current);
       if (cycleTimer.current) clearTimeout(cycleTimer.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, stopped, shouldStop]);
 
   // Dismiss handler

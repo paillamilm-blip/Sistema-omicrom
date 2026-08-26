@@ -702,7 +702,7 @@ export function OrbShell() {
   }, [state, isListening]);
 
   // ── Onboarding handler (R3: intent-first routing) ────────────────────
-  const handleOnboardingComplete = useCallback((choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar') => {
+  const handleOnboardingComplete = useCallback((_choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar') => {
     // After onboarding: go to orb state (not fullscreen) so user sees their new orb
     // The orb now has their skills as nodes — let them explore naturally
     setOnboardingDone(true);

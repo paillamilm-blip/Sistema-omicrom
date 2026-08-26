@@ -31,7 +31,8 @@ export function useProgressiveBlur(sectionId: string) {
 
   // Cleanup all timers on unmount
   useEffect(() => {
-    return () => { timersRef.current.forEach(clearTimeout); };
+    const timers = timersRef.current;
+    return () => { timers.forEach(clearTimeout); };
   }, []);
 
   // On mount, if not visited, auto-clear after entrance delay

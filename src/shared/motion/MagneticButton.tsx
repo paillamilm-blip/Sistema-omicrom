@@ -6,7 +6,7 @@
 // Impeccable: smooth spring return to center on leave.
 // ═══════════════════════════════════════════════════════════════════════
 import { useRef, useCallback, type ReactNode, type CSSProperties } from 'react';
-import { motion, useSpring, useTransform, useMotionValue } from 'framer-motion';
+import { motion, useSpring, useMotionValue } from 'framer-motion';
 import { useReducedMotion } from './useReducedMotion';
 
 interface Props {
