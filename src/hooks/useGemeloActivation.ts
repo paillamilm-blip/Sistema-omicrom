@@ -3,11 +3,16 @@
 // Custom hook: encapsula toda la lógica de negocio del flujo de
 // activación del Gemelo Digital.
 //
-// FLUJO NUEVO (Experience-First):
+// FLUJO (Experience-First):
 //   1. Upload CV (cualquier usuario, guest o autenticado)
 //   2. Análisis (IA o local — NO requiere auth)
 //   3. GemeloReveal (muestra resultados impactantes — NO requiere auth)
-//   4. Persistir (SOLO cuando el usuario decide "Activar" — requiere auth)
+//   4. Persistir (SOLO cuando el usuario toca "Activar" — requiere auth)
+//   5. Auto-convalidar (SOLO tras persist exitoso)
+//
+// FIX: Eliminada la persistencia inline dentro de activateGemeloCompleto
+// que causaba un loop y duplicación. Ahora `persistAnalysis` es el ÚNICO
+// camino para guardar → coherente, sin stale closures, sin loop.
 //
 // Si el usuario no está autenticado al persistir, se abre el modal de
 // login. Al volver autenticado, se persiste automáticamente.
@@ -53,6 +58,7 @@ export function useGemeloActivation() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [pendingPersist, setPendingPersist] = useState(false);
   const [persisted, setPersisted] = useState(false);
+  const [persistError, setPersistError] = useState<string | null>(null);
   const dossierRef = useRef<AnalyzedProfile | null>(null);
   const pushIdRef = useRef(0);
   const isProcessingRef = useRef(false);
@@ -74,27 +80,6 @@ export function useGemeloActivation() {
   // Keep dossierRef in sync (avoids stale closure in pendingPersist effect)
   useEffect(() => { dossierRef.current = dossier; }, [dossier]);
 
-  // ── Auto-persist when user authenticates after reveal ────────────
-  useEffect(() => {
-    if (pendingPersist && profile?.id && dossierRef.current) {
-      void persistAnalysis(dossierRef.current);
-      setPendingPersist(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.id, pendingPersist]);
-
-  // ── Cancel activation (user-triggered) ───────────────────────────
-  const cancelActivation = useCallback(() => {
-    cancelledRef.current = true;
-    isProcessingRef.current = false;
-    if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
-    if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
-    setLastError(null);
-    setPhase('upload');
-    setMsg('Cancelado. Podés reintentar cuando quieras.');
-    toast('Análisis cancelado', 'info');
-  }, [toast]);
-
   // ── Push notification helper ─────────────────────────────────────
   const emitPush = useCallback((label: string, delta: number, color: string) => {
     const id = ++pushIdRef.current;
@@ -103,6 +88,7 @@ export function useGemeloActivation() {
   }, []);
 
   // ── Auto-convalidation chain (requires auth) ─────────────────────
+  // ONLY runs after a SUCCESSFUL persist — never independently.
   const runAutoChain = useCallback(async () => {
     setCurrentStep(1);
     try {
@@ -140,6 +126,121 @@ export function useGemeloActivation() {
     await refreshProfile();
   }, [emitPush, refreshProfile]);
 
+  // ══════════════════════════════════════════════════════════════════
+  // PERSIST — ÚNICO camino para guardar el CV analizado en la DB.
+  // Called from: GemeloReveal CTA, or auto-persist effect after auth.
+  // If not authenticated, opens login and auto-persists on return.
+  // After successful persist → runs runAutoChain.
+  // ══════════════════════════════════════════════════════════════════
+  const persistAnalysis = useCallback(async (analyzed?: AnalyzedProfile | null) => {
+    const data = analyzed || dossierRef.current;
+    if (!data) {
+      toast('No hay análisis para guardar. Subí tu CV primero.', 'error');
+      return;
+    }
+
+    // If not authenticated → open auth modal, mark pending
+    if (!profile?.id) {
+      setPendingPersist(true);
+      window.dispatchEvent(new Event('omicron:request-auth'));
+      toast('Registrate para guardar tu Gemelo Digital', 'info');
+      return;
+    }
+
+    // Clear previous error
+    setPersistError(null);
+    setMsg('Guardando tu Gemelo Digital…');
+
+    try {
+      const cleanSkills = (data.labels ?? []).filter((s: string) => typeof s === 'string' && s.trim());
+      const cleanDetail = (data.skillsDetail ?? [])
+        .filter((s: { name: string; pct: number }) => s?.name)
+        .map((s: { name: string; pct: number }) => ({ name: String(s.name), pct: Number(s.pct) || 0 }));
+
+      const { data: rpcData, error } = await supabase.rpc('aplicar_analisis_cv', {
+        p_name: String(data.name || ''),
+        p_skills: cleanSkills.length > 0 ? cleanSkills : ['general'],
+        p_exec: Math.round(Number(data.axes.exec) || 0),
+        p_qual: Math.round(Number(data.axes.qual) || 0),
+        p_trans: Math.round(Number(data.axes.trans) || 0),
+        p_fund: Math.round(Number(data.axes.fund) || 0),
+        p_years: data.years ? Math.round(Number(data.years)) : 0,
+        p_summary: data.summary ? String(data.summary) : '',
+        p_skills_detail: cleanDetail.length > 0 ? cleanDetail : [],
+      });
+
+      const res = rpcData as { ok?: boolean; error?: string } | null;
+      if (error || !res?.ok) {
+        const errMsg = error?.message || res?.error || 'Error desconocido';
+        // Provide actionable messages based on common errors
+        let userMsg: string;
+        if (errMsg.includes('Could not find') || errMsg.includes('function') || errMsg.includes('does not exist')) {
+          userMsg = 'La base de datos necesita actualizarse. Contactá soporte.';
+          console.error('[Omicron] RPC not found — migrations 0062+0063 not applied?', errMsg);
+        } else if (errMsg.includes('sin sesión') || errMsg.includes('JWT') || errMsg.includes('expired')) {
+          userMsg = 'Tu sesión expiró. Refrescá la página e intentá de nuevo.';
+        } else {
+          userMsg = `No se pudo guardar: ${errMsg}`;
+        }
+        setPersistError(userMsg);
+        toast(userMsg, 'error');
+        console.error('[Omicron] persistAnalysis RPC failed:', { error, rpcData });
+        return;
+      }
+
+      // ═══════ SUCCESS — profile saved! ═══════
+      setPersisted(true);
+      setPersistError(null);
+      setCompletedSteps(['cv']);
+      emitPush('Ejecución', data.axes.exec > 50 ? 12 : 8, C.cyan);
+      emitPush('Calidad', data.axes.qual > 50 ? 10 : 6, C.purple);
+      toast('¡Gemelo Digital activado!', 'success');
+      speak(`Gemelo Digital activado. Perfil: ${data.seniorLabel}.`);
+
+      // Force profile refresh IMMEDIATELY
+      await refreshProfile();
+
+      // Broadcast to network (best-effort)
+      try {
+        supabase.channel('omicron-live').send({ type: 'broadcast', event: 'activity', payload: { text: `${profile?.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } });
+        import('@/shared/utils/analytics').then(({ track }) => track('cv_uploaded')).catch(() => {});
+      } catch { /* silent */ }
+
+      // Run auto-convalidation chain ONLY after successful persist
+      await runAutoChain();
+
+      // Clear phantom timer (they saved — no more countdown)
+      localStorage.removeItem('omicron_gemelo_phantom_expire');
+
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Error desconocido';
+      setPersistError(`Error al guardar: ${errMsg}`);
+      console.error('[Omicron] persistAnalysis failed:', err);
+      toast('Error al guardar. Intentá de nuevo.', 'error');
+    }
+  }, [profile?.id, profile?.username, emitPush, runAutoChain, toast, refreshProfile]);
+
+  // ── Auto-persist when user authenticates after reveal ────────────
+  useEffect(() => {
+    if (pendingPersist && profile?.id && dossierRef.current) {
+      void persistAnalysis(dossierRef.current);
+      setPendingPersist(false);
+    }
+  }, [profile?.id, pendingPersist, persistAnalysis]);
+
+  // ── Cancel activation (user-triggered) ───────────────────────────
+  const cancelActivation = useCallback(() => {
+    cancelledRef.current = true;
+    isProcessingRef.current = false;
+    if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
+    if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
+    setLastError(null);
+    setPersistError(null);
+    setPhase('upload');
+    setMsg('Cancelado. Podés reintentar cuando quieras.');
+    toast('Análisis cancelado', 'info');
+  }, [toast]);
+
   // ── Detect synergies from analyzed profile ───────────────────────
   const detectSynergies = useCallback((analyzed: AnalyzedProfile): string[] => {
     const results: string[] = [];
@@ -176,6 +277,11 @@ export function useGemeloActivation() {
   // ══════════════════════════════════════════════════════════════════
   // ANALYZE CV — NO requiere auth. Cualquier usuario puede analizar.
   // Al terminar, muestra GemeloReveal (phase = 'reveal').
+  //
+  // IMPORTANTE: Esta función SOLO analiza. NO persiste. La persistencia
+  // ocurre SOLO cuando el usuario toca "Activar" en GemeloReveal, que
+  // llama a `persistAnalysis`. Esto rompe el loop anterior donde el
+  // análisis intentaba guardar inline y fallaba silenciosamente.
   // ══════════════════════════════════════════════════════════════════
   const activateGemeloCompleto = useCallback(async () => {
     const text = cvText.trim();
@@ -188,6 +294,7 @@ export function useGemeloActivation() {
     setCurrentStep(0);
     setMsg('Ómicron está analizando TODO tu CV con IA…');
     setLastError(null);
+    setPersistError(null);
 
     // ── Safety timeout ───────────────────────────────────────────────
     safetyTimerRef.current = setTimeout(() => {
@@ -267,6 +374,7 @@ export function useGemeloActivation() {
 
       if (!analyzed) {
         setMsg('No se obtuvo un análisis. Intentá de nuevo.');
+        setLastError('no_analysis');
         setPhase('upload');
         isProcessingRef.current = false;
         return;
@@ -277,54 +385,26 @@ export function useGemeloActivation() {
 
       if (cancelledRef.current) return;
 
-      // ── 3) Show GemeloReveal ───────────────────────────────────────
+      // ── 3) Show GemeloReveal — user decides when to persist ────────
       setSynergies(detectSynergies(analyzed));
       setDossier(analyzed);
       setAi({ loading: false, text: analyzed.summary });
       setPhase('reveal');
       isProcessingRef.current = false;
 
-      // ── 4) PERSIST IMMEDIATELY if authenticated (NO setTimeout, NO indirection)
+      // ── 4) AUTO-PERSIST for authenticated users ────────────────────
+      // If the user is already authenticated, persist immediately in background.
+      // This is NOT a duplicate — it uses the canonical persistAnalysis function
+      // via dossierRef (which is now set). If it fails, the user still sees the
+      // reveal and can retry via the CTA button.
       if (profile?.id) {
-        try {
-          const cleanSkills = (analyzed.labels ?? []).filter((s: string) => typeof s === 'string' && s.trim());
-          const cleanDetail = (analyzed.skillsDetail ?? [])
-            .filter((s: { name: string; pct: number }) => s?.name)
-            .map((s: { name: string; pct: number }) => ({ name: String(s.name), pct: Number(s.pct) || 0 }));
-
-          const { data: rpcData, error: rpcError } = await supabase.rpc('aplicar_analisis_cv', {
-            p_name: String(analyzed.name || ''),
-            p_skills: cleanSkills.length > 0 ? cleanSkills : ['general'],
-            p_exec: Math.round(Number(analyzed.axes.exec) || 0),
-            p_qual: Math.round(Number(analyzed.axes.qual) || 0),
-            p_trans: Math.round(Number(analyzed.axes.trans) || 0),
-            p_fund: Math.round(Number(analyzed.axes.fund) || 0),
-            p_years: analyzed.years ? Math.round(Number(analyzed.years)) : 0,
-            p_summary: analyzed.summary ? String(analyzed.summary) : '',
-            p_skills_detail: cleanDetail.length > 0 ? cleanDetail : [],
-          });
-
-          const res = rpcData as { ok?: boolean; error?: string } | null;
-          if (rpcError || !res?.ok) {
-            console.error('[Omicron] PERSIST FAILED:', { rpcError, rpcData });
-            toast(`Error al guardar: ${rpcError?.message || res?.error || '?'}`, 'error');
-          } else {
-            // SUCCESS — profile saved!
-            setPersisted(true);
-            toast('¡Gemelo Digital activado!', 'success');
-            speak(`Gemelo Digital activado. Perfil: ${analyzed.seniorLabel}.`);
-            await refreshProfile();
-            // Run convalidation chain in background
-            runAutoChain().catch(() => {});
-            localStorage.removeItem('omicron_gemelo_phantom_expire');
-          }
-        } catch (persistErr) {
-          console.error('[Omicron] PERSIST THREW:', persistErr);
-          toast('Error al guardar. Intentá de nuevo.', 'error');
-        }
+        // Small delay to let React commit the dossier state
+        setTimeout(() => {
+          void persistAnalysis(analyzed);
+        }, 100);
       }
 
-      // Analytics
+      // Analytics (best-effort)
       try {
         import('@/shared/utils/analytics').then(({ track }) => track('cv_analyzed')).catch(() => {});
       } catch { /* silent */ }
@@ -339,99 +419,17 @@ export function useGemeloActivation() {
         const localResult = analyzeCV(cvText.trim());
         setDossier(localResult);
         setSynergies(detectSynergies(localResult));
+        setAi({ loading: false, text: localResult.summary });
         setPhase('reveal');
       } catch (fallbackErr) {
         console.error('[Omicron] Local fallback also failed:', fallbackErr);
+        setLastError('catastrophic');
         setMsg('Error al procesar. Intentá de nuevo.');
         setPhase('upload');
       }
       isProcessingRef.current = false;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cvText, detectSynergies, toast, profile?.id, persistAnalysis]);
-
-  // ══════════════════════════════════════════════════════════════════
-  // PERSIST — Called from GemeloReveal CTA. Requires auth.
-  // If not authenticated, opens login and auto-persists on return.
-  // ══════════════════════════════════════════════════════════════════
-  const persistAnalysis = useCallback(async (analyzed?: AnalyzedProfile | null) => {
-    const data = analyzed || dossier;
-    if (!data) return;
-
-    // If not authenticated → open auth modal, mark pending
-    if (!profile?.id) {
-      setPendingPersist(true);
-      window.dispatchEvent(new Event('omicron:request-auth'));
-      toast('Registrate para guardar tu Gemelo Digital', 'info');
-      return;
-    }
-
-    // ── Persist to database ──────────────────────────────────────────
-    setMsg('Guardando tu Gemelo Digital…');
-
-    try {
-      const cleanSkills = (data.labels ?? []).filter((s: string) => typeof s === 'string' && s.trim());
-      const cleanDetail = (data.skillsDetail ?? [])
-        .filter((s: { name: string; pct: number }) => s?.name)
-        .map((s: { name: string; pct: number }) => ({ name: String(s.name), pct: Number(s.pct) || 0 }));
-
-      const { data: rpcData, error } = await supabase.rpc('aplicar_analisis_cv', {
-        p_name: String(data.name || ''),
-        p_skills: cleanSkills.length > 0 ? cleanSkills : ['general'],
-        p_exec: Math.round(Number(data.axes.exec) || 0),
-        p_qual: Math.round(Number(data.axes.qual) || 0),
-        p_trans: Math.round(Number(data.axes.trans) || 0),
-        p_fund: Math.round(Number(data.axes.fund) || 0),
-        p_years: data.years ? Math.round(Number(data.years)) : 0,
-        p_summary: data.summary ? String(data.summary) : '',
-        p_skills_detail: cleanDetail.length > 0 ? cleanDetail : [],
-      });
-
-      const res = rpcData as { ok?: boolean; error?: string } | null;
-      if (error || !res?.ok) {
-        const errMsg = error?.message || res?.error || 'Error desconocido';
-        // Provide actionable messages based on common errors
-        if (errMsg.includes('Could not find') || errMsg.includes('function') || errMsg.includes('does not exist')) {
-          toast('La base de datos necesita actualizarse. Ejecutá: supabase db push', 'error');
-          console.error('[Omicron] RPC not found — migrations not applied?', errMsg);
-        } else if (errMsg.includes('sin sesión') || errMsg.includes('JWT')) {
-          toast('Tu sesión expiró. Refrescá la página e intentá de nuevo.', 'error');
-        } else {
-          toast(`No se pudo guardar: ${errMsg}`, 'error');
-        }
-        console.error('[Omicron] persistAnalysis RPC failed:', { error, rpcData });
-        return;
-      }
-
-      // Success!
-      setPersisted(true);
-      setCompletedSteps(['cv']);
-      emitPush('Ejecución', data.axes.exec > 50 ? 12 : 8, C.cyan);
-      emitPush('Calidad', data.axes.qual > 50 ? 10 : 6, C.purple);
-      toast('¡Gemelo Digital activado!', 'success');
-      speak(`Gemelo Digital activado. Perfil: ${data.seniorLabel}.`);
-
-      // Force profile refresh IMMEDIATELY (don't wait for runAutoChain)
-      await refreshProfile();
-
-      // Broadcast to network
-      try {
-        supabase.channel('omicron-live').send({ type: 'broadcast', event: 'activity', payload: { text: `${profile?.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } });
-        import('@/shared/utils/analytics').then(({ track }) => track('cv_uploaded')).catch(() => {});
-      } catch { /* silent */ }
-
-      // Run auto-convalidation chain
-      await runAutoChain();
-
-      // Clear phantom timer (they saved — no more countdown)
-      localStorage.removeItem('omicron_gemelo_phantom_expire');
-
-    } catch (err) {
-      console.error('[Omicron] persistAnalysis failed:', err);
-      toast('Error al guardar. Intentá de nuevo.', 'error');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dossier, profile?.id, emitPush, runAutoChain, toast, refreshProfile]);
 
   return {
     // State
@@ -439,7 +437,7 @@ export function useGemeloActivation() {
     cvText, setCvText, cvFileName, msg, pushes, synergies,
     rep, hasExistingCV, gemelo, profile, lastError,
     isProcessing: isProcessingRef.current,
-    pendingPersist, persisted,
+    pendingPersist, persisted, persistError,
     // Actions
     onCVFile, activateGemeloCompleto, cancelActivation, persistAnalysis,
   };
