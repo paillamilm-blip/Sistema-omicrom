@@ -31,6 +31,7 @@ inclusion: always
 | **SCRAPEAR:** [sitio/datos] | Extraigo datos de cualquier web | Firecrawl + Scrape + Browse + Agent Browser |
 | **ESPIAR:** [url competencia] | Analizo sitio/app de la competencia | Agent Browser + Browse + Superpowers + Performance |
 | **AUTOMATIZAR:** [flujo] | Creo automatización de browser repetible | Agent Browser + Nova Act + Firecrawl + QA Skill |
+| **HACKEAR:** [módulo/app] | Pentesting con IA — busco vulnerabilidades reales con exploits | Strix (penetration-testing + find-vulns + owasp + api-security + fix-vulns) + Security & Hardening + CSO |
 
 ---
 
@@ -55,6 +56,7 @@ inclusion: always
 | **EXTRAER:** [datos de sitio] | Scraping masivo estructurado | "EXTRAER: todos los empleos de LinkedIn Chile" |
 | **LOOP:** [problema complejo] | Bug/problema que NO se resuelve. ITERA hasta arreglarlo | "LOOP: el CV no se analiza en celular" |
 | **LOOP TOTAL:** [tema] | Busca TODOS los bugs de un tema y no para hasta resolver todos | "LOOP TOTAL: el sistema de reputación" |
+| **HACKEAR:** [app/módulo] | Pentesting IA + fix de cada vuln + re-scan hasta 0 vulns | "HACKEAR: el módulo de auth" |
 
 ---
 
@@ -355,6 +357,57 @@ LOOP TOTAL: el análisis de CV
 ```
 
 **Potencia:** 38/46 skills — NIVEL ABSOLUTO 🔥🔥🔥🔥🔥
+
+---
+
+### HACKEAR: [módulo/app] ← 🏴‍☠️ PENTESTING IA + FIX + RE-SCAN HASTA 0 VULNS
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  HACKEAR — Pentesting autónomo con Strix IA                         │
+│                                                                     │
+│  FASE 1: PENTEST (Strix escanea como un hacker real)                │
+│    → Reconocimiento → Explotación → Validación con PoC              │
+│    → Lista de vulnerabilidades CONFIRMADAS (no false positives)      │
+│                                                                     │
+│  FASE 2: FIX (por cada vulnerabilidad, de crítica a baja)           │
+│    ┌────────────────────────────────────────────────────────┐       │
+│    │  ARREGLAR (root cause) → REVISAR → SINERGIA            │       │
+│    └────────────────────────────────────────────────────────┘       │
+│                                                                     │
+│  FASE 3: RE-SCAN (Strix ataca de nuevo para confirmar fix)          │
+│    → ¿Vulnerabilidad cerrada? SÍ → siguiente                       │
+│    → ¿Sigue abierta? → volver a FASE 2                             │
+│                                                                     │
+│  FASE 4: SCAN FINAL (Strix completo otra vez)                       │
+│    → 0 vulns = LANZAR ✅                                             │
+│    → Vulns nuevas = volver a FASE 2                                 │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Se activa con:** "hackear", "hackea", "pentest", "buscar vulnerabilidades", "es hackeable?", "seguridad ofensiva"
+
+**Skills activadas:**
+- **Strix:** penetration-testing + find-security-vulnerabilities + owasp-top-10 + api-security + application-security + fix-vulnerabilities + ci-security-scanning
+- **Soporte:** security-and-hardening + cso + code-review-ultra + systematic-debugging + sinergia + qa-memoria + verification
+
+**Protocolo:**
+1. Strix escanea el módulo/app como un hacker real (OWASP Top 10 + beyond)
+2. Cada vulnerabilidad viene con **exploit real (PoC)** — no son alertas falsas
+3. Arreglo cada vuln de crítica → baja (root cause, no parche superficial)
+4. Re-escaneo con Strix para confirmar que el fix cerró el exploit
+5. Scan final completo — si aparece algo nuevo, vuelvo a fixear
+6. Solo lanzo cuando Strix devuelve **0 vulnerabilidades confirmadas**
+
+**Ejemplo:**
+```
+HACKEAR: el módulo de auth
+HACKEAR: las Edge Functions
+HACKEAR: toda la app
+hackea el sistema de pagos
+es hackeable el login?
+```
+
+**Potencia:** MÁXIMA en seguridad ofensiva 🏴‍☠️🔥
 
 ---
 
