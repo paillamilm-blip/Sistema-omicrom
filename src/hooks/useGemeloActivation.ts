@@ -272,7 +272,12 @@ export function useGemeloActivation() {
         return;
       }
 
-      // ── 2) Show GemeloReveal (NO persist yet) ──────────────────────
+      // ── 2) Minimum syncing time (so user always sees the orb animation) ─
+      await new Promise(r => setTimeout(r, 2000));
+
+      if (cancelledRef.current) return;
+
+      // ── 3) Show GemeloReveal ───────────────────────────────────────
       setSynergies(detectSynergies(analyzed));
       setDossier(analyzed);
       setAi({ loading: false, text: analyzed.summary });
