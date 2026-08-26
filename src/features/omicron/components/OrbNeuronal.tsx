@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import type { TabId } from '@/types';
 
@@ -208,12 +208,6 @@ export default function OrbNeuronal({
     scene.add(dots);
 
     // ── No core — clean wireframe + glowing nodes only ────────────────
-    const coreGeo = null;
-    const coreMat = null;
-    const core = null;
-    const haloGeo = null;
-    const haloMat = null;
-    const halo = null;
 
     // ── Hub node positions (Fibonacci on sphere surface) ─────────────
     const hubPositions = fibonacciSphere(Math.max(nodeCount, 1), radius * 0.98);

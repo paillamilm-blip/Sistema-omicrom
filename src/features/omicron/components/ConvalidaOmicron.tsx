@@ -19,7 +19,6 @@ import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { C, FONT, RADIUS, SIZE } from '@/theme';
 import { getUserColor } from '@/shared/components/ColorPicker';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
-import { ProgressBar } from '@/shared/components/OmicronChrome';
 
 export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   const uc = getUserColor();

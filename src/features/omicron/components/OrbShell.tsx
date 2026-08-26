@@ -254,7 +254,7 @@ export function OrbShell() {
   const rafRef = useRef<number | null>(null);
 
   // Idle escalation — si no interactúa, escalamos
-  const { stage: idleStage, helpMessage, resetIdle } = useIdleEscalation(state === 'orb');
+  const { helpMessage, resetIdle } = useIdleEscalation(state === 'orb');
   const hasGreeted = useRef(false);
   const [previewSkills, setPreviewSkills] = useState<string[]>([]);
 
