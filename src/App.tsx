@@ -74,7 +74,10 @@ function AppShell() {
 
     // Register daily activity for streak (server-side)
     if (authStatus === 'authenticated') {
-      supabase.rpc('register_daily_activity', { p_challenge: false, p_pe: 0 }).then(() => {/* ok */});
+      supabase.rpc('register_daily_activity', { p_challenge: false, p_pe: 0 })
+        .then(({ error }) => {
+          if (error) console.warn('[App] register_daily_activity failed (RPC may not exist):', error.message);
+        });
     }
   }, [authStatus]);
 

@@ -11,7 +11,7 @@ import { useNavigation } from '@/store/NavigationContext';
 import { useProfile } from '@/store/ProfileContext';
 import { interpret } from '@/features/omicron/services/oraculo';
 import { speakOmicron } from '@/features/omicron/services/voice';
-import { askOmicron, type OmicronContext } from '@/features/omicron/services/brain';
+import { askOmicron, checkOmicronLimit, type OmicronContext } from '@/features/omicron/services/brain';
 import { stopAI, isAudioUnlocked, speakLocal } from '@/infrastructure/voice/voiceAI';
 import { useGemeloProfile } from '@/features/gemelo/hooks/useGemeloProfile';
 import { useIdleEscalation } from '@/hooks/useIdleEscalation';
@@ -303,10 +303,10 @@ export function OrbShell() {
     const hasSkill = (keywords: string[]) =>
       keywords.some(k => validatedSkills.some(s => s.toLowerCase().includes(k.toLowerCase())));
 
-    // Map node id → level (0-1) + next step text
-    // GAP 7 FIX: Hub nextSteps come from omicronCoach.nodeGuidance() (dynamic, real data)
+    // Level map for HUB NODES only (the 9 app sections).
+    // Skill nodes (skill-0-xxx) get their levels from buildSkillNodes() directly
+    // — they use real AI analysis data (skills_detail pct) not this static map.
     const levelMap: Record<string, { level: number; nextStep: string }> = {
-      // Hubs → driven by axes + nodeGuidance from omicronCoach (dynamic)
       inicio:      { level: Math.min(1, rep / 100), nextStep: nodeGuidance('perfil', sbProfile, gemeloDigital) || (rep < 50 ? 'Completa tu perfil' : '¡Perfil sólido!') },
       academia:    { level: execNorm * 0.5 + foundNorm * 0.5, nextStep: nodeGuidance('academia', sbProfile, gemeloDigital) },
       empleos:     { level: execNorm, nextStep: nodeGuidance('empleos', sbProfile, gemeloDigital) },
@@ -316,65 +316,15 @@ export function OrbShell() {
       habilidades: { level: qualNorm, nextStep: nodeGuidance('maxskill', sbProfile, gemeloDigital) },
       billetera:   { level: Math.min(1, (profile.vault ?? 0) / 5), nextStep: nodeGuidance('wallet', sbProfile, gemeloDigital) },
       boveda:      { level: Math.min(1, (profile.vault ?? 0) / 5), nextStep: nodeGuidance('vault', sbProfile, gemeloDigital) },
-
-      // Knowledge nodes → based on validated skills
-      react:        { level: hasSkill(['react', 'jsx', 'frontend']) ? 0.8 : execNorm * 0.3, nextStep: hasSkill(['react']) ? 'Aprende Server Components' : 'Empieza con React fundamentals' },
-      python:       { level: hasSkill(['python', 'django', 'flask']) ? 0.8 : foundNorm * 0.3, nextStep: hasSkill(['python']) ? 'Aplica Python a ML/Data' : 'Empieza con Python básico' },
-      typescript:   { level: hasSkill(['typescript', 'ts']) ? 0.85 : execNorm * 0.25, nextStep: hasSkill(['typescript']) ? 'Aprende tipos avanzados' : 'Agrega TypeScript a tus proyectos' },
-      nodejs:       { level: hasSkill(['node', 'nodejs', 'backend']) ? 0.75 : execNorm * 0.3, nextStep: hasSkill(['node']) ? 'Aprende microservicios' : 'Crea tu primer servidor Node' },
-      ia:           { level: hasSkill(['ia', 'inteligencia', 'gpt', 'ai']) ? 0.7 : foundNorm * 0.2, nextStep: 'Integra IA en tu próximo proyecto' },
-      ml:           { level: hasSkill(['machine learning', 'ml', 'scikit']) ? 0.75 : foundNorm * 0.15, nextStep: hasSkill(['ml']) ? 'Construye tu primer modelo en prod' : 'Toma el curso de ML fundamentals' },
-      data:         { level: hasSkill(['data', 'analytics', 'sql', 'pandas']) ? 0.7 : foundNorm * 0.2, nextStep: 'Analiza datos reales de tu área' },
-      cloud:        { level: hasSkill(['cloud', 'aws', 'azure', 'gcp']) ? 0.75 : execNorm * 0.2, nextStep: hasSkill(['cloud']) ? 'Obtén certificación cloud' : 'Despliega tu primera app en la nube' },
-      devops:       { level: hasSkill(['devops', 'docker', 'ci/cd', 'kubernetes']) ? 0.7 : execNorm * 0.25, nextStep: 'Automatiza tu pipeline de deploy' },
-      design:       { level: hasSkill(['diseño', 'ux', 'figma', 'ui']) ? 0.8 : qualNorm * 0.3, nextStep: hasSkill(['diseño', 'ux']) ? 'Crea un case study de diseño' : 'Aprende principios de UX' },
-      liderazgo:    { level: transNorm * 0.7 + (hasSkill(['liderazgo', 'management']) ? 0.3 : 0), nextStep: transNorm < 0.5 ? 'Lidera tu primer proyecto de equipo' : 'Mentoriza a otro nodo' },
-      comunicacion: { level: transNorm * 0.6 + qualNorm * 0.4, nextStep: 'Participa en una presentación o charla' },
-      gestion:      { level: transNorm * 0.5 + foundNorm * 0.5, nextStep: foundNorm < 0.5 ? 'Toma un curso de gestión de proyectos' : 'Certifícate en Scrum' },
-      agile:        { level: hasSkill(['agile', 'scrum', 'kanban']) ? 0.8 : foundNorm * 0.3, nextStep: hasSkill(['agile', 'scrum']) ? 'Obtén certificación PMP' : 'Aplica Scrum en tu próximo proyecto' },
-      seguridad:    { level: hasSkill(['seguridad', 'ciberseguridad', 'security']) ? 0.75 : foundNorm * 0.15, nextStep: 'Toma el curso de ciberseguridad básica' },
-      blockchain:   { level: hasSkill(['blockchain', 'web3', 'solidity']) ? 0.8 : transNorm * 0.2, nextStep: hasSkill(['blockchain']) ? 'Despliega tu primer contrato' : 'Entiende cómo funciona blockchain' },
-      web3:         { level: hasSkill(['web3', 'ethereum', 'nft']) ? 0.75 : transNorm * 0.15, nextStep: 'Construye una dApp simple' },
-      mobile:       { level: hasSkill(['mobile', 'react native', 'flutter', 'ios', 'android']) ? 0.75 : execNorm * 0.25, nextStep: 'Publica tu primera app en la tienda' },
-      databases:    { level: hasSkill(['sql', 'database', 'postgres', 'mongodb']) ? 0.8 : foundNorm * 0.3, nextStep: hasSkill(['sql']) ? 'Aprende optimización de queries' : 'Domina SQL básico' },
-      api:          { level: hasSkill(['api', 'rest', 'graphql']) ? 0.8 : execNorm * 0.35, nextStep: hasSkill(['api']) ? 'Diseña APIs más robustas' : 'Crea tu primera REST API' },
-      testing:      { level: hasSkill(['testing', 'test', 'jest', 'cypress']) ? 0.75 : qualNorm * 0.3, nextStep: 'Agrega tests a tu proyecto actual' },
-      arquitectura: { level: hasSkill(['arquitectura', 'architecture', 'system design']) ? 0.7 : foundNorm * 0.3, nextStep: 'Documenta la arquitectura de un proyecto tuyo' },
-      analytics:    { level: hasSkill(['analytics', 'ga', 'plausible']) ? 0.7 : transNorm * 0.25, nextStep: 'Instala analytics en tu app' },
-      marketing:    { level: hasSkill(['marketing', 'seo', 'ads']) ? 0.7 : transNorm * 0.25, nextStep: 'Aprende growth hacking básico' },
-      finanzas:     { level: hasSkill(['finanzas', 'finance']) ? 0.7 : foundNorm * 0.25, nextStep: 'Toma el módulo de finanzas personales' },
-      negocios:     { level: transNorm * 0.6 + foundNorm * 0.4, nextStep: 'Lee sobre modelos de negocio innovadores' },
-      innovacion:   { level: transNorm, nextStep: 'Propone una mejora en tu próximo proyecto' },
-      robotica:     { level: hasSkill(['robotica', 'robot', 'arduino']) ? 0.7 : foundNorm * 0.1, nextStep: 'Explora proyectos de robótica open source' },
-      iot:          { level: hasSkill(['iot', 'arduino', 'raspberry']) ? 0.7 : foundNorm * 0.1, nextStep: 'Conecta un dispositivo IoT' },
-      networking:   { level: transNorm * 0.7 + Math.min(0.3, (profile.vault ?? 0) * 0.06), nextStep: 'Conecta con 3 profesionales esta semana' },
-      freelance:    { level: execNorm * 0.5 + transNorm * 0.5, nextStep: execNorm < 0.5 ? 'Arma tu propuesta de servicios' : 'Sube tu primera propuesta al mercado' },
-      startup:      { level: transNorm * 0.6 + execNorm * 0.4, nextStep: 'Valida una idea de startup en 1 semana' },
-      cv:           { level: profile.cv ? 0.9 : 0.1, nextStep: profile.cv ? 'Actualiza tu CV con proyectos recientes' : '¡Sube tu CV para activar tu Gemelo!' },
-      reputacion:   { level: Math.min(1, rep / 100), nextStep: rep < 50 ? 'Convalida tus credenciales' : rep < 80 ? 'Completa los 4 ejes del Gemelo' : '¡Reputación de élite! Comparte tu badge' },
-      certificados: { level: Math.min(1, (profile.titles ?? 0) / 5), nextStep: profile.titles === 0 ? 'Sube tu primer certificado' : 'Agrega más certificaciones' },
-      mentoria:     { level: transNorm * 0.8, nextStep: transNorm > 0.6 ? 'Ofrece mentorías en el mercado' : 'Primero sube tu reputación' },
-      coaching:     { level: transNorm * 0.7, nextStep: 'Publica tu servicio de coaching' },
-      cursos:       { level: foundNorm, nextStep: foundNorm < 0.5 ? 'Inscríbete en un curso estructurado' : 'Busca certificación de nivel avanzado' },
-      talleres:     { level: transNorm * 0.5, nextStep: 'Asiste o dicta un taller práctico' },
-      proyectos:    { level: execNorm, nextStep: execNorm < 0.5 ? 'Documenta un proyecto tuyo en la Bóveda' : 'Agrega más proyectos a tu portfolio' },
-      colaboracion: { level: transNorm, nextStep: 'Inicia un proyecto colaborativo' },
-      tokens:       { level: Math.min(1, (profile.vault ?? 0) / 3), nextStep: 'Acumula tokens participando' },
-      stake:        { level: Math.min(1, (profile.vault ?? 0) / 5), nextStep: 'Aprende sobre staking en Ómicron' },
-      votacion:     { level: foundNorm * 0.5, nextStep: 'Participa en la próxima votación de gobernanza' },
-      propuestas:   { level: foundNorm * 0.4 + transNorm * 0.3, nextStep: 'Redacta tu primera propuesta' },
-      sql:          { level: hasSkill(['sql', 'database']) ? 0.8 : foundNorm * 0.3, nextStep: 'Practica queries complejos' },
-      git:          { level: hasSkill(['git', 'github']) ? 0.85 : execNorm * 0.4, nextStep: hasSkill(['git']) ? 'Aprende GitFlow y branching avanzado' : 'Aprende Git básico hoy' },
-      docker:       { level: hasSkill(['docker', 'container']) ? 0.8 : execNorm * 0.25, nextStep: hasSkill(['docker']) ? 'Aprende Docker Compose y Kubernetes' : 'Dockeriza tu primera app' },
-      kubernetes:   { level: hasSkill(['kubernetes', 'k8s']) ? 0.75 : execNorm * 0.15, nextStep: 'Despliega en un cluster Kubernetes' },
-      aws:          { level: hasSkill(['aws', 'amazon']) ? 0.8 : execNorm * 0.2, nextStep: hasSkill(['aws']) ? 'Certifícate en AWS Solutions Architect' : 'Crea tu primera instancia EC2' },
-      figma:        { level: hasSkill(['figma', 'design', 'ux']) ? 0.8 : qualNorm * 0.2, nextStep: hasSkill(['figma']) ? 'Crea un sistema de diseño completo' : 'Diseña tu primer wireframe' },
-      threejs:      { level: hasSkill(['three', 'webgl', '3d']) ? 0.8 : execNorm * 0.15, nextStep: 'Crea una escena 3D interactiva' },
-      rust:         { level: hasSkill(['rust']) ? 0.75 : foundNorm * 0.1, nextStep: 'Aprende ownership y borrowing en Rust' },
-      go:           { level: hasSkill(['go', 'golang']) ? 0.75 : execNorm * 0.15, nextStep: 'Crea un microservicio en Go' },
-      idiomas:      { level: hasSkill(['inglés', 'ingles', 'english', 'idioma']) ? 0.7 : transNorm * 0.3, nextStep: 'Practica con conversaciones técnicas' },
-      ingles:       { level: hasSkill(['inglés', 'ingles', 'english', 'b2', 'c1']) ? 0.85 : transNorm * 0.25, nextStep: hasSkill(['inglés', 'english']) ? 'Obtén certificación IELTS o Cambridge' : 'Empieza con inglés técnico' },
-      japones:      { level: hasSkill(['japonés', 'japones', 'japanese', 'jlpt']) ? 0.7 : 0.05, nextStep: 'El japonés abre puertas al mercado asiático' },
+      // Invitation nodes (when user has no skills)
+      'inv-cv':       { level: hasSkill(['cv', 'curriculum']) ? 0.9 : 0.1, nextStep: '¡Sube tu CV para activar tu Gemelo!' },
+      'inv-skills':   { level: qualNorm, nextStep: 'Descubre tus habilidades ocultas' },
+      'inv-curso':    { level: foundNorm * 0.5, nextStep: 'Empieza tu primer curso' },
+      'inv-empleo':   { level: execNorm * 0.3, nextStep: 'Encuentra tu primer match' },
+      'inv-servicio': { level: transNorm * 0.3, nextStep: 'Ofrece tu primer servicio' },
+      'inv-token':    { level: Math.min(1, (profile.vault ?? 0) / 3), nextStep: 'Gana tokens participando' },
+      'inv-connect':  { level: transNorm * 0.4, nextStep: 'Conecta con otros profesionales' },
+      'inv-valida':   { level: qualNorm * 0.5, nextStep: 'Valida tu expertise' },
     };
 
     return dynamicOrbNodes.map(node => ({
@@ -427,6 +377,10 @@ export function OrbShell() {
         activeTab: selectedNode?.tab ?? 'perfil',
         displayName: sbProfile?.display_name || sbProfile?.username,
       };
+      if (!checkOmicronLimit()) {
+        flash('Alcanzaste el límite diario de consultas. Volvé mañana con energía recargada.');
+        return;
+      }
       const r = await askOmicron(text, omCtx);
       flash(r.text);
       speakOmicron(r.text);
@@ -474,6 +428,10 @@ export function OrbShell() {
       activeTab: selectedNode?.tab ?? 'perfil',
       displayName: sbProfile?.display_name || sbProfile?.username,
     };
+    if (!checkOmicronLimit()) {
+      flash('Alcanzaste el límite diario de consultas. Volvé mañana con energía recargada.');
+      return;
+    }
     const r = await askOmicron(text, omCtx);
     flash(r.text);
     speakOmicron(r.text);
@@ -518,7 +476,7 @@ export function OrbShell() {
         window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
       },
     });
-    if (handle) rafRef.current = null; // store handle if needed for cleanup
+    if (handle) void 0; // handle stored internally by recognition module
   }, [isListening, handleTextInput]);
 
   // ── Handle node tap → go to preview ─────────────────────────────────
