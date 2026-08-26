@@ -22,6 +22,8 @@ export default defineConfig({
     globals: true,
     // No falla el CI si algún cambio temporalmente no trae archivos de test.
     passWithNoTests: true,
+    // Excluir .kiro/ (archivos internos de Kiro) y node_modules
+    exclude: ['**/node_modules/**', '**/.kiro/**', '**/e2e/**'],
   },
   build: {
     // Separa dependencias en chunks cacheables (mejor rendimiento en visitas
