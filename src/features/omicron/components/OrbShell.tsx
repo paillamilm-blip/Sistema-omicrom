@@ -724,33 +724,23 @@ export function OrbShell() {
       <OrbOnboarding
         onComplete={handleOnboardingComplete}
         onSkillsPreview={setPreviewSkills}
-        onProfileGenerated={async (generated: GeneratedProfile) => {
-          // R4: Guardar perfil generado en Supabase
-          try {
-            const { supabase } = await import('@/infrastructure/supabase/client');
-            if (sbProfile?.id) {
-              await supabase.from('profiles').update({
-                skills: generated.skills,
-                skills_detail: generated.skills.map((s: string, i: number) => ({
-                  name: s,
-                  pct: Math.max(40, 80 - i * 10),
-                })),
-                cv_summary: generated.summary,
-                cv_years_experience: generated.years,
-                execution_score: generated.axes.exec,
-                quality_score: generated.axes.qual,
-                transcendence_score: generated.axes.trans,
-                foundation_score: generated.axes.fund,
-              }).eq('id', sbProfile.id);
-              // CABLE 1: Broadcast "activó su Gemelo Digital" a toda la red
-              try {
-                const ch = supabase.channel('omicron-live');
-                ch.send({ type: 'broadcast', event: 'activity', payload: { text: `${sbProfile.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } });
-              } catch { /* silencioso */ }
-            }
-          } catch (e) {
-            console.warn('[onboarding] Error guardando perfil:', e);
-          }
+        onProfileGenerated={(generated: GeneratedProfile) => {
+          // FIX: El onboarding genera un perfil ESTIMADO de 1 frase (ej: "ingeniero industrial").
+          // NO se persiste a Supabase aquí — solo se guarda en localStorage como preview.
+          // La persistencia REAL solo ocurre cuando el usuario sube su CV completo
+          // y se ejecuta aplicar_analisis_cv (vía useGemeloActivation → persistAnalysis).
+          //
+          // ANTES: escribía directo a profiles con .update() → esto:
+          //   1) Era bloqueado por el trigger 0007_protect_profile (scores revertidos)
+          //   2) O peor: si el trigger no cubría skills/summary, sobreescribía datos reales
+          //   3) Causaba que el CV posterior no "convalidara" (datos del onboarding prevalecían)
+          //
+          // AHORA: solo localStorage → el usuario ve un preview en la orbe, pero al subir
+          // su CV real, aplicar_analisis_cv escribe los datos correctos.
+          import('@/shared/utils/guestMode').then(({ saveGuestProfile }) => {
+            saveGuestProfile({ ...generated, createdAt: new Date().toISOString() });
+          }).catch(() => {});
+          console.info('[onboarding] Profile preview saved to localStorage (not persisted to DB until CV upload)');
         }}
       />
 
