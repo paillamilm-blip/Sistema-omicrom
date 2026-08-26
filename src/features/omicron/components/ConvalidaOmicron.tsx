@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Upload, ArrowRight, TrendingUp, Zap, RotateCcw } from 'lucide-react';
 import { useGemeloActivation } from '@/hooks/useGemeloActivation';
 import { GemeloReveal } from './GemeloReveal';
+import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { C, FONT, RADIUS, SIZE } from '@/theme';
 import { getUserColor } from '@/shared/components/ColorPicker';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
@@ -54,11 +55,13 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   // ══════════════════════════════════════════════════════════════════════
   if (phase === 'reveal' && dossier) {
     return (
-      <GemeloReveal
-        analyzed={dossier}
-        isAuthenticated={!!profile?.id}
-        onActivate={() => void persistAnalysis()}
-      />
+      <ErrorBoundary section="GemeloReveal">
+        <GemeloReveal
+          analyzed={dossier}
+          isAuthenticated={!!profile?.id}
+          onActivate={() => void persistAnalysis()}
+        />
+      </ErrorBoundary>
     );
   }
 

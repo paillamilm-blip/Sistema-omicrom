@@ -6,6 +6,7 @@ import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { ProactiveCards } from './ProactiveCards';
 import { OrbContextLabel } from './OrbContextLabel';
 import { PremiumLock } from '@/features/wallet/components/Premium';
+import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { useNavigation } from '@/store/NavigationContext';
 import { useProfile } from '@/store/ProfileContext';
 import { interpret } from '@/features/omicron/services/oraculo';
@@ -1290,9 +1291,17 @@ export function OrbShell() {
 
       {/* ── CV UPLOAD MODAL (ConvalidaOmicron) ─────────────────────── */}
       {showConvalida && (
-        <Suspense fallback={null}>
-          <ConvalidaOmicron onClose={() => setShowConvalida(false)} />
-        </Suspense>
+        <ErrorBoundary section="ConvalidaCV">
+          <Suspense fallback={
+            <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
+              <button onClick={() => setShowConvalida(false)} aria-label="Cerrar" style={{ position: 'absolute', top: 16, right: 20, width: 44, height: 44, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>✕</button>
+              <GeodesicOrb size={80} nodes={5} color={C.cyan} spinning={20} intensity={0.5} breathing />
+              <p style={{ marginTop: 16, fontFamily: FONT.mono, fontSize: 12, color: C.mut }}>Cargando módulo CV…</p>
+            </div>
+          }>
+            <ConvalidaOmicron onClose={() => setShowConvalida(false)} />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       {/* ── CSS Animations ──────────────────────────────────────────── */}
