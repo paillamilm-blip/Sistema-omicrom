@@ -19,7 +19,6 @@ import { C, FONT, RADIUS } from '@/theme';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { ColorPicker, COLOR_OPTIONS, type ColorOption } from '@/shared/components/ColorPicker';
 import { TextReveal } from '@/shared/motion/TextReveal';
-import { SlideUp } from '@/shared/motion/SlideUp';
 import { CelebrationBurst } from '@/shared/motion/CelebrationBurst';
 import { MagneticButton } from '@/shared/motion/MagneticButton';
 import { audioHum, audioTick, audioAscend, audioConfirm } from '@/shared/utils/spatialAudio';
