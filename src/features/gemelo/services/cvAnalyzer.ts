@@ -175,12 +175,13 @@ export function analyzeCV(text: string): AnalyzedProfile {
   // 5. EXTRAER NOMBRE (primera línea si es válida)
   let name = '';
   const lines = String(text).split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const NAME_EXCLUDES = /curriculum|resume|^cv\b|perfil profesional|datos personales|informaci[oó]n|desarroll|ingenier|abogad|contador|profesor|docente|analista|consultor|gerente|director|coordinador|t[eé]cnic|licenciad|profesional|especialista|freelanc/i;
   for (const line of lines.slice(0, 5)) {
     if (
       line.length > 2 &&
       line.length < 50 &&
       /[a-záéíóúñ]/i.test(line) &&
-      !/curriculum|resume|^cv\b|perfil profesional|datos personales|informaci[oó]n/i.test(line) &&
+      !NAME_EXCLUDES.test(line) &&
       // Línea que parece nombre: tiene mayúsculas, no tiene números excesivos
       /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+){1,5}$/.test(line)
     ) {
@@ -195,7 +196,7 @@ export function analyzeCV(text: string): AnalyzedProfile {
       firstLine.length > 2 &&
       firstLine.length < 38 &&
       /[a-záéíóúñ]/i.test(firstLine) &&
-      !/curriculum|resume|^cv\b|desarroll|ingenier|perfil|datos/i.test(firstLine)
+      !NAME_EXCLUDES.test(firstLine)
     ) {
       name = firstLine;
     }
