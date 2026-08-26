@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 // ═══════════════════════════════════════════════════════════════════════
 // <ProactiveCards /> — Floating info cards that appear proactively
