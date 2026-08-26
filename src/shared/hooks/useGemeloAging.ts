@@ -83,5 +83,6 @@ export function useGemeloAging(input: AgingInput): GemeloFreshness {
     };
 
     return { freshness, daysSince, style, label };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input.lastActiveAt, input.streakDays]);
 }

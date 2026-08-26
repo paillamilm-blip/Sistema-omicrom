@@ -92,6 +92,7 @@ export function useAura(axes: AuraAxes | null | undefined): AuraColors {
   return useMemo(() => {
     if (!axes) return computeAura({ execution: 30, quality: 30, transcendence: 20, foundation: 25 });
     return computeAura(axes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [axes?.execution, axes?.quality, axes?.transcendence, axes?.foundation]);
 }
 
