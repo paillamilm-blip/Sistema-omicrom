@@ -284,13 +284,44 @@ export function useGemeloActivation() {
       setPhase('reveal');
       isProcessingRef.current = false;
 
-      // ── 3) AUTO-PERSIST if user is already authenticated ───────────
-      // Don't make the user wait for Act 5 — save NOW and show the reveal
-      // as a celebration, not a gate. Guest users still see the full reveal
-      // and persist after registering (via pendingPersist).
+      // ── 4) PERSIST IMMEDIATELY if authenticated (NO setTimeout, NO indirection)
       if (profile?.id) {
-        // Small delay so the reveal starts rendering first
-        setTimeout(() => { void persistAnalysis(analyzed); }, 500);
+        try {
+          const cleanSkills = (analyzed.labels ?? []).filter((s: string) => typeof s === 'string' && s.trim());
+          const cleanDetail = (analyzed.skillsDetail ?? [])
+            .filter((s: { name: string; pct: number }) => s?.name)
+            .map((s: { name: string; pct: number }) => ({ name: String(s.name), pct: Number(s.pct) || 0 }));
+
+          const { data: rpcData, error: rpcError } = await supabase.rpc('aplicar_analisis_cv', {
+            p_name: String(analyzed.name || ''),
+            p_skills: cleanSkills.length > 0 ? cleanSkills : ['general'],
+            p_exec: Math.round(Number(analyzed.axes.exec) || 0),
+            p_qual: Math.round(Number(analyzed.axes.qual) || 0),
+            p_trans: Math.round(Number(analyzed.axes.trans) || 0),
+            p_fund: Math.round(Number(analyzed.axes.fund) || 0),
+            p_years: analyzed.years ? Math.round(Number(analyzed.years)) : 0,
+            p_summary: analyzed.summary ? String(analyzed.summary) : '',
+            p_skills_detail: cleanDetail.length > 0 ? cleanDetail : [],
+          });
+
+          const res = rpcData as { ok?: boolean; error?: string } | null;
+          if (rpcError || !res?.ok) {
+            console.error('[Omicron] PERSIST FAILED:', { rpcError, rpcData });
+            toast(`Error al guardar: ${rpcError?.message || res?.error || '?'}`, 'error');
+          } else {
+            // SUCCESS — profile saved!
+            setPersisted(true);
+            toast('¡Gemelo Digital activado!', 'success');
+            speak(`Gemelo Digital activado. Perfil: ${analyzed.seniorLabel}.`);
+            await refreshProfile();
+            // Run convalidation chain in background
+            runAutoChain().catch(() => {});
+            localStorage.removeItem('omicron_gemelo_phantom_expire');
+          }
+        } catch (persistErr) {
+          console.error('[Omicron] PERSIST THREW:', persistErr);
+          toast('Error al guardar. Intentá de nuevo.', 'error');
+        }
       }
 
       // Analytics
