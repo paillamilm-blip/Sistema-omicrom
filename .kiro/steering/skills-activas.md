@@ -54,6 +54,7 @@ inclusion: always
 | **ESPIONAJE:** [competidor] | Analizar competencia a fondo | "ESPIONAJE: plataforma X de empleo" |
 | **EXTRAER:** [datos de sitio] | Scraping masivo estructurado | "EXTRAER: todos los empleos de LinkedIn Chile" |
 | **LOOP:** [problema complejo] | Bug/problema que NO se resuelve. ITERA hasta arreglarlo | "LOOP: el CV no se analiza en celular" |
+| **LOOP TOTAL:** [tema] | Busca TODOS los bugs de un tema y no para hasta resolver todos | "LOOP TOTAL: el sistema de reputación" |
 
 ---
 
@@ -245,6 +246,115 @@ ITERACIÓN 3+ (escalada):
 7. Si en iteración 1 se resuelve = ⚡ rápido. Si toma 3+ = 🔬 profundo
 
 **Potencia:** 32/46 skills — el combo más poderoso del sistema 🔥🔥🔥🔥
+
+---
+
+### LOOP TOTAL: [tema] ← 🔁🔁 NIVEL ABSOLUTO — ESCANEA TODO + ARREGLA TODO + NO PARA
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│  LOOP TOTAL — Resolución completa de un tema                             │
+│                                                                          │
+│  FASE 1: ESCANEAR                                                        │
+│    Ultra Review + Sinergia + Performance → lista de TODOS los issues     │
+│                                                                          │
+│  FASE 2: CICLO (por cada issue encontrado)                               │
+│    ┌─────────────────────────────────────────────────────────────┐       │
+│    │  INVESTIGAR → ARREGLAR → ULTRA REVIEW → SINERGIA → NAVEGAR │       │
+│    │       ↑                                          │         │       │
+│    │       │    ¿Este issue está resuelto?             ↓         │       │
+│    │       │         NO ←──────────────────── TESTEAR           │       │
+│    │       │                                          │         │       │
+│    │       └── nueva hipótesis (máx 3 intentos) ←─────┘         │       │
+│    │                                                             │       │
+│    │         SÍ → registrar en QA Memoria → siguiente issue     │       │
+│    └─────────────────────────────────────────────────────────────┘       │
+│                                                                          │
+│  FASE 3: RE-ESCANEAR                                                     │
+│    Ultra Review + Sinergia otra vez → ¿aparecieron issues nuevos?        │
+│    SÍ → volver a FASE 2                                                  │
+│    NO → LANZAR ✅ (tema 100% limpio)                                      │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+**Trigger:** "LOOP TOTAL: [tema]", "arreglar todo de [tema]", "limpiar todos los bugs de [tema]"
+
+**Skills activadas (38/46 — NIVEL ABSOLUTO):**
+- **Escaneo:** Code Review Ultra + Ponytail Review + Performance Optimization + Sinergia (7 checks) + Security & Hardening
+- **Investigación:** Investigación + Systematic Debugging + QA Memoria + Superpowers + Doubt-Driven + Dispatching Parallel Agents
+- **Ejecución:** GSD + Ponytail + Incremental Implementation + Claude Mem + Context Mode
+- **Verificación:** Agent Browser + Nova Act + QA Skill + Verification + Performance
+- **Conexión:** Sinergia (post-fix) + Code Simplification + Ponytail Review (no dejar deuda)
+- **Deploy:** Ship + Shipping & Launch
+- **Memoria:** Claude Mem (contexto entre issues) + QA Memoria (registro permanente)
+
+**Protocolo de ejecución:**
+
+```
+FASE 1 — ESCANEO TOTAL DEL TEMA:
+  1. Identificar TODOS los archivos relacionados con el tema
+  2. ULTRA REVIEW: buscar bugs, edge cases, errores de tipos, dead code
+  3. SINERGIA: verificar las 7 conexiones (tipos, providers, Edge Functions, etc.)
+  4. PERFORMANCE: detectar bottlenecks, N+1, memory leaks
+  5. SECURITY: vulnerabilidades en ese módulo
+  6. Generar LISTA PRIORIZADA de issues (crítico → menor)
+  7. Claude Mem: registrar la lista completa como checkpoint
+
+FASE 2 — CICLO DE RESOLUCIÓN (por cada issue):
+  Para cada issue de la lista, de mayor a menor severidad:
+  
+  Iteración 1:
+    1. INVESTIGAR: root cause del issue específico
+    2. Consultar QA MEMORIA: ¿hay patrón aplicable?
+    3. ARREGLAR: fix mínimo (Ponytail guard)
+    4. ULTRA REVIEW: ¿el fix es correcto? ¿introdujo algo nuevo?
+    5. SINERGIA: ¿rompió alguna conexión?
+    6. NAVEGAR: verificar en browser real
+    7. TESTEAR: ¿pasan tests? ¿performance OK?
+    
+    → RESUELTO: Registrar en QA Memoria → siguiente issue
+    → NO RESUELTO: Nueva hipótesis → iteración 2 (máx 3 por issue)
+  
+  Después de CADA fix:
+    - Claude Mem: actualizar progreso (X/N resueltos)
+    - Si el fix de un issue resolvió otros → marcarlos como resueltos
+    - Si el fix de un issue CREÓ otro → agregarlo a la lista
+
+FASE 3 — RE-ESCANEO (verificación final):
+  1. ULTRA REVIEW completo otra vez sobre todo el tema
+  2. SINERGIA: 7 checks completos
+  3. PERFORMANCE: sin regresiones
+  4. NAVEGAR: recorrer flujos del tema en browser
+  
+  → Si aparecen issues NUEVOS: volver a FASE 2 con los nuevos
+  → Si CERO issues: ✅ TEMA LIMPIO → LANZAR
+
+FASE 4 — CIERRE:
+  1. Claude Mem: reporte final (total issues encontrados, resueltos, patrones)
+  2. QA Memoria: registrar TODOS los fixes como base de conocimiento
+  3. LANZAR: deploy con confianza
+```
+
+**Reglas del LOOP TOTAL:**
+1. **CONTEXTO PERSISTENTE** — Claude Mem trackea TODO entre issues (no pierde el hilo)
+2. **ULTRA REVIEW en cada fix** — no solo "compila", sino calidad real
+3. **SINERGIA en cada fix** — ningún fix puede romper otra cosa
+4. **QA MEMORIA acumula** — cada solución alimenta la siguiente
+5. **Máximo 3 intentos por issue** — si no se resuelve, lo marca como "necesita input" y sigue
+6. **Re-escaneo final obligatorio** — un fix puede crear bugs nuevos, hay que verificar
+7. **No para hasta que el re-escaneo devuelva CERO** — esa es la garantía
+8. **Reporte final** — al terminar, resume todo lo que hizo (para futuras sesiones)
+
+**Ejemplo de uso:**
+```
+LOOP TOTAL: el análisis de CV
+→ Escanea: gemini.ts, useGemeloActivation.ts, ConvalidaOmicron.tsx, proxy-ai, analizar-cv
+→ Encuentra: 4 issues (timeout sin retry, validación Zod incompleta, error silencioso, memory leak)
+→ Resuelve uno por uno con ultra review + sinergia cada vez
+→ Re-escanea: 0 issues nuevos
+→ Lanza ✅
+```
+
+**Potencia:** 38/46 skills — NIVEL ABSOLUTO 🔥🔥🔥🔥🔥
 
 ---
 
