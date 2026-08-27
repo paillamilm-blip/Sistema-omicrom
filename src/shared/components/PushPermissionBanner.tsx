@@ -91,7 +91,7 @@ const S: Record<string, React.CSSProperties> = {
     margin: '0 0 14px',
     padding: '16px',
     borderRadius: 14,
-    background: 'linear-gradient(145deg, rgba(94,92,230,0.08), rgba(92,200,255,0.05))',
+    background: 'linear-gradient(145deg, rgba(94,92,230,0.08), rgba(160,174,192,0.05))',
     border: '1px solid rgba(94,92,230,0.3)',
   },
   close: {

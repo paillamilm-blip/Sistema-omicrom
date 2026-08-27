@@ -18,8 +18,8 @@ interface Props {
 }
 
 const AVATAR_PALETTES = [
-  ['#5cc8ff', '#5e5ce6'],
-  ['#3fd0c9', '#5cc8ff'],
+  ['#a0aec0', '#5e5ce6'],
+  ['#3fd0c9', '#a0aec0'],
   ['#ffb02e', '#ff6a3d'],
   ['#b98bff', '#5e5ce6'],
   ['#ff8fb0', '#ff375f'],
@@ -145,7 +145,7 @@ export function AvatarPicker({ selected, onChange }: Props) {
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 border: `1.5px solid ${C.cyan}`,
-                boxShadow: `0 0 0 3px rgba(92,200,255,0.25)`,
+                boxShadow: `0 0 0 3px rgba(160,174,192,0.25)`,
               }
             : {
                 borderStyle: 'dashed',
@@ -168,7 +168,7 @@ export function AvatarPicker({ selected, onChange }: Props) {
               ...S.slot,
               background: `linear-gradient(140deg, ${c1}, ${c2})`,
               border: isSelected ? `1.5px solid ${C.cyan}` : `1.5px solid ${C.line}`,
-              boxShadow: isSelected ? `0 0 0 3px rgba(92,200,255,0.25)` : 'none',
+              boxShadow: isSelected ? `0 0 0 3px rgba(160,174,192,0.25)` : 'none',
             }}
             aria-label={`Gradiente ${i + 1}`}
           />

@@ -547,7 +547,7 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5,
     cursor: 'pointer', display: 'flex', alignItems: 'center',
     justifyContent: 'center', gap: 8,
-    boxShadow: `0 8px 24px rgba(92,200,255,0.3)`,
+    boxShadow: `0 8px 24px rgba(160,174,192,0.3)`,
   },
   btnAcademia: {
     width: '100%', padding: '10px 0', borderRadius: RADIUS.md,

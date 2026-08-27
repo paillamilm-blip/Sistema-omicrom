@@ -24,9 +24,9 @@ export default {
           text:     '#eaf0fb',                     // C.ink
           subtle:   '#6b7590',                     // C.mut
           // === ACENTOS (paleta Holo-Gemelo unificada) ===
-          accent:   '#5cc8ff',                     // C.cyan — héroe SKY
-          cyan:     '#5cc8ff',                     // C.cyan
-          cyanDim:  'rgba(92,200,255,0.46)',       // C.cyanDim
+          accent:   '#a0aec0',                     // C.cyan — Silver Ice
+          cyan:     '#a0aec0',                     // C.cyan
+          cyanDim:  'rgba(160,174,192,0.46)',       // C.cyanDim
           gold:     '#ffb02e',                     // C.gold — ÁMBAR
           goldDim:  'rgba(255,176,46,0.46)',       // C.goldDim
           purple:   '#5e5ce6',                     // C.purple — INDIGO
@@ -48,9 +48,9 @@ export default {
         'omicron-pill':   '999px',   // RADIUS.pill
       },
       boxShadow: {
-        'orb':         '0 0 60px rgba(92,200,255,0.46)',
+        'orb':         '0 0 60px rgba(160,174,192,0.46)',
         'glass-core':  '0 8px 32px -8px rgba(0,0,0,0.45)',
-        'glow-cyan':   '0 0 18px rgba(92,200,255,0.45)',
+        'glow-cyan':   '0 0 18px rgba(160,174,192,0.45)',
         'glow-gold':   '0 0 18px rgba(255,176,46,0.42)',
         'glow-purple': '0 0 18px rgba(94,92,230,0.45)',
       },

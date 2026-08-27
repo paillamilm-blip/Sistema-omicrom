@@ -697,7 +697,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   tabActive: {
     color: '#05060f',
-    background: 'linear-gradient(135deg, #8fe0ff, #5cc8ff)',
+    background: 'linear-gradient(135deg, #8fe0ff, #a0aec0)',
     borderColor: 'transparent',
     fontWeight: 600,
   },
@@ -836,7 +836,7 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 13,
     fontWeight: 600,
     color: '#05060f',
-    background: 'linear-gradient(135deg, #8fe0ff, #5cc8ff)',
+    background: 'linear-gradient(135deg, #8fe0ff, #a0aec0)',
     whiteSpace: 'nowrap',
     flexShrink: 0,
   },

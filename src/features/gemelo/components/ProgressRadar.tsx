@@ -29,7 +29,7 @@ const AXIS_LABELS = {
 } as const;
 
 const AXIS_COLORS = {
-  execution:    '#5cc8ff',   // cyan — flujo de ejecución
+  execution:    '#a0aec0',   // silver ice — flujo de ejecución
   quality:      '#8a88f0',   // acero-cyan — calidad
   transcendence:'#ffb02e',   // ámbar — trascendencia
   foundation:   '#3fd0c9',   // esmeralda — fundamento
@@ -161,8 +161,8 @@ export function ProgressRadar({
             position: 'relative',
             borderRadius: '50%',
             padding: 6,
-            background: 'radial-gradient(circle at 50% 45%, rgba(92, 200, 255,0.10), rgba(8,16,38,0.25) 60%, transparent 75%)',
-            boxShadow: '0 0 40px rgba(92, 200, 255,0.12), inset 0 0 40px rgba(94, 92, 230,0.10)',
+            background: 'radial-gradient(circle at 50% 45%, rgba(160,174,192,0.10), rgba(8,16,38,0.25) 60%, transparent 75%)',
+            boxShadow: '0 0 40px rgba(160,174,192,0.12), inset 0 0 40px rgba(94, 92, 230,0.10)',
             animation: animated ? 'floatY 6s ease-in-out infinite' : undefined,
           }}
         >
@@ -178,13 +178,13 @@ export function ProgressRadar({
               <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
             <radialGradient id="radar-fill" cx="50%" cy="50%" r="60%">
-              <stop offset="0%" stopColor="#5cc8ff" stopOpacity="0.28" />
+              <stop offset="0%" stopColor="#a0aec0" stopOpacity="0.28" />
               <stop offset="100%" stopColor="#5e5ce6" stopOpacity="0.10" />
             </radialGradient>
           </defs>
 
           {/* Grid (malla del poliedro) */}
-          <g stroke="rgba(92, 200, 255,0.22)" strokeWidth="1" opacity="0.55">
+          <g stroke="rgba(160,174,192,0.22)" strokeWidth="1" opacity="0.55">
             {gridLines.filter(l => l.type === 'concentric').map((line, i) => (
               <polygon key={`concentric-${i}`} points={line.points} fill="none" />
             ))}
@@ -198,7 +198,7 @@ export function ProgressRadar({
           <polygon
             points={polygonPoints}
             fill="url(#radar-fill)"
-            stroke="#5cc8ff"
+            stroke="#a0aec0"
             strokeWidth="2"
             strokeLinejoin="round"
             filter="url(#radar-glow)"

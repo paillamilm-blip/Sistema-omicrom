@@ -15,18 +15,18 @@ function drawPassport(cv: HTMLCanvasElement, p: GemeloProfile, tierName: string)
   const g = x.createLinearGradient(0, 0, W, H);
   g.addColorStop(0, '#04122a'); g.addColorStop(0.5, '#02081a'); g.addColorStop(1, '#06122e');
   x.fillStyle = g; x.fillRect(0, 0, W, H);
-  x.strokeStyle = 'rgba(92, 200, 255,0.45)'; x.lineWidth = 3; x.strokeRect(16, 16, W - 32, H - 32);
+  x.strokeStyle = 'rgba(160,174,192,0.45)'; x.lineWidth = 3; x.strokeRect(16, 16, W - 32, H - 32);
   x.textAlign = 'center';
   x.fillStyle = '#8bd4ff'; x.font = 'bold 96px Georgia, serif'; x.fillText('\u03A9', W / 2, 135);
   x.fillStyle = '#eaf4ff'; x.font = "bold 34px -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"; x.fillText('Sistema Ómicron', W / 2, 182);
-  x.fillStyle = 'rgba(92, 200, 255,0.75)'; x.font = "15px 'SF Mono', monospace"; x.fillText('PASAPORTE · GEMELO DIGITAL', W / 2, 210);
+  x.fillStyle = 'rgba(160,174,192,0.75)'; x.font = "15px 'SF Mono', monospace"; x.fillText('PASAPORTE · GEMELO DIGITAL', W / 2, 210);
   x.fillStyle = '#ffb02e'; x.font = "bold 26px 'SF Mono', monospace"; x.fillText(tierName.toUpperCase(), W / 2, 268);
   x.fillStyle = 'rgba(234,244,255,0.55)'; x.font = "14px 'SF Mono', monospace";
   x.fillText('REPUTACIÓN', W / 2 - 130, 330); x.fillText('PUNTAJE PE', W / 2 + 130, 330);
   x.fillStyle = '#ffb02e'; x.font = "bold 74px -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"; x.fillText(String(p.rep), W / 2 - 130, 400);
   x.fillStyle = '#8bd4ff'; x.font = "bold 54px -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"; x.fillText(p.pe.toLocaleString('es'), W / 2 + 130, 398);
   const EJ: [string, keyof GemeloAxes, string][] = [
-    ['Ejecución', 'execution', '#5cc8ff'],
+    ['Ejecución', 'execution', '#a0aec0'],
     ['Calidad', 'quality', '#8a88f0'],
     ['Trascendencia', 'transcendence', '#ffb02e'],
     ['Fundamento', 'foundation', '#3fd0c9'],
@@ -42,7 +42,7 @@ function drawPassport(cv: HTMLCanvasElement, p: GemeloProfile, tierName: string)
     x.fillStyle = col; x.fillRect(50, yy, ((W - 100) * v) / 100, 11);
     yy += 54;
   });
-  x.textAlign = 'center'; x.fillStyle = 'rgba(92, 200, 255,0.55)'; x.font = "12px 'SF Mono', monospace";
+  x.textAlign = 'center'; x.fillStyle = 'rgba(160,174,192,0.55)'; x.font = "12px 'SF Mono', monospace";
   x.fillText('Verificable en Ómicron · Confianza Cero', W / 2, H - 40);
 }
 
@@ -73,7 +73,7 @@ export function PasaporteGemelo() {
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           padding: '11px 0', marginBottom: 14, borderRadius: RADIUS.lg, cursor: 'pointer',
-          background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.cyanDim}`, color: C.cyan,
+          background: 'rgba(160,174,192,0.08)', border: `1px solid ${C.cyanDim}`, color: C.cyan,
           fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
         }}
       >

@@ -218,10 +218,10 @@ export function MarketTab() {
                   return (
                     <button key={c.key} onClick={() => setCategory(c.key)} style={{
                       ...styles.catPillVertical,
-                      background: active ? 'rgba(92, 200, 255,0.16)' : 'rgba(255,255,255,0.02)',
+                      background: active ? 'rgba(160,174,192,0.16)' : 'rgba(255,255,255,0.02)',
                       border: `1px solid ${active ? C.blue : C.lineSoft}`,
                       color: active ? C.blueHi : C.muted,
-                      boxShadow: active ? `0 0 14px rgba(92, 200, 255,0.35)` : 'none',
+                      boxShadow: active ? `0 0 14px rgba(160,174,192,0.35)` : 'none',
                     }}>
                       {c.icon && <span>{c.icon}</span>}{c.label}
                     </button>
@@ -236,7 +236,7 @@ export function MarketTab() {
                   return (
                     <button key={key} onClick={() => setSortBy(key)} style={{
                       ...styles.catPillVertical,
-                      background: on ? 'rgba(92, 200, 255,0.16)' : 'transparent',
+                      background: on ? 'rgba(160,174,192,0.16)' : 'transparent',
                       border: `1px solid ${on ? C.blue : C.lineSoft}`,
                       color: on ? C.blueHi : C.muted,
                     }}>{label}</button>
@@ -356,7 +356,7 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
         background: canHire ? `linear-gradient(135deg, ${C.blue}, #008b9e)` : 'transparent',
         border: `1px solid ${canHire ? C.blue : C.lineSoft}`,
         color: canHire ? '#04121f' : C.muted,
-        boxShadow: canHire ? `0 0 18px rgba(92, 200, 255,0.4)` : 'none',
+        boxShadow: canHire ? `0 0 18px rgba(160,174,192,0.4)` : 'none',
         cursor: canHire ? 'pointer' : 'default',
       }}>
         {canHire ? '▸ CONTRATAR · ESCROW' : service.seller_id ? 'TU SERVICIO' : 'DEMO'}
@@ -370,8 +370,8 @@ const styles: Record<string, React.CSSProperties> = {
   grid: { position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `linear-gradient(${C.lineSoft} 1px, transparent 1px), linear-gradient(90deg, ${C.lineSoft} 1px, transparent 1px)`, backgroundSize: '28px 28px', maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 70%)', WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 70%)' },
   header: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.line}`, background: 'rgba(8,11,18,0.7)', flexShrink: 0 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 },
-  hamburgerBtn: { flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.lineSoft}`, cursor: 'pointer' },
-  activeFilterBar: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, margin: '10px 0 4px', padding: '9px 12px', borderRadius: 8, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.lineSoft}`, color: C.muted, fontFamily: FONT_MONO, fontSize: 11, cursor: 'pointer', flexShrink: 0, textAlign: 'left' },
+  hamburgerBtn: { flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(160,174,192,0.08)', border: `1px solid ${C.lineSoft}`, cursor: 'pointer' },
+  activeFilterBar: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, margin: '10px 0 4px', padding: '9px 12px', borderRadius: 8, background: 'rgba(160,174,192,0.05)', border: `1px solid ${C.lineSoft}`, color: C.muted, fontFamily: FONT_MONO, fontSize: 11, cursor: 'pointer', flexShrink: 0, textAlign: 'left' },
   drawerBg: { position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(2,5,11,0.72)', backdropFilter: 'blur(3px)' },
   drawerPanel: { position: 'absolute', top: 0, left: 0, bottom: 0, width: '82%', maxWidth: 320, display: 'flex', flexDirection: 'column', background: `linear-gradient(165deg, ${C.panelA}, ${C.panelB})`, borderRight: `1px solid ${C.blue}`, boxShadow: '4px 0 30px rgba(0,0,0,0.5)' },
   drawerHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 14px', borderBottom: `1px solid ${C.line}` },
@@ -379,16 +379,16 @@ const styles: Record<string, React.CSSProperties> = {
   drawerClose: { width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.lineSoft}`, color: C.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   drawerSectionTitle: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted, letterSpacing: 1.5, marginBottom: 10, textTransform: 'uppercase' },
   catPillVertical: { display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', borderRadius: 8, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 12, letterSpacing: 0.5, textAlign: 'left', textTransform: 'uppercase' },
-  drawerApplyBtn: { width: '100%', padding: '13px 0', borderRadius: 8, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, color: '#04121f', fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 15, boxShadow: '0 0 16px rgba(92, 200, 255,0.4)' },
-  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: `0 0 14px rgba(92, 200, 255,0.5)` },
+  drawerApplyBtn: { width: '100%', padding: '13px 0', borderRadius: 8, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, color: '#04121f', fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 15, boxShadow: '0 0 16px rgba(160,174,192,0.4)' },
+  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: `0 0 14px rgba(160,174,192,0.5)` },
   headerTitle: { fontFamily: FONT_MONO, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   headerSub: { fontFamily: FONT_MONO, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
-  publishBtn: { display: 'flex', alignItems: 'center', gap: 4, padding: '7px 13px', borderRadius: 8, background: 'rgba(92, 200, 255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1 },
+  publishBtn: { display: 'flex', alignItems: 'center', gap: 4, padding: '7px 13px', borderRadius: 8, background: 'rgba(160,174,192,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1 },
   catRow: { position: 'relative', zIndex: 2, display: 'flex', gap: 8, padding: '12px 14px', overflowX: 'auto', flexShrink: 0 },
   sortRow: { position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px 8px', flexShrink: 0 },
   sortLabel: { fontFamily: FONT_MONO, fontSize: 8.5, color: C.muted, letterSpacing: 1.5 },
   sortPill: { display: 'flex', alignItems: 'center', gap: 4, padding: '5px 11px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 0.5, whiteSpace: 'nowrap' },
-  trustSeal: { display: 'flex', alignItems: 'center', gap: 8, margin: '11px 0 2px', padding: '8px 10px', borderRadius: 6, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.lineSoft}` },
+  trustSeal: { display: 'flex', alignItems: 'center', gap: 8, margin: '11px 0 2px', padding: '8px 10px', borderRadius: 6, background: 'rgba(160,174,192,0.05)', border: `1px solid ${C.lineSoft}` },
   trustItem: { flex: 1, display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 },
   trustLabel: { fontFamily: FONT_MONO, fontSize: 7.5, color: C.muted, letterSpacing: 1 },
   trustVal: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 16, lineHeight: 1 },
@@ -401,7 +401,7 @@ const styles: Record<string, React.CSSProperties> = {
   advisorInput: { width: '100%', minHeight: 64, boxSizing: 'border-box', padding: 10, borderRadius: 8, background: '#040a18', border: `1px solid ${C.lineSoft}`, color: C.ink, fontFamily: FONT_RAJ, fontSize: 13, lineHeight: 1.4, resize: 'vertical', outline: 'none' },
   advisorBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 0', borderRadius: 8, border: 'none', background: `linear-gradient(135deg, ${C.amberHi}, ${C.amber})`, color: '#04121f', fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 13, letterSpacing: 0.5 },
   advisorErr: { padding: 10, borderRadius: 8, background: 'rgba(255, 92, 122,0.10)', border: '1px solid rgba(255, 92, 122,0.3)', fontFamily: FONT_RAJ, fontSize: 12.5, color: '#ffb3bf', lineHeight: 1.4 },
-  advisorResult: { padding: 12, borderRadius: 8, background: 'rgba(92, 200, 255,0.06)', border: `1px solid rgba(92, 200, 255,0.25)` },
+  advisorResult: { padding: 12, borderRadius: 8, background: 'rgba(160,174,192,0.06)', border: `1px solid rgba(160,174,192,0.25)` },
   advisorResultHead: { display: 'flex', alignItems: 'center', gap: 8, fontFamily: FONT_MONO, fontSize: 9, letterSpacing: 1.5, color: C.blueHi, marginBottom: 8 },
   catPill: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontFamily: FONT_MONO, fontSize: 11, letterSpacing: 1, whiteSpace: 'nowrap', transition: 'all .2s', textTransform: 'uppercase' },
   scroll: { position: 'relative', zIndex: 2, flex: 1, overflowY: 'auto', padding: '4px 0 20px', display: 'flex', flexDirection: 'column', gap: 10 },
@@ -413,16 +413,16 @@ const styles: Record<string, React.CSSProperties> = {
   metaLine: { display: 'flex', alignItems: 'center', gap: 4, marginTop: 4, fontFamily: FONT_MONO, fontSize: 11, color: C.muted },
   priceTop: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 19, color: C.amberHi, lineHeight: 1 },
   idTagInline: { fontFamily: FONT_MONO, fontSize: 7.5, color: C.muted, letterSpacing: 1, marginTop: 3 },
-  trustSealCompact: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 7, margin: '10px 0', padding: '7px 10px', borderRadius: 6, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.lineSoft}`, fontFamily: FONT_MONO, fontSize: 10.5, color: C.ink },
+  trustSealCompact: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 7, margin: '10px 0', padding: '7px 10px', borderRadius: 6, background: 'rgba(160,174,192,0.05)', border: `1px solid ${C.lineSoft}`, fontFamily: FONT_MONO, fontSize: 10.5, color: C.ink },
   trustChip: { display: 'inline-flex', alignItems: 'center', gap: 3 },
   trustSep: { color: 'rgba(255,255,255,0.2)' },
   seller: { fontFamily: FONT_MONO, fontSize: 11, color: C.muted },
-  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.blueHi, background: 'rgba(92, 200, 255,0.10)', border: '1px solid rgba(92, 200, 255,0.30)', padding: '1px 7px', borderRadius: 3 },
+  peBadge: { display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: FONT_MONO, fontSize: 9, color: C.blueHi, background: 'rgba(160,174,192,0.10)', border: '1px solid rgba(160,174,192,0.30)', padding: '1px 7px', borderRadius: 3 },
   statRow: { display: 'flex', gap: 8, marginTop: 12 },
   statBox: { flex: 1, background: 'rgba(0,0,0,0.25)', border: `1px solid ${C.lineSoft}`, borderRadius: 4, padding: '7px 10px' },
   statLabel: { fontFamily: FONT_MONO, fontSize: 8, color: C.muted, letterSpacing: 1.5 },
   price: { fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 20, color: C.amberHi, marginTop: 1 },
   rating: { display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_RAJ, fontWeight: 700, fontSize: 20, color: C.ink, marginTop: 1 },
-  tag: { fontFamily: FONT_MONO, fontSize: 11, color: C.blueHi, background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3, letterSpacing: 0.5 },
+  tag: { fontFamily: FONT_MONO, fontSize: 11, color: C.blueHi, background: 'rgba(160,174,192,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3, letterSpacing: 0.5 },
   hireBtn: { width: '100%', marginTop: 10, padding: '9px 0', borderRadius: 5, fontFamily: FONT_MONO, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, transition: 'all .15s' },
 };

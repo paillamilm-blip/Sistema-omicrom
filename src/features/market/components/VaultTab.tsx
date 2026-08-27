@@ -351,7 +351,7 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
     await insertDoc(vec, null);
   }
 
-  const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.line}`, borderRadius: 6, padding: '9px 11px', color: C.ink, fontFamily: FM, fontSize: 12, outline: 'none', marginBottom: 10 };
+  const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'rgba(160,174,192,0.05)', border: `1px solid ${C.line}`, borderRadius: 6, padding: '9px 11px', color: C.ink, fontFamily: FM, fontSize: 12, outline: 'none', marginBottom: 10 };
   const lbl: React.CSSProperties = { fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, display: 'block' };
 
   return (
@@ -394,12 +394,12 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
 const styles: Record<string, React.CSSProperties> = {
   root: { display: 'flex', flexDirection: 'column', height: '100%', background: C.bg, overflow: 'hidden' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${C.line}`, background: 'rgba(8,11,18,0.7)', flexShrink: 0 },
-  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: '0 0 14px rgba(92, 200, 255,0.5)' },
+  iconBadge: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.blueHi}, ${C.blue})`, boxShadow: '0 0 14px rgba(160,174,192,0.5)' },
   hTitle: { fontFamily: FM, fontSize: 12, color: C.blueHi, letterSpacing: 1.5, fontWeight: 700 },
   hSub: { fontFamily: FM, fontSize: 9, color: C.muted, letterSpacing: 1, marginTop: 2 },
-  pubBtn: { display: 'flex', alignItems: 'center', gap: 4, padding: '7px 13px', borderRadius: 8, background: 'rgba(92, 200, 255,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 11, letterSpacing: 1 },
+  pubBtn: { display: 'flex', alignItems: 'center', gap: 4, padding: '7px 13px', borderRadius: 8, background: 'rgba(160,174,192,0.12)', border: `1px solid ${C.blue}`, color: C.blueHi, cursor: 'pointer', fontFamily: FM, fontSize: 11, letterSpacing: 1 },
   searchRow: { display: 'flex', gap: 8, padding: '12px 0', flexShrink: 0 },
-  searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', borderRadius: 8, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.line}` },
+  searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', borderRadius: 8, background: 'rgba(160,174,192,0.05)', border: `1px solid ${C.line}` },
   searchInput: { flex: 1, background: 'none', border: 'none', outline: 'none', color: C.ink, fontFamily: FR, fontSize: 13, padding: '10px 0' },
   searchBtn: { width: 44, borderRadius: 8, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: 'none', color: '#04121f', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   scroll: { flex: 1, overflowY: 'auto', padding: '4px 0 20px', display: 'flex', flexDirection: 'column', gap: 14 },
@@ -410,20 +410,20 @@ const styles: Record<string, React.CSSProperties> = {
   oracleInput: { width: '100%', minHeight: 62, boxSizing: 'border-box', padding: 10, borderRadius: 8, background: '#040a18', border: `1px solid ${C.lineSoft}`, color: C.ink, fontFamily: FR, fontSize: 13, lineHeight: 1.4, resize: 'vertical', outline: 'none' },
   oracleBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 0', borderRadius: 8, border: 'none', background: `linear-gradient(135deg, ${C.amberHi}, ${C.amber})`, color: '#04121f', fontFamily: FR, fontWeight: 700, fontSize: 13, letterSpacing: 0.5 },
   oracleErr: { padding: 10, borderRadius: 8, background: 'rgba(255, 92, 122,0.10)', border: '1px solid rgba(255, 92, 122,0.3)', fontFamily: FR, fontSize: 12.5, color: '#ffb3bf', lineHeight: 1.4 },
-  oracleResult: { padding: 12, borderRadius: 8, background: 'rgba(92, 200, 255,0.06)', border: `1px solid rgba(92, 200, 255,0.25)` },
+  oracleResult: { padding: 12, borderRadius: 8, background: 'rgba(160,174,192,0.06)', border: `1px solid rgba(160,174,192,0.25)` },
   oracleResultHead: { display: 'flex', alignItems: 'center', gap: 8, fontFamily: FM, fontSize: 9, letterSpacing: 1.5, color: C.blueHi, marginBottom: 8 },
   muted: { fontFamily: FM, fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 12, letterSpacing: 1 },
   card: { position: 'relative', background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${C.line}`, borderRadius: 18, padding: '16px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.04)' },
   cardTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.steelHi}, ${C.blue}, transparent)` },
-  simBadge: { position: 'absolute', top: 12, right: 14, fontFamily: FM, fontSize: 8, color: C.blueHi, background: 'rgba(92, 200, 255,0.12)', border: `1px solid ${C.blue}`, padding: '2px 7px', borderRadius: 3 },
+  simBadge: { position: 'absolute', top: 12, right: 14, fontFamily: FM, fontSize: 8, color: C.blueHi, background: 'rgba(160,174,192,0.12)', border: `1px solid ${C.blue}`, padding: '2px 7px', borderRadius: 3 },
   title: { fontFamily: FR, fontWeight: 700, fontSize: 17, color: C.ink, lineHeight: 1.15, paddingRight: 60 },
   author: { fontFamily: FM, fontSize: 11, color: C.muted, marginTop: 3 },
-  tag: { fontFamily: FM, fontSize: 11, color: C.blueHi, background: 'rgba(92, 200, 255,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3 },
+  tag: { fontFamily: FM, fontSize: 11, color: C.blueHi, background: 'rgba(160,174,192,0.08)', border: `1px solid ${C.lineSoft}`, padding: '3px 9px', borderRadius: 3 },
   content: { fontFamily: FR, fontSize: 13, color: '#b9d4e6', lineHeight: 1.5, marginTop: 10, whiteSpace: 'pre-wrap', background: 'rgba(63, 208, 201,0.05)', border: '1px solid rgba(63, 208, 201,0.2)', borderRadius: 6, padding: '10px 12px' },
   locked: { fontFamily: FM, fontSize: 11, color: C.amber, marginTop: 10, background: 'rgba(255, 176, 46,0.06)', border: '1px solid rgba(255, 176, 46,0.25)', borderRadius: 6, padding: '12px', textAlign: 'center' },
   footer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
   royalties: { display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: FM, fontSize: 11, color: C.amberHi },
   consultBtn: { padding: '8px 14px', borderRadius: 6, cursor: 'pointer', background: `linear-gradient(135deg, ${C.blue}, #008b9e)`, border: 'none', color: '#04121f', fontFamily: FM, fontSize: 11, letterSpacing: 0.5, fontWeight: 700 },
   modalBg: { position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(2,5,11,0.8)', backdropFilter: 'blur(4px)', padding: 20 },
-  modal: { width: '100%', maxWidth: 400, maxHeight: '85vh', overflowY: 'auto', borderRadius: 12, padding: 20, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.blue}`, boxShadow: '0 0 30px rgba(92, 200, 255,0.3)', position: 'relative' },
+  modal: { width: '100%', maxWidth: 400, maxHeight: '85vh', overflowY: 'auto', borderRadius: 12, padding: 20, background: `linear-gradient(145deg, ${C.panelA}, ${C.panelB})`, border: `1px solid ${C.blue}`, boxShadow: '0 0 30px rgba(160,174,192,0.3)', position: 'relative' },
 };

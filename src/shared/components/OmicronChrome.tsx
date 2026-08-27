@@ -99,7 +99,7 @@ const S: Record<string, CSSProperties> = {
   back: {
     flexShrink: 0, width: 44, height: 44, borderRadius: 12,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(92,200,255,0.10)', border: `1px solid ${C.cyanDim}`,
+    background: 'rgba(160,174,192,0.10)', border: `1px solid ${C.cyanDim}`,
     color: C.cyan, cursor: 'pointer',
   },
   iconBadge: {

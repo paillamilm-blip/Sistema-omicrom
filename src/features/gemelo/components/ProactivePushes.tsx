@@ -122,7 +122,7 @@ function getTypeStyles(type: Push['type']) {
 
   if (type === 'activity') {
     return {
-      card: { borderColor: 'rgba(92,200,255,0.4)' },
+      card: { borderColor: 'rgba(160,174,192,0.4)' },
       tag: { color: C.cyan },
       dot: { background: C.cyan, boxShadow: `0 0 8px ${C.cyan}` },
     };

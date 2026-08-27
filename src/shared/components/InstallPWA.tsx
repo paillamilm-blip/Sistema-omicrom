@@ -74,7 +74,7 @@ export function InstallPWA() {
         display: 'flex', alignItems: 'center', gap: 12, maxWidth: '92vw',
         padding: '10px 12px 10px 16px', borderRadius: RADIUS.pill,
         background: 'rgba(6,12,26,0.94)', border: `1px solid ${C.cyanDim}`,
-        boxShadow: '0 12px 40px rgba(0,0,0,0.55), 0 0 22px rgba(92, 200, 255,0.18)',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.55), 0 0 22px rgba(160,174,192,0.18)',
         backdropFilter: 'blur(12px)',
       }}
     >

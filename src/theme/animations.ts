@@ -4,7 +4,7 @@
 // ease-out para entradas, exit más rápido que enter, nunca >1s para UI.
 
 export const KEYFRAMES = `
-@keyframes cp-pulse { 0%,100% { opacity:1; box-shadow:0 0 8px #5cc8ff; } 50% { opacity:0.3; box-shadow:none; } }
+@keyframes cp-pulse { 0%,100% { opacity:1; box-shadow:0 0 8px #a0aec0; } 50% { opacity:0.3; box-shadow:none; } }
 @keyframes cp-spin { to { transform: rotate(360deg); } }
 @keyframes cp-scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
 @keyframes cp-node-pop { 0% { opacity:0; transform:scale(0.9); } 100% { opacity:1; transform:scale(1); } }

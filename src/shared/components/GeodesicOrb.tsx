@@ -82,7 +82,7 @@ function project(v: [number, number, number], size: number, depthScale = 0.3): {
 
 export function GeodesicOrb({
   nodes = 12,
-  color = '#5cc8ff',
+  color = '#a0aec0',
   size = 200,
   breathing = true,
   spinning = 20,

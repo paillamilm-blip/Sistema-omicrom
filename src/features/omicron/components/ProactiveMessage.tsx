@@ -90,7 +90,7 @@ const S: Record<string, React.CSSProperties> = {
     border: `1px solid ${C.cyanFaint}`,
     backdropFilter: 'blur(14px)',
     WebkitBackdropFilter: 'blur(14px)',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.3), 0 12px 40px rgba(0,0,0,0.45), 0 0 20px rgba(92,200,255,0.08)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.3), 0 12px 40px rgba(0,0,0,0.45), 0 0 20px rgba(160,174,192,0.08)',
     transition: 'opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
     zIndex: 8,
   },
@@ -146,7 +146,7 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 11,
     fontWeight: 700,
     cursor: 'pointer',
-    boxShadow: '0 0 12px rgba(92,200,255,0.25)',
+    boxShadow: '0 0 12px rgba(160,174,192,0.25)',
   },
   btnGhost: {
     display: 'inline-flex',

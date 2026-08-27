@@ -118,7 +118,7 @@ const S: Record<string, React.CSSProperties> = {
     right: '-30%',
     width: '120%',
     height: '120%',
-    background: 'radial-gradient(circle at 70% 80%, rgba(92,200,255,0.12), transparent 50%)',
+    background: 'radial-gradient(circle at 70% 80%, rgba(160,174,192,0.12), transparent 50%)',
     animation: 'slowRotate 40s linear infinite reverse',
   },
   bgNoise: {
@@ -153,7 +153,7 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'rgba(92,200,255,0.1)',
+    background: 'rgba(160,174,192,0.1)',
     border: `1px solid ${C.cyanDim}`,
     color: C.cyan,
     cursor: 'pointer',

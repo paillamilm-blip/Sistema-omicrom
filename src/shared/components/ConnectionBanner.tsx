@@ -36,7 +36,7 @@ export function ConnectionBanner() {
         ...S.bar,
         background: off
           ? 'linear-gradient(90deg, rgba(255, 176, 46,0.95), rgba(255, 92, 122,0.95))'
-          : 'linear-gradient(90deg, rgba(63, 208, 201,0.95), rgba(92, 200, 255,0.92))',
+          : 'linear-gradient(90deg, rgba(63, 208, 201,0.95), rgba(160,174,192,0.92))',
         color: '#000206',
       }}
     >

@@ -23,7 +23,7 @@ const C = {
   red: T.red, redFaint: T.redFaint,
   purple: T.purple,
   bg: T.bg, panel: 'rgba(8,16,38,0.72)', card: 'rgba(13,22,46,0.85)',
-  text: T.ink, sub: 'rgba(92,200,255,0.62)', line: T.line,
+  text: T.ink, sub: 'rgba(160,174,192,0.62)', line: T.line,
 } as const;
 const MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
 const DISP = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";

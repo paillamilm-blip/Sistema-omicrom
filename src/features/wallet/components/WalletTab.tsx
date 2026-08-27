@@ -187,7 +187,7 @@ export function WalletTab() {
               <button onClick={() => setTransferMode('send')} className="oc-pressable" style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0',
                 borderRadius: 14, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
-                background: 'linear-gradient(135deg,#5cc8ff,#5e5ce6)', border: 'none', color: '#fff',
+                background: 'linear-gradient(135deg,#a0aec0,#5e5ce6)', border: 'none', color: '#fff',
                 boxShadow: '0 8px 22px rgba(10,132,255,0.34)',
               }}>
                 <ArrowUpRight size={16} /> Enviar
@@ -294,7 +294,7 @@ export function WalletTab() {
                 <button key={v} onClick={() => setView(v)} className="oc-pressable" style={{
                   flex: 1, padding: '9px 0', borderRadius: 12, cursor: 'pointer',
                   fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
-                  background: active ? 'linear-gradient(135deg,#5cc8ff,#5e5ce6)' : 'transparent',
+                  background: active ? 'linear-gradient(135deg,#a0aec0,#5e5ce6)' : 'transparent',
                   border: 'none', color: active ? '#fff' : C.mut,
                   boxShadow: active ? '0 6px 16px rgba(10,132,255,0.3)' : 'none',
                 }}>{label}</button>

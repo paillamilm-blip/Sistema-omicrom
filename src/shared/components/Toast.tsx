@@ -10,7 +10,7 @@ interface ToastItem { id: number; message: string; type: ToastType; }
 interface ToastCtx { toast: (message: string, type?: ToastType) => void; }
 const Ctx = createContext<ToastCtx | null>(null);
 
-const COLOR: Record<ToastType, string> = { success: '#3fd0c9', error: '#ff5066', info: '#5cc8ff' };
+const COLOR: Record<ToastType, string> = { success: '#3fd0c9', error: '#ff5066', info: '#a0aec0' };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
