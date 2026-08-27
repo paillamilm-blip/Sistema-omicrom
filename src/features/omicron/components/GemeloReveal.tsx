@@ -415,10 +415,11 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
                 {/* Match bar */}
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>Match con tu perfil</span>
-                    <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, color: job.matchPct >= 80 ? C.green : C.gold }}>{job.matchPct}%</span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>Compatibilidad con tu perfil</span>
+                    <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, color: job.matchPct >= 80 ? C.green : C.gold }}>{job.matchPct}/100</span>
                   </div>
                   <ProgressBar pct={job.matchPct} color={job.matchPct >= 80 ? C.green : C.gold} height={6} />
+                  <div style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, marginTop: 4 }}>Mide cuántas habilidades tuyas coinciden con lo que pide este empleo</div>
                 </div>
 
                 {/* Matches */}
@@ -430,7 +431,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
                   ))}
                   {job.gap && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.gold }}>
-                      <span>△</span> {job.gap.skill} ({job.gap.current}%) — debajo del ideal
+                      <span>△</span> Tu {job.gap.skill} está en {job.gap.current}/100 — Este empleo pide al menos 60/100
                     </div>
                   )}
                 </div>
@@ -439,7 +440,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
                 {job.gap && (
                   <div style={{ padding: 10, borderRadius: RADIUS.md, background: `${uc}0a`, border: `1px solid ${uc}22` }}>
                     <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, margin: 0, lineHeight: 1.5 }}>
-                      <span style={{ color: uc, fontWeight: 700 }}>Si subís {job.gap.skill} a 60</span>, este match pasa a {Math.min(95, job.matchPct + 13)}%. Ómicron puede ayudarte HOY.
+                      <span style={{ color: uc, fontWeight: 700 }}>Si subís tu {job.gap.skill} a 60/100</span>, este empleo matchea {Math.min(95, job.matchPct + 13)}/100 con tu perfil. En la Academia hay un curso de {job.gap.skill} de 2 horas que te sube ese puntaje.
                     </p>
                   </div>
                 )}
@@ -457,7 +458,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 2, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Tu Gemelo Digital está vivo</div>
                 <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.hero, color: C.ink, marginBottom: 4 }}>{analyzed.seniorLabel}</div>
-                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Pero solo en tu memoria.</div>
+                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Pero si cerrás esta ventana, se pierde. No queda guardado en ningún lado.</div>
               </div>
 
               {/* Without vs With account */}
@@ -467,17 +468,17 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut }}>
                     <span>× Desaparece al cerrar</span>
                     <span>× Sin acceso a empleos</span>
-                    <span>× Sin mejora continua</span>
-                    <span>× Nadie te encuentra</span>
+                    <span>× No recibís sugerencias de mejora</span>
+                    <span>× Las empresas no pueden ver tu perfil</span>
                   </div>
                 </div>
                 <div style={{ padding: 12, borderRadius: RADIUS.lg, background: `${C.green}08`, border: `1px solid ${C.green}33` }}>
                   <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green, textTransform: 'uppercase', marginBottom: 8 }}>Con cuenta</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: FONT.body, fontSize: SIZE.xs, color: C.ink }}>
-                    <span>✓ Gemelo vive 24/7</span>
-                    <span>✓ Ómicron te empuja</span>
-                    <span>✓ Oportunidades reales</span>
-                    <span>✓ Reputación imparable</span>
+                    <span>✓ Tu perfil queda guardado para siempre</span>
+                    <span>✓ Recibís pasos concretos para mejorar cada semana</span>
+                    <span>✓ Empleos compatibles te llegan automáticamente</span>
+                    <span>✓ Cada logro sube tu puntaje de reputación (0-100)</span>
                   </div>
                 </div>
               </div>
@@ -497,7 +498,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
               {/* Countdown */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', borderRadius: RADIUS.pill, background: `${C.red}0a`, border: `1px solid ${C.red}22` }}>
                 <Clock size={12} color={C.red} />
-                <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.red }}>Tu Gemelo se desvanece en {countdown}</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.red }}>Si cerrás sin registrarte, estos datos se pierden en {countdown} — no los podemos recuperar</span>
               </div>
             </motion.div>
           )}
