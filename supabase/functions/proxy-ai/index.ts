@@ -138,6 +138,10 @@ Deno.serve(async (req) => {
     // ══════════════════════════════════════════════════════════════════
 
     // ── Try OpenRouter (PRIMARY) ──────────────────────────────────────
+    const debugLog: string[] = [];
+    debugLog.push(`OPENROUTER_KEY: ${OPENROUTER_KEY ? `present (${OPENROUTER_KEY.slice(0, 12)}...)` : 'MISSING'}`);
+    debugLog.push(`GEMINI_KEY: ${GEMINI_KEY ? `present (${GEMINI_KEY.slice(0, 8)}...)` : 'MISSING'}`);
+
     if (OPENROUTER_KEY) {
       const aliveModels = FREE_MODELS.filter(isModelAlive);
       if (aliveModels.length === 0) DEAD_MODELS.clear();
@@ -170,6 +174,9 @@ Deno.serve(async (req) => {
 
           if (!resp.ok) {
             const status = resp.status;
+            const errBody = await resp.text().catch(() => '');
+            debugLog.push(`${model} → ${status}: ${errBody.slice(0, 150)}`);
+            console.error(`[proxy-ai] ${model} failed ${status}: ${errBody.slice(0, 200)}`);
             if (status === 404 || status === 402) { DEAD_MODELS.set(model, Date.now()); continue; }
             if (status === 429) continue;
             continue;
@@ -180,9 +187,12 @@ Deno.serve(async (req) => {
           if (text) {
             return json({ text: text.trim(), model });
           }
+          debugLog.push(`${model} → 200 but empty response`);
           continue;
         } catch (e) {
-          if ((e as Error).name === 'AbortError') continue;
+          const errMsg = (e as Error).name === 'AbortError' ? 'timeout 25s' : String(e).slice(0, 100);
+          debugLog.push(`${model} → threw: ${errMsg}`);
+          console.error(`[proxy-ai] ${model} threw:`, errMsg);
           continue;
         }
       }
@@ -231,8 +241,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // All failed
-    return json({ error: 'IA no disponible. Todos los modelos fallaron. Intenta en unos minutos.' }, 503);
+    // All failed — return debug info so we can see WHAT failed
+    console.error('[proxy-ai] ALL FAILED. Debug:', debugLog.join(' | '));
+    return json({
+      error: 'IA no disponible. Todos los modelos fallaron.',
+      debug: debugLog,
+    }, 503);
   } catch (e) {
     return json({ error: 'Error interno en proxy-ai.', detail: String(e).slice(0, 200) }, 500);
   }
