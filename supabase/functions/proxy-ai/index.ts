@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
   try {
     // ── Validate key ──────────────────────────────────────────────────
     if (!OPENROUTER_KEY && !GEMINI_KEY) {
-      return json({ error: 'IA no configurada (falta GEMINI_API_KEY y OPENROUTER_KEY en secrets).' }, 503);
+      return json({ error: 'IA no configurada (falta OPENROUTER_KEY en secrets).' }, 503);
     }
 
     // ── Rate limit (15 req/min por IP — más generoso que endpoints específicos) ──
@@ -131,10 +131,65 @@ Deno.serve(async (req) => {
 
     const { maxTokens = 1024, temperature = 0.7, jsonMode = false } = body.options ?? {};
 
-    // ── Try Gemini first ──────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════
+    // STRATEGY: OpenRouter FIRST (reliable, free models available).
+    // Gemini only as last-resort fallback if OpenRouter completely fails.
+    // ══════════════════════════════════════════════════════════════════
+
+    // ── Try OpenRouter (PRIMARY) ──────────────────────────────────────
+    if (OPENROUTER_KEY) {
+      const aliveModels = FREE_MODELS.filter(isModelAlive);
+      if (aliveModels.length === 0) DEAD_MODELS.clear();
+      const modelsToTry = aliveModels.length > 0 ? aliveModels : FREE_MODELS;
+
+      for (const model of modelsToTry) {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 25000);
+
+          const resp = await fetch(OR_URL, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENROUTER_KEY}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': ALLOWED_ORIGIN,
+              'X-Title': 'Sistema Omicron',
+            },
+            body: JSON.stringify({
+              model,
+              messages: body.messages,
+              max_tokens: Math.min(maxTokens, 4096),
+              temperature: Math.min(Math.max(temperature, 0), 1.5),
+              ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
+            }),
+            signal: controller.signal,
+          });
+
+          clearTimeout(timer);
+
+          if (!resp.ok) {
+            const status = resp.status;
+            if (status === 404 || status === 402) { DEAD_MODELS.set(model, Date.now()); continue; }
+            if (status === 429) continue;
+            continue;
+          }
+
+          const data = await resp.json();
+          const text = data?.choices?.[0]?.message?.content ?? '';
+          if (text) {
+            return json({ text: text.trim(), model });
+          }
+          continue;
+        } catch (e) {
+          if ((e as Error).name === 'AbortError') continue;
+          continue;
+        }
+      }
+    }
+
+    // ── Try Gemini (FALLBACK only if OpenRouter failed) ───────────────
     if (GEMINI_KEY) {
       try {
-        // Gemini no tiene rol 'system' — convertir a user con prefijo
         const contents = body.messages.map((msg) => {
           const role = msg.role === 'assistant' ? 'model' : 'user';
           const text = msg.role === 'system' ? `System: ${msg.content}` : msg.content;
@@ -169,74 +224,13 @@ Deno.serve(async (req) => {
           if (geminiText) {
             return json({ text: geminiText.trim(), model: GEMINI_MODEL });
           }
-        } else {
-          console.warn(`[proxy-ai] Gemini failed: ${geminiResp.status}, falling back to OpenRouter`);
         }
       } catch (e) {
-        console.warn('[proxy-ai] Gemini error, falling back to OpenRouter:', String(e).slice(0, 150));
+        console.warn('[proxy-ai] Gemini fallback also failed:', String(e).slice(0, 100));
       }
     }
 
-    // ── If no OPENROUTER_KEY and Gemini failed, return clear error ────
-    if (!OPENROUTER_KEY) {
-      return json({ error: 'Gemini falló y no hay fallback disponible (OPENROUTER_KEY no configurada). Reintentá en unos segundos.' }, 503);
-    }
-
-    // ── Call OpenRouter with multi-model fallback ──────────────────────
-    const aliveModels = FREE_MODELS.filter(isModelAlive);
-    if (aliveModels.length === 0) {
-      DEAD_MODELS.clear(); // Reset and try all
-    }
-    const modelsToTry = aliveModels.length > 0 ? aliveModels : FREE_MODELS;
-
-    for (const model of modelsToTry) {
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 25000); // 25s timeout
-
-        const resp = await fetch(OR_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENROUTER_KEY}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': ALLOWED_ORIGIN,
-            'X-Title': 'Sistema Omicron',
-          },
-          body: JSON.stringify({
-            model,
-            messages: body.messages,
-            max_tokens: Math.min(maxTokens, 4096), // Cap server-side
-            temperature: Math.min(Math.max(temperature, 0), 1.5),
-            ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
-          }),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timer);
-
-        if (!resp.ok) {
-          const status = resp.status;
-          if (status === 404 || status === 402) {
-            DEAD_MODELS.set(model, Date.now());
-            continue;
-          }
-          if (status === 429) continue; // Rate limited on this model, try next
-          continue; // Other errors, try next
-        }
-
-        const data = await resp.json();
-        const text = data?.choices?.[0]?.message?.content ?? '';
-        if (text) {
-          return json({ text: text.trim(), model });
-        }
-        continue; // Empty response, try next
-      } catch (e) {
-        if ((e as Error).name === 'AbortError') continue;
-        continue;
-      }
-    }
-
-    // All models failed
+    // All failed
     return json({ error: 'IA no disponible. Todos los modelos fallaron. Intenta en unos minutos.' }, 503);
   } catch (e) {
     return json({ error: 'Error interno en proxy-ai.', detail: String(e).slice(0, 200) }, 500);
