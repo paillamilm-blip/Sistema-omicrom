@@ -307,13 +307,12 @@ export function useGemeloActivation() {
       console.warn('[Omicron] Safety timeout reached (30s). Using local fallback.');
       isProcessingRef.current = false;
       if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
-      // Don't error — use local fallback on timeout
-      const localResult = analyzeCV(text);
-      setSynergies(detectSynergies(localResult));
-      setDossier(localResult);
-      setAi({ loading: false, text: localResult.summary });
-      setPhase('reveal');
-      toast('IA tardó demasiado — se usó análisis local', 'info');
+      // Timeout — show error instead of wrong local data
+      isProcessingRef.current = false;
+      setMsg('La IA tardó demasiado. Intentá de nuevo.');
+      setLastError('timeout');
+      toast('Timeout: la IA no respondió en 30s. Reintentá.', 'error');
+      setPhase('upload');
     }, SAFETY_TIMEOUT_MS);
 
     // ── Progress messages ────────────────────────────────────────────
@@ -361,14 +360,14 @@ export function useGemeloActivation() {
             axes: { exec: clamp(ia.axes!.exec), qual: clamp(ia.axes!.qual), trans: clamp(ia.axes!.trans), fund: clamp(ia.axes!.fund) },
           };
         } else {
-          // IA failed or incomplete — use local
-          console.warn('[Omicron] AI result incomplete, using local fallback');
-          analyzed = analyzeCV(text);
+          // IA failed or incomplete — show error, NO local fallback con datos falsos
+          console.error('[Omicron] AI result incomplete. No local fallback.');
+          analyzed = null;
         }
       } catch (err) {
-        // Any error from IA → fallback local (never block)
-        console.warn('[Omicron] AI threw, using local fallback:', err);
-        analyzed = analyzeCV(text);
+        // Any error from IA → NO fallback local (prefer error over wrong data)
+        console.error('[Omicron] AI threw:', err);
+        analyzed = null;
       }
 
       // Clear timers
@@ -378,8 +377,9 @@ export function useGemeloActivation() {
       if (cancelledRef.current) return;
 
       if (!analyzed) {
-        setMsg('No se obtuvo un análisis. Intentá de nuevo.');
+        setMsg('La IA no pudo analizar tu CV. Verificá tu conexión e intentá de nuevo.');
         setLastError('no_analysis');
+        toast('Error: la IA no respondió. Reintentá en unos segundos.', 'error');
         setPhase('upload');
         isProcessingRef.current = false;
         return;
@@ -427,19 +427,11 @@ export function useGemeloActivation() {
       if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
       if (cancelledRef.current) return;
       console.error('[Omicron] activateGemeloCompleto failed:', err);
-      // Even on catastrophic failure, try local fallback safely
-      try {
-        const localResult = analyzeCV(cvText.trim());
-        setDossier(localResult);
-        setSynergies(detectSynergies(localResult));
-        setAi({ loading: false, text: localResult.summary });
-        setPhase('reveal');
-      } catch (fallbackErr) {
-        console.error('[Omicron] Local fallback also failed:', fallbackErr);
-        setLastError('catastrophic');
-        setMsg('Error al procesar. Intentá de nuevo.');
-        setPhase('upload');
-      }
+      // Even on catastrophic failure, show clear error
+      setLastError('catastrophic');
+      setMsg('Error al procesar. Intentá de nuevo.');
+      toast('Error inesperado. Reintentá.', 'error');
+      setPhase('upload');
       isProcessingRef.current = false;
     }
   }, [cvText, detectSynergies, toast, profile?.id, persistAnalysis]);
