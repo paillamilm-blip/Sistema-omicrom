@@ -223,21 +223,60 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
 
           {/* ── ACT 2: EL VEREDICTO ──────────────────────────────────── */}
           {currentAct === 'verdict' && (
-            <motion.div key="verdict" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ padding: '0 24px', flex: 1 }}>
-              {/* 4 Axes visual */}
+            <motion.div key="verdict" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ padding: '0 24px', flex: 1, overflowY: 'auto' }}>
+              {/* Profile summary — nombre, carrera, experiencia */}
+              <div style={{ padding: 16, borderRadius: RADIUS.xl, background: C.glass, border: `1px solid ${uc}33`, marginBottom: 16 }}>
+                {analyzed.name && (
+                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.lg, color: C.ink, marginBottom: 4 }}>
+                    {analyzed.name}
+                  </div>
+                )}
+                <div style={{ fontFamily: FONT.body, fontSize: SIZE.md, color: uc, fontWeight: 700, marginBottom: 8 }}>
+                  {analyzed.seniorLabel}
+                </div>
+                {analyzed.years > 0 && (
+                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut, marginBottom: 8 }}>
+                    {analyzed.years} {analyzed.years === 1 ? 'año' : 'años'} de experiencia profesional
+                  </div>
+                )}
+                {analyzed.labels.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                    {analyzed.labels.slice(0, 6).map((skill, i) => (
+                      <span key={i} style={{ padding: '4px 10px', borderRadius: RADIUS.pill, background: `${uc}14`, border: `1px solid ${uc}33`, fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc }}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {analyzed.summary && (
+                  <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.6, margin: 0, opacity: 0.85 }}>
+                    {analyzed.summary.split('\n')[0]}
+                  </p>
+                )}
+              </div>
+
+              {/* 4 Axes visual — con descripción */}
+              <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Tus 4 ejes del Gemelo Digital</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20 }}>
                 {Object.entries(analyzed.axes).map(([key, val]) => {
                   const info = AXIS_LABELS[key];
                   const isWeak = key === weakAxis.key;
                   const Icon = info?.icon || Zap;
+                  const descriptions: Record<string, string> = {
+                    exec: 'Capacidad de entregar resultados',
+                    qual: 'Rigor y estándares profesionales',
+                    trans: 'Impacto, liderazgo y mentoría',
+                    fund: 'Base formal y certificaciones',
+                  };
                   return (
                     <div key={key} style={{ padding: 12, borderRadius: RADIUS.lg, background: isWeak ? `${C.red}12` : C.glass, border: `1px solid ${isWeak ? C.red + '44' : C.line}` }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                         <Icon size={12} color={info?.color || C.cyan} />
                         <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textTransform: 'uppercase', letterSpacing: 1 }}>{info?.name || key}</span>
                       </div>
-                      <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color: isWeak ? C.red : info?.color || C.cyan }}>{val}</div>
-                      {isWeak && <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.red }}>← tu punto ciego</span>}
+                      <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color: isWeak ? C.red : info?.color || C.cyan }}>{val}<span style={{ fontSize: SIZE.xs, color: C.mut }}>/100</span></div>
+                      <span style={{ fontFamily: FONT.body, fontSize: 10, color: C.mut, lineHeight: 1.3 }}>{descriptions[key] || ''}</span>
+                      {isWeak && <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.red, marginTop: 4 }}>← tu punto ciego</div>}
                     </div>
                   );
                 })}
