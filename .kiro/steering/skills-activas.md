@@ -31,6 +31,7 @@ inclusion: always
 | **SCRAPEAR:** [sitio/datos] | Extraigo datos de cualquier web | Firecrawl + Scrape + Browse + Agent Browser |
 | **ESPIAR:** [url competencia] | Analizo sitio/app de la competencia | Agent Browser + Browse + Superpowers + Performance |
 | **AUTOMATIZAR:** [flujo] | Creo automatización de browser repetible | Agent Browser + Nova Act + Firecrawl + QA Skill |
+| **HACKEAR:** [módulo/app] | Pentesting IA con Strix — vulns reales con exploit (PoC) | Strix (9 skills) + Security & Hardening + CSO + Code Review Ultra |
 
 ---
 
@@ -55,6 +56,8 @@ inclusion: always
 | **EXTRAER:** [datos de sitio] | Scraping masivo estructurado | "EXTRAER: todos los empleos de LinkedIn Chile" |
 | **LOOP:** [problema complejo] | Bug/problema que NO se resuelve. ITERA hasta arreglarlo | "LOOP: el CV no se analiza en celular" |
 | **LOOP TOTAL:** [tema] | Busca TODOS los bugs de un tema y no para hasta resolver todos | "LOOP TOTAL: el sistema de reputación" |
+| **LOOP VIVO:** [cambio] | Hace el cambio → corre la app → te muestra SCREENSHOT en vivo | "LOOP VIVO: el botón de logout" |
+| **HACKEAR:** [módulo/app] | Pentest IA + fix de cada vuln + re-scan hasta 0 vulns | "HACKEAR: el módulo de auth" |
 
 ---
 
@@ -358,6 +361,105 @@ LOOP TOTAL: el análisis de CV
 
 ---
 
+### LOOP VIVO: [cambio] ← 👁️ VES EL RESULTADO EN VIVO
+```
+┌────────────────────────────────────────────────────────────────────┐
+│  LOOP VIVO — Cambio + app corriendo + screenshot en vivo           │
+│                                                                    │
+│  1. HACER el cambio (código)                                       │
+│  2. npm run dev (levantar servidor en background)                  │
+│  3. agent-browser abre localhost:5173                              │
+│  4. SCREENSHOT → te lo muestro                                     │
+│  5. ¿Se ve bien?                                                   │
+│       NO → ajustar → volver a 2                                    │
+│       SÍ → LANZAR ✅                                                │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+**Se activa con:** "LOOP VIVO: [cambio]", "mostrame como queda", "quiero verlo", "en vivo", "screenshot"
+
+**Skills:** gsd + ponytail + agent-browser/core + browse + impeccable + taste-skill + animate + verification
+
+**Protocolo:**
+```
+1. CAMBIO: Implemento la modificación (visual o funcional)
+2. SERVIDOR: npm run dev en background (puerto 5173)
+3. BROWSER: agent-browser open http://localhost:5173
+4. NAVEGAR: Voy al flujo/pantalla que cambió
+5. SCREENSHOT: agent-browser screenshot → te lo muestro
+6. EVALUAR: ¿Se ve como querías?
+   → NO: ajusto y repito desde el paso 2
+   → SÍ: commit + push + deploy
+```
+
+**Reglas:**
+- SIEMPRE muestro screenshot ANTES de commitear
+- Si el cambio es visual, comparo antes/después
+- Si el servidor no levanta, arreglo el error primero
+- Máximo 4 iteraciones visuales (después pregunto qué falta)
+- El servidor corre en background (no bloquea)
+
+**Ejemplos:**
+```
+LOOP VIVO: el botón de logout en el header
+LOOP VIVO: que el orbe sea más grande en celular
+LOOP VIVO: cambiá el color del CTA a dorado
+mostrame como queda el onboarding
+quiero ver la pantalla de wallet
+```
+
+**Potencia:** Feedback visual inmediato 👁️🔥
+
+---
+
+### HACKEAR: [módulo/app] ← 🏴‍☠️ PENTEST IA + FIX + RE-SCAN HASTA 0 VULNS
+```
+┌────────────────────────────────────────────────────────────────────┐
+│  FASE 1: PENTEST — Strix IA ataca como hacker real                 │
+│    Reconocimiento → Explotación → Validación con PoC                │
+│    → Solo vulns CONFIRMADAS (cero false positives)                  │
+│                                                                    │
+│  FASE 2: FIX — por cada vuln (crítica → baja)                       │
+│    ARREGLAR (root cause) → REVISAR → SINERGIA                       │
+│                                                                    │
+│  FASE 3: RE-SCAN — Strix ataca de nuevo el mismo punto              │
+│    ¿Exploit cerrado? SÍ → siguiente · NO → volver a FASE 2          │
+│                                                                    │
+│  FASE 4: SCAN FINAL — Strix completo otra vez                       │
+│    0 vulns → LANZAR ✅ · Vulns nuevas → volver a FASE 2             │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+**Se activa con:** "HACKEAR: [módulo]", "hackea", "pentest", "buscar vulnerabilidades", "es hackeable?"
+
+**Skills (Strix + soporte):**
+- penetration-testing-with-strix (core)
+- find-security-vulnerabilities-in-code (white-box)
+- fix-security-vulnerabilities-with-strix (remediation + verify)
+- owasp-top-10-testing · api-security-testing · application-security-testing
+- web-app-penetration-testing · ci-security-scanning-with-strix
+- managed-pentesting-with-strix
+- \+ security-and-hardening + cso + code-review-ultra + sinergia + qa-memoria
+
+**Diferencia vs PROTEGER:**
+| PROTEGER | HACKEAR |
+|----------|---------|
+| Revisa el código buscando patrones inseguros | Ataca la app de verdad con exploits |
+| Puede dar false positives | Solo reporta lo que logró explotar (PoC) |
+| Rápido, estático | Más lento, dinámico, real |
+
+**Ejemplos:**
+```
+HACKEAR: el módulo de auth
+HACKEAR: las Edge Functions
+HACKEAR: toda la app
+es hackeable el login?
+```
+
+**Potencia:** MÁXIMA en seguridad ofensiva 🏴‍☠️🔥
+
+---
+
 ---
 
 ## 🎛️ REGLAS DEL SISTEMA
@@ -443,8 +545,7 @@ BLINDAR: el flujo de pagos con Stripe
 | 28 | ship | Deploy |
 | 29 | shipping-and-launch | Deploy |
 | 30 | nova-act | Automatización |
-| 31 | adn-digital | Producto |
-| 32 | sinergia | Conexión |
+| 31 | sinergia | Conexión |
 | 33 | qa-memoria | QA |
 | 34 | investigacion | QA |
 | 35 | agent-browser/core | Automatización |
