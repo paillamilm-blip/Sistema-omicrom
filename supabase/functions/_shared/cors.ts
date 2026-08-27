@@ -28,14 +28,8 @@ function getAllowedOrigin(requestOrigin?: string | null): string {
     return requestOrigin;
   }
 
-  // Permitir preview deployments de Vercel (*.vercel.app)
-  // Patrón: https://<project>-<hash>-<team>.vercel.app
-  if (/^https:\/\/[a-z0-9-]+-[a-z0-9]+-[a-z0-9-]+(\.vercel\.app)$/.test(requestOrigin)) {
-    return requestOrigin;
-  }
-
-  // Permitir cualquier subdominio de sistema-omicrom en Vercel
-  if (requestOrigin.endsWith('.vercel.app') && requestOrigin.includes('sistema-omicrom')) {
+  // Permitir preview deployments de Vercel del proyecto (con o sin 'm' final)
+  if (requestOrigin.endsWith('.vercel.app') && /sistema-omicro[nm]/.test(requestOrigin)) {
     return requestOrigin;
   }
 
