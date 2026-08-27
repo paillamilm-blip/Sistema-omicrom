@@ -220,14 +220,14 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
             const active = i === step, doneS = i < step;
             return (
               <div key={stepKey} style={{ display: 'flex', gap: 12, opacity: active || doneS ? 1 : 0.4 }}>
-                <div style={{ flexShrink: 0, width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', background: doneS ? C.green : active ? 'rgba(92, 200, 255,0.15)' : 'rgba(255,255,255,0.08)', color: doneS ? '#04121f' : active ? C.cyan : C.cyanDim, border: active ? `1px solid ${C.cyan}` : 'none', fontFamily: FONT.mono, fontSize: 12 }}>
+                <div style={{ flexShrink: 0, width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', background: doneS ? C.green : active ? 'rgba(160,174,192,0.15)' : 'rgba(255,255,255,0.08)', color: doneS ? '#04121f' : active ? C.cyan : C.cyanDim, border: active ? `1px solid ${C.cyan}` : 'none', fontFamily: FONT.mono, fontSize: 12 }}>
                   {doneS ? <Check size={15} /> : i === 3 ? '✓' : i + 1}
                 </div>
                 <div style={{ flex: 1, paddingTop: 3 }}>
                   <div style={{ fontWeight: 700, fontSize: 13, color: '#eaf4ff' }}>{h}</div>
                   {i === 0 && (active || doneS) && <div style={{ fontSize: 12, color: C.cyanDim, marginTop: 4, lineHeight: 1.4 }}>Adjunté tu Pasaporte verificable ({repText}). Sin formularios: tus datos ya están validados.</div>}
                   {i === 1 && (active || doneS) && (
-                    <div style={{ marginTop: 8, padding: '11px 13px', borderRadius: 12, background: 'rgba(92, 200, 255,0.05)', border: `1px solid ${C.cyanFaint}`, fontSize: 12, lineHeight: 1.5, color: '#dbeafe' }}>
+                    <div style={{ marginTop: 8, padding: '11px 13px', borderRadius: 12, background: 'rgba(160,174,192,0.05)', border: `1px solid ${C.cyanFaint}`, fontSize: 12, lineHeight: 1.5, color: '#dbeafe' }}>
                       "Candidato {repText}. Encaje con {job.title}: {fit}%. Fortalezas verificadas en Ómicron, sin necesidad de pruebas adicionales."
                     </div>
                   )}

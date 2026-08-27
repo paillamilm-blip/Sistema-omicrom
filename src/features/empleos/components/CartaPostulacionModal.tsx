@@ -240,7 +240,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tag: {
     display: 'inline-flex', padding: '3px 8px', borderRadius: 4,
-    background: 'rgba(92, 200, 255, 0.08)', border: `1px solid rgba(92, 200, 255, 0.2)`,
+    background: 'rgba(160,174,192, 0.08)', border: `1px solid rgba(160,174,192, 0.2)`,
     fontFamily: FM, fontSize: 11, color: C.cyanHi,
   },
   cartaBox: {
@@ -253,7 +253,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   copyBtn: {
     display: 'inline-flex', alignItems: 'center', gap: 4,
-    background: 'rgba(92, 200, 255, 0.1)', border: `1px solid rgba(92, 200, 255, 0.3)`,
+    background: 'rgba(160,174,192, 0.1)', border: `1px solid rgba(160,174,192, 0.3)`,
     borderRadius: 5, padding: '4px 9px', cursor: 'pointer',
     fontFamily: FM, fontSize: 9, color: C.cyanHi,
   },
@@ -266,6 +266,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: `linear-gradient(135deg, ${C.cyan}, #008b9e)`,
     border: 'none', color: '#04121f',
     fontFamily: FM, fontSize: 12, fontWeight: 700, letterSpacing: 1,
-    boxShadow: '0 0 20px rgba(92, 200, 255, 0.3)',
+    boxShadow: '0 0 20px rgba(160,174,192, 0.3)',
   },
 };

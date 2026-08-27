@@ -1,17 +1,17 @@
 // theme/tokens.ts
 // Sistema Ómicron — Design Tokens: Colores y estados
 //
-// Identidad: negro-azulado premium (tipo Apple) + paleta sky/indigo/teal + ámbar.
-//   cyan  → SKY   #5cc8ff   (héroe azul cielo)
+// Identidad: negro-azulado premium (tipo Apple) + paleta silver-ice/indigo/teal + ámbar.
+//   cyan  → SILVER ICE #a0aec0 (héroe plateado)
 //   purple→ INDIGO #5e5ce6  (tiers / destacados)
 //   green → TEAL  #3fd0c9   (estado OK / economía)
 //   gold  → ÁMBAR #ffb02e   (acento cálido)
 
 export const C = {
-  cyan:         '#5cc8ff',
-  cyanDim:      'rgba(92,200,255,0.46)',
-  cyanFaint:    'rgba(92,200,255,0.16)',
-  cyanGhost:    'rgba(92,200,255,0.08)',
+  cyan:         '#a0aec0',
+  cyanDim:      'rgba(160,174,192,0.46)',
+  cyanFaint:    'rgba(160,174,192,0.16)',
+  cyanGhost:    'rgba(160,174,192,0.08)',
   gold:         '#ffb02e',
   goldDim:      'rgba(255,176,46,0.46)',
   goldFaint:    'rgba(255,176,46,0.14)',

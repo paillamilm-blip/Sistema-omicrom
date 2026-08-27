@@ -772,7 +772,7 @@ export function OrbShell() {
             height: 44,
             borderRadius: '50%',
             border: `1.5px solid ${C.cyanDim}`,
-            background: 'radial-gradient(circle at 32% 26%, rgba(92,200,255,0.14), rgba(6,10,22,0.85))',
+            background: 'radial-gradient(circle at 32% 26%, rgba(160,174,192,0.14), rgba(6,10,22,0.85))',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
             cursor: 'pointer',
@@ -941,7 +941,7 @@ export function OrbShell() {
                 width: '100%', padding: '12px 0', borderRadius: 14, border: 'none', cursor: 'pointer',
                 background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`,
                 color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
-                boxShadow: `0 8px 24px rgba(92,200,255,0.3)`,
+                boxShadow: `0 8px 24px rgba(160,174,192,0.3)`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >

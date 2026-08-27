@@ -54,7 +54,7 @@ function showUpdateBanner(reg: ServiceWorkerRegistration): void {
     'position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);' +
     'z-index:99999;display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:16px;' +
     'background:rgba(10,16,30,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);' +
-    'border:1px solid rgba(92,200,255,0.4);box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 22px rgba(92,200,255,.25);' +
+    'border:1px solid rgba(160,174,192,0.4);box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 22px rgba(160,174,192,.25);' +
     "font-family:-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif;color:#eaf0fb;" +
     'max-width:calc(100vw - 32px);animation:omiUpIn .3s ease both';
 
@@ -70,7 +70,7 @@ function showUpdateBanner(reg: ServiceWorkerRegistration): void {
   btn.textContent = 'Actualizar';
   btn.style.cssText =
     'flex-shrink:0;padding:8px 15px;border-radius:11px;border:none;cursor:pointer;font-weight:700;font-size:13px;' +
-    'color:#fff;background:linear-gradient(135deg,#5cc8ff,#5e5ce6);box-shadow:0 6px 16px rgba(10,132,255,.4)';
+    'color:#fff;background:linear-gradient(135deg,#a0aec0,#5e5ce6);box-shadow:0 6px 16px rgba(160,174,192,.4)';
   btn.onclick = () => {
     btn.textContent = 'Actualizando…';
     btn.disabled = true;

@@ -66,7 +66,7 @@ function TutorPanel({ lesson, onClose }: { lesson: { title: string; content: str
             const msgKey = `msg-${msgIdx}-${m.role}-${m.text.slice(0, 20)}`;
             return (
               <div key={msgKey} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
-                <div style={{ maxWidth: '85%', padding: '10px 13px', borderRadius: 12, background: own ? 'rgba(92, 200, 255,0.12)' : `${C.gold}12`, border: `1px solid ${own ? C.cyanDim : C.gold + '40'}`, borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3 }}>
+                <div style={{ maxWidth: '85%', padding: '10px 13px', borderRadius: 12, background: own ? 'rgba(160,174,192,0.12)' : `${C.gold}12`, border: `1px solid ${own ? C.cyanDim : C.gold + '40'}`, borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3 }}>
                   <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: '#e6f1fb', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</p>
                 </div>
               </div>

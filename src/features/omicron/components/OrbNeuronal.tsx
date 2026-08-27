@@ -97,7 +97,7 @@ export default function OrbNeuronal({
   isListening = false,
   onProjectedPositions,
   notifications = {},
-  userColor = '#5cc8ff',
+  userColor = '#a0aec0',
   className,
 }: OrbNeuronalProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);

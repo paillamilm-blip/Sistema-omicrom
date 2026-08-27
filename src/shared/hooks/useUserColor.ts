@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { getUserColor } from '@/shared/components/ColorPicker';
 
 /**
- * Returns the user's selected color as a hex string (e.g. '#5cc8ff').
+ * Returns the user's selected color as a hex string (e.g. '#a0aec0').
  * Updates reactively if the color changes (storage event or custom event).
  */
 export function useUserColor(): string {

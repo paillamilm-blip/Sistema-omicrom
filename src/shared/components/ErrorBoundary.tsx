@@ -83,14 +83,14 @@ const styles: Record<string, React.CSSProperties> = {
   btnRow: { display: 'flex', gap: 10 },
   btnGhost: {
     flex: 1, padding: '10px 0', borderRadius: 8, cursor: 'pointer',
-    background: 'rgba(92, 200, 255,0.08)', border: '1px solid rgba(92, 200, 255,0.35)',
-    color: '#5cc8ff', fontFamily: RAJ, fontWeight: 700, fontSize: 13,
+    background: 'rgba(160,174,192,0.08)', border: '1px solid rgba(160,174,192,0.35)',
+    color: '#a0aec0', fontFamily: RAJ, fontWeight: 700, fontSize: 13,
   },
   btnPrimary: {
     flex: 1, padding: '10px 0', borderRadius: 8, cursor: 'pointer',
-    background: 'linear-gradient(90deg, #5cc8ff, #008b9e)', border: 'none',
+    background: 'linear-gradient(90deg, #a0aec0, #008b9e)', border: 'none',
     color: '#000206', fontFamily: RAJ, fontWeight: 700, fontSize: 13,
-    boxShadow: '0 0 15px rgba(92, 200, 255,0.35)',
+    boxShadow: '0 0 15px rgba(160,174,192,0.35)',
   },
   hint: { fontFamily: MONO, fontSize: 9, color: 'rgba(159,179,204,0.5)', marginTop: 16, letterSpacing: 0.5 },
 };

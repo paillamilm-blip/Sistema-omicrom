@@ -32,7 +32,7 @@ export function GemeloBadge() {
       style={{
         display: 'flex', alignItems: 'center', gap: 4,
         padding: '5px 9px', borderRadius: 14, cursor: 'pointer',
-        background: 'rgba(92,200,255,0.08)', border: `1px solid ${C.cyanDim}`,
+        background: 'rgba(160,174,192,0.08)', border: `1px solid ${C.cyanDim}`,
         fontFamily: FONT.mono, fontSize: 11, color: '#eaf0fb', whiteSpace: 'nowrap',
       }}
     >

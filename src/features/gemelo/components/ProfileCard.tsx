@@ -152,8 +152,8 @@ export function ProfileCard({
 
 function getAvatarGradient(index: number): string {
   const palettes = [
-    ['#5cc8ff', '#5e5ce6'],
-    ['#3fd0c9', '#5cc8ff'],
+    ['#a0aec0', '#5e5ce6'],
+    ['#3fd0c9', '#a0aec0'],
     ['#ffb02e', '#ff6a3d'],
     ['#b98bff', '#5e5ce6'],
     ['#ff8fb0', '#ff375f'],
@@ -350,7 +350,7 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 11,
     padding: '5px 10px',
     borderRadius: 11,
-    border: `1px solid rgba(92,200,255,0.32)`,
+    border: `1px solid rgba(160,174,192,0.32)`,
     background: C.glass,
     color: C.cyan,
   },

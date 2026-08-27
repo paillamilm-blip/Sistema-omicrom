@@ -188,7 +188,7 @@ export function EmotionParticles() {
             borderRadius: '50%',
             background: config.warmth > 0.6
               ? `rgba(255, 176, 46, ${0.3 + Math.random() * 0.3})`
-              : `rgba(92, 200, 255, ${0.2 + Math.random() * 0.2})`,
+              : `rgba(160,174,192, ${0.2 + Math.random() * 0.2})`,
             left: `${10 + Math.random() * 80}%`,
             top: `${10 + Math.random() * 80}%`,
             animation: `emotionFloat ${4 + Math.random() * 4}s ease-in-out infinite`,

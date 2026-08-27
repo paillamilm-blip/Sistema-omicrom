@@ -18,7 +18,7 @@ const STEPS: Step[] = [
     tag: 'BIENVENIDO A LA RED',
     title: 'Sistema Ómicron',
     body: 'Un marketplace de capital intelectual de la Industria 5.0. Aquí tu conocimiento es un activo: lo aprendes, lo validas y lo monetizas. Confianza cero, mérito verificable.',
-    accent: '#5cc8ff',
+    accent: '#a0aec0',
   },
   {
     icon: <Radar size={34} />,
@@ -32,7 +32,7 @@ const STEPS: Step[] = [
     tag: 'CÓMO NAVEGAR',
     title: '5 hubs, una misión',
     body: 'APRENDER (árbol + academia), MERCADO (servicios + bóveda), EMPLEOS, GOBERNANZA (disputas + staking) y tu PERFIL. Usa las sub-pestañas superiores para moverte dentro de cada hub.',
-    accent: '#5cc8ff',
+    accent: '#a0aec0',
   },
   {
     icon: <Rocket size={34} />,
@@ -114,7 +114,7 @@ const S: Record<string, React.CSSProperties> = {
   iconRing: {
     width: 78, height: 78, borderRadius: '50%', margin: '0 auto 18px',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    border: '1px solid', background: 'rgba(92, 200, 255,0.04)', animation: 'floatY 5s ease-in-out infinite',
+    border: '1px solid', background: 'rgba(160,174,192,0.04)', animation: 'floatY 5s ease-in-out infinite',
   },
   tag: { fontFamily: MONO, fontSize: 11, letterSpacing: 2.5, fontWeight: 700 },
   title: { fontFamily: RAJ, fontWeight: 700, fontSize: 26, color: '#eaf0fb', margin: '6px 0 12px', letterSpacing: 0.5 },

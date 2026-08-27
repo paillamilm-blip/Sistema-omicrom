@@ -329,7 +329,7 @@ export function GobernanzaTab() {
                   </p>
 
                   {myVote ? (
-                    <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(92, 200, 255, 0.08)', border: `1px solid ${C.cyanFaint}` }}>
+                    <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(160,174,192, 0.08)', border: `1px solid ${C.cyanFaint}` }}>
                       <span style={{ fontFamily: FONT.mono, fontSize: 11, color: myVote.verdict === 'UPHOLD' ? C.green : C.gold }}>
                         Tu voto: {myVote.verdict === 'UPHOLD' ? '✓ CONFIRMAR FALLO' : '↩ REVERTIR FALLO'}
                       </span>
@@ -620,7 +620,7 @@ function BlackboxPanel({ disputeId, reason }: { disputeId: string; reason: strin
             )}
             {aErr && <p style={{ fontFamily: FONT.mono, fontSize: 9, color: C.red, marginTop: 6 }}>{aErr}</p>}
             {analysis && (
-              <div style={{ marginTop: 8, padding: 10, borderRadius: 8, background: 'rgba(92, 200, 255,0.06)', border: `1px solid ${C.cyanDim}` }}>
+              <div style={{ marginTop: 8, padding: 10, borderRadius: 8, background: 'rgba(160,174,192,0.06)', border: `1px solid ${C.cyanDim}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: 1.5, color: C.cyan }}>
                   <Sparkles size={11} /> ANÁLISIS NEUTRAL · RELATOR IA (no es veredicto)
                 </div>

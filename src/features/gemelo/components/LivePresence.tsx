@@ -101,7 +101,7 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
                   <button
                     onClick={() => setDmWith({ id: n.id, name: n.username, username: n.username, avatar: null })}
                     aria-label={`Mensaje a ${n.username}`}
-                    style={{ flex: '0 0 auto', width: 34, height: 34, borderRadius: 12, display: 'grid', placeItems: 'center', background: 'rgba(92, 200, 255,0.1)', border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', fontSize: 15 }}
+                    style={{ flex: '0 0 auto', width: 34, height: 34, borderRadius: 12, display: 'grid', placeItems: 'center', background: 'rgba(160,174,192,0.1)', border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', fontSize: 15 }}
                   >
                     💬
                   </button>

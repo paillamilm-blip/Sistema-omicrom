@@ -14,7 +14,7 @@ export function HubSubNav() {
     <div style={{
       flexShrink: 0, display: 'flex', gap: 8, padding: '8px 12px',
       background: 'rgba(2,6,19,0.85)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-      borderBottom: '1px solid rgba(92, 200, 255,0.14)',
+      borderBottom: '1px solid rgba(160,174,192,0.14)',
       position: 'relative', zIndex: 3,
     }}>
       {hub.members.map(m => {
@@ -26,10 +26,10 @@ export function HubSubNav() {
             style={{
               flex: 1, padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
               fontFamily: FONT.display, fontSize: 13, letterSpacing: 0.3, fontWeight: 700,
-              background: active ? 'linear-gradient(135deg, #5cc8ff, #008b9e)' : 'transparent',
-              border: `1px solid ${active ? '#5cc8ff' : 'rgba(94, 92, 230,0.30)'}`,
+              background: active ? 'linear-gradient(135deg, #a0aec0, #008b9e)' : 'transparent',
+              border: `1px solid ${active ? '#a0aec0' : 'rgba(94, 92, 230,0.30)'}`,
               color: active ? '#000206' : '#9fb3cc',
-              boxShadow: active ? '0 0 16px rgba(92, 200, 255,0.45)' : 'none',
+              boxShadow: active ? '0 0 16px rgba(160,174,192,0.45)' : 'none',
               transition: 'all .2s',
             }}
           >

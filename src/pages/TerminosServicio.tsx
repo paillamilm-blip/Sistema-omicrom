@@ -368,7 +368,7 @@ const S: Record<string, React.CSSProperties> = {
   acceptance: {
     marginTop: 24,
     padding: 16,
-    background: 'rgba(92,200,255,0.1)',
+    background: 'rgba(160,174,192,0.1)',
     border: `1px solid ${C.cyan}`,
     borderRadius: 12,
   },

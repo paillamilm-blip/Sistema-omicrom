@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // COLOR PICKER — User chooses their Gemelo's primary color.
 //
-// 5 colors from the Ómicron palette. Each renders as a glowing circle.
+// 7 colors from the Ómicron palette. Each renders as a glowing circle.
 // Selected color gets a scale + ring animation.
 // Persists choice to localStorage for use across the app.
 //
@@ -23,11 +23,13 @@ export interface ColorOption {
 }
 
 export const COLOR_OPTIONS: ColorOption[] = [
-  { id: 'cyan', hex: '#5cc8ff', label: 'Cian' },
+  { id: 'ice', hex: '#7dd3fc', label: 'Hielo' },
   { id: 'purple', hex: '#5e5ce6', label: 'Púrpura' },
   { id: 'gold', hex: '#ffb02e', label: 'Oro' },
   { id: 'green', hex: '#3fd0c9', label: 'Esmeralda' },
   { id: 'pink', hex: '#ff6b9d', label: 'Rosa' },
+  { id: 'lime', hex: '#84cc16', label: 'Lima' },
+  { id: 'white', hex: '#e0e4ea', label: 'Blanco' },
 ];
 
 /** Get the user's saved color (or default cyan) */
@@ -50,13 +52,13 @@ interface Props {
   onSelect: (color: ColorOption) => void;
   /** Currently selected color id */
   selected?: string;
-  /** Size of each circle in px (default 44) */
+  /** Size of each circle in px (default 38) */
   dotSize?: number;
   style?: CSSProperties;
 }
 
-export function ColorPicker({ onSelect, selected, dotSize = 44, style }: Props) {
-  const [active, setActive] = useState(selected || 'cyan');
+export function ColorPicker({ onSelect, selected, dotSize = 38, style }: Props) {
+  const [active, setActive] = useState(selected || 'ice');
 
   const handleSelect = useCallback((option: ColorOption) => {
     setActive(option.id);
@@ -75,7 +77,7 @@ export function ColorPicker({ onSelect, selected, dotSize = 44, style }: Props) 
         Elige el color de tu Gemelo
       </p>
 
-      <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
         {COLOR_OPTIONS.map((option) => {
           const isActive = active === option.id;
           return (

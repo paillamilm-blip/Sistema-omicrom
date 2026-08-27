@@ -97,8 +97,8 @@ export function RedSocialTab() {
           return (
             <button key={t.id} onClick={() => setSection(t.id)} style={{
               ...S.tab,
-              background: active ? 'rgba(92,200,255,0.1)' : 'transparent',
-              borderColor: active ? C.cyan : 'rgba(92,200,255,0.15)',
+              background: active ? 'rgba(160,174,192,0.1)' : 'transparent',
+              borderColor: active ? C.cyan : 'rgba(160,174,192,0.15)',
               color: active ? C.cyan : C.mut,
             }}>
               {t.icon}
@@ -316,16 +316,16 @@ const S: Record<string, React.CSSProperties> = {
     letterSpacing: 0.5, whiteSpace: 'nowrap',
   },
   badge: {
-    background: 'rgba(92,200,255,0.2)', borderRadius: 8, padding: '1px 5px',
+    background: 'rgba(160,174,192,0.2)', borderRadius: 8, padding: '1px 5px',
     fontFamily: FONT.mono, fontSize: 9, fontWeight: 700,
   },
   scroll: { flex: 1, overflowY: 'auto', padding: '4px 0 20px' },
   sectionLabel: { fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.5, color: C.cyan, marginBottom: 10, textTransform: 'uppercase' },
-  feedItem: { display: 'flex', alignItems: 'center', gap: 8, padding: '9px 0', borderBottom: `1px solid rgba(92,200,255,0.08)` },
+  feedItem: { display: 'flex', alignItems: 'center', gap: 8, padding: '9px 0', borderBottom: `1px solid rgba(160,174,192,0.08)` },
   feedDot: { width: 7, height: 7, borderRadius: '50%', flexShrink: 0, boxShadow: '0 0 6px currentColor' },
   feedText: { flex: 1, fontFamily: FONT.body, fontSize: 12.5, color: C.ink, lineHeight: 1.4 },
   feedTime: { fontFamily: FONT.mono, fontSize: 9, color: C.mut, flexShrink: 0 },
-  peerRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: `1px solid rgba(92,200,255,0.06)` },
+  peerRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: `1px solid rgba(160,174,192,0.06)` },
   avatar: {
     width: 38, height: 38, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
     background: 'rgba(63,208,201,0.1)', border: `1px solid ${C.green}44`,
@@ -336,15 +336,15 @@ const S: Record<string, React.CSSProperties> = {
   onlineDot: { width: 8, height: 8, borderRadius: '50%', boxShadow: `0 0 6px ${C.green}` },
   dmBtn: {
     width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(92,200,255,0.08)', border: `1px solid ${C.cyan}33`, cursor: 'pointer', fontSize: 13,
+    background: 'rgba(160,174,192,0.08)', border: `1px solid ${C.cyan}33`, cursor: 'pointer', fontSize: 13,
   },
   rankRow: {
     display: 'flex', alignItems: 'center', gap: 8, padding: '10px 4px',
-    borderBottom: `1px solid rgba(92,200,255,0.06)`,
+    borderBottom: `1px solid rgba(160,174,192,0.06)`,
     background: 'none', border: 'none', width: '100%', cursor: 'pointer', textAlign: 'left',
   },
   rankPos: { fontFamily: FONT.display, fontWeight: 700, fontSize: 13, width: 28, textAlign: 'center' },
-  sugCard: { display: 'flex', alignItems: 'center', gap: 8, padding: '12px 0', borderBottom: `1px solid rgba(92,200,255,0.06)` },
+  sugCard: { display: 'flex', alignItems: 'center', gap: 8, padding: '12px 0', borderBottom: `1px solid rgba(160,174,192,0.06)` },
   sugReason: { fontFamily: FONT.body, fontSize: 11, color: '#8bb8d4', marginTop: 4, lineHeight: 1.3 },
   connectBtn: {
     padding: '7px 12px', borderRadius: 8, border: `1px solid ${C.green}66`,

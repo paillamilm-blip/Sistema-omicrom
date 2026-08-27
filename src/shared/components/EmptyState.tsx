@@ -12,7 +12,7 @@ interface EmptyStateProps {
   accent?: string;        // color de acento (default cyan)
 }
 
-export function EmptyState({ icon, title, hint, ctaLabel, onCta, accent = '#5cc8ff' }: EmptyStateProps) {
+export function EmptyState({ icon, title, hint, ctaLabel, onCta, accent = '#a0aec0' }: EmptyStateProps) {
   return (
     <div style={S.wrap}>
       <div style={{ ...S.ring, borderColor: `${accent}66`, color: accent, boxShadow: `0 0 26px ${accent}33` }}>
@@ -43,7 +43,7 @@ const S: Record<string, React.CSSProperties> = {
   ring: {
     width: 72, height: 72, borderRadius: '50%', marginBottom: 14,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    border: '1px solid', background: 'rgba(92, 200, 255,0.04)',
+    border: '1px solid', background: 'rgba(160,174,192,0.04)',
     animation: 'floatY 5s ease-in-out infinite',
   },
   title: { fontFamily: RAJ, fontWeight: 700, fontSize: 20, color: '#eaf0fb', letterSpacing: 0.5 },

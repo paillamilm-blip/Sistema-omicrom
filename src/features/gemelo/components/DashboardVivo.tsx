@@ -118,7 +118,7 @@ const S: Record<string, React.CSSProperties> = {
     padding: '12px',
     borderRadius: 12,
     background: 'rgba(8,16,38,0.5)',
-    border: '1px solid rgba(92,200,255,0.1)',
+    border: '1px solid rgba(160,174,192,0.1)',
   },
   stat: {
     flex: 1,

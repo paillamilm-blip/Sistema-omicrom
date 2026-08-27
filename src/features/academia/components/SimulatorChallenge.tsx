@@ -39,7 +39,7 @@ const C = {
   green: T.green, greenFaint: T.greenFaint,
   red: T.red, redFaint: T.redFaint,
   bg: T.bg, panel: 'rgba(8,16,38,0.72)', card: 'rgba(13,22,46,0.85)',
-  text: T.ink, sub: 'rgba(92,200,255,0.5)', line: T.line,
+  text: T.ink, sub: 'rgba(160,174,192,0.5)', line: T.line,
 } as const;
 const MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
 const DISP = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
@@ -224,7 +224,7 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
     <div role="dialog" aria-modal="true" aria-label={`Simulador: ${test.test_name}`}
       style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(2,6,19,0.92)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column' }}>
 
-      <header style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: C.panel, borderBottom: `1px solid ${C.line}`, boxShadow: '0 4px 24px rgba(92, 200, 255,0.08)' }}>
+      <header style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: C.panel, borderBottom: `1px solid ${C.line}`, boxShadow: '0 4px 24px rgba(160,174,192,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
           <div style={{ width: 36, height: 36, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, boxShadow: `0 0 14px ${C.cyan}44`, animation: 'cp-breathe 1.8s ease-in-out infinite' }}>
             <Zap size={18} style={{ color: C.cyan }} />
@@ -304,8 +304,8 @@ export function SimulatorChallenge({ test, nodeId, onClose, onSuccess }: Simulat
 
         {activeView === 'editor' && (
           <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ position: 'relative', borderRadius: 12, border: `1px solid ${C.cyanDim}`, overflow: 'hidden', background: '#040a18', boxShadow: `inset 0 0 30px rgba(92, 200, 255,0.06)` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderBottom: `1px solid ${C.line}`, background: 'rgba(92, 200, 255,0.04)' }}>
+            <div style={{ position: 'relative', borderRadius: 12, border: `1px solid ${C.cyanDim}`, overflow: 'hidden', background: '#040a18', boxShadow: `inset 0 0 30px rgba(160,174,192,0.06)` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderBottom: `1px solid ${C.line}`, background: 'rgba(160,174,192,0.04)' }}>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <div style={{ width: 9, height: 9, borderRadius: '50%', background: C.red, opacity: 0.7 }} />
                   <div style={{ width: 9, height: 9, borderRadius: '50%', background: C.gold, opacity: 0.7 }} />
