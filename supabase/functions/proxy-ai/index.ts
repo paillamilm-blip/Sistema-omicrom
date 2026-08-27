@@ -32,13 +32,15 @@ const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicr
 
 import { corsHeaders } from '../_shared/cors.ts';
 
-// Modelos gratis ordenados por preferencia (actualizado agosto 2026)
-// openrouter/free = router automático que elige el mejor modelo gratis disponible
+// Modelos gratis CONFIRMADOS disponibles (verificado 27-ago-2026 con /api/v1/models)
+// Ordenados por capacidad: los primeros son más potentes para análisis de CV
 const FREE_MODELS = [
-  'openrouter/free',
-  'nvidia/nemotron-3-ultra-550b-a55b:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
-  'nvidia/nemotron-3-nano-30b-a3b:free',
+  'z-ai/glm-5.2:free',                        // Potente, buen JSON
+  'minimax/minimax-m3:free',                  // Rápido y confiable
+  'google/gemma-4-31b-it:free',               // Google, buen español
+  'nvidia/nemotron-3-super-120b-a12b:free',   // NVIDIA, 120B
+  'google/gemma-4-26b-a4b-it:free',           // Fallback Google
+  'nvidia/nemotron-3-ultra-550b-a55b:free',   // Último recurso (550B, más lento)
 ];
 
 // Cache de modelos muertos (por instancia de la Edge Function — ~5min lifetime)
