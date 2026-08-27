@@ -443,8 +443,7 @@ BLINDAR: el flujo de pagos con Stripe
 | 28 | ship | Deploy |
 | 29 | shipping-and-launch | Deploy |
 | 30 | nova-act | Automatización |
-| 31 | adn-digital | Producto |
-| 32 | sinergia | Conexión |
+| 31 | sinergia | Conexión |
 | 33 | qa-memoria | QA |
 | 34 | investigacion | QA |
 | 35 | agent-browser/core | Automatización |
