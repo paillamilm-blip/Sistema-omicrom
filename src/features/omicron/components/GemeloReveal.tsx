@@ -303,49 +303,103 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
 
           {/* ── ACT 3: MAPA DE POSIBILIDADES ─────────────────────────── */}
           {currentAct === 'map' && (
-            <motion.div key="map" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ padding: '0 24px', flex: 1 }}>
-              <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 2, color: C.mut, textTransform: 'uppercase', marginBottom: 16, textAlign: 'center' }}>Tu mapa de posibilidades</div>
+            <motion.div key="map" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ padding: '0 24px', flex: 1, overflowY: 'auto' }}>
+              {(() => {
+                const repToday = Math.round(0.2 * 20 + 0.8 * ((analyzed.axes.exec + analyzed.axes.qual + analyzed.axes.trans + analyzed.axes.fund) / 4));
+                const repFuture = Math.min(95, Math.round(0.2 * 40 + 0.8 * ((analyzed.axes.exec + analyzed.axes.qual + Math.min(analyzed.axes.trans + 15, 80) + analyzed.axes.fund) / 4)));
+                const jobsToday = Math.max(1, Math.floor(analyzed.years / 3));
+                const jobsFuture = Math.max(3, Math.floor(analyzed.years / 2) + 4);
+                const levelToday = analyzed.arch === 'senior' || analyzed.arch === 'lead' ? 'Senior' : 'Intermedio';
+                const levelFuture = analyzed.arch === 'senior' || analyzed.arch === 'lead' ? 'Líder de equipo' : 'Senior';
+                const weakName = AXIS_LABELS[weakAxis.key]?.name || 'tu eje débil';
+                return (
+                  <>
+                    <div style={{ marginBottom: 16, textAlign: 'center' }}>
+                      <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.lg, color: C.ink, marginBottom: 4 }}>Dónde estás y dónde podés llegar</div>
+                      <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut }}>Tu reputación se mide de 0 a 100. Mide qué tan verificable es tu experiencia.</div>
+                    </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-                {/* WHERE YOU ARE */}
-                <div style={{ padding: 14, borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${C.line}` }}>
-                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, marginBottom: 10, textTransform: 'uppercase' }}>Hoy</div>
-                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color: C.gold, marginBottom: 4 }}>{Math.round(0.2 * 20 + 0.8 * ((analyzed.axes.exec + analyzed.axes.qual + analyzed.axes.trans + analyzed.axes.fund) / 4))}</div>
-                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>Reputación</div>
-                  <div style={{ marginTop: 10, fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.ink }}>💼 {Math.max(1, Math.floor(analyzed.years / 3))} empleos accesibles</div>
-                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.ink }}>🎯 Nodo {analyzed.arch === 'senior' || analyzed.arch === 'lead' ? 'Senior' : 'Mid'}</div>
-                </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                      {/* HOY */}
+                      <div style={{ padding: 14, borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${C.line}` }}>
+                        <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Ahora mismo</div>
+                        <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color: C.gold }}>{repToday}<span style={{ fontSize: SIZE.sm, color: C.mut }}>/100</span></div>
+                        <div style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, marginBottom: 10 }}>Tu reputación actual</div>
+                        <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.ink, marginBottom: 4, lineHeight: 1.4 }}>
+                          <strong>{jobsToday}</strong> {jobsToday === 1 ? 'empleo compatible' : 'empleos compatibles'} con tu perfil
+                        </div>
+                        <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.ink, lineHeight: 1.4 }}>
+                          Nivel: <strong>{levelToday}</strong>
+                        </div>
+                      </div>
 
-                {/* WHERE YOU COULD BE */}
-                <div style={{ padding: 14, borderRadius: RADIUS.lg, background: `${C.green}0a`, border: `1px solid ${C.green}33` }}>
-                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green, marginBottom: 10, textTransform: 'uppercase' }}>En 2 semanas</div>
-                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color: C.green, marginBottom: 4 }}>{Math.min(95, Math.round(0.2 * 40 + 0.8 * ((analyzed.axes.exec + analyzed.axes.qual + Math.min(analyzed.axes.trans + 15, 80) + analyzed.axes.fund) / 4)))}</div>
-                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>Reputación</div>
-                  <div style={{ marginTop: 10, fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.green }}>💼 {Math.max(3, Math.floor(analyzed.years / 2) + 4)} empleos</div>
-                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.green }}>🎯 Nodo {analyzed.arch === 'senior' ? 'Lead' : 'Senior'}</div>
-                </div>
-              </div>
+                      {/* EN 2 SEMANAS */}
+                      <div style={{ padding: 14, borderRadius: RADIUS.lg, background: `${C.green}0a`, border: `1px solid ${C.green}33` }}>
+                        <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>En 2 semanas</div>
+                        <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color: C.green }}>{repFuture}<span style={{ fontSize: SIZE.sm, color: C.mut }}>/100</span></div>
+                        <div style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, marginBottom: 10 }}>Si completás los 3 pasos</div>
+                        <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.green, marginBottom: 4, lineHeight: 1.4 }}>
+                          <strong>{jobsFuture}</strong> empleos compatibles
+                        </div>
+                        <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.green, lineHeight: 1.4 }}>
+                          Nivel: <strong>{levelFuture}</strong>
+                        </div>
+                      </div>
+                    </div>
 
-              {/* What's needed */}
-              <div style={{ padding: 14, borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${uc}33`, marginBottom: 16 }}>
-                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>¿Qué falta?</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink }}>
-                    <span style={{ color: C.gold }}>△</span> {AXIS_LABELS[weakAxis.key]?.name} +15 → subir eje
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink }}>
-                    <span style={{ color: C.gold }}>△</span> 1 validación de pares
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink }}>
-                    <span style={{ color: C.gold }}>△</span> 1 reto completado
-                  </div>
-                </div>
-                <div style={{ marginTop: 10, fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>⚡ Tiempo estimado: 2 semanas con Ómicron</div>
-              </div>
+                    {/* 3 PASOS CONCRETOS */}
+                    <div style={{ padding: 16, borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${uc}33`, marginBottom: 16 }}>
+                      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, color: C.ink, marginBottom: 4 }}>Los 3 pasos para llegar ahí</div>
+                      <div style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, marginBottom: 14 }}>Cada paso suma puntos a tu reputación. Podés hacerlos en cualquier orden.</div>
 
-              <button onClick={advanceAct} style={{ width: '100%', padding: '14px 20px', borderRadius: RADIUS.pill, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                Ver oportunidad real <Briefcase size={16} />
-              </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        {/* Paso 1 */}
+                        <div style={{ display: 'flex', gap: 12 }}>
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: `${uc}22`, border: `1px solid ${uc}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xs, color: uc }}>1</div>
+                          <div>
+                            <div style={{ fontFamily: FONT.body, fontWeight: 700, fontSize: SIZE.sm, color: C.ink, marginBottom: 2 }}>
+                              Tomá un curso corto de {weakName.toLowerCase()}
+                            </div>
+                            <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut, lineHeight: 1.5 }}>
+                              Tu {weakName} está en {weakAxis.val}/100 — es tu punto más bajo. En la Academia hay cursos de 2-3 horas que te suman 15 puntos.
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Paso 2 */}
+                        <div style={{ display: 'flex', gap: 12 }}>
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: `${uc}22`, border: `1px solid ${uc}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xs, color: uc }}>2</div>
+                          <div>
+                            <div style={{ fontFamily: FONT.body, fontWeight: 700, fontSize: SIZE.sm, color: C.ink, marginBottom: 2 }}>
+                              Pedí que un colega confirme tu experiencia
+                            </div>
+                            <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut, lineHeight: 1.5 }}>
+                              Invitá a alguien que trabajó con vos. Cuando confirma que es cierto lo que declarás, tu perfil pasa de "declarado" a "verificado".
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Paso 3 */}
+                        <div style={{ display: 'flex', gap: 12 }}>
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: `${uc}22`, border: `1px solid ${uc}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xs, color: uc }}>3</div>
+                          <div>
+                            <div style={{ fontFamily: FONT.body, fontWeight: 700, fontSize: SIZE.sm, color: C.ink, marginBottom: 2 }}>
+                              Resolvé un caso práctico de tu área
+                            </div>
+                            <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut, lineHeight: 1.5 }}>
+                              Un ejercicio real de 15 minutos. Demuestra que sabés hacer lo que dice tu CV, no solo que lo escribiste.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button onClick={advanceAct} style={{ width: '100%', padding: '14px 20px', borderRadius: RADIUS.pill, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      Ver un empleo que te calza hoy <Briefcase size={16} />
+                    </button>
+                  </>
+                );
+              })()}
             </motion.div>
           )}
 
