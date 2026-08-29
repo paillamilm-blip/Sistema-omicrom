@@ -60,6 +60,13 @@ export function ColorPicker({ onSelect, selected, dotSize = 38, style }: Props) 
   const handleSelect = useCallback((option: ColorOption) => {
     setActive(option.id);
     setUserColor(option.id);
+    // Escritura diferida a Supabase (write-through) para sincronizar el
+    // color entre dispositivos si hay sesión. localStorage ya quedó
+    // guardado arriba de forma síncrona; esto no bloquea la selección y,
+    // si falla o es invitado, no rompe nada (no-op silencioso).
+    import('@/shared/services/userColorSync')
+      .then(m => m.persistUserColor(option.id))
+      .catch(() => {});
     hapticLight();
     audioTick();
     onSelect(option);

@@ -76,6 +76,19 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   }, [profile]);
 
+  // Sincronizar el color del Gemelo (lectura, read-through). Cuando el
+  // perfil autenticado se materializa (login o canal real-time), se
+  // reconcilia el color guardado en el perfil con la caché local
+  // (localStorage). Este es el punto centralizado por donde fluye el
+  // perfil. hydrateUserColorFromProfile solo escribe si los valores
+  // difieren (anti-bucle) y no rompe el modo invitado.
+  useEffect(() => {
+    if (!profile) return;
+    import('@/shared/services/userColorSync')
+      .then(m => m.hydrateUserColorFromProfile(profile.user_color))
+      .catch(() => {});
+  }, [profile?.id, profile?.user_color]);
+
   // updateReputation no usa setTimeout para refrescar el perfil: el canal
   // real-time de profiles (más abajo) ya detecta el UPDATE y actualiza el estado.
   const updateReputation = useCallback(
