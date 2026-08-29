@@ -472,7 +472,7 @@ export function OrbShell() {
     window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: true } }));
 
     const handle = startSpeechRecognition({
-      lang: 'es-CL',
+      lang: 'es-US',
       interimResults: true,
       onResult: (transcript, isFinal) => {
         setInputText(transcript);
