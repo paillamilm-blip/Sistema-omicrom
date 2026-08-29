@@ -260,7 +260,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
     import('@/infrastructure/voice/recognition').then(({ startSpeechRecognition, isSpeechAvailable }) => {
       if (!isSpeechAvailable()) return;
       const handle = startSpeechRecognition({
-        lang: 'es-CL',
+        lang: 'es-US',
         interimResults: true,
         onResult: (transcript: string, isFinal: boolean) => {
           setInput(transcript);

@@ -10,7 +10,7 @@
 //   5. El orbe vibra con el evento 'omicron:speaking'
 //
 // Si proxy-tts falla: fallback silencioso (no se habla, solo texto).
-// NO usa Web Speech API — la voz es IA real (S2.1 Pro Free / Kokoro).
+// NO usa Web Speech API — la voz es IA real (Fish Audio S2.1 Pro Free).
 // ═══════════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/infrastructure/supabase/client';
