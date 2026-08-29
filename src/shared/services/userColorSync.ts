@@ -17,28 +17,15 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/infrastructure/supabase/client';
-import { COLOR_OPTIONS } from '@/shared/components/ColorPicker';
+import { resolveColorId, readLocalColor } from './userColor';
 
 // Misma clave que usa ColorPicker (caché síncrona en el dispositivo).
 const STORAGE_KEY = 'omicron_user_color';
 
-/**
- * Helper PURO de validación. Devuelve el ID canónico del color si `value`
- * coincide con un id ('gold') o con un hex ('#ffb02e') de COLOR_OPTIONS.
- * Si no coincide (o es null/undefined) devuelve null. No toca localStorage
- * ni la red: es determinista y fácil de probar.
- */
-export function resolveColorId(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const found = COLOR_OPTIONS.find(c => c.id === value || c.hex === value);
-  return found ? found.id : null;
-}
-
-/** Lee el valor crudo guardado en localStorage (o null si no existe). */
-function readLocalColor(): string | null {
-  if (typeof localStorage === 'undefined') return null;
-  return localStorage.getItem(STORAGE_KEY);
-}
+// La lógica pura (validación de color y lectura de localStorage) vive en
+// ./userColor, un módulo sin dependencia de Supabase. Se re-exporta
+// resolveColorId para no romper a quienes lo importen desde aquí.
+export { resolveColorId } from './userColor';
 
 /**
  * Escritura (write-through): sube el color al perfil de la persona en

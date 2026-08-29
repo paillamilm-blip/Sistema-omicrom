@@ -3,7 +3,9 @@
 // Ejercitan la lógica real: fallarían si el mapeo id/hex fuera revertido.
 
 import { describe, it, expect } from 'vitest';
-import { resolveColorId } from './userColorSync';
+// Se importa desde el módulo PURO (./userColor) para que la prueba no arrastre
+// el cliente de Supabase (que lee variables de entorno al inicializarse).
+import { resolveColorId } from './userColor';
 
 describe('resolveColorId (validación de color)', () => {
   it('mapea un id conocido a su id canónico', () => {
