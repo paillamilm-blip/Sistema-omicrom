@@ -33,33 +33,32 @@ function cleanForSpeech(text: string): string {
 
 /**
  * Selecciona la mejor voz española disponible en el navegador.
- * Prioriza voces premium de Google (es-ES-Standard-A), Microsoft (es-ES-Helena),
- * y Apple (Mónica, Paulina). Si no hay premium, usa cualquier voz española.
+ * Esta voz es SOLO el fallback de emergencia offline (cuando falla el
+ * proxy-tts / no hay internet), pero igual debe sonar coherente con la
+ * voz principal: acento LATINOAMERICANO NEUTRO. Por eso priorizamos
+ * voces latinas PRIMERO y dejamos las de España como ÚLTIMO recurso.
  */
 function selectBestVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   if (!voices || voices.length === 0) return null;
 
-  // Voces premium priorizadas (ordenadas por calidad y amigabilidad)
-  const premiumNames = [
-    // Google Cloud TTS (las mejores — naturales + expresivas)
-    'Google español',
-    'es-ES-Standard-A', // Femenina estándar (muy natural)
-    'es-ES-Wavenet-C',  // Femenina Wavenet (IA — la más natural)
-    'es-ES-Neural2-A',  // Femenina neural
-    // Microsoft Azure TTS
-    'Microsoft Helena - Spanish (Spain)',
-    'es-ES-ElviraNeural',
-    // Apple macOS/iOS
-    'Mónica',           // Española (muy natural en Apple)
+  // 1) Voces latinoamericanas priorizadas (primera coincidencia gana)
+  const latinNames = [
+    // Google Cloud TTS (LatAm — naturales y neutras)
+    'es-US-Neural2',
+    'es-US-Wavenet',
+    'es-US-Standard',
+    'Google español de Estados Unidos',
+    // Apple / Windows / Android (voces latinas)
     'Paulina',          // Mexicana (muy amigable)
-    'Jorge',            // Masculina española
-    // Voicepack Windows/Android
-    'Spanish Spain',
-    'es-ES',
+    'Microsoft Sabina', // Mexicana
+    'Microsoft Dalia',  // Mexicana
+    // Códigos de idioma latinoamericanos
+    'es-US',
+    'es-MX',
+    'es-419',
   ];
 
-  // Buscar primera coincidencia premium
-  for (const name of premiumNames) {
+  for (const name of latinNames) {
     const match = voices.find((v) =>
       v.name.toLowerCase().includes(name.toLowerCase()) ||
       v.lang.toLowerCase().startsWith(name.toLowerCase())
@@ -67,11 +66,28 @@ function selectBestVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice |
     if (match) return match;
   }
 
-  // Fallback: cualquier voz que empiece con "es-" (español)
+  // 2) Cualquier voz española genérica (es-*) que NO sea de España
+  const anyLatinSpanish = voices.find((v) => {
+    const lang = v.lang.toLowerCase();
+    return lang.startsWith('es') && !lang.startsWith('es-es');
+  });
+  if (anyLatinSpanish) return anyLatinSpanish;
+
+  // 3) España como ÚLTIMO recurso
+  const spainNames = ['Mónica', 'es-ES-Standard', 'es-ES'];
+  for (const name of spainNames) {
+    const match = voices.find((v) =>
+      v.name.toLowerCase().includes(name.toLowerCase()) ||
+      v.lang.toLowerCase().startsWith(name.toLowerCase())
+    );
+    if (match) return match;
+  }
+
+  // 4) Cualquier voz española restante
   const anySpanish = voices.find((v) => v.lang.toLowerCase().startsWith('es'));
   if (anySpanish) return anySpanish;
 
-  // Última opción: primera voz disponible
+  // 5) Última opción: primera voz disponible
   return voices[0];
 }
 
@@ -120,8 +136,8 @@ export function speak(
       utterance.voice = bestVoice;
       utterance.lang = bestVoice.lang;
     } else {
-      // Fallback: idioma español genérico
-      utterance.lang = 'es-ES';
+      // Fallback: idioma español latinoamericano neutro
+      utterance.lang = 'es-US';
     }
 
     // Callbacks opcionales

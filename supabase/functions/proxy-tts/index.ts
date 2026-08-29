@@ -2,12 +2,15 @@
 // ═══════════════════════════════════════════════════════════════════════
 // PROXY-TTS — Text-to-Speech server-side via OpenRouter.
 //
-// Protege la API key (nunca en el frontend). Usa modelos TTS gratis.
+// Protege la API key (nunca en el frontend). Usa un único motor TTS.
 // Retorna audio stream (mp3 o pcm) directo al browser para reproducción.
 //
-// Modelos disponibles (ago-2026):
-//   - fish-audio/s2.1-pro-free (GRATIS, multilingüe, expresivo)
-//   - hexgrad/kokoro-82m (GRATIS, voces españolas naturales)
+// VOZ UNIFICADA (una sola): Fish Audio S2.1 Pro Free, multilingüe y
+// expresivo. Acento español latinoamericano NEUTRO (el texto de la app
+// ya está neutralizado, sin voseo). Si Fish Audio falla, se retorna
+// { fallback: true } para que el navegador use su voz local como
+// emergencia offline (ver voiceAI.ts). Kokoro fue removido para evitar
+// cambios de voz a mitad de conversación.
 //
 // El frontend envía texto oración por oración → reproduce al instante.
 // ═══════════════════════════════════════════════════════════════════════
@@ -18,17 +21,18 @@ const OPENROUTER_KEY = Deno.env.get('OPENROUTER_KEY') ?? '';
 const TTS_URL = 'https://openrouter.ai/api/v1/audio/speech';
 const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicrom.vercel.app';
 
-// Modelos TTS: S2.1 Pro Free (expresivo) → Kokoro (rápido) como fallback
+// Motor TTS ÚNICO: Fish Audio S2.1 Pro Free (multilingüe, expresivo).
+// Sin fallback a otros modelos → una sola voz coherente en toda la sesión.
 const TTS_MODELS = [
   'fish-audio/s2.1-pro-free',
-  'hexgrad/kokoro-82m',
 ];
 
-// Voces españolas
+// Voces españolas — acento latinoamericano NEUTRO.
+// Fish Audio S2.1 sigue el texto de entrada (ya neutralizado LatAm), por
+// eso usamos la voz española genérica del modelo sin sobre-parametrizar.
 const VOICES: Record<string, string> = {
-  default: 'ef_dora',      // Kokoro: español femenino natural
-  male: 'em_alex',         // Kokoro: español masculino
-  s2_spanish: 'es_female', // S2.1: español genérico
+  default: 'es_female', // S2.1: español femenino (neutro LatAm)
+  male: 'es_male',      // S2.1: español masculino (neutro LatAm)
 };
 
 const CORS = corsHeaders();

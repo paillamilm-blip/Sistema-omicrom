@@ -47,7 +47,7 @@ export function isSpeechAvailable(): boolean {
 }
 
 export interface SpeechOptions {
-  /** Language code (default: 'es-CL') */
+  /** Language code (default: 'es-US' — español latinoamericano neutro) */
   lang?: string;
   /** Show interim results while speaking (default: true) */
   interimResults?: boolean;
@@ -72,7 +72,7 @@ export function startSpeechRecognition(options: SpeechOptions): SpeechHandle | n
   const SR = getSpeechRecognitionCtor();
   if (!SR) return null;
 
-  const { lang = 'es-CL', interimResults = true, onResult, onEnd, onError } = options;
+  const { lang = 'es-US', interimResults = true, onResult, onEnd, onError } = options;
 
   const recog = new SR();
   recog.lang = lang;
