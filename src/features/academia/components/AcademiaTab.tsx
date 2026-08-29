@@ -13,6 +13,7 @@ import { CelebrationBurst } from '@/shared/motion';
 import { LoadingScreen } from '@/shared/components/CyberComponents';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { useToast } from '@/shared/components/Toast';
 
@@ -220,6 +221,7 @@ function CoachModal({ onClose }: { onClose: () => void }) {
 export function AcademiaTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
   const { toast } = useToast();
+  const uc = useUserColor();
   const [courses, setCourses] = useState<Course[]>([]);
   const [prog, setProg] = useState<Map<string, Prog>>(new Map());
   const [counts, setCounts] = useState<Map<string, { total: number; done: number }>>(new Map());
@@ -421,9 +423,9 @@ export function AcademiaTab() {
               <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyan, marginBottom: 12 }}>◆ NÚCLEO DE APRENDIZAJE</div>
 
               {/* Sistema Solar del Aprendizaje · mismo Núcleo de partículas de toda la app (Ómicrom unificado) */}
-              <div style={{ position: 'relative', width: 180, height: 180, margin: '0 auto 6px' }}
+              <div style={{ position: 'relative', width: 130, height: 130, margin: '0 auto 6px' }}
                 role="img" aria-label={`Progreso de aprendizaje ${totalAll ? Math.round((totalDone / totalAll) * 100) : 0} por ciento`}>
-                <GeodesicOrb size={180} nodes={totalAll && totalDone >= totalAll ? 42 : 12} spinning={20} intensity={totalAll && totalDone >= totalAll ? 0.9 : 0.5} />
+                <GeodesicOrb size={130} nodes={totalAll && totalDone >= totalAll ? 42 : 12} color={uc} spinning={20} intensity={totalAll && totalDone >= totalAll ? 0.9 : 0.5} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <div style={{ textAlign: 'center', lineHeight: 1 }}>
                     <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 8, color: C.cyan, letterSpacing: 2 }}>NÚCLEO</span>

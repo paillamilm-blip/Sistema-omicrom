@@ -10,6 +10,7 @@ import { NoAccess } from '@/features/auth/components/NoAccess';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { InstallPWA } from '@/shared/components/InstallPWA';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { ToastProvider } from '@/shared/components/Toast';
 import { ConnectionBanner } from '@/shared/components/ConnectionBanner';
 import { RealtimeProvider } from './store/RealtimeContext';
@@ -25,6 +26,7 @@ import { omicronAudio } from '@/shared/utils/spatialAudio';
 
 function AppShell() {
   const { authStatus, isLoadingProfile } = useApp();
+  const uc = useUserColor();
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -109,12 +111,12 @@ function AppShell() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(94,92,230,0.14), transparent 60%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', width: 168, height: 168 }}>
-          <GeodesicOrb size={168} nodes={12} spinning={25} intensity={0.7} />
+        <div style={{ position: 'relative', width: 110, height: 110 }}>
+          <GeodesicOrb size={110} nodes={12} color={uc} spinning={25} intensity={0.7} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
-          <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicrom...</p>
-          <button onClick={() => setForceGuest(true)} style={{ marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${C.cyan}44`, color: C.cyan, fontFamily: FONT.mono, fontSize: 10, cursor: 'pointer' }}>
+          <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: uc, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicrom...</p>
+          <button onClick={() => setForceGuest(true)} style={{ marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${uc}44`, color: uc, fontFamily: FONT.mono, fontSize: 10, cursor: 'pointer' }}>
             Entrar sin cuenta →
           </button>
         </div>

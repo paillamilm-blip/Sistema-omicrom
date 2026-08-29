@@ -197,7 +197,7 @@ function TabLoader() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: C.bg }}>
       <div style={{ width: 64, height: 64 }}>
-        <GeodesicOrb size={64} nodes={8} spinning={15} />
+        <GeodesicOrb size={64} nodes={8} color={getUserColor()} spinning={15} />
       </div>
       <p style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Cargando...</p>
     </div>
@@ -1278,7 +1278,7 @@ export function OrbShell() {
           <Suspense fallback={
             <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
               <button onClick={() => setShowConvalida(false)} aria-label="Cerrar" style={{ position: 'absolute', top: 16, right: 20, width: 44, height: 44, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>✕</button>
-              <GeodesicOrb size={80} nodes={5} color={C.cyan} spinning={20} intensity={0.5} breathing />
+              <GeodesicOrb size={80} nodes={5} color={getUserColor()} spinning={20} intensity={0.5} breathing />
               <p style={{ marginTop: 16, fontFamily: FONT.mono, fontSize: 12, color: C.mut }}>Cargando módulo CV…</p>
             </div>
           }>
