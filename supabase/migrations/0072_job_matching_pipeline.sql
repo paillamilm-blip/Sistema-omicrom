@@ -121,12 +121,15 @@ $fn$;
 -- Nota: pg_cron debe estar habilitado en Supabase (Settings > Extensions).
 -- Si no está habilitado, estas sentencias fallan silenciosamente.
 
-DO $$
+DO $do$
 BEGIN
   -- Verificar si pg_cron está disponible
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
     -- Sync jobs cada 6 horas (00:00, 06:00, 12:00, 18:00 UTC)
-    PERFORM cron.unschedule('sync-jobs-6h');
+    -- unschedule solo si ya existe (evita error "could not find job" en primer run)
+    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'sync-jobs-6h') THEN
+      PERFORM cron.unschedule('sync-jobs-6h');
+    END IF;
     PERFORM cron.schedule(
       'sync-jobs-6h',
       '0 */6 * * *',
@@ -144,7 +147,9 @@ BEGIN
     );
 
     -- Notify matches 5 min después del sync (en los :05 de cada 6h)
-    PERFORM cron.unschedule('notify-matches-6h');
+    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'notify-matches-6h') THEN
+      PERFORM cron.unschedule('notify-matches-6h');
+    END IF;
     PERFORM cron.schedule(
       'notify-matches-6h',
       '5 */6 * * *',
@@ -168,7 +173,7 @@ BEGIN
 EXCEPTION WHEN others THEN
   RAISE NOTICE 'pg_cron scheduling failed (non-fatal): %', SQLERRM;
 END;
-$$;
+$do$;
 
 -- ══════════════════════════════════════════════════════════════════════
 -- 4. ACTUALIZAR TRIGGER para que sync-jobs (empleos externos) genere matches
