@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // JARVIS PRESENCE · Live Pulse Bar
 //
-// 2px bar at the very top of the app that shows Ómicron is ALIVE.
+// 2px bar at the very top of the app that shows Ómicrom is ALIVE.
 // It's the system's heartbeat — always visible, never invasive.
 //
 // States:

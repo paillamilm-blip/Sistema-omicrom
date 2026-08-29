@@ -420,7 +420,7 @@ export function AcademiaTab() {
               })()}
               <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyan, marginBottom: 12 }}>◆ NÚCLEO DE APRENDIZAJE</div>
 
-              {/* Sistema Solar del Aprendizaje · mismo Núcleo de partículas de toda la app (Ómicron unificado) */}
+              {/* Sistema Solar del Aprendizaje · mismo Núcleo de partículas de toda la app (Ómicrom unificado) */}
               <div style={{ position: 'relative', width: 180, height: 180, margin: '0 auto 6px' }}
                 role="img" aria-label={`Progreso de aprendizaje ${totalAll ? Math.round((totalDone / totalAll) * 100) : 0} por ciento`}>
                 <GeodesicOrb size={180} nodes={totalAll && totalDone >= totalAll ? 42 : 12} spinning={20} intensity={totalAll && totalDone >= totalAll ? 0.9 : 0.5} />

@@ -113,7 +113,7 @@ function AppShell() {
           <GeodesicOrb size={168} nodes={12} spinning={25} intensity={0.7} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
-          <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicron...</p>
+          <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicrom...</p>
           <button onClick={() => setForceGuest(true)} style={{ marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${C.cyan}44`, color: C.cyan, fontFamily: FONT.mono, fontSize: 10, cursor: 'pointer' }}>
             Entrar sin cuenta →
           </button>

@@ -1,10 +1,10 @@
 // features/omicron/components/GemeloReveal.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// GEMELO REVEAL — La experiencia "Tu Primer Minuto en Ómicron".
+// GEMELO REVEAL — La experiencia "Tu Primer Minuto en Ómicrom".
 //
 // 5 Actos:
 //   1. "La Orbe Te Lee"        — datos aparecen tipo terminal, orbe crece
-//   2. "El Veredicto"          — Ómicron habla tu eje débil (TTS)
+//   2. "El Veredicto"          — Ómicrom habla tu eje débil (TTS)
 //   3. "Mapa de Posibilidades" — dónde estás vs dónde podrías
 //   4. "Oportunidad Real"      — 1 empleo que matchea + % + gap
 //   5. "Momento de Verdad"     — CTA con countdown de desvanecimiento
@@ -185,7 +185,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
     if (currentAct === 'verdict') {
       import('@/infrastructure/voice/engine').then(({ speak }) => {
         const weakName = AXIS_LABELS[weakAxis.key]?.name || 'Trascendencia';
-        speak(`${analyzed.name || 'Tu perfil'}. ${analyzed.seniorLabel}. Tu ${AXIS_LABELS[strongAxis.key]?.name || 'Ejecución'} es fuerte. Pero tu ${weakName} está en ${weakAxis.val}. Ómicron puede ayudarte a subirla.`);
+        speak(`${analyzed.name || 'Tu perfil'}. ${analyzed.seniorLabel}. Tu ${AXIS_LABELS[strongAxis.key]?.name || 'Ejecución'} es fuerte. Pero tu ${weakName} está en ${weakAxis.val}. Ómicrom puede ayudarte a subirla.`);
       }).catch(() => {});
     }
     // Cleanup: stop speaking when act changes or component unmounts
@@ -286,7 +286,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
               <div style={{ padding: 16, borderRadius: RADIUS.xl, background: C.glass, border: `1px solid ${C.line}`, marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <Sparkles size={14} color={uc} />
-                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4, color: uc, textTransform: 'uppercase' }}>Ómicron dice</span>
+                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4, color: uc, textTransform: 'uppercase' }}>Ómicrom dice</span>
                 </div>
                 <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.6, margin: 0 }}>
                   Tu <strong style={{ color: AXIS_LABELS[strongAxis.key]?.color }}>{AXIS_LABELS[strongAxis.key]?.name}</strong> es sólida — {strongAxis.val}/100.

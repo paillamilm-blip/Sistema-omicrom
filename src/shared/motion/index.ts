@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════
-// shared/motion — Ómicron Motion System
+// shared/motion — Ómicrom Motion System
 //
 // Taste (Anti-Slop): Cada animación tiene PROPÓSITO. No decora — comunica.
 // Animate: Spring physics reales, no duraciones inventadas.

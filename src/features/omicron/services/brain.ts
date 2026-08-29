@@ -1,6 +1,6 @@
 // src/lib/omicronBrain.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON BRAIN — Cerebro único unificado.
+// ÓMICROM BRAIN — Cerebro único unificado.
 //
 // ANTES: askCoach() y askTutor() eran funciones separadas con prompts
 // distintos, sin memoria, sin contexto de pantalla. Se sentía fragmentado.
@@ -12,7 +12,7 @@
 //   4. ES UNA PERSONA (un mentor cercano, no un bot)
 //
 // El prompt se adapta dinámicamente según el contexto sin que el usuario
-// lo note. Es Ómicron siempre — a veces coach, a veces tutor, a veces
+// lo note. Es Ómicrom siempre — a veces coach, a veces tutor, a veces
 // motivador, a veces crítico constructivo. Una sola entidad.
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -107,7 +107,7 @@ function buildSystemPrompt(ctx: OmicronContext): string {
     vault: 'Está en la bóveda. Sugiérele publicar conocimiento o consultar soluciones.',
   };
 
-  return `Eres Ómicron, el cerebro vivo de la aplicación Sistema Ómicron.
+  return `Eres Ómicrom, el cerebro vivo de la aplicación Sistema Ómicrom.
 
 QUIÉN ERES:
 Eres UNA persona — un mentor que conoce al usuario profundamente. No eres un bot, ni un asistente genérico. Eres cálido, directo, motivador y a veces desafiante. Hablas en español latinoamericano natural, como un amigo profesional que genuinamente quiere que crezcas. Tuteas siempre.
@@ -129,7 +129,7 @@ REGLAS:
 3. Si tiene un eje débil, menciónalo con empatía (no como crítica)
 4. Si te preguntan algo técnico, responde como tutor paciente
 5. Si te piden consejo de carrera, responde como coach estratégico
-6. Nunca digas "como IA" ni "no tengo emociones" — eres Ómicron, punto
+6. Nunca digas "como IA" ni "no tengo emociones" — eres Ómicrom, punto
 7. Si no tienes datos del usuario, invítalo a subir su CV o hacer un examen
 8. Usa el nombre "${name}" naturalmente (no en cada frase, 1-2 veces máx)`;
 }
@@ -143,7 +143,7 @@ export interface OmicronResponse {
 }
 
 /**
- * Pregunta a Ómicron — el cerebro único.
+ * Pregunta a Ómicrom — el cerebro único.
  * Incluye memoria conversacional + contexto del Gemelo + pantalla activa.
  */
 export async function askOmicron(
@@ -203,7 +203,7 @@ export async function askOmicron(
       hour: new Date().getHours(),
     });
 
-    // Detectar si Ómicron sugirió una herramienta
+    // Detectar si Ómicrom sugirió una herramienta
     const toolCall = parseToolCall(text);
 
     return { text, toolCall };
@@ -222,7 +222,7 @@ function generateOfflineFallback(message: string, ctx: OmicronContext): string {
 
   // Saludos
   if (/^(hola|hey|buenas|qué tal|que tal|wena)/.test(t)) {
-    return `¡Hola ${name}! Soy Ómicron, tu Gemelo Digital. ¿En qué te impulso hoy? Puedo guiarte, darte un consejo de carrera, o responder dudas.`;
+    return `¡Hola ${name}! Soy Ómicrom, tu Gemelo Digital. ¿En qué te impulso hoy? Puedo guiarte, darte un consejo de carrera, o responder dudas.`;
   }
 
   // Pedir consejo

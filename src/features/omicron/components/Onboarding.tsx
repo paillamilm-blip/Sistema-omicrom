@@ -16,7 +16,7 @@ const STEPS: Step[] = [
   {
     icon: <Fingerprint size={34} />,
     tag: 'BIENVENIDO A LA RED',
-    title: 'Sistema Ómicron',
+    title: 'Sistema Ómicrom',
     body: 'Un marketplace de capital intelectual de la Industria 5.0. Aquí tu conocimiento es un activo: lo aprendes, lo validas y lo monetizas. Confianza cero, mérito verificable.',
     accent: '#a0aec0',
   },
@@ -61,7 +61,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
   }, []);
 
   return (
-    <div style={S.overlay} role="dialog" aria-modal="true" aria-label="Bienvenida a Sistema Ómicron">
+    <div style={S.overlay} role="dialog" aria-modal="true" aria-label="Bienvenida a Sistema Ómicrom">
       <div style={{ ...S.card, borderColor: `${step.accent}55`, boxShadow: `0 0 40px ${step.accent}33, inset 0 1px 1px rgba(255,255,255,0.05)` }}>
         <button style={S.skip} onClick={finish} aria-label="Saltar introducción">Saltar</button>
 

@@ -336,7 +336,7 @@ export function OrbShell() {
     }));
   }, [profile, sbProfile, gemeloDigital, dynamicOrbNodes]);
 
-  // ── Handle text input — Ómicron cerebro unificado ───────────────────
+  // ── Handle text input — Ómicrom cerebro unificado ───────────────────
   const handleTextInput = useCallback(async (text: string) => {
     // Limpiar respuesta anterior para mostrar que estamos procesando
     setResponseMsg('Un momento…');
@@ -422,10 +422,10 @@ export function OrbShell() {
       return;
     }
 
-    // unknown — Ómicron cerebro unificado (coach + tutor + motivador)
+    // unknown — Ómicrom cerebro unificado (coach + tutor + motivador)
     flash('Déjame pensar…');
     // Show timeout indicator if AI takes too long
-    const slowTimer = setTimeout(() => flash('Ómicron está tardando más de lo normal… seguí esperando.'), 8000);
+    const slowTimer = setTimeout(() => flash('Ómicrom está tardando más de lo normal… seguí esperando.'), 8000);
     const omCtx: OmicronContext = {
       skills: sbProfile?.skills ?? [],
       cv_summary: sbProfile?.cv_summary ?? '',
@@ -629,7 +629,7 @@ export function OrbShell() {
     return () => { stopAI(); };
   }, []);
 
-  // Idle escalation: hablar cuando Ómicron tiene algo que decir y el usuario no interactúa
+  // Idle escalation: hablar cuando Ómicrom tiene algo que decir y el usuario no interactúa
   const lastIdleSpoken = useRef('');
   useEffect(() => {
     if (!helpMessage || helpMessage === lastIdleSpoken.current) return;
@@ -1172,7 +1172,7 @@ export function OrbShell() {
             onChange={(e: { target: { value: string } }) => setInputText(e.target.value)}
             onFocus={() => setInputFocused(true)}
             onBlur={() => setInputFocused(false)}
-            placeholder={state === 'fullscreen' ? 'Pregunta a Ómicron…' : 'Habla o escribe a Ómicron…'}
+            placeholder={state === 'fullscreen' ? 'Pregunta a Ómicrom…' : 'Habla o escribe a Ómicrom…'}
             aria-label="Escribir comando al Oráculo"
             inputMode="text"
             autoComplete="off"
@@ -1259,7 +1259,7 @@ export function OrbShell() {
       {/* ── PREMIUM UPSELL (cuando llega al límite de IA) ──────────── */}
       {showPremium && <PremiumLock feature="Coach IA" onClose={() => setShowPremium(false)} />}
 
-      {/* ── CREDENCIAL ÓMICRON (abierta desde el avatar) ───────────── */}
+      {/* ── CREDENCIAL ÓMICROM (abierta desde el avatar) ───────────── */}
       {showCredencial && (
         <ErrorBoundary section="Credencial">
           <Suspense fallback={

@@ -1,6 +1,6 @@
 // shared/components/OmicronChrome.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · Chrome compartido para TODAS las pestañas (Industria 5.0).
+// ÓMICROM · Chrome compartido para TODAS las pestañas (Industria 5.0).
 //
 // Vive en shared/ porque lo usan 8+ módulos (academia, empleos, chat,
 // market, wallet, gobernanza, gemelo, omicron). Es layout reutilizable.
@@ -15,7 +15,7 @@ import { C, FONT, RADIUS } from '@/theme';
 import { getUserColor } from '@/shared/components/ColorPicker';
 
 export const oc: Record<string, CSSProperties> = {
-  // Pantalla transparente: deja ver el fondo Ómicron de UnifiedLayout.
+  // Pantalla transparente: deja ver el fondo Ómicrom de UnifiedLayout.
   root: {
     display: 'flex', flexDirection: 'column', height: '100%',
     position: 'relative', overflow: 'hidden', background: 'transparent',
@@ -24,7 +24,7 @@ export const oc: Record<string, CSSProperties> = {
     flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0,
     WebkitOverflowScrolling: 'touch',
   },
-  // Tarjeta glass premium (mismo lenguaje que el Perfil Ómicron).
+  // Tarjeta glass premium (mismo lenguaje que el Perfil Ómicrom).
   card: {
     borderRadius: RADIUS.xl, padding: 16,
     background: C.glass, border: `1px solid ${C.line}`,

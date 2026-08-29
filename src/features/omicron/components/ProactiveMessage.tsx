@@ -51,7 +51,7 @@ export function ProactiveMessage({ message, actions, onDismiss }: Props) {
     }}>
       {/* Header */}
       <div style={S.header}>
-        <span style={S.tag}>ÓMICRON</span>
+        <span style={S.tag}>ÓMICROM</span>
         <button onClick={handleDismiss} style={S.closeBtn}>✕</button>
       </div>
 

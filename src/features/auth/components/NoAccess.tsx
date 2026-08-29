@@ -53,7 +53,7 @@ export function NoAccess() {
             <GeodesicOrb size={80} nodes={10} color={uc} spinning={20} intensity={0.6} />
           </div>
           <div style={{ textAlign: 'center' }}>
-            <h1 style={S.brand}>Sistema Ómicron</h1>
+            <h1 style={S.brand}>Sistema Ómicrom</h1>
             <p style={S.tagline}>Acceso restringido</p>
           </div>
         </motion.div>
@@ -75,7 +75,7 @@ export function NoAccess() {
 
             <h2 style={S.title}>Tu cuenta aún no tiene acceso</h2>
             <p style={S.desc}>
-              Contacta al soporte de Sistema Ómicron para obtener acceso a la red.
+              Contacta al soporte de Sistema Ómicrom para obtener acceso a la red.
             </p>
 
             {/* Estado de la cuenta */}
@@ -100,7 +100,7 @@ export function NoAccess() {
 
           <div style={S.secure}>
             <Shield size={12} />
-            <span>Cifrado E2E · Red segura Ómicron</span>
+            <span>Cifrado E2E · Red segura Ómicrom</span>
           </div>
         </motion.div>
       </div>

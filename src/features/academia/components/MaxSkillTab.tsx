@@ -166,7 +166,7 @@ export function MaxSkillTab() {
       const result = await askOmicron('Dame un consejo para mejorar mis skills', ctx);
       setCoachAdvice(result.text);
     } catch {
-      setCoachAdvice('Error al consultar a Ómicron. Intenta de nuevo.');
+      setCoachAdvice('Error al consultar a Ómicrom. Intenta de nuevo.');
     } finally {
       setCoachLoading(false);
     }

@@ -1,5 +1,5 @@
 // src/components/empleos/TrabajoTeEncuentra.tsx
-// "El trabajo te encuentra": Ómicron analiza tu Gemelo (perfil COMPARTIDO),
+// "El trabajo te encuentra": Ómicrom analiza tu Gemelo (perfil COMPARTIDO),
 // calcula la afinidad de cada oportunidad, y con un clic ("Sí, me interesa")
 // postula por ti, prepara la propuesta y te entrena para la entrevista
 // (con voz: leer la pregunta + practicar tu respuesta).
@@ -17,7 +17,7 @@ const JOBS: JobDef[] = [
   { title: 'Product Designer', company: 'Aurora Studio', salary: '$2.800–3.600', mode: 'Remoto', tags: ['UX', 'Figma'], minPe: 300, bias: 6, eje: 'quality' },
   { title: 'Full-Stack Developer', company: 'Vortex', salary: '$3.000–3.800', mode: 'Remoto', tags: ['Node', 'React', 'SQL'], minPe: 600, bias: 5, eje: 'execution' },
   { title: 'Tech Lead', company: 'Helix', salary: '$5.000–6.500', mode: 'Híbrido', tags: ['Liderazgo', 'Arquitectura'], minPe: 1500, bias: 1, eje: 'foundation' },
-  { title: 'Mentor / Formador', company: 'Academia Ómicron', salary: '$2.000 + tokens', mode: 'Remoto', tags: ['Mentoría', 'Bóveda'], minPe: 200, bias: 8, eje: 'transcendence' },
+  { title: 'Mentor / Formador', company: 'Academia Ómicrom', salary: '$2.000 + tokens', mode: 'Remoto', tags: ['Mentoría', 'Bóveda'], minPe: 200, bias: 8, eje: 'transcendence' },
 ];
 const STAGES = ['Enviada', 'En revisión', 'Entrevista', 'Oferta'];
 const IQ = [
@@ -87,7 +87,7 @@ export function TrabajoTeEncuentra() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>El trabajo te encuentra</div>
           <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, marginTop: 1 }}>
-            Ómicron postula por ti · Nodo {tierName} · rep {profile.rep}
+            Ómicrom postula por ti · Nodo {tierName} · rep {profile.rep}
           </div>
         </div>
         <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.green, letterSpacing: 1 }}>24/7</span>
@@ -97,7 +97,7 @@ export function TrabajoTeEncuentra() {
       {apps.length > 0 && (
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: 1, color: C.green, textTransform: 'uppercase', marginBottom: 8 }}>
-            ● Ómicron gestiona {apps.length} proceso(s) por ti
+            ● Ómicrom gestiona {apps.length} proceso(s) por ti
           </div>
           {apps.slice().reverse().map((a, i) => {
             const s = stageOf(a), pct = Math.round(((s + 1) / STAGES.length) * 100);
@@ -143,7 +143,7 @@ export function TrabajoTeEncuentra() {
                 </div>
               </div>
               {done ? (
-                <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.green, marginTop: 10 }}>✓ Ómicron está postulando por ti</div>
+                <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.green, marginTop: 10 }}>✓ Ómicrom está postulando por ti</div>
               ) : (
                 <button onClick={() => setFlowJob(j)} style={{ width: '100%', marginTop: 11, padding: 11, borderRadius: RADIUS.lg, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, #8bd4ff, ${C.cyan})`, color: '#04121f', fontFamily: FONT.mono, fontSize: 11, letterSpacing: .5, textTransform: 'uppercase', fontWeight: 700 }}>
                   ✓ Sí, me interesa
@@ -228,7 +228,7 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
                   {i === 0 && (active || doneS) && <div style={{ fontSize: 12, color: C.cyanDim, marginTop: 4, lineHeight: 1.4 }}>Adjunté tu Pasaporte verificable ({repText}). Sin formularios: tus datos ya están validados.</div>}
                   {i === 1 && (active || doneS) && (
                     <div style={{ marginTop: 8, padding: '11px 13px', borderRadius: 12, background: 'rgba(160,174,192,0.05)', border: `1px solid ${C.cyanFaint}`, fontSize: 12, lineHeight: 1.5, color: '#dbeafe' }}>
-                      "Candidato {repText}. Encaje con {job.title}: {fit}%. Fortalezas verificadas en Ómicron, sin necesidad de pruebas adicionales."
+                      "Candidato {repText}. Encaje con {job.title}: {fit}%. Fortalezas verificadas en Ómicrom, sin necesidad de pruebas adicionales."
                     </div>
                   )}
                   {i === 2 && (active || doneS) && (
@@ -254,7 +254,7 @@ function AutoApply({ job, fit, repText, onApplied, onClose }: {
 
         {step >= 3 && (
           <button onClick={onClose} style={{ width: '100%', marginTop: 16, padding: 13, borderRadius: RADIUS.lg, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, #8bd4ff, ${C.cyan})`, color: '#04121f', fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700 }}>
-            ✓ Listo · Ómicron gestiona el proceso
+            ✓ Listo · Ómicrom gestiona el proceso
           </button>
         )}
       </div>

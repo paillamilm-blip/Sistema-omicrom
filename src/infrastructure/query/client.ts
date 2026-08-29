@@ -1,5 +1,5 @@
 // infrastructure/query/client.ts
-// TanStack Query client configuration for Sistema Ómicron
+// TanStack Query client configuration for Sistema Ómicrom
 //
 // Default settings optimized for a PWA with realtime subscriptions:
 // - staleTime: 30s (data is fresh for 30s before refetching)

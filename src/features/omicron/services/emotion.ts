@@ -1,7 +1,7 @@
 // src/lib/emotionDetector.ts
 // ═══════════════════════════════════════════════════════════════════════
 // DETECTOR DE ESTADO EMOCIONAL — Analiza el input del usuario para
-// adaptar el tono de Ómicron en tiempo real.
+// adaptar el tono de Ómicrom en tiempo real.
 //
 // NO usa IA — es heurístico puro (0 latencia, 0 tokens, funciona offline).
 // Señales: longitud, puntuación, mayúsculas, errores, velocidad, emojis.
@@ -21,7 +21,7 @@ let messageCount = 0;
 
 /**
  * Detecta el estado emocional del usuario basado en su input.
- * Retorna la emoción dominante + hint para el prompt de Ómicron.
+ * Retorna la emoción dominante + hint para el prompt de Ómicrom.
  */
 export function detectEmotion(text: string): EmotionSignal {
   const t = text.trim();

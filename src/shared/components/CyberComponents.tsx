@@ -1,5 +1,5 @@
 // src/components/shared/CyberComponents.tsx
-// Sistema Ómicron — Shared Cyberpunk Components · Industrial 5.0
+// Sistema Ómicrom — Shared Cyberpunk Components · Industrial 5.0
 //
 // Componentes reutilizables para todos los tabs.
 // Todos importan tokens desde '../../theme'.
@@ -189,7 +189,7 @@ interface CyberCardProps {
   style?:      CSSProperties;
   onClick?:    () => void;
   topBar?:     boolean;  // muestra barra superior del color del acento
-  className?:  string;   // permite motion Ómicron (oc-rise / oc-pressable)
+  className?:  string;   // permite motion Ómicrom (oc-rise / oc-pressable)
 }
 export function CyberCard({
   children, color = C.cyan, margin = '10px 14px 6px',

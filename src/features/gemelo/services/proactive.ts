@@ -1,6 +1,6 @@
 // lib/proactiveEngine.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · MOTOR DE PROACTIVIDAD — El Gemelo que se anticipa
+// ÓMICROM · MOTOR DE PROACTIVIDAD — El Gemelo que se anticipa
 // Detecta momentos para intervenir ANTES de que el usuario pregunte.
 // Contexto: hora, red en vivo, oportunidades, inactividad, logros.
 // ═══════════════════════════════════════════════════════════════════════

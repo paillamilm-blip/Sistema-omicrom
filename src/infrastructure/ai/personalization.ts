@@ -4,7 +4,7 @@
 //
 // Aprende del usuario: tono preferido, estilo de aprendizaje, temas
 // débiles, horarios pico, longitud de respuesta preferida. Todo esto
-// se inyecta al system prompt de omicronBrain para que Ómicron sea
+// se inyecta al system prompt de omicronBrain para que Ómicrom sea
 // cada vez MÁS personal con el tiempo.
 // ═══════════════════════════════════════════════════════════════════════
 

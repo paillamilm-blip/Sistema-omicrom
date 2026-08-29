@@ -1,6 +1,6 @@
 // src/components/OraculoBar.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · Oráculo (barra de voz flotante)
+// ÓMICROM · Oráculo (barra de voz flotante)
 // Botón-micrófono flotante: hablas y el Oráculo navega tu app, responde
 // datos simples o te da un consejo con IA real (Edge Function `coach`).
 // Totalmente defensivo: detecta soporte de voz y no lanza excepciones.
@@ -181,7 +181,7 @@ export function OraculoBar() {
       }
       return;
     }
-    // unknown — send to Ómicron AI (same as OrbShell)
+    // unknown — send to Ómicrom AI (same as OrbShell)
     setBusy(true);
     flash('oraculo', 'Déjame pensar…', 20000);
     try {

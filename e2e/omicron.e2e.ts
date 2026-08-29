@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 // ═══════════════════════════════════════════════════════════════════════
-// QA COMPLETA de la experiencia Ómicron (Plan B — sin Nova Act).
+// QA COMPLETA de la experiencia Ómicrom (Plan B — sin Nova Act).
 //
 //   npm i -D @playwright/test && npx playwright install chromium
 //   export TEST_EMAIL="tu_usuario_o_correo"
@@ -33,23 +33,23 @@ async function login(page: Page) {
   await page.locator('input[type="password"]').first().fill(PASSWORD!);
   // Botón de ENVÍO ("Acceder a la Red"), NO la pestaña "Iniciar Sesión".
   await page.getByRole('button', { name: /acceder a la red/i }).click();
-  // Home listo cuando aparece la barra de comando de Ómicron.
-  await expect(page.getByPlaceholder(/habla o escribe a ómicron/i)).toBeVisible({ timeout: 30_000 });
+  // Home listo cuando aparece la barra de comando de Ómicrom.
+  await expect(page.getByPlaceholder(/habla o escribe a ómicrom/i)).toBeVisible({ timeout: 30_000 });
 }
 
 async function goHome(page: Page) {
-  await page.goto('/'); // activeTab vuelve a 'perfil' (home de Ómicron)
-  await expect(page.getByPlaceholder(/habla o escribe a ómicron/i)).toBeVisible({ timeout: 30_000 });
+  await page.goto('/'); // activeTab vuelve a 'perfil' (home de Ómicrom)
+  await expect(page.getByPlaceholder(/habla o escribe a ómicrom/i)).toBeVisible({ timeout: 30_000 });
 }
 
 // ── 1 · Pantalla de acceso ─────────────────────────────────────────────
-test('1 · La pantalla de acceso de Ómicron carga', async ({ page }) => {
+test('1 · La pantalla de acceso de Ómicrom carga', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /sistema ómicron/i })).toBeVisible({ timeout: 25_000 });
+  await expect(page.getByRole('heading', { name: /sistema ómicrom/i })).toBeVisible({ timeout: 25_000 });
 });
 
 // ── 2 · Home completo tras login ───────────────────────────────────────
-test('2 · Home de Ómicron: orbe + comando + acciones + capacidades', async ({ page }) => {
+test('2 · Home de Ómicrom: orbe + comando + acciones + capacidades', async ({ page }) => {
   test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
   await login(page);
 
@@ -79,10 +79,10 @@ test('3 · Convalidar el Gemelo mueve la reputación real', async ({ page }) => 
 });
 
 // ── 4 · Comando escrito → navegación ───────────────────────────────────
-test('4 · Ómicron navega por comando escrito', async ({ page }) => {
+test('4 · Ómicrom navega por comando escrito', async ({ page }) => {
   test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
   await login(page);
-  const input = page.getByPlaceholder(/habla o escribe a ómicron/i);
+  const input = page.getByPlaceholder(/habla o escribe a ómicrom/i);
   await input.fill('llévame a Academia');
   await input.press('Enter');
   await expect(page.getByText(/academia/i).first()).toBeVisible({ timeout: 20_000 });
@@ -133,11 +133,11 @@ test('7 · El micrófono responde (escucha o invita a escribir)', async ({ page,
   await expect(page.getByText(/escuchando|escribirme/i).first()).toBeVisible({ timeout: 10_000 });
 });
 
-// ── 8 · Ómicron responde a un saludo (conversación) ────────────────────
-test('8 · Ómicron responde cuando le hablás', async ({ page }) => {
+// ── 8 · Ómicrom responde a un saludo (conversación) ────────────────────
+test('8 · Ómicrom responde cuando le hablás', async ({ page }) => {
   test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
   await login(page);
-  const input = page.getByPlaceholder(/habla o escribe a ómicron/i);
+  const input = page.getByPlaceholder(/habla o escribe a ómicrom/i);
   await input.fill('hola');
   await input.press('Enter');
   await expect(page.getByText(/hablame o escribime/i)).toBeVisible({ timeout: 15_000 });
@@ -148,7 +148,7 @@ test('9 · Cerrar sesión vuelve a la pantalla de acceso', async ({ page }) => {
   test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
   await login(page);
   await page.getByRole('button', { name: /cerrar sesión/i }).click();
-  await expect(page.getByRole('heading', { name: /sistema ómicron/i })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('heading', { name: /sistema ómicrom/i })).toBeVisible({ timeout: 20_000 });
 });
 
 // ── 10 · SINERGIA: journey completo end-to-end ─────────────────────────
@@ -163,7 +163,7 @@ test('10 · Sinergia: login → convalidar → navegar → cerrar sesión', asyn
 
   // Navegar por comando
   await goHome(page);
-  const input = page.getByPlaceholder(/habla o escribe a ómicron/i);
+  const input = page.getByPlaceholder(/habla o escribe a ómicrom/i);
   await input.fill('llévame a Empleos');
   await input.press('Enter');
   await expect(page.getByText(/oportunidades/i).first()).toBeVisible({ timeout: 20_000 });
@@ -171,5 +171,5 @@ test('10 · Sinergia: login → convalidar → navegar → cerrar sesión', asyn
   // Cerrar sesión
   await goHome(page);
   await page.getByRole('button', { name: /cerrar sesión/i }).click();
-  await expect(page.getByRole('heading', { name: /sistema ómicron/i })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('heading', { name: /sistema ómicrom/i })).toBeVisible({ timeout: 20_000 });
 });

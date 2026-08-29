@@ -1,6 +1,6 @@
 // src/lib/gemeloProfile.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · Perfil del Gemelo Digital — FACADE DE SOLO LECTURA
+// ÓMICROM · Perfil del Gemelo Digital — FACADE DE SOLO LECTURA
 //
 // RECTIFICACIÓN PRIORIDAD 1: Este módulo ya NO modifica la reputación
 // localmente. Toda mutación de datos convalidados pasa por RPCs de

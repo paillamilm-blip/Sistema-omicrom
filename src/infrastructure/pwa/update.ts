@@ -33,7 +33,7 @@ export function registerPWA(): void {
           }
         });
       });
-    }).catch((err) => console.warn('[Ómicron] No se pudo registrar el service worker:', err));
+    }).catch((err) => console.warn('[Ómicrom] No se pudo registrar el service worker:', err));
 
     // Tras activar la versión nueva (SKIP_WAITING), recargar una sola vez.
     let reloaded = false;
@@ -63,7 +63,7 @@ function showUpdateBanner(reg: ServiceWorkerRegistration): void {
   document.head.appendChild(style);
 
   const txt = document.createElement('span');
-  txt.textContent = '✨ Nueva versión de Ómicron disponible';
+  txt.textContent = '✨ Nueva versión de Ómicrom disponible';
   txt.style.cssText = 'font-size:13px;font-weight:600';
 
   const btn = document.createElement('button');

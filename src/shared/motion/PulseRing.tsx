@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // Expanding ring that fades out — like Apple Watch activity ring pulse.
 // Use for: live data received, realtime events, connection established.
-// Taste: ONE ring (not three). color from Ómicron palette.
+// Taste: ONE ring (not three). color from Ómicrom palette.
 // Anti-slop: triggers once per event, not infinite looping.
 // ═══════════════════════════════════════════════════════════════════════
 import { useEffect, useState, type CSSProperties } from 'react';

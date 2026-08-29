@@ -16,7 +16,7 @@ export interface MicroCurso {
   peReward: number;
 }
 
-const SYS_PROMPT = `Eres Ómicron, el generador de micro-cursos adaptativos.
+const SYS_PROMPT = `Eres Ómicrom, el generador de micro-cursos adaptativos.
 Genera un micro-curso práctico sobre la skill indicada.
 El curso debe ser:
 - Breve (2-3 párrafos de concepto, como una lección de 3 minutos)

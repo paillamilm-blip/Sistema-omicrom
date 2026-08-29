@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // COLOR PICKER — User chooses their Gemelo's primary color.
 //
-// 4 colors from the Ómicron palette. Each renders as a glowing circle.
+// 4 colors from the Ómicrom palette. Each renders as a glowing circle.
 // Selected color gets a scale + ring animation.
 // Persists choice to localStorage for use across the app.
 //

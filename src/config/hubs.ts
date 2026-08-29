@@ -8,7 +8,7 @@ export interface HubMember { tab: TabId; label: string; }
 export interface Hub { id: string; label: string; Icon: LucideIcon; members: HubMember[]; }
 
 // ─────────────────────────────────────────────────────────────
-// Navegación completa: los 6 hubs del ecosistema Ómicron activos.
+// Navegación completa: los 6 hubs del ecosistema Ómicrom activos.
 // (Anteriormente reducida a 3 hubs para un piloto controlado; se
 // reactivaron Mercado, Billetera, Mensajes y Gobernanza — todos los
 // módulos ya estaban construidos y probados, solo ocultos.)

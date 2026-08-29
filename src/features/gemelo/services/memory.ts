@@ -1,6 +1,6 @@
 // lib/gemeloMemory.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · MEMORIA DEL GEMELO — Sistema de contexto persistente
+// ÓMICROM · MEMORIA DEL GEMELO — Sistema de contexto persistente
 // El Gemelo RECUERDA conversaciones, aprende preferencias, detecta patrones.
 // Mejora con cada interacción. Como Jarvis para Tony Stark.
 // ═══════════════════════════════════════════════════════════════════════
