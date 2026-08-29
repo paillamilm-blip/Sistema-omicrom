@@ -1264,7 +1264,7 @@ export function OrbShell() {
         <ErrorBoundary section="Credencial">
           <Suspense fallback={
             <div style={{ position: 'fixed', inset: 0, zIndex: 95, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)' }}>
-              <GeodesicOrb size={90} nodes={8} color={getUserColor()} spinning={0} intensity={0.55} breathing />
+              <GeodesicOrb size={80} nodes={8} color={getUserColor()} spinning={0} intensity={0.55} breathing />
             </div>
           }>
             <CredencialModal onClose={() => setShowCredencial(false)} />
