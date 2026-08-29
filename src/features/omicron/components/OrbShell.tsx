@@ -1244,6 +1244,7 @@ export function OrbShell() {
           <div style={{ maxWidth: 300, width: '100%', pointerEvents: 'auto' }}>
             <ProactiveCards
               visible={state === 'orb' && onboardingDone}
+              hasCv={Boolean(sbProfile?.cv_summary)}
               onNavigate={(tab) => {
                 if (tab === 'cv') {
                   setShowConvalida(true);

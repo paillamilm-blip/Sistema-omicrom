@@ -57,11 +57,14 @@ export interface ProactiveCardsProps {
   visible: boolean;
   onNavigate: (tab: string) => void;
   onDismiss?: () => void;
+  hasCv?: boolean;
 }
 
 // ── Component ───────────────────────────────────────────────────────
-export function ProactiveCards({ visible, onNavigate, onDismiss }: ProactiveCardsProps) {
+export function ProactiveCards({ visible, onNavigate, onDismiss, hasCv = false }: ProactiveCardsProps) {
   const userColor = useUserColor();
+  // Once the CV is uploaded and processed, drop the "sube tu CV" card.
+  const messages = hasCv ? MESSAGES.filter(m => m.id !== 'cv') : MESSAGES;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [show, setShow] = useState(false);
   const [stopped, setStopped] = useState(false);
@@ -151,7 +154,7 @@ export function ProactiveCards({ visible, onNavigate, onDismiss }: ProactiveCard
         // After dismiss animation, schedule next card (8s cycle)
         if (cycleTimer.current) clearTimeout(cycleTimer.current);
         cycleTimer.current = setTimeout(() => {
-          setCurrentIndex(prev => (prev + 1) % MESSAGES.length);
+          setCurrentIndex(prev => (messages.length ? (prev + 1) % messages.length : 0));
           startIdleCheck();
         }, 8000);
       }, 6000);
@@ -177,14 +180,14 @@ export function ProactiveCards({ visible, onNavigate, onDismiss }: ProactiveCard
 
   // CTA handler
   const handleCTA = useCallback(() => {
-    const msg = MESSAGES[currentIndex];
+    const msg = messages.length ? messages[currentIndex % messages.length] : undefined;
     if (msg?.action) {
       onNavigate(msg.action);
     }
     handleDismiss();
-  }, [currentIndex, onNavigate, handleDismiss]);
+  }, [currentIndex, onNavigate, handleDismiss, messages]);
 
-  const currentMessage = MESSAGES[currentIndex];
+  const currentMessage = messages.length ? messages[currentIndex % messages.length] : undefined;
 
   if (!visible || stopped) return null;
 
