@@ -42,3 +42,9 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_public_credential(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_public_credential(text) TO anon;
+
+-- Recargar el esquema de PostgREST para que exponga la nueva firma (con
+-- skills_detail) de inmediato. Sin esto, la API REST puede seguir sirviendo
+-- la firma cacheada sin la columna y la fusión de orbes quedaría vacía hasta
+-- un reload/reinicio manual. Mismo patrón que 0070 y el resto de migraciones.
+NOTIFY pgrst, 'reload schema';
