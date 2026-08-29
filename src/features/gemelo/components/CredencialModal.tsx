@@ -488,7 +488,7 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
 
           {!username && (
             <p style={{ margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textAlign: 'center' }}>
-              Creá tu usuario público para poder compartir tu credencial.
+              Crea tu usuario público para poder compartir tu credencial.
             </p>
           )}
 

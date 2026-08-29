@@ -158,12 +158,12 @@ describe('nodeGuidance — mensajes por tab', () => {
 
   it('empleos invita a postular si la reputación es >= 45', () => {
     const msg = nodeGuidance('empleos', makeProfile(), makeGemelo({ overallReputation: 50 }));
-    expect(msg).toMatch(/ya podés postular/i);
+    expect(msg).toMatch(/ya puedes postular/i);
   });
 
   it('empleos invita a subir reputación si es < 45', () => {
     const msg = nodeGuidance('empleos', makeProfile(), makeGemelo({ overallReputation: 20 }));
-    expect(msg).toMatch(/subí tu reputación/i);
+    expect(msg).toMatch(/sube tu reputación/i);
   });
 
   it('wallet muestra cuántos PE faltan para el siguiente nivel', () => {
@@ -173,6 +173,6 @@ describe('nodeGuidance — mensajes por tab', () => {
 
   it('tab desconocido devuelve string genérico (no crashea)', () => {
     // @ts-expect-error - probamos un tab inválido a propósito
-    expect(nodeGuidance('inexistente', makeProfile(), null)).toBe('Explorá este nodo para descubrir cómo mejorar tu Gemelo Digital.');
+    expect(nodeGuidance('inexistente', makeProfile(), null)).toBe('Explora este nodo para descubrir cómo mejorar tu Gemelo Digital.');
   });
 });

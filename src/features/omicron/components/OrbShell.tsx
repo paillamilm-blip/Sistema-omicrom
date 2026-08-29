@@ -401,7 +401,7 @@ export function OrbShell() {
       if (intent.topic === 'reputacion') msg = `Tu reputación va en ${Math.round(sbProfile?.reputation_score ?? 0)} de 100. ${(sbProfile?.reputation_score ?? 0) >= 50 ? '¡Vas bien!' : 'Validando skills la subimos juntos.'}`;
       else if (intent.topic === 'tokens') msg = `Tienes ${(sbProfile?.token_balance ?? 0).toLocaleString()} tokens en tu billetera.`;
       else if (intent.topic === 'pe') msg = `Llevas ${(sbProfile?.pe_points ?? 0).toLocaleString()} puntos de experiencia. Cada nodo que valides suma más.`;
-      else msg = 'Puedes decirme cosas como: "abre academia", "dame un consejo", "cuánta reputación tengo", o simplemente tocar un nodo del orbe. Estoy acá para lo que necesites.';
+      else msg = 'Puedes decirme cosas como: "abre academia", "dame un consejo", "cuánta reputación tengo", o simplemente tocar un nodo del orbe. Estoy aquí para lo que necesites.';
       flash(msg);
       speakLocal(msg);
       return;
@@ -416,7 +416,7 @@ export function OrbShell() {
         setActiveTab('perfil');
       }
       const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia', vault: 'un aporte a la Bóveda' };
-      const msg = `Para convalidar ${names[intent.item]}, abrí tu perfil y usá el botón de convalidación.`;
+      const msg = `Para convalidar ${names[intent.item]}, abre tu perfil y usa el botón de convalidación.`;
       flash(msg);
       speakLocal(msg);
       return;
@@ -463,7 +463,7 @@ export function OrbShell() {
     // Speech recognition via shared utility
     const { startSpeechRecognition, isSpeechAvailable } = await import('@/infrastructure/voice/recognition');
     if (!isSpeechAvailable()) {
-      setResponseMsg('La voz no está disponible en este navegador. Escríbeme acá abajo — funciona igual.');
+      setResponseMsg('La voz no está disponible en este navegador. Escríbeme aquí abajo — funciona igual.');
       return;
     }
 
@@ -608,7 +608,7 @@ export function OrbShell() {
           const top = steps[0];
           const msg = top
             ? `${saludo}, ${name}. ${top.why.slice(0, 140)} ¿Vamos con eso?`
-            : `${saludo}, ${name}. Tu Gemelo está al día. Toca un nodo o pregúntame lo que quieras — estoy acá para ayudarte.`;
+            : `${saludo}, ${name}. Tu Gemelo está al día. Toca un nodo o pregúntame lo que quieras — estoy aquí para ayudarte.`;
           setResponseMsg(msg);
           setProactiveActions(top ? [
             { label: 'Sí, vamos', emoji: '✅', primary: true, onClick: () => { handleTextInput(top.why.includes('CV') ? 'quiero subir mi cv' : 'dame un consejo'); setResponseMsg(null); } },
@@ -1172,7 +1172,7 @@ export function OrbShell() {
             onChange={(e: { target: { value: string } }) => setInputText(e.target.value)}
             onFocus={() => setInputFocused(true)}
             onBlur={() => setInputFocused(false)}
-            placeholder={state === 'fullscreen' ? 'Preguntá a Ómicron…' : 'Hablá o escribí a Ómicron…'}
+            placeholder={state === 'fullscreen' ? 'Pregunta a Ómicron…' : 'Habla o escribe a Ómicron…'}
             aria-label="Escribir comando al Oráculo"
             inputMode="text"
             autoComplete="off"

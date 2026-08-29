@@ -114,7 +114,7 @@ export function GemeloTab() {
         <div style={{ fontSize: 48 }}>⬡</div>
         <h2 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, color: C.ink }}>Tu Gemelo Digital</h2>
         <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: C.mut, maxWidth: 280 }}>
-          Creá tu cuenta o iniciá sesión para activar tu Gemelo Digital y subir tu CV.
+          Crea tu cuenta o inicia sesión para activar tu Gemelo Digital y subir tu CV.
         </p>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('omicron:request-auth'))}

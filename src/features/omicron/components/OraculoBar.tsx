@@ -175,7 +175,7 @@ export function OraculoBar() {
         remember(text, t, { ...contextData, coachAdvice: true });
       } catch (err) {
         console.error('[OraculoBar] coach AI error:', err);
-        flash('oraculo', 'No pude conectar con la IA. Intentá de nuevo en unos segundos.');
+        flash('oraculo', 'No pude conectar con la IA. Intenta de nuevo en unos segundos.');
       } finally {
         setBusy(false);
       }

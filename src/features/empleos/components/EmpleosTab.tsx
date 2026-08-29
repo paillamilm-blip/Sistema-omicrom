@@ -461,7 +461,7 @@ function RadarView({ jobs, userPos, geoStatus, onRequestGeo, onPick }: {
       )}
 
       {items.length === 0 && remote.length === 0 && (
-        <p style={styles.muted}>Aún no hay ofertas con ubicación. Publica una con ubicación para verla acá.</p>
+        <p style={styles.muted}>Aún no hay ofertas con ubicación. Publica una con ubicación para verla aquí.</p>
       )}
     </div>
   );

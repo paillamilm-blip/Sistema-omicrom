@@ -166,7 +166,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
         {hasExistingCV && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderRadius: RADIUS.md, background: C.greenFaint, border: `1px solid ${C.greenDim}`, marginBottom: 12 }}>
             <Check size={14} color={C.green} />
-            <span style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.green }}>CV anterior detectado — subí uno nuevo para actualizar</span>
+            <span style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.green }}>CV anterior detectado — sube uno nuevo para actualizar</span>
           </div>
         )}
 
@@ -182,7 +182,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
           <div style={{ flex: 1, height: 1, background: C.line }} />
-          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>o pegá tu experiencia</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>o pega tu experiencia</span>
           <div style={{ flex: 1, height: 1, background: C.line }} />
         </div>
 

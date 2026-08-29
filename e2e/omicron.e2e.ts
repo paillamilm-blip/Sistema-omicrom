@@ -34,12 +34,12 @@ async function login(page: Page) {
   // Botón de ENVÍO ("Acceder a la Red"), NO la pestaña "Iniciar Sesión".
   await page.getByRole('button', { name: /acceder a la red/i }).click();
   // Home listo cuando aparece la barra de comando de Ómicron.
-  await expect(page.getByPlaceholder(/hablá o escribí a ómicron/i)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByPlaceholder(/habla o escribe a ómicron/i)).toBeVisible({ timeout: 30_000 });
 }
 
 async function goHome(page: Page) {
   await page.goto('/'); // activeTab vuelve a 'perfil' (home de Ómicron)
-  await expect(page.getByPlaceholder(/hablá o escribí a ómicron/i)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByPlaceholder(/habla o escribe a ómicron/i)).toBeVisible({ timeout: 30_000 });
 }
 
 // ── 1 · Pantalla de acceso ─────────────────────────────────────────────
@@ -82,7 +82,7 @@ test('3 · Convalidar el Gemelo mueve la reputación real', async ({ page }) => 
 test('4 · Ómicron navega por comando escrito', async ({ page }) => {
   test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
   await login(page);
-  const input = page.getByPlaceholder(/hablá o escribí a ómicron/i);
+  const input = page.getByPlaceholder(/habla o escribe a ómicron/i);
   await input.fill('llévame a Academia');
   await input.press('Enter');
   await expect(page.getByText(/academia/i).first()).toBeVisible({ timeout: 20_000 });
@@ -137,7 +137,7 @@ test('7 · El micrófono responde (escucha o invita a escribir)', async ({ page,
 test('8 · Ómicron responde cuando le hablás', async ({ page }) => {
   test.skip(!HAS_CREDS, 'Definí TEST_EMAIL y TEST_PASSWORD.');
   await login(page);
-  const input = page.getByPlaceholder(/hablá o escribí a ómicron/i);
+  const input = page.getByPlaceholder(/habla o escribe a ómicron/i);
   await input.fill('hola');
   await input.press('Enter');
   await expect(page.getByText(/hablame o escribime/i)).toBeVisible({ timeout: 15_000 });
@@ -163,7 +163,7 @@ test('10 · Sinergia: login → convalidar → navegar → cerrar sesión', asyn
 
   // Navegar por comando
   await goHome(page);
-  const input = page.getByPlaceholder(/hablá o escribí a ómicron/i);
+  const input = page.getByPlaceholder(/habla o escribe a ómicron/i);
   await input.fill('llévame a Empleos');
   await input.press('Enter');
   await expect(page.getByText(/oportunidades/i).first()).toBeVisible({ timeout: 20_000 });
