@@ -16,7 +16,7 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { X, Share2, Zap, Shield, Globe, TrendingUp, CheckCircle2, Circle } from 'lucide-react';
+import { X, Share2, Download, Zap, Shield, Globe, TrendingUp, CheckCircle2, Circle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
 import { C, FONT, SIZE, RADIUS } from '@/theme';
@@ -26,6 +26,107 @@ import { ShareCredentialModal } from '@/features/gemelo/components/RedSocial';
 
 // Fondo radial de la marca Ómicron (mismo lenguaje que BASE.root del tema).
 const OMICRON_BG = 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)';
+
+// ── Stacks tipográficos para el canvas (los tokens FONT no son legibles
+// desde el contexto 2D; replicamos las familias del tema como literales). ──
+const CANVAS_SANS = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
+const CANVAS_MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
+
+// Datos mínimos para dibujar la credencial descargable. Los colores llegan
+// como hex (el canvas no puede leer los tokens del tema) para respetar el
+// color personal del usuario en los acentos.
+type CredentialDrawData = {
+  name: string;
+  seniorLabel: string;
+  years: number;
+  reputation: number;
+  accent: string; // color personal del usuario (uc)
+  axes: { label: string; value: number; color: string }[];
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// drawCredential — Renderiza la credencial como tarjeta PNG compartible.
+//
+// Técnica rescatada de PasaporteGemelo (canvas 2D 600x860 + toDataURL), pero
+// adaptada a los datos propios de la Credencial y al color personal del
+// usuario: la "Ω", el número de reputación y la línea de acento superior usan
+// `accent` (uc), NO un cian hardcodeado. Cada número se muestra con /100.
+// ═══════════════════════════════════════════════════════════════════════
+function drawCredential(cv: HTMLCanvasElement, data: CredentialDrawData): void {
+  const x = cv.getContext('2d');
+  if (!x) return;
+  const W = cv.width, H = cv.height;
+  const accent = data.accent;
+
+  // Fondo: gradiente navy Ómicron.
+  const g = x.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#04122a'); g.addColorStop(0.5, '#02081a'); g.addColorStop(1, '#06122e');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+
+  // Borde fino.
+  x.strokeStyle = 'rgba(160,174,192,0.35)'; x.lineWidth = 2; x.strokeRect(16, 16, W - 32, H - 32);
+
+  // Línea de acento superior (color del usuario).
+  x.fillStyle = accent; x.fillRect(W / 2 - 60, 40, 120, 3);
+
+  x.textAlign = 'center';
+
+  // Glifo Ω (acento del usuario).
+  x.fillStyle = accent; x.font = 'bold 92px Georgia, serif'; x.fillText('\u03A9', W / 2, 148);
+
+  // Título + subtítulo.
+  x.fillStyle = '#eaf4ff'; x.font = `bold 34px ${CANVAS_SANS}`; x.fillText('Sistema Ómicron', W / 2, 196);
+  x.fillStyle = 'rgba(160,174,192,0.75)'; x.font = `15px ${CANVAS_MONO}`;
+  x.fillText('CREDENCIAL · GEMELO DIGITAL', W / 2, 224);
+
+  // Nombre + seniority + años.
+  const name = data.name.trim() || 'Tu Gemelo Digital';
+  x.fillStyle = '#eaf4ff'; x.font = `bold 30px ${CANVAS_SANS}`; x.fillText(name, W / 2, 292);
+  const sub = data.years > 0 ? `${data.seniorLabel} · ${data.years} años` : data.seniorLabel;
+  x.fillStyle = 'rgba(234,244,255,0.6)'; x.font = `16px ${CANVAS_SANS}`; x.fillText(sub, W / 2, 322);
+
+  // Reputación: número grande (acento) + /100.
+  x.fillStyle = 'rgba(234,244,255,0.55)'; x.font = `14px ${CANVAS_MONO}`;
+  x.fillText('REPUTACIÓN', W / 2, 372);
+  const rep = Math.round(data.reputation);
+  const repStr = String(rep);
+  // Dibujamos el número (acento) y su "/100" centrados como conjunto.
+  x.font = `bold 78px ${CANVAS_SANS}`;
+  const repW = x.measureText(repStr).width;
+  x.font = `20px ${CANVAS_MONO}`;
+  const suffixW = x.measureText('/100').width;
+  const totalW = repW + 8 + suffixW;
+  const startX = W / 2 - totalW / 2;
+  x.textAlign = 'left';
+  x.fillStyle = accent; x.font = `bold 78px ${CANVAS_SANS}`;
+  x.fillText(repStr, startX, 440);
+  x.fillStyle = 'rgba(160,174,192,0.75)'; x.font = `20px ${CANVAS_MONO}`;
+  x.fillText('/100', startX + repW + 8, 440);
+  x.textAlign = 'center';
+
+  // Modelo 20/80.
+  x.fillStyle = 'rgba(160,174,192,0.7)'; x.font = `13px ${CANVAS_MONO}`;
+  x.fillText('20% credenciales · 80% desempeño demostrado', W / 2, 470);
+
+  // Los 4 ejes como barras etiquetadas con /100 (colores del modal).
+  let yy = 522;
+  x.textAlign = 'left';
+  data.axes.forEach(({ label, value, color }) => {
+    const v = Math.max(0, Math.min(100, Math.round(value)));
+    x.fillStyle = 'rgba(234,244,255,0.85)'; x.font = `15px ${CANVAS_MONO}`;
+    x.fillText(label, 50, yy - 8);
+    x.textAlign = 'right'; x.fillStyle = 'rgba(255,255,255,0.5)'; x.font = `13px ${CANVAS_MONO}`;
+    x.fillText(`${v}/100`, W - 50, yy - 8);
+    x.textAlign = 'left';
+    x.fillStyle = 'rgba(255,255,255,0.1)'; x.fillRect(50, yy, W - 100, 11);
+    x.fillStyle = color; x.fillRect(50, yy, ((W - 100) * v) / 100, 11);
+    yy += 56;
+  });
+
+  // Pie de página.
+  x.textAlign = 'center'; x.fillStyle = 'rgba(160,174,192,0.6)'; x.font = `12px ${CANVAS_MONO}`;
+  x.fillText('Verificable en Ómicron · Conocimiento verificable, no declarado', W / 2, H - 40);
+}
 
 // Título de bloque reutilizable: punto de acento del color personal + label mono.
 function BlockTitle({ uc, children }: { uc: string; children: ReactNode }) {
@@ -67,7 +168,9 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
     { key: 'trans', label: 'Trascendencia', value: gemelo?.transcendence ?? profile?.transcendence_score ?? 0, color: C.gold, Icon: Globe },
     { key: 'fund', label: 'Fundamento', value: gemelo?.foundation ?? profile?.foundation_score ?? 0, color: C.green, Icon: TrendingUp },
   ];
-  const reputation = Math.round(gemelo?.overallReputation ?? profile?.reputation_score ?? 0);
+  // Clamp 0-100: la reputación es server-side, pero acotamos por si llega
+  // un valor fuera de rango (mantiene el "/100" honesto en pantalla y PNG).
+  const reputation = Math.max(0, Math.min(100, Math.round(gemelo?.overallReputation ?? profile?.reputation_score ?? 0)));
 
   // Nodos del orbe: entre 6 y 42, proporcional a la cantidad de skills.
   const orbNodes = Math.min(42, Math.max(6, skillsDetail.length));
@@ -85,6 +188,37 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
   const evidence: string[] = [];
   if (contractsDone > 0) evidence.push(`${contractsDone} proyectos completados`);
   if (isVerifiedPro) evidence.push('Profesional verificado');
+
+  // ── Descargar credencial como PNG ──────────────────────────────────────
+  // Genera una tarjeta compartible (WhatsApp/email) usando canvas 2D. Los
+  // acentos usan el color personal del usuario (uc); cada número lleva /100.
+  const handleDownload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 860;
+    drawCredential(canvas, {
+      name,
+      seniorLabel,
+      years,
+      reputation,
+      accent: uc,
+      // Colores hex explícitos (el canvas no lee los tokens del tema):
+      // Ejecución = color del usuario, Calidad = C.purple, Trascendencia =
+      // C.gold, Fundamento = C.green. Mismos ejes/orden que el modal.
+      axes: [
+        { label: 'Ejecución', value: axes[0].value, color: uc },
+        { label: 'Calidad', value: axes[1].value, color: '#5e5ce6' },
+        { label: 'Trascendencia', value: axes[2].value, color: '#ffb02e' },
+        { label: 'Fundamento', value: axes[3].value, color: '#3fd0c9' },
+      ],
+    });
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'credencial-omicron.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
 
   return (
     <motion.div
@@ -318,7 +452,7 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
             </div>
           </motion.section>
 
-          {/* ── Compartir credencial ── */}
+          {/* ── Compartir credencial (primario) ── */}
           <button
             onClick={() => username && setShowShare(true)}
             disabled={!username}
@@ -335,6 +469,23 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
           >
             <Share2 size={16} /> Compartir
           </button>
+
+          {/* ── Descargar credencial como PNG (secundario) ── */}
+          <button
+            onClick={handleDownload}
+            style={{
+              width: '100%', marginTop: 10, padding: '13px', borderRadius: RADIUS.lg,
+              cursor: 'pointer',
+              background: 'rgba(255,255,255,0.05)',
+              border: `1px solid ${C.line}`,
+              color: C.ink,
+              fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}
+          >
+            <Download size={16} /> Descargar
+          </button>
+
           {!username && (
             <p style={{ margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textAlign: 'center' }}>
               Creá tu usuario público para poder compartir tu credencial.
