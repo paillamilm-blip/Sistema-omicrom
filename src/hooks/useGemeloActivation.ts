@@ -53,7 +53,7 @@ export function useGemeloActivation() {
   const [ai, setAi] = useState<{ loading: boolean; text: string }>({ loading: false, text: '' });
   const [cvText, setCvText] = useState('');
   const [cvFileName, setCvFileName] = useState('');
-  const [msg, setMsg] = useState('Subí tu CV y Ómicron activa todo automáticamente.');
+  const [msg, setMsg] = useState('Sube tu CV y Ómicron activa todo automáticamente.');
   const [pushes, setPushes] = useState<Push[]>([]);
   const [synergies, setSynergies] = useState<string[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -137,7 +137,7 @@ export function useGemeloActivation() {
   const persistAnalysis = useCallback(async (analyzed?: AnalyzedProfile | null) => {
     const data = analyzed || dossierRef.current;
     if (!data) {
-      toast('No hay análisis para guardar. Subí tu CV primero.', 'error');
+      toast('No hay análisis para guardar. Sube tu CV primero.', 'error');
       return;
     }
 
@@ -145,7 +145,7 @@ export function useGemeloActivation() {
     if (!profile?.id) {
       setPendingPersist(true);
       window.dispatchEvent(new Event('omicron:request-auth'));
-      toast('Registrate para guardar tu Gemelo Digital', 'info');
+      toast('Regístrate para guardar tu Gemelo Digital', 'info');
       return;
     }
 
@@ -177,10 +177,10 @@ export function useGemeloActivation() {
         // Provide actionable messages based on common errors
         let userMsg: string;
         if (errMsg.includes('Could not find') || errMsg.includes('function') || errMsg.includes('does not exist')) {
-          userMsg = 'La base de datos necesita actualizarse. Contactá soporte.';
+          userMsg = 'La base de datos necesita actualizarse. Contacta soporte.';
           console.error('[Omicron] RPC not found — migrations 0062+0063 not applied?', errMsg);
         } else if (errMsg.includes('sin sesión') || errMsg.includes('JWT') || errMsg.includes('expired')) {
-          userMsg = 'Tu sesión expiró. Refrescá la página e intentá de nuevo.';
+          userMsg = 'Tu sesión expiró. Refresca la página e intenta de nuevo.';
         } else {
           userMsg = `No se pudo guardar: ${errMsg}`;
         }
@@ -221,7 +221,7 @@ export function useGemeloActivation() {
       const errMsg = err instanceof Error ? err.message : 'Error desconocido';
       setPersistError(`Error al guardar: ${errMsg}`);
       console.error('[Omicron] persistAnalysis failed:', err);
-      toast('Error al guardar. Intentá de nuevo.', 'error');
+      toast('Error al guardar. Intenta de nuevo.', 'error');
     }
   }, [profile?.id, profile?.username, emitPush, runAutoChain, toast, refreshProfile]);
 
@@ -262,7 +262,7 @@ export function useGemeloActivation() {
       results.push('Stack moderno detectado → acceso a proyectos premium en Servicios');
     }
     if (analyzed.axes.trans > 40) {
-      results.push('Alta trascendencia → publicá en la Bóveda para generar regalías');
+      results.push('Alta trascendencia → publica en la Bóveda para generar regalías');
     }
     return results;
   }, []);
@@ -305,16 +305,16 @@ export function useGemeloActivation() {
       if (text.length >= 30) {
         setCvText(text);
         const preview = text.slice(0, 60).replace(/\s+/g, ' ').trim();
-        setMsg(`✓ "${file.name}" leído (${text.length} caracteres). Tocá "Activar Gemelo Completo".`);
+        setMsg(`✓ "${file.name}" leído (${text.length} caracteres). Toca "Activar Gemelo Completo".`);
         toast(`CV leído: "${preview}…"`, 'success');
       } else {
-        setMsg(`No pude extraer texto del archivo (solo ${text.length} caracteres). Pegá tu experiencia abajo.`);
-        toast('El archivo no tiene texto legible. Probá pegando tu experiencia.', 'error');
+        setMsg(`No pude extraer texto del archivo (solo ${text.length} caracteres). Pega tu experiencia abajo.`);
+        toast('El archivo no tiene texto legible. Prueba pegando tu experiencia.', 'error');
       }
     } catch (err) {
       console.warn('[Omicron] CV file read failed:', err);
-      setMsg('No pude leer el archivo. Pegá tu experiencia abajo.');
-      toast('Error leyendo el archivo. Intentá con otro formato.', 'error');
+      setMsg('No pude leer el archivo. Pega tu experiencia abajo.');
+      toast('Error leyendo el archivo. Intenta con otro formato.', 'error');
     }
   }, [toast]);
 
@@ -348,9 +348,9 @@ export function useGemeloActivation() {
       if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
       // Timeout — show error instead of wrong local data
       isProcessingRef.current = false;
-      setMsg('La IA tardó demasiado. Intentá de nuevo.');
+      setMsg('La IA tardó demasiado. Intenta de nuevo.');
       setLastError('timeout');
-      toast('Timeout: la IA no respondió en 30s. Reintentá.', 'error');
+      toast('Timeout: la IA no respondió en 30s. Reintenta.', 'error');
       setPhase('upload');
     }, SAFETY_TIMEOUT_MS);
 
@@ -416,9 +416,9 @@ export function useGemeloActivation() {
       if (cancelledRef.current) return;
 
       if (!analyzed) {
-        setMsg('La IA no pudo analizar tu CV. Verificá tu conexión e intentá de nuevo.');
+        setMsg('La IA no pudo analizar tu CV. Verifica tu conexión e intenta de nuevo.');
         setLastError('no_analysis');
-        toast('Error: la IA no respondió. Reintentá en unos segundos.', 'error');
+        toast('Error: la IA no respondió. Reintenta en unos segundos.', 'error');
         setPhase('upload');
         isProcessingRef.current = false;
         return;
@@ -474,8 +474,8 @@ export function useGemeloActivation() {
       console.error('[Omicron] activateGemeloCompleto failed:', err);
       // Even on catastrophic failure, show clear error
       setLastError('catastrophic');
-      setMsg('Error al procesar. Intentá de nuevo.');
-      toast('Error inesperado. Reintentá.', 'error');
+      setMsg('Error al procesar. Intenta de nuevo.');
+      toast('Error inesperado. Reintenta.', 'error');
       setPhase('upload');
       isProcessingRef.current = false;
     }

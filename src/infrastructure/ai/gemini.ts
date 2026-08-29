@@ -78,7 +78,7 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
     const validation = validateGeminiResponse(parsed);
     if (!validation.success) {
       console.warn('[geminiClient] Zod validation failed:', validation.error);
-      return { ok: false, error: 'La IA devolvió datos incompletos. Intentá de nuevo.', errorCode: 'validation_error' };
+      return { ok: false, error: 'La IA devolvió datos incompletos. Intenta de nuevo.', errorCode: 'validation_error' };
     }
 
     return { ok: true, analysis: validation.data as GeminiAnalysis };
@@ -91,16 +91,16 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
         case 'timeout':
           return { ok: false, error: 'La IA tardó demasiado. Los servidores pueden estar ocupados.', errorCode: 'timeout' };
         case 'credits':
-          return { ok: false, error: aiErr.message || 'Créditos IA agotados. Esperá a mañana o mejorá tu plan.', errorCode: 'credits' };
+          return { ok: false, error: aiErr.message || 'Créditos IA agotados. Espera a mañana o mejora tu plan.', errorCode: 'credits' };
         case 'server':
-          return { ok: false, error: aiErr.message || 'Servicio de IA con problemas. Reintentá en unos minutos.', errorCode: 'server' };
+          return { ok: false, error: aiErr.message || 'Servicio de IA con problemas. Reintenta en unos minutos.', errorCode: 'server' };
         case 'network':
-          return { ok: false, error: 'Error al comunicarse con el servidor de IA. Verificá tu conexión.', errorCode: 'network' };
+          return { ok: false, error: 'Error al comunicarse con el servidor de IA. Verifica tu conexión.', errorCode: 'network' };
         default:
           return { ok: false, error: aiErr.message || 'Error desconocido de IA.', errorCode: aiErr.code };
       }
     }
     console.warn('[geminiClient] Error:', e);
-    return { ok: false, error: 'No se pudo conectar con la IA. Intentá de nuevo.', errorCode: 'unknown' };
+    return { ok: false, error: 'No se pudo conectar con la IA. Intenta de nuevo.', errorCode: 'unknown' };
   }
 }

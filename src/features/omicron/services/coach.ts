@@ -42,9 +42,9 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
   if (skills.length === 0) {
     steps.push({
       id: 'cv', score: 100, tab: 'perfil', accent: C.cyan, cv: true, metric: 'Fundamento',
-      title: 'Convalidá tu CV real',
+      title: 'Convalida tu CV real',
       actionLabel: 'Subir mi CV',
-      why: 'Ómicron todavía no conoce tu experiencia. Subí tu CV (PDF o Word) y calculo tu nivel, tus habilidades y tus 4 ejes al instante.',
+      why: 'Ómicron todavía no conoce tu experiencia. Sube tu CV (PDF o Word) y calculo tu nivel, tus habilidades y tus 4 ejes al instante.',
     });
   }
 
@@ -53,27 +53,27 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
     const axes: { key: string; val: number; tab: TabId; accent: string; label: string; title: string; actionLabel: string; why: string; cv?: boolean }[] = [
       {
         key: 'execution', val: gemelo.execution, tab: 'maxskill', accent: C.cyan, label: 'Ejecución',
-        title: 'Validá tu próximo nodo de habilidad',
+        title: 'Valida tu próximo nodo de habilidad',
         actionLabel: 'Ir a Habilidades',
-        why: `Tu Ejecución está en ${r(gemelo.execution)}. Superá un reto en Habilidades para demostrar tu velocidad — cada nodo que validás abre el siguiente.`,
+        why: `Tu Ejecución está en ${r(gemelo.execution)}. Supera un reto en Habilidades para demostrar tu velocidad — cada nodo que validas abre el siguiente.`,
       },
       {
         key: 'quality', val: gemelo.quality, tab: 'academia', accent: C.purple, label: 'Calidad',
-        title: 'Rendí un examen en Academia',
+        title: 'Rinde un examen en Academia',
         actionLabel: 'Ir a Academia',
-        why: `Tu Calidad está en ${r(gemelo.quality)}. Aprobá un curso y su examen para validar un nodo con evidencia real y subir tu calidad técnica.`,
+        why: `Tu Calidad está en ${r(gemelo.quality)}. Aprueba un curso y su examen para validar un nodo con evidencia real y subir tu calidad técnica.`,
       },
       {
         key: 'transcendence', val: gemelo.transcendence, tab: 'vault', accent: C.gold, label: 'Trascendencia',
-        title: 'Subí un aporte a la Bóveda',
+        title: 'Sube un aporte a la Bóveda',
         actionLabel: 'Ir a la Bóveda',
         why: `Tu Trascendencia está en ${r(gemelo.transcendence)}. Compartir conocimiento multiplica tu impacto en la red y te genera regalías.`,
       },
       {
         key: 'foundation', val: gemelo.foundation, tab: 'perfil', accent: C.green, label: 'Fundamento', cv: true,
-        title: 'Reforzá tu Fundamento',
+        title: 'Refuerza tu Fundamento',
         actionLabel: 'Convalidar credenciales',
-        why: `Tu Fundamento está en ${r(gemelo.foundation)}. Convalidá tu título y tus años de experiencia para reforzar tu base teórica.`,
+        why: `Tu Fundamento está en ${r(gemelo.foundation)}. Convalida tu título y tus años de experiencia para reforzar tu base teórica.`,
       },
     ];
     axes.forEach((a) => steps.push({
@@ -86,25 +86,25 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
   if (profile && profile.traditional_score < 40 && skills.length > 0) {
     steps.push({
       id: 'trad', score: 58, tab: 'perfil', accent: C.green, cv: true, metric: `Credenciales ${r(profile.traditional_score)}`,
-      title: 'Convalidá tus credenciales',
+      title: 'Convalida tus credenciales',
       actionLabel: 'Convalidar',
-      why: `Tus credenciales verificadas están en ${r(profile.traditional_score)}/100. Convalidá CV, título y años para subir el 20% que pondera tu confianza.`,
+      why: `Tus credenciales verificadas están en ${r(profile.traditional_score)}/100. Convalida CV, título y años para subir el 20% que pondera tu confianza.`,
     });
   }
 
-  // 4) Sinergia: si ya tenés reputación suficiente, monetizá / postulá.
+  // 4) Sinergia: si ya tienes reputación suficiente, monetiza / postula.
   if (gemelo && gemelo.overallReputation >= 45 && skills.length > 0) {
     steps.push({
       id: 'jobs', score: 42, tab: 'empleos', accent: C.cyan, metric: `Reputación ${r(gemelo.overallReputation)}`,
-      title: 'Postulá a una oportunidad',
+      title: 'Postula a una oportunidad',
       actionLabel: 'Ver Empleos',
-      why: `Con reputación ${r(gemelo.overallReputation)} ya sos candidato real. Apuntá a vacantes que pidan ${topSkill} — dejá que el trabajo te encuentre.`,
+      why: `Con reputación ${r(gemelo.overallReputation)} ya eres candidato real. Apunta a vacantes que pidan ${topSkill} — deja que el trabajo te encuentre.`,
     });
     steps.push({
       id: 'market', score: 38, tab: 'market', accent: C.purple, metric: 'Capital intelectual',
-      title: `Publicá un servicio de ${topSkill}`,
+      title: `Publica un servicio de ${topSkill}`,
       actionLabel: 'Ir al Mercado',
-      why: `Monetizá tu experticia en ${topSkill}: publicá un servicio en el Mercado y empezá a ganar tokens en la red.`,
+      why: `Monetiza tu experticia en ${topSkill}: publica un servicio en el Mercado y empieza a ganar tokens en la red.`,
     });
   }
 
@@ -114,9 +114,9 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
   if (steps.length === 0) {
     steps.push({
       id: 'explore', score: 10, tab: 'maxskill', accent: C.cyan,
-      title: 'Explorá tu siguiente nodo',
+      title: 'Explora tu siguiente nodo',
       actionLabel: 'Ir a Habilidades',
-      why: 'Tu Gemelo Digital siempre puede mejorar. Validá una habilidad para subir tu Ejecución y desbloquear oportunidades.',
+      why: 'Tu Gemelo Digital siempre puede mejorar. Valida una habilidad para subir tu Ejecución y desbloquear oportunidades.',
     });
   }
 

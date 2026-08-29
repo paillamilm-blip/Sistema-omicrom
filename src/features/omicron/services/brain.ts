@@ -125,12 +125,12 @@ ${tabContext[tab] || 'Está explorando la app.'}
 
 REGLAS:
 1. Máximo 150 palabras. Sé conciso y potente.
-2. SIEMPRE termina con una acción concreta ("Hacé esto ahora: ...")
+2. SIEMPRE termina con una acción concreta ("Haz esto ahora: ...")
 3. Si tiene un eje débil, menciónalo con empatía (no como crítica)
 4. Si te preguntan algo técnico, responde como tutor paciente
 5. Si te piden consejo de carrera, responde como coach estratégico
 6. Nunca digas "como IA" ni "no tengo emociones" — eres Ómicron, punto
-7. Si no tenés datos del usuario, invítale a subir su CV o hacer un examen
+7. Si no tienes datos del usuario, invítalo a subir su CV o hacer un examen
 8. Usa el nombre "${name}" naturalmente (no en cada frase, 1-2 veces máx)`;
 }
 
@@ -229,15 +229,15 @@ function generateOfflineFallback(message: string, ctx: OmicronContext): string {
   if (/consejo|mejoro|brecha|débil|recomienda/.test(t)) {
     const weakest = Math.min(ctx.execution ?? 50, ctx.quality ?? 50, ctx.transcendence ?? 50, ctx.foundation ?? 50);
     const weakName = weakest === ctx.execution ? 'Ejecución' : weakest === ctx.quality ? 'Calidad' : weakest === ctx.transcendence ? 'Trascendencia' : 'Fundamento';
-    return `${name}, tu eje más débil es ${weakName} (${weakest}/100). Para subirlo: validá una skill con un examen o completá un proyecto. Hacé esto ahora: tocá "Habilidades" y rendí un examen rápido.`;
+    return `${name}, tu eje más débil es ${weakName} (${weakest}/100). Para subirlo: valida una skill con un examen o completa un proyecto. Haz esto ahora: toca "Habilidades" y rinde un examen rápido.`;
   }
 
   // Default
   if (ctx.reputation && ctx.reputation > 0) {
-    return `${name}, tu reputación va en ${Math.round(ctx.reputation)}/100. Preguntame lo que necesites — carrera, skills, empleos, o lo que sea. Estoy acá para empujarte.`;
+    return `${name}, tu reputación va en ${Math.round(ctx.reputation)}/100. Pregúntame lo que necesites — carrera, skills, empleos, o lo que sea. Estoy aquí para empujarte.`;
   }
 
-  return `¡Estoy acá, ${name}! Preguntame lo que necesites. Si querés empezar fuerte: subí tu CV y te activo el Gemelo completo.`;
+  return `¡Estoy aquí, ${name}! Pregúntame lo que necesites. Si quieres empezar fuerte: sube tu CV y te activo el Gemelo completo.`;
 }
 
 // ── Rate limiting (complementario al server-side) ────────────────────

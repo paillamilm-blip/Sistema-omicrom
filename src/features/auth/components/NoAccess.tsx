@@ -75,7 +75,7 @@ export function NoAccess() {
 
             <h2 style={S.title}>Tu cuenta aún no tiene acceso</h2>
             <p style={S.desc}>
-              Contactá al soporte de Sistema Ómicron para obtener acceso a la red.
+              Contacta al soporte de Sistema Ómicron para obtener acceso a la red.
             </p>
 
             {/* Estado de la cuenta */}

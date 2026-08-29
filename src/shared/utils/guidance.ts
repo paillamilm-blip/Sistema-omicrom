@@ -31,32 +31,32 @@ export function nodeGuidance(tab: TabId, profile: Profile | null, gemelo: Gemelo
 
   switch (tab) {
     case 'academia':
-      return `Cada curso valida un nodo real. Aprobá su examen para subir tu Calidad${gemelo ? ` (hoy ${r(gemelo.quality)})` : ''} con evidencia.`;
+      return `Cada curso valida un nodo real. Aprueba su examen para subir tu Calidad${gemelo ? ` (hoy ${r(gemelo.quality)})` : ''} con evidencia.`;
     case 'maxskill':
-      return `Validá tu próximo nodo para subir tu Ejecución${gemelo ? ` (hoy ${r(gemelo.execution)})` : ''}. Cada nodo que superás abre el siguiente.`;
+      return `Valida tu próximo nodo para subir tu Ejecución${gemelo ? ` (hoy ${r(gemelo.execution)})` : ''}. Cada nodo que superas abre el siguiente.`;
     case 'empleos':
       return rep >= 45
-        ? `Con reputación ${rep} ya podés postular. Buscá vacantes que pidan ${topSkill}.`
-        : 'Subí tu reputación validando nodos y pronto el trabajo te va a encontrar.';
+        ? `Con reputación ${rep} ya puedes postular. Busca vacantes que pidan ${topSkill}.`
+        : 'Sube tu reputación validando nodos y pronto el trabajo te va a encontrar.';
     case 'market':
-      return `Publicá un servicio con tu experticia en ${topSkill} y empezá a ganar tokens.`;
+      return `Publica un servicio con tu experticia en ${topSkill} y empieza a ganar tokens.`;
     case 'vault':
-      return `Subí un aporte para subir tu Trascendencia${gemelo ? ` (hoy ${r(gemelo.transcendence)})` : ''} y ganar regalías.`;
+      return `Sube un aporte para subir tu Trascendencia${gemelo ? ` (hoy ${r(gemelo.transcendence)})` : ''} y ganar regalías.`;
     case 'wallet': {
       const li = levelInfo(pe);
       return li.next
-        ? `Tenés ${pe} PE. Te faltan ${li.toNext} PE para llegar a ${li.next}.`
-        : `Sos ${li.tier}: nivel máximo. Seguí ganando tokens con tu experticia.`;
+        ? `Tienes ${pe} PE. Te faltan ${li.toNext} PE para llegar a ${li.next}.`
+        : `Eres ${li.tier}: nivel máximo. Sigue ganando tokens con tu experticia.`;
     }
     case 'gobernanza':
-      return 'Participá como árbitro o votá propuestas: la gobernanza refuerza tu reputación en la red.';
+      return 'Participa como árbitro o vota propuestas: la gobernanza refuerza tu reputación en la red.';
     case 'chat':
-      return 'Coordiná tus contratos acá. Cada acuerdo queda protegido en la caja negra.';
+      return 'Coordina tus contratos aquí. Cada acuerdo queda protegido en la caja negra.';
     case 'perfil':
       return skills.length === 0
-        ? 'Subí tu CV para activar tu Gemelo Digital. Es la base de todo: habilidades, ejes y reputación.'
-        : `Tu Fundamento está en ${gemelo ? r(gemelo.foundation) : '?'}. Convalidá más credenciales para fortalecer tu base.`;
+        ? 'Sube tu CV para activar tu Gemelo Digital. Es la base de todo: habilidades, ejes y reputación.'
+        : `Tu Fundamento está en ${gemelo ? r(gemelo.foundation) : '?'}. Convalida más credenciales para fortalecer tu base.`;
     default:
-      return 'Explorá este nodo para descubrir cómo mejorar tu Gemelo Digital.';
+      return 'Explora este nodo para descubrir cómo mejorar tu Gemelo Digital.';
   }
 }

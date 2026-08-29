@@ -103,7 +103,7 @@ export async function callAI(
 
       // If msg indicates connection failure vs server error
       if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('fetch')) {
-        throw new AIError('Sin conexión al servidor. Verificá tu internet.', 'network');
+        throw new AIError('Sin conexión al servidor. Verifica tu internet.', 'network');
       }
 
       throw new AIError(msg || 'Error al contactar el servicio de IA.', 'server');
@@ -127,7 +127,7 @@ export async function callAI(
     // Distinguish network errors from other errors
     const errMsg = (e as Error)?.message || '';
     if (errMsg.includes('Failed to fetch') || errMsg.includes('NetworkError') || errMsg.includes('ERR_')) {
-      throw new AIError('Sin conexión al servidor. Verificá tu internet.', 'network');
+      throw new AIError('Sin conexión al servidor. Verifica tu internet.', 'network');
     }
     throw new AIError('Error de conexión con la IA.', 'network');
   }
