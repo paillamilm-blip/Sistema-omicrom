@@ -24,6 +24,7 @@ import { useToast } from '@/shared/components/Toast';
 import { speak } from '@/infrastructure/voice/engine';
 import { analyzeCV, type AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
 import { extractCVText } from '@/features/gemelo/services/cvExtract';
+import { savePendingCvAnalysis, getPendingCvAnalysis, clearPendingCvAnalysis, hasPendingCvAnalysis } from '@/shared/utils/guestMode';
 import { C } from '@/theme';
 
 type Kind = 'cv' | 'title' | 'year' | 'vault';
@@ -60,6 +61,7 @@ export function useGemeloActivation() {
   const [persisted, setPersisted] = useState(false);
   const [persistError, setPersistError] = useState<string | null>(null);
   const dossierRef = useRef<AnalyzedProfile | null>(null);
+  const rescueAttemptedRef = useRef(false);
   const pushIdRef = useRef(0);
   const isProcessingRef = useRef(false);
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -212,6 +214,9 @@ export function useGemeloActivation() {
       // Clear phantom timer (they saved — no more countdown)
       localStorage.removeItem('omicron_gemelo_phantom_expire');
 
+      // Limpiar el puente localStorage: ya está guardado en la DB (idempotencia)
+      clearPendingCvAnalysis();
+
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Error desconocido';
       setPersistError(`Error al guardar: ${errMsg}`);
@@ -255,6 +260,27 @@ export function useGemeloActivation() {
     }
     return results;
   }, []);
+
+  // ── Rescate del puente localStorage tras el remount guest→auth ───
+  // Cubre el caso donde App.tsx remonta el árbol al autenticarse: el
+  // dossier en memoria se pierde, pero quedó en localStorage al analizar
+  // como guest. Al montar ya autenticado, lo rescatamos, sembramos la UI
+  // (para que el usuario vea su reveal correcto) y lo persistimos vía RPC.
+  // Corre una sola vez por mount; persistAnalysis limpia la clave al éxito.
+  useEffect(() => {
+    if (profile?.id && !rescueAttemptedRef.current && hasPendingCvAnalysis()) {
+      const rescued = getPendingCvAnalysis();
+      if (rescued) {
+        rescueAttemptedRef.current = true;
+        setDossier(rescued);
+        dossierRef.current = rescued;
+        setSynergies(detectSynergies(rescued));
+        setAi({ loading: false, text: rescued.summary });
+        setPhase('reveal');
+        void persistAnalysis(rescued);
+      }
+    }
+  }, [profile?.id, persistAnalysis, detectSynergies]);
 
   // ── Read CV file ─────────────────────────────────────────────────
   const onCVFile = useCallback(async (file: File) => {
@@ -401,6 +427,12 @@ export function useGemeloActivation() {
       });
       setSynergies(detectSynergies(analyzed));
       setDossier(analyzed);
+      // Puente localStorage: si es guest, guardar el análisis para que
+      // sobreviva el remount guest→auth (App.tsx) y las recargas. Se
+      // rescata y persiste vía RPC al autenticarse (ver rescue effect).
+      if (!profile?.id) {
+        savePendingCvAnalysis(analyzed);
+      }
       setAi({ loading: false, text: analyzed.summary });
       setPhase('reveal');
       isProcessingRef.current = false;
