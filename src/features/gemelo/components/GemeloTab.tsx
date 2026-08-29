@@ -12,6 +12,7 @@
 import { useMemo, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
 import { C, FONT } from '@/theme';
 import { audioSweep } from '@/shared/utils/spatialAudio';
@@ -23,9 +24,9 @@ import { DailyChallengeCard } from '@/features/academia/components/DailyChalleng
 import { JourneyProgress } from '@/features/gemelo/components/JourneyProgress';
 import { DashboardVivo } from '@/features/gemelo/components/DashboardVivo';
 import { PushPermissionBanner } from '@/shared/components/PushPermissionBanner';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 
-// ── Colores para cada skill orbital ────────────────────────────────────
-const SKILL_COLORS = [C.cyan, C.purple, C.gold, C.green, C.red];
+// ── Ejes del Gemelo. El color del eje "Ejecución" se sustituye por el color del usuario en runtime. ──
 const AXIS_META = [
   { key: 'exec', label: 'Ejecución', color: C.cyan, Icon: Zap },
   { key: 'qual', label: 'Calidad', color: C.purple, Icon: Shield },
@@ -47,8 +48,13 @@ const slideVariants = {
 export function GemeloTab() {
   const { profile, setActiveTab } = useApp();
   const gemelo = useGemeloDigital();
+  const uc = useUserColor();
   const [[currentSlide, direction], setSlide] = useState([0, 0]);
   const visitedSlides = useRef(new Set([0]));
+
+  // El color primario de skills y del eje "Ejecución" usa el color elegido por el usuario.
+  const skillColors = [uc, C.purple, C.gold, C.green, C.red];
+  const axisMeta = AXIS_META.map((a) => (a.key === 'exec' ? { ...a, color: uc } : a));
 
   const skillsDetail = useMemo(() => {
     const details = profile?.skills_detail ?? [];
@@ -124,9 +130,9 @@ export function GemeloTab() {
   const renderCard = (idx: number) => {
     const isRevisit = visitedSlides.current.has(idx) && idx !== 0; // slide 0 se marca en init
     switch (idx) {
-      case 0: return <CardIdentidad nucleus={nucleus} top3={top3} hasTwo={hasTwo} hasThree={hasThree} reputation={reputation} />;
-      case 1: return <CardCompetencias skillsDetail={skillsDetail} cvSummary={cvSummary} skipAnimation={isRevisit} />;
-      case 2: return <CardImpacto axes={axes} setActiveTab={setActiveTab} skipAnimation={isRevisit} />;
+      case 0: return <CardIdentidad nucleus={nucleus} top3={top3} hasTwo={hasTwo} hasThree={hasThree} reputation={reputation} skillColors={skillColors} uc={uc} />;
+      case 1: return <CardCompetencias skillsDetail={skillsDetail} cvSummary={cvSummary} skipAnimation={isRevisit} skillColors={skillColors} uc={uc} />;
+      case 2: return <CardImpacto axes={axes} setActiveTab={setActiveTab} skipAnimation={isRevisit} axisMeta={axisMeta} uc={uc} />;
       default: return null;
     }
   };
@@ -144,7 +150,7 @@ export function GemeloTab() {
       {/* ═══ HEADER ═══ */}
       <div style={{ textAlign: 'center', padding: '16px 20px 8px', flexShrink: 0, position: 'relative', ...aging.style }}>
         <AuraBackground axes={{ execution: axes.exec, quality: axes.qual, transcendence: axes.trans, foundation: axes.fund }} />
-        <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 4 }}>
+        <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2.5, color: uc, textTransform: 'uppercase', marginBottom: 4 }}>
           ADN Digital · Perfil Ómicron
         </div>
         <h1 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
@@ -158,7 +164,7 @@ export function GemeloTab() {
       {/* ═══ TABS / DOTS + ARROWS ═══ */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '6px 16px 10px', flexShrink: 0 }}>
         <button onClick={() => goToSlide(currentSlide - 1)} disabled={currentSlide === 0}
-          style={{ background: 'none', border: 'none', color: currentSlide === 0 ? C.mut : C.cyan, cursor: 'pointer', padding: 4, opacity: currentSlide === 0 ? 0.3 : 1 }}>
+          style={{ background: 'none', border: 'none', color: currentSlide === 0 ? C.mut : uc, cursor: 'pointer', padding: 4, opacity: currentSlide === 0 ? 0.3 : 1 }}>
           <ChevronLeft size={18} />
         </button>
         <div style={{ display: 'flex', gap: 4 }}>
@@ -168,9 +174,9 @@ export function GemeloTab() {
               onClick={() => goToSlide(i)}
               style={{
                 padding: '5px 10px', borderRadius: 999, cursor: 'pointer',
-                border: i === currentSlide ? `1px solid ${C.cyan}` : `1px solid ${C.line}`,
-                background: i === currentSlide ? `${C.cyan}18` : 'transparent',
-                color: i === currentSlide ? C.cyan : C.mut,
+                border: i === currentSlide ? `1px solid ${uc}` : `1px solid ${C.line}`,
+                background: i === currentSlide ? `${uc}18` : 'transparent',
+                color: i === currentSlide ? uc : C.mut,
                 fontFamily: FONT.mono, fontSize: 9, fontWeight: 600, letterSpacing: 0.5,
                 transition: 'all 0.2s ease',
               }}
@@ -180,7 +186,7 @@ export function GemeloTab() {
           ))}
         </div>
         <button onClick={() => goToSlide(currentSlide + 1)} disabled={currentSlide === 2}
-          style={{ background: 'none', border: 'none', color: currentSlide === 2 ? C.mut : C.cyan, cursor: 'pointer', padding: 4, opacity: currentSlide === 2 ? 0.3 : 1 }}>
+          style={{ background: 'none', border: 'none', color: currentSlide === 2 ? C.mut : uc, cursor: 'pointer', padding: 4, opacity: currentSlide === 2 ? 0.3 : 1 }}>
           <ChevronRight size={18} />
         </button>
       </div>
@@ -241,12 +247,15 @@ export function GemeloTab() {
 // SUB-COMPONENTES DE CADA CARD
 // ═══════════════════════════════════════════════════════════════════════
 
-function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation }: {
+function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColors, uc }: {
   nucleus: { name: string; pct: number } | undefined;
   top3: { name: string; pct: number }[];
   hasTwo: boolean; hasThree: boolean;
   reputation: number;
+  skillColors: string[];
+  uc: string;
 }) {
+  const SKILL_COLORS = skillColors;
   return (
     <div style={{
       borderRadius: 999, padding: '20px 16px',
@@ -308,23 +317,26 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation }: {
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         padding: '10px 16px', borderRadius: 999, margin: '0 auto',
-        background: `linear-gradient(135deg, ${C.cyanGhost}, ${C.purpleFaint})`,
+        background: `linear-gradient(135deg, ${uc}14, ${C.purpleFaint})`,
         border: `1px solid ${C.line}`,
       }}>
         <Sparkles size={14} color={C.gold} />
         <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.ink }}>Reputación</span>
-        <span style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 800, color: C.cyan }}><SmoothNumber value={Math.round(reputation)} /></span>
+        <span style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 800, color: uc }}><SmoothNumber value={Math.round(reputation)} /></span>
         <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>/100</span>
       </div>
     </div>
   );
 }
 
-function CardCompetencias({ skillsDetail, cvSummary, skipAnimation }: {
+function CardCompetencias({ skillsDetail, cvSummary, skipAnimation, skillColors, uc }: {
   skillsDetail: { name: string; pct: number }[];
   cvSummary: string;
   skipAnimation?: boolean;
+  skillColors: string[];
+  uc: string;
 }) {
+  const SKILL_COLORS = skillColors;
   return (
     <div style={{
       borderRadius: 999, padding: '20px 16px',
@@ -335,15 +347,15 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation }: {
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <FileText size={14} color={C.cyan} />
-        <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase' }}>CV Convalidado</span>
+        <FileText size={14} color={uc} />
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.5, color: uc, textTransform: 'uppercase' }}>CV Verificado</span>
         <CheckCircle2 size={12} color={C.green} />
       </div>
 
       {/* Skills */}
       <div style={{
         borderRadius: 14, padding: '14px 14px 10px',
-        background: `linear-gradient(135deg, ${C.glass}, ${C.cyanGhost})`,
+        background: `linear-gradient(135deg, ${C.glass}, ${uc}14)`,
         border: `1px solid ${C.line}`, marginBottom: cvSummary ? 12 : 0,
       }}>
         {skillsDetail.slice(0, 7).map((skill, i) => (
@@ -375,7 +387,7 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation }: {
           background: C.glass, border: `1px solid ${C.line}`,
           position: 'relative', overflow: 'hidden',
         }}>
-          <div style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 2, borderRadius: 1, background: `linear-gradient(to bottom, ${C.cyan}, ${C.purple}, ${C.gold})`, opacity: 0.6 }} />
+          <div style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 2, borderRadius: 1, background: `linear-gradient(to bottom, ${uc}, ${C.purple}, ${C.gold})`, opacity: 0.6 }} />
           <div style={{ paddingLeft: 12 }}>
             <div style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1.5, color: C.mut, textTransform: 'uppercase', marginBottom: 6 }}>Resumen IA</div>
             <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 12, lineHeight: 1.55, color: C.ink, whiteSpace: 'pre-wrap' }}>
@@ -388,10 +400,12 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation }: {
   );
 }
 
-function CardImpacto({ axes, setActiveTab, skipAnimation }: {
+function CardImpacto({ axes, setActiveTab, skipAnimation, axisMeta, uc }: {
   axes: { exec: number; qual: number; trans: number; fund: number };
   setActiveTab: (tab: 'maxskill' | 'academia') => void;
   skipAnimation?: boolean;
+  axisMeta: { key: string; label: string; color: string; Icon: LucideIcon }[];
+  uc: string;
 }) {
   return (
     <div style={{
@@ -409,7 +423,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation }: {
 
       {/* 4 Axes */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-        {AXIS_META.map(({ key, label, color, Icon }) => {
+        {axisMeta.map(({ key, label, color, Icon }) => {
           const val = axes[key as keyof typeof axes] ?? 0;
           return (
             <GlowCard key={key} color={color} intensity={0.1} style={{ padding: '12px 12px', borderRadius: 14, background: `${color}08`, border: `1px solid ${color}33` }}>
@@ -426,7 +440,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation }: {
                     style={{ height: '100%', borderRadius: 3, background: color, boxShadow: `0 0 5px ${color}66` }}
                   />
                 </div>
-                <span style={{ fontFamily: FONT.mono, fontSize: 13, fontWeight: 700, color, minWidth: 26, textAlign: 'right' }}>{val}</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: 13, fontWeight: 700, color, minWidth: 26, textAlign: 'right' }}>{val}<span style={{ fontSize: 9, fontWeight: 600, color: C.mut }}>/100</span></span>
               </div>
             </GlowCard>
           );
@@ -437,7 +451,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation }: {
       <div style={{ display: 'flex', gap: 10 }}>
         <MagneticButton onClick={() => setActiveTab('maxskill')} style={{
           flex: 1, padding: '12px 0', borderRadius: 12,
-          background: C.glass, border: `1px solid ${C.cyanFaint}`, color: C.cyan,
+          background: C.glass, border: `1px solid ${uc}29`, color: uc,
           fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
