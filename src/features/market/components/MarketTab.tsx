@@ -175,7 +175,7 @@ export function MarketTab() {
 
   return (
     <div style={oc.root}>
-      {/* Header Ómicron unificado */}
+      {/* Header Ómicrom unificado */}
       <OmicronHeader
         onBack={() => setActiveTab('perfil')}
         icon={<Cpu size={18} />}

@@ -258,7 +258,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   const submitLabel = loading
     ? 'Procesando...'
     : mode === 'login' ? 'Acceder a la Red'
-    : mode === 'register' ? 'Unirse a Ómicron'
+    : mode === 'register' ? 'Unirse a Ómicrom'
     : 'Enviar enlace de recuperación';
 
   return (
@@ -288,7 +288,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
             <GeodesicOrb size={80} nodes={10} color={uc} spinning={20} intensity={0.6} />
           </div>
           <div style={{ textAlign: 'center' }}>
-            <h1 style={S.brand}>Sistema Ómicron</h1>
+            <h1 style={S.brand}>Sistema Ómicrom</h1>
             <p style={S.tagline}>Tu reputación, imposible de falsificar.</p>
           </div>
         </motion.div>
@@ -443,7 +443,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
 
           <div style={S.secure}>
             <Shield size={12} />
-            <span>Cifrado E2E · Red segura Ómicron</span>
+            <span>Cifrado E2E · Red segura Ómicrom</span>
           </div>
         </motion.div>
 

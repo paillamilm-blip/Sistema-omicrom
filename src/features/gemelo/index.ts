@@ -5,7 +5,7 @@
 // Identidad, reputación, competencias, credenciales, red social,
 // visualización, progreso, memoria, y lógica de mejora.
 //
-// Conceptualmente: Ómicron = tu coach (te empuja), Gemelo = tú (te mide).
+// Conceptualmente: Ómicrom = tu coach (te empuja), Gemelo = tú (te mide).
 // ═══════════════════════════════════════════════════════════════════════
 
 // ── Services (lógica de dominio) ─────────────────────────────────────

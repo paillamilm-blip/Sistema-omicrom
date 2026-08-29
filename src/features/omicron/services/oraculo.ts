@@ -1,6 +1,6 @@
 // src/lib/oraculo.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · Oráculo — motor de intención (voz/texto → acción)
+// ÓMICROM · Oráculo — motor de intención (voz/texto → acción)
 // Interpreta lo que el usuario dice y lo traduce a: navegar a un hub,
 // responder un dato simple, o consultar al Coach IA (Edge Function `coach`,
 // respaldada por Gemini). Puro TypeScript, sin dependencias nuevas.

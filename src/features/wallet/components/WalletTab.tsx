@@ -161,7 +161,7 @@ export function WalletTab() {
               <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.gold, marginBottom: 6 }}>Tokens</span>
             </div>
             <div style={{ fontFamily: FONT.body, fontSize: 12.5, color: C.mut, marginTop: 6, lineHeight: 1.4 }}>
-              Es tu dinero dentro de Ómicron. <strong style={{ color: C.ink }}>1 Token = $1 peso chileno.</strong>
+              Es tu dinero dentro de Ómicrom. <strong style={{ color: C.ink }}>1 Token = $1 peso chileno.</strong>
             </div>
 
             {/* ── Botón principal: Recargar (comprar con tarjeta) ── */}

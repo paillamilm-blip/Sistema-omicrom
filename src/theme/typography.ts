@@ -40,7 +40,7 @@ export const SIZE = {
 } as const;
 
 export const FONT_STYLE = {
-  /** Tags, badges, eyebrows (ÓMICRON, CÓMO MEJORAR, etc.) */
+  /** Tags, badges, eyebrows (ÓMICROM, CÓMO MEJORAR, etc.) */
   label:    { fontFamily: MONO, fontSize: SIZE.xxs, letterSpacing: 1.4, textTransform: 'uppercase' as const },
   /** Code, counters */
   mono:     { fontFamily: MONO, fontSize: SIZE.sm },

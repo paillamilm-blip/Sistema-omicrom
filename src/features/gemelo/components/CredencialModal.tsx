@@ -1,6 +1,6 @@
 // features/gemelo/components/CredencialModal.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// CREDENCIAL ÓMICRON — Tu Gemelo Digital como credencial verificable.
+// CREDENCIAL ÓMICROM — Tu Gemelo Digital como credencial verificable.
 //
 // A diferencia de GemeloTab (el "taller" interno donde trabajás tu perfil),
 // este modal presenta tu Gemelo Digital como una CREDENCIAL: el equivalente
@@ -24,7 +24,7 @@ import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { ShareCredentialModal } from '@/features/gemelo/components/RedSocial';
 
-// Fondo radial de la marca Ómicron (mismo lenguaje que BASE.root del tema).
+// Fondo radial de la marca Ómicrom (mismo lenguaje que BASE.root del tema).
 const OMICRON_BG = 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)';
 
 // ── Stacks tipográficos para el canvas (los tokens FONT no son legibles
@@ -58,7 +58,7 @@ function drawCredential(cv: HTMLCanvasElement, data: CredentialDrawData): void {
   const W = cv.width, H = cv.height;
   const accent = data.accent;
 
-  // Fondo: gradiente navy Ómicron.
+  // Fondo: gradiente navy Ómicrom.
   const g = x.createLinearGradient(0, 0, W, H);
   g.addColorStop(0, '#04122a'); g.addColorStop(0.5, '#02081a'); g.addColorStop(1, '#06122e');
   x.fillStyle = g; x.fillRect(0, 0, W, H);
@@ -75,7 +75,7 @@ function drawCredential(cv: HTMLCanvasElement, data: CredentialDrawData): void {
   x.fillStyle = accent; x.font = 'bold 92px Georgia, serif'; x.fillText('\u03A9', W / 2, 148);
 
   // Título + subtítulo.
-  x.fillStyle = '#eaf4ff'; x.font = `bold 34px ${CANVAS_SANS}`; x.fillText('Sistema Ómicron', W / 2, 196);
+  x.fillStyle = '#eaf4ff'; x.font = `bold 34px ${CANVAS_SANS}`; x.fillText('Sistema Ómicrom', W / 2, 196);
   x.fillStyle = 'rgba(160,174,192,0.75)'; x.font = `15px ${CANVAS_MONO}`;
   x.fillText('CREDENCIAL · GEMELO DIGITAL', W / 2, 224);
 
@@ -125,7 +125,7 @@ function drawCredential(cv: HTMLCanvasElement, data: CredentialDrawData): void {
 
   // Pie de página.
   x.textAlign = 'center'; x.fillStyle = 'rgba(160,174,192,0.6)'; x.font = `12px ${CANVAS_MONO}`;
-  x.fillText('Verificable en Ómicron · Conocimiento verificable, no declarado', W / 2, H - 40);
+  x.fillText('Verificable en Ómicrom · Conocimiento verificable, no declarado', W / 2, H - 40);
 }
 
 // Título de bloque reutilizable: punto de acento del color personal + label mono.
@@ -268,7 +268,7 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
         <div style={{ padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* ── Eyebrow ── */}
           <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 2.5, color: uc, textTransform: 'uppercase' }}>
-            Credencial Ómicron
+            Credencial Ómicrom
           </div>
 
           {/* ── Orbe como RETRATO contenido ── */}

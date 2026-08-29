@@ -1,6 +1,6 @@
 // src/features/omicron/services/coach.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · Motor de mejora en tiempo real (FASE 3)
+// ÓMICROM · Motor de mejora en tiempo real (FASE 3)
 //
 // Lee los datos REALES del usuario (skills del CV, 4 ejes del Gemelo, PE,
 // reputación, credenciales) y produce una RUTA priorizada de pasos
@@ -44,7 +44,7 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
       id: 'cv', score: 100, tab: 'perfil', accent: C.cyan, cv: true, metric: 'Fundamento',
       title: 'Convalida tu CV real',
       actionLabel: 'Subir mi CV',
-      why: 'Ómicron todavía no conoce tu experiencia. Sube tu CV (PDF o Word) y calculo tu nivel, tus habilidades y tus 4 ejes al instante.',
+      why: 'Ómicrom todavía no conoce tu experiencia. Sube tu CV (PDF o Word) y calculo tu nivel, tus habilidades y tus 4 ejes al instante.',
     });
   }
 

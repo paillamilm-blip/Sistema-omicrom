@@ -42,7 +42,7 @@ export interface GeneratedProfile {
   summary: string;
 }
 
-const PROFILE_PROMPT = 'Eres Ómicron. El usuario te dice a qué se dedica en 1 frase. Extrae un perfil profesional ESTIMADO. Responde SOLO JSON válido: {"profession":"título corto","years":0,"skills":["skill1","skill2","skill3","skill4","skill5"],"axes":{"exec":0,"qual":0,"trans":0,"fund":0},"seniorLabel":"Profesional X","summary":"2 frases de quién es"} Reglas: skills 4-6, axes 0-100 (mínimo 20), seniorLabel real, conservador si no es claro.';
+const PROFILE_PROMPT = 'Eres Ómicrom. El usuario te dice a qué se dedica en 1 frase. Extrae un perfil profesional ESTIMADO. Responde SOLO JSON válido: {"profession":"título corto","years":0,"skills":["skill1","skill2","skill3","skill4","skill5"],"axes":{"exec":0,"qual":0,"trans":0,"fund":0},"seniorLabel":"Profesional X","summary":"2 frases de quién es"} Reglas: skills 4-6, axes 0-100 (mínimo 20), seniorLabel real, conservador si no es claro.';
 
 // ── Intent classification ─────────────────────────────────────────────
 function classifyIntent(text: string): 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar' {
@@ -365,7 +365,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: chosenColor, boxShadow: `0 0 8px ${chosenColor}`, animation: 'cp-breathe 2s ease-in-out infinite' }} />
-                    <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: chosenColor, textTransform: 'uppercase' }}>ÓMICRON</span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: chosenColor, textTransform: 'uppercase' }}>ÓMICROM</span>
                   </div>
                   <div style={{ fontFamily: FONT.body, fontSize: 15, color: C.ink, lineHeight: 1.6 }}>
                     <TextReveal text="¿A qué te dedicas? Cuéntame en una frase." speed={22} cursor={true} />

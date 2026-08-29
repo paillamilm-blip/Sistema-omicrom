@@ -57,7 +57,7 @@ export function LiveBadge() {
   );
 }
 
-/** C · Panel "Red Ómicron en vivo": todos los nodos conectados + actividad. */
+/** C · Panel "Red Ómicrom en vivo": todos los nodos conectados + actividad. */
 export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { nodes, events, onlineCount } = useRealtime();
   const { profile } = useProfile();
@@ -72,7 +72,7 @@ export function LiveNetworkPanel({ open, onClose }: { open: boolean; onClose: ()
         <div style={{ width: 40, height: 4, borderRadius: 3, background: 'rgba(255,255,255,0.18)', margin: '10px auto 4px' }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 18px 10px' }}>
           <div>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: '#eaf0fb' }}>Red Ómicron en vivo</div>
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: '#eaf0fb' }}>Red Ómicrom en vivo</div>
             <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.greenDim }}>◉ {onlineCount} {onlineCount === 1 ? 'nodo' : 'nodos'} en línea ahora</div>
           </div>
           <button onClick={onClose} aria-label="Cerrar" style={{ width: 30, height: 30, borderRadius: '50%', border: `1px solid ${C.cyanDim}`, background: 'rgba(255,255,255,0.05)', color: 'rgba(234,242,255,0.55)', cursor: 'pointer' }}>✕</button>

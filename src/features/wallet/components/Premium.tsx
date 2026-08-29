@@ -62,7 +62,7 @@ export function PremiumLock({ feature, onClose }: { feature: string; onClose: ()
         <div style={{ fontSize: 40, filter: 'drop-shadow(0 0 10px rgba(255, 176, 46,0.6))' }}>💎</div>
         <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: '#ffe6a8', margin: '8px 0 4px' }}>Función Premium</div>
         <p style={{ fontFamily: FONT.body, fontSize: 13, color: '#eadfc4', lineHeight: 1.5, margin: '0 0 4px' }}>
-          <b style={{ color: C.gold }}>{feature}</b> requiere créditos Ómicron.
+          <b style={{ color: C.gold }}>{feature}</b> requiere créditos Ómicrom.
         </p>
         <p style={{ fontFamily: FONT.mono, fontSize: 11, color: 'rgba(255, 176, 46,0.75)', letterSpacing: 0.5, margin: '0 0 20px' }}>
           5.000 tokens = $5.000 CLP · Coach IA ilimitado por 1 día.

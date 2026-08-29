@@ -1,5 +1,5 @@
 // theme/tokens.ts
-// Sistema Ómicron — Design Tokens: Colores y estados
+// Sistema Ómicrom — Design Tokens: Colores y estados
 //
 // Identidad: negro-azulado premium (tipo Apple) + paleta silver-ice/indigo/teal + ámbar.
 //   cyan  → SILVER ICE #a0aec0 (héroe plateado)

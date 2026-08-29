@@ -191,7 +191,7 @@ export function EmpleosTab() {
 
   return (
     <div style={{ ...oc.root, ...blurStyle }}>
-      {/* Header Ómicron unificado */}
+      {/* Header Ómicrom unificado */}
       <OmicronHeader
         onBack={() => setActiveTab('perfil')}
         icon={<Briefcase size={17} />}

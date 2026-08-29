@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // MICRO-RETOS DIARIOS — "Tu desafío de hoy"
 //
-// Cada día, Ómicron propone UN reto de 5 minutos basado en la brecha más
+// Cada día, Ómicrom propone UN reto de 5 minutos basado en la brecha más
 // débil del usuario. No es un curso largo — es una acción mínima con
 // impacto medible que mueve los ejes realmente.
 //
@@ -39,7 +39,7 @@ const EXECUTION_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
 const QUALITY_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
   { title: 'Valida una skill', description: 'Rinde un examen rápido de tu skill principal. 3 preguntas + caso práctico.', action: 'Examen en MaxSkill', duration: '5 min', reward: { pe: 10, axis: 'quality', delta: 3 }, icon: '🎯', targetTab: 'maxskill' },
   { title: 'Completa una lección', description: 'Toma una lección de la Academia y responde el quiz.', action: 'Lección en Academia', duration: '5 min', reward: { pe: 5, axis: 'quality', delta: 2 }, icon: '📚', targetTab: 'academia' },
-  { title: 'Revisa tu CV', description: 'Si tu CV está desactualizado, vuelve a subirlo. Ómicron re-analiza y actualiza tus ejes.', action: 'Re-subir CV', duration: '3 min', reward: { pe: 5, axis: 'quality', delta: 2 }, icon: '📄', targetTab: 'perfil' },
+  { title: 'Revisa tu CV', description: 'Si tu CV está desactualizado, vuelve a subirlo. Ómicrom re-analiza y actualiza tus ejes.', action: 'Re-subir CV', duration: '3 min', reward: { pe: 5, axis: 'quality', delta: 2 }, icon: '📄', targetTab: 'perfil' },
 ];
 
 const TRANSCENDENCE_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [

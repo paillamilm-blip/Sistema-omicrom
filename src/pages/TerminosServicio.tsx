@@ -1,6 +1,6 @@
 // src/pages/TerminosServicio.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// TÉRMINOS DE SERVICIO — Ómicron
+// TÉRMINOS DE SERVICIO — Ómicrom
 // Documento legal conforme a la ley chilena para marketplace de servicios.
 // ═══════════════════════════════════════════════════════════════════════
 import { ArrowLeft } from 'lucide-react';
@@ -26,12 +26,12 @@ export function TerminosServicio() {
           <section style={S.section}>
             <h2 style={S.h2}>1. ACEPTACIÓN DE LOS TÉRMINOS</h2>
             <p style={S.p}>
-              Al acceder y utilizar la plataforma Ómicron (en adelante, "la Plataforma"), 
+              Al acceder y utilizar la plataforma Ómicrom (en adelante, "la Plataforma"), 
               usted acepta estar obligado por estos Términos y Condiciones de Uso (en adelante, 
               "los Términos"). Si no está de acuerdo con estos Términos, no utilice la Plataforma.
             </p>
             <p style={S.p}>
-              La Plataforma es operada por Ómicron SpA (en adelante, "Ómicron", "nosotros" o "la Empresa"), 
+              La Plataforma es operada por Ómicrom SpA (en adelante, "Ómicrom", "nosotros" o "la Empresa"), 
               con domicilio en Santiago, Chile, RUT pendiente de constitución.
             </p>
           </section>
@@ -39,7 +39,7 @@ export function TerminosServicio() {
           <section style={S.section}>
             <h2 style={S.h2}>2. DEFINICIÓN DEL SERVICIO</h2>
             <p style={S.p}>
-              Ómicron es un marketplace que conecta profesionales y técnicos (en adelante, "Usuarios") 
+              Ómicrom es un marketplace que conecta profesionales y técnicos (en adelante, "Usuarios") 
               para la prestación y contratación de servicios profesionales. La Plataforma ofrece:
             </p>
             <ul style={S.ul}>
@@ -68,13 +68,13 @@ export function TerminosServicio() {
             <h3 style={S.h3}>3.2 Seguridad de la Cuenta</h3>
             <p style={S.p}>
               Usted es responsable de mantener la confidencialidad de su contraseña y de todas 
-              las actividades que ocurran bajo su cuenta. Notifique inmediatamente a Ómicron 
+              las actividades que ocurran bajo su cuenta. Notifique inmediatamente a Ómicrom 
               sobre cualquier uso no autorizado de su cuenta.
             </p>
 
             <h3 style={S.h3}>3.3 Suspensión y Terminación</h3>
             <p style={S.p}>
-              Ómicron se reserva el derecho de suspender o terminar su cuenta si:
+              Ómicrom se reserva el derecho de suspender o terminar su cuenta si:
             </p>
             <ul style={S.ul}>
               <li style={S.li}>Viola estos Términos o la legislación chilena aplicable.</li>
@@ -100,7 +100,7 @@ export function TerminosServicio() {
 
             <h3 style={S.h3}>4.2 Responsabilidad</h3>
             <p style={S.p}>
-              Ómicron actúa como intermediario facilitador. <strong>NO somos parte de los contratos</strong> 
+              Ómicrom actúa como intermediario facilitador. <strong>NO somos parte de los contratos</strong> 
               entre Usuarios. No garantizamos la calidad, legalidad o idoneidad de los servicios prestados. 
               Cada Usuario es responsable de:
             </p>
@@ -112,7 +112,7 @@ export function TerminosServicio() {
 
             <h3 style={S.h3}>4.3 Comisión de Plataforma</h3>
             <p style={S.p}>
-              Ómicron cobra una comisión del <strong>10%</strong> sobre el monto del contrato al momento 
+              Ómicrom cobra una comisión del <strong>10%</strong> sobre el monto del contrato al momento 
               de liberar el pago al vendedor. Esta comisión cubre:
             </p>
             <ul style={S.ul}>
@@ -126,7 +126,7 @@ export function TerminosServicio() {
             <h2 style={S.h2}>5. SISTEMA DE TOKENS</h2>
             <h3 style={S.h3}>5.1 Naturaleza de los Tokens</h3>
             <p style={S.p}>
-              Los tokens de Ómicron son una <strong>moneda interna de la Plataforma</strong>, 
+              Los tokens de Ómicrom son una <strong>moneda interna de la Plataforma</strong>, 
               sin valor de cambio fuera de ella. NO son criptomonedas, valores mobiliarios 
               ni instrumentos financieros regulados. Se utilizan exclusivamente para:
             </p>
@@ -140,7 +140,7 @@ export function TerminosServicio() {
             <p style={S.p}>
               Cuando la Plataforma alcance el volumen necesario, se habilitará la conversión 
               de tokens a pesos chilenos (CLP) mediante integración con procesadores de pago 
-              (Stripe u otros). La tasa de conversión será fijada por Ómicron y comunicada 
+              (Stripe u otros). La tasa de conversión será fijada por Ómicrom y comunicada 
               con 30 días de anticipación. Nos reservamos el derecho de:
             </p>
             <ul style={S.ul}>
@@ -182,9 +182,9 @@ export function TerminosServicio() {
               <li style={S.li}>Acepta que un 20% de las regalías vaya al autor del documento padre (si aplica).</li>
             </ul>
 
-            <h3 style={S.h3}>6.3 Marca Ómicron</h3>
+            <h3 style={S.h3}>6.3 Marca Ómicrom</h3>
             <p style={S.p}>
-              "Ómicron", el símbolo Ω, y todos los diseños asociados son marcas comerciales de Ómicron SpA. 
+              "Ómicrom", el símbolo Ω, y todos los diseños asociados son marcas comerciales de Ómicrom SpA. 
               No puede utilizarlos sin autorización escrita previa.
             </p>
           </section>
@@ -202,7 +202,7 @@ export function TerminosServicio() {
             <h3 style={S.h3}>7.2 Apelaciones</h3>
             <p style={S.p}>
               Las decisiones del tribunal de árbitros son FINALES dentro de la Plataforma. Si considera 
-              que hubo un error grave, puede apelar ante Ómicron dentro de 15 días. Nos reservamos el 
+              que hubo un error grave, puede apelar ante Ómicrom dentro de 15 días. Nos reservamos el 
               derecho de revisar casos excepcionales.
             </p>
 
@@ -217,7 +217,7 @@ export function TerminosServicio() {
           <section style={S.section}>
             <h2 style={S.h2}>8. LIMITACIÓN DE RESPONSABILIDAD</h2>
             <p style={S.p}>
-              Ómicron proporciona la Plataforma "TAL CUAL" y "SEGÚN DISPONIBILIDAD". 
+              Ómicrom proporciona la Plataforma "TAL CUAL" y "SEGÚN DISPONIBILIDAD". 
               En la máxima medida permitida por la ley chilena, NO garantizamos:
             </p>
             <ul style={S.ul}>
@@ -226,7 +226,7 @@ export function TerminosServicio() {
               <li style={S.li}>La exactitud de las credenciales o reputación de otros Usuarios.</li>
             </ul>
             <p style={S.p}>
-              Ómicron <strong>NO será responsable</strong> por daños indirectos, incidentales, 
+              Ómicrom <strong>NO será responsable</strong> por daños indirectos, incidentales, 
               especiales o consecuentes derivados del uso de la Plataforma, incluyendo:
             </p>
             <ul style={S.ul}>
@@ -243,7 +243,7 @@ export function TerminosServicio() {
           <section style={S.section}>
             <h2 style={S.h2}>9. MODIFICACIONES</h2>
             <p style={S.p}>
-              Ómicron se reserva el derecho de modificar estos Términos en cualquier momento. 
+              Ómicrom se reserva el derecho de modificar estos Términos en cualquier momento. 
               Los cambios entrarán en vigor al ser publicados en la Plataforma. Si los cambios 
               son significativos, se notificará por email con <strong>30 días de anticipación</strong>. 
               El uso continuado de la Plataforma después de los cambios constituye aceptación de los 

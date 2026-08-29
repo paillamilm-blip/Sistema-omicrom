@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Log para diagnóstico (visible en consola del navegador).
-    console.error('[Ómicron · ErrorBoundary]', this.props.section ?? '', error, info);
+    console.error('[Ómicrom · ErrorBoundary]', this.props.section ?? '', error, info);
   }
 
   private handleReset = () => this.setState({ hasError: false, message: '' });

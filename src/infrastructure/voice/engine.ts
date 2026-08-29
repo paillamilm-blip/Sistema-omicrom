@@ -1,6 +1,6 @@
 // lib/voiceEngine.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON · Motor de Voz Premium — síntesis natural y amigable.
+// ÓMICROM · Motor de Voz Premium — síntesis natural y amigable.
 // Selecciona voces españolas premium (Google/Microsoft/Apple), ajusta
 // pitch alto para calidez, rate pausado para claridad, inserta pausas
 // inteligentes en puntos/comas para fluidez natural.

@@ -1,6 +1,6 @@
 // config/nodes.ts
 // ─────────────────────────────────────────────────────────────
-// FUENTE ÚNICA DE VERDAD para la taxonomía de Nodos del Sistema Ómicron.
+// FUENTE ÚNICA DE VERDAD para la taxonomía de Nodos del Sistema Ómicrom.
 // Antes esta info estaba duplicada (y divergente) en GemeloTab, WalletTab,
 // MarketTab y EditProfileModal. Centralizarla evita inconsistencias.
 // ─────────────────────────────────────────────────────────────

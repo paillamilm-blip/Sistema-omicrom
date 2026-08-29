@@ -1,6 +1,6 @@
 // src/lib/omicronTools.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON TOOLS — Herramientas que el cerebro puede invocar.
+// ÓMICROM TOOLS — Herramientas que el cerebro puede invocar.
 //
 // Cuando omicronBrain detecta que necesita una acción específica
 // (examen, búsqueda en bóveda, carta, etc.), puede "llamar" una
@@ -10,9 +10,9 @@
 //   1. omicronBrain analiza el intent
 //   2. Si necesita una herramienta → retorna { tool: 'examen', params: {...} }
 //   3. El frontend ejecuta la herramienta (navega al tab + lanza la acción)
-//   4. El resultado se añade al contexto de Ómicron
+//   4. El resultado se añade al contexto de Ómicrom
 //
-// Esto convierte a Ómicron de chatbot → agente real.
+// Esto convierte a Ómicrom de chatbot → agente real.
 // ═══════════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/infrastructure/supabase/client';
@@ -29,7 +29,7 @@ export type ToolName =
 export interface ToolCall {
   tool: ToolName;
   params: Record<string, unknown>;
-  reason: string; // Por qué Ómicron decidió usar esta herramienta
+  reason: string; // Por qué Ómicrom decidió usar esta herramienta
 }
 
 export interface ToolResult {
@@ -57,7 +57,7 @@ Ejemplo: "Te recomiendo validar React con un examen. [EXAMEN:react]"
 `;
 
 /**
- * Parsea si la respuesta de Ómicron contiene un tool call.
+ * Parsea si la respuesta de Ómicrom contiene un tool call.
  * Busca patrones como [EXAMEN:react] o [EMPLEOS] al final.
  */
 export function parseToolCall(response: string): ToolCall | null {
@@ -90,7 +90,7 @@ export function parseToolCall(response: string): ToolCall | null {
       skill: param ?? undefined,
       tab: tabMap[action] ?? undefined,
     },
-    reason: `Ómicron sugirió: ${action}${param ? ` (${param})` : ''}`,
+    reason: `Ómicrom sugirió: ${action}${param ? ` (${param})` : ''}`,
   };
 }
 

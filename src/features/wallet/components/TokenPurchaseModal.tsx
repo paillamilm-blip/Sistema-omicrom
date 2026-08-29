@@ -149,7 +149,7 @@ export function TokenPurchaseModal({ onClose }: Props) {
 
         <div className="flex items-center gap-2 text-omicron-muted text-[11px]">
           <ShieldCheck size={13} className="text-omicron-green" />
-          Pago procesado de forma segura por Stripe. Ómicron no almacena tu tarjeta.
+          Pago procesado de forma segura por Stripe. Ómicrom no almacena tu tarjeta.
         </div>
 
         <div className="flex gap-3 pb-2">

@@ -53,7 +53,7 @@ export function useGemeloActivation() {
   const [ai, setAi] = useState<{ loading: boolean; text: string }>({ loading: false, text: '' });
   const [cvText, setCvText] = useState('');
   const [cvFileName, setCvFileName] = useState('');
-  const [msg, setMsg] = useState('Sube tu CV y Ómicron activa todo automáticamente.');
+  const [msg, setMsg] = useState('Sube tu CV y Ómicrom activa todo automáticamente.');
   const [pushes, setPushes] = useState<Push[]>([]);
   const [synergies, setSynergies] = useState<string[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -336,7 +336,7 @@ export function useGemeloActivation() {
 
     setPhase('syncing');
     setCurrentStep(0);
-    setMsg('Ómicron está analizando TODO tu CV con IA…');
+    setMsg('Ómicrom está analizando TODO tu CV con IA…');
     setLastError(null);
     setPersistError(null);
 

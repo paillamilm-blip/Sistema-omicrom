@@ -1,7 +1,7 @@
 // src/lib/progressiveProfile.ts
 // ═══════════════════════════════════════════════════════════════════════
 // R2: PROGRESSIVE PROFILING — Enriquecimiento gradual del perfil.
-// En vez de pedir todo de una vez, Ómicron pregunta de a poco.
+// En vez de pedir todo de una vez, Ómicrom pregunta de a poco.
 // ═══════════════════════════════════════════════════════════════════════
 import type { Profile } from '@/types';
 

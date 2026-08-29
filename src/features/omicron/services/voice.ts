@@ -1,9 +1,9 @@
 // src/lib/omicronVoice.ts
 // ═══════════════════════════════════════════════════════════════════════
-// ÓMICRON VOICE — TTS fluida vía Edge Function proxy-tts.
+// ÓMICROM VOICE — TTS fluida vía Edge Function proxy-tts.
 //
 // Estrategia "hablar mientras piensa":
-//   1. El texto de Ómicron se divide en oraciones
+//   1. El texto de Ómicrom se divide en oraciones
 //   2. Cada oración se envía a proxy-tts (server-side, key protegida)
 //   3. El audio de la primera oración empieza a sonar en ~1-2s
 //   4. Mientras suena, ya se está generando el audio de la siguiente

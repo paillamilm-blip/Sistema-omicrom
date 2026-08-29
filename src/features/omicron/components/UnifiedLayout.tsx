@@ -37,7 +37,7 @@ export function UnifiedLayout({
 
   return (
     <div style={S.container}>
-      {/* Fondo Ómicron: grilla + halo (continuidad visual con la orbe) */}
+      {/* Fondo Ómicrom: grilla + halo (continuidad visual con la orbe) */}
       <div style={S.bgGrid} />
       <div style={S.bgGlow} />
 

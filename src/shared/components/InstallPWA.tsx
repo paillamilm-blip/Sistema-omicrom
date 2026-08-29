@@ -81,13 +81,13 @@ export function InstallPWA() {
       <span style={{ fontSize: 20, lineHeight: 1 }}>Ω</span>
       {iosHint ? (
         <span style={{ fontFamily: FONT.body, fontSize: 12.5, color: '#eaf0fb', lineHeight: 1.4 }}>
-          Instala Ómicron: toca <Share size={13} style={{ verticalAlign: 'middle', color: C.cyan }} /> Compartir y
+          Instala Ómicrom: toca <Share size={13} style={{ verticalAlign: 'middle', color: C.cyan }} /> Compartir y
           {' '}<b style={{ color: C.cyan }}>Añadir a inicio</b>
         </span>
       ) : (
         <>
           <span style={{ fontFamily: FONT.body, fontSize: 13, color: '#eaf0fb' }}>
-            Instala Ómicron como app
+            Instala Ómicrom como app
           </span>
           <button
             onClick={install}

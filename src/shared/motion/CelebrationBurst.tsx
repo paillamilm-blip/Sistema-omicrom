@@ -3,7 +3,7 @@
 // Lightweight confetti burst for achievements, streaks, level-ups.
 // Pure CSS/JS — no canvas, no library. 30 particles, auto-cleanup.
 // Anti-slop: particles have physics (gravity + random velocity).
-// Taste: uses the Ómicron color palette, not random colors.
+// Taste: uses the Ómicrom color palette, not random colors.
 // Respects prefers-reduced-motion (shows a gentle scale pulse instead).
 // ═══════════════════════════════════════════════════════════════════════
 import { useEffect, useRef, useState, type CSSProperties } from 'react';

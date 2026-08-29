@@ -178,7 +178,7 @@ export function CartaPostulacionModal({ job, onClose, onApplyDone }: Props) {
             {/* Gaps (si hay) */}
             {carta.gapsMencionados.length > 0 && (
               <div style={{ fontFamily: FM, fontSize: 9, color: C.muted, margin: '8px 0', lineHeight: 1.4 }}>
-                💡 Áreas a desarrollar: {carta.gapsMencionados.join(', ')} — Ómicron puede ayudarte.
+                💡 Áreas a desarrollar: {carta.gapsMencionados.join(', ')} — Ómicrom puede ayudarte.
               </div>
             )}
 

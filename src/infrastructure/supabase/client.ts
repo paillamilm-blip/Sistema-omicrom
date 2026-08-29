@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 // ─────────────────────────────────────────────────────────────
-// Conexión a Supabase (proyecto Ómicron).
+// Conexión a Supabase (proyecto Ómicrom).
 //
 // La anon key es PÚBLICA por diseño (la seguridad real la dan las
 // políticas RLS de la base de datos). Se dejan como valores por
