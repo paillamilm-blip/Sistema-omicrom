@@ -14,8 +14,9 @@
 // significado claro (Reputación, Ejecución, etc.).
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { X, Share2, Zap, Shield, Globe, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { X, Share2, Zap, Shield, Globe, TrendingUp, CheckCircle2, Circle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
 import { C, FONT, SIZE, RADIUS } from '@/theme';
@@ -25,6 +26,18 @@ import { ShareCredentialModal } from '@/features/gemelo/components/RedSocial';
 
 // Fondo radial de la marca Ómicron (mismo lenguaje que BASE.root del tema).
 const OMICRON_BG = 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)';
+
+// Título de bloque reutilizable: punto de acento del color personal + label mono.
+function BlockTitle({ uc, children }: { uc: string; children: ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: uc, boxShadow: `0 0 6px ${uc}88`, flexShrink: 0 }} />
+      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4, color: C.mut, textTransform: 'uppercase' }}>
+        {children}
+      </span>
+    </div>
+  );
+}
 
 export function CredencialModal({ onClose }: { onClose: () => void }) {
   const { profile } = useApp();
@@ -58,6 +71,20 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
 
   // Nodos del orbe: entre 6 y 42, proporcional a la cantidad de skills.
   const orbNodes = Math.min(42, Math.max(6, skillsDetail.length));
+
+  // ── Bloque PERFIL PROFESIONAL: resumen del CV (truncado ~280 chars) ────
+  const cvSummary = (profile?.cv_summary ?? '').trim();
+  const cvSummaryText = cvSummary.length > 280 ? `${cvSummary.slice(0, 280).trimEnd()}…` : cvSummary;
+
+  // ── Bloque COMPETENCIAS VERIFICADAS: top ~6 competencias ───────────────
+  const topSkills = useMemo(() => skillsDetail.slice(0, 6), [skillsDetail]);
+
+  // ── Bloque TRAYECTORIA VERIFICADA: evidencia de tono profesional ───────
+  const contractsDone = profile?.total_contracts_completed ?? 0;
+  const isVerifiedPro = profile?.is_verified_professional ?? false;
+  const evidence: string[] = [];
+  if (contractsDone > 0) evidence.push(`${contractsDone} proyectos completados`);
+  if (isVerifiedPro) evidence.push('Profesional verificado');
 
   return (
     <motion.div
@@ -158,41 +185,138 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
                 style={{ height: '100%', borderRadius: 3, background: uc, boxShadow: `0 0 6px ${uc}66` }}
               />
             </div>
+            {/* Modelo 20/80: la reputación combina credenciales + desempeño demostrado. */}
+            <p style={{ margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textAlign: 'center' }}>
+              20% credenciales · 80% desempeño demostrado
+            </p>
           </div>
 
-          {/* ── 4 Ejes del Gemelo (grid 2x2, cada uno NN/100) ── */}
-          <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 20 }}>
-            {axes.map(({ key, label, value, color, Icon }, i) => {
-              const val = Math.round(value);
-              return (
-                <div
-                  key={key}
-                  style={{
-                    padding: '12px 12px', borderRadius: RADIUS.md,
-                    background: `${color}0d`, border: `1px solid ${color}33`,
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-                    <Icon size={13} color={color} />
-                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ flex: 1, height: 5, borderRadius: 3, background: `${color}22`, overflow: 'hidden' }}>
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${val}%` }}
-                        transition={{ delay: 0.25 + i * 0.08, duration: 0.6, ease: 'easeOut' }}
-                        style={{ height: '100%', borderRadius: 3, background: color, boxShadow: `0 0 5px ${color}66` }}
-                      />
+          {/* ═══ CREDENCIAL ESPEJO: CV + verificación lado a lado ═══════════ */}
+
+          {/* ── Bloque PERFIL PROFESIONAL (se oculta si no hay CV) ── */}
+          {cvSummaryText && (
+            <motion.section
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.4, ease: 'easeOut' }}
+              style={{
+                position: 'relative', width: '100%', marginTop: 20, padding: 16,
+                borderRadius: RADIUS.lg, background: 'rgba(255,255,255,0.04)',
+                border: `1px solid ${C.line}`, overflow: 'hidden',
+              }}
+            >
+              {/* Barra de acento vertical con la gradiente de la marca personal. */}
+              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 2, background: `linear-gradient(to bottom, ${uc}, ${C.purple}, ${C.gold})` }} />
+              <BlockTitle uc={uc}>Perfil Profesional</BlockTitle>
+              <p style={{ margin: '10px 0 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+                {cvSummaryText}
+              </p>
+            </motion.section>
+          )}
+
+          {/* ── Bloque COMPETENCIAS VERIFICADAS ── */}
+          {topSkills.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.4, ease: 'easeOut' }}
+              style={{
+                width: '100%', marginTop: 18, padding: 16,
+                borderRadius: RADIUS.lg, background: 'rgba(255,255,255,0.035)',
+                border: `1px solid ${C.line}`,
+              }}
+            >
+              <BlockTitle uc={uc}>Nivel de Competencias</BlockTitle>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 12 }}>
+                {topSkills.map((skill, i) => {
+                  const pct = Math.round(skill.pct);
+                  // Estado de DOMINIO (no verificación real): sin flag por-competencia
+                  // en el tipo, usamos el pct. pct >= 70 → "Dominio alto". Cuando exista
+                  // verificación real por competencia, cambiar a "Verificada" con su flag.
+                  const highMastery = pct >= 70;
+                  return (
+                    <div key={`${skill.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ flex: 1, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink }}>{skill.name}</span>
+                      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: highMastery ? uc : C.mut }}>
+                        {pct}<span style={{ fontSize: SIZE.xxs, color: C.mut }}>/100</span>
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 96, justifyContent: 'flex-end' }}>
+                        {highMastery
+                          ? <CheckCircle2 size={13} color={uc} />
+                          : <Circle size={13} color={C.mut} />}
+                        <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.4, color: highMastery ? C.ink : C.mut }}>
+                          {highMastery ? 'Dominio alto' : 'En desarrollo'}
+                        </span>
+                      </span>
                     </div>
-                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.sm, fontWeight: 700, color, minWidth: 30, textAlign: 'right' }}>
-                      {val}<span style={{ fontSize: SIZE.xxs, fontWeight: 600, color: C.mut }}>/100</span>
-                    </span>
+                  );
+                })}
+              </div>
+            </motion.section>
+          )}
+
+          {/* ── Bloque TRAYECTORIA VERIFICADA (siempre presente: contiene los ejes) ── */}
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.4, ease: 'easeOut' }}
+            style={{
+              width: '100%', marginTop: 18, padding: 16,
+              borderRadius: RADIUS.lg, background: 'rgba(255,255,255,0.045)',
+              border: `1px solid ${C.line}`,
+            }}
+          >
+            <BlockTitle uc={uc}>Trayectoria Verificada</BlockTitle>
+
+            {/* Evidencia de tono profesional (solo filas con dato > 0). */}
+            {evidence.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                {evidence.map((text) => (
+                  <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <CheckCircle2 size={14} color={C.green} />
+                    <span style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink }}>{text}</span>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+            )}
+
+            {/* Los 4 ejes del Gemelo como pieza central de la evidencia medible. */}
+            <p style={{ margin: '16px 0 10px', fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>
+              Nivel de conocimiento medido
+            </p>
+            <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {axes.map(({ key, label, value, color, Icon }, i) => {
+                const val = Math.round(value);
+                return (
+                  <div
+                    key={key}
+                    style={{
+                      padding: '12px 12px', borderRadius: RADIUS.md,
+                      background: `${color}0d`, border: `1px solid ${color}33`,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                      <Icon size={13} color={color} />
+                      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ flex: 1, height: 5, borderRadius: 3, background: `${color}22`, overflow: 'hidden' }}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${val}%` }}
+                          transition={{ delay: 0.25 + i * 0.08, duration: 0.6, ease: 'easeOut' }}
+                          style={{ height: '100%', borderRadius: 3, background: color, boxShadow: `0 0 5px ${color}66` }}
+                        />
+                      </div>
+                      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.sm, fontWeight: 700, color, minWidth: 30, textAlign: 'right' }}>
+                        {val}<span style={{ fontSize: SIZE.xxs, fontWeight: 600, color: C.mut }}>/100</span>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.section>
 
           {/* ── Compartir credencial ── */}
           <button
@@ -221,7 +345,7 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 16 }}>
             <CheckCircle2 size={13} color={C.green} />
             <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.5, color: C.mut }}>
-              Verificado por Sistema Ómicron
+              Conocimiento verificable, no declarado
             </span>
           </div>
         </div>
