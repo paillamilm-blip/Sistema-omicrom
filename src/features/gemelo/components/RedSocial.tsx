@@ -463,13 +463,13 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
 
                     {fusion.complementary.length > 0 && (
                       <div>
-                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyan, letterSpacing: 1 }}>SE COMPLEMENTAN</span>
+                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: 1 }}>SE COMPLEMENTAN</span>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 5 }}>
                           {fusion.complementary.map((s) => (
                             <div key={`comp-${s.name}`} style={{ fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, lineHeight: 1.4 }}>
                               {s.direction === 'learn'
-                                ? <>Puedes aprender <strong style={{ color: C.cyan }}>{s.name}</strong> ({s.theirsPct}/100) de {cred.full_name}.</>
-                                : <>Puedes enseñar <strong style={{ color: C.cyan }}>{s.name}</strong> ({s.minePct}/100) a {cred.full_name}.</>}
+                                ? <>Puedes aprender <strong style={{ color: uc }}>{s.name}</strong> ({s.theirsPct}/100) de {cred.full_name}.</>
+                                : <>Puedes enseñar <strong style={{ color: uc }}>{s.name}</strong> ({s.minePct}/100) a {cred.full_name}.</>}
                             </div>
                           ))}
                         </div>
@@ -478,12 +478,12 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
 
                     {fusion.onlyTheirs.length > 0 && (
                       <div>
-                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyan, letterSpacing: 1 }}>APRENDER ALGO NUEVO</span>
+                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: 1 }}>APRENDER ALGO NUEVO</span>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 5 }}>
                           {fusion.onlyTheirs.map((s) => (
                             <span key={`only-${s.name}`} style={{
-                              padding: '3px 9px', borderRadius: 999, background: C.cyanFaint, border: `1px solid ${C.cyanDim}`,
-                              fontFamily: FONT.mono, fontSize: 9.5, color: C.cyan,
+                              padding: '3px 9px', borderRadius: 999, background: `${uc}12`, border: `1px solid ${uc}44`,
+                              fontFamily: FONT.mono, fontSize: 9.5, color: uc,
                             }}>
                               {s.name} · {s.theirsPct}/100
                             </span>
