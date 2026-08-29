@@ -227,6 +227,7 @@ interface PublicCred {
   is_verified_professional: boolean; reputation_score: number;
   execution_score: number; quality_score: number; transcendence_score: number;
   foundation_score: number; pe_points: number; total_contracts_completed: number;
+  skills_detail?: { name: string; pct: number }[];
 }
 
 type ConnState = 'none' | 'pending_sent' | 'pending_received' | 'accepted' | 'rejected';
@@ -259,6 +260,17 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
       const row = Array.isArray(data) ? data[0] : null;
       if (!alive) return;
       if (error || !row) { setNotFound(true); setLoading(false); return; }
+      // skills_detail llega como jsonb (supabase-js lo parsea a JS). Guardamos
+      // solo entradas con nombre válido y pct numérico (fusión de orbes 5b).
+      const rawSkills: unknown = row.skills_detail;
+      const skillsDetail: { name: string; pct: number }[] = Array.isArray(rawSkills)
+        ? rawSkills
+            .map((x) => {
+              const o = x as { name?: unknown; pct?: unknown };
+              return { name: String(o.name ?? ''), pct: Number(o.pct) || 0 };
+            })
+            .filter((s) => !!s.name)
+        : [];
       const c: PublicCred = {
         id: row.id,
         username: row.username,
@@ -276,6 +288,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
         foundation_score: Number(row.foundation_score ?? 0),
         pe_points: Number(row.pe_points ?? 0),
         total_contracts_completed: Number(row.total_contracts_completed ?? 0),
+        skills_detail: skillsDetail,
       };
       setCred(c);
       setLoading(false);
@@ -428,8 +441,8 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             const mine: Skill[] = mineDetails.length > 0
               ? mineDetails
               : (profile.skills ?? []).map((s: string, i: number) => ({ name: s, pct: Math.max(30, 85 - i * 8) }));
-            // La credencial pública aún no expone las skills de la otra persona (llega en 5b).
-            const theirs: Skill[] = [];
+            // Skills de la otra persona expuestas por el RPC get_public_credential.
+            const theirs: Skill[] = cred.skills_detail ?? [];
             const fusion = computeOrbFusion(mine, theirs);
             const hasData = fusion.shared.length > 0 || fusion.complementary.length > 0 || fusion.onlyTheirs.length > 0;
 
