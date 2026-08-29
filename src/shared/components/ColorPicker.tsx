@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // COLOR PICKER — User chooses their Gemelo's primary color.
 //
-// 7 colors from the Ómicron palette. Each renders as a glowing circle.
+// 4 colors from the Ómicron palette. Each renders as a glowing circle.
 // Selected color gets a scale + ring animation.
 // Persists choice to localStorage for use across the app.
 //
@@ -24,12 +24,9 @@ export interface ColorOption {
 
 export const COLOR_OPTIONS: ColorOption[] = [
   { id: 'ice', hex: '#7dd3fc', label: 'Hielo' },
-  { id: 'purple', hex: '#5e5ce6', label: 'Púrpura' },
-  { id: 'gold', hex: '#ffb02e', label: 'Oro' },
-  { id: 'green', hex: '#3fd0c9', label: 'Esmeralda' },
   { id: 'pink', hex: '#ff6b9d', label: 'Rosa' },
+  { id: 'gold', hex: '#ffb02e', label: 'Oro' },
   { id: 'lime', hex: '#84cc16', label: 'Lima' },
-  { id: 'white', hex: '#e0e4ea', label: 'Blanco' },
 ];
 
 /** Get the user's saved color (or default cyan) */
