@@ -49,6 +49,7 @@ const AcademiaTab   = lazy(() => import('@/features/academia/components/Academia
 const GobernanzaTab = lazy(() => import('@/features/gobernanza/components/GobernanzaTab').then(m => ({ default: m.GobernanzaTab })));
 const VaultTab      = lazy(() => import('@/features/market/components/VaultTab').then(m => ({ default: m.VaultTab })));
 const ConvalidaOmicron = lazy(() => import('./ConvalidaOmicron'));
+const CredencialModal = lazy(() => import('@/features/gemelo/components/CredencialModal').then(m => ({ default: m.CredencialModal })));
 
 // ── Orb node definitions (the app sections) ─────────────────────────
 // Los primeros 9 son los HUBS navegables de la app.
@@ -250,6 +251,7 @@ export function OrbShell() {
   const [proactiveActions, setProactiveActions] = useState<ProactiveAction[]>([]);
   const [showPremium, setShowPremium] = useState(false);
   const [showConvalida, setShowConvalida] = useState(false);
+  const [showCredencial, setShowCredencial] = useState(false);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -756,13 +758,9 @@ export function OrbShell() {
       {/* ── PROFILE AVATAR BUTTON (sutil, esquina superior derecha) ──── */}
       {state !== 'fullscreen' && (
         <button
-          onClick={() => {
-            const node = orbNodesWithLevels.find((n: OrbNode) => n.id === 'inicio');
-            if (node) { setSelectedNode(node); setState('fullscreen'); }
-            setActiveTab('perfil');
-          }}
-          aria-label="Ver mi perfil"
-          title="Mi perfil"
+          onClick={() => setShowCredencial(true)}
+          aria-label="Ver mi credencial"
+          title="Mi credencial"
           style={{
             position: 'absolute',
             top: 'calc(env(safe-area-inset-top, 12px) + 14px)',
@@ -1260,6 +1258,19 @@ export function OrbShell() {
 
       {/* ── PREMIUM UPSELL (cuando llega al límite de IA) ──────────── */}
       {showPremium && <PremiumLock feature="Coach IA" onClose={() => setShowPremium(false)} />}
+
+      {/* ── CREDENCIAL ÓMICRON (abierta desde el avatar) ───────────── */}
+      {showCredencial && (
+        <ErrorBoundary section="Credencial">
+          <Suspense fallback={
+            <div style={{ position: 'fixed', inset: 0, zIndex: 95, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)' }}>
+              <GeodesicOrb size={90} nodes={8} color={getUserColor()} spinning={0} intensity={0.55} breathing />
+            </div>
+          }>
+            <CredencialModal onClose={() => setShowCredencial(false)} />
+          </Suspense>
+        </ErrorBoundary>
+      )}
 
       {/* ── CV UPLOAD MODAL (ConvalidaOmicron) ─────────────────────── */}
       {showConvalida && (
