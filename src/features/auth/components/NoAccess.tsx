@@ -49,7 +49,7 @@ export function NoAccess() {
           transition={{ duration: 0.5 }}
           style={S.logoBlock}
         >
-          <div style={{ ...S.orbRing, border: `1px solid ${uc}4d`, boxShadow: `0 0 30px ${uc}33, inset 0 0 20px ${uc}14` }}>
+          <div style={{ ...S.orbRing, boxShadow: `0 0 30px ${uc}33, inset 0 0 20px ${uc}14` }}>
             <GeodesicOrb size={80} nodes={10} color={uc} spinning={20} intensity={0.6} />
           </div>
           <div style={{ textAlign: 'center' }}>
