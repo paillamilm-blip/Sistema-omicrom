@@ -80,11 +80,15 @@ CREATE OR REPLACE FUNCTION public.get_retention_cohort(p_days int DEFAULT 7)
 RETURNS TABLE(cohort_date date, total_users bigint, returned_users bigint, retention_pct numeric)
 LANGUAGE sql STABLE AS $$
   WITH cohorts AS (
+    -- profiles no tiene columna created_at en el esquema base; derivamos la
+    -- fecha de cohorte como la PRIMERA actividad registrada de cada usuario.
     SELECT
-      DATE(created_at) as cohort_date,
-      id as user_id
-    FROM public.profiles
-    WHERE is_ghost = false
+      min(da.activity_date) as cohort_date,
+      da.user_id as user_id
+    FROM public.daily_activity da
+    JOIN public.profiles p ON p.id = da.user_id
+    WHERE p.is_ghost = false
+    GROUP BY da.user_id
   ),
   returned AS (
     SELECT DISTINCT
