@@ -1,5 +1,6 @@
 import { OrbShell } from '@/features/omicron/components/OrbShell';
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/infrastructure/query/client';
 import { AppProvider, useApp } from './store/AppContext';
@@ -107,30 +108,31 @@ function AppShell() {
     return () => clearTimeout(timer);
   }, [authStatus, isLoadingProfile]);
 
-  if ((authStatus === 'loading' || isLoadingProfile) && !forceGuest) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, background: C.bg, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(94,92,230,0.14), transparent 60%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', width: 110, height: 110 }}>
-          <GeodesicOrb size={110} nodes={12} color={uc} spinning={25} intensity={0.7} />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}>
-          <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: uc, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicrom...</p>
-          <button onClick={() => setForceGuest(true)} style={{ marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${uc}44`, color: uc, fontFamily: FONT.mono, fontSize: 10, cursor: 'pointer' }}>
-            Entrar sin cuenta →
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+  // Precedencia intacta: recuperación de contraseña y sin-acceso cortocircuitan
+  // ANTES del árbol de la app, igual que antes del loader animado.
   if (showResetPassword) return <ResetPasswordOverlay onDone={() => setShowResetPassword(false)} />;
   if (authStatus === 'no_access') return <NoAccess />;
+
+  // Condición de carga (idéntica a la original). Con ella derivamos showLoader.
+  const showLoader = (authStatus === 'loading' || isLoadingProfile) && !forceGuest;
+
+  // Respetar preferencia de menor movimiento: si el usuario la pide, el orbe
+  // solo se desvanece (sin encogerse ni viajar a la esquina).
+  const prefersReducedMotion = typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Salida del orbe: encoge (110 -> ~44px, scale 0.4) y se desplaza hacia la
+  // esquina superior derecha (donde vive el avatar en OrbShell). Con menor
+  // movimiento, solo se desvanece.
+  const orbExit = prefersReducedMotion
+    ? { opacity: 0 }
+    : { scale: 0.4, x: '38vw', y: '-40vh', opacity: 0 };
 
   const isGuest = authStatus === 'unauthenticated' || forceGuest;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
       <SelfManagedPulseBar />
       <OrbShell />
       {isGuest && showAuthModal && <AuthOverlay onClose={() => setShowAuthModal(false)} />}
@@ -140,6 +142,45 @@ function AppShell() {
       <ErrorBoundary section="InstalarApp">
         <InstallPWA />
       </ErrorBoundary>
+
+      {/* Loader de carga superpuesto: mientras showLoader es true cubre la app.
+          Al resolverse el gate, AnimatePresence reproduce la salida (~0.6s):
+          el orbe encoge y viaja a la esquina superior derecha y luego se
+          desmonta, revelando la app ya montada debajo. */}
+      <AnimatePresence>
+        {showLoader && (
+          <motion.div
+            key="omicron-loader"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeInOut' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, background: C.bg, overflow: 'hidden' }}
+          >
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(94,92,230,0.14), transparent 60%)', pointerEvents: 'none' }} />
+            <motion.div
+              initial={{ scale: 1, opacity: 1 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={orbExit}
+              transition={{ duration: 0.6, ease: 'easeInOut' }}
+              style={{ position: 'relative', width: 110, height: 110 }}
+            >
+              <GeodesicOrb size={110} nodes={12} color={uc} spinning={25} intensity={0.7} />
+            </motion.div>
+            {/* El texto y el botón se desvanecen más rápido que el orbe (~0.25s). */}
+            <motion.div
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}
+            >
+              <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: uc, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicrom...</p>
+              <button onClick={() => setForceGuest(true)} style={{ marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${uc}44`, color: uc, fontFamily: FONT.mono, fontSize: 10, cursor: 'pointer' }}>
+                Entrar sin cuenta →
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
