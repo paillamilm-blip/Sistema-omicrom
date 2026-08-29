@@ -2,14 +2,23 @@
 // ═══════════════════════════════════════════════════════════════════════
 // Lógica PURA del color del Gemelo, aislada de Supabase.
 //
-// Este módulo NO importa el cliente de Supabase: solo depende de la paleta
-// oficial (COLOR_OPTIONS de ColorPicker) y de localStorage. Al separarlo del
+// Este módulo NO importa el cliente de Supabase ni ColorPicker: la paleta
+// oficial se inlinea aquí (mismos id/hex que COLOR_OPTIONS de ColorPicker)
+// para mantener el módulo con dependencias mínimas y evitar arrastrar
+// ColorPicker → spatialAudio (cuyo constructor usa window.matchMedia, que no
+// existe en jsdom) dentro del entorno de Vitest de CI. Al separarlo del
 // servicio de sincronización, las pruebas unitarias del helper puro pueden
-// importarlo sin arrastrar el cliente de Supabase (que lee variables de
-// entorno al inicializarse y rompería en el entorno de Vitest de CI).
+// importarlo sin romper la carga del suite.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { COLOR_OPTIONS } from '@/shared/components/ColorPicker';
+// Paleta oficial inlineada (debe mantenerse sincronizada con COLOR_OPTIONS
+// de ColorPicker). resolveColorId solo necesita id y hex.
+const COLOR_OPTIONS: ReadonlyArray<{ id: string; hex: string }> = [
+  { id: 'ice', hex: '#7dd3fc' },
+  { id: 'pink', hex: '#ff6b9d' },
+  { id: 'gold', hex: '#ffb02e' },
+  { id: 'lime', hex: '#84cc16' },
+];
 
 // Misma clave que usa ColorPicker (caché síncrona en el dispositivo).
 const STORAGE_KEY = 'omicron_user_color';
