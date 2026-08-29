@@ -193,7 +193,7 @@ export function MaxSkillTab() {
 
           {/* ════════════ SECCIÓN 1: RADAR DEL GEMELO ════════════ */}
           <SectionTitle icon={<Target size={15} />} color={C.cyan}>
-            ADN del Gemelo Digital
+            Tu Gemelo Digital
           </SectionTitle>
 
           <OmicronCard accent={C.cyan} glow style={{ marginBottom: 16 }}>

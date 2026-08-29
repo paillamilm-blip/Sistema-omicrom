@@ -57,7 +57,7 @@ const CredencialModal = lazy(() => import('@/features/gemelo/components/Credenci
 // de integrar conocimiento al Gemelo Digital.
 // ── Hub nodes (always present — the 9 app sections) ─────────────────
 const HUB_NODES: OrbNode[] = [
-  { id: 'inicio',      label: 'Mi ADN',       tab: 'perfil',     icon: '⬡' },
+  { id: 'inicio',      label: 'Mi Gemelo',    tab: 'perfil',     icon: '⬡' },
   { id: 'academia',    label: 'Academia',     tab: 'academia',   icon: '◈' },
   { id: 'empleos',     label: 'Empleos',      tab: 'empleos',    icon: '◇' },
   { id: 'mercado',     label: 'Mercado',      tab: 'market',     icon: '⬢' },
@@ -494,7 +494,7 @@ export function OrbShell() {
 
   // ── Handle node tap → go to preview ─────────────────────────────────
   // Todos los nodos usan el mismo flujo: tap → preview → fullscreen.
-  // El nodo Mi ADN va a renderTab('perfil') que ahora muestra el ADN Digital.
+  // El nodo Mi Gemelo va a renderTab('perfil') que ahora muestra el Gemelo Digital.
   const handleNodeTap = useCallback((node: OrbNode) => {
     hapticMedium();
     audioSweep();

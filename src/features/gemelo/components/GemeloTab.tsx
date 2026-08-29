@@ -114,7 +114,7 @@ export function GemeloTab() {
         <div style={{ fontSize: 48 }}>⬡</div>
         <h2 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, color: C.ink }}>Tu Gemelo Digital</h2>
         <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: C.mut, maxWidth: 280 }}>
-          Creá tu cuenta o iniciá sesión para activar tu ADN Digital y subir tu CV.
+          Creá tu cuenta o iniciá sesión para activar tu Gemelo Digital y subir tu CV.
         </p>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('omicron:request-auth'))}
@@ -151,7 +151,7 @@ export function GemeloTab() {
       <div style={{ textAlign: 'center', padding: '16px 20px 8px', flexShrink: 0, position: 'relative', ...aging.style }}>
         <AuraBackground axes={{ execution: axes.exec, quality: axes.qual, transcendence: axes.trans, foundation: axes.fund }} />
         <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2.5, color: uc, textTransform: 'uppercase', marginBottom: 4 }}>
-          ADN Digital · Perfil Ómicron
+          Gemelo Digital · Perfil Ómicron
         </div>
         <h1 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
           {name || 'Tu Gemelo Digital'}

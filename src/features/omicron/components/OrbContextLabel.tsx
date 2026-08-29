@@ -47,7 +47,7 @@ export function OrbContextLabel({ visible = true }: Props) {
       options.push({ text: `${topSkill.name} ${topSkill.pct}% · toca para mejorar`, highlight: false });
     }
 
-    options.push({ text: '↓ toca un nodo para explorar tu ADN', highlight: false });
+    options.push({ text: '↓ toca un nodo para explorar tu Gemelo Digital', highlight: false });
     options.push({ text: '↓ desliza o toca · pregúntame algo', highlight: false });
 
     return options[seed % options.length] ?? options[0];
