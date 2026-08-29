@@ -78,12 +78,13 @@ export async function persistUserColor(colorId: string): Promise<void> {
  */
 export function hydrateUserColorFromProfile(profileColor: string | null | undefined): void {
   const profileId = resolveColorId(profileColor);
-  const localRaw = readLocalColor();
-  const localId = resolveColorId(localRaw);
+  const localId = resolveColorId(readLocalColor());
 
   if (profileId) {
-    // (a) El perfil manda: bajar a localStorage solo si cambia.
-    if (localRaw !== profileId) {
+    // (a) El perfil manda: bajar a localStorage solo si cambia. Se compara
+    // el id canónico (no el valor crudo) para que una entrada antigua que
+    // guardara el hex no fuerce una reescritura redundante en cada carga.
+    if (localId !== profileId) {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem(STORAGE_KEY, profileId);
       }
