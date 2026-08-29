@@ -11,6 +11,8 @@ import {
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { ProgressRadar } from '@/features/gemelo/components/ProgressRadar';
+import { useUserColor } from '@/shared/hooks/useUserColor';
+import { computeOrbFusion, type Skill } from '@/features/gemelo/services/orbFusion';
 import { C, FONT, RADIUS } from '@/theme';
 import type { GemeloDigital } from '@/types';
 
@@ -231,6 +233,7 @@ type ConnState = 'none' | 'pending_sent' | 'pending_received' | 'accepted' | 're
 
 export function PublicCredentialModal({ username, onClose }: { username: string; onClose: () => void }) {
   const { profile } = useApp();
+  const uc = useUserColor();
   const [cred, setCred] = useState<PublicCred | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -414,6 +417,82 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
                 <p style={{ margin: '6px 0 0', fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, lineHeight: 1.4 }}>
                   Juntos cubren el {aff}% de las 4 dimensiones del Gemelo. Mientras mas alto, mejor se complementan para contratos exigentes.
                 </p>
+              </div>
+            );
+          })()}
+
+          {/* Fusión de orbes: en qué crecemos juntos (compartir, aprender, enseñar). */}
+          {profile && !isSelf && (() => {
+            // Mis skills siguen el mismo patrón que GemeloTab (skills_detail o fallback).
+            const mineDetails = profile.skills_detail ?? [];
+            const mine: Skill[] = mineDetails.length > 0
+              ? mineDetails
+              : (profile.skills ?? []).map((s: string, i: number) => ({ name: s, pct: Math.max(30, 85 - i * 8) }));
+            // La credencial pública aún no expone las skills de la otra persona (llega en 5b).
+            const theirs: Skill[] = [];
+            const fusion = computeOrbFusion(mine, theirs);
+            const hasData = fusion.shared.length > 0 || fusion.complementary.length > 0 || fusion.onlyTheirs.length > 0;
+
+            return (
+              <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${C.line}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: uc, letterSpacing: 1 }}>FUSIÓN DE ORBES</span>
+                </div>
+
+                {!hasData ? (
+                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, lineHeight: 1.45 }}>
+                    Cuando ambos publiquen sus habilidades con detalle, aquí verás en qué coinciden, qué puedes aprender y qué puedes enseñar para crecer juntos en la red.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {fusion.shared.length > 0 && (
+                      <div>
+                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: 1 }}>EN COMÚN</span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 5 }}>
+                          {fusion.shared.map((s) => (
+                            <span key={`shared-${s.name}`} style={{
+                              padding: '3px 9px', borderRadius: 999, background: `${uc}18`, border: `1px solid ${uc}44`,
+                              fontFamily: FONT.mono, fontSize: 9.5, color: uc,
+                            }}>
+                              {s.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {fusion.complementary.length > 0 && (
+                      <div>
+                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: 1 }}>SE COMPLEMENTAN</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 5 }}>
+                          {fusion.complementary.map((s) => (
+                            <div key={`comp-${s.name}`} style={{ fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, lineHeight: 1.4 }}>
+                              {s.direction === 'learn'
+                                ? <>Puedes aprender <strong style={{ color: uc }}>{s.name}</strong> ({s.theirsPct}/100) de {cred.full_name}.</>
+                                : <>Puedes enseñar <strong style={{ color: uc }}>{s.name}</strong> ({s.minePct}/100) a {cred.full_name}.</>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {fusion.onlyTheirs.length > 0 && (
+                      <div>
+                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: 1 }}>APRENDER ALGO NUEVO</span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 5 }}>
+                          {fusion.onlyTheirs.map((s) => (
+                            <span key={`only-${s.name}`} style={{
+                              padding: '3px 9px', borderRadius: 999, background: `${uc}12`, border: `1px solid ${uc}44`,
+                              fontFamily: FONT.mono, fontSize: 9.5, color: uc,
+                            }}>
+                              {s.name} · {s.theirsPct}/100
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })()}
