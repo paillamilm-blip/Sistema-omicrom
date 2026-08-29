@@ -92,7 +92,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
 
         {/* GeodesicOrb (grows during analysis) */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 2 }}>
-          <GeodesicOrb size={160} nodes={orbNodes} color={uc} spinning={18} intensity={0.75} breathing />
+          <GeodesicOrb size={130} nodes={orbNodes} color={uc} spinning={18} intensity={0.75} breathing />
 
           {/* Progress message */}
           <p style={{ textAlign: 'center', margin: '24px 20px 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.5 }}>

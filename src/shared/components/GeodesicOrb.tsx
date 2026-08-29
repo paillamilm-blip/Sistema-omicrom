@@ -170,19 +170,6 @@ export function GeodesicOrb({
           transition: 'width 0.8s ease, height 0.8s ease, box-shadow 0.8s ease',
         }}
       />
-
-      {/* Outer ring (subtle) */}
-      {clampedNodes > 5 && (
-        <div
-          style={{
-            position: 'absolute', inset: 4,
-            borderRadius: '50%',
-            border: `1px solid ${color}22`,
-            opacity: intensity * 0.5,
-            transition: 'opacity 0.8s ease',
-          }}
-        />
-      )}
     </div>
   );
 }

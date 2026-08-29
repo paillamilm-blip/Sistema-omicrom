@@ -276,7 +276,6 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
             style={{
               marginTop: 18,
               padding: 8, borderRadius: RADIUS.pill,
-              border: `1px solid ${uc}4d`,
               boxShadow: `0 0 30px ${uc}33`,
               background: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.04), transparent 70%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
