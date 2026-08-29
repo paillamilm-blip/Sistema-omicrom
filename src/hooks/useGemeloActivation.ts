@@ -226,8 +226,14 @@ export function useGemeloActivation() {
   }, [profile?.id, profile?.username, emitPush, runAutoChain, toast, refreshProfile]);
 
   // ── Auto-persist when user authenticates after reveal ────────────
+  // Camino SIN remount: la instancia del hook sobrevive al login, así que
+  // marcamos rescueAttemptedRef para que el efecto de rescate no dispare
+  // un segundo persistAnalysis cuando pendingPersist vuelva a false (la
+  // clave aún no se limpió porque el RPC está en vuelo). Garantiza UN solo
+  // guardado tanto en el camino con remount como sin remount.
   useEffect(() => {
     if (pendingPersist && profile?.id && dossierRef.current) {
+      rescueAttemptedRef.current = true;
       void persistAnalysis(dossierRef.current);
       setPendingPersist(false);
     }
@@ -267,8 +273,15 @@ export function useGemeloActivation() {
   // como guest. Al montar ya autenticado, lo rescatamos, sembramos la UI
   // (para que el usuario vea su reveal correcto) y lo persistimos vía RPC.
   // Corre una sola vez por mount; persistAnalysis limpia la clave al éxito.
+  //
+  // Guarda `!pendingPersist`: si NO hubo remount (la instancia del hook
+  // sobrevive), `pendingPersist` ya está en true y el efecto de auto-persist
+  // de arriba se encarga del guardado. El rescate cede para evitar que
+  // ambos efectos disparen persistAnalysis en el mismo commit (doble RPC,
+  // doble runAutoChain, doble toast). En el camino con remount la instancia
+  // nueva nace con pendingPersist=false, así que el rescate sí dispara.
   useEffect(() => {
-    if (profile?.id && !rescueAttemptedRef.current && hasPendingCvAnalysis()) {
+    if (profile?.id && !pendingPersist && !rescueAttemptedRef.current && hasPendingCvAnalysis()) {
       const rescued = getPendingCvAnalysis();
       if (rescued) {
         rescueAttemptedRef.current = true;
@@ -280,7 +293,7 @@ export function useGemeloActivation() {
         void persistAnalysis(rescued);
       }
     }
-  }, [profile?.id, persistAnalysis, detectSynergies]);
+  }, [profile?.id, pendingPersist, persistAnalysis, detectSynergies]);
 
   // ── Read CV file ─────────────────────────────────────────────────
   const onCVFile = useCallback(async (file: File) => {

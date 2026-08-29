@@ -75,4 +75,29 @@ describe('puente CV analizado (guestMode)', () => {
     );
     expect(getPendingCvAnalysis()).toBeNull();
   });
+
+  it('skillsDetail presente pero no-array -> getPendingCvAnalysis() retorna null', () => {
+    localStorage.setItem(
+      PENDING_KEY,
+      JSON.stringify({
+        name: 'Detalle inválido',
+        labels: ['React'],
+        skillsDetail: { react: 80 },
+        axes: { exec: 70, qual: 65, trans: 40, fund: 55 },
+      }),
+    );
+    expect(getPendingCvAnalysis()).toBeNull();
+  });
+
+  it('sin skillsDetail (undefined) con forma válida -> getPendingCvAnalysis() no es null', () => {
+    localStorage.setItem(
+      PENDING_KEY,
+      JSON.stringify({
+        name: 'Sin detalle',
+        labels: ['React'],
+        axes: { exec: 70, qual: 65, trans: 40, fund: 55 },
+      }),
+    );
+    expect(getPendingCvAnalysis()).not.toBeNull();
+  });
 });

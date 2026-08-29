@@ -60,7 +60,9 @@ export function savePendingCvAnalysis(profile: AnalyzedProfile): void {
 /**
  * Lee el análisis pendiente del CV desde localStorage.
  * Validación defensiva: retorna null salvo que sea un objeto con `axes`
- * (exec/qual/trans/fund numéricos), `name` string y `labels` array.
+ * (exec/qual/trans/fund numéricos), `name` string y `labels` array. Si
+ * `skillsDetail` está presente pero no es array, también retorna null
+ * (cierra el contrato del AnalyzedProfile para futuros consumidores).
  */
 export function getPendingCvAnalysis(): AnalyzedProfile | null {
   try {
@@ -71,6 +73,7 @@ export function getPendingCvAnalysis(): AnalyzedProfile | null {
     const p = parsed as Record<string, unknown>;
     if (typeof p.name !== 'string') return null;
     if (!Array.isArray(p.labels)) return null;
+    if (p.skillsDetail !== undefined && !Array.isArray(p.skillsDetail)) return null;
     const axes = p.axes;
     if (!axes || typeof axes !== 'object') return null;
     const a = axes as Record<string, unknown>;
