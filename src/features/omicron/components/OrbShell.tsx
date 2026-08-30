@@ -1,4 +1,5 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
@@ -247,6 +248,8 @@ export function OrbShell() {
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
   const [voiceLevel, setVoiceLevel] = useState(0);
   const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const [nodePositions, setNodePositions] = useState<{ id: string; x: number; y: number; depth: number }[]>([]);
   const [inputText, setInputText] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
@@ -579,6 +582,7 @@ export function OrbShell() {
     const handleSpeaking = (e: Event) => {
       const active = (e as CustomEvent).detail?.active;
       setVoiceLevel(active ? 0.3 : 0);
+      setIsSpeaking(!!active);
     };
     window.addEventListener('omicron:speaking', handleSpeaking);
     return () => {
@@ -774,7 +778,33 @@ export function OrbShell() {
         pointerEvents: state === 'fullscreen' ? 'none' : 'auto',
         zIndex: 1,
       }}>
-        <div style={{ width: '64vmin', height: '64vmin', maxWidth: 360, maxHeight: 360 }}>
+        <motion.div
+          style={{
+            width: '64vmin',
+            height: '64vmin',
+            maxWidth: 360,
+            maxHeight: 360,
+            transformOrigin: 'center',
+            willChange: 'transform',
+          }}
+          animate={
+            prefersReducedMotion
+              ? { scale: 1 }
+              : isSpeaking
+                // Pulso vivo mientras Ómicrom habla: expande/contrae en ritmo.
+                // La amplitud se sesga ligeramente con voiceLevel, siempre clamp <= ~1.07.
+                ? { scale: [1, Math.min(1.07, 1.05 + voiceLevel * 0.06), 1] }
+                // Reposo: respiración muy sutil para no pelear con la animación interna del orbe.
+                : { scale: [1, 1.015, 1] }
+          }
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : isSpeaking
+                ? { repeat: Infinity, duration: 1.1, ease: 'easeInOut' }
+                : { repeat: Infinity, duration: 4, ease: 'easeInOut' }
+          }
+        >
           <OrbNeuronal
             nodes={orbNodesWithLevels}
             activeNodeId={selectedNode?.id ?? null}
@@ -785,7 +815,7 @@ export function OrbShell() {
             notifications={unreadCount > 0 ? { mensajes: unreadCount } : undefined}
             userColor={getUserColor()}
           />
-        </div>
+        </motion.div>
       </div>
 
 
