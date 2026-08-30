@@ -179,9 +179,9 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
 
 function playFromURL(url: string, _gen: number): void {
   const audio = new Audio(url);
-  // Necesario para que Web Audio pueda leer audio cross-origin cuando el
-  // servidor lo permite; inofensivo si no (el fallback cubre el caso no-CORS).
-  audio.crossOrigin = 'anonymous';
+  // El audio es un blob: same-origin (URL.createObjectURL), así que NO se marca
+  // crossOrigin: hacerlo es innecesario y en algunos navegadores interfiere con
+  // MediaElementSource, impidiendo que el analizador reciba muestras reales.
   audio.volume = 0.85;
   currentAudio = audio;
   emitSpeaking(true);
