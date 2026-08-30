@@ -87,6 +87,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     import('@/shared/services/userColorSync')
       .then(m => m.hydrateUserColorFromProfile(profile.user_color))
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id, profile?.user_color]);
 
   // Sincronizar el perfil del onboarding (lectura, read-through). Mismo
@@ -100,6 +101,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     import('@/shared/services/onboardingSync')
       .then(m => m.hydrateOnboardingFromProfile(profile))
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id, profile?.onboarding_completed_at]);
 
   // updateReputation no usa setTimeout para refrescar el perfil: el canal
