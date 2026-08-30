@@ -27,6 +27,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
     phase, currentStep, dossier,
     cvText, setCvText, cvFileName, msg, pushes, lastError,
     hasExistingCV, profile,
+    persisting, persisted,
     onCVFile, activateGemeloCompleto, cancelActivation, persistAnalysis,
   } = useGemeloActivation();
 
@@ -59,6 +60,9 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           analyzed={dossier}
           isAuthenticated={!!profile?.id}
           onActivate={() => void persistAnalysis()}
+          persisting={persisting}
+          persisted={persisted}
+          onClose={onClose}
         />
       </ErrorBoundary>
     );

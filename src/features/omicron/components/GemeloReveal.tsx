@@ -26,6 +26,9 @@ interface Props {
   analyzed: AnalyzedProfile;
   onActivate: () => void; // Called when user wants to register/save
   isAuthenticated: boolean;
+  persisting?: boolean; // true mientras el RPC de guardado está en vuelo
+  persisted?: boolean; // true tras un guardado exitoso
+  onClose?: () => void; // cierra el overlay ConvalidaOmicron
 }
 
 interface SyntheticJob {
@@ -122,7 +125,7 @@ function TerminalLine({ text, delay, color = C.cyan }: { text: string; delay: nu
 // ═══════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════
-export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
+export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting, persisted, onClose }: Props) {
   const uc = getUserColor();
   const [currentAct, setCurrentAct] = useState<Act>('reading');
   const [orbNodes, setOrbNodes] = useState(3);
@@ -194,6 +197,19 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAct]);
+
+  // ── Auto-advance tras guardado exitoso (usuario autenticado) ─────────
+  // Cuando el persist termina bien, damos un breve "beat" de confirmación
+  // y cerramos el overlay para que el usuario vuelva a la app con su
+  // Gemelo ya guardado y visible. Cubre tanto el tap manual del CTA como
+  // el auto-persist en background (setTimeout 100ms del hook), que también
+  // marca persisted=true sin que el usuario toque nada.
+  useEffect(() => {
+    if (isAuthenticated && persisted) {
+      const t = setTimeout(() => { onClose?.(); }, 900);
+      return () => clearTimeout(t);
+    }
+  }, [isAuthenticated, persisted, onClose]);
 
   // ═══════════════════════════════════════════════════════════════════════
   // RENDER
@@ -458,48 +474,59 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 2, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Tu Gemelo Digital está vivo</div>
                 <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.hero, color: C.ink, marginBottom: 4 }}>{analyzed.seniorLabel}</div>
-                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Pero si cierras esta ventana, se pierde. No queda guardado en ningún lado.</div>
+                {isAuthenticated ? (
+                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Tu Gemelo Digital queda guardado en tu perfil.</div>
+                ) : (
+                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Pero si cierras esta ventana, se pierde. No queda guardado en ningún lado.</div>
+                )}
               </div>
 
-              {/* Without vs With account */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-                <div style={{ padding: 12, borderRadius: RADIUS.lg, background: `${C.red}08`, border: `1px solid ${C.red}22` }}>
-                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.red, textTransform: 'uppercase', marginBottom: 8 }}>Sin cuenta</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut }}>
-                    <span>× Desaparece al cerrar</span>
-                    <span>× Sin acceso a empleos</span>
-                    <span>× No recibes sugerencias de mejora</span>
-                    <span>× Las empresas no pueden ver tu perfil</span>
+              {/* Without vs With account — solo para guests */}
+              {!isAuthenticated && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+                  <div style={{ padding: 12, borderRadius: RADIUS.lg, background: `${C.red}08`, border: `1px solid ${C.red}22` }}>
+                    <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.red, textTransform: 'uppercase', marginBottom: 8 }}>Sin cuenta</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut }}>
+                      <span>× Desaparece al cerrar</span>
+                      <span>× Sin acceso a empleos</span>
+                      <span>× No recibes sugerencias de mejora</span>
+                      <span>× Las empresas no pueden ver tu perfil</span>
+                    </div>
+                  </div>
+                  <div style={{ padding: 12, borderRadius: RADIUS.lg, background: `${C.green}08`, border: `1px solid ${C.green}33` }}>
+                    <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green, textTransform: 'uppercase', marginBottom: 8 }}>Con cuenta</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: FONT.body, fontSize: SIZE.xs, color: C.ink }}>
+                      <span>✓ Tu perfil queda guardado para siempre</span>
+                      <span>✓ Recibes pasos concretos para mejorar cada semana</span>
+                      <span>✓ Empleos compatibles te llegan automáticamente</span>
+                      <span>✓ Cada logro sube tu puntaje de reputación (0-100)</span>
+                    </div>
                   </div>
                 </div>
-                <div style={{ padding: 12, borderRadius: RADIUS.lg, background: `${C.green}08`, border: `1px solid ${C.green}33` }}>
-                  <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green, textTransform: 'uppercase', marginBottom: 8 }}>Con cuenta</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: FONT.body, fontSize: SIZE.xs, color: C.ink }}>
-                    <span>✓ Tu perfil queda guardado para siempre</span>
-                    <span>✓ Recibes pasos concretos para mejorar cada semana</span>
-                    <span>✓ Empleos compatibles te llegan automáticamente</span>
-                    <span>✓ Cada logro sube tu puntaje de reputación (0-100)</span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* CTA Button */}
               <motion.button
                 onClick={onActivate}
-                whileTap={{ scale: 0.97 }}
-                style={{ width: '100%', padding: '16px 24px', borderRadius: RADIUS.pill, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.lg, cursor: 'pointer', boxShadow: `0 4px 24px ${uc}44`, marginBottom: 12 }}
+                whileTap={isAuthenticated && (persisting || persisted) ? undefined : { scale: 0.97 }}
+                disabled={isAuthenticated && (persisting || persisted)}
+                style={{ width: '100%', padding: '16px 24px', borderRadius: RADIUS.pill, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.lg, cursor: isAuthenticated && (persisting || persisted) ? 'default' : 'pointer', opacity: isAuthenticated && (persisting || persisted) ? 0.7 : 1, boxShadow: `0 4px 24px ${uc}44`, marginBottom: 12 }}
               >
-                🧬 {isAuthenticated ? 'Guardar mi Gemelo Digital' : 'Activar mi Gemelo Digital'}
+                {isAuthenticated
+                  ? (persisted ? '✓ Guardado' : persisting ? 'Guardando…' : '🧬 Guardar mi Gemelo Digital')
+                  : '🧬 Activar mi Gemelo Digital'}
               </motion.button>
               <p style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, margin: '0 0 16px' }}>
                 {isAuthenticated ? 'Se guarda en tu perfil permanentemente' : '30 segundos — sin tarjeta de crédito'}
               </p>
 
-              {/* Countdown */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', borderRadius: RADIUS.pill, background: `${C.red}0a`, border: `1px solid ${C.red}22` }}>
-                <Clock size={12} color={C.red} />
-                <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.red }}>Si cierras sin registrarte, estos datos se pierden en {countdown} — no los podemos recuperar</span>
-              </div>
+              {/* Countdown — solo para guests */}
+              {!isAuthenticated && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', borderRadius: RADIUS.pill, background: `${C.red}0a`, border: `1px solid ${C.red}22` }}>
+                  <Clock size={12} color={C.red} />
+                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.red }}>Si cierras sin registrarte, estos datos se pierden en {countdown} — no los podemos recuperar</span>
+                </div>
+              )}
             </motion.div>
           )}
 
