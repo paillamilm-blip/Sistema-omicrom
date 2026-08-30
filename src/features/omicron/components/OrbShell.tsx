@@ -1279,9 +1279,6 @@ export function OrbShell() {
             slot="greeting"
             visible={showHomeGuide}
             userName={resolveGreetingName(sbProfile)}
-            hasCv={Boolean(sbProfile?.cv_summary)}
-            onNavigate={() => {}}
-            onDismiss={dismissHomeGuide}
           />
         </div>
       )}
@@ -1350,8 +1347,14 @@ export function OrbShell() {
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <CloudSavedBadge />
             </div>
+            {/* Se suprime mientras la bienvenida (showHomeGuide) está en
+                pantalla: el saludo + chips ES la guía de la primera sesión,
+                así dos superficies de guía no compiten en la banda superior.
+                ProactiveCards reanuda sus tips ociosos solo tras descartar la
+                bienvenida; su tope por sesión es independiente (sessionStorage
+                propio), así que sigue funcionando después. */}
             <ProactiveCards
-              visible={state === 'orb' && onboardingDone}
+              visible={state === 'orb' && onboardingDone && !showHomeGuide}
               hasCv={Boolean(sbProfile?.cv_summary)}
               onNavigate={(tab) => {
                 if (tab === 'cv') {

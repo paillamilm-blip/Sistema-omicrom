@@ -28,9 +28,18 @@ import { hapticLight } from '@/shared/utils/haptics';
 import { C, FONT, RADIUS } from '@/theme';
 import { buildGreeting, buildHomeActions } from '../utils/orbHomeGuide';
 
-export interface OrbHomeGuideProps {
-  /** Ranura de render: 'greeting' (arriba del orbe) o 'actions' (abajo). */
-  slot: 'greeting' | 'actions';
+// Unión discriminada por `slot`: cada ranura declara solo lo que usa, así el
+// saludo no arrastra props muertas (onNavigate/onDismiss) que nunca invoca.
+interface GreetingSlotProps {
+  /** Ranura SALUDO: línea sobria anclada arriba del orbe (no interactiva). */
+  slot: 'greeting';
+  userName: string;
+  visible: boolean;
+}
+
+interface ActionsSlotProps {
+  /** Ranura ACCIONES: tarjeta glass con chips + cierre, abajo del orbe. */
+  slot: 'actions';
   userName: string;
   hasCv: boolean;
   visible: boolean;
@@ -38,18 +47,11 @@ export interface OrbHomeGuideProps {
   onDismiss: () => void;
 }
 
-export function OrbHomeGuide({ slot, userName, hasCv, visible, onNavigate, onDismiss }: OrbHomeGuideProps) {
+export type OrbHomeGuideProps = GreetingSlotProps | ActionsSlotProps;
+
+export function OrbHomeGuide(props: OrbHomeGuideProps) {
   const userColor = useUserColor();
   const reduce = useReducedMotion();
-
-  const greeting = buildGreeting(userName);
-  const actions = buildHomeActions(hasCv);
-
-  const handleChip = (tab: string) => {
-    hapticLight();
-    onNavigate(tab);
-    onDismiss();
-  };
 
   // Variantes con animación; en reduced-motion se anulan transform/opacity
   // (incluida la `exit`, que queda {} → descarte instantáneo por diseño).
@@ -70,10 +72,11 @@ export function OrbHomeGuide({ slot, userName, hasCv, visible, onNavigate, onDis
       };
 
   // ── Ranura SALUDO: línea sobria anclada arriba del orbe ─────────────
-  if (slot === 'greeting') {
+  if (props.slot === 'greeting') {
+    const greeting = buildGreeting(props.userName);
     return (
       <AnimatePresence>
-        {visible && (
+        {props.visible && (
           <motion.p
             key="orb-home-greeting"
             variants={containerVariants}
@@ -101,6 +104,15 @@ export function OrbHomeGuide({ slot, userName, hasCv, visible, onNavigate, onDis
   }
 
   // ── Ranura ACCIONES: tarjeta glass con chips + cierre, abajo del orbe ─
+  const { visible, hasCv, onNavigate, onDismiss } = props;
+  const actions = buildHomeActions(hasCv);
+
+  const handleChip = (tab: string) => {
+    hapticLight();
+    onNavigate(tab);
+    onDismiss();
+  };
+
   return (
     <AnimatePresence>
       {visible && (
