@@ -254,7 +254,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
       </motion.div>
 
       {/* Content area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingTop: currentAct === 'reading' ? '32%' : '12%', overflow: 'auto' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: currentAct === 'reading' ? 'flex-end' : 'flex-start', paddingTop: currentAct === 'reading' ? '32%' : '16px', overflow: 'auto' }}>
         <AnimatePresence mode="wait">
 
           {/* ── ACT 1: LA ORBE TE LEE ────────────────────────────────── */}
