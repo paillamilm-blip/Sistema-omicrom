@@ -266,42 +266,42 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
         </button>
 
         <div style={{ padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* ── Eyebrow ── */}
-          <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 2.5, color: uc, textTransform: 'uppercase' }}>
-            Credencial Ómicrom
-          </div>
+          {/* ── Encabezado compacto: orbe pequeño (esquina superior) + identidad ── */}
+          {/* El orbe se muestra achicado como "retrato" en la esquina superior
+              izquierda (mismo tratamiento que la orbe de carga de OrbShell), de
+              modo que no invade ni empuja el nombre. La X de cerrar queda a la
+              derecha, así que el orbe va a la izquierda para evitar colisión. */}
+          <div style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            {/* ── Orbe como RETRATO contenido (pequeño, esquina) ── */}
+            <div style={{ flexShrink: 0, marginTop: 2 }}>
+              <GeodesicOrb
+                size={64}
+                spinning={0}
+                breathing
+                intensity={0.6}
+                color={uc}
+                nodes={orbNodes}
+              />
+            </div>
 
-          {/* ── Orbe como RETRATO contenido ── */}
-          <div
-            style={{
-              marginTop: 18,
-              padding: 8, borderRadius: RADIUS.pill,
-              boxShadow: `0 0 30px ${uc}33`,
-              background: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.04), transparent 70%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <GeodesicOrb
-              size={130}
-              spinning={0}
-              breathing
-              intensity={0.6}
-              color={uc}
-              nodes={orbNodes}
-            />
+            {/* ── Identidad: eyebrow + nombre + seniority ── */}
+            {/* paddingRight deja espacio para la X (top:14 right:14) sin solapar. */}
+            <div style={{ flex: 1, minWidth: 0, paddingRight: 36 }}>
+              <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 2.5, color: uc, textTransform: 'uppercase' }}>
+                Credencial Ómicrom
+              </div>
+              <h2 style={{ margin: '4px 0 0', fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xl, color: C.ink, letterSpacing: -0.3 }}>
+                {name || 'Tu Gemelo Digital'}
+              </h2>
+              <p style={{ margin: '3px 0 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.mut }}>
+                {seniorLabel}{years > 0 ? ` · ${years} años` : ''}
+              </p>
+            </div>
           </div>
-
-          {/* ── Nombre + seniority ── */}
-          <h2 style={{ margin: '18px 0 0', fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xl, color: C.ink, letterSpacing: -0.3, textAlign: 'center' }}>
-            {name || 'Tu Gemelo Digital'}
-          </h2>
-          <p style={{ margin: '4px 0 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.mut, textAlign: 'center' }}>
-            {seniorLabel}{years > 0 ? ` · ${years} años` : ''}
-          </p>
 
           {/* ── Reputación ── */}
-          <div style={{ width: '100%', marginTop: 22 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 6 }}>
+          <div style={{ width: '100%', marginTop: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-start', gap: 6 }}>
               <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1, color: C.mut, textTransform: 'uppercase', marginRight: 4 }}>
                 Reputación
               </span>
@@ -319,7 +319,7 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
               />
             </div>
             {/* Modelo 20/80: la reputación combina credenciales + desempeño demostrado. */}
-            <p style={{ margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textAlign: 'center' }}>
+            <p style={{ margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textAlign: 'left' }}>
               20% credenciales · 80% desempeño demostrado
             </p>
           </div>
