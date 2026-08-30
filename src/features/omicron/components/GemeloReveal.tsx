@@ -13,7 +13,7 @@
 // NO requiere auth — si es guest, al final pide registro para guardar.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Zap, Briefcase, TrendingUp, Shield, Target, Clock, ChevronRight, Sparkles } from 'lucide-react';
 import { C, FONT, SIZE, RADIUS } from '@/theme';
 import { getUserColor } from '@/shared/components/ColorPicker';
@@ -132,6 +132,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
   // inline, que cambia en cada render).
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  const reduceMotion = useReducedMotion();
   const [currentAct, setCurrentAct] = useState<Act>('reading');
   const [orbNodes, setOrbNodes] = useState(3);
   const [orbIntensity, setOrbIntensity] = useState(0.2);
@@ -230,15 +231,30 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
   // ═══════════════════════════════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════════════════════════════
+  const orbDocked = currentAct !== 'reading';
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: C.bg, overflow: 'hidden' }}>
-      {/* Orb — always visible, grows with acts */}
-      <div style={{ position: 'absolute', top: '8%', left: '50%', transform: 'translateX(-50%)', zIndex: 1, opacity: currentAct === 'cta' ? 0.4 : 1, transition: 'opacity 1s' }}>
+      {/* Orb — grande y centrado arriba mientras lee (acto 'reading');
+          al avanzar se achica, rota (sensación de carga) y vuela a la
+          esquina superior derecha, donde queda pequeño el resto de actos. */}
+      <motion.div
+        style={{ position: 'absolute', zIndex: 1 }}
+        animate={
+          orbDocked
+            ? { top: 'calc(env(safe-area-inset-top, 12px) + 8px)', left: 'auto', right: 16, x: '0%', scale: 0.62, rotate: reduceMotion ? 0 : 360, opacity: currentAct === 'cta' ? 0.4 : 1 }
+            : { top: '8%', left: '50%', right: 'auto', x: '-50%', scale: 1, rotate: 0, opacity: 1 }
+        }
+        transition={
+          reduceMotion
+            ? { duration: 0.2 }
+            : { duration: 0.8, ease: [0.32, 0.72, 0, 1] }
+        }
+      >
         <GeodesicOrb size={currentAct === 'reading' ? 104 : 76} nodes={orbNodes} color={uc} spinning={15} intensity={orbIntensity} breathing />
-      </div>
+      </motion.div>
 
       {/* Content area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingTop: currentAct === 'reading' ? '32%' : '22%', overflow: 'auto' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingTop: currentAct === 'reading' ? '32%' : '12%', overflow: 'auto' }}>
         <AnimatePresence mode="wait">
 
           {/* ── ACT 1: LA ORBE TE LEE ────────────────────────────────── */}
