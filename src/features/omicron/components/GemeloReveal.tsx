@@ -202,11 +202,11 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated }: Props) {
     <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: C.bg, overflow: 'hidden' }}>
       {/* Orb — always visible, grows with acts */}
       <div style={{ position: 'absolute', top: '8%', left: '50%', transform: 'translateX(-50%)', zIndex: 1, opacity: currentAct === 'cta' ? 0.4 : 1, transition: 'opacity 1s' }}>
-        <GeodesicOrb size={currentAct === 'reading' ? 140 : 100} nodes={orbNodes} color={uc} spinning={15} intensity={orbIntensity} breathing />
+        <GeodesicOrb size={currentAct === 'reading' ? 104 : 76} nodes={orbNodes} color={uc} spinning={15} intensity={orbIntensity} breathing />
       </div>
 
       {/* Content area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingTop: currentAct === 'reading' ? '42%' : '28%', overflow: 'auto' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingTop: currentAct === 'reading' ? '32%' : '22%', overflow: 'auto' }}>
         <AnimatePresence mode="wait">
 
           {/* ── ACT 1: LA ORBE TE LEE ────────────────────────────────── */}
