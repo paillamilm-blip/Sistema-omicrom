@@ -123,14 +123,19 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
   const inputRef = useRef('');
   inputRef.current = input;
 
+  // Ocultar el onboarding cuando ya está confirmado: por bandera local, por
+  // skills en el perfil, o por onboarding_completed_at (confirmación en la nube).
+  // Esto evita que en un dispositivo nuevo el overlay parpadee/se repita en la
+  // breve ventana previa a que hydrateOnboardingFromProfile escriba localStorage.
   const shouldHide = (typeof localStorage !== 'undefined' && localStorage.getItem(ONBOARDING_KEY))
-    || (profile?.skills && profile.skills.length > 0);
+    || (profile?.skills && profile.skills.length > 0)
+    || Boolean(profile?.onboarding_completed_at);
 
   useEffect(() => {
-    if (profile?.skills && profile.skills.length > 0) {
+    if ((profile?.skills && profile.skills.length > 0) || profile?.onboarding_completed_at) {
       localStorage.setItem(ONBOARDING_KEY, 'true');
     }
-  }, [profile?.skills]);
+  }, [profile?.skills, profile?.onboarding_completed_at]);
 
   // ── Step 1: Awakening — orb appears from nothing ──────────────────
   useEffect(() => {

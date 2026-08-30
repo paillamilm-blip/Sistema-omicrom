@@ -5,6 +5,7 @@ import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { ProactiveCards } from './ProactiveCards';
 import { OrbContextLabel } from './OrbContextLabel';
+import { CloudSavedBadge } from './CloudSavedBadge';
 import { PremiumLock } from '@/features/wallet/components/Premium';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { useNavigation } from '@/store/NavigationContext';
@@ -264,6 +265,19 @@ export function OrbShell() {
   const [onboardingDone, setOnboardingDone] = useState(() =>
     typeof localStorage !== 'undefined' && !!localStorage.getItem('omicron_onboarding_done')
   );
+
+  // En un dispositivo nuevo (localStorage vacío) el estado inicial anterior sería
+  // false y el oráculo no aparecería tras iniciar sesión. Si el perfil de la nube
+  // confirma el onboarding (onboarding_completed_at o skills presentes), lo tratamos
+  // como completado para que el orbe se muestre de inmediato, sin repetir onboarding.
+  // No regresamos el valor inicial basado en localStorage: solo lo activamos.
+  useEffect(() => {
+    const cloudOnboardingDone =
+      !!sbProfile?.onboarding_completed_at || (sbProfile?.skills?.length ?? 0) > 0;
+    if (cloudOnboardingDone) {
+      setOnboardingDone(true);
+    }
+  }, [sbProfile?.onboarding_completed_at, sbProfile?.skills]);
 
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
@@ -1239,7 +1253,15 @@ export function OrbShell() {
           padding: '0 20px',
           pointerEvents: 'none',
         }}>
-          <div style={{ maxWidth: 300, width: '100%', pointerEvents: 'auto' }}>
+          <div style={{ maxWidth: 300, width: '100%', pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Indicador discreto: el perfil está guardado en la cuenta del
+                usuario (no solo en el dispositivo). Solo para usuarios
+                autenticados con el onboarding confirmado en la nube. */}
+            {sbProfile?.onboarding_completed_at && (
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <CloudSavedBadge />
+              </div>
+            )}
             <ProactiveCards
               visible={state === 'orb' && onboardingDone}
               hasCv={Boolean(sbProfile?.cv_summary)}
