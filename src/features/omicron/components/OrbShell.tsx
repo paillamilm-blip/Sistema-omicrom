@@ -7,6 +7,7 @@ import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { ProactiveCards } from './ProactiveCards';
 import { OrbHomeGuide } from './OrbHomeGuide';
 import { resolveGreetingName } from '../utils/orbHomeGuide';
+import { shouldShowWelcomeCredencial } from '../utils/welcomeCredencial';
 import { OrbContextLabel } from './OrbContextLabel';
 import { CloudSavedBadge } from './CloudSavedBadge';
 import { PremiumLock } from '@/features/wallet/components/Premium';
@@ -301,6 +302,48 @@ export function OrbShell() {
       sessionStorage.setItem('omicron_home_guide_seen', '1');
     } catch { /* noop */ }
   }, []);
+
+  // ── Bienvenida por Credencial: SOLO la primera vez de cada sesión ───
+  // La primera vez que la app aterriza en el home autenticado del orbe,
+  // auto-abrimos la Credencial Ómicrom (misma que abre el avatar) como
+  // bienvenida; al cerrarla, se revela el home y el asistente. Un flag en
+  // sessionStorage ('omicron_welcome_credencial_shown') garantiza que sea
+  // una única vez por sesión (y vuelva a mostrarse en una sesión nueva).
+  //
+  // El flag se escribe SOLO al momento de abrir: así un invitado que se
+  // autentica más tarde en la misma sesión todavía recibe la bienvenida.
+  // El ref evita reevaluar tras montar (incluye el doble-invoke de StrictMode).
+  const welcomeCredencialChecked = useRef(false);
+  useEffect(() => {
+    if (welcomeCredencialChecked.current) return;
+
+    let alreadyShown = false;
+    try {
+      alreadyShown = sessionStorage.getItem('omicron_welcome_credencial_shown') === '1';
+    } catch {
+      alreadyShown = false;
+    }
+
+    const shouldOpen = shouldShowWelcomeCredencial({
+      isAuthenticated: !!sbProfile?.id,
+      state,
+      onboardingDone,
+      alreadyShown,
+      showConvalida,
+      showCredencial,
+      showPremium,
+    });
+
+    if (!shouldOpen) return;
+
+    // Fijamos el flag y el guard ANTES de abrir, de modo que jamás pueda
+    // abrirse dos veces en la misma sesión ni entre re-renders.
+    welcomeCredencialChecked.current = true;
+    try {
+      sessionStorage.setItem('omicron_welcome_credencial_shown', '1');
+    } catch { /* noop */ }
+    setShowCredencial(true);
+  }, [sbProfile?.id, state, onboardingDone, showConvalida, showCredencial, showPremium]);
 
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
