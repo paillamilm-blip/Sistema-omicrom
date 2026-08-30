@@ -754,7 +754,7 @@ export function OrbShell() {
         pointerEvents: state === 'fullscreen' ? 'none' : 'auto',
         zIndex: 1,
       }}>
-        <div style={{ width: '90vmin', height: '90vmin', maxWidth: 460, maxHeight: 460 }}>
+        <div style={{ width: '64vmin', height: '64vmin', maxWidth: 360, maxHeight: 360 }}>
           <OrbNeuronal
             nodes={orbNodesWithLevels}
             activeNodeId={selectedNode?.id ?? null}
