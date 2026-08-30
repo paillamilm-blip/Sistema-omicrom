@@ -59,6 +59,7 @@ export function useGemeloActivation() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [pendingPersist, setPendingPersist] = useState(false);
   const [persisted, setPersisted] = useState(false);
+  const [persisting, setPersisting] = useState(false);
   const [persistError, setPersistError] = useState<string | null>(null);
   const dossierRef = useRef<AnalyzedProfile | null>(null);
   const rescueAttemptedRef = useRef(false);
@@ -149,7 +150,10 @@ export function useGemeloActivation() {
       return;
     }
 
-    // Clear previous error
+    // Clear previous error — a partir de aquí sí vamos a golpear el RPC
+    // (usuario autenticado), así que marcamos el estado "guardando" para
+    // que la UI muestre progreso y no parezca congelada.
+    setPersisting(true);
     setPersistError(null);
     setMsg('Guardando tu Gemelo Digital…');
 
@@ -222,6 +226,10 @@ export function useGemeloActivation() {
       setPersistError(`Error al guardar: ${errMsg}`);
       console.error('[Omicron] persistAnalysis failed:', err);
       toast('Error al guardar. Intenta de nuevo.', 'error');
+    } finally {
+      // Limpia el estado "guardando" en TODOS los caminos de salida del
+      // RPC: éxito, retornos tempranos por error y catch.
+      setPersisting(false);
     }
   }, [profile?.id, profile?.username, emitPush, runAutoChain, toast, refreshProfile]);
 
@@ -487,7 +495,7 @@ export function useGemeloActivation() {
     cvText, setCvText, cvFileName, msg, pushes, synergies,
     rep, hasExistingCV, gemelo, profile, lastError,
     isProcessing: isProcessingRef.current,
-    pendingPersist, persisted, persistError,
+    pendingPersist, persisted, persisting, persistError,
     // Actions
     onCVFile, activateGemeloCompleto, cancelActivation, persistAnalysis,
   };
