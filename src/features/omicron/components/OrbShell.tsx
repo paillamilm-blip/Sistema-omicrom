@@ -1289,7 +1289,10 @@ export function OrbShell() {
               <GeodesicOrb size={80} nodes={8} color={getUserColor()} spinning={0} intensity={0.55} breathing />
             </div>
           }>
-            <CredencialModal onClose={() => setShowCredencial(false)} />
+            <CredencialModal
+              onClose={() => setShowCredencial(false)}
+              onUpdateCV={() => { setShowCredencial(false); setShowConvalida(true); }}
+            />
           </Suspense>
         </ErrorBoundary>
       )}
