@@ -266,6 +266,19 @@ export function OrbShell() {
     typeof localStorage !== 'undefined' && !!localStorage.getItem('omicron_onboarding_done')
   );
 
+  // En un dispositivo nuevo (localStorage vacío) el estado inicial anterior sería
+  // false y el oráculo no aparecería tras iniciar sesión. Si el perfil de la nube
+  // confirma el onboarding (onboarding_completed_at o skills presentes), lo tratamos
+  // como completado para que el orbe se muestre de inmediato, sin repetir onboarding.
+  // No regresamos el valor inicial basado en localStorage: solo lo activamos.
+  useEffect(() => {
+    const cloudOnboardingDone =
+      !!sbProfile?.onboarding_completed_at || (sbProfile?.skills?.length ?? 0) > 0;
+    if (cloudOnboardingDone) {
+      setOnboardingDone(true);
+    }
+  }, [sbProfile?.onboarding_completed_at, sbProfile?.skills]);
+
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
   // Now uses skills_detail (from AI analysis) for real domination %.
