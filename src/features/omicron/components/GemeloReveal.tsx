@@ -127,6 +127,11 @@ function TerminalLine({ text, delay, color = C.cyan }: { text: string; delay: nu
 // ═══════════════════════════════════════════════════════════════════════
 export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting, persisted, onClose }: Props) {
   const uc = getUserColor();
+  // Ref al último onClose para que el timer de auto-cierre siempre llame a la
+  // versión actual sin depender de su identidad (el padre lo pasa como arrow
+  // inline, que cambia en cada render).
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   const [currentAct, setCurrentAct] = useState<Act>('reading');
   const [orbNodes, setOrbNodes] = useState(3);
   const [orbIntensity, setOrbIntensity] = useState(0.2);
@@ -209,12 +214,18 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
   // posterior persisted=true cierra el overlay.
   // Nota: `persisted` solo se pone en true (nunca se resetea en el hook),
   // por lo que este efecto asume una única secuencia de reveal por montaje.
+  // IMPORTANTE: llamamos a `onCloseRef.current` (no a `onClose` directo) y
+  // excluimos `onClose` de las deps. Así los re-renders del padre durante los
+  // 900ms (toasts, refreshProfile, canal realtime) NO recrean el efecto ni
+  // reinician el timer; de lo contrario el overlay se quedaba pegado en
+  // "✓ Guardado" porque el timeout nunca llegaba a dispararse.
   useEffect(() => {
     if (isAuthenticated && persisted && currentAct === 'cta') {
-      const t = setTimeout(() => { onClose?.(); }, 900);
+      const t = setTimeout(() => { onCloseRef.current?.(); }, 900);
       return () => clearTimeout(t);
     }
-  }, [isAuthenticated, persisted, currentAct, onClose]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, persisted, currentAct]);
 
   // ═══════════════════════════════════════════════════════════════════════
   // RENDER
