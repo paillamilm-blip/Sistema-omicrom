@@ -14,6 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/infrastructure/supabase/client';
+import { startVoiceAnalysis, stopVoiceAnalysis } from '@/infrastructure/voice/voiceAnalyser';
 
 // ── State ────────────────────────────────────────────────────────────
 let isSpeaking = false;
@@ -35,7 +36,7 @@ export async function speakOmicron(text: string): Promise<void> {
 
   isSpeaking = true;
   abortController = new AbortController();
-  window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { speaking: true } }));
+  window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { active: true, speaking: true } }));
 
   const sentences = splitIntoChunks(text);
 
@@ -48,7 +49,7 @@ export async function speakOmicron(text: string): Promise<void> {
     // Silencioso — si TTS falla, el texto ya se mostró en UI
   } finally {
     isSpeaking = false;
-    window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { speaking: false } }));
+    window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { active: false, speaking: false } }));
   }
 }
 
@@ -60,9 +61,10 @@ export function stopOmicron(): void {
   abortController = null;
   audioQueue.forEach(a => { a.pause(); a.src = ''; });
   audioQueue.length = 0;
+  stopVoiceAnalysis();
   if (isSpeaking) {
     isSpeaking = false;
-    window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { speaking: false } }));
+    window.dispatchEvent(new CustomEvent('omicron:speaking', { detail: { active: false, speaking: false } }));
   }
 }
 
@@ -144,17 +146,22 @@ async function speakChunk(text: string): Promise<void> {
 
     const url = URL.createObjectURL(blob);
     const audio = new Audio(url);
+    // Necesario para que Web Audio pueda leer audio cross-origin cuando el
+    // servidor lo permite; inofensivo si no (el fallback cubre el no-CORS).
+    audio.crossOrigin = 'anonymous';
     audioQueue.push(audio);
 
     await new Promise<void>((resolve, reject) => {
       audio.onended = () => {
         URL.revokeObjectURL(url);
         audioQueue.splice(audioQueue.indexOf(audio), 1);
+        stopVoiceAnalysis();
         resolve();
       };
       audio.onerror = () => {
         URL.revokeObjectURL(url);
         audioQueue.splice(audioQueue.indexOf(audio), 1);
+        stopVoiceAnalysis();
         resolve(); // No rechazar — seguir con el siguiente chunk
       };
       if (abortController?.signal.aborted) {
@@ -165,7 +172,9 @@ async function speakChunk(text: string): Promise<void> {
         audio.pause();
         reject(new Error('aborted'));
       }, { once: true });
-      audio.play().catch(() => resolve()); // Autoplay blocked → skip
+      audio.play()
+        .then(() => startVoiceAnalysis(audio))
+        .catch(() => resolve()); // Autoplay blocked → skip
     });
   } catch {
     // Si todo falla, intentar speechSynthesis como ultimo recurso

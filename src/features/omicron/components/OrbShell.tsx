@@ -735,7 +735,9 @@ export function OrbShell() {
 
   // Fix 2: Idle breathing — throttled state update (2 Hz, cosmetic only)
   useEffect(() => {
-    if (state !== 'orb' || isListening) return;
+    // Mientras Ómicrom habla, el analizador de voz alimenta voiceLevel en vivo
+    // vía 'oracle:voice'; no correr la respiración senoidal para no pisarlo.
+    if (state !== 'orb' || isListening || isSpeaking) return;
     let running = true;
     let last = 0;
     const throttled = (ts: number) => {
@@ -751,7 +753,7 @@ export function OrbShell() {
       running = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [state, isListening]);
+  }, [state, isListening, isSpeaking]);
 
   // ── Onboarding handler (R3: intent-first routing) ────────────────────
   const handleOnboardingComplete = useCallback((_choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar') => {
@@ -834,9 +836,11 @@ export function OrbShell() {
             prefersReducedMotion
               ? { scale: 1 }
               : isSpeaking
-                // Pulso vivo mientras Ómicrom habla: expande/contrae en ritmo.
-                // La amplitud se sesga ligeramente con voiceLevel, siempre clamp <= ~1.07.
-                ? { scale: [1, Math.min(1.07, 1.05 + voiceLevel * 0.06), 1] }
+                // Pulso vivo mientras Ómicrom habla: rebota como ecualizador.
+                // voiceLevel ahora es la amplitud RMS real (0..1) en tiempo real,
+                // así que subimos el coeficiente para que las sílabas fuertes se
+                // noten, manteniéndolo premium con clamp <= ~1.12.
+                ? { scale: [1, Math.min(1.12, 1.02 + voiceLevel * 0.12), 1] }
                 // Reposo: respiración muy sutil para no pelear con la animación interna del orbe.
                 : { scale: [1, 1.015, 1] }
           }

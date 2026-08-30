@@ -12,6 +12,7 @@
 
 import { speak } from '@/infrastructure/voice/engine';
 import { supabase } from '@/infrastructure/supabase/client';
+import { startVoiceAnalysis, stopVoiceAnalysis } from '@/infrastructure/voice/voiceAnalyser';
 
 // Voces disponibles (deben coincidir con proxy-tts)
 const VOICES = {
@@ -178,20 +179,30 @@ export async function speakAI(text: string, voice: keyof typeof VOICES = 'defaul
 
 function playFromURL(url: string, _gen: number): void {
   const audio = new Audio(url);
+  // Necesario para que Web Audio pueda leer audio cross-origin cuando el
+  // servidor lo permite; inofensivo si no (el fallback cubre el caso no-CORS).
+  audio.crossOrigin = 'anonymous';
   audio.volume = 0.85;
   currentAudio = audio;
   emitSpeaking(true);
 
-  audio.play().catch(() => {
-    // Autoplay blocked
-    if (currentAudio === audio) currentAudio = null;
-    emitSpeaking(false);
-  });
+  audio.play()
+    .then(() => {
+      // Solo analizar si ESTE audio sigue siendo el actual.
+      if (currentAudio === audio) startVoiceAnalysis(audio);
+    })
+    .catch(() => {
+      // Autoplay blocked
+      if (currentAudio === audio) currentAudio = null;
+      stopVoiceAnalysis();
+      emitSpeaking(false);
+    });
 
   audio.onended = () => {
     // Identity check: solo emitir si ESTE audio sigue siendo el actual
     if (currentAudio === audio) {
       currentAudio = null;
+      stopVoiceAnalysis();
       emitSpeaking(false);
     }
   };
@@ -199,6 +210,7 @@ function playFromURL(url: string, _gen: number): void {
   audio.onerror = () => {
     if (currentAudio === audio) {
       currentAudio = null;
+      stopVoiceAnalysis();
       emitSpeaking(false);
     }
   };
@@ -227,6 +239,8 @@ export function stopAI(): void {
       if (!inCache) URL.revokeObjectURL(src);
     }
   }
+  // Detener análisis de amplitud y asentar el orbe
+  stopVoiceAnalysis();
   // Detener Web Speech
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     window.speechSynthesis.cancel();
