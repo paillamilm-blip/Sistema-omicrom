@@ -4,6 +4,7 @@ import { supabase } from '@/infrastructure/supabase/client';
 import { Eye, EyeOff, Shield, ArrowLeft, Mail } from 'lucide-react';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { getGuestProfile, clearGuestProfile } from '@/shared/utils/guestMode';
+import { persistOnboardingProfile } from '@/shared/services/onboardingSync';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { C, FONT, SIZE, RADIUS } from '@/theme';
 
@@ -94,23 +95,23 @@ function translateAuthError(message?: string): string {
   return 'Ocurrió un error. Intenta nuevamente.';
 }
 
-/** Migra el perfil generado como guest a Supabase al autenticarse */
+/**
+ * Migra el perfil generado como guest a Supabase al autenticarse.
+ *
+ * Delega en persistOnboardingProfile (capa de sincronización del onboarding),
+ * que sube la parte ADITIVA (skills / años / ejes / resumen) por el RPC
+ * aditivo aplicar_analisis_cv (GREATEST/MERGE del lado servidor) y las
+ * columnas de presentación (profession / seniorLabel / onboarding_completed_at)
+ * con un UPDATE directo. Antes se hacía un UPDATE plano que podía BAJAR un eje
+ * ganado en el CV y descartaba profession/seniorLabel: eso ya no ocurre.
+ */
 async function migrateGuestProfile() {
   try {
     const guest = getGuestProfile();
     if (!guest) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from('profiles').update({
-      skills: guest.skills,
-      skills_detail: guest.skills.map((s, i) => ({ name: s, pct: Math.max(40, 80 - i * 10) })),
-      cv_summary: guest.summary,
-      cv_years_experience: guest.years,
-      execution_score: guest.axes.exec,
-      quality_score: guest.axes.qual,
-      transcendence_score: guest.axes.trans,
-      foundation_score: guest.axes.fund,
-    }).eq('id', user.id);
+    await persistOnboardingProfile(guest);
     clearGuestProfile();
   } catch { /* silencioso */ }
 }

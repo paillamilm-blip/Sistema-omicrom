@@ -22,6 +22,11 @@ export interface Profile {
   cv_years_experience?: number;    // años de experiencia detectados en el último CV analizado
   skills_detail?: { name: string; pct: number }[]; // skills con % de dominio estimado
 
+  // === ONBOARDING (estimación inicial, sincronizada entre dispositivos) ===
+  onboarding_profession?: string;    // profesión estimada en el onboarding (texto de presentación)
+  onboarding_senior_label?: string;  // etiqueta de seniority estimada (texto de presentación)
+  onboarding_completed_at?: string;  // momento en que se completó el onboarding; marca de "ya hecho"
+
   // === TOKENS Y WALLET ===
   token_balance: number;
   token_escrow?: number;   // ✅ añadido: tokens bloqueados en escrow

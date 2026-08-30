@@ -89,6 +89,19 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, [profile?.id, profile?.user_color]);
 
+  // Sincronizar el perfil del onboarding (lectura, read-through). Mismo
+  // patrón que el color: cuando el perfil autenticado se materializa, se
+  // reconcilia el onboarding guardado en la nube (profesión / seniority /
+  // skills / ejes) con la caché local del invitado, para que un dispositivo
+  // nuevo vea el onboarding ya hecho. hydrateOnboardingFromProfile solo
+  // escribe si los valores difieren (anti-bucle) y no rompe el modo invitado.
+  useEffect(() => {
+    if (!profile) return;
+    import('@/shared/services/onboardingSync')
+      .then(m => m.hydrateOnboardingFromProfile(profile))
+      .catch(() => {});
+  }, [profile?.id, profile?.onboarding_completed_at]);
+
   // updateReputation no usa setTimeout para refrescar el perfil: el canal
   // real-time de profiles (más abajo) ya detecta el UPDATE y actualiza el estado.
   const updateReputation = useCallback(
