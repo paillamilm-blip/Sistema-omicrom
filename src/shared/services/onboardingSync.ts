@@ -65,8 +65,13 @@ export async function persistOnboardingProfile(guest: GuestProfile): Promise<voi
     // (a) Parte ADITIVA por el RPC aditivo (mismo mapeo de skills_detail que
     // usaba migrateGuestProfile). Ejes/skills/años/resumen se funden con
     // GREATEST/MERGE del lado servidor: nunca bajan un valor ya ganado.
+    // OJO: NO se envía la profesión como p_name. El RPC escribe p_name en
+    // full_name; la profesión del onboarding (p. ej. "Abogada") NO es el
+    // nombre de la persona y no debe pisar su nombre real. Se manda cadena
+    // vacía para que el guard coalesce(p_name,'')<>'' del RPC deje full_name
+    // intacto. La profesión ya se persiste aparte en onboarding_profession.
     await supabase.rpc('aplicar_analisis_cv', {
-      p_name: guest.profession,
+      p_name: '',
       p_skills: guest.skills,
       p_exec: guest.axes.exec,
       p_qual: guest.axes.qual,
@@ -79,10 +84,28 @@ export async function persistOnboardingProfile(guest: GuestProfile): Promise<voi
 
     // (b) Columnas de presentación propias del onboarding: UPDATE directo.
     // Mismo patrón de auto-actualización con RLS (id = auth.uid()).
+    //
+    // onboarding_completed_at marca la PRIMERA vez que se completó el
+    // onboarding (ver 0080) y es lo que keyea el efecto de hidratación en
+    // ProfileContext. Debe preservarse: solo se setea si aún no existe. Así
+    // no cambia en cada write-through y el efecto (keyed en
+    // [profile?.id, profile?.onboarding_completed_at]) deja de re-dispararse.
+    // Las columnas de presentación (profession / seniorLabel) sí se
+    // actualizan siempre.
+    const { data: current } = await supabase
+      .from('profiles')
+      .select('onboarding_completed_at')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const alreadyCompleted =
+      typeof current?.onboarding_completed_at === 'string' && current.onboarding_completed_at !== '';
+
     await supabase.from('profiles').update({
       onboarding_profession: guest.profession,
       onboarding_senior_label: guest.seniorLabel,
-      onboarding_completed_at: new Date().toISOString(),
+      // Preserva la marca de primera compleción: solo se escribe si falta.
+      ...(alreadyCompleted ? {} : { onboarding_completed_at: new Date().toISOString() }),
     }).eq('id', user.id);
   } catch {
     /* silencioso: el perfil local del onboarding ya quedó en localStorage */
@@ -107,12 +130,12 @@ export async function persistOnboardingProfile(guest: GuestProfile): Promise<voi
  */
 export function hydrateOnboardingFromProfile(
   profile: {
-    profession?: string | null;
     skills?: string[] | null;
-    seniorLabel?: string | null;
-    summary?: string | null;
-    // Columnas REALES del Profile de Supabase para años y ejes: se mapean a la
-    // forma que espera el reconciliador puro (years + axes{exec,qual,trans,fund}).
+    // Columnas REALES del Profile de Supabase. El resumen ganado en el CV vive
+    // en cv_summary; años y ejes en cv_years_experience + los cuatro *_score.
+    // Se mapean a la forma que espera el reconciliador puro
+    // (years + axes{exec,qual,trans,fund} + summary).
+    cv_summary?: string | null;
     cv_years_experience?: number | null;
     execution_score?: number | null;
     quality_score?: number | null;
@@ -134,7 +157,7 @@ export function hydrateOnboardingFromProfile(
       // reconciliador puro (las columnas onboarding_* son las de presentación).
       const reconciled = mergeOnboardingIntoLocal(
         {
-          profession: profile.onboarding_profession ?? profile.profession,
+          profession: profile.onboarding_profession,
           // Años y ejes viven en las columnas REALES del Profile
           // (cv_years_experience + los cuatro *_score); se mapean aquí a la
           // forma que espera el reconciliador puro para que un dispositivo
@@ -147,8 +170,11 @@ export function hydrateOnboardingFromProfile(
             trans: profile.transcendence_score,
             fund: profile.foundation_score,
           },
-          seniorLabel: profile.onboarding_senior_label ?? profile.seniorLabel,
-          summary: profile.summary,
+          seniorLabel: profile.onboarding_senior_label,
+          // El resumen ganado en el CV vive en la columna REAL cv_summary; así
+          // rehidrata en un dispositivo nuevo (antes se leía profile.summary,
+          // que no existe en Profile).
+          summary: profile.cv_summary,
           onboarding_completed_at: profile.onboarding_completed_at,
         },
         local,

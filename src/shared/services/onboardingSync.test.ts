@@ -75,6 +75,23 @@ describe('mergeOnboardingIntoLocal (semántica aditiva)', () => {
     expect(fromLocal.profession).toBe('Ingeniera');
     expect(fromLocal.seniorLabel).toBe('Semi Senior');
   });
+
+  it('cloud-leads: con onboarding_completed_at, el texto de la nube gana sobre un local no vacío', () => {
+    // Cuando la nube trae marca de compleción (onboarding_completed_at), sus
+    // textos no vacíos tienen prioridad AUNQUE el local también traiga valores.
+    const result = mergeOnboardingIntoLocal(
+      {
+        profession: 'Abogada',
+        seniorLabel: 'Senior',
+        summary: 'Resumen desde la nube',
+        onboarding_completed_at: '2026-02-01T00:00:00.000Z',
+      },
+      guest({ profession: 'Ingeniera', seniorLabel: 'Junior', summary: 'Resumen local' }),
+    );
+    expect(result.profession).toBe('Abogada');
+    expect(result.seniorLabel).toBe('Senior');
+    expect(result.summary).toBe('Resumen desde la nube');
+  });
 });
 
 describe('hasCloudOnboarding (predicado puro)', () => {
