@@ -77,7 +77,10 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
       <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: C.bg }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative', zIndex: 2 }}>
-          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: uc }}>ANALIZANDO TU CV</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <GeodesicOrb size={40} nodes={orbNodes} color={uc} spinning={18} intensity={0.75} breathing />
+            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: uc }}>ANALIZANDO TU CV</span>
+          </div>
           <button
             onClick={cancelActivation}
             aria-label="Cancelar análisis"
@@ -94,10 +97,8 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* GeodesicOrb (grows during analysis) */}
+        {/* Progress message + pulsing dots */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 2 }}>
-          <GeodesicOrb size={84} nodes={orbNodes} color={uc} spinning={18} intensity={0.75} breathing />
-
           {/* Progress message */}
           <p style={{ textAlign: 'center', margin: '24px 20px 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.5 }}>
             {msg}
@@ -139,13 +140,11 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
     <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: C.bg }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative', zIndex: 2 }}>
-        <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: C.ink }}>ACTIVAR GEMELO</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <GeodesicOrb size={40} nodes={5} color={uc} spinning={25} intensity={0.6} breathing />
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: C.ink }}>ACTIVAR GEMELO</span>
+        </div>
         <button onClick={onClose} aria-label="Cerrar" style={{ width: 44, height: 44, borderRadius: RADIUS.md, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
-      </div>
-
-      {/* GeodesicOrb (small, breathing) */}
-      <div style={{ position: 'relative', zIndex: 2, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 0 12px' }}>
-        <GeodesicOrb size={80} nodes={5} color={uc} spinning={25} intensity={0.6} breathing />
       </div>
 
       {/* Message */}
