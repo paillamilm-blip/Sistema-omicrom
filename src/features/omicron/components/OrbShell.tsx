@@ -4,6 +4,8 @@ import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { ProactiveCards } from './ProactiveCards';
+import { OrbHomeGuide } from './OrbHomeGuide';
+import { resolveGreetingName } from '../utils/orbHomeGuide';
 import { OrbContextLabel } from './OrbContextLabel';
 import { CloudSavedBadge } from './CloudSavedBadge';
 import { PremiumLock } from '@/features/wallet/components/Premium';
@@ -278,6 +280,24 @@ export function OrbShell() {
       setOnboardingDone(true);
     }
   }, [sbProfile?.onboarding_completed_at, sbProfile?.skills]);
+
+  // ── Bienvenida del orbe: SOLO la primera vez de cada sesión ─────────
+  // Un flag en sessionStorage (mismo patrón que ProactiveCards) hace que
+  // la superficie de bienvenida aparezca una única vez por sesión de
+  // navegador y no vuelva a mostrarse tras descartarla o actuar sobre un chip.
+  const [showHomeGuide, setShowHomeGuide] = useState(() => {
+    try {
+      return sessionStorage.getItem('omicron_home_guide_seen') !== '1';
+    } catch {
+      return true;
+    }
+  });
+  const dismissHomeGuide = useCallback(() => {
+    setShowHomeGuide(false);
+    try {
+      sessionStorage.setItem('omicron_home_guide_seen', '1');
+    } catch { /* noop */ }
+  }, []);
 
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
@@ -1228,6 +1248,72 @@ export function OrbShell() {
         {/* Suggestion Chips removed — ProactiveCards now guide the user */}
       </div>}
 
+      {/* ── BIENVENIDA DEL ORBE (solo la primera vez de cada sesión) ──
+          Superficie calma en dos partes (acceptance criterion #5): el
+          SALUDO se ancla ARRIBA del orbe y los CHIPS de acción ABAJO,
+          encima de la barra de input.
+
+          Los wrappers se montan mientras state==='orb' && onboardingDone
+          (SIN `showHomeGuide` en la condición); es `visible={showHomeGuide}`
+          quien gobierna el <AnimatePresence> interno, de modo que al
+          descartar se reproduce la variante `exit` (fade-out) en vez de un
+          corte seco. Con prefers-reduced-motion la variante `exit` es {} y
+          el descarte queda instantáneo (correcto). El wrapper exterior usa
+          pointerEvents:'none' para no bloquear el orbe cuando la tarjeta
+          se anima hacia afuera; la tarjeta reactiva pointerEvents:'auto'. */}
+
+      {/* Saludo: anclado arriba, debajo del OrbContextLabel para no chocar. */}
+      {state === 'orb' && onboardingDone && !!sbProfile?.id && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(env(safe-area-inset-top, 12px) + 96px)',
+          left: 0,
+          right: 0,
+          zIndex: 5,
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '0 20px',
+          pointerEvents: 'none',
+        }}>
+          <OrbHomeGuide
+            slot="greeting"
+            visible={showHomeGuide}
+            userName={resolveGreetingName(sbProfile)}
+          />
+        </div>
+      )}
+
+      {/* Chips de acción: anclados abajo, encima de la barra de input. */}
+      {state === 'orb' && onboardingDone && !!sbProfile?.id && (
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 'calc(env(safe-area-inset-bottom, 12px) + 84px)',
+          zIndex: 46,
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '0 16px',
+          pointerEvents: 'none',
+        }}>
+          <OrbHomeGuide
+            slot="actions"
+            visible={showHomeGuide}
+            userName={resolveGreetingName(sbProfile)}
+            hasCv={Boolean(sbProfile?.cv_summary)}
+            onNavigate={(tab) => {
+              if (tab === 'cv') {
+                setShowConvalida(true);
+                return;
+              }
+              const node = orbNodesWithLevels.find((n: OrbNode) => n.tab === tab);
+              if (node) handleNodeTap(node);
+            }}
+            onDismiss={dismissHomeGuide}
+          />
+        </div>
+      )}
+
       {/* ── PROACTIVE MESSAGE (con botones — reemplaza la burbuja plana) ── */}
       {state === 'orb' && responseMsg && (
         <ProactiveMessage
@@ -1261,8 +1347,14 @@ export function OrbShell() {
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <CloudSavedBadge />
             </div>
+            {/* Se suprime mientras la bienvenida (showHomeGuide) está en
+                pantalla: el saludo + chips ES la guía de la primera sesión,
+                así dos superficies de guía no compiten en la banda superior.
+                ProactiveCards reanuda sus tips ociosos solo tras descartar la
+                bienvenida; su tope por sesión es independiente (sessionStorage
+                propio), así que sigue funcionando después. */}
             <ProactiveCards
-              visible={state === 'orb' && onboardingDone}
+              visible={state === 'orb' && onboardingDone && !showHomeGuide}
               hasCv={Boolean(sbProfile?.cv_summary)}
               onNavigate={(tab) => {
                 if (tab === 'cv') {
