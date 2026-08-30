@@ -14,8 +14,8 @@
 // significado claro (Reputación, Ejecución, etc.).
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import type { ReactNode, CSSProperties } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, Share2, Download, Zap, Shield, Globe, TrendingUp, CheckCircle2, Circle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
@@ -26,6 +26,10 @@ import { ShareCredentialModal } from '@/features/gemelo/components/RedSocial';
 
 // Fondo radial de la marca Ómicrom (mismo lenguaje que BASE.root del tema).
 const OMICRON_BG = 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)';
+
+// ── Pestañas de la credencial (orden fijo): el cuerpo se pagina en 3 vistas. ──
+const TABS = ['Perfil', 'Competencias', 'Trayectoria'] as const;
+type TabIndex = 0 | 1 | 2;
 
 // ── Stacks tipográficos para el canvas (los tokens FONT no son legibles
 // desde el contexto 2D; replicamos las familias del tema como literales). ──
@@ -146,6 +150,18 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
   const uc = useUserColor();
   const [showShare, setShowShare] = useState(false);
 
+  // Pestaña activa del cuerpo paginado (0=Perfil, 1=Competencias, 2=Trayectoria).
+  // `dir` guarda la dirección del último cambio para orientar el slide horizontal.
+  const [tab, setTab] = useState<TabIndex>(0);
+  const [dir, setDir] = useState<1 | -1>(1);
+  const reduceMotion = useReducedMotion();
+
+  // Cambia de pestaña recordando la dirección (para el slide del seam).
+  const goTab = (next: TabIndex) => {
+    setDir(next >= tab ? 1 : -1);
+    setTab(next);
+  };
+
   // ── Datos derivados (mismo patrón exacto que GemeloTab) ────────────────
   const name = profile?.display_name || profile?.full_name || profile?.username || '';
   const username = profile?.username;
@@ -175,9 +191,11 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
   // Nodos del orbe: entre 6 y 42, proporcional a la cantidad de skills.
   const orbNodes = Math.min(42, Math.max(6, skillsDetail.length));
 
-  // ── Bloque PERFIL PROFESIONAL: resumen del CV (truncado ~280 chars) ────
+  // ── Bloque PERFIL PROFESIONAL: resumen del CV ─────────────────────────
+  // La pestaña Perfil puede contener más texto (con scroll interno acotado),
+  // así que relajamos el corte a ~600 chars pero lo mantenemos acotado.
   const cvSummary = (profile?.cv_summary ?? '').trim();
-  const cvSummaryText = cvSummary.length > 280 ? `${cvSummary.slice(0, 280).trimEnd()}…` : cvSummary;
+  const cvSummaryText = cvSummary.length > 600 ? `${cvSummary.slice(0, 600).trimEnd()}…` : cvSummary;
 
   // ── Bloque COMPETENCIAS VERIFICADAS: top ~6 competencias ───────────────
   const topSkills = useMemo(() => skillsDetail.slice(0, 6), [skillsDetail]);
@@ -220,6 +238,144 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
     a.remove();
   };
 
+  // ═══ SEAM DE ANIMACIÓN (un solo lugar) ════════════════════════════════
+  // Transición slide horizontal + fade entre pestañas. La distancia se anula
+  // con "reduce motion". FEAT-003 podrá enganchar `drag` en este mismo motion.div
+  // sin reestructurar (las variantes reciben `dir` como custom).
+  const slide = reduceMotion ? 0 : 44;
+  const bodyVariants = {
+    enter: (d: 1 | -1) => ({ x: d * slide, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (d: 1 | -1) => ({ x: -d * slide, opacity: 0 }),
+  };
+  const bodyTransition = { duration: 0.28, ease: 'easeOut' as const };
+
+  // Marco visual compartido por los tres cuerpos de pestaña.
+  const tabPanelStyle: CSSProperties = {
+    width: '100%', padding: 16,
+    borderRadius: RADIUS.lg, background: 'rgba(255,255,255,0.04)',
+    border: `1px solid ${C.line}`,
+  };
+
+  // Cuerpo de la pestaña activa (se renderiza uno a la vez).
+  const renderTabBody = () => {
+    if (tab === 0) {
+      // ── Perfil Profesional (cvSummary con scroll interno acotado) ──
+      return (
+        <section style={{ ...tabPanelStyle, position: 'relative', overflow: 'hidden' }}>
+          {/* Barra de acento vertical con la gradiente de la marca personal. */}
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 2, background: `linear-gradient(to bottom, ${uc}, ${C.purple}, ${C.gold})` }} />
+          <BlockTitle uc={uc}>Perfil Profesional</BlockTitle>
+          {cvSummaryText ? (
+            <p style={{ margin: '10px 0 0', maxHeight: 260, overflowY: 'auto', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+              {cvSummaryText}
+            </p>
+          ) : (
+            <p style={{ margin: '10px 0 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.mut, lineHeight: 1.55 }}>
+              Todavía no hay un resumen profesional.
+            </p>
+          )}
+        </section>
+      );
+    }
+
+    if (tab === 1) {
+      // ── Nivel de Competencias (topSkills) ──
+      return (
+        <section style={{ ...tabPanelStyle, background: 'rgba(255,255,255,0.035)' }}>
+          <BlockTitle uc={uc}>Nivel de Competencias</BlockTitle>
+          {topSkills.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 12 }}>
+              {topSkills.map((skill, i) => {
+                const pct = Math.round(skill.pct);
+                // Estado de DOMINIO (no verificación real): sin flag por-competencia
+                // en el tipo, usamos el pct. pct >= 70 → "Dominio alto". Cuando exista
+                // verificación real por competencia, cambiar a "Verificada" con su flag.
+                const highMastery = pct >= 70;
+                return (
+                  <div key={`${skill.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ flex: 1, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink }}>{skill.name}</span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: highMastery ? uc : C.mut }}>
+                      {pct}<span style={{ fontSize: SIZE.xxs, color: C.mut }}>/100</span>
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 96, justifyContent: 'flex-end' }}>
+                      {highMastery
+                        ? <CheckCircle2 size={13} color={uc} />
+                        : <Circle size={13} color={C.mut} />}
+                      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.4, color: highMastery ? C.ink : C.mut }}>
+                        {highMastery ? 'Dominio alto' : 'En desarrollo'}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p style={{ margin: '10px 0 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.mut, lineHeight: 1.55 }}>
+              Todavía no hay competencias para mostrar.
+            </p>
+          )}
+        </section>
+      );
+    }
+
+    // ── Trayectoria Verificada (evidencia + 4 ejes) ──
+    return (
+      <section style={{ ...tabPanelStyle, background: 'rgba(255,255,255,0.045)' }}>
+        <BlockTitle uc={uc}>Trayectoria Verificada</BlockTitle>
+
+        {/* Evidencia de tono profesional (solo filas con dato > 0). */}
+        {evidence.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+            {evidence.map((text) => (
+              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <CheckCircle2 size={14} color={C.green} />
+                <span style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink }}>{text}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Los 4 ejes del Gemelo como pieza central de la evidencia medible. */}
+        <p style={{ margin: '16px 0 10px', fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>
+          Nivel de conocimiento medido
+        </p>
+        <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {axes.map(({ key, label, value, color, Icon }, i) => {
+            const val = Math.round(value);
+            return (
+              <div
+                key={key}
+                style={{
+                  padding: '12px 12px', borderRadius: RADIUS.md,
+                  background: `${color}0d`, border: `1px solid ${color}33`,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                  <Icon size={13} color={color} />
+                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, height: 5, borderRadius: 3, background: `${color}22`, overflow: 'hidden' }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${val}%` }}
+                      transition={{ delay: 0.25 + i * 0.08, duration: 0.6, ease: 'easeOut' }}
+                      style={{ height: '100%', borderRadius: 3, background: color, boxShadow: `0 0 5px ${color}66` }}
+                    />
+                  </div>
+                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.sm, fontWeight: 700, color, minWidth: 30, textAlign: 'right' }}>
+                    {val}<span style={{ fontSize: SIZE.xxs, fontWeight: 600, color: C.mut }}>/100</span>
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
   return (
     <motion.div
       onClick={onClose}
@@ -240,7 +396,9 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
         transition={{ type: 'spring', stiffness: 320, damping: 30 }}
         style={{
           position: 'relative',
-          width: '100%', maxWidth: 420, maxHeight: '92vh', overflowY: 'auto',
+          width: '100%', maxWidth: 420, maxHeight: '92vh',
+          display: 'flex', flexDirection: 'column',
+          overflow: 'hidden',
           borderRadius: RADIUS.xl,
           background: 'linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
           border: `1px solid ${C.line}`,
@@ -265,7 +423,8 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
           <X size={16} />
         </button>
 
-        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {/* ═══ ENCABEZADO FIJO (orbe + identidad + reputación) ═══════════ */}
+        <div style={{ flexShrink: 0, padding: '24px 24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* ── Encabezado compacto: orbe pequeño (esquina superior) + identidad ── */}
           {/* El orbe se muestra achicado como "retrato" en la esquina superior
               izquierda (mismo tratamiento que la orbe de carga de OrbShell), de
@@ -323,140 +482,79 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
               20% credenciales · 80% desempeño demostrado
             </p>
           </div>
+        </div>
 
-          {/* ═══ CREDENCIAL ESPEJO: CV + verificación lado a lado ═══════════ */}
-
-          {/* ── Bloque PERFIL PROFESIONAL (se oculta si no hay CV) ── */}
-          {cvSummaryText && (
-            <motion.section
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.4, ease: 'easeOut' }}
-              style={{
-                position: 'relative', width: '100%', marginTop: 20, padding: 16,
-                borderRadius: RADIUS.lg, background: 'rgba(255,255,255,0.04)',
-                border: `1px solid ${C.line}`, overflow: 'hidden',
-              }}
-            >
-              {/* Barra de acento vertical con la gradiente de la marca personal. */}
-              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 2, background: `linear-gradient(to bottom, ${uc}, ${C.purple}, ${C.gold})` }} />
-              <BlockTitle uc={uc}>Perfil Profesional</BlockTitle>
-              <p style={{ margin: '10px 0 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
-                {cvSummaryText}
-              </p>
-            </motion.section>
-          )}
-
-          {/* ── Bloque COMPETENCIAS VERIFICADAS ── */}
-          {topSkills.length > 0 && (
-            <motion.section
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.4, ease: 'easeOut' }}
-              style={{
-                width: '100%', marginTop: 18, padding: 16,
-                borderRadius: RADIUS.lg, background: 'rgba(255,255,255,0.035)',
-                border: `1px solid ${C.line}`,
-              }}
-            >
-              <BlockTitle uc={uc}>Nivel de Competencias</BlockTitle>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 12 }}>
-                {topSkills.map((skill, i) => {
-                  const pct = Math.round(skill.pct);
-                  // Estado de DOMINIO (no verificación real): sin flag por-competencia
-                  // en el tipo, usamos el pct. pct >= 70 → "Dominio alto". Cuando exista
-                  // verificación real por competencia, cambiar a "Verificada" con su flag.
-                  const highMastery = pct >= 70;
-                  return (
-                    <div key={`${skill.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ flex: 1, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink }}>{skill.name}</span>
-                      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: highMastery ? uc : C.mut }}>
-                        {pct}<span style={{ fontSize: SIZE.xxs, color: C.mut }}>/100</span>
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 96, justifyContent: 'flex-end' }}>
-                        {highMastery
-                          ? <CheckCircle2 size={13} color={uc} />
-                          : <Circle size={13} color={C.mut} />}
-                        <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.4, color: highMastery ? C.ink : C.mut }}>
-                          {highMastery ? 'Dominio alto' : 'En desarrollo'}
-                        </span>
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.section>
-          )}
-
-          {/* ── Bloque TRAYECTORIA VERIFICADA (siempre presente: contiene los ejes) ── */}
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.4, ease: 'easeOut' }}
-            style={{
-              width: '100%', marginTop: 18, padding: 16,
-              borderRadius: RADIUS.lg, background: 'rgba(255,255,255,0.045)',
-              border: `1px solid ${C.line}`,
-            }}
-          >
-            <BlockTitle uc={uc}>Trayectoria Verificada</BlockTitle>
-
-            {/* Evidencia de tono profesional (solo filas con dato > 0). */}
-            {evidence.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                {evidence.map((text) => (
-                  <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <CheckCircle2 size={14} color={C.green} />
-                    <span style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink }}>{text}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Los 4 ejes del Gemelo como pieza central de la evidencia medible. */}
-            <p style={{ margin: '16px 0 10px', fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>
-              Nivel de conocimiento medido
-            </p>
-            <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {axes.map(({ key, label, value, color, Icon }, i) => {
-                const val = Math.round(value);
-                return (
-                  <div
-                    key={key}
+        {/* ═══ BARRA DE PESTAÑAS (entre encabezado fijo y cuerpo) ════════ */}
+        <div
+          role="tablist"
+          aria-label="Secciones de la credencial"
+          style={{
+            flexShrink: 0, display: 'flex', gap: 4,
+            padding: '14px 24px 0', margin: '4px 0 0',
+          }}
+        >
+          {TABS.map((label, i) => {
+            const active = tab === i;
+            return (
+              <button
+                key={label}
+                role="tab"
+                aria-selected={active}
+                aria-label={label}
+                onClick={() => goTab(i as TabIndex)}
+                style={{
+                  flex: 1, position: 'relative', cursor: 'pointer',
+                  padding: '8px 4px 10px',
+                  background: 'transparent', border: 'none',
+                  fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.6,
+                  color: active ? C.ink : C.mut,
+                }}
+              >
+                {label}
+                {/* Indicador de pestaña activa (subrayado en el color del usuario). */}
+                {active && (
+                  <motion.div
+                    layoutId="cred-tab-indicator"
                     style={{
-                      padding: '12px 12px', borderRadius: RADIUS.md,
-                      background: `${color}0d`, border: `1px solid ${color}33`,
+                      position: 'absolute', left: 8, right: 8, bottom: 0, height: 2,
+                      borderRadius: 2, background: uc, boxShadow: `0 0 6px ${uc}88`,
                     }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-                      <Icon size={13} color={color} />
-                      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ flex: 1, height: 5, borderRadius: 3, background: `${color}22`, overflow: 'hidden' }}>
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${val}%` }}
-                          transition={{ delay: 0.25 + i * 0.08, duration: 0.6, ease: 'easeOut' }}
-                          style={{ height: '100%', borderRadius: 3, background: color, boxShadow: `0 0 5px ${color}66` }}
-                        />
-                      </div>
-                      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.sm, fontWeight: 700, color, minWidth: 30, textAlign: 'right' }}>
-                        {val}<span style={{ fontSize: SIZE.xxs, fontWeight: 600, color: C.mut }}>/100</span>
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.section>
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {/* Separador bajo la barra de pestañas. */}
+        <div style={{ flexShrink: 0, height: 1, background: C.line, margin: '0 24px' }} />
 
+        {/* ═══ CUERPO PAGINADO (región flexible con scroll acotado) ══════ */}
+        {/* SEAM DE ANIMACIÓN: un único motion.div keyed por pestaña. */}
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 24px' }}>
+          <AnimatePresence mode="wait" custom={dir} initial={false}>
+            <motion.div
+              key={tab}
+              custom={dir}
+              variants={bodyVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={bodyTransition}
+              style={{ width: '100%' }}
+            >
+              {renderTabBody()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* ═══ PIE FIJO (acciones + sello, sin scroll de página) ═════════ */}
+        <div style={{ flexShrink: 0, padding: '14px 24px 20px', borderTop: `1px solid ${C.line}`, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* ── Compartir credencial (primario) ── */}
           <button
             onClick={() => username && setShowShare(true)}
             disabled={!username}
             style={{
-              width: '100%', marginTop: 22, padding: '13px', borderRadius: RADIUS.lg,
+              width: '100%', padding: '13px', borderRadius: RADIUS.lg,
               cursor: username ? 'pointer' : 'not-allowed',
               background: username ? uc : 'rgba(255,255,255,0.05)',
               border: username ? 'none' : `1px solid ${C.line}`,
