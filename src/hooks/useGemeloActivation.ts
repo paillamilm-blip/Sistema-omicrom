@@ -202,6 +202,10 @@ export function useGemeloActivation() {
       emitPush('Calidad', data.axes.qual > 50 ? 10 : 6, C.purple);
       toast('¡Gemelo Digital activado!', 'success');
       speak(`Gemelo Digital activado. Perfil: ${data.seniorLabel}.`);
+      // Señal "recién guardado": la insignia efímera CloudSavedBadge escucha
+      // este evento DOM para aparecer y auto-ocultarse (~3s). Mismo patrón
+      // que userColorSync con 'omicron:color-changed'.
+      window.dispatchEvent(new Event('omicron:profile-saved'));
 
       // Force profile refresh IMMEDIATELY
       await refreshProfile();

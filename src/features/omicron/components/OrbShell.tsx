@@ -1254,14 +1254,13 @@ export function OrbShell() {
           pointerEvents: 'none',
         }}>
           <div style={{ maxWidth: 300, width: '100%', pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Indicador discreto: el perfil está guardado en la cuenta del
-                usuario (no solo en el dispositivo). Solo para usuarios
-                autenticados con el onboarding confirmado en la nube. */}
-            {sbProfile?.onboarding_completed_at && (
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <CloudSavedBadge />
-              </div>
-            )}
+            {/* Confirmación efímera: aparece SOLO tras un guardado exitoso
+                (escucha 'omicron:profile-saved') y se auto-oculta con fade
+                ~3s después. Renderiza null el resto del tiempo, así que no
+                ocupa espacio ni se muestra de forma permanente. */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <CloudSavedBadge />
+            </div>
             <ProactiveCards
               visible={state === 'orb' && onboardingDone}
               hasCv={Boolean(sbProfile?.cv_summary)}

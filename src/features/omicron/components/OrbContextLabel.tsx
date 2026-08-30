@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useMemo } from 'react';
-import { C, FONT } from '@/theme';
+import { C, FONT, SIZE } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { streakDays } from '@/features/gemelo/services/profile';
 import { greetingCopy, streakCopy } from '@/shared/utils/microcopy';
@@ -47,8 +47,8 @@ export function OrbContextLabel({ visible = true }: Props) {
       options.push({ text: `${topSkill.name} ${topSkill.pct}% · toca para mejorar`, highlight: false });
     }
 
-    options.push({ text: '↓ toca un nodo para explorar tu Gemelo Digital', highlight: false });
-    options.push({ text: '↓ desliza o toca · pregúntame algo', highlight: false });
+    options.push({ text: 'Toca un nodo para explorar tu Gemelo', highlight: false });
+    options.push({ text: 'Desliza o toca · pregúntame algo', highlight: false });
 
     return options[seed % options.length] ?? options[0];
   }, [profile]);
@@ -73,8 +73,9 @@ const S: Record<string, React.CSSProperties> = {
     left: '50%',
     transform: 'translateX(-50%)',
     fontFamily: FONT.mono,
-    fontSize: 11,
-    letterSpacing: 1,
+    fontSize: SIZE.xs,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
     textAlign: 'center',
     whiteSpace: 'nowrap',
     zIndex: 3,
