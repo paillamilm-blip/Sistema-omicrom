@@ -108,11 +108,16 @@ export async function persistOnboardingProfile(guest: GuestProfile): Promise<voi
 export function hydrateOnboardingFromProfile(
   profile: {
     profession?: string | null;
-    years?: number | null;
     skills?: string[] | null;
-    axes?: { exec?: number | null; qual?: number | null; trans?: number | null; fund?: number | null } | null;
     seniorLabel?: string | null;
     summary?: string | null;
+    // Columnas REALES del Profile de Supabase para años y ejes: se mapean a la
+    // forma que espera el reconciliador puro (years + axes{exec,qual,trans,fund}).
+    cv_years_experience?: number | null;
+    execution_score?: number | null;
+    quality_score?: number | null;
+    transcendence_score?: number | null;
+    foundation_score?: number | null;
     onboarding_profession?: string | null;
     onboarding_senior_label?: string | null;
     onboarding_completed_at?: string | null;
@@ -130,9 +135,18 @@ export function hydrateOnboardingFromProfile(
       const reconciled = mergeOnboardingIntoLocal(
         {
           profession: profile.onboarding_profession ?? profile.profession,
-          years: profile.years,
+          // Años y ejes viven en las columnas REALES del Profile
+          // (cv_years_experience + los cuatro *_score); se mapean aquí a la
+          // forma que espera el reconciliador puro para que un dispositivo
+          // nuevo también recupere años y ejes en la caché del invitado.
+          years: profile.cv_years_experience,
           skills: profile.skills,
-          axes: profile.axes,
+          axes: {
+            exec: profile.execution_score,
+            qual: profile.quality_score,
+            trans: profile.transcendence_score,
+            fund: profile.foundation_score,
+          },
           seniorLabel: profile.onboarding_senior_label ?? profile.seniorLabel,
           summary: profile.summary,
           onboarding_completed_at: profile.onboarding_completed_at,
