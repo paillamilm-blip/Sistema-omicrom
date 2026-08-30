@@ -18,7 +18,10 @@
 //   • SSR/test-safe con guards typeof window / AudioContext.
 // ═══════════════════════════════════════════════════════════════════════
 
-type WebkitWindow = Window & { webkitAudioContext?: typeof AudioContext };
+type WebkitWindow = Window & {
+  AudioContext?: typeof AudioContext;
+  webkitAudioContext?: typeof AudioContext;
+};
 
 // ── Estado a nivel de módulo ─────────────────────────────────────────
 let sharedCtx: AudioContext | null = null;
@@ -203,7 +206,7 @@ export function startVoiceAnalysis(audio: HTMLAudioElement): void {
       source.connect(analyser);
       analyser.connect(ctx.destination);
       activeAnalyser = analyser;
-      timeData = new Uint8Array(analyser.frequencyBinCount);
+      timeData = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
     }
   } catch {
     usingFallback = true;
