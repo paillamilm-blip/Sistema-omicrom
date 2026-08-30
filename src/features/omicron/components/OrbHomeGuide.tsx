@@ -8,6 +8,13 @@
 // perdida al aterrizar. Es descartable (tocar un chip o el cierre) y no
 // vuelve a aparecer esa sesión.
 //
+// Composición (acceptance criterion #5): el SALUDO se ancla ARRIBA del
+// orbe y los CHIPS de acción ABAJO (encima de la barra de input). Para
+// no duplicar la lógica, el mismo componente se renderiza en dos ranuras
+// (`slot`): 'greeting' arriba y 'actions' abajo. Cada ranura tiene su
+// propio <AnimatePresence> gobernado por `visible`, de modo que el
+// descarte reproduce la variante `exit` (fade-out) en vez de un corte seco.
+//
 // Reutiliza la navegación existente vía onNavigate(tab); coexiste con
 // ProactiveCards y OrbContextLabel (que quedan tal cual).
 //
@@ -22,6 +29,8 @@ import { C, FONT, RADIUS } from '@/theme';
 import { buildGreeting, buildHomeActions } from '../utils/orbHomeGuide';
 
 export interface OrbHomeGuideProps {
+  /** Ranura de render: 'greeting' (arriba del orbe) o 'actions' (abajo). */
+  slot: 'greeting' | 'actions';
   userName: string;
   hasCv: boolean;
   visible: boolean;
@@ -29,7 +38,7 @@ export interface OrbHomeGuideProps {
   onDismiss: () => void;
 }
 
-export function OrbHomeGuide({ userName, hasCv, visible, onNavigate, onDismiss }: OrbHomeGuideProps) {
+export function OrbHomeGuide({ slot, userName, hasCv, visible, onNavigate, onDismiss }: OrbHomeGuideProps) {
   const userColor = useUserColor();
   const reduce = useReducedMotion();
 
@@ -42,7 +51,8 @@ export function OrbHomeGuide({ userName, hasCv, visible, onNavigate, onDismiss }
     onDismiss();
   };
 
-  // Variantes con animación; en reduced-motion se anulan transform/opacity.
+  // Variantes con animación; en reduced-motion se anulan transform/opacity
+  // (incluida la `exit`, que queda {} → descarte instantáneo por diseño).
   const containerVariants: Variants = reduce
     ? { hidden: {}, show: {}, exit: {} }
     : {
@@ -59,11 +69,43 @@ export function OrbHomeGuide({ userName, hasCv, visible, onNavigate, onDismiss }
         exit: { opacity: 0, y: 6 },
       };
 
+  // ── Ranura SALUDO: línea sobria anclada arriba del orbe ─────────────
+  if (slot === 'greeting') {
+    return (
+      <AnimatePresence>
+        {visible && (
+          <motion.p
+            key="orb-home-greeting"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            style={{
+              margin: 0,
+              maxWidth: 340,
+              textAlign: 'center',
+              fontFamily: FONT.body,
+              fontSize: 15,
+              lineHeight: 1.4,
+              fontWeight: 600,
+              color: C.ink,
+              textShadow: `0 0 10px ${userColor}33`,
+              pointerEvents: 'none',
+            }}
+          >
+            {greeting}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  // ── Ranura ACCIONES: tarjeta glass con chips + cierre, abajo del orbe ─
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
-          key="orb-home-guide"
+          key="orb-home-actions"
           variants={containerVariants}
           initial="hidden"
           animate="show"
@@ -82,20 +124,20 @@ export function OrbHomeGuide({ userName, hasCv, visible, onNavigate, onDismiss }
             boxShadow: `0 4px 24px ${userColor}1A, 0 8px 32px rgba(0,0,0,0.4)`,
           }}
         >
-          {/* Cabecera: eyebrow + cierre */}
+          {/* Cabecera: microcopy + cierre */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
             <motion.p
               variants={itemVariants}
               style={{
                 margin: 0,
                 fontFamily: FONT.body,
-                fontSize: 14,
+                fontSize: 13,
                 lineHeight: 1.4,
-                color: C.ink,
-                fontWeight: 600,
+                color: C.mut,
+                fontWeight: 500,
               }}
             >
-              {greeting}
+              ¿Por dónde empezamos?
             </motion.p>
             <button
               onClick={onDismiss}

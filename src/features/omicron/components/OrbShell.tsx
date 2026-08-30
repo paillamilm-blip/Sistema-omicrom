@@ -1249,10 +1249,45 @@ export function OrbShell() {
       </div>}
 
       {/* ── BIENVENIDA DEL ORBE (solo la primera vez de cada sesión) ──
-          Superficie calma con saludo + chips tocables, anclada ARRIBA de
-          la barra de input. El wrapper exterior tiene pointerEvents:'none'
-          para no bloquear el orbe; la tarjeta reactiva pointerEvents:'auto'. */}
-      {state === 'orb' && onboardingDone && showHomeGuide && (
+          Superficie calma en dos partes (acceptance criterion #5): el
+          SALUDO se ancla ARRIBA del orbe y los CHIPS de acción ABAJO,
+          encima de la barra de input.
+
+          Los wrappers se montan mientras state==='orb' && onboardingDone
+          (SIN `showHomeGuide` en la condición); es `visible={showHomeGuide}`
+          quien gobierna el <AnimatePresence> interno, de modo que al
+          descartar se reproduce la variante `exit` (fade-out) en vez de un
+          corte seco. Con prefers-reduced-motion la variante `exit` es {} y
+          el descarte queda instantáneo (correcto). El wrapper exterior usa
+          pointerEvents:'none' para no bloquear el orbe cuando la tarjeta
+          se anima hacia afuera; la tarjeta reactiva pointerEvents:'auto'. */}
+
+      {/* Saludo: anclado arriba, debajo del OrbContextLabel para no chocar. */}
+      {state === 'orb' && onboardingDone && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(env(safe-area-inset-top, 12px) + 96px)',
+          left: 0,
+          right: 0,
+          zIndex: 5,
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '0 20px',
+          pointerEvents: 'none',
+        }}>
+          <OrbHomeGuide
+            slot="greeting"
+            visible={showHomeGuide}
+            userName={resolveGreetingName(sbProfile)}
+            hasCv={Boolean(sbProfile?.cv_summary)}
+            onNavigate={() => {}}
+            onDismiss={dismissHomeGuide}
+          />
+        </div>
+      )}
+
+      {/* Chips de acción: anclados abajo, encima de la barra de input. */}
+      {state === 'orb' && onboardingDone && (
         <div style={{
           position: 'absolute',
           left: 0,
@@ -1265,7 +1300,8 @@ export function OrbShell() {
           pointerEvents: 'none',
         }}>
           <OrbHomeGuide
-            visible={state === 'orb' && onboardingDone && showHomeGuide}
+            slot="actions"
+            visible={showHomeGuide}
             userName={resolveGreetingName(sbProfile)}
             hasCv={Boolean(sbProfile?.cv_summary)}
             onNavigate={(tab) => {
