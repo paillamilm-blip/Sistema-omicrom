@@ -31,7 +31,12 @@ let rafId: number | null = null;
 let activeEl: HTMLAudioElement | null = null;
 let activeAnalyser: AnalyserNode | null = null;
 let timeData: Uint8Array<ArrayBuffer> | null = null;
+let freqData: Uint8Array<ArrayBuffer> | null = null;
 let smoothed = 0;
+// Bandas de frecuencia suavizadas (ecualizador esférico — Inc 2).
+let smoothedBass = 0;
+let smoothedMid = 0;
+let smoothedTreble = 0;
 
 // Detección de señal "muerta" (CORS-tainted → todo en cero) para fallback.
 let flatSinceTs = 0;
@@ -61,6 +66,14 @@ function prefersReducedMotion(): boolean {
 function dispatchLevel(level: number): void {
   if (!hasWindow()) return;
   window.dispatchEvent(new CustomEvent('oracle:voice', { detail: { level } }));
+}
+
+// Emite las bandas de frecuencia (0..1) para el ecualizador esférico.
+function dispatchSpectrum(bass: number, mid: number, treble: number): void {
+  if (!hasWindow()) return;
+  window.dispatchEvent(
+    new CustomEvent('oracle:spectrum', { detail: { bass, mid, treble } }),
+  );
 }
 
 function ensureContext(): AudioContext | null {
@@ -109,14 +122,32 @@ function synthesizedLevel(): number {
   return Math.max(0.15, Math.min(0.6, raw));
 }
 
+// Bandas sintéticas (bass/mid/treble) derivadas de la misma oscilación de
+// fallback, con desfases distintos para que el ecualizador se mueva vivo aun
+// sin datos reales de Web Audio. Se mantienen en un rango discreto ~0.1..0.7.
+function synthesizedBands(): { bass: number; mid: number; treble: number } {
+  const clamp = (v: number) => Math.max(0.1, Math.min(0.7, v));
+  const bass = clamp(0.35 + Math.sin(fallbackPhase * 0.9) * 0.3);
+  const mid = clamp(0.35 + Math.sin(fallbackPhase * 1.7 + 2.1) * 0.3);
+  const treble = clamp(0.3 + Math.sin(fallbackPhase * 2.6 + 4.2) * 0.28);
+  return { bass, mid, treble };
+}
+
 // ── Loop de análisis ─────────────────────────────────────────────────
 function tick(): void {
   if (!activeEl) return;
 
   let level = 0;
+  let bass = 0;
+  let mid = 0;
+  let treble = 0;
 
   if (usingFallback) {
     level = synthesizedLevel();
+    const bands = synthesizedBands();
+    bass = bands.bass;
+    mid = bands.mid;
+    treble = bands.treble;
   } else if (activeAnalyser && timeData) {
     activeAnalyser.getByteTimeDomainData(timeData);
     let sumSq = 0;
@@ -128,6 +159,27 @@ function tick(): void {
     // Normalizar: RMS típico de voz ~0.05..0.35 → escalar a 0..1.
     level = Math.max(0, Math.min(1, rms * 2.6));
 
+    // Bandas de frecuencia: repartir los bins en tercios (grave/medio/agudo).
+    if (freqData) {
+      activeAnalyser.getByteFrequencyData(freqData);
+      const bins = freqData.length; // = analyser.frequencyBinCount
+      const third = Math.max(1, Math.floor(bins / 3));
+      let sumBass = 0;
+      let sumMid = 0;
+      let sumTreble = 0;
+      for (let i = 0; i < bins; i++) {
+        const v = freqData[i];
+        if (i < third) sumBass += v;
+        else if (i < third * 2) sumMid += v;
+        else sumTreble += v;
+      }
+      const midCount = third;
+      const trebleCount = bins - third * 2;
+      bass = sumBass / third / 255;
+      mid = sumMid / midCount / 255;
+      treble = sumTreble / Math.max(1, trebleCount) / 255;
+    }
+
     // Detectar señal plana (CORS-tainted) mientras el elemento suena.
     const playing = !activeEl.paused && !activeEl.ended;
     if (playing && rms < 0.004) {
@@ -136,6 +188,10 @@ function tick(): void {
       else if (now - flatSinceTs > 300) {
         usingFallback = true;
         level = synthesizedLevel();
+        const bands = synthesizedBands();
+        bass = bands.bass;
+        mid = bands.mid;
+        treble = bands.treble;
       }
     } else {
       flatSinceTs = 0;
@@ -145,6 +201,12 @@ function tick(): void {
   // Suavizado exponencial para que module en vez de saltar.
   smoothed += (level - smoothed) * 0.35;
   dispatchLevel(smoothed);
+
+  // Mismas constantes de suavizado para las bandas del ecualizador.
+  smoothedBass += (bass - smoothedBass) * 0.35;
+  smoothedMid += (mid - smoothedMid) * 0.35;
+  smoothedTreble += (treble - smoothedTreble) * 0.35;
+  dispatchSpectrum(smoothedBass, smoothedMid, smoothedTreble);
 
   rafId = requestAnimationFrame(tick);
 }
@@ -177,7 +239,11 @@ export function startVoiceAnalysis(audio: HTMLAudioElement): void {
   activeEl = audio;
   activeAnalyser = null;
   timeData = null;
+  freqData = null;
   smoothed = 0;
+  smoothedBass = 0;
+  smoothedMid = 0;
+  smoothedTreble = 0;
   flatSinceTs = 0;
   usingFallback = false;
 
@@ -207,6 +273,7 @@ export function startVoiceAnalysis(audio: HTMLAudioElement): void {
       analyser.connect(ctx.destination);
       activeAnalyser = analyser;
       timeData = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
+      freqData = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
     }
   } catch {
     usingFallback = true;
@@ -228,7 +295,11 @@ export function stopVoiceAnalysis(): void {
   activeEl = null;
   activeAnalyser = null;
   timeData = null;
+  freqData = null;
   smoothed = 0;
+  smoothedBass = 0;
+  smoothedMid = 0;
+  smoothedTreble = 0;
   flatSinceTs = 0;
   usingFallback = false;
   dispatchLevel(0);
