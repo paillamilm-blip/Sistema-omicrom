@@ -199,17 +199,22 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
   }, [currentAct]);
 
   // ── Auto-advance tras guardado exitoso (usuario autenticado) ─────────
-  // Cuando el persist termina bien, damos un breve "beat" de confirmación
-  // y cerramos el overlay para que el usuario vuelva a la app con su
-  // Gemelo ya guardado y visible. Cubre tanto el tap manual del CTA como
-  // el auto-persist en background (setTimeout 100ms del hook), que también
-  // marca persisted=true sin que el usuario toque nada.
+  // Cerramos el overlay solo cuando el usuario llegó al acto final (CTA) y
+  // el guardado ya terminó bien, dándole un breve "beat" de confirmación.
+  // Así el usuario autenticado ve la secuencia completa de 5 actos: el
+  // auto-persist en background (setTimeout 100ms del hook) marca
+  // persisted=true muy temprano, pero NO cierra el reveal hasta el CTA.
+  // Cubre ambos casos: si al llegar al CTA el guardado ya estaba hecho,
+  // cierra a ~900ms; si aún no, el tap del CTA dispara el persist y el
+  // posterior persisted=true cierra el overlay.
+  // Nota: `persisted` solo se pone en true (nunca se resetea en el hook),
+  // por lo que este efecto asume una única secuencia de reveal por montaje.
   useEffect(() => {
-    if (isAuthenticated && persisted) {
+    if (isAuthenticated && persisted && currentAct === 'cta') {
       const t = setTimeout(() => { onClose?.(); }, 900);
       return () => clearTimeout(t);
     }
-  }, [isAuthenticated, persisted, onClose]);
+  }, [isAuthenticated, persisted, currentAct, onClose]);
 
   // ═══════════════════════════════════════════════════════════════════════
   // RENDER
