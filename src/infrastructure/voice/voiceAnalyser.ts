@@ -30,7 +30,7 @@ const sourceMap = new WeakMap<HTMLAudioElement, MediaElementAudioSourceNode>();
 let rafId: number | null = null;
 let activeEl: HTMLAudioElement | null = null;
 let activeAnalyser: AnalyserNode | null = null;
-let timeData: Uint8Array | null = null;
+let timeData: Uint8Array<ArrayBuffer> | null = null;
 let smoothed = 0;
 
 // Detección de señal "muerta" (CORS-tainted → todo en cero) para fallback.
