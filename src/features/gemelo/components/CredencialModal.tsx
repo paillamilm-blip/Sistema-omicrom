@@ -17,7 +17,7 @@ import { useMemo, useState } from 'react';
 import type { ReactNode, CSSProperties } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
-import { X, Share2, Download, Zap, Shield, Globe, TrendingUp, CheckCircle2, Circle } from 'lucide-react';
+import { X, Share2, Download, RefreshCw, Zap, Shield, Globe, TrendingUp, CheckCircle2, Circle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
 import { C, FONT, SIZE, RADIUS } from '@/theme';
@@ -145,7 +145,7 @@ function BlockTitle({ uc, children }: { uc: string; children: ReactNode }) {
   );
 }
 
-export function CredencialModal({ onClose }: { onClose: () => void }) {
+export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; onUpdateCV?: () => void }) {
   const { profile } = useApp();
   const gemelo = useGemeloDigital();
   const uc = useUserColor();
@@ -623,6 +623,27 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
             }}
           >
             <Download size={16} /> Descargar
+          </button>
+
+          {/* ── Actualizar CV (terciario, pequeño) ── */}
+          {/* Reabre el flujo de carga/actualización de CV (ConvalidaOmicron).
+              Estilo deliberadamente más chico y liviano que Compartir/Descargar
+              (padding compacto, tipografía menor, color C.mut) para no competir.
+              No se condiciona a username: actualizar el CV siempre está disponible
+              mientras la credencial esté abierta. onUpdateCV es opcional (?.). */}
+          <button
+            onClick={() => onUpdateCV?.()}
+            style={{
+              marginTop: 12, padding: '7px 12px', borderRadius: RADIUS.md,
+              cursor: 'pointer',
+              background: 'transparent',
+              border: `1px solid ${C.line}`,
+              color: C.mut,
+              fontFamily: FONT.mono, fontWeight: 600, fontSize: SIZE.xxs, letterSpacing: 0.4,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}
+          >
+            <RefreshCw size={12} /> Actualizar CV
           </button>
 
           {!username && (
