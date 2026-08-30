@@ -4,6 +4,8 @@ import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { ProactiveCards } from './ProactiveCards';
+import { OrbHomeGuide } from './OrbHomeGuide';
+import { resolveGreetingName } from '../utils/orbHomeGuide';
 import { OrbContextLabel } from './OrbContextLabel';
 import { CloudSavedBadge } from './CloudSavedBadge';
 import { PremiumLock } from '@/features/wallet/components/Premium';
@@ -278,6 +280,24 @@ export function OrbShell() {
       setOnboardingDone(true);
     }
   }, [sbProfile?.onboarding_completed_at, sbProfile?.skills]);
+
+  // ── Bienvenida del orbe: SOLO la primera vez de cada sesión ─────────
+  // Un flag en sessionStorage (mismo patrón que ProactiveCards) hace que
+  // la superficie de bienvenida aparezca una única vez por sesión de
+  // navegador y no vuelva a mostrarse tras descartarla o actuar sobre un chip.
+  const [showHomeGuide, setShowHomeGuide] = useState(() => {
+    try {
+      return sessionStorage.getItem('omicron_home_guide_seen') !== '1';
+    } catch {
+      return true;
+    }
+  });
+  const dismissHomeGuide = useCallback(() => {
+    setShowHomeGuide(false);
+    try {
+      sessionStorage.setItem('omicron_home_guide_seen', '1');
+    } catch { /* noop */ }
+  }, []);
 
   // ── Build orb nodes dynamically from user's real skills ─────────────
   // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
@@ -1227,6 +1247,39 @@ export function OrbShell() {
 
         {/* Suggestion Chips removed — ProactiveCards now guide the user */}
       </div>}
+
+      {/* ── BIENVENIDA DEL ORBE (solo la primera vez de cada sesión) ──
+          Superficie calma con saludo + chips tocables, anclada ARRIBA de
+          la barra de input. El wrapper exterior tiene pointerEvents:'none'
+          para no bloquear el orbe; la tarjeta reactiva pointerEvents:'auto'. */}
+      {state === 'orb' && onboardingDone && showHomeGuide && (
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 'calc(env(safe-area-inset-bottom, 12px) + 84px)',
+          zIndex: 46,
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '0 16px',
+          pointerEvents: 'none',
+        }}>
+          <OrbHomeGuide
+            visible={state === 'orb' && onboardingDone && showHomeGuide}
+            userName={resolveGreetingName(sbProfile)}
+            hasCv={Boolean(sbProfile?.cv_summary)}
+            onNavigate={(tab) => {
+              if (tab === 'cv') {
+                setShowConvalida(true);
+                return;
+              }
+              const node = orbNodesWithLevels.find((n: OrbNode) => n.tab === tab);
+              if (node) handleNodeTap(node);
+            }}
+            onDismiss={dismissHomeGuide}
+          />
+        </div>
+      )}
 
       {/* ── PROACTIVE MESSAGE (con botones — reemplaza la burbuja plana) ── */}
       {state === 'orb' && responseMsg && (
