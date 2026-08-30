@@ -847,11 +847,12 @@ export function OrbShell() {
             prefersReducedMotion
               ? { scale: 1 }
               : isSpeaking
-                // Pulso vivo mientras Ómicrom habla: rebota como ecualizador.
-                // voiceLevel ahora es la amplitud RMS real (0..1) en tiempo real,
-                // así que subimos el coeficiente para que las sílabas fuertes se
-                // noten, manteniéndolo premium con clamp <= ~1.12.
-                ? { scale: [1, Math.min(1.12, 1.02 + voiceLevel * 0.12), 1] }
+                // Ecualizador en vivo: la escala es un ÚNICO valor que sigue el
+                // nivel RMS real (voiceLevel 0..1) en cada render (~60fps vía el
+                // evento 'oracle:voice'). No es un keyframe [1, pico, 1]: así las
+                // sílabas fuertes saltan al instante y las pausas caen de vuelta,
+                // dando la sensación de ecualizador y no de respiración.
+                ? { scale: 1 + Math.min(0.18, voiceLevel * 0.18) }
                 // Reposo: respiración muy sutil para no pelear con la animación interna del orbe.
                 : { scale: [1, 1.015, 1] }
           }
@@ -859,7 +860,9 @@ export function OrbShell() {
             prefersReducedMotion
               ? { duration: 0 }
               : isSpeaking
-                ? { repeat: Infinity, duration: 1.1, ease: 'easeInOut' }
+                // Transición corta y elástica: rastrea el nivel actual en lugar de
+                // correr un tween fijo. Sin repeat: Infinity en el estado hablando.
+                ? { type: 'spring', stiffness: 500, damping: 30 }
                 : { repeat: Infinity, duration: 4, ease: 'easeInOut' }
           }
         >

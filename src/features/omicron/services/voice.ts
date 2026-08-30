@@ -146,9 +146,9 @@ async function speakChunk(text: string): Promise<void> {
 
     const url = URL.createObjectURL(blob);
     const audio = new Audio(url);
-    // Necesario para que Web Audio pueda leer audio cross-origin cuando el
-    // servidor lo permite; inofensivo si no (el fallback cubre el no-CORS).
-    audio.crossOrigin = 'anonymous';
+    // El audio es un blob: same-origin (URL.createObjectURL), así que NO se marca
+    // crossOrigin: hacerlo es innecesario y en algunos navegadores interfiere con
+    // MediaElementSource, impidiendo que el analizador reciba muestras reales.
     audioQueue.push(audio);
 
     await new Promise<void>((resolve, reject) => {
