@@ -248,6 +248,7 @@ export function OrbShell() {
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
   const [voiceLevel, setVoiceLevel] = useState(0);
+  const [spectrum, setSpectrum] = useState<{ bass: number; mid: number; treble: number } | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const prefersReducedMotion = useReducedMotion();
@@ -619,18 +620,28 @@ export function OrbShell() {
       const detail = (e as CustomEvent).detail;
       setVoiceLevel(detail.level);
     };
+    // Ecualizador esférico: bandas de frecuencia (bass/mid/treble) — Inc 2.
+    const handleSpectrum = (e: Event) => {
+      const detail = (e as CustomEvent).detail as
+        | { bass: number; mid: number; treble: number }
+        | undefined;
+      setSpectrum(detail ?? null);
+    };
     window.addEventListener('oracle:listening', handleOracleListening);
     window.addEventListener('oracle:voice', handleOracleVoice);
+    window.addEventListener('oracle:spectrum', handleSpectrum);
     // Escuchar cuando speakAI está hablando para vibrar el orbe
     const handleSpeaking = (e: Event) => {
       const active = (e as CustomEvent).detail?.active;
       setVoiceLevel(active ? 0.3 : 0);
       setIsSpeaking(!!active);
+      if (!active) setSpectrum(null);
     };
     window.addEventListener('omicron:speaking', handleSpeaking);
     return () => {
       window.removeEventListener('oracle:listening', handleOracleListening);
       window.removeEventListener('oracle:voice', handleOracleVoice);
+      window.removeEventListener('oracle:spectrum', handleSpectrum);
       window.removeEventListener('omicron:speaking', handleSpeaking);
     };
   }, []);
@@ -857,6 +868,7 @@ export function OrbShell() {
             activeNodeId={selectedNode?.id ?? null}
             onNodeTap={handleNodeTap}
             voiceLevel={voiceLevel}
+            spectrum={spectrum}
             isListening={isListening}
             onProjectedPositions={handleProjected}
             notifications={unreadCount > 0 ? { mensajes: unreadCount } : undefined}

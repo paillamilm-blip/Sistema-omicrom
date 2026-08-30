@@ -38,6 +38,7 @@ export interface OrbNeuronalProps {
   activeNodeId?: string | null;
   onNodeTap?: (node: OrbNode) => void;
   voiceLevel?: number;
+  spectrum?: { bass: number; mid: number; treble: number } | null;
   isListening?: boolean;
   onProjectedPositions?: (positions: { id: string; x: number; y: number; depth: number }[]) => void;
   notifications?: Record<string, number>;
@@ -94,6 +95,7 @@ export default function OrbNeuronal({
   activeNodeId = null,
   onNodeTap,
   voiceLevel = 0,
+  spectrum = null,
   isListening = false,
   onProjectedPositions,
   notifications = {},
@@ -102,6 +104,7 @@ export default function OrbNeuronal({
 }: OrbNeuronalProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const voiceLevelRef = useRef(voiceLevel);
+  const spectrumRef = useRef(spectrum);
   const isListeningRef = useRef(isListening);
   const activeNodeRef = useRef(activeNodeId);
   const onNodeTapRef = useRef(onNodeTap);
@@ -109,8 +112,12 @@ export default function OrbNeuronal({
   const notificationsRef = useRef(notifications);
   const userColorRef = useRef(userColor);
   const cleanupRef = useRef<(() => void) | null>(null);
+  // Guarda dura de reduced-motion: aunque llegue un evento 'oracle:spectrum'
+  // suelto, el orbe NO aplica movimiento por bandas si el usuario lo pidió.
+  const reducedMotionRef = useRef(false);
 
   voiceLevelRef.current = voiceLevel;
+  spectrumRef.current = spectrum;
   isListeningRef.current = isListening;
   activeNodeRef.current = activeNodeId;
   onNodeTapRef.current = onNodeTap;
@@ -123,6 +130,16 @@ export default function OrbNeuronal({
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
+
+    // Detectar reduced-motion una vez (SSR/test-safe) para la guarda dura.
+    try {
+      reducedMotionRef.current =
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch {
+      reducedMotionRef.current = false;
+    }
 
     const width = container.clientWidth || 300;
     const height = container.clientHeight || 300;
@@ -393,9 +410,17 @@ export default function OrbNeuronal({
       // Sync dots rotation
       dots.rotation.copy(wireframe.rotation);
 
-      // Voice vibration
+      // Ecualizador esférico: bandas de frecuencia (bass/mid/treble) — Inc 2.
+      // Guarda dura de reduced-motion: si está activo, no aplicar bandas.
+      const spec = reducedMotionRef.current ? null : spectrumRef.current;
+
+      // Voice vibration (el treble aumenta ligeramente el temblor)
       if (voiceLevelRef.current > 0.1) {
-        const shake = voiceLevelRef.current * 0.02;
+        let shake = voiceLevelRef.current * 0.02;
+        if (spec) {
+          // Nudge tasteful: hasta ~+50% de temblor con treble alto.
+          shake += voiceLevelRef.current * 0.02 * Math.min(1, spec.treble) * 0.5;
+        }
         wireframe.position.x = (Math.random() - 0.5) * shake;
         wireframe.position.y = (Math.random() - 0.5) * shake;
         dots.position.copy(wireframe.position);
@@ -404,12 +429,20 @@ export default function OrbNeuronal({
         dots.position.set(0, 0, 0);
       }
 
-      // Edge breathing opacity (subtle, range 0.25-0.55)
-      edgesMat.opacity = 0.4 + Math.sin(time * 0.7) * 0.15;
+      // Edge breathing opacity (subtle, range 0.25-0.55); el medio la realza.
+      let edgeOpacity = 0.4 + Math.sin(time * 0.7) * 0.15;
+      if (spec) {
+        edgeOpacity += Math.min(1, spec.mid) * 0.2;
+      }
+      edgesMat.opacity = Math.min(0.8, edgeOpacity);
 
-      // Dot constant full brightness
+      // Dot constant full brightness; el grave engorda un poco los nodos.
       dotMat.opacity = 1.0;
-      dotMat.size = 0.18 + Math.sin(time * 1.1) * 0.02;
+      let dotSize = 0.18 + Math.sin(time * 1.1) * 0.02;
+      if (spec) {
+        dotSize += Math.min(1, spec.bass) * 0.05;
+      }
+      dotMat.size = dotSize;
 
       // Update color if changed
       const c = new THREE.Color(userColorRef.current);
