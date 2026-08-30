@@ -16,6 +16,7 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode, CSSProperties } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import type { PanInfo } from 'framer-motion';
 import { X, Share2, Download, Zap, Shield, Globe, TrendingUp, CheckCircle2, Circle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
@@ -160,6 +161,19 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
   const goTab = (next: TabIndex) => {
     setDir(next >= tab ? 1 : -1);
     setTab(next);
+  };
+
+  // ── Swipe/arrastre horizontal para paginar entre pestañas ──────────────
+  // Se lee el desplazamiento y la velocidad al soltar. Umbrales: +/-60px de
+  // arrastre o +/-300 de velocidad. Se acota a 0..2 (no pasa de la primera ni
+  // de la última). El handler lee `tab` fresco directamente (sin timers ni
+  // callbacks inestables). Bajo reduce-motion el gesto SIGUE cambiando de
+  // pestaña; solo se suprime el slide (ya gestionado con slide=0).
+  const handleDragEnd = (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const goNext = info.offset.x < -60 || info.velocity.x < -300;
+    const goPrev = info.offset.x > 60 || info.velocity.x > 300;
+    if (goNext && tab < 2) goTab((tab + 1) as TabIndex);
+    else if (goPrev && tab > 0) goTab((tab - 1) as TabIndex);
   };
 
   // ── Datos derivados (mismo patrón exacto que GemeloTab) ────────────────
@@ -540,11 +554,39 @@ export function CredencialModal({ onClose }: { onClose: () => void }) {
               animate="center"
               exit="exit"
               transition={bodyTransition}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.15}
+              onDragEnd={handleDragEnd}
               style={{ width: '100%' }}
             >
               {renderTabBody()}
             </motion.div>
           </AnimatePresence>
+        </div>
+
+        {/* ═══ INDICADOR DE PAGINADO (3 puntos) ═════════════════════════ */}
+        {/* Afordancia sutil de que la credencial se pagina y se puede deslizar.
+            El punto activo se tiñe con el color personal (uc); los inactivos
+            quedan atenuados. El subrayado de pestaña activa se mantiene igual. */}
+        <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 7, padding: '10px 0 2px' }}>
+          {TABS.map((label, i) => {
+            const active = tab === i;
+            return (
+              <span
+                key={label}
+                aria-hidden
+                style={{
+                  width: active ? 7 : 6,
+                  height: active ? 7 : 6,
+                  borderRadius: '50%',
+                  background: active ? uc : C.line,
+                  boxShadow: active ? `0 0 6px ${uc}88` : 'none',
+                  transition: 'background 0.2s ease',
+                }}
+              />
+            );
+          })}
         </div>
 
         {/* ═══ PIE FIJO (acciones + sello, sin scroll de página) ═════════ */}
