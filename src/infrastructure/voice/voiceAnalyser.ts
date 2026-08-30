@@ -178,6 +178,11 @@ function tick(): void {
       bass = sumBass / third / 255;
       mid = sumMid / midCount / 255;
       treble = sumTreble / Math.max(1, trebleCount) / 255;
+      // Noise-gate suave: silencio real asienta plano en vez de titilar.
+      // Solo sobre bandas REALES (no aplica al fallback, que debe seguir vivo).
+      if (bass < 0.06) bass = 0;
+      if (mid < 0.06) mid = 0;
+      if (treble < 0.06) treble = 0;
     }
 
     // Detectar señal plana (CORS-tainted) mientras el elemento suena.
@@ -303,4 +308,6 @@ export function stopVoiceAnalysis(): void {
   flatSinceTs = 0;
   usingFallback = false;
   dispatchLevel(0);
+  // Simetría con dispatchLevel(0): limpiar cualquier espectro obsoleto al parar.
+  dispatchSpectrum(0, 0, 0);
 }
