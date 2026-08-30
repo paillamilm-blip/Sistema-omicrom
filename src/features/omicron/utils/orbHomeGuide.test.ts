@@ -44,7 +44,10 @@ describe('resolveGreetingName', () => {
     expect(resolveGreetingName({ display_name: '   ' })).toBe('');
     expect(resolveGreetingName({ display_name: 'operador' })).toBe('');
     expect(resolveGreetingName({ full_name: 'Amigo' })).toBe('');
-    expect(resolveGreetingName({ username: 'N' })).toBe('');
+  });
+
+  it('trata un nombre real de una sola letra ("N") como nombre válido', () => {
+    expect(resolveGreetingName({ username: 'N' })).toBe('N');
   });
 });
 

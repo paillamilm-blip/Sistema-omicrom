@@ -16,13 +16,13 @@ export interface GreetingProfileLike {
 }
 
 // Fallbacks genéricos que NO son un nombre real: se tratan como sin-nombre.
-const GENERIC_FALLBACKS = new Set(['operador', 'amigo', 'n']);
+const GENERIC_FALLBACKS = new Set(['operador', 'amigo']);
 
 /**
  * Resuelve el nombre a mostrar en el saludo siguiendo la precedencia ya
  * usada en OrbShell: display_name > full_name > username. Recorta espacios
  * y devuelve '' cuando el valor está vacío o es un fallback genérico
- * ('operador' / 'amigo' / 'N').
+ * ('operador' / 'amigo').
  */
 export function resolveGreetingName(profile: GreetingProfileLike | null | undefined): string {
   if (!profile) return '';

@@ -1263,7 +1263,7 @@ export function OrbShell() {
           se anima hacia afuera; la tarjeta reactiva pointerEvents:'auto'. */}
 
       {/* Saludo: anclado arriba, debajo del OrbContextLabel para no chocar. */}
-      {state === 'orb' && onboardingDone && (
+      {state === 'orb' && onboardingDone && !!sbProfile?.id && (
         <div style={{
           position: 'absolute',
           top: 'calc(env(safe-area-inset-top, 12px) + 96px)',
@@ -1284,7 +1284,7 @@ export function OrbShell() {
       )}
 
       {/* Chips de acción: anclados abajo, encima de la barra de input. */}
-      {state === 'orb' && onboardingDone && (
+      {state === 'orb' && onboardingDone && !!sbProfile?.id && (
         <div style={{
           position: 'absolute',
           left: 0,
