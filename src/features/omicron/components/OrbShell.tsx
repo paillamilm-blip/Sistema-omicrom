@@ -1,5 +1,4 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
 import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
@@ -72,6 +71,13 @@ const HUB_NODES: OrbNode[] = [
   { id: 'billetera',   label: 'Billetera',    tab: 'wallet',     icon: '▽' },
   { id: 'boveda',      label: 'Bóveda',       tab: 'vault',      icon: '⊡' },
 ];
+
+// ── Shared orb box dimensions ───────────────────────────────────────
+// El orbe y la capa de etiquetas (labels HTML proyectadas desde 3D)
+// DEBEN compartir exactamente la misma caja centrada para que las
+// coordenadas proyectadas (0..box) caigan sobre el orbe visible.
+const ORB_SIZE_VMIN = 54;
+const ORB_MAX = 300;
 
 // ── Default invitation nodes (when user has no skills yet) ───────────
 const INVITATION_NODES: OrbNode[] = [
@@ -251,7 +257,6 @@ export function OrbShell() {
   const [spectrum, setSpectrum] = useState<{ bass: number; mid: number; treble: number } | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
   const [nodePositions, setNodePositions] = useState<{ id: string; x: number; y: number; depth: number }[]>([]);
   const [inputText, setInputText] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
@@ -834,37 +839,24 @@ export function OrbShell() {
         pointerEvents: state === 'fullscreen' ? 'none' : 'auto',
         zIndex: 1,
       }}>
-        <motion.div
+        {/*
+          Caja ESTABLE sin escala: el orbe ya NO aplica un scale CSS desde
+          voiceLevel. clientWidth (usado para proyectar los nodos) es el
+          tamaño de layout SIN transformar; si escalábamos aquí, el orbe
+          visible y las coordenadas proyectadas se desincronizaban y las
+          etiquetas dejaban de caer sobre el orbe. La sensación de
+          ecualizador se conserva con la reactividad INTERNA de OrbNeuronal
+          (rotación/shake/bandas + un breathing sutil de las mallas),
+          guardada por prefers-reduced-motion.
+        */}
+        <div
           style={{
-            width: '64vmin',
-            height: '64vmin',
-            maxWidth: 360,
-            maxHeight: 360,
+            width: `${ORB_SIZE_VMIN}vmin`,
+            height: `${ORB_SIZE_VMIN}vmin`,
+            maxWidth: ORB_MAX,
+            maxHeight: ORB_MAX,
             transformOrigin: 'center',
-            willChange: 'transform',
           }}
-          animate={
-            prefersReducedMotion
-              ? { scale: 1 }
-              : isSpeaking
-                // Ecualizador en vivo: la escala es un ÚNICO valor que sigue el
-                // nivel RMS real (voiceLevel 0..1) en cada render (~60fps vía el
-                // evento 'oracle:voice'). No es un keyframe [1, pico, 1]: así las
-                // sílabas fuertes saltan al instante y las pausas caen de vuelta,
-                // dando la sensación de ecualizador y no de respiración.
-                ? { scale: 1 + Math.min(0.34, voiceLevel * 0.36) }
-                // Reposo: respiración muy sutil para no pelear con la animación interna del orbe.
-                : { scale: [1, 1.015, 1] }
-          }
-          transition={
-            prefersReducedMotion
-              ? { duration: 0 }
-              : isSpeaking
-                // Transición corta y elástica: rastrea el nivel actual en lugar de
-                // correr un tween fijo. Sin repeat: Infinity en el estado hablando.
-                ? { type: 'spring', stiffness: 500, damping: 30 }
-                : { repeat: Infinity, duration: 4, ease: 'easeInOut' }
-          }
         >
           <OrbNeuronal
             nodes={orbNodesWithLevels}
@@ -877,7 +869,7 @@ export function OrbShell() {
             notifications={unreadCount > 0 ? { mensajes: unreadCount } : undefined}
             userColor={getUserColor()}
           />
-        </motion.div>
+        </div>
       </div>
 
 
@@ -1164,8 +1156,25 @@ export function OrbShell() {
       )}
 
       {/* ── NODE LABELS (HTML overlay projected from 3D) ────────────── */}
+      {/*
+        La caja de etiquetas ocupa EXACTAMENTE la misma caja centrada que el
+        orbe (ORB_SIZE_VMIN / ORB_MAX). Las coordenadas proyectadas pos.x/pos.y
+        vienen en el espacio de la caja del orbe (0..box), así que este contenedor
+        centrado hace que left:pos.x/top:pos.y caiga sobre el orbe visible.
+      */}
       {state !== 'fullscreen' && (
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2 }}>
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: `${ORB_SIZE_VMIN}vmin`,
+          height: `${ORB_SIZE_VMIN}vmin`,
+          maxWidth: ORB_MAX,
+          maxHeight: ORB_MAX,
+          pointerEvents: 'none',
+          zIndex: 2,
+        }}>
           {/* P1: aria-live announces active node to screen readers */}
           <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
             {selectedNode ? `${selectedNode.label} seleccionado. ${selectedNode.nextStep || ''}` : 'Orbe de navegación. Usa Tab para explorar.'}

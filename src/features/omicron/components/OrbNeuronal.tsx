@@ -367,6 +367,11 @@ export default function OrbNeuronal({
     // ── Animation loop ──────────────────────────────────────────────
     let frameId: number;
     let time = 0;
+    // Breathing/ecualizador interno: escala SOLO las mallas visuales
+    // (wireframe + dots) hacia targetBreath, siguiendo el nivel de voz.
+    // No toca hubPositions (usados para proyectar labels), así que las
+    // etiquetas quedan alineadas mientras el orbe "respira" con la voz.
+    let currentBreath = 1;
     const autoRotationSpeed = 0.002;
     // Lerp factor for buttery smooth interpolation (lower = smoother/laggier)
     const lerpFactor = 0.12;
@@ -428,6 +433,21 @@ export default function OrbNeuronal({
         wireframe.position.set(0, 0, 0);
         dots.position.set(0, 0, 0);
       }
+
+      // Breathing/ecualizador interno: escala SOLO las mallas visuales
+      // (no las hubPositions de proyección), guardada por reduced-motion.
+      // El grave engorda un pelín el pulso para dar sensación de ecualizador.
+      let targetBreath = 1;
+      if (!reducedMotionRef.current) {
+        targetBreath = 1 + Math.min(0.16, voiceLevelRef.current * 0.18);
+        if (spec) {
+          targetBreath += Math.min(1, spec.bass) * 0.04;
+        }
+      }
+      // Lerp suave hacia el objetivo (rastrea el nivel sin saltos bruscos).
+      currentBreath += (targetBreath - currentBreath) * 0.2;
+      wireframe.scale.setScalar(currentBreath);
+      dots.scale.setScalar(currentBreath);
 
       // Edge breathing opacity (subtle, range 0.25-0.55); el medio la realza.
       let edgeOpacity = 0.4 + Math.sin(time * 0.7) * 0.15;
