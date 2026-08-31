@@ -22,7 +22,8 @@ import { useIdleEscalation } from '@/hooks/useIdleEscalation';
 import { computeSteps, nodeGuidance } from '@/features/omicron/services/coach';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
-import { C, FONT } from '@/theme';
+import { motion, useReducedMotion } from 'framer-motion';
+import { C, FONT, SIZE } from '@/theme';
 import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
 import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
@@ -238,6 +239,8 @@ export function OrbShell() {
   const { profile: sbFull } = useProfile();
   // User's accent color for input bar glow and UI accents
   const orbColor = useUserColor();
+  // Respetar prefers-reduced-motion para el micro-feedback de las etiquetas
+  const prefersReducedMotion = useReducedMotion();
 
   // ── Build GemeloDigital from Supabase profile for omicronCoach ──────
   const sbProfile = sbFull; // Supabase profile (has execution_score, skills_detail, etc.)
@@ -1247,19 +1250,23 @@ export function OrbShell() {
                   pointerEvents: isFront ? 'auto' : 'none',
                 }}
               >
-                <span style={{
-                  fontFamily: FONT.mono,
-                  fontSize: isActive ? 11 : 9,
-                  fontWeight: isActive ? 700 : 500,
-                  letterSpacing: 1,
-                  color: isActive ? C.cyan : C.mut,
-                  textTransform: 'uppercase',
-                  textShadow: isActive ? `0 0 8px ${C.cyan}` : 'none',
-                  whiteSpace: 'nowrap',
-                  transition: 'color 0.15s ease, font-size 0.15s ease',
-                }}>
+                <motion.span
+                  whileTap={isActive && !prefersReducedMotion ? { scale: 0.96 } : undefined}
+                  transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+                  style={{
+                    fontFamily: FONT.mono,
+                    fontSize: isActive ? SIZE.xs : SIZE.xxs,
+                    fontWeight: isActive ? 700 : 500,
+                    letterSpacing: isActive ? 1.4 : 1.2,
+                    color: isActive ? orbColor : C.mut,
+                    textTransform: 'uppercase',
+                    textShadow: isActive ? `0 0 8px ${orbColor}` : 'none',
+                    whiteSpace: 'nowrap',
+                    transition: 'color 0.15s ease, font-size 0.15s ease',
+                  }}
+                >
                   {node.label}{node.level !== undefined && node.level > 0 ? ` ${Math.round(node.level * 100)}%` : ''}
-                </span>
+                </motion.span>
               </button>
             );
           })}
