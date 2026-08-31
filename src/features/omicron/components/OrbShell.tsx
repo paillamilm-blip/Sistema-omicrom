@@ -5,7 +5,9 @@ import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { ProactiveCards } from './ProactiveCards';
 import { OrbHomeGuide } from './OrbHomeGuide';
+import { OrbEstadoDelDia } from './OrbEstadoDelDia';
 import { resolveGreetingName } from '../utils/orbHomeGuide';
+import { pickHomeStatus } from '../utils/homeStatus';
 import { shouldShowWelcomeCredencial } from '../utils/welcomeCredencial';
 import { OrbContextLabel } from './OrbContextLabel';
 import { CloudSavedBadge } from './CloudSavedBadge';
@@ -20,6 +22,7 @@ import { stopAI, isAudioUnlocked, speakLocal } from '@/infrastructure/voice/voic
 import { useGemeloProfile } from '@/features/gemelo/hooks/useGemeloProfile';
 import { useIdleEscalation } from '@/hooks/useIdleEscalation';
 import { computeSteps, nodeGuidance } from '@/features/omicron/services/coach';
+import { streakDays } from '@/features/gemelo/services/profile';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -254,6 +257,21 @@ export function OrbShell() {
       overallReputation: sbProfile.reputation_score ?? profile.rep ?? 0,
     };
   }, [sbProfile, profile]);
+
+  // ── Estado del día / próximo paso (ribbon calmo del Home) ───────────
+  // Se compone SOLO con datos ya presentes en el cliente (racha local +
+  // próximo paso determinista + reputación del perfil): sin llamadas al
+  // backend. El helper pickHomeStatus es puro y está unit-testeado.
+  const homeStatusLabel = useMemo(() => {
+    if (!sbProfile?.id) return null;
+    const nextStep = computeSteps(sbProfile, gemeloDigital)[0] ?? null;
+    return pickHomeStatus({
+      streak: streakDays(),
+      nextStep,
+      reputation: sbProfile?.reputation_score ?? null,
+    }).label;
+  }, [sbProfile, gemeloDigital]);
+
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
   const [voiceLevel, setVoiceLevel] = useState(0);
@@ -1457,6 +1475,35 @@ export function OrbShell() {
             }}
             onDismiss={dismissHomeGuide}
           />
+        </div>
+      )}
+
+      {/* ── ESTADO DEL DÍA / PRÓXIMO PASO (ribbon calmo del Home) ────
+          UNA sola línea sobria anclada JUSTO ENCIMA de la barra de input,
+          con su propia banda vertical (bottom safe+76px, zIndex 6 < 50 de
+          la barra). Se compone SOLO con datos ya presentes en el cliente
+          (racha + computeSteps + reputación), sin backend.
+
+          Anti-clutter: se muestra SOLO cuando no compite con las otras
+          superficies de guía. Se suprime mientras showHomeGuide está en
+          pantalla (el saludo + chips es la guía de la primera sesión, y su
+          tarjeta de acciones ocupa la banda inferior en bottom safe+84px) y
+          mientras responseMsg está activo (ProactiveMessage se muestra). El
+          wrapper usa pointerEvents:'none' para no bloquear taps de nodos ni
+          la barra de input. */}
+      {state === 'orb' && onboardingDone && !!sbProfile?.id && !showHomeGuide && !responseMsg && (
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 'calc(env(safe-area-inset-bottom, 12px) + 76px)',
+          zIndex: 6,
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '0 20px',
+          pointerEvents: 'none',
+        }}>
+          <OrbEstadoDelDia label={homeStatusLabel} visible />
         </div>
       )}
 
