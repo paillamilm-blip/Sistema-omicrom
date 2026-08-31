@@ -29,7 +29,7 @@ describe('pickHomeStatus', () => {
 
   it('con próximo paso Y racha antepone la racha como contexto', () => {
     const status = pickHomeStatus({ streak: 3, nextStep: stepWith('Rinde un examen en Academia') });
-    expect(status.label).toContain('racha de 3 días');
+    expect(status.label).toContain('Racha de 3 días · Tu próximo paso:');
     expect(status.label).toContain('Rinde un examen en Academia');
   });
 
