@@ -42,6 +42,11 @@ let smoothedTreble = 0;
 let flatSinceTs = 0;
 let usingFallback = false;
 let fallbackPhase = 0;
+// Una vez que se confirma señal REAL viva en la reproducción actual, no
+// permitimos que el detector de señal plana re-latche el fallback sintético
+// durante pausas naturales de la voz (evita parpadeo real↔sintético). Se
+// reinicia en start/stop.
+let realSignalSeen = false;
 // Contador de frames para sondear periódicamente si el fallback puede
 // auto-recuperarse (señal real viva). Se reinicia en start/stop.
 let frameCounter = 0;
@@ -157,6 +162,7 @@ function tick(): void {
       if (probeRms > 0.01) {
         usingFallback = false;
         flatSinceTs = 0;
+        realSignalSeen = true;
       }
     }
   }
@@ -182,6 +188,10 @@ function tick(): void {
     const rms = Math.sqrt(sumSq / timeData.length);
     // Normalizar: RMS típico de voz ~0.05..0.35 → escalar a 0..1.
     level = Math.max(0, Math.min(1, rms * 2.6));
+
+    // Señal real viva confirmada (mismo umbral que la sonda de auto-recuperación).
+    // A partir de aquí el detector de señal plana NO debe re-latchear el fallback.
+    if (rms > 0.01) realSignalSeen = true;
 
     // Bandas de frecuencia: repartir los bins en tercios (grave/medio/agudo).
     if (freqData) {
@@ -214,7 +224,10 @@ function tick(): void {
     if (playing && rms < 0.004) {
       const now = hasWindow() ? performance.now() : Date.now();
       if (flatSinceTs === 0) flatSinceTs = now;
-      else if (now - flatSinceTs > 300) {
+      // Solo latchamos el fallback sintético si NUNCA se vio señal real en esta
+      // reproducción. Si ya hubo señal real, una pausa/silencio de la voz no
+      // debe volver a sintético (evita parpadeo en entregas lentas/pausadas).
+      else if (!realSignalSeen && now - flatSinceTs > 300) {
         usingFallback = true;
         level = synthesizedLevel();
         const bands = synthesizedBands();
@@ -277,6 +290,7 @@ export async function startVoiceAnalysis(
   smoothedTreble = 0;
   flatSinceTs = 0;
   usingFallback = false;
+  realSignalSeen = false;
   frameCounter = 0;
 
   const ctx = ensureContext();
@@ -360,6 +374,7 @@ export function stopVoiceAnalysis(): void {
   smoothedTreble = 0;
   flatSinceTs = 0;
   usingFallback = false;
+  realSignalSeen = false;
   frameCounter = 0;
   dispatchLevel(0);
   // Simetría con dispatchLevel(0): limpiar cualquier espectro obsoleto al parar.
