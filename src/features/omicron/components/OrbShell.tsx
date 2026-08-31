@@ -873,6 +873,44 @@ export function OrbShell() {
       </div>
 
 
+      {/* ── GUEST LOGIN BUTTON (visible, esquina superior izquierda) ── */}
+      {state !== 'fullscreen' && !sbProfile?.id && (
+        <button
+          onClick={() => {
+            hapticLight();
+            window.dispatchEvent(new CustomEvent('omicron:request-auth'));
+          }}
+          aria-label="Iniciar sesión"
+          title="Iniciar sesión"
+          style={{
+            position: 'absolute',
+            top: 'calc(env(safe-area-inset-top, 12px) + 14px)',
+            left: 16,
+            zIndex: 4,
+            minHeight: 40,
+            padding: '8px 16px',
+            borderRadius: 999,
+            border: `1.5px solid ${orbColor}`,
+            background: `linear-gradient(135deg, ${orbColor}22, rgba(6,10,22,0.85))`,
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: FONT.display,
+            fontWeight: 700,
+            fontSize: 13,
+            letterSpacing: -0.2,
+            color: orbColor,
+            boxShadow: `0 0 12px ${orbColor}33, 0 4px 14px rgba(0,0,0,0.4)`,
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          }}
+        >
+          Iniciar sesión
+        </button>
+      )}
+
       {/* ── PROFILE AVATAR BUTTON (sutil, esquina superior derecha) ──── */}
       {state !== 'fullscreen' && (
         <button
