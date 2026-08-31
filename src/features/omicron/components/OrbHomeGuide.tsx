@@ -25,8 +25,8 @@
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { hapticLight } from '@/shared/utils/haptics';
-import { C, FONT, RADIUS } from '@/theme';
-import { buildGreeting, buildHomeActions } from '../utils/orbHomeGuide';
+import { C, FONT, RADIUS, SIZE, SP } from '@/theme';
+import { buildHomeActions, splitGreeting } from '../utils/orbHomeGuide';
 
 // Unión discriminada por `slot`: cada ranura declara solo lo que usa, así el
 // saludo no arrastra props muertas (onNavigate/onDismiss) que nunca invoca.
@@ -71,13 +71,17 @@ export function OrbHomeGuide(props: OrbHomeGuideProps) {
         exit: { opacity: 0, y: 6 },
       };
 
-  // ── Ranura SALUDO: línea sobria anclada arriba del orbe ─────────────
+  // ── Ranura SALUDO: dos niveles anclados arriba del orbe ─────────────
+  // Jerarquía premium: el nombre (lead) es el HÉROE (FONT.display, SIZE.lg,
+  // 600, C.ink) y el estado '· tu Gemelo está activo' queda DISCRETO
+  // (SIZE.sm, C.mut). El contenedor escalona las dos líneas (stagger del
+  // itemVariants) sin superficies nuevas. En reduced-motion todo se anula.
   if (props.slot === 'greeting') {
-    const greeting = buildGreeting(props.userName);
+    const { lead, status } = splitGreeting(props.userName);
     return (
       <AnimatePresence>
         {props.visible && (
-          <motion.p
+          <motion.div
             key="orb-home-greeting"
             variants={containerVariants}
             initial="hidden"
@@ -86,18 +90,43 @@ export function OrbHomeGuide(props: OrbHomeGuideProps) {
             style={{
               margin: 0,
               maxWidth: 340,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: SP[1],
               textAlign: 'center',
-              fontFamily: FONT.body,
-              fontSize: 15,
-              lineHeight: 1.4,
-              fontWeight: 600,
-              color: C.ink,
-              textShadow: `0 0 10px ${userColor}33`,
               pointerEvents: 'none',
             }}
           >
-            {greeting}
-          </motion.p>
+            <motion.span
+              variants={itemVariants}
+              style={{
+                fontFamily: FONT.display,
+                fontSize: SIZE.lg,
+                lineHeight: 1.3,
+                fontWeight: 600,
+                letterSpacing: -0.2,
+                color: C.ink,
+                textShadow: `0 0 10px ${userColor}33`,
+              }}
+            >
+              {lead}
+            </motion.span>
+            {status && (
+              <motion.span
+                variants={itemVariants}
+                style={{
+                  fontFamily: FONT.body,
+                  fontSize: SIZE.sm,
+                  lineHeight: 1.4,
+                  fontWeight: 500,
+                  color: C.mut,
+                }}
+              >
+                {status}
+              </motion.span>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
     );

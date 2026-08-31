@@ -5,7 +5,7 @@
 // componente ni tocan window.matchMedia.
 
 import { describe, it, expect } from 'vitest';
-import { resolveGreetingName, buildGreeting, buildHomeActions } from './orbHomeGuide';
+import { resolveGreetingName, buildGreeting, buildHomeActions, splitGreeting } from './orbHomeGuide';
 
 describe('buildGreeting', () => {
   it('con nombre devuelve la variante nombrada', () => {
@@ -18,6 +18,26 @@ describe('buildGreeting', () => {
 
   it('recorta el nombre antes de interpolar', () => {
     expect(buildGreeting('  Ana  ')).toBe('Hola, Ana · tu Gemelo está activo');
+  });
+});
+
+describe('splitGreeting', () => {
+  it('con nombre: lead incluye el nombre y status es la porción de estado', () => {
+    const { lead, status } = splitGreeting('Matías');
+    expect(lead).toBe('Hola, Matías');
+    expect(lead).toContain('Matías');
+    expect(status).toBe('· tu Gemelo está activo');
+  });
+
+  it('sin nombre: lead es "Hola" y status conserva la porción de estado', () => {
+    const { lead, status } = splitGreeting('');
+    expect(lead).toBe('Hola');
+    expect(status).toBe('· tu Gemelo está activo');
+  });
+
+  it('recompone exactamente buildGreeting() (lead + " " + status)', () => {
+    expect(`${splitGreeting('Ana').lead} ${splitGreeting('Ana').status}`).toBe(buildGreeting('Ana'));
+    expect(`${splitGreeting('').lead} ${splitGreeting('').status}`).toBe(buildGreeting(''));
   });
 });
 

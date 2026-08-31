@@ -50,6 +50,34 @@ export function buildGreeting(name: string): string {
     : 'Hola · tu Gemelo está activo';
 }
 
+// ── Saludo en dos niveles (para jerarquía tipográfica en el Home) ────
+export interface GreetingParts {
+  /** Nivel héroe: el saludo con nombre ('Hola, {name}') o 'Hola'. */
+  lead: string;
+  /** Nivel discreto: el estado '· tu Gemelo está activo'. */
+  status: string;
+}
+
+/**
+ * Parte la línea de saludo en dos niveles para mostrarla con jerarquía
+ * visual SIN cambiar el contrato de buildGreeting():
+ *   lead   → 'Hola, {name}' (o 'Hola' sin nombre) — protagonista.
+ *   status → '· tu Gemelo está activo' — de-enfatizado.
+ * Deriva de buildGreeting() partiendo por el separador '·', así ambos
+ * helpers no pueden desincronizarse.
+ */
+export function splitGreeting(name: string): GreetingParts {
+  const full = buildGreeting(name);
+  const sepIndex = full.indexOf('·');
+  if (sepIndex < 0) {
+    return { lead: full.trim(), status: '' };
+  }
+  return {
+    lead: full.slice(0, sepIndex).trim(),
+    status: full.slice(sepIndex).trim(),
+  };
+}
+
 // ── Chip de acción tocable ──────────────────────────────────────────
 export interface HomeAction {
   label: string;
