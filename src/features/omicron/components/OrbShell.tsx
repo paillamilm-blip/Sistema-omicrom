@@ -896,7 +896,11 @@ export function OrbShell() {
 
       {/* ── GUEST LOGIN BUTTON (visible, esquina superior izquierda) ── */}
       {state !== 'fullscreen' && !sbProfile?.id && (
-        <button
+        <motion.button
+          // Micro-feedback de tap consistente con el Home (OBRA MAESTRA INC 4):
+          // press transform-only, <=160ms, neutralizado bajo reduced-motion.
+          whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
+          transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => {
             hapticLight();
             window.dispatchEvent(new CustomEvent('omicron:request-auth'));
@@ -925,16 +929,22 @@ export function OrbShell() {
             letterSpacing: -0.2,
             color: orbColor,
             boxShadow: `0 0 12px ${orbColor}33, 0 4px 14px rgba(0,0,0,0.4)`,
-            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            // El transform lo gobierna framer-motion (whileTap); mantenemos
+            // solo la transición de box-shadow para no competir por transform.
+            transition: 'box-shadow 0.15s ease',
           }}
         >
           Iniciar sesión
-        </button>
+        </motion.button>
       )}
 
       {/* ── PROFILE AVATAR BUTTON (sutil, esquina superior derecha) ──── */}
       {state !== 'fullscreen' && (
-        <button
+        <motion.button
+          // Micro-feedback de tap consistente con el Home (OBRA MAESTRA INC 4):
+          // press transform-only, <=160ms, neutralizado bajo reduced-motion.
+          whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
+          transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => setShowCredencial(true)}
           aria-label="Ver mi credencial"
           title="Mi credencial"
@@ -956,7 +966,9 @@ export function OrbShell() {
             justifyContent: 'center',
             overflow: 'hidden',
             boxShadow: `0 0 12px ${C.cyanFaint}, 0 4px 14px rgba(0,0,0,0.4)`,
-            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            // El transform lo gobierna framer-motion (whileTap); mantenemos
+            // solo la transición de box-shadow para no competir por transform.
+            transition: 'box-shadow 0.15s ease',
             padding: 0,
           }}
         >
@@ -978,7 +990,7 @@ export function OrbShell() {
                 .trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()}
             </span>
           )}
-        </button>
+        </motion.button>
       )}
 
 

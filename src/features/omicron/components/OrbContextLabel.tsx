@@ -80,6 +80,11 @@ const S: Record<string, React.CSSProperties> = {
     whiteSpace: 'nowrap',
     zIndex: 3,
     pointerEvents: 'none',
-    animation: 'fadeInDown 0.3s cubic-bezier(0.32, 0.72, 0, 1) both',
+    // Coreografía de entrada del Home (OBRA MAESTRA INC 4): easing compartido
+    // cubic-bezier(0.23,1,0.32,1) y un pequeño delay para que la línea
+    // superior entre CON RITMO junto al saludo y al ribbon (cascada coherente
+    // línea → saludo → estado del día). Reduced-motion ya lo neutraliza la
+    // regla global @media (prefers-reduced-motion: reduce) en OrbShell.
+    animation: 'fadeInDown 0.28s cubic-bezier(0.23, 1, 0.32, 1) 0.08s both',
   },
 };
