@@ -341,7 +341,8 @@ export async function startVoiceAnalysis(
     } catch {
       resumed = false;
     }
-    if (!resumed || ctx.state !== 'running') {
+    const stateAfter: AudioContextState = ctx.state;
+    if (!resumed || stateAfter !== 'running') {
       usingFallback = true;
     }
   }
