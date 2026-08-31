@@ -42,6 +42,9 @@ let smoothedTreble = 0;
 let flatSinceTs = 0;
 let usingFallback = false;
 let fallbackPhase = 0;
+// Contador de frames para sondear periódicamente si el fallback puede
+// auto-recuperarse (señal real viva). Se reinicia en start/stop.
+let frameCounter = 0;
 
 // ── Helpers de entorno ───────────────────────────────────────────────
 function hasWindow(): boolean {
@@ -137,6 +140,27 @@ function synthesizedBands(): { bass: number; mid: number; treble: number } {
 function tick(): void {
   if (!activeEl) return;
 
+  frameCounter++;
+
+  // Auto-recuperación del fallback: si estamos en fallback pero hay un analyser
+  // real disponible, sondear la señal cada ~30 frames (~500ms). Si el RMS real
+  // ya está vivo (> 0.01), volver a leer datos reales en vez del sintético.
+  if (usingFallback && activeAnalyser && timeData) {
+    if (frameCounter % 30 === 0) {
+      activeAnalyser.getByteTimeDomainData(timeData);
+      let probeSumSq = 0;
+      for (let i = 0; i < timeData.length; i++) {
+        const v = (timeData[i] - 128) / 128;
+        probeSumSq += v * v;
+      }
+      const probeRms = Math.sqrt(probeSumSq / timeData.length);
+      if (probeRms > 0.01) {
+        usingFallback = false;
+        flatSinceTs = 0;
+      }
+    }
+  }
+
   let level = 0;
   let bass = 0;
   let mid = 0;
@@ -224,7 +248,9 @@ function tick(): void {
  * detiene primero. Inserta source→analyser→destination para NO cortar el
  * sonido. Cae a fallback sintético si Web Audio no puede leer los datos.
  */
-export function startVoiceAnalysis(audio: HTMLAudioElement): void {
+export async function startVoiceAnalysis(
+  audio: HTMLAudioElement,
+): Promise<void> {
   if (!hasWindow()) return;
 
   // Detener cualquier loop previo sin resetear el orbe todavía.
@@ -251,6 +277,7 @@ export function startVoiceAnalysis(audio: HTMLAudioElement): void {
   smoothedTreble = 0;
   flatSinceTs = 0;
   usingFallback = false;
+  frameCounter = 0;
 
   const ctx = ensureContext();
   if (!ctx) {
@@ -258,10 +285,6 @@ export function startVoiceAnalysis(audio: HTMLAudioElement): void {
     usingFallback = true;
     rafId = requestAnimationFrame(tick);
     return;
-  }
-
-  if (ctx.state === 'suspended') {
-    ctx.resume().catch(() => {});
   }
 
   try {
@@ -283,6 +306,36 @@ export function startVoiceAnalysis(audio: HTMLAudioElement): void {
   } catch {
     usingFallback = true;
   }
+
+  // Un AudioContext suspendido (típico hasta que hay gesto del usuario)
+  // entrega bytes de silencio (128) y el detector de señal plana latcharía el
+  // fallback sintético en ~300ms antes de que llegue audio real. Por eso, si
+  // está suspendido, ESPERAMOS a que reanude (con timeout > 1s) ANTES de
+  // arrancar el rAF. Si reanuda a tiempo, el loop lee datos reales; si no,
+  // caemos a fallback (auto-recuperable dentro de tick()).
+  if (ctx.state === 'suspended') {
+    let resumed = false;
+    try {
+      await Promise.race([
+        ctx.resume().then(() => {
+          resumed = true;
+        }),
+        new Promise<void>((resolve) => {
+          window.setTimeout(resolve, 1000);
+        }),
+      ]);
+    } catch {
+      resumed = false;
+    }
+    if (!resumed || ctx.state !== 'running') {
+      usingFallback = true;
+    }
+  }
+
+  // Guard de arranque obsoleto: durante el await pudo dispararse un nuevo
+  // startVoiceAnalysis (otro elemento) o un stopVoiceAnalysis. Solo arrancamos
+  // el loop si este sigue siendo el elemento activo.
+  if (activeEl !== audio) return;
 
   rafId = requestAnimationFrame(tick);
 }
@@ -307,6 +360,7 @@ export function stopVoiceAnalysis(): void {
   smoothedTreble = 0;
   flatSinceTs = 0;
   usingFallback = false;
+  frameCounter = 0;
   dispatchLevel(0);
   // Simetría con dispatchLevel(0): limpiar cualquier espectro obsoleto al parar.
   dispatchSpectrum(0, 0, 0);
