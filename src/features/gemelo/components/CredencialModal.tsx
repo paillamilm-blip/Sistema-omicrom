@@ -17,8 +17,9 @@ import { useMemo, useState } from 'react';
 import type { ReactNode, CSSProperties } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
-import { X, Share2, Download, RefreshCw, Zap, Shield, Globe, TrendingUp, CheckCircle2, Circle } from 'lucide-react';
+import { X, Share2, Download, RefreshCw, Zap, Shield, Globe, TrendingUp, CheckCircle2, Circle, LogOut } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
 import { C, FONT, SIZE, RADIUS } from '@/theme';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
@@ -150,6 +151,9 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
   const gemelo = useGemeloDigital();
   const uc = useUserColor();
   const [showShare, setShowShare] = useState(false);
+  // Cerrar sesión con TAP-TO-CONFIRM: primer tap arma la confirmación, segundo
+  // tap ejecuta signOut. Evita salidas accidentales sin usar confirm() nativo.
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   // Pestaña activa del cuerpo paginado (0=Perfil, 1=Competencias, 2=Trayectoria).
   // `dir` guarda la dirección del último cambio para orientar el slide horizontal.
@@ -651,6 +655,77 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
               Crea tu usuario público para poder compartir tu credencial.
             </p>
           )}
+
+          {/* ── Cerrar sesión (acción menos prominente, tinte destructivo) ── */}
+          {/* Discreta y teñida con C.red. TAP-TO-CONFIRM: primer tap arma la
+              confirmación; el segundo ejecuta signOut(). El listener de auth de
+              la app baja al usuario a invitado (no navegamos manualmente). La
+              transición entre estados usa AnimatePresence con fade/scale sutil,
+              y se vuelve instantánea bajo reduce-motion. */}
+          <div style={{ marginTop: 12, minHeight: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <AnimatePresence mode="wait" initial={false}>
+              {!confirmingLogout ? (
+                <motion.button
+                  key="logout-idle"
+                  onClick={() => setConfirmingLogout(true)}
+                  initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+                  aria-label="Cerrar sesión"
+                  style={{
+                    minHeight: 34, padding: '7px 12px', borderRadius: RADIUS.md,
+                    cursor: 'pointer',
+                    background: `${C.red}14`,
+                    border: `1px solid ${C.red}44`,
+                    color: C.red,
+                    fontFamily: FONT.mono, fontWeight: 600, fontSize: SIZE.xxs, letterSpacing: 0.4,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}
+                >
+                  <LogOut size={13} /> Cerrar sesión
+                </motion.button>
+              ) : (
+                <motion.div
+                  key="logout-confirm"
+                  initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                >
+                  <button
+                    onClick={() => { void supabase.auth.signOut(); }}
+                    aria-label="Confirmar cerrar sesión"
+                    style={{
+                      minHeight: 34, padding: '7px 12px', borderRadius: RADIUS.md,
+                      cursor: 'pointer',
+                      background: `${C.red}26`,
+                      border: `1px solid ${C.red}`,
+                      color: C.red,
+                      fontFamily: FONT.mono, fontWeight: 700, fontSize: SIZE.xxs, letterSpacing: 0.4,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    <LogOut size={13} /> ¿Confirmar salida?
+                  </button>
+                  <button
+                    onClick={() => setConfirmingLogout(false)}
+                    aria-label="Cancelar cierre de sesión"
+                    style={{
+                      minHeight: 34, padding: '7px 8px', borderRadius: RADIUS.md,
+                      cursor: 'pointer',
+                      background: 'transparent', border: 'none',
+                      color: C.mut,
+                      fontFamily: FONT.mono, fontWeight: 600, fontSize: SIZE.xxs, letterSpacing: 0.4,
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* ── Sello de verificación ── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 16 }}>
