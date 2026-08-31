@@ -852,7 +852,7 @@ export function OrbShell() {
                 // evento 'oracle:voice'). No es un keyframe [1, pico, 1]: así las
                 // sílabas fuertes saltan al instante y las pausas caen de vuelta,
                 // dando la sensación de ecualizador y no de respiración.
-                ? { scale: 1 + Math.min(0.18, voiceLevel * 0.18) }
+                ? { scale: 1 + Math.min(0.34, voiceLevel * 0.36) }
                 // Reposo: respiración muy sutil para no pelear con la animación interna del orbe.
                 : { scale: [1, 1.015, 1] }
           }
