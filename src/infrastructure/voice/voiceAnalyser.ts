@@ -341,8 +341,11 @@ export async function startVoiceAnalysis(
     } catch {
       resumed = false;
     }
-    const stateAfter: AudioContextState = ctx.state;
-    if (!resumed || stateAfter !== 'running') {
+    // Si resume() no resolvió dentro del timeout, el contexto no está corriendo
+    // → caer a fallback (auto-recuperable dentro de tick()). Nota: no leemos
+    // ctx.state aquí porque el narrowing de TS lo mantiene como 'suspended'
+    // dentro de este bloque; `resumed` es la señal fiable de que reanudó.
+    if (!resumed) {
       usingFallback = true;
     }
   }
