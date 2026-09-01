@@ -301,6 +301,18 @@ export function OrbShell() {
     setRisenAxisLabel(rose);
   }, [gemeloDigital]);
 
+  // El alza es una NOVEDAD, no un estado permanente: se anuncia UNA vez y
+  // luego la voz vuelve a su línea normal de próximo paso. Tras mostrarse,
+  // un timer one-shot limpia risenAxisLabel a null (la escritura del
+  // snapshot ya avanzó la baseline, así que futuras alzas reales se siguen
+  // detectando). Sin loop de re-render: solo corre cuando pasa a no-null y
+  // se limpia al desmontar.
+  useEffect(() => {
+    if (!risenAxisLabel) return;
+    const t = setTimeout(() => setRisenAxisLabel(null), 6000);
+    return () => clearTimeout(t);
+  }, [risenAxisLabel]);
+
   // ── Estado del día / próximo paso (ribbon calmo del Home) ───────────
   // Se compone SOLO con datos ya presentes en el cliente (racha local +
   // próximo paso determinista + reputación del perfil + alza de eje): sin
