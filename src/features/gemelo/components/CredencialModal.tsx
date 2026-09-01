@@ -33,6 +33,10 @@ const OMICRON_BG = 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%
 const TABS = ['Perfil', 'Competencias', 'Trayectoria'] as const;
 type TabIndex = 0 | 1 | 2;
 
+// Ease del brillo holográfico (sheen). Tupla cubic-bezier MUTABLE tipada
+// [number, number, number, number] (NO `as const`) para cumplir el lint de CI.
+const SHEEN_EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
+
 // ── Stacks tipográficos para el canvas (los tokens FONT no son legibles
 // desde el contexto 2D; replicamos las familias del tema como literales). ──
 const CANVAS_SANS = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
@@ -424,8 +428,35 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
           boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
         }}
       >
+        {/* ═══ BRILLO HOLOGRÁFICO (sheen) ═══════════════════════════════
+            Banda diagonal de luz que recorre la superficie de la credencial
+            para que se lea como un documento holográfico imposible de
+            falsificar. Overlay NO interactivo (pointerEvents:'none'),
+            recortado por el overflow:'hidden' de la tarjeta y pintado DEBAJO
+            de todo el contenido (que fluye por encima). Bajo reduce-motion es
+            un único destello estático (sin loop). Solo usa uc + blanco-alfa. */}
+        <motion.div
+          aria-hidden
+          initial={false}
+          animate={reduceMotion ? { backgroundPosition: '50% 50%' } : { backgroundPosition: ['0% 0%', '100% 100%'] }}
+          transition={
+            reduceMotion
+              ? undefined
+              : { duration: 7.5, ease: SHEEN_EASE, repeat: Infinity, repeatType: 'mirror' }
+          }
+          style={{
+            position: 'absolute', inset: 0, zIndex: 0,
+            borderRadius: RADIUS.xl,
+            pointerEvents: 'none',
+            opacity: 0.7,
+            backgroundImage: `linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.10) 45%, ${uc}22 50%, rgba(255,255,255,0.10) 55%, transparent 70%)`,
+            backgroundSize: '250% 250%',
+            backgroundRepeat: 'no-repeat',
+          }}
+        />
+
         {/* ── Barra de acento superior (color del usuario) ── */}
-        <div style={{ height: 3, borderRadius: '3px 3px 0 0', background: `linear-gradient(90deg, transparent, ${uc}, transparent)` }} />
+        <div style={{ position: 'relative', zIndex: 1, height: 3, borderRadius: '3px 3px 0 0', background: `linear-gradient(90deg, transparent, ${uc}, transparent)` }} />
 
         {/* ── Botón cerrar ── */}
         <button
@@ -442,7 +473,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
         </button>
 
         {/* ═══ ENCABEZADO FIJO (orbe + identidad + reputación) ═══════════ */}
-        <div style={{ flexShrink: 0, padding: '24px 24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ position: 'relative', zIndex: 1, flexShrink: 0, padding: '24px 24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* ── Encabezado compacto: orbe pequeño (esquina superior) + identidad ── */}
           {/* El orbe se muestra achicado como "retrato" en la esquina superior
               izquierda (mismo tratamiento que la orbe de carga de OrbShell), de
@@ -507,6 +538,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
           role="tablist"
           aria-label="Secciones de la credencial"
           style={{
+            position: 'relative', zIndex: 1,
             flexShrink: 0, display: 'flex', gap: 4,
             padding: '14px 24px 0', margin: '4px 0 0',
           }}
@@ -544,11 +576,11 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
           })}
         </div>
         {/* Separador bajo la barra de pestañas. */}
-        <div style={{ flexShrink: 0, height: 1, background: C.line, margin: '0 24px' }} />
+        <div style={{ position: 'relative', zIndex: 1, flexShrink: 0, height: 1, background: C.line, margin: '0 24px' }} />
 
         {/* ═══ CUERPO PAGINADO (región flexible con scroll acotado) ══════ */}
         {/* SEAM DE ANIMACIÓN: un único motion.div keyed por pestaña. */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 24px' }}>
+        <div style={{ position: 'relative', zIndex: 1, flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 24px' }}>
           <AnimatePresence mode="wait" custom={dir} initial={false}>
             <motion.div
               key={tab}
@@ -573,7 +605,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
         {/* Afordancia sutil de que la credencial se pagina y se puede deslizar.
             El punto activo se tiñe con el color personal (uc); los inactivos
             quedan atenuados. El subrayado de pestaña activa se mantiene igual. */}
-        <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 7, padding: '10px 0 2px' }}>
+        <div style={{ position: 'relative', zIndex: 1, flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 7, padding: '10px 0 2px' }}>
           {TABS.map((label, i) => {
             const active = tab === i;
             return (
@@ -594,7 +626,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
         </div>
 
         {/* ═══ PIE FIJO (acciones + sello, sin scroll de página) ═════════ */}
-        <div style={{ flexShrink: 0, padding: '14px 24px 20px', borderTop: `1px solid ${C.line}`, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ position: 'relative', zIndex: 1, flexShrink: 0, padding: '14px 24px 20px', borderTop: `1px solid ${C.line}`, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* ── Compartir credencial (primario) ── */}
           <button
             onClick={() => username && setShowShare(true)}
