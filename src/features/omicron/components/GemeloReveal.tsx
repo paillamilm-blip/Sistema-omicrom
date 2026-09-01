@@ -108,15 +108,20 @@ function generateSyntheticJob(analyzed: AnalyzedProfile): SyntheticJob {
 }
 
 // ── Terminal line component ──────────────────────────────────────────────
-function TerminalLine({ text, delay, color = C.cyan }: { text: string; delay: number; color?: string }) {
+// Línea tipo terminal con auto-timer propio (aparece a los `delay`ms) y
+// entrada framer transform/opacity. Respeta prefers-reduced-motion: con
+// reduceMotion aparece en estado final (sin slide ni tween). El timer se
+// limpia solo al desmontar; todo el bloque 'reading' se desmonta en el
+// cambio de acto vía AnimatePresence, así que no quedan timers colgando.
+function TerminalLine({ text, delay, color = C.cyan, reduceMotion = false }: { text: string; delay: number; color?: string; reduceMotion?: boolean }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
   if (!visible) return null;
   return (
     <motion.div
-      initial={{ opacity: 0, x: -8 }}
+      initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      transition={reduceMotion ? { duration: 0 } : { duration: 0.3, ease: 'easeOut' }}
       style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}
     >
       <span style={{ color: C.mut }}>{'>'}</span> {text}
@@ -303,12 +308,24 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
           {/* ── ACT 1: LA ORBE TE LEE ────────────────────────────────── */}
           {currentAct === 'reading' && (
             <motion.div key="reading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ padding: '0 24px', flex: 1 }}>
-              <TerminalLine text="Detectando identidad..." delay={200} color={C.mut} />
-              <TerminalLine text={analyzed.name || analyzed.seniorLabel || 'Profesional detectado'} delay={800} color={C.ink} />
-              <TerminalLine text={analyzed.seniorLabel} delay={1400} color={uc} />
-              <TerminalLine text={`${analyzed.years > 0 ? analyzed.years + ' años' : 'Experiencia'} en entornos productivos`} delay={2000} color={C.ink} />
-              <TerminalLine text={analyzed.labels.slice(0, 4).join(' · ') || 'Analizando competencias…'} delay={2600} color={C.gold} />
-              <TerminalLine text={`Gemelo Digital calibrado. ${analyzed.labels.length} competencias detectadas.`} delay={3600} color={C.green} />
+              <TerminalLine text="Detectando identidad..." delay={200} color={C.mut} reduceMotion={!!reduceMotion} />
+              <TerminalLine text={analyzed.name || analyzed.seniorLabel || 'Profesional detectado'} delay={800} color={C.ink} reduceMotion={!!reduceMotion} />
+              <TerminalLine text={analyzed.seniorLabel} delay={1400} color={uc} reduceMotion={!!reduceMotion} />
+              <TerminalLine text={`${analyzed.years > 0 ? analyzed.years + ' años' : 'Experiencia'} en entornos productivos`} delay={2000} color={C.ink} reduceMotion={!!reduceMotion} />
+              {/* El Gemelo nace de tu CV: cada competencia REAL (analyzed.labels)
+                  aparece una a una, en ritmo, como "Detectado: {competencia}".
+                  Se apoya en el auto-timer propio de TerminalLine (sin timers
+                  nuevos en el padre) y aterriza toda antes de la línea
+                  'calibrado' (3600ms) y muy antes del auto-avance (4500ms):
+                  base 2200 + i*280 → última en 3320ms para N=5. Si no hay
+                  labels reales, cae con gracia a 'Analizando competencias…'
+                  (nunca se inventan competencias). */}
+              {analyzed.labels.length > 0
+                ? analyzed.labels.slice(0, 5).map((label, i) => (
+                    <TerminalLine key={i} text={`Detectado: ${label}`} delay={2200 + i * 280} color={C.gold} reduceMotion={!!reduceMotion} />
+                  ))
+                : <TerminalLine text="Analizando competencias…" delay={2600} color={C.gold} reduceMotion={!!reduceMotion} />}
+              <TerminalLine text={`Gemelo Digital calibrado. ${analyzed.labels.length} competencias detectadas.`} delay={3600} color={C.green} reduceMotion={!!reduceMotion} />
             </motion.div>
           )}
 
