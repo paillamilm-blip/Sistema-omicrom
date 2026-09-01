@@ -160,6 +160,10 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
     setShowPass(false);
     setError(null);
     setSuccess(null);
+    // Un beat latente no debe sobrevivir a un cambio de vista: si el usuario
+    // alterna login/registro/recuperar tras un éxito, se limpia igual que el
+    // resto del estado del formulario.
+    setAuthPulse(false);
   }
 
   // Bloquea en tiempo real cualquier carácter que no sea letra, número o
@@ -300,12 +304,19 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   // ── "Encender tu Gemelo" (INC 3) — beat de éxito ────────────────────
   // Cuando la autenticación tiene éxito (authPulse), el orbe da UN solo
   // destello breve (~360ms) con el color del usuario y vuelve al reposo.
-  // Es puramente presentacional: framer-motion anima un keyframe que empieza
-  // y termina en reposo, así que NO hace falta ningún temporizador ni reset,
-  // y por tanto no hay riesgo de setState-after-unmount ni de callbacks
-  // inestables en dependencias. Con reduce activo, no hay escala ni
-  // desplazamiento: solo un breve reconocimiento por opacidad/glow.
-  // El burst de glow reutiliza el mismo lenguaje del halo de carga (INC1).
+  // Es puramente presentacional. El beat debe reproducirse UNA sola vez: al
+  // terminar la animación se resetea authPulse a false vía el callback
+  // onAnimationComplete de framer-motion (más abajo, en el motion.div del
+  // orbe). Esto es necesario porque en los flujos forgot/register el overlay
+  // sigue montado y el keyframe de boxShadow incorpora orbRingShadow (derivado
+  // de charge/focused); sin reset, cualquier foco/edición posterior recalcula
+  // orbRingShadow, cambia el objetivo del keyframe y framer REPRODUCIRÍA el
+  // beat otra vez (loop prohibido por los criterios). No se usa setTimeout:
+  // framer no invoca onAnimationComplete tras desmontar, así que no hay riesgo
+  // de setState-after-unmount ni de callbacks inestables en dependencias de
+  // efectos (el handler va inline, no en un array de deps). Con reduce activo,
+  // no hay escala ni desplazamiento: solo un breve reconocimiento por
+  // opacidad/glow. El burst de glow reutiliza el lenguaje del halo (INC1).
   const pulseGlow = `0 0 72px ${uc}cc, 0 0 24px ${uc}99, inset 0 0 24px ${uc}33`;
   const orbBeatAnimate = authPulse
     ? reduce
@@ -353,6 +364,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
             style={{ ...S.orbRing, boxShadow: orbRingShadow }}
             animate={orbBeatAnimate}
             transition={orbBeatTransition}
+            onAnimationComplete={() => { if (authPulse) setAuthPulse(false); }}
           >
             <GeodesicOrb size={80} nodes={orbNodes} color={uc} spinning={orbSpinning} intensity={orbIntensity} />
           </motion.div>
