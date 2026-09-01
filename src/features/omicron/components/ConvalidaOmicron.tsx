@@ -11,7 +11,7 @@
 // Ya no existe la fase "dossier" vieja. GemeloReveal la reemplaza completamente.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, Check, Upload, ArrowRight, TrendingUp, Zap, RotateCcw } from 'lucide-react';
 import { useGemeloActivation } from '@/hooks/useGemeloActivation';
 import { GemeloReveal } from './GemeloReveal';
@@ -20,8 +20,16 @@ import { C, FONT, RADIUS, SIZE } from '@/theme';
 import { getUserColor } from '@/shared/components/ColorPicker';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 
+// ── Ease-out tuple para el escaneo (mutable, NO `as const`) ──────────────
+// Mismo valor que BEAT_EASE en GemeloReveal.tsx para mantener el lenguaje.
+const SCAN_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+// Número de pasos reales del análisis (currentStep va 0 -> 1 -> 2 -> 3).
+const SCAN_STEPS = 4;
+
 export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   const uc = getUserColor();
+  const reduceMotion = useReducedMotion();
 
   const {
     phase, currentStep, dossier,
@@ -97,18 +105,52 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Progress message + pulsing dots */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 2 }}>
-          {/* Progress message */}
-          <p style={{ textAlign: 'center', margin: '24px 20px 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.5 }}>
-            {msg}
-          </p>
+        {/* Lectura en curso: mensaje real + riel de progreso por pasos reales */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 2, padding: '0 20px' }}>
+          {/* Contador honesto de pasos (currentStep va 0..3) */}
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, textTransform: 'uppercase', color: C.mut }}>
+            Paso {Math.min(currentStep + 1, SCAN_STEPS)} de {SCAN_STEPS}
+          </span>
 
-          {/* Pulsing dots */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16 }}>
-            <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }} style={{ width: 8, height: 8, borderRadius: '50%', background: uc }} />
-            <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }} style={{ width: 8, height: 8, borderRadius: '50%', background: uc }} />
-            <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }} style={{ width: 8, height: 8, borderRadius: '50%', background: uc }} />
+          {/* Mensaje de progreso real (PROGRESS_MESSAGES), cross-fade al avanzar */}
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={msg}
+              initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -6 }}
+              transition={reduceMotion ? { duration: 0 } : { duration: 0.32, ease: SCAN_EASE }}
+              style={{ textAlign: 'center', margin: '12px 0 0', minHeight: 44, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.5 }}
+            >
+              {msg}
+            </motion.p>
+          </AnimatePresence>
+
+          {/* Riel de escaneo: pasos 0..currentStep leídos (uc), resto pendientes (C.line) */}
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={SCAN_STEPS}
+            aria-valuenow={Math.min(currentStep + 1, SCAN_STEPS)}
+            aria-label="Progreso de lectura del CV"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 20, width: '100%', maxWidth: 260 }}
+          >
+            {Array.from({ length: SCAN_STEPS }, (_, i) => {
+              const read = i <= currentStep;
+              return (
+                <motion.div
+                  key={i}
+                  style={{ flex: 1, height: 4, borderRadius: RADIUS.pill, background: C.line, transformOrigin: 'left center', overflow: 'hidden' }}
+                >
+                  <motion.div
+                    initial={false}
+                    animate={{ scaleX: read ? 1 : 0, opacity: read ? 1 : 0 }}
+                    transition={reduceMotion ? { duration: 0 } : { duration: 0.38, ease: SCAN_EASE }}
+                    style={{ width: '100%', height: '100%', borderRadius: RADIUS.pill, background: uc, transformOrigin: 'left center' }}
+                  />
+                </motion.div>
+              );
+            })}
           </div>
         </div>
 
