@@ -24,6 +24,14 @@ const USERNAME_MAX_LENGTH = 24;
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]*$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Curva ease-out estándar de la app para la entrada y los micro-taps.
+// Con prefers-reduced-motion la entrada cae a un fade sin desplazamiento y
+// el whileTap se desactiva; el desplazamiento y el escalonado quedan detrás
+// de !reduce.
+const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1];
+const TAP_SCALE = { scale: 0.96 };
+const TAP_TRANSITION = { duration: 0.14, ease: EASE_OUT };
+
 // ═══════════════════════════════════════════════════════════════════════
 // CSS inyectado una sola vez: cubre los estados interactivos (:focus,
 // :hover, ::placeholder) que no se pueden expresar con estilos inline.
@@ -50,7 +58,6 @@ function injectAuthStyles(): void {
     }
     .auth-submit { transition: filter .18s ease, transform .12s ease, box-shadow .18s ease; }
     .auth-submit:hover:not(:disabled) { filter: brightness(1.08); }
-    .auth-submit:active:not(:disabled) { transform: scale(0.985); }
     .auth-tab { transition: color .18s ease, background .22s ease; }
     .auth-link { transition: color .18s ease; }
     .auth-link:hover { color: var(--omi-accent) !important; }
@@ -313,9 +320,9 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
       <div style={S.stack}>
         {/* ── Logo: orbe con el color elegido ────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: reduce ? 0 : 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.24, ease: EASE_OUT, delay: 0 }}
           style={S.logoBlock}
         >
           <div style={{ ...S.orbRing, boxShadow: orbRingShadow }}>
@@ -329,9 +336,9 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
 
         {/* ── Tarjeta glass premium ──────────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: reduce ? 0 : 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.08 }}
+          transition={{ duration: 0.24, ease: EASE_OUT, delay: reduce ? 0 : 0.06 }}
           style={S.card}
         >
           {/* Barra de acento superior con el color del usuario */}
@@ -343,11 +350,13 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
               {(['login', 'register'] as const).map(m => {
                 const active = mode === m;
                 return (
-                  <button
+                  <motion.button
                     key={m}
                     type="button"
                     className="auth-tab"
                     onClick={() => switchMode(m)}
+                    whileTap={reduce ? undefined : TAP_SCALE}
+                    transition={TAP_TRANSITION}
                     style={{
                       ...S.tab,
                       color: active ? '#fff' : C.mut,
@@ -357,7 +366,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
                     }}
                   >
                     {m === 'login' ? 'Iniciar Sesión' : 'Registrarse'}
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
@@ -457,10 +466,12 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
               </div>
             )}
 
-            <button
+            <motion.button
               type="submit"
               className="auth-submit"
               disabled={loading}
+              whileTap={reduce ? undefined : TAP_SCALE}
+              transition={TAP_TRANSITION}
               style={{
                 ...S.submit,
                 background: `linear-gradient(135deg, ${uc}, ${C.purple})`,
@@ -470,7 +481,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
               }}
             >
               {submitLabel}
-            </button>
+            </motion.button>
 
             {mode === 'login' && (
               <button type="button" className="auth-link" onClick={() => switchMode('forgot')} style={S.forgot}>
@@ -494,9 +505,15 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
 
         {/* ── Modo invitado ──────────────────────────────────────────── */}
         {onClose && (
-          <button onClick={onClose} className="auth-ghost" style={{ ...S.ghost, border: `1px solid ${uc}33` }}>
+          <motion.button
+            onClick={onClose}
+            className="auth-ghost"
+            whileTap={reduce ? undefined : TAP_SCALE}
+            transition={TAP_TRANSITION}
+            style={{ ...S.ghost, border: `1px solid ${uc}33` }}
+          >
             Explorar sin cuenta →
-          </button>
+          </motion.button>
         )}
       </div>
     </div>
