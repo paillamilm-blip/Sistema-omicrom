@@ -11,6 +11,7 @@ import { OrbHomeGuide } from './OrbHomeGuide';
 import { OrbEstadoDelDia } from './OrbEstadoDelDia';
 import { resolveGreetingName } from '../utils/orbHomeGuide';
 import { pickHomeStatus } from '../utils/homeStatus';
+import { nodeUnlock } from '../utils/nodeUnlock';
 import { shouldShowWelcomeCredencial } from '../utils/welcomeCredencial';
 import { CloudSavedBadge } from './CloudSavedBadge';
 import { PremiumLock } from '@/features/wallet/components/Premium';
@@ -499,6 +500,20 @@ export function OrbShell() {
     }));
   }, [profile, sbProfile, gemeloDigital, dynamicOrbNodes]);
 
+  // ── BLOQUEADO / DESBLOQUEADO ("Matar el Escritorio" Inc 4) ──────────
+  // La red del orbe se ARMA con lo que la persona desbloqueó. El desbloqueo
+  // de cada nodo hub se decide SOLO leyendo la reputación real del perfil
+  // (reputation_score 0..100, la misma fuente que lee la Credencial). Este
+  // cliente NUNCA escribe reputación: solo LEE. La lógica de compuertas y las
+  // pistas cero-jerga viven en el helper puro nodeUnlock() (unit-testeado);
+  // aquí solo lo consultamos con la reputación real y una envoltura estable
+  // por render.
+  const realReputation = sbProfile?.reputation_score ?? profile.rep ?? 0;
+  const unlockFor = useCallback(
+    (nodeId: string) => nodeUnlock(nodeId, realReputation),
+    [realReputation],
+  );
+
   // ── Handle text input — Ómicrom cerebro unificado ───────────────────
   const handleTextInput = useCallback(async (text: string) => {
     // Limpiar respuesta anterior para mostrar que estamos procesando
@@ -516,6 +531,18 @@ export function OrbShell() {
     if (intent.kind === 'navigate') {
       const node = orbNodesWithLevels.find((n: OrbNode) => n.tab === intent.tab);
       if (node) {
+        // Misma compuerta que el tap (Inc 4): si la orden hablada/escrita
+        // resuelve a un nodo hub BLOQUEADO, mostramos la pista en vez de
+        // navegar, para que la barra Jarvis respete el bloqueado/desbloqueado.
+        const isHubNode = HUB_NODES.some(h => h.id === node.id);
+        if (isHubNode) {
+          const gate = unlockFor(node.id);
+          if (!gate.unlocked && gate.hint) {
+            flash(gate.hint);
+            speakLocal(gate.hint);
+            return;
+          }
+        }
         setSelectedNode(node);
         setState('preview');
         setActiveTab(node.tab);
@@ -611,7 +638,7 @@ export function OrbShell() {
     clearTimeout(slowTimer);
     flash(r.text);
     speakOmicron(r.text);
-  }, [setActiveTab, sbProfile, orbNodesWithLevels, selectedNode]);
+  }, [setActiveTab, sbProfile, orbNodesWithLevels, selectedNode, unlockFor]);
 
   // ── Toggle listening (speech recognition) ──────────────────────────
   // Voz y texto son LA MISMA experiencia — la voz solo cambia el input method.
@@ -659,6 +686,23 @@ export function OrbShell() {
   // Todos los nodos usan el mismo flujo: tap → preview → fullscreen.
   // El nodo Mi Gemelo va a renderTab('perfil') que ahora muestra el Gemelo Digital.
   const handleNodeTap = useCallback((node: OrbNode) => {
+    // BLOQUEADO / DESBLOQUEADO (Inc 4): solo los nodos hub tienen compuerta.
+    // Si un hub está BLOQUEADO, tocarlo NO navega: en su lugar mostramos la
+    // pista cero-jerga (QUÉ se abre + a QUÉ nivel) por el canal reactivo
+    // existente (ProactiveMessage), sin inventar una superficie nueva. Los
+    // nodos de habilidades/conocimiento y los desbloqueados se comportan
+    // exactamente como hasta hoy (tap → preview → fullscreen).
+    const isHubNode = HUB_NODES.some(h => h.id === node.id);
+    if (isHubNode) {
+      const gate = unlockFor(node.id);
+      if (!gate.unlocked && gate.hint) {
+        hapticLight();
+        setResponseMsg(gate.hint);
+        setProactiveActions([]);
+        speakLocal(gate.hint);
+        return;
+      }
+    }
     hapticMedium();
     audioSweep();
     firePulse('user');
@@ -668,7 +712,7 @@ export function OrbShell() {
     // Señal de tap de nodo (canal 'omicron:node-tap'); se mantiene por si
     // otros oyentes la usan aunque ProactiveCards ya no esté montado.
     window.dispatchEvent(new CustomEvent('omicron:node-tap'));
-  }, [setActiveTab]);
+  }, [setActiveTab, unlockFor]);
 
   // ── Handle preview click → fullscreen ───────────────────────────────
   const handlePreviewClick = useCallback(() => {
@@ -1313,6 +1357,13 @@ export function OrbShell() {
             const isActive = node.id === selectedNode?.id;
             const isHub = HUB_NODES.findIndex(n => n.id === node.id) >= 0;
             if (!isHub && !isActive) return null;
+            // BLOQUEADO / DESBLOQUEADO (Inc 4): los nodos hub bloqueados se
+            // leen TENUES / lejanos (menor opacidad), así la red se percibe
+            // "armada" con lo desbloqueado. Solo aplica a hubs; el gate es
+            // read-only sobre la reputación real. Presentación aditiva:
+            // los nodos desbloqueados se ven EXACTAMENTE como hasta hoy.
+            const gate = isHub ? unlockFor(node.id) : null;
+            const isLocked = !!gate && !gate.unlocked;
             // ── El orbe como MAPA VIVO, no como menú ──────────────────
             // En vez del corte binario anterior (frente 0.7 / atrás 0),
             // la opacidad de cada etiqueta hub es una función CONTINUA de
@@ -1323,17 +1374,25 @@ export function OrbShell() {
             // con el mismo peso (efecto "grilla de menú"). Todos los
             // botones hub se siguen renderizando para tap/lectores.
             const depthOpacity = Math.max(0.06, 0.85 - pos.depth * 0.79);
-            const labelOpacity = isActive ? 1 : depthOpacity;
+            // Los nodos bloqueados se retiran un paso más (atenuación
+            // multiplicativa) para leerse "lejanos", pero siguen visibles y
+            // TAPPABLES: tocarlos revela la pista de cómo abrirlos.
+            const lockedDim = isLocked ? 0.42 : 1;
+            const labelOpacity = isActive ? 1 : depthOpacity * lockedDim;
             // El nodo activo siempre es tappable; los demás lo son cuando
             // su etiqueta es legible (evita capturar taps de nodos casi
-            // invisibles del hemisferio trasero). La navegación por voz/
-            // texto y el resto del flujo quedan intactos.
+            // invisibles del hemisferio trasero). Un hub bloqueado del frente
+            // sigue siendo tappable (depthOpacity>0.2) y, al tocarlo, revela
+            // la pista en vez de navegar. La navegación por voz/texto y el
+            // resto del flujo quedan intactos.
             const tappable = isActive || depthOpacity > 0.2;
             return (
               <button
                 key={node.id}
                 onClick={() => { handleNodeTap(node); }}
-                aria-label={`${node.label}${node.level ? ` ${Math.round(node.level * 100)}%` : ''}: ${node.nextStep || 'Explorar'}`}
+                aria-label={isLocked && gate?.hint
+                  ? `${node.label}, bloqueado. ${gate.hint}`
+                  : `${node.label}${node.level ? ` ${Math.round(node.level * 100)}%` : ''}: ${node.nextStep || 'Explorar'}`}
                 style={{
                   position: 'absolute',
                   left: pos.x,
@@ -1367,7 +1426,7 @@ export function OrbShell() {
                     transition: prefersReducedMotion ? 'none' : 'color 0.15s ease, font-size 0.15s ease',
                   }}
                 >
-                  {node.label}{node.level !== undefined && node.level > 0 ? ` ${Math.round(node.level * 100)}%` : ''}
+                  {isLocked ? '🔒 ' : ''}{node.label}{!isLocked && node.level !== undefined && node.level > 0 ? ` ${Math.round(node.level * 100)}%` : ''}
                 </motion.span>
               </button>
             );
