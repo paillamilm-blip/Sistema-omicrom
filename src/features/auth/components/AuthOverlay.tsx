@@ -56,7 +56,7 @@ function injectAuthStyles(): void {
       background: rgba(255,255,255,0.07) !important;
       box-shadow: 0 0 0 3px var(--omi-accent-soft);
     }
-    .auth-submit { transition: filter .18s ease, transform .12s ease, box-shadow .18s ease; }
+    .auth-submit { transition: filter .18s ease, box-shadow .18s ease; }
     .auth-submit:hover:not(:disabled) { filter: brightness(1.08); }
     .auth-tab { transition: color .18s ease, background .22s ease; }
     .auth-link { transition: color .18s ease; }
