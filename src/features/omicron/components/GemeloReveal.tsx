@@ -167,6 +167,90 @@ function RepValue({ to, color, delayMs }: { to: number; color: string; delayMs: 
   );
 }
 
+// ── Living seal / "sello" for the verdict act (INC 4, Idea 5) ────────────
+// Un sello que se "estampa" una sola vez cuando aterriza el veredicto: escala
+// (0.9 → 1.0) + opacidad + un breve resplandor en el color del usuario (`uc`),
+// leyéndose como una credencial oficial recién emitida. One-shot, no-loop,
+// <400ms, ease-out (BEAT_EASE), solo transform/opacity + boxShadow.
+// Reduced motion: aparece en su estado final al instante (sin tween).
+// No usa timers propios: framer-motion anima al montar; el bloque 'verdict'
+// se monta al entrar al acto vía AnimatePresence.
+function VerdictSeal({ uc, reduceMotion = false }: { uc: string; reduceMotion?: boolean }) {
+  return (
+    <motion.div
+      initial={reduceMotion ? { scale: 1, opacity: 1 } : { scale: 0.9, opacity: 0 }}
+      animate={
+        reduceMotion
+          ? { scale: 1, opacity: 1, boxShadow: `0 0 0 1px ${uc}55` }
+          : { scale: 1, opacity: 1, boxShadow: [`0 0 0 1px ${uc}55`, `0 0 18px 2px ${uc}66`, `0 0 0 1px ${uc}55`] }
+      }
+      transition={reduceMotion ? { duration: 0 } : { duration: 0.38, ease: BEAT_EASE }}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '4px 12px',
+        borderRadius: RADIUS.pill,
+        background: `${uc}14`,
+        border: `1px solid ${uc}55`,
+        transformOrigin: 'center',
+      }}
+    >
+      <Shield size={12} color={uc} />
+      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.2, color: uc, textTransform: 'uppercase' }}>
+        Credencial emitida por Ómicrom
+      </span>
+    </motion.div>
+  );
+}
+
+// ── Traveling light bar for the map act (INC 4, Idea 4) ──────────────────
+// Barra que conecta la reputación de HOY con la FUTURA. Una luz viaja una
+// sola vez de izquierda (hoy) a derecha (futuro) para que el usuario VEA el
+// salto. Solo transform (translateX) + opacity; one-shot, no-loop.
+// El ancho relativo de la luz mapea el delta real (repFuture - repToday)
+// sobre la escala 0-100; no altera ninguna cifra ni fórmula.
+// Reduced motion: barra estática que muestra el delta, sin luz viajera.
+function RepTravelBar({ repToday, repFuture, uc, reduceMotion = false }: { repToday: number; repFuture: number; uc: string; reduceMotion?: boolean }) {
+  const delta = Math.max(0, repFuture - repToday);
+  // Posiciones relativas (0-100) sobre la escala 0-100 para anclar el tramo.
+  const startPct = Math.max(0, Math.min(100, repToday));
+  const endPct = Math.max(0, Math.min(100, repFuture));
+  const spanPct = Math.max(0, endPct - startPct);
+  return (
+    <div style={{ marginBottom: 16 }}>
+      {/* Riel base */}
+      <div style={{ position: 'relative', height: 6, borderRadius: RADIUS.pill, background: `${C.line}`, overflow: 'hidden' }}>
+        {/* Tramo hoy→futuro coloreado con el color del usuario */}
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${startPct}%`, width: `${spanPct}%`, background: `${uc}55`, borderRadius: RADIUS.pill }} />
+        {/* Contenedor del tramo hoy→futuro (con overflow oculto): dentro, una
+            capa translada su translateX RELATIVO a su propio ancho (= ancho del
+            tramo), así la luz cruza el tramo completo. Solo transform + opacity;
+            one-shot. Reduced motion: sin luz viajera (el tramo estático ya
+            muestra el delta). */}
+        {!reduceMotion && delta > 0 && (
+          <div style={{ position: 'absolute', top: -3, left: `${startPct}%`, width: `${spanPct}%`, height: 12, overflow: 'hidden' }}>
+            {/* La luz viaja translateX de -100% a 0% relativo a su propio ancho
+                (= ancho del tramo), cruzando el tramo completo. El punto brillante
+                va anclado al borde derecho de esta capa. Solo transform+opacity. */}
+            <motion.div
+              initial={{ x: '-100%', opacity: 0 }}
+              animate={{ x: ['-100%', '0%'], opacity: [0, 1, 0] }}
+              transition={{ duration: 0.9, ease: BEAT_EASE }}
+              style={{ position: 'absolute', top: 0, right: 0, width: '100%', height: 12 }}
+            >
+              <div style={{ position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: uc, boxShadow: `0 0 12px 3px ${uc}` }} />
+            </motion.div>
+          </div>
+        )}
+      </div>
+      <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, marginTop: 6, textAlign: 'center' }}>
+        {delta > 0 ? `+${delta} puntos de reputación al completar los 3 pasos` : 'Tu reputación ya está en su mejor nivel'}
+      </div>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════
@@ -407,9 +491,13 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
 
               {/* Verdict message */}
               <div style={{ padding: 16, borderRadius: RADIUS.xl, background: C.glass, border: `1px solid ${C.line}`, marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <Sparkles size={14} color={uc} />
-                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4, color: uc, textTransform: 'uppercase' }}>Ómicrom dice</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Sparkles size={14} color={uc} />
+                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4, color: uc, textTransform: 'uppercase' }}>Ómicrom dice</span>
+                  </div>
+                  {/* Sello vivo: se estampa una sola vez al aterrizar el veredicto */}
+                  <VerdictSeal uc={uc} reduceMotion={!!reduceMotion} />
                 </div>
                 <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.6, margin: 0 }}>
                   Tu <strong style={{ color: AXIS_LABELS[strongAxis.key]?.color }}>{AXIS_LABELS[strongAxis.key]?.name}</strong> es sólida — {strongAxis.val}/100.
@@ -469,6 +557,10 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                         </div>
                       </div>
                     </div>
+
+                    {/* Luz viajera: anima el salto de reputación hoy → futuro
+                        una sola vez, sin tocar cifras ni fórmulas. */}
+                    <RepTravelBar repToday={repToday} repFuture={repFuture} uc={uc} reduceMotion={!!reduceMotion} />
 
                     {/* 3 PASOS CONCRETOS */}
                     <div style={{ padding: 16, borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${uc}33`, marginBottom: 16 }}>
