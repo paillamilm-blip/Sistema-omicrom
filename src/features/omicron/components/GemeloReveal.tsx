@@ -20,6 +20,7 @@ import { getUserColor } from '@/shared/components/ColorPicker';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { ProgressBar } from '@/shared/components/OmicronChrome';
 import type { AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
+import { useCountUp } from './CountUp';
 
 // ── Types ──────────────────────────────────────────────────────────────
 interface Props {
@@ -119,6 +120,44 @@ function TerminalLine({ text, delay, color = C.cyan }: { text: string; delay: nu
     >
       <span style={{ color: C.mut }}>{'>'}</span> {text}
     </motion.div>
+  );
+}
+
+// ── Ease-out tuple for the birth-beat pulse (mutable, NOT `as const`) ────
+const BEAT_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+// ── Axis value with count-up + one-shot "birth beat" pulse ───────────────
+// El número sube de 0 al valor real (escalonado por `delayMs`) y, al
+// aterrizar, dispara un latido único (scale + opacity, no-loop, <300ms).
+// Reduced motion: valor final instantáneo, sin tween ni latido.
+function AxisValue({ to, color, delayMs }: { to: number; color: string; delayMs: number }) {
+  const reduceMotion = useReducedMotion();
+  const [beat, setBeat] = useState(false);
+  const value = useCountUp(to, {
+    durationMs: 900,
+    delayMs,
+    onLanded: () => setBeat(true),
+  });
+  return (
+    <motion.div
+      animate={beat && !reduceMotion ? { scale: [1, 1.05, 1], opacity: [1, 0.85, 1] } : { scale: 1, opacity: 1 }}
+      transition={{ duration: 0.28, ease: BEAT_EASE }}
+      style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color, transformOrigin: 'left center' }}
+    >
+      {value}<span style={{ fontSize: SIZE.xs, color: C.mut }}>/100</span>
+    </motion.div>
+  );
+}
+
+// ── Reputation value with count-up (map act) ─────────────────────────────
+// Sube de 0 al valor computado real. Solo animación de display; la fórmula
+// no cambia. Reduced motion: valor final instantáneo.
+function RepValue({ to, color, delayMs }: { to: number; color: string; delayMs: number }) {
+  const value = useCountUp(to, { durationMs: 900, delayMs });
+  return (
+    <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color }}>
+      {value}<span style={{ fontSize: SIZE.sm, color: C.mut }}>/100</span>
+    </div>
   );
 }
 
@@ -306,7 +345,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
               {/* 4 Axes visual — con descripción */}
               <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Tus 4 ejes del Gemelo Digital</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20 }}>
-                {Object.entries(analyzed.axes).map(([key, val]) => {
+                {Object.entries(analyzed.axes).map(([key, val], i) => {
                   const info = AXIS_LABELS[key];
                   const isWeak = key === weakAxis.key;
                   const Icon = info?.icon || Zap;
@@ -322,7 +361,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                         <Icon size={12} color={info?.color || C.cyan} />
                         <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textTransform: 'uppercase', letterSpacing: 1 }}>{info?.name || key}</span>
                       </div>
-                      <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color: isWeak ? C.red : info?.color || C.cyan }}>{val}<span style={{ fontSize: SIZE.xs, color: C.mut }}>/100</span></div>
+                      <AxisValue to={val} color={isWeak ? C.red : info?.color || C.cyan} delayMs={i * 70} />
                       <span style={{ fontFamily: FONT.body, fontSize: 10, color: C.mut, lineHeight: 1.3 }}>{descriptions[key] || ''}</span>
                       {isWeak && <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.red, marginTop: 4 }}>← tu punto ciego</div>}
                     </div>
@@ -371,7 +410,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                       {/* HOY */}
                       <div style={{ padding: 14, borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${C.line}` }}>
                         <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Ahora mismo</div>
-                        <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color: C.gold }}>{repToday}<span style={{ fontSize: SIZE.sm, color: C.mut }}>/100</span></div>
+                        <RepValue to={repToday} color={C.gold} delayMs={0} />
                         <div style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, marginBottom: 10 }}>Tu reputación actual</div>
                         <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.ink, marginBottom: 4, lineHeight: 1.4 }}>
                           <strong>{jobsToday}</strong> {jobsToday === 1 ? 'empleo compatible' : 'empleos compatibles'} con tu perfil
@@ -384,7 +423,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                       {/* EN 2 SEMANAS */}
                       <div style={{ padding: 14, borderRadius: RADIUS.lg, background: `${C.green}0a`, border: `1px solid ${C.green}33` }}>
                         <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>En 2 semanas</div>
-                        <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color: C.green }}>{repFuture}<span style={{ fontSize: SIZE.sm, color: C.mut }}>/100</span></div>
+                        <RepValue to={repFuture} color={C.green} delayMs={120} />
                         <div style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, marginBottom: 10 }}>Si completas los 3 pasos</div>
                         <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.green, marginBottom: 4, lineHeight: 1.4 }}>
                           <strong>{jobsFuture}</strong> empleos compatibles
