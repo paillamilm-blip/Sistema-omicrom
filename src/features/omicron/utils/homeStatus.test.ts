@@ -21,16 +21,50 @@ function stepWith(title: string): NextStep {
 }
 
 describe('pickHomeStatus', () => {
-  it('con próximo paso incluye el título del paso', () => {
+  it('con próximo paso incluye el título del paso y cierra con la invitación', () => {
     const status = pickHomeStatus({ streak: 0, nextStep: stepWith('Convalida tu CV real') });
-    expect(status.label).toContain('Convalida tu CV real');
-    expect(status.label).toContain('Tu próximo paso:');
+    expect(status.label).toBe('Tu próximo paso: Convalida tu CV real. ¿Seguimos o quieres hacer otra cosa?');
   });
 
-  it('con próximo paso Y racha antepone la racha como contexto', () => {
+  it('con próximo paso Y racha antepone la racha y cierra con la invitación', () => {
     const status = pickHomeStatus({ streak: 3, nextStep: stepWith('Rinde un examen en Academia') });
-    expect(status.label).toContain('Racha de 3 días · Tu próximo paso:');
-    expect(status.label).toContain('Rinde un examen en Academia');
+    expect(status.label).toBe(
+      'Racha de 3 días · Tu próximo paso: Rinde un examen en Academia. ¿Seguimos o quieres hacer otra cosa?',
+    );
+  });
+
+  it('con eje que subió + próximo paso compone qué se movió + qué sigue + invitación en UNA línea', () => {
+    const status = pickHomeStatus({
+      streak: 0,
+      nextStep: stepWith('Rinde un examen en Academia'),
+      axisRose: 'Ejecución',
+    });
+    expect(status.label).toBe(
+      'Hoy tu Ejecución subió · Tu próximo paso: Rinde un examen en Academia. ¿Seguimos o quieres hacer otra cosa?',
+    );
+  });
+
+  it('el alza de eje tiene prioridad sobre la racha (una sola voz del núcleo)', () => {
+    const status = pickHomeStatus({
+      streak: 5,
+      nextStep: stepWith('Sube un aporte a la Bóveda'),
+      axisRose: 'Calidad',
+    });
+    expect(status.label).toBe(
+      'Hoy tu Calidad subió · Tu próximo paso: Sube un aporte a la Bóveda. ¿Seguimos o quieres hacer otra cosa?',
+    );
+    // No debe caer en la rama de "próximo paso + racha".
+    expect(status.label).not.toContain('Racha de 5 días');
+  });
+
+  it('axisRose vacío o solo espacios NO activa la rama de alza', () => {
+    const status = pickHomeStatus({
+      streak: 0,
+      nextStep: stepWith('Convalida tu CV real'),
+      axisRose: '   ',
+    });
+    expect(status.label).toBe('Tu próximo paso: Convalida tu CV real. ¿Seguimos o quieres hacer otra cosa?');
+    expect(status.label).not.toContain('subió');
   });
 
   it('con streak>0 y sin paso refleja la racha (plural correcto)', () => {

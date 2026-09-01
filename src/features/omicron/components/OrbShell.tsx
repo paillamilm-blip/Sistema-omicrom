@@ -3,13 +3,15 @@ import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
-import { ProactiveCards } from './ProactiveCards';
+// NOTE ("Matar el Escritorio" Inc 2): ProactiveCards y OrbContextLabel se
+// DESMONTARON del shell para consolidar el Home en UNA sola voz ambiental
+// (OrbEstadoDelDia). Sus archivos permanecen en el repo (reversible), pero
+// ya no se importan aquí.
 import { OrbHomeGuide } from './OrbHomeGuide';
 import { OrbEstadoDelDia } from './OrbEstadoDelDia';
 import { resolveGreetingName } from '../utils/orbHomeGuide';
 import { pickHomeStatus } from '../utils/homeStatus';
 import { shouldShowWelcomeCredencial } from '../utils/welcomeCredencial';
-import { OrbContextLabel } from './OrbContextLabel';
 import { CloudSavedBadge } from './CloudSavedBadge';
 import { PremiumLock } from '@/features/wallet/components/Premium';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
@@ -258,10 +260,63 @@ export function OrbShell() {
     };
   }, [sbProfile, profile]);
 
+  // ── Alza de eje desde la última visita (para la voz del núcleo) ─────
+  // Comparamos los 4 ejes actuales contra la última foto cacheada en
+  // localStorage. Si alguno subió, guardamos su nombre HUMANO (ej.
+  // "Ejecución") para que el ribbon abra con "Hoy tu {eje} subió". La
+  // detección (impura: lee/escribe localStorage) vive AQUÍ; homeStatus.ts
+  // sigue siendo puro y solo COMPONE la línea con el label ya resuelto.
+  const [risenAxisLabel, setRisenAxisLabel] = useState<string | null>(null);
+  useEffect(() => {
+    if (!gemeloDigital) return;
+    const current = {
+      execution: Math.round(gemeloDigital.execution),
+      quality: Math.round(gemeloDigital.quality),
+      transcendence: Math.round(gemeloDigital.transcendence),
+      foundation: Math.round(gemeloDigital.foundation),
+    };
+    const AXES: { key: keyof typeof current; label: string }[] = [
+      { key: 'execution', label: 'Ejecución' },
+      { key: 'quality', label: 'Calidad' },
+      { key: 'transcendence', label: 'Trascendencia' },
+      { key: 'foundation', label: 'Fundamento' },
+    ];
+    let rose: string | null = null;
+    try {
+      const raw = localStorage.getItem('omicron_axes_snapshot');
+      if (raw) {
+        const prev = JSON.parse(raw) as Partial<typeof current>;
+        // El eje que MÁS subió es el que anunciamos (una sola voz, un solo dato).
+        let bestDelta = 0;
+        for (const { key, label } of AXES) {
+          const before = typeof prev[key] === 'number' ? (prev[key] as number) : null;
+          if (before !== null && current[key] - before > bestDelta) {
+            bestDelta = current[key] - before;
+            rose = label;
+          }
+        }
+      }
+      localStorage.setItem('omicron_axes_snapshot', JSON.stringify(current));
+    } catch { /* sin localStorage: sin alza, sin problema */ }
+    setRisenAxisLabel(rose);
+  }, [gemeloDigital]);
+
+  // El alza es una NOVEDAD, no un estado permanente: se anuncia UNA vez y
+  // luego la voz vuelve a su línea normal de próximo paso. Tras mostrarse,
+  // un timer one-shot limpia risenAxisLabel a null (la escritura del
+  // snapshot ya avanzó la baseline, así que futuras alzas reales se siguen
+  // detectando). Sin loop de re-render: solo corre cuando pasa a no-null y
+  // se limpia al desmontar.
+  useEffect(() => {
+    if (!risenAxisLabel) return;
+    const t = setTimeout(() => setRisenAxisLabel(null), 6000);
+    return () => clearTimeout(t);
+  }, [risenAxisLabel]);
+
   // ── Estado del día / próximo paso (ribbon calmo del Home) ───────────
   // Se compone SOLO con datos ya presentes en el cliente (racha local +
-  // próximo paso determinista + reputación del perfil): sin llamadas al
-  // backend. El helper pickHomeStatus es puro y está unit-testeado.
+  // próximo paso determinista + reputación del perfil + alza de eje): sin
+  // llamadas al backend. El helper pickHomeStatus es puro y unit-testeado.
   const homeStatusLabel = useMemo(() => {
     if (!sbProfile?.id) return null;
     const nextStep = computeSteps(sbProfile, gemeloDigital)[0] ?? null;
@@ -269,8 +324,9 @@ export function OrbShell() {
       streak: streakDays(),
       nextStep,
       reputation: sbProfile?.reputation_score ?? null,
+      axisRose: risenAxisLabel,
     }).label;
-  }, [sbProfile, gemeloDigital]);
+  }, [sbProfile, gemeloDigital, risenAxisLabel]);
 
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
@@ -609,7 +665,8 @@ export function OrbShell() {
     setSelectedNode(node);
     setState('preview');
     setActiveTab(node.tab);
-    // Dispatch event for ProactiveCards idle/tap tracking
+    // Señal de tap de nodo (canal 'omicron:node-tap'); se mantiene por si
+    // otros oyentes la usan aunque ProactiveCards ya no esté montado.
     window.dispatchEvent(new CustomEvent('omicron:node-tap'));
   }, [setActiveTab]);
 
@@ -1436,7 +1493,7 @@ export function OrbShell() {
           </button>
         </form>
 
-        {/* Suggestion Chips removed — ProactiveCards now guide the user */}
+        {/* Suggestion Chips removed — la voz del núcleo (OrbEstadoDelDia) guía */}
       </div>}
 
       {/* ── BIENVENIDA DEL ORBE (solo la primera vez de cada sesión) ──
@@ -1453,7 +1510,7 @@ export function OrbShell() {
           pointerEvents:'none' para no bloquear el orbe cuando la tarjeta
           se anima hacia afuera; la tarjeta reactiva pointerEvents:'auto'. */}
 
-      {/* Saludo: anclado arriba, debajo del OrbContextLabel para no chocar. */}
+      {/* Saludo de primera sesión: anclado arriba (banda superior libre). */}
       {state === 'orb' && onboardingDone && !!sbProfile?.id && (
         <div style={{
           position: 'absolute',
@@ -1505,19 +1562,23 @@ export function OrbShell() {
         </div>
       )}
 
-      {/* ── ESTADO DEL DÍA / PRÓXIMO PASO (ribbon calmo del Home) ────
-          UNA sola línea sobria anclada JUSTO ENCIMA de la barra de input,
-          con su propia banda vertical (bottom safe+76px, zIndex 6 < 50 de
-          la barra). Se compone SOLO con datos ya presentes en el cliente
-          (racha + computeSteps + reputación), sin backend.
+      {/* ── ESTADO DEL DÍA / PRÓXIMO PASO (LA voz ambiental del Home) ────
+          "Matar el Escritorio" Inc 2: esta ES la única voz ambiental del
+          núcleo. UNA sola línea sobria anclada JUSTO ENCIMA de la barra de
+          input, con su propia banda vertical (bottom safe+76px, zIndex 6 <
+          50 de la barra). Se compone SOLO con datos ya presentes en el
+          cliente (alza de eje + racha + computeSteps + reputación), sin
+          backend, y puede expresar en UNA línea "qué se movió + próximo paso
+          + invitación" con números reales.
 
-          Anti-clutter: se muestra SOLO cuando no compite con las otras
-          superficies de guía. Se suprime mientras showHomeGuide está en
-          pantalla (el saludo + chips es la guía de la primera sesión, y su
-          tarjeta de acciones ocupa la banda inferior en bottom safe+84px) y
-          mientras responseMsg está activo (ProactiveMessage se muestra). El
-          wrapper usa pointerEvents:'none' para no bloquear taps de nodos ni
-          la barra de input. */}
+          Mutua exclusión (a lo sumo UNA voz ambiental a la vez): se suprime
+          mientras showHomeGuide está en pantalla (el saludo + chips es la
+          guía de la PRIMERA sesión, y su tarjeta de acciones ocupa la banda
+          inferior en bottom safe+84px) y mientras responseMsg está activo
+          (ProactiveMessage es el canal REACTIVO). Ya no compite con
+          OrbContextLabel ni ProactiveCards: ambos fueron desmontados en este
+          incremento. El wrapper usa pointerEvents:'none' para no bloquear
+          taps de nodos ni la barra de input. */}
       {state === 'orb' && onboardingDone && !!sbProfile?.id && !showHomeGuide && !responseMsg && (
         <div style={{
           position: 'absolute',
@@ -1543,10 +1604,24 @@ export function OrbShell() {
         />
       )}
 
-      {/* ── ORB CONTEXT LABEL (texto flotante arriba) ──────────────── */}
-      {state === 'orb' && <OrbContextLabel visible={!responseMsg} />}
-
-      {/* ── PROACTIVE INFO CARDS (above the orb, centered) ──────────── */}
+      {/* ── CONFIRMACIÓN DE GUARDADO EN LA NUBE (efímera) ──────────────
+          "Matar el Escritorio" Inc 2 — CONSOLIDACIÓN A UNA SOLA VOZ:
+          el Home ambiental habla ahora con UNA sola voz calma del núcleo
+          (OrbEstadoDelDia, arriba de la barra: qué se movió + próximo paso
+          + invitación, con números reales). Por eso se RETIRARON de esta
+          banda superior las dos superficies ambientales más débiles que
+          competían con ella:
+            • OrbContextLabel (one-liner rotativo superior) — su valor
+              (racha, reputación, "toca un nodo") ya lo expresa la voz del
+              núcleo / la bienvenida de primera sesión.
+            • ProactiveCards (tips TIP ociosos rotativos) — su tip principal
+              ("Sube tu CV") ES el primer paso determinista de computeSteps,
+              que la voz del núcleo ya ofrece; los demás tips los cubre la
+              bienvenida (saludo + chips) de la sesión 1.
+          Sus ARCHIVOS quedan en el repo (diff pequeño y reversible). Aquí
+          solo permanece CloudSavedBadge: NO es una voz ambiental de guía,
+          sino una confirmación efímera que aparece SOLO tras un guardado
+          exitoso ('omicron:profile-saved') y se auto-oculta ~3s después. */}
       {state === 'orb' && onboardingDone && (
         <div style={{
           position: 'absolute',
@@ -1559,32 +1634,8 @@ export function OrbShell() {
           padding: '0 20px',
           pointerEvents: 'none',
         }}>
-          <div style={{ maxWidth: 300, width: '100%', pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Confirmación efímera: aparece SOLO tras un guardado exitoso
-                (escucha 'omicron:profile-saved') y se auto-oculta con fade
-                ~3s después. Renderiza null el resto del tiempo, así que no
-                ocupa espacio ni se muestra de forma permanente. */}
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <CloudSavedBadge />
-            </div>
-            {/* Se suprime mientras la bienvenida (showHomeGuide) está en
-                pantalla: el saludo + chips ES la guía de la primera sesión,
-                así dos superficies de guía no compiten en la banda superior.
-                ProactiveCards reanuda sus tips ociosos solo tras descartar la
-                bienvenida; su tope por sesión es independiente (sessionStorage
-                propio), así que sigue funcionando después. */}
-            <ProactiveCards
-              visible={state === 'orb' && onboardingDone && !showHomeGuide}
-              hasCv={Boolean(sbProfile?.cv_summary)}
-              onNavigate={(tab) => {
-                if (tab === 'cv') {
-                  setShowConvalida(true);
-                  return;
-                }
-                const node = orbNodesWithLevels.find((n: OrbNode) => n.tab === tab);
-                if (node) handleNodeTap(node);
-              }}
-            />
+          <div style={{ maxWidth: 300, width: '100%', pointerEvents: 'auto', display: 'flex', justifyContent: 'center' }}>
+            <CloudSavedBadge />
           </div>
         </div>
       )}
