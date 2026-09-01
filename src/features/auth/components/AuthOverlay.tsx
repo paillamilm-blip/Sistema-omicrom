@@ -144,6 +144,10 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   // Estado puramente visual: indica si algún campo del formulario está
   // enfocado, para dar un pequeño empujón al "encendido" del orbe.
   const [focused, setFocused] = useState(false);
+  // Estado puramente visual del "beat" de éxito ("encender tu Gemelo"): se
+  // activa una sola vez cuando la autenticación tiene éxito para disparar un
+  // destello breve del orbe. NUNCA condiciona el flujo de auth ni el cierre.
+  const [authPulse, setAuthPulse] = useState(false);
 
   // Limpia todos los campos y mensajes al alternar entre vistas
   // (login / registro / recuperar contraseña), evitando que los datos de
@@ -221,6 +225,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
         });
         if (err) throw err;
         setSuccess('Revisa tu correo para restablecer la contraseña.');
+        setAuthPulse(true);
       } else if (mode === 'login') {
         // El campo de login acepta "usuario" o "email" indistintamente.
         // Supabase Auth solo autentica con email, así que si lo ingresado
@@ -238,6 +243,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
         }
         const { error: err } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
         if (err) throw err;
+        setAuthPulse(true);
         // Migrar perfil guest al autenticarse
         migrateGuestProfile();
         // El cambio de estado de autenticación redirige automáticamente
@@ -249,6 +255,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
           options: { data: { username: trimmedUsername, full_name: trimmedUsername } },
         });
         if (err) throw err;
+        setAuthPulse(true);
         // Analytics + migrar guest
         import('@/shared/utils/analytics').then(({ track }) => { track('signup_completed'); }).catch(() => {});
         migrateGuestProfile();
@@ -290,6 +297,23 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   const glowBlur = reduce ? 30 : Math.round(30 + charge * 30);   // 30px -> 60px
   const orbRingShadow = `0 0 ${glowBlur}px ${uc}${glowAlpha}, inset 0 0 20px ${uc}14`;
 
+  // ── "Encender tu Gemelo" (INC 3) — beat de éxito ────────────────────
+  // Cuando la autenticación tiene éxito (authPulse), el orbe da UN solo
+  // destello breve (~360ms) con el color del usuario y vuelve al reposo.
+  // Es puramente presentacional: framer-motion anima un keyframe que empieza
+  // y termina en reposo, así que NO hace falta ningún temporizador ni reset,
+  // y por tanto no hay riesgo de setState-after-unmount ni de callbacks
+  // inestables en dependencias. Con reduce activo, no hay escala ni
+  // desplazamiento: solo un breve reconocimiento por opacidad/glow.
+  // El burst de glow reutiliza el mismo lenguaje del halo de carga (INC1).
+  const pulseGlow = `0 0 72px ${uc}cc, 0 0 24px ${uc}99, inset 0 0 24px ${uc}33`;
+  const orbBeatAnimate = authPulse
+    ? reduce
+      ? { boxShadow: [orbRingShadow, pulseGlow, orbRingShadow] }
+      : { scale: [1, 1.06, 1], boxShadow: [orbRingShadow, pulseGlow, orbRingShadow] }
+    : {};
+  const orbBeatTransition = { duration: 0.36, ease: EASE_OUT, times: [0, 0.4, 1] };
+
   // En login se etiqueta genéricamente "Usuario" (no "Email") para no
   // confirmarle a un atacante que el campo espera específicamente un
   // correo, mitigando ataques de enumeración de cuentas.
@@ -325,9 +349,13 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
           transition={{ duration: 0.24, ease: EASE_OUT, delay: 0 }}
           style={S.logoBlock}
         >
-          <div style={{ ...S.orbRing, boxShadow: orbRingShadow }}>
+          <motion.div
+            style={{ ...S.orbRing, boxShadow: orbRingShadow }}
+            animate={orbBeatAnimate}
+            transition={orbBeatTransition}
+          >
             <GeodesicOrb size={80} nodes={orbNodes} color={uc} spinning={orbSpinning} intensity={orbIntensity} />
-          </div>
+          </motion.div>
           <div style={{ textAlign: 'center' }}>
             <h1 style={S.brand}>Sistema Ómicrom</h1>
             <p style={S.tagline}>Tu reputación, imposible de falsificar.</p>
