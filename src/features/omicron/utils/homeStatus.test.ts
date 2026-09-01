@@ -23,13 +23,13 @@ function stepWith(title: string): NextStep {
 describe('pickHomeStatus', () => {
   it('con próximo paso incluye el título del paso y cierra con la invitación', () => {
     const status = pickHomeStatus({ streak: 0, nextStep: stepWith('Convalida tu CV real') });
-    expect(status.label).toBe('Tu próximo paso: Convalida tu CV real. ¿Seguimos o querés otra cosa?');
+    expect(status.label).toBe('Tu próximo paso: Convalida tu CV real. ¿Seguimos o quieres hacer otra cosa?');
   });
 
   it('con próximo paso Y racha antepone la racha y cierra con la invitación', () => {
     const status = pickHomeStatus({ streak: 3, nextStep: stepWith('Rinde un examen en Academia') });
     expect(status.label).toBe(
-      'Racha de 3 días · Tu próximo paso: Rinde un examen en Academia. ¿Seguimos o querés otra cosa?',
+      'Racha de 3 días · Tu próximo paso: Rinde un examen en Academia. ¿Seguimos o quieres hacer otra cosa?',
     );
   });
 
@@ -40,7 +40,7 @@ describe('pickHomeStatus', () => {
       axisRose: 'Ejecución',
     });
     expect(status.label).toBe(
-      'Hoy tu Ejecución subió · Tu próximo paso: Rinde un examen en Academia. ¿Seguimos o querés otra cosa?',
+      'Hoy tu Ejecución subió · Tu próximo paso: Rinde un examen en Academia. ¿Seguimos o quieres hacer otra cosa?',
     );
   });
 
@@ -51,7 +51,7 @@ describe('pickHomeStatus', () => {
       axisRose: 'Calidad',
     });
     expect(status.label).toBe(
-      'Hoy tu Calidad subió · Tu próximo paso: Sube un aporte a la Bóveda. ¿Seguimos o querés otra cosa?',
+      'Hoy tu Calidad subió · Tu próximo paso: Sube un aporte a la Bóveda. ¿Seguimos o quieres hacer otra cosa?',
     );
     // No debe caer en la rama de "próximo paso + racha".
     expect(status.label).not.toContain('Racha de 5 días');
@@ -63,7 +63,7 @@ describe('pickHomeStatus', () => {
       nextStep: stepWith('Convalida tu CV real'),
       axisRose: '   ',
     });
-    expect(status.label).toBe('Tu próximo paso: Convalida tu CV real. ¿Seguimos o querés otra cosa?');
+    expect(status.label).toBe('Tu próximo paso: Convalida tu CV real. ¿Seguimos o quieres hacer otra cosa?');
     expect(status.label).not.toContain('subió');
   });
 

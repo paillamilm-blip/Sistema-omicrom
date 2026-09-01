@@ -48,16 +48,16 @@ function fullScale(n: number): number {
  *
  * Es UNA sola voz calma del núcleo (consolidación "Matar el Escritorio"):
  * cuando hay próximo paso, la línea termina con una invitación breve
- * ("¿Seguimos o querés otra cosa?") para que el Home hable con una única
+ * ("¿Seguimos o quieres hacer otra cosa?") para que el Home hable con una única
  * voz que ORIENTA e INVITA, en vez de repartir el mensaje en varias
  * tarjetas/etiquetas que compiten.
  *
  * Prioridad de la línea:
  *   1) Si un eje subió desde la última visita Y hay próximo paso:
- *      "Hoy tu {eje} subió · Tu próximo paso: {title}. ¿Seguimos o querés
- *      otra cosa?" — qué se movió + qué sigue + invitación, en UNA línea.
+ *      "Hoy tu {eje} subió · Tu próximo paso: {title}. ¿Seguimos o quieres
+ *      hacer otra cosa?" — qué se movió + qué sigue + invitación, en UNA línea.
  *   2) Si hay próximo paso (sin alza detectada): lo destacamos
- *      ("Tu próximo paso: {title}. ¿Seguimos o querés otra cosa?"),
+ *      ("Tu próximo paso: {title}. ¿Seguimos o quieres hacer otra cosa?"),
  *      anteponiendo la racha como contexto breve cuando streak > 0.
  *   3) Si no hay próximo paso pero sí racha: reflejamos la racha
  *      (singular/plural correcto: "1 día" vs "N días").
@@ -71,7 +71,7 @@ function fullScale(n: number): number {
  */
 // Invitación breve en español LatAm, cero jerga (texto exacto del plan del
 // incremento). Cierra la voz del núcleo cuando hay un próximo paso que ofrecer.
-const INVITATION = '¿Seguimos o querés otra cosa?';
+const INVITATION = '¿Seguimos o quieres hacer otra cosa?';
 
 export function pickHomeStatus(input: HomeStatusInput): HomeStatus {
   const streak = Number.isFinite(input.streak) ? Math.max(0, Math.trunc(input.streak)) : 0;
