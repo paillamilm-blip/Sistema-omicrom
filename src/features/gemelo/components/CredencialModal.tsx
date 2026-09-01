@@ -455,6 +455,32 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
           }}
         />
 
+        {/* ═══ PATRÓN DE SEGURIDAD (guilloché estático) ═════════════════
+            Micro-trama fina de líneas repetidas (estilo guilloché) detrás del
+            encabezado, para reforzar la lectura de "documento oficial imposible
+            de falsificar". Es 100% ESTÁTICO (sin animación ni loop): un simple
+            div decorativo, aria-hidden, no interactivo (pointerEvents:'none'),
+            en la misma banda que el sheen (zIndex:0) para que el contenido del
+            encabezado (zIndex:1) quede por encima. Recortado por el
+            overflow:'hidden' de la tarjeta. Construido SOLO con uc + blanco-alfa
+            a muy baja opacidad (nunca C.cyan ni #5cc8ff). No desplaza ni empuja
+            contenido: está posicionado en absoluto sobre la franja superior. */}
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: 260, zIndex: 0,
+            pointerEvents: 'none',
+            borderRadius: `${RADIUS.xl}px ${RADIUS.xl}px 0 0`,
+            backgroundImage: [
+              `repeating-linear-gradient(45deg, ${uc}0a 0px, ${uc}0a 1px, transparent 1px, transparent 7px)`,
+              `repeating-linear-gradient(-45deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 7px)`,
+              `repeating-radial-gradient(circle at 50% 0%, ${uc}09 0px, ${uc}09 1px, transparent 1px, transparent 11px)`,
+            ].join(', '),
+            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)',
+            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)',
+          }}
+        />
+
         {/* ── Barra de acento superior (color del usuario) ── */}
         <div style={{ position: 'relative', zIndex: 1, height: 3, borderRadius: '3px 3px 0 0', background: `linear-gradient(90deg, transparent, ${uc}, transparent)` }} />
 
@@ -760,8 +786,35 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
           </div>
 
           {/* ── Sello de verificación ── */}
+          {/* Beat de autenticidad de UNA SOLA VEZ: al montar, el ícono se
+              asienta (scale/opacity) y una única onda anular en C.green se
+              expande y se desvanece EXACTAMENTE una vez (sin repeat:Infinity),
+              como el "sellado" de la credencial. Bajo reduce-motion el ícono
+              queda en su estado final (initial=false) y la onda NO se renderiza.
+              El texto permanece IDÉNTICO. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 16 }}>
-            <CheckCircle2 size={13} color={C.green} />
+            <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              {!reduceMotion && (
+                <motion.span
+                  aria-hidden
+                  initial={{ scale: 0.6, opacity: 0.5 }}
+                  animate={{ scale: 2.4, opacity: 0 }}
+                  transition={{ delay: 0.35, duration: 0.9, ease: SHEEN_EASE }}
+                  style={{
+                    position: 'absolute', width: 13, height: 13, borderRadius: '50%',
+                    border: `1px solid ${C.green}`, pointerEvents: 'none',
+                  }}
+                />
+              )}
+              <motion.span
+                initial={reduceMotion ? false : { scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.4, ease: SHEEN_EASE }}
+                style={{ display: 'inline-flex' }}
+              >
+                <CheckCircle2 size={13} color={C.green} />
+              </motion.span>
+            </span>
             <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.5, color: C.mut }}>
               Conocimiento verificable, no declarado
             </span>
