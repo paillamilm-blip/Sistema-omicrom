@@ -1419,7 +1419,10 @@ export function OrbShell() {
             WebkitBackdropFilter: 'blur(16px)',
             boxShadow: inputFocused
               ? `0 0 20px ${orbColor}33, 0 0 8px ${orbColor}22, 0 8px 32px rgba(0,0,0,0.3)`
-              : (!inputText && !responseMsg ? `0 0 12px ${orbColor}22, 0 0 4px ${orbColor}11` : 'none'),
+              // En reposo la barra es el CONTROL PRIMARIO: halo de color de
+              // usuario un poco más presente (solo box-shadow, sin nuevos
+              // loops; el breathe existente ya lo neutraliza reduced-motion).
+              : (!inputText && !responseMsg ? `0 0 18px ${orbColor}33, 0 0 6px ${orbColor}1a, 0 4px 20px rgba(0,0,0,0.28)` : 'none'),
             transform: inputFocused ? 'scale(1.02)' : 'scale(1)',
             transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
             animation: !inputText && !responseMsg && !inputFocused ? 'cp-breathe 3s ease-in-out infinite' : 'none',
@@ -1454,7 +1457,7 @@ export function OrbShell() {
             onChange={(e: { target: { value: string } }) => setInputText(e.target.value)}
             onFocus={() => setInputFocused(true)}
             onBlur={() => setInputFocused(false)}
-            placeholder={state === 'fullscreen' ? 'Pregunta a Ómicrom…' : 'Habla o escribe a Ómicrom…'}
+            placeholder={state === 'fullscreen' ? 'Pregunta a Ómicrom…' : '¿Qué quieres hacer hoy? Habla o escríbeme…'}
             aria-label="Escribir comando al Oráculo"
             inputMode="text"
             autoComplete="off"

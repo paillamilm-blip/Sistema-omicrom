@@ -14,6 +14,26 @@ export type OraculoIntent =
   | { kind: 'fact'; topic: 'reputacion' | 'tokens' | 'pe' | 'ayuda' }
   | { kind: 'unknown' };
 
+// Intenciones NATURALES: órdenes en lenguaje del fundador que deben aterrizar
+// en el módulo REAL correcto (verificado contra el código, sin inventar
+// pantallas). Se evalúan ANTES de NAV para que ganen sobre palabras genéricas
+// (p. ej. "trabajo freelance / por proyecto" → market, no al empleos genérico
+// de la palabra suelta "trabajo", porque es OFRECER tu servicio, no buscar
+// vacante; "buscar empleo" sin freelance sigue cayendo en empleos vía NAV).
+//   · jugar/reto/partida  → maxskill  (MaxSkillTab hospeda los retos:
+//                                       DailyChallengeCard / SimulatorChallenge).
+//   · vender/monetizar/servicio/freelance/proyecto → market
+//                                       (MarketTab = Servicios: vender ideas,
+//                                        servicios y trabajo freelance/por proyecto).
+//   · ranking/posición/clasificación   → chat
+//                                       (RedSocialTab tiene la sección "Ranking"
+//                                        con el leaderboard de reputación).
+const NAV_NATURAL: { keys: string[]; tab: TabId; label: string }[] = [
+  { keys: ['jugar', 'juego', 'juega', 'reto', 'desaf', 'partida', 'simulad'], tab: 'maxskill', label: 'Habilidades' },
+  { keys: ['ranking', 'posici', 'posición', 'clasificaci', 'tabla', 'leaderboard', 'top 10', 'top diez'], tab: 'chat', label: 'Mensajes' },
+  { keys: ['vender', 'vende', 'monetiz', 'freelance', 'free lance', 'por proyecto', 'ofrecer un servicio', 'ofrecer servicio', 'ofrecer mi servicio'], tab: 'market', label: 'Servicios' },
+];
+
 const NAV: { keys: string[]; tab: TabId; label: string }[] = [
   { keys: ['inicio', 'gemelo', 'perfil', 'principal', 'home'], tab: 'perfil', label: 'Inicio' },
   { keys: ['habilidad', 'skill', 'competenc', 'maxskill', 'destreza'], tab: 'maxskill', label: 'Habilidades' },
@@ -51,6 +71,11 @@ export function interpret(raw: string): OraculoIntent {
   if (/(cuánt|cuant).*(token|saldo|plata|dinero)/.test(q)) return { kind: 'fact', topic: 'tokens' };
   if (/(punto|pe\b|experiencia)/.test(q)) return { kind: 'fact', topic: 'pe' };
   if (/(ayuda|qué puedo|que puedo|comando|quién eres|quien eres)/.test(q)) return { kind: 'fact', topic: 'ayuda' };
+
+  // Órdenes naturales primero (específicas): "quiero jugar", "vender una idea",
+  // "buscar freelance", "ver mi ranking". Ganan sobre las palabras genéricas.
+  const natural = NAV_NATURAL.find((n) => n.keys.some((k) => q.includes(k)));
+  if (natural) return { kind: 'navigate', tab: natural.tab, label: natural.label };
 
   const nav = NAV.find((n) => n.keys.some((k) => q.includes(k)));
   if (nav) return { kind: 'navigate', tab: nav.tab, label: nav.label };

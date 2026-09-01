@@ -43,6 +43,49 @@ describe('interpret — navegación', () => {
   });
 });
 
+// ── ÓRDENES NATURALES DE LA BARRA JARVIS (Matar el Escritorio, Inc 3) ──
+// El fundador habla/escribe en lenguaje natural y la barra teletransporta al
+// módulo REAL correcto (destinos verificados contra el código, sin inventar
+// pantallas). Estas mapean a tabs existentes, ganando sobre las palabras
+// genéricas. El spec falla si se revierten los grupos NAV_NATURAL.
+describe('interpret — órdenes naturales (Jarvis)', () => {
+  it('"quiero jugar" → Habilidades (maxskill hospeda los retos)', () => {
+    expect(interpret('quiero jugar')).toEqual({ kind: 'navigate', tab: 'maxskill', label: 'Habilidades' });
+  });
+
+  it('"muéstrame un reto" → Habilidades (maxskill)', () => {
+    expect(interpret('muéstrame un reto')).toEqual({ kind: 'navigate', tab: 'maxskill', label: 'Habilidades' });
+  });
+
+  it('"vender una idea" → Servicios (market)', () => {
+    expect(interpret('vender una idea')).toEqual({ kind: 'navigate', tab: 'market', label: 'Servicios' });
+  });
+
+  it('"quiero monetizar mi servicio" → Servicios (market)', () => {
+    expect(interpret('quiero monetizar mi servicio')).toEqual({ kind: 'navigate', tab: 'market', label: 'Servicios' });
+  });
+
+  it('"buscar trabajo freelance" → Servicios (market; freelance = vender tu servicio)', () => {
+    expect(interpret('buscar trabajo freelance')).toEqual({ kind: 'navigate', tab: 'market', label: 'Servicios' });
+  });
+
+  it('"tengo un trabajo por proyecto" → Servicios (market)', () => {
+    expect(interpret('tengo un trabajo por proyecto')).toEqual({ kind: 'navigate', tab: 'market', label: 'Servicios' });
+  });
+
+  it('"ver mi ranking" → Mensajes (RedSocialTab tiene la sección Ranking)', () => {
+    expect(interpret('ver mi ranking')).toEqual({ kind: 'navigate', tab: 'chat', label: 'Mensajes' });
+  });
+
+  it('"cuál es mi posición en la tabla" → Mensajes (ranking)', () => {
+    expect(interpret('cuál es mi posición en la tabla')).toEqual({ kind: 'navigate', tab: 'chat', label: 'Mensajes' });
+  });
+
+  it('regresión: "buscar empleo" (sin freelance) sigue yendo a Empleos', () => {
+    expect(interpret('buscar empleo')).toEqual({ kind: 'navigate', tab: 'empleos', label: 'Empleos' });
+  });
+});
+
 describe('interpret — convalidación', () => {
   it('"sube mi cv" → convalidate cv', () => {
     expect(interpret('sube mi cv')).toEqual({ kind: 'convalidate', item: 'cv' });
