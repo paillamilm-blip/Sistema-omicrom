@@ -48,6 +48,12 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   // Detect error state
   const isError = phase === 'upload' && lastError !== null;
 
+  // Lectura exitosa REAL: el hook fija cvFileName Y msg que empieza con "✓".
+  // Un archivo ilegible/corto TAMBIÉN fija cvFileName pero msg NO empieza con
+  // "✓" (dice "No pude leer/extraer..."), así que exigimos ambas condiciones
+  // para no mostrar un falso "documento leído".
+  const cvReadOk = !!cvFileName && msg.startsWith('✓');
+
   // Retry with cooldown
   const handleRetry = () => {
     if (retryCooldown) return;
@@ -178,19 +184,31 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   // PHASE: UPLOAD — Subir CV o pegar texto
   // ══════════════════════════════════════════════════════════════════════
   const canActivate = !!cvText.trim();
+
+  // Coreografía de entrada escalonada (transform/opacity). Con reduceMotion
+  // cada elemento renderiza su estado final al instante (initial === animate).
+  const enter = (order: number) =>
+    reduceMotion
+      ? { initial: { opacity: 1, y: 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } }
+      : {
+          initial: { opacity: 0, y: 8 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.28, ease: SCAN_EASE, delay: order * 0.06 },
+        };
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: C.bg }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative', zIndex: 2 }}>
+      <motion.div {...enter(0)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative', zIndex: 2 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <GeodesicOrb size={40} nodes={5} color={uc} spinning={25} intensity={0.6} breathing />
           <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: C.ink }}>ACTIVAR GEMELO</span>
         </div>
         <button onClick={onClose} aria-label="Cerrar" style={{ width: 44, height: 44, borderRadius: RADIUS.md, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
-      </div>
+      </motion.div>
 
       {/* Message */}
-      <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', margin: '4px 20px 12px', fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.5, color: isError ? C.red : C.ink, minHeight: 40 }}>{msg}</p>
+      <motion.p {...enter(1)} style={{ position: 'relative', zIndex: 2, textAlign: 'center', margin: '4px 20px 12px', fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.5, color: isError ? C.red : C.ink, minHeight: 40 }}>{msg}</motion.p>
 
       {/* Error retry button */}
       {isError && lastError !== 'credits' && (
@@ -215,24 +233,44 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {/* Upload area */}
-        <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '28px 16px', borderRadius: RADIUS.xl, border: `1.5px dashed ${uc}55`, background: C.glass, cursor: 'pointer', marginBottom: 16, textAlign: 'center', backdropFilter: 'blur(14px)' }}>
+        {/* Upload area — dropzone con micro-interacciones (transform/opacity) */}
+        <motion.label
+          {...enter(2)}
+          whileHover={reduceMotion ? undefined : { scale: 1.01 }}
+          whileTap={reduceMotion ? undefined : { scale: 0.99 }}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '28px 16px', borderRadius: RADIUS.xl, border: `1.5px dashed ${cvReadOk ? `${uc}aa` : `${uc}55`}`, background: C.glass, cursor: 'pointer', marginBottom: 16, textAlign: 'center', backdropFilter: 'blur(14px)', boxShadow: cvReadOk ? `0 0 0 1px ${uc}33, 0 8px 28px ${uc}22` : 'none' }}
+        >
           <input type="file" accept=".pdf,.doc,.docx,.txt" style={{ display: 'none' }}
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void onCVFile(f); e.currentTarget.value = ''; }} />
-          <Upload size={24} color={uc} />
+          {/* Beat de confirmación one-shot: sólo con lectura REAL exitosa (msg ✓).
+              key={cvFileName} → se reproduce una vez por documento y descansa. */}
+          {cvReadOk ? (
+            <motion.span
+              key={cvFileName}
+              initial={reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={reduceMotion ? { duration: 0 } : { duration: 0.3, ease: SCAN_EASE }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: RADIUS.pill, background: `${uc}22`, border: `1px solid ${uc}66` }}
+            >
+              <Check size={16} color={uc} />
+            </motion.span>
+          ) : (
+            <Upload size={24} color={uc} />
+          )}
           <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, color: C.ink }}>{cvFileName || 'Subir CV (PDF · Word · TXT)'}</span>
           <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Lee cualquier PDF o Word</span>
-        </label>
+        </motion.label>
 
         {/* Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
+        <motion.div {...enter(3)} style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
           <div style={{ flex: 1, height: 1, background: C.line }} />
           <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>o pega tu experiencia</span>
           <div style={{ flex: 1, height: 1, background: C.line }} />
-        </div>
+        </motion.div>
 
         {/* Textarea */}
-        <textarea
+        <motion.textarea
+          {...enter(4)}
           value={cvText}
           onChange={(e) => setCvText(e.target.value)}
           placeholder="Rol actual, años de experiencia, tecnologías, certificaciones, empresas donde trabajaste..."
@@ -241,7 +279,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* CTA Button */}
-      <div style={{ padding: '12px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', position: 'relative', zIndex: 2 }}>
+      <motion.div {...enter(5)} style={{ padding: '12px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', position: 'relative', zIndex: 2 }}>
         <motion.button
           onClick={() => void activateGemeloCompleto()}
           disabled={!canActivate}
@@ -253,7 +291,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
         <p style={{ textAlign: 'center', margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>
           Analiza CV + valida titulo + años + aportes — todo automático
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }
