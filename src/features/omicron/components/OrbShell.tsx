@@ -1173,7 +1173,7 @@ export function OrbShell() {
         }}>
           <button
             onClick={handleBack}
-            aria-label="Volver al orbe"
+            aria-label="Volver al núcleo"
             style={{
               width: 44,
               height: 44,
@@ -1253,10 +1253,25 @@ export function OrbShell() {
           {nodePositions.map((pos: { id: string; x: number; y: number; depth: number }) => {
             const node = orbNodesWithLevels.find((n: OrbNode) => n.id === pos.id);
             if (!node) return null;
-            const isFront = pos.depth < 0.5;
             const isActive = node.id === selectedNode?.id;
             const isHub = HUB_NODES.findIndex(n => n.id === node.id) >= 0;
             if (!isHub && !isActive) return null;
+            // ── El orbe como MAPA VIVO, no como menú ──────────────────
+            // En vez del corte binario anterior (frente 0.7 / atrás 0),
+            // la opacidad de cada etiqueta hub es una función CONTINUA de
+            // su profundidad proyectada (pos.depth: 0=frente .. 1=atrás):
+            // las de adelante quedan nítidas y las de atrás se retiran.
+            // Así el orbe se lee como un mapa vivo y solo destacan los
+            // pocos nodos frontales, en lugar de mostrar las 9 etiquetas
+            // con el mismo peso (efecto "grilla de menú"). Todos los
+            // botones hub se siguen renderizando para tap/lectores.
+            const depthOpacity = Math.max(0.06, 0.85 - pos.depth * 0.79);
+            const labelOpacity = isActive ? 1 : depthOpacity;
+            // El nodo activo siempre es tappable; los demás lo son cuando
+            // su etiqueta es legible (evita capturar taps de nodos casi
+            // invisibles del hemisferio trasero). La navegación por voz/
+            // texto y el resto del flujo quedan intactos.
+            const tappable = isActive || depthOpacity > 0.2;
             return (
               <button
                 key={node.id}
@@ -1267,8 +1282,8 @@ export function OrbShell() {
                   left: pos.x,
                   top: pos.y,
                   transform: 'translate(-50%, -140%)',
-                  opacity: isFront ? (isActive ? 1 : 0.7) : 0,
-                  transition: 'opacity 0.15s ease',
+                  opacity: labelOpacity,
+                  transition: prefersReducedMotion ? 'none' : 'opacity 0.2s ease',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -1277,7 +1292,7 @@ export function OrbShell() {
                   border: 'none',
                   cursor: 'pointer',
                   padding: '4px 8px',
-                  pointerEvents: isFront ? 'auto' : 'none',
+                  pointerEvents: tappable ? 'auto' : 'none',
                 }}
               >
                 <motion.span
@@ -1292,7 +1307,7 @@ export function OrbShell() {
                     textTransform: 'uppercase',
                     textShadow: isActive ? `0 0 8px ${orbColor}` : 'none',
                     whiteSpace: 'nowrap',
-                    transition: 'color 0.15s ease, font-size 0.15s ease',
+                    transition: prefersReducedMotion ? 'none' : 'color 0.15s ease, font-size 0.15s ease',
                   }}
                 >
                   {node.label}{node.level !== undefined && node.level > 0 ? ` ${Math.round(node.level * 100)}%` : ''}
