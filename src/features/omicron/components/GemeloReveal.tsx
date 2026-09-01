@@ -21,6 +21,7 @@ import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { ProgressBar } from '@/shared/components/OmicronChrome';
 import type { AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
 import { useCountUp } from './CountUp';
+import { deriveArchetype } from '../utils/archetype';
 
 // ── Types ──────────────────────────────────────────────────────────────
 interface Props {
@@ -182,6 +183,9 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
   const job = useRef(generateSyntheticJob(analyzed)).current;
   const weakAxis = Object.entries(analyzed.axes).reduce((min, [k, v]) => v < min.val ? { key: k, val: v } : min, { key: 'trans', val: 100 });
   const strongAxis = Object.entries(analyzed.axes).reduce((max, [k, v]) => v > max.val ? { key: k, val: v } : max, { key: 'exec', val: 0 });
+  // Arquetipo determinista derivado de los ejes reales (helper puro, sin IA).
+  // Es estable para un `analyzed` dado, así que se computa una vez por render.
+  const archetype = deriveArchetype(analyzed.axes);
 
   // ── Countdown timer (desvanecimiento) ────────────────────────────────
   useEffect(() => {
@@ -341,6 +345,21 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                   </p>
                 )}
               </div>
+
+              {/* Arquetipo — identidad-titular derivada de los ejes reales.
+                  Entrada suave y respetuosa de prefers-reduced-motion: con
+                  reduceMotion no hay desplazamiento ni tween (aparece al
+                  instante), igual que AxisValue. */}
+              <motion.div
+                initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={reduceMotion ? { duration: 0 } : { duration: 0.5, ease: BEAT_EASE }}
+                style={{ textAlign: 'center', marginBottom: 18 }}
+              >
+                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4, color: C.mut, textTransform: 'uppercase', marginBottom: 4 }}>Tu arquetipo</div>
+                <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color: uc, marginBottom: 4 }}>{archetype.name}</div>
+                <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.mut, lineHeight: 1.5, margin: 0 }}>{archetype.line}</p>
+              </motion.div>
 
               {/* 4 Axes visual — con descripción */}
               <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Tus 4 ejes del Gemelo Digital</div>
