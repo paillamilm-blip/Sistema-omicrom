@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { supabase } from '@/infrastructure/supabase/client';
 import { Eye, EyeOff, Shield, ArrowLeft, Mail } from 'lucide-react';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
@@ -122,6 +122,10 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   // el login deja de ser la única pantalla con un acento distinto.
   const uc = useUserColor();
 
+  // Respeta prefers-reduced-motion: cuando está activo, el orbe se queda en
+  // su estado base tranquilo y NO reacciona al llenado del formulario.
+  const reduce = useReducedMotion();
+
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -130,6 +134,9 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  // Estado puramente visual: indica si algún campo del formulario está
+  // enfocado, para dar un pequeño empujón al "encendido" del orbe.
+  const [focused, setFocused] = useState(false);
 
   // Limpia todos los campos y mensajes al alternar entre vistas
   // (login / registro / recuperar contraseña), evitando que los datos de
@@ -250,6 +257,32 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
     }
   }
 
+  // ── "Encender tu Gemelo" (INC 1) ────────────────────────────────────
+  // Cálculo puramente visual y sin efectos/temporizadores: mide qué tan
+  // lleno está el formulario en el modo actual y lo traduce en energía del
+  // orbe. Los campos considerados son exactamente los visibles en cada modo.
+  const filledCount =
+    (mode === 'register' ? (username.trim() ? 1 : 0) : 0) +
+    (email.trim() ? 1 : 0) +
+    (mode !== 'forgot' && password ? 1 : 0);
+  const fieldCount = mode === 'register' ? 3 : mode === 'forgot' ? 1 : 2;
+  // charge 0..1: proporción de campos con contenido, con un pequeño empujón
+  // (hasta +0.15) mientras algún campo está enfocado, sin superar 1.
+  const charge = Math.min(1, filledCount / fieldCount + (focused ? 0.15 : 0));
+
+  // Mapa charge -> props del orbe. Con reduce activo se fuerza el estado base
+  // tranquilo (nodes 10, intensity 0.6, spinning 20) y sin animación de carga.
+  const orbNodes = reduce ? 10 : Math.round(10 + charge * 12);   // 10 -> 22
+  const orbIntensity = reduce ? 0.6 : 0.6 + charge * 0.35;       // 0.6 -> 0.95
+  const orbSpinning = reduce ? 20 : 20 - charge * 8;             // 20s -> 12s
+
+  // Glow del anillo (S.orbRing) proporcional a la carga con el color del
+  // usuario. Sin reduce, el halo se intensifica al llenar; con reduce queda
+  // estático en su valor base. NO es un borde: sigue siendo solo sombra.
+  const glowAlpha = reduce ? '33' : Math.round((0.2 + charge * 0.4) * 255).toString(16).padStart(2, '0');
+  const glowBlur = reduce ? 30 : Math.round(30 + charge * 30);   // 30px -> 60px
+  const orbRingShadow = `0 0 ${glowBlur}px ${uc}${glowAlpha}, inset 0 0 20px ${uc}14`;
+
   // En login se etiqueta genéricamente "Usuario" (no "Email") para no
   // confirmarle a un atacante que el campo espera específicamente un
   // correo, mitigando ataques de enumeración de cuentas.
@@ -285,8 +318,8 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
           transition={{ duration: 0.5 }}
           style={S.logoBlock}
         >
-          <div style={{ ...S.orbRing, boxShadow: `0 0 30px ${uc}33, inset 0 0 20px ${uc}14` }}>
-            <GeodesicOrb size={80} nodes={10} color={uc} spinning={20} intensity={0.6} />
+          <div style={{ ...S.orbRing, boxShadow: orbRingShadow }}>
+            <GeodesicOrb size={80} nodes={orbNodes} color={uc} spinning={orbSpinning} intensity={orbIntensity} />
           </div>
           <div style={{ textAlign: 'center' }}>
             <h1 style={S.brand}>Sistema Ómicrom</h1>
@@ -348,6 +381,8 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
                   className="auth-input"
                   value={username}
                   onChange={handleUsernameChange}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
                   placeholder="tu_nodo"
                   required
                   minLength={USERNAME_MIN_LENGTH}
@@ -367,7 +402,8 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
                 className="auth-input"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                onBlur={() => setEmail(v => v.trim())}
+                onFocus={() => setFocused(true)}
+                onBlur={() => { setEmail(v => v.trim()); setFocused(false); }}
                 placeholder={identifierPlaceholder}
                 required
                 maxLength={EMAIL_MAX_LENGTH}
@@ -387,6 +423,8 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
                     className="auth-input"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
                     placeholder="..."
                     required
                     minLength={PASSWORD_MIN_LENGTH}
@@ -493,6 +531,7 @@ const S: Record<string, CSSProperties> = {
   },
   orbRing: {
     width: 80, height: 80, borderRadius: RADIUS.pill, overflow: 'hidden',
+    transition: 'box-shadow 0.8s ease',
   },
   brand: {
     margin: 0,
