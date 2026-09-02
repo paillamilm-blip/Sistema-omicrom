@@ -35,6 +35,11 @@ import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { getUserColor } from '@/shared/components/ColorPicker';
 import { useUserColor } from '@/shared/hooks/useUserColor';
+import {
+  detectActiveSynergies,
+  synergyGroupForSkill,
+  SYNERGY_GROUP_META,
+} from '@/features/omicron/utils/skillSynergy';
 import type { TabId, GemeloDigital } from '@/types';
 
 // =====================================================================
@@ -136,42 +141,16 @@ function buildSkillNodes(
     return undefined;
   };
 
-  // Synergy groups: related skills boost each other's effective level
-  const SYNERGY_GROUPS: string[][] = [
-    ['react', 'typescript', 'javascript', 'frontend', 'node', 'next.js'],
-    ['python', 'machine learning', 'data', 'ia', 'deep learning', 'analytics'],
-    ['docker', 'kubernetes', 'aws', 'devops', 'cloud', 'ci/cd'],
-    ['diseño', 'ux', 'ui', 'figma', 'design', 'branding'],
-    ['gestión', 'liderazgo', 'scrum', 'agile', 'project management'],
-    ['ventas', 'marketing', 'negociación', 'comercial', 'growth'],
-  ];
-
-  // Detect which synergy groups are active (2+ skills from same group)
-  // Uses word-boundary matching to avoid cross-contamination
-  // (e.g. "Google Analytics" should NOT match the ML group's "analytics")
-  const activeSynergies = new Set<number>();
-  SYNERGY_GROUPS.forEach((group, gi) => {
-    const matches = skills.filter((s) => {
-      const lower = s.toLowerCase();
-      return group.some((g) => {
-        // Word boundary: the group keyword must be a whole word in the skill
-        const re = new RegExp(`\\b${g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-        return re.test(lower);
-      });
-    });
-    if (matches.length >= 2) activeSynergies.add(gi);
-  });
+  // Detect which synergy groups are active (2+ skills from same group).
+  // La detección vive en el helper PURO skillSynergy.ts (fuente única de
+  // verdad, unit-testeada). Word-boundary + regla de 2+ coincidencias por
+  // grupo evitan activaciones espurias (p.ej. "Google Analytics" sola no
+  // activa el grupo de datos). La matemática del bono no cambia.
+  const activeSynergies = detectActiveSynergies(skills);
 
   // Synergy bonus: +0.08 if skill belongs to an active synergy group
   const getSynergyBonus = (skill: string): number => {
-    const lower = skill.toLowerCase();
-    for (const gi of activeSynergies) {
-      if (SYNERGY_GROUPS[gi].some((g) => {
-        const re = new RegExp(`\\b${g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-        return re.test(lower);
-      })) return 0.08;
-    }
-    return 0;
+    return synergyGroupForSkill(skill, activeSynergies) !== null ? 0.08 : 0;
   };
 
   return skills.map((skill, i) => {
@@ -451,6 +430,16 @@ export function OrbShell() {
 
     return [...HUB_NODES, ...skillNodes, ...previewNodes];
   }, [sbProfile, profile, previewSkills]);
+
+  // ── Sinergias activas a nivel shell (solo presentación, read-only) ──
+  // Reusa la MISMA fuente de habilidades que buildSkillNodes y el MISMO
+  // helper puro. Sirve para que el preview pueda explicar, en cero jerga y
+  // en el color del usuario, por qué un nodo recibe el bono de sinergia.
+  // No toca reputación ni scores.
+  const activeSynergies = useMemo(
+    () => detectActiveSynergies(sbProfile?.skills ?? profile.skills ?? []),
+    [sbProfile, profile],
+  );
 
   // ── Compute node levels from user's Gemelo profile ──────────────────
   // Maps each node to a 0-1 level based on validated skills and axes
@@ -1107,16 +1096,28 @@ export function OrbShell() {
         // ── Guidance: cómo mejorar en este nodo
         const guidance = nodeGuidance(selectedNode.tab, sbProfile, gemeloDigital);
 
-        // ── Sinergias con este nodo
-        const nodeSkills = (sbProfile?.skills ?? []) as string[];
-        const SYNERGY_MAP: Record<string, string[]> = {
-          habilidades: ['react', 'typescript', 'node', 'python', 'java', 'docker'],
-          academia: ['machine learning', 'data', 'analytics', 'deep learning'],
-          empleos: ['liderazgo', 'gestión', 'scrum', 'agile'],
-          market: ['diseño', 'ux', 'figma', 'freelance'],
-        };
-        const relatedSkills = (SYNERGY_MAP[selectedNode.id] ?? [])
-          .filter(s => nodeSkills.some(sk => sk.toLowerCase().includes(s)));
+        // ── Sinergia activa de este nodo (cero jerga, color del usuario) ──
+        // Reemplaza los antiguos chips estáticos "⚡ Sinergias" (C.gold/C.cyan)
+        // por una explicación real, driven por la detección que ya da el bono.
+        // Un nodo de habilidad ('skill-…') participa por su propio nombre; un
+        // nodo hub participa cuando la persona tiene habilidades de un grupo
+        // activo que caen bajo la misma pestaña que el nodo. Solo lectura.
+        const userSkillsForSynergy = (sbProfile?.skills ?? profile.skills ?? []) as string[];
+        const synergyGroupId: number | null = (() => {
+          if (selectedNode.id.startsWith('skill-')) {
+            return synergyGroupForSkill(selectedNode.label, activeSynergies);
+          }
+          // Nodo hub: busca la primera habilidad real de la persona que caiga
+          // en la MISMA pestaña que el nodo y participe de una sinergia activa.
+          for (const sk of userSkillsForSynergy) {
+            if (categorizeSkill(sk) !== selectedNode.tab) continue;
+            const gid = synergyGroupForSkill(sk, activeSynergies);
+            if (gid !== null) return gid;
+          }
+          return null;
+        })();
+        const synergyMeta =
+          synergyGroupId !== null ? SYNERGY_GROUP_META[synergyGroupId] : null;
 
         return (
           <div
@@ -1205,21 +1206,56 @@ export function OrbShell() {
               </p>
             </div>
 
-            {/* Sinergias activas */}
-            {relatedSkills.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: C.gold, textTransform: 'uppercase', width: '100%', marginBottom: 2 }}>
-                  ⚡ Sinergias
-                </span>
-                {relatedSkills.map(s => (
-                  <span key={s} style={{
-                    padding: '3px 8px', borderRadius: 999, fontFamily: FONT.mono, fontSize: 9,
-                    background: `${C.gold}14`, border: `1px solid ${C.gold}44`, color: C.ink,
-                  }}>
-                    {s}
-                  </span>
-                ))}
-              </div>
+            {/* Sinergia activa — QUÉ + POR QUÉ + QUÉ GANA, en el color del
+                usuario. Aditivo: si el nodo no participa de una sinergia
+                activa, no se renderiza nada (sin ruido de estado vacío).
+                Beat de entrada de una sola pasada (transform/opacity/box-
+                shadow); bajo prefers-reduced-motion se pinta el estado final
+                estático, sin animación ni loop. */}
+            {synergyMeta && (
+              <motion.div
+                key={`synergy-${synergyGroupId}-${selectedNode.id}`}
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, transform: 'scale(0.94)', boxShadow: `0 0 0px ${orbColor}00` }
+                }
+                animate={{
+                  opacity: 1,
+                  transform: 'scale(1)',
+                  boxShadow: `0 8px 24px ${orbColor}22`,
+                }}
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { duration: 0.5, ease: [0.23, 1, 0.32, 1] }
+                }
+                style={{
+                  padding: '12px 14px', borderRadius: 14, marginBottom: 12,
+                  background: `${orbColor}14`,
+                  border: `1px solid ${orbColor}44`,
+                }}
+              >
+                <div style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1.5, color: orbColor, textTransform: 'uppercase', marginBottom: 6 }}>
+                  ⚡ Sinergia activa
+                </div>
+                {/* QUÉ */}
+                <p style={{ margin: '0 0 4px', fontFamily: FONT.display, fontSize: 13.5, fontWeight: 700, color: C.ink }}>
+                  {synergyMeta.nombre}
+                </p>
+                {/* POR QUÉ */}
+                <p style={{ margin: '0 0 8px', fontFamily: FONT.body, fontSize: 12, lineHeight: 1.5, color: C.mut }}>
+                  {synergyMeta.porque}
+                </p>
+                {/* QUÉ GANA */}
+                <div style={{
+                  display: 'inline-block', padding: '3px 10px', borderRadius: 999,
+                  fontFamily: FONT.mono, fontSize: 10, fontWeight: 700,
+                  background: `${orbColor}22`, border: `1px solid ${orbColor}44`, color: orbColor,
+                }}>
+                  +8/100 en tu dominio
+                </div>
+              </motion.div>
             )}
 
             {/* CTA: abrir fullscreen */}
