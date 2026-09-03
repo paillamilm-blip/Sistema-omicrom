@@ -17,6 +17,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { callAI } from '@/infrastructure/ai/client';
+import { callAIStream } from '@/infrastructure/ai/stream';
 import { detectEmotion } from './emotion';
 import { getPersonalizationHint, learnFromInteraction } from '@/infrastructure/ai/personalization';
 import { TOOL_CATALOG, parseToolCall, type ToolCall } from './tools';
@@ -145,10 +146,20 @@ export interface OmicronResponse {
 /**
  * Pregunta a Ómicrom — el cerebro único.
  * Incluye memoria conversacional + contexto del Gemelo + pantalla activa.
+ *
+ * RESPUESTA VIVA (Inc 2): `onToken` es OPCIONAL y no cambia el contrato de
+ * hoy. Cuando NO se pasa, el comportamiento es idéntico al histórico
+ * (callAI + memoria + emoción + personalización + parseo de herramienta +
+ * fallback offline + campo error). Cuando se pasa, usamos callAIStream para
+ * que los tokens fluyan a la UI: contra el proxy-ai actual (sin SSE) el
+ * callback se invoca una sola vez con el texto completo, pero deja el camino
+ * listo para streaming real sin tocar a los consumidores. El valor de retorno
+ * es siempre el mismo OmicronResponse final.
  */
 export async function askOmicron(
   message: string,
   context: OmicronContext,
+  onToken?: (partial: string) => void,
 ): Promise<OmicronResponse> {
   // Detectar estado emocional
   const emotion = detectEmotion(message);
@@ -182,11 +193,17 @@ export async function askOmicron(
   ];
 
   try {
-    const text = await callAI(messages, {
-      maxTokens: 512,
-      temperature: 0.75,
-      timeout: 28000,
-    });
+    const text = onToken
+      ? await callAIStream(messages, onToken, {
+          maxTokens: 512,
+          temperature: 0.75,
+          timeout: 28000,
+        })
+      : await callAI(messages, {
+          maxTokens: 512,
+          temperature: 0.75,
+          timeout: 28000,
+        });
 
     if (!text) {
       const fallback = generateOfflineFallback(message, context);
