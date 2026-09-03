@@ -357,7 +357,9 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
       const t = setTimeout(() => { onCloseRef.current?.(); }, 900);
       return () => clearTimeout(t);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Sin eslint-disable: las dependencias YA están completas. `onCloseRef` es
+  // una ref (no necesita ser dependencia), así que la directiva quedaba sin
+  // usar y ESLint la reportaba como el único warning del proyecto.
   }, [isAuthenticated, persisted, currentAct]);
 
   // ═══════════════════════════════════════════════════════════════════════

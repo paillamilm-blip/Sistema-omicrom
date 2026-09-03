@@ -81,6 +81,8 @@ describe('opportunityBridge — defensa ante datos sucios', () => {
   it('conteos decimales se truncan (no muestra "2.7 ofertas")', () => {
     const b = opportunityBridge({ openJobs: 5.9, matchedJobs: 2.7, skillCount: 3.2 });
     expect(b.label).toContain('2 de las 5');
-    expect(b.label).not.toContain('.');
+    // Sin decimales: se prohíbe el patrón dígito.dígito, NO el punto final de
+    // la frase (que es puntuación legítima).
+    expect(b.label).not.toMatch(/\d\.\d/);
   });
 });
