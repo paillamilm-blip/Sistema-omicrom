@@ -17,7 +17,7 @@ import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '@/shared/comp
 import { SmoothNumber, StaggerList, StaggerItem } from '@/shared/motion';
 import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
-import { commissionQuote } from '@/features/omicron/utils/commissionQuote';
+import { commissionQuote, PIONEER_BPS } from '@/features/omicron/utils/commissionQuote';
 import type { WalletTransaction } from '@/types';
 
 // ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────
@@ -150,7 +150,10 @@ export function WalletTab() {
   // 0.5 %. Los tramos por PE de abajo son solo tu PROGRESO de experiencia
   // (el PE alimenta tu reputación), NUNCA un segundo nivel.
   const repScore = profile?.reputation_score ?? 0;
-  const myQuote  = commissionQuote(0, repScore);
+  // El beneficio Pionero es un PISO de 0.5 %: se pasa a la fuente única para
+  // que el encabezado, el banner Pionero y la pantalla de publicar digan
+  // exactamente la misma tasa (nunca dos números distintos para lo mismo).
+  const myQuote  = commissionQuote(0, repScore, { pioneer });
 
   return (
     <div style={oc.root}>
@@ -294,8 +297,8 @@ export function WalletTab() {
                 </div>
                 <div>
                   <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>Programa Pionero</div>
-                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color: C.ink, marginTop: 2 }}>Comisión 10% de por vida</div>
-                  <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>Beneficio garantizado por ser usuario fundador.</div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color: C.ink, marginTop: 2 }}>Comisión {PIONEER_BPS / 100} % de por vida</div>
+                  <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>Por ser usuario fundador pagas siempre la comisión más baja de la red, sin importar tu nivel.</div>
                 </div>
               </div>
             </OmicronCard>
