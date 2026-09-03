@@ -347,7 +347,7 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
           <span style={styles.trustSep}>·</span>
           <span style={styles.trustChip}><ShieldCheck size={11} style={{ color: C.blueHi }} /> <b style={{ color: C.blueHi }}>{val}</b> validadas</span>
           <span style={styles.trustSep}>·</span>
-          <span style={{ color: C.muted }}>{service.seller.node_type.replace('Nodo ', '')} N{lvl}</span>
+          <span style={{ color: C.muted }}>{(service.seller.node_type ?? 'Nodo Operativo').replace('Nodo ', '')} N{lvl}</span>
         </div>
       )}
 

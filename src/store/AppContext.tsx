@@ -2,7 +2,7 @@
 // FACADE de compatibilidad (Fase 0.3 del plan de producción).
 //
 // La lógica real vive ahora en dos contextos separados:
-//   - ProfileContext.tsx    → auth + perfil + gemelo + updateReputation
+//   - ProfileContext.tsx    → auth + perfil + gemelo (reputación solo-lectura)
 //   - NavigationContext.tsx → activeTab + unreadCount
 //
 // Se separaron para que un cambio de `activeTab` (navegación, muy frecuente)
@@ -22,14 +22,6 @@ import type { AppState, GemeloDigital } from '../types';
 
 interface ExtendedAppState extends AppState {
   gemelo: GemeloDigital | null;
-  updateReputation: (input: {
-    execution_delta?: number;
-    quality_delta?: number;
-    transcendence_delta?: number;
-    foundation_delta?: number;
-    reason: string;
-    trigger_event_id?: string;
-  }) => Promise<boolean>;
 }
 
 function NavigationProviderBridge({ children }: { children: ReactNode }) {
@@ -72,12 +64,6 @@ export function useApp(): ExtendedAppState {
 export function useGemeloDigital(): GemeloDigital | null {
   const { gemelo } = useProfile();
   return gemelo;
-}
-
-// Hook para actualizar reputación fácilmente
-export function useUpdateReputation() {
-  const { updateReputation } = useProfile();
-  return updateReputation;
 }
 
 // Re-exports para quien prefiera consumir los contextos granulares

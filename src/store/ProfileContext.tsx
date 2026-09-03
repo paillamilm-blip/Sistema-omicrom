@@ -21,7 +21,7 @@ import {
 } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/infrastructure/supabase/client';
-import { calculateGemeloDigital, updateReputationInDatabase } from '@/features/gemelo/services/reputation';
+import { calculateGemeloDigital } from '@/features/gemelo/services/reputation';
 import type { AuthStatus, Profile, GemeloDigital } from '../types';
 
 const DEFAULT_PE_POINTS = 0;
@@ -33,14 +33,6 @@ export interface ProfileContextState {
   profile: Profile | null;
   gemelo: GemeloDigital | null;
   refreshProfile: () => Promise<void>;
-  updateReputation: (input: {
-    execution_delta?: number;
-    quality_delta?: number;
-    transcendence_delta?: number;
-    foundation_delta?: number;
-    reason: string;
-    trigger_event_id?: string;
-  }) => Promise<boolean>;
 }
 
 const ProfileContext = createContext<ProfileContextState | null>(null);
@@ -104,29 +96,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id, profile?.onboarding_completed_at]);
 
-  // updateReputation no usa setTimeout para refrescar el perfil: el canal
-  // real-time de profiles (más abajo) ya detecta el UPDATE y actualiza el estado.
-  const updateReputation = useCallback(
-    async (input: {
-      execution_delta?: number;
-      quality_delta?: number;
-      transcendence_delta?: number;
-      foundation_delta?: number;
-      reason: string;
-      trigger_event_id?: string;
-    }) => {
-      if (!profile?.id) return false;
-
-      const success = await updateReputationInDatabase({
-        user_id: profile.id,
-        ...input,
-      });
-
-      return success;
-    },
-    [profile?.id]
-  );
-
+  // La reputación es solo-lectura en el cliente: el canal real-time de
+  // profiles (más abajo) detecta cualquier UPDATE server-side (triggers) y
+  // actualiza el estado. No existe escritura de scores desde el cliente.
   const refreshProfile = useCallback(async () => {
     if (!profile?.id) return;
     const p = await fetchProfile(profile.id);
@@ -291,7 +263,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     profile,
     gemelo,
     refreshProfile,
-    updateReputation,
   };
 
   return (
