@@ -11,11 +11,25 @@
 //  • Cuando `thinking` es true, la burbuja "respira" con una elipsis
 //    animada ("Ómicrom está pensando…"). Bajo prefers-reduced-motion se
 //    queda estática (estado final, sin animación ni loop).
+//
+// RESPUESTA VIVA (Inc 2):
+//  • Cuando `stream` es true, el mensaje se revela PALABRA POR PALABRA con un
+//    intervalo (typewriter del lado del cliente, ya que proxy-ai no hace SSE).
+//    El troceo vive en el helper puro wordPrefixes() (unit-testeado). El
+//    intervalo se limpia al desmontar o al cambiar el mensaje.
+//  • Bajo prefers-reduced-motion la revelación se "asienta" al texto completo
+//    al instante (sin loop, sin animación).
+//  • El auto-cierre de 10s arranca SOLO cuando la revelación termina, para que
+//    el usuario alcance a leer (decisión aprobada por el fundador).
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { C, FONT } from '@/theme';
+import { wordPrefixes } from '../utils/typewriter';
+
+// Ritmo del typewriter: ~45ms por palabra da una sensación viva sin marear.
+const REVEAL_STEP_MS = 45;
 
 export interface ProactiveAction {
   label: string;
@@ -31,24 +45,64 @@ interface Props {
   userColor: string;
   /** Mientras Ómicrom consulta la IA: muestra la elipsis viva. */
   thinking?: boolean;
+  /** Revela el mensaje palabra por palabra (respuestas de IA). */
+  stream?: boolean;
   onDismiss?: () => void;
 }
 
-export function ProactiveMessage({ message, actions, userColor, thinking, onDismiss }: Props) {
+export function ProactiveMessage({ message, actions, userColor, thinking, stream, onDismiss }: Props) {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const reduceMotion = useReducedMotion();
 
+  // ── Typewriter (Inc 2) ──────────────────────────────────────────────
+  // `shown` es el texto revelado hasta ahora. Sin stream (o con
+  // reduced-motion) es el mensaje completo desde el primer render.
+  const revealActive = !!stream && !reduceMotion && !!message;
+  const [shown, setShown] = useState<string>(revealActive ? '' : message);
+  const revealDone = shown === message;
+
+  // Aparición + auto-cierre. El auto-cierre de 10s arranca SOLO cuando la
+  // revelación terminó (revealDone), para que el usuario alcance a leer.
   useEffect(() => {
     if (!message) return;
     const t = setTimeout(() => setVisible(true), 200);
-    // Auto-dismiss después de 10s si el usuario no interactúa
-    const autoDismiss = setTimeout(() => {
-      setDismissed(true);
-      onDismiss?.();
-    }, 10000);
-    return () => { clearTimeout(t); clearTimeout(autoDismiss); };
-  }, [message, onDismiss]);
+    let autoDismiss: ReturnType<typeof setTimeout> | undefined;
+    if (revealDone) {
+      autoDismiss = setTimeout(() => {
+        setDismissed(true);
+        onDismiss?.();
+      }, 10000);
+    }
+    return () => { clearTimeout(t); if (autoDismiss) clearTimeout(autoDismiss); };
+  }, [message, revealDone, onDismiss]);
+
+  // Revelación palabra por palabra. Se reinicia al cambiar el mensaje y limpia
+  // su intervalo al desmontar. Bajo reduced-motion o sin stream se asienta al
+  // texto completo al instante (sin loop).
+  useEffect(() => {
+    if (!revealActive) {
+      setShown(message);
+      return;
+    }
+    const prefixes = wordPrefixes(message);
+    if (prefixes.length === 0) {
+      setShown(message);
+      return;
+    }
+    let i = 0;
+    setShown(prefixes[0]);
+    const id = setInterval(() => {
+      i += 1;
+      if (i >= prefixes.length) {
+        setShown(message);
+        clearInterval(id);
+        return;
+      }
+      setShown(prefixes[i]);
+    }, REVEAL_STEP_MS);
+    return () => clearInterval(id);
+  }, [message, revealActive]);
 
   if (!message || dismissed) return null;
 
@@ -82,7 +136,7 @@ export function ProactiveMessage({ message, actions, userColor, thinking, onDism
 
       {/* Message */}
       <p style={S.message}>
-        {message}
+        {shown}
         {thinking && (
           <span
             className={reduceMotion ? undefined : 'omicron-thinking-dots'}

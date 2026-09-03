@@ -319,6 +319,10 @@ export function OrbShell() {
   const [inputFocused, setInputFocused] = useState(false);
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
   const [proactiveActions, setProactiveActions] = useState<ProactiveAction[]>([]);
+  // RESPUESTA VIVA (Inc 2): cuando la respuesta es de la IA (coach/unknown) la
+  // revelamos palabra por palabra. Los mensajes deterministas y cortos
+  // (navegar/dato/convalidar/pensando/límite) se muestran al instante.
+  const [responseStream, setResponseStream] = useState(false);
   // Indicador vivo: mientras Ómicrom consulta la IA, la burbuja "respira"
   // ("Ómicrom está pensando…") en vez de mostrar texto muerto.
   const [omicronThinking, setOmicronThinking] = useState(false);
@@ -510,14 +514,35 @@ export function OrbShell() {
   const handleTextInput = useCallback(async (text: string) => {
     // Limpiar respuesta anterior para mostrar que estamos procesando
     setResponseMsg('Un momento…');
+    setResponseStream(false);
+    setProactiveActions([]);
 
     const intent = interpret(text);
 
-    const flash = (msg: string, _ms = 0) => {
+    // `flash` muestra un mensaje al instante (por defecto). `stream` marca las
+    // respuestas de IA para que la burbuja las revele palabra por palabra.
+    const flash = (msg: string, stream = false) => {
+      setResponseStream(stream);
       setResponseMsg(msg);
       // Las respuestas persisten hasta que el usuario envíe otro mensaje
       // (no se auto-borran — interacción fluida)
       if (responseTimer.current) clearTimeout(responseTimer.current);
+    };
+
+    // Ómicrom no pudo responder (IA caída/offline o texto vacío): NUNCA
+    // inventamos una respuesta. Mostramos un mensaje explícito (tuteo, cero
+    // jerga) con un botón para reintentar la MISMA consulta. Usamos el ref
+    // para reejecutar handleTextInput sin crear un ciclo de dependencias.
+    const showRetry = (original: string) => {
+      setProactiveActions([
+        {
+          label: 'Reintentar',
+          emoji: '↻',
+          primary: true,
+          onClick: () => handleTextInputRef.current?.(original),
+        },
+      ]);
+      flash('No pude responder ahora. Vuelve a intentarlo.');
     };
 
     if (intent.kind === 'navigate') {
@@ -570,8 +595,12 @@ export function OrbShell() {
       setOmicronThinking(true);
       try {
         const r = await askOmicron(text, omCtx);
-        flash(r.text);
-        speakOmicron(r.text);
+        if (r.error || !r.text) {
+          showRetry(text);
+        } else {
+          flash(r.text, true);
+          speakOmicron(r.text);
+        }
       } finally {
         clearTimeout(coachTimer);
         setOmicronThinking(false);
@@ -630,13 +659,22 @@ export function OrbShell() {
     setOmicronThinking(true);
     try {
       const r = await askOmicron(text, omCtx);
-      flash(r.text);
-      speakOmicron(r.text);
+      if (r.error || !r.text) {
+        showRetry(text);
+      } else {
+        flash(r.text, true);
+        speakOmicron(r.text);
+      }
     } finally {
       clearTimeout(slowTimer);
       setOmicronThinking(false);
     }
   }, [setActiveTab, sbProfile, orbNodesWithLevels, selectedNode, unlockFor]);
+
+  // Ref siempre-fresco a handleTextInput: permite que el botón "Reintentar"
+  // reejecute la consulta sin meter handleTextInput en sus propias deps.
+  const handleTextInputRef = useRef(handleTextInput);
+  handleTextInputRef.current = handleTextInput;
 
   // ── Toggle listening (speech recognition) ──────────────────────────
   // Voz y texto son LA MISMA experiencia — la voz solo cambia el input method.
@@ -1714,7 +1752,8 @@ export function OrbShell() {
           actions={proactiveActions}
           userColor={orbColor}
           thinking={omicronThinking}
-          onDismiss={() => { setResponseMsg(null); setProactiveActions([]); }}
+          stream={responseStream}
+          onDismiss={() => { setResponseMsg(null); setProactiveActions([]); setResponseStream(false); }}
         />
       )}
 
