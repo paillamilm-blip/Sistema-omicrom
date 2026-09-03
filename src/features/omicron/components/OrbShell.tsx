@@ -298,7 +298,12 @@ export function OrbShell() {
   // próximo paso determinista + reputación del perfil + alza de eje): sin
   // llamadas al backend. El helper pickHomeStatus es puro y unit-testeado.
   const homeStatusLabel = useMemo(() => {
-    if (!sbProfile?.id) return null;
+    // B6 — ÓMICROM NUNCA QUEDA MUDO: un invitado (explorando sin cuenta) antes
+    // recibía `null` acá y además la superficie no se montaba, así que el
+    // núcleo no le decía NADA. Ahora también le habla, con la única
+    // invitación honesta que aplica sin datos suyos: activar su Gemelo con el
+    // CV. Sin inventar números (no tiene reputación ni ejes todavía).
+    if (!sbProfile?.id) return 'Estás explorando sin cuenta. Sube tu CV y activa tu Gemelo Digital en 1 minuto.';
     const nextStep = computeSteps(sbProfile, gemeloDigital)[0] ?? null;
     const rep = sbProfile?.reputation_score ?? null;
     return pickHomeStatus({
@@ -1731,7 +1736,10 @@ export function OrbShell() {
           OrbContextLabel ni ProactiveCards: ambos fueron desmontados en este
           incremento. El wrapper usa pointerEvents:'none' para no bloquear
           taps de nodos ni la barra de input. */}
-      {state === 'orb' && onboardingDone && !!sbProfile?.id && !showHomeGuide && !responseMsg && (
+      {/* B6: SIN la compuerta `!!sbProfile?.id`. La voz del núcleo también
+          acompaña al invitado (pickHomeStatus ya recibe su línea propia en
+          homeStatusLabel); `visible` se apaga solo si no hay label. */}
+      {state === 'orb' && onboardingDone && !showHomeGuide && !responseMsg && homeStatusLabel && (
         <div style={{
           position: 'absolute',
           left: 0,
