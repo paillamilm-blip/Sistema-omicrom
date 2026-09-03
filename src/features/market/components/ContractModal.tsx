@@ -3,6 +3,7 @@ import { Shield, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useProfile } from '@/store/ProfileContext';
 import { Modal } from '@/shared/components/Modal';
+import { commissionQuote } from '@/features/omicron/utils/commissionQuote';
 import type { MarketService } from '@/types';
 
 interface Props {
@@ -21,6 +22,17 @@ export function ContractModal({ service, onClose }: Props) {
 
   const canAfford = (profile?.token_balance ?? 0) >= service.price;
   const sellerName = service.seller?.username ?? 'vendedor';
+
+  // Comisión Ómicrom (Etapa 1, SOLO DISPLAY, no mueve dinero). Tu precio no
+  // cambia: solo mostramos, con transparencia, cómo se reparte el pago del
+  // profesional. La tasa depende de la reputación real del VENDEDOR (baja al
+  // subir de nivel). Si no tenemos su reputación a mano, mostramos "hasta 1 %"
+  // (nunca inventamos una reputación).
+  const sellerReputation = service.seller?.reputation_score;
+  const quote =
+    typeof sellerReputation === 'number' && Number.isFinite(sellerReputation)
+      ? commissionQuote(service.price, sellerReputation)
+      : null;
 
   async function handleHire() {
     if (!profile || !service.seller_id) return;
@@ -133,6 +145,29 @@ export function ContractModal({ service, onClose }: Props) {
             <span className={`font-bold ${canAfford ? 'text-omicron-text' : 'text-red-400'}`}>
               🪙 {(profile?.token_balance ?? 0) - service.price}
             </span>
+          </div>
+
+          {/* Comisión Ómicrom (Etapa 1, solo transparencia): tu precio no cambia,
+              solo mostramos cómo se reparte el pago del profesional. */}
+          <div className="border-t border-omicron-border pt-2 space-y-1">
+            {quote ? (
+              <>
+                <div className="flex justify-between text-xs">
+                  <span className="text-omicron-subtle">Comisión Ómicrom: {quote.ratePct} %</span>
+                  <span className="text-omicron-subtle">🪙 {quote.commission}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-omicron-subtle">@{sellerName} recibe</span>
+                  <span className="text-omicron-text font-semibold">🪙 {quote.net} tokens</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between text-xs">
+                <span className="text-omicron-subtle">Comisión Ómicrom: hasta 1 %</span>
+                <span className="text-omicron-subtle">se descuenta al profesional</span>
+              </div>
+            )}
+            <p className="text-omicron-muted text-xs pt-0.5">La red se financia con lo que ganas.</p>
           </div>
         </div>
 

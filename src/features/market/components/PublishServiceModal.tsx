@@ -3,6 +3,7 @@ import { Plus, X } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useProfile } from '@/store/ProfileContext';
 import { Modal } from '@/shared/components/Modal';
+import { commissionQuote } from '@/features/omicron/utils/commissionQuote';
 
 interface Props {
   onClose: () => void;
@@ -29,6 +30,16 @@ export function PublishServiceModal({ onClose, onPublished }: Props) {
   const [tagInput, setTagInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Comisión Ómicrom (Etapa 1, SOLO DISPLAY, no mueve dinero). Al publicar,
+  // te mostramos con transparencia cuánto recibes tras la comisión, según tu
+  // reputación real (baja al subir de nivel). Solo se muestra si el precio ya
+  // es válido (>= 10 tokens). El servidor sigue siendo la fuente de verdad.
+  const priceValue = parseInt(form.price, 10);
+  const quote =
+    Number.isFinite(priceValue) && priceValue >= 10 && profile
+      ? commissionQuote(priceValue, profile.reputation_score)
+      : null;
 
   function addTag() {
     const t = tagInput.trim();
@@ -105,6 +116,15 @@ export function PublishServiceModal({ onClose, onPublished }: Props) {
               className="w-full bg-omicron-surface border border-omicron-border rounded-xl pl-10 pr-4 py-3 text-omicron-text placeholder:text-omicron-muted text-sm focus:outline-none focus:border-omicron-accent transition"
             />
           </div>
+          {/* Comisión Ómicrom (solo transparencia): cuánto recibes tras la comisión. */}
+          {quote && (
+            <div className="mt-2 bg-omicron-surface border border-omicron-border rounded-xl px-4 py-3">
+              <p className="text-omicron-subtle text-xs">
+                Comisión Ómicrom: {quote.ratePct} % · recibes 🪙 {quote.net} tokens
+              </p>
+              <p className="text-omicron-muted text-xs mt-1">La red se financia con lo que ganas.</p>
+            </div>
+          )}
         </div>
 
 
