@@ -17,6 +17,7 @@ import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '@/shared/comp
 import { SmoothNumber, StaggerList, StaggerItem } from '@/shared/motion';
 import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
+import { commissionQuote } from '@/features/omicron/utils/commissionQuote';
 import type { WalletTransaction } from '@/types';
 
 // ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────
@@ -143,6 +144,14 @@ export function WalletTab() {
   const pioneer = profile?.is_pioneer     ?? false;
   const node    = getNode(pe);
 
+  // UNIFICACIÓN (Etapa A): TODO el nivel visible se mide desde TU REPUTACIÓN
+  // (una sola medición). La comisión real de la red es la Comisión Ómicrom,
+  // que BAJA al subir de nivel: Estudiante 1 % · Técnico 0.8 % · Arquitecto
+  // 0.5 %. Los tramos por PE de abajo son solo tu PROGRESO de experiencia
+  // (el PE alimenta tu reputación), NUNCA un segundo nivel.
+  const repScore = profile?.reputation_score ?? 0;
+  const myQuote  = commissionQuote(0, repScore);
+
   return (
     <div style={oc.root}>
       <OmicronHeader
@@ -150,7 +159,7 @@ export function WalletTab() {
         icon={<Wallet size={17} />}
         accent={C.gold}
         title="Billetera"
-        subtitle={`Comisión de red: ${node.commission}%`}
+        subtitle={`Nivel ${myQuote.band} · Comisión Ómicrom ${myQuote.ratePct} %`}
       />
       <div style={oc.scroll}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
@@ -408,10 +417,10 @@ export function WalletTab() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Layers size={16} style={{ color: active ? n.accent : C.mut }} />
-                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: active ? C.ink : C.mut }}>Comisión de red: {n.commission}%</span>
+                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: active ? C.ink : C.mut }}>Tramo de experiencia</span>
                         {active && <Chip color={n.accent} filled>ACTUAL</Chip>}
                       </div>
-                      <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 13, color: active ? n.accent : C.mut }}>{n.commission}% fee</span>
+                      <span style={{ fontFamily: FONT.mono, fontWeight: 700, fontSize: 11, color: active ? n.accent : C.mut }}>suma a tu reputación</span>
                     </div>
                     <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginBottom: active && n.maxPE ? 8 : 0 }}>
                       {n.maxPE ? `${n.minPE.toLocaleString()} – ${n.maxPE.toLocaleString()} PE` : `${n.minPE.toLocaleString()}+ PE`}

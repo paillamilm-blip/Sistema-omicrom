@@ -11,7 +11,13 @@ import type { TabId, Profile, GemeloDigital } from '@/types';
 const r = (n: number) => Math.round(n);
 
 /**
- * Umbrales de nivel por PE (alineado con la Billetera: Operativo/Core/Arquitecto).
+ * Tramos de PROGRESO por PE (puntos de experiencia).
+ *
+ * UNIFICACIÓN (Etapa A): esto NO es el nivel del usuario. El nivel visible se
+ * mide SIEMPRE desde la reputación (Estudiante / Técnico / Arquitecto, una sola
+ * medición). El PE es el motor interno que alimenta la reputación, así que esta
+ * función solo describe el avance dentro de un tramo de experiencia y su
+ * `tier` no debe mostrarse como el nivel de la persona.
  */
 export function levelInfo(pe: number): { tier: string; next: string | null; toNext: number; pct: number } {
   if (pe >= 2000) return { tier: 'Nodo Arquitecto', next: null, toNext: 0, pct: 100 };
@@ -43,10 +49,13 @@ export function nodeGuidance(tab: TabId, profile: Profile | null, gemelo: Gemelo
     case 'vault':
       return `Sube un aporte para subir tu Trascendencia${gemelo ? ` (hoy ${r(gemelo.transcendence)})` : ''} y ganar regalías.`;
     case 'wallet': {
+      // UNIFICACIÓN (Etapa A): tu NIVEL se mide SOLO desde tu reputación
+      // (una sola medición). El PE es el motor que la alimenta, así que acá
+      // hablamos de PE como progreso, nunca como un segundo nivel.
       const li = levelInfo(pe);
       return li.next
-        ? `Tienes ${pe} PE. Te faltan ${li.toNext} PE para llegar a ${li.next}.`
-        : `Eres ${li.tier}: nivel máximo. Sigue ganando tokens con tu experticia.`;
+        ? `Tienes ${pe} PE y suman a tu reputación (${rep}/100). Con ${li.toNext} PE más aceleras tu próximo nivel.`
+        : `Tienes ${pe} PE: el máximo del tramo. Sigue ganando tokens con tu experticia.`;
     }
     case 'gobernanza':
       return 'Participa como árbitro o vota propuestas: la gobernanza refuerza tu reputación en la red.';
