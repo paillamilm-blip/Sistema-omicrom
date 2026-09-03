@@ -13,6 +13,7 @@ import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
 import { RutaCarrera } from '@/features/empleos/components/RutaCarrera';
 import { FreelanceNeeds } from '@/features/empleos/components/FreelanceNeeds';
 import { CartaPostulacionModal } from '@/features/empleos/components/CartaPostulacionModal';
+import { opportunityBridge } from '@/features/empleos/services/opportunityBridge';
 import { oc, OmicronHeader, OmicronAction } from '@/shared/components/OmicronChrome';
 import { audioPing } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
@@ -203,6 +204,36 @@ export function EmpleosTab() {
         action={<OmicronAction onClick={() => setShowPublish(true)}><Plus size={14} /> Publicar</OmicronAction>}
       />
       <GemeloGuidance tab="empleos" />
+
+      {/* ── EL PUENTE: aprender -> oportunidad, hecho visible ──────────────
+          Une las dos puntas que antes se sentían desconectadas: cuántas
+          ofertas REALES abren tus habilidades hoy, y qué hacés para abrir
+          más. Se compone con conteos que YA están en memoria (jobs OPEN +
+          matches reales/locales + skills del perfil): CERO consultas nuevas
+          y CERO datos inventados. Si la red no tiene ofertas, lo dice.
+          No se muestra mientras carga, para no afirmar "no hay ofertas"
+          antes de saberlo. */}
+      {!loading && (() => {
+        const bridge = opportunityBridge({
+          openJobs: jobs.length,
+          matchedJobs: myMatches.size || localSuggestions.size,
+          skillCount: profile?.skills?.length ?? 0,
+        });
+        const tint = bridge.tone === 'win' ? C.green : bridge.tone === 'empty' ? C.muted : C.blueHi;
+        return (
+          <div style={{
+            display: 'flex', alignItems: 'flex-start', gap: 8,
+            padding: '10px 12px', marginBottom: 10,
+            borderRadius: 12,
+            background: 'rgba(255,255,255,0.03)',
+            border: `1px solid ${tint}44`,
+            borderLeft: `2px solid ${tint}`,
+          }}>
+            <Flame size={13} style={{ color: tint, flexShrink: 0, marginTop: 2 }} />
+            <span style={{ fontSize: 12, lineHeight: 1.45, color: C.muted }}>{bridge.label}</span>
+          </div>
+        );
+      })()}
 
       {/* Filtros */}
       <div style={styles.filterRow}>
