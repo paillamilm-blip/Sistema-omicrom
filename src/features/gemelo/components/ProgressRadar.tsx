@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { AlertCircle, TrendingUp } from 'lucide-react';
 import type { GemeloDigital } from '@/types';
 import { formatScore, getReputationBadge } from '@/features/gemelo/services/reputation';
+import { levelBandFor } from '@/features/omicron/utils/nodeUnlock';
 
 interface ProgressRadarProps {
   gemelo: GemeloDigital;
@@ -123,8 +124,12 @@ export function ProgressRadar({
     return lines;
   }, [points, radius, centerX, centerY]);
 
+  // getReputationBadge se mantiene SOLO por su color (borde) y emoji; la
+  // ETIQUETA visible del nivel es la banda humana única (Estudiante / Técnico
+  // / Arquitecto) derivada de la reputación real, coherente con toda la app.
   const badge       = getReputationBadge(gemelo.overallReputation);
   const borderColor = BADGE_BORDER_HEX[badge.color] ?? '#64748b';
+  const levelBand   = levelBandFor(gemelo.overallReputation);
 
   const dotRadius   = size === 'sm' ? 4 : size === 'md' ? 5 : 7;
   const glowRadius  = size === 'sm' ? 6 : size === 'md' ? 8 : 11;
@@ -149,7 +154,7 @@ export function ProgressRadar({
             className="px-4 py-2 rounded-xl border-2 text-center"
             style={{ borderColor }}
           >
-            <p className="text-sm font-bold">{badge.emoji} {badge.label}</p>
+            <p className="text-sm font-bold">{badge.emoji} {levelBand}</p>
           </div>
         </div>
       )}

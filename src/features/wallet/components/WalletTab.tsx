@@ -20,10 +20,16 @@ import { firePulse } from '@/shared/components/LivePulseBar';
 import type { WalletTransaction } from '@/types';
 
 // ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────
+// NOTA (FEAT-001): `name` (id del tier), minPE/maxPE/commission/accent y TODA
+// la matemática de tiers quedan BYTE-A-BYTE (es lógica económica por PE, un eje
+// distinto de las bandas por reputación). SOLO se agrega `label` de PRESENTACIÓN
+// para mostrar el vocabulario de nivel único de la app (Estudiante / Técnico /
+// Arquitecto), coherente en toda la UI, sin tocar la economía. FLAG: el tier por
+// PE y la banda por reputación NO son el mismo eje; el label es display-only.
 const NODES = [
-  { name: 'Nodo Operativo',  minPE: 0,    maxPE: 499 as number | null,  commission: 15, accent: '#9aa7bd' },
-  { name: 'Nodo Core',       minPE: 500,  maxPE: 1999 as number | null, commission: 10, accent: C.cyan },
-  { name: 'Nodo Arquitecto', minPE: 2000, maxPE: null as number | null, commission: 5,  accent: C.gold },
+  { name: 'Nodo Operativo',  label: 'Estudiante', minPE: 0,    maxPE: 499 as number | null,  commission: 15, accent: '#9aa7bd' },
+  { name: 'Nodo Core',       label: 'Técnico',    minPE: 500,  maxPE: 1999 as number | null, commission: 10, accent: C.cyan },
+  { name: 'Nodo Arquitecto', label: 'Arquitecto', minPE: 2000, maxPE: null as number | null, commission: 5,  accent: C.gold },
 ];
 
 function getNode(pe: number) {
@@ -144,7 +150,7 @@ export function WalletTab() {
         icon={<Wallet size={17} />}
         accent={C.gold}
         title="Billetera"
-        subtitle={`Nivel ${node.name}`}
+        subtitle={`Nivel ${node.label}`}
       />
       <div style={oc.scroll}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
@@ -402,7 +408,7 @@ export function WalletTab() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Layers size={16} style={{ color: active ? n.accent : C.mut }} />
-                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: active ? C.ink : C.mut }}>{n.name}</span>
+                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: active ? C.ink : C.mut }}>{n.label}</span>
                         {active && <Chip color={n.accent} filled>ACTUAL</Chip>}
                       </div>
                       <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 13, color: active ? n.accent : C.mut }}>{n.commission}% fee</span>

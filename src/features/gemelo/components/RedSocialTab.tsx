@@ -14,6 +14,7 @@ import { C, FONT } from '@/theme';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
 import { RedPanel, DirectChatModal, PublicCredentialModal } from '@/features/gemelo/components/RedSocial';
+import { levelBandFor, bandForNodeLevel } from '@/features/omicron/utils/nodeUnlock';
 import type { LiveEvent } from '@/hooks/useRealtimeNetwork';
 
 type Section = 'feed' | 'online' | 'ranking' | 'dms' | 'sugerencias';
@@ -169,7 +170,8 @@ function OnlineSection({ peers, profile, onViewUser, onDm }: {
         <div style={S.avatar}>{(profile?.username ?? 'T')[0].toUpperCase()}</div>
         <div style={{ flex: 1 }}>
           <div style={S.peerName}>{profile?.username} (tú)</div>
-          <div style={S.peerMeta}>{profile?.node_type ?? 'Nodo Operativo'}</div>
+          {/* Nivel humano único derivado de la reputación real (solo lectura). */}
+          <div style={S.peerMeta}>{levelBandFor(profile?.reputation_score ?? 0)}</div>
         </div>
         <span style={{ ...S.onlineDot, background: C.green }} />
       </div>
@@ -181,7 +183,9 @@ function OnlineSection({ peers, profile, onViewUser, onDm }: {
           </button>
           <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => onViewUser(n.username)}>
             <div style={S.peerName}>{n.username}</div>
-            <div style={S.peerMeta}>{n.node_type} · N{n.node_level}</div>
+            {/* Solo hay node_level del par en presencia: lo mostramos con el
+                vocabulario de nivel único (cero jerga), no node_type. */}
+            <div style={S.peerMeta}>{bandForNodeLevel(n.node_level)}</div>
           </div>
           <button onClick={() => onDm({ id: n.id, name: n.username, username: n.username, avatar: null })} style={S.dmBtn}>
             💬
@@ -282,7 +286,7 @@ function SugerenciasSection({ suggestions, loading, onViewUser, onConnect }: {
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={S.peerName}>{s.full_name || s.username}</div>
-            <div style={S.peerMeta}>@{s.username} · {s.node_type} · Rep {s.reputation_score.toFixed(0)}</div>
+            <div style={S.peerMeta}>@{s.username} · {levelBandFor(s.reputation_score)} · Rep {s.reputation_score.toFixed(0)}</div>
             <div style={S.sugReason}>{s.reason}</div>
           </div>
           <button

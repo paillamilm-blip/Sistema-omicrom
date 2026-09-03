@@ -13,6 +13,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import type { NextStep } from '../services/coach';
+import type { LevelBand } from './nodeUnlock';
 
 // ── Entrada laxa: solo los datos que ya existen en el cliente ────────
 export interface HomeStatusInput {
@@ -22,6 +23,14 @@ export interface HomeStatusInput {
   nextStep: NextStep | null;
   /** Reputación 0..100 del perfil (opcional). */
   reputation?: number | null;
+  /**
+   * Banda de nivel HUMANA ya resuelta (Estudiante / Técnico / Arquitecto),
+   * derivada de la reputación por el caller vía nodeUnlock.levelBandFor. Cuando
+   * está presente junto a la reputación, la voz del núcleo la muestra como el
+   * nivel único del usuario ("Vas como Técnico (63/100) …"). null/undefined si
+   * no hay perfil aún. Este módulo puro NO calcula la banda: solo la COMPONE.
+   */
+  levelBand?: LevelBand | null;
   /**
    * Nombre HUMANO del eje que subió desde la última visita (ej. "Ejecución"),
    * o null/undefined si nada subió. La DETECCIÓN del alza vive fuera de este
@@ -73,6 +82,14 @@ function fullScale(n: number): number {
 // incremento). Cierra la voz del núcleo cuando hay un próximo paso que ofrecer.
 const INVITATION = '¿Seguimos o quieres hacer otra cosa?';
 
+// Siguiente banda de nivel a la que puede aspirar la persona (null en el tope).
+// El nivel único visible es Estudiante → Técnico → Arquitecto.
+const NEXT_BAND: Record<LevelBand, LevelBand | null> = {
+  Estudiante: 'Técnico',
+  Técnico: 'Arquitecto',
+  Arquitecto: null,
+};
+
 export function pickHomeStatus(input: HomeStatusInput): HomeStatus {
   const streak = Number.isFinite(input.streak) ? Math.max(0, Math.trunc(input.streak)) : 0;
   const rachaText =
@@ -102,9 +119,21 @@ export function pickHomeStatus(input: HomeStatusInput): HomeStatus {
     return { label: `Llevas una ${rachaText}. Sigue así.` };
   }
 
-  // 4) Sin paso ni racha pero con reputación → número a escala completa.
+  // 4) Sin paso ni racha pero con reputación → mostramos el NIVEL ÚNICO del
+  //    usuario (banda humana) con su reputación a escala completa. Cuando la
+  //    banda está resuelta, la voz invita a la siguiente banda ("… para
+  //    acercarte a Arquitecto"); en la banda tope solo reconoce el nivel.
   const rep = input.reputation;
   if (typeof rep === 'number' && Number.isFinite(rep) && rep > 0) {
+    const band = input.levelBand;
+    if (band) {
+      const nextBand = NEXT_BAND[band];
+      return {
+        label: nextBand
+          ? `Vas como ${band} (${fullScale(rep)}/100) — valida una habilidad para acercarte a ${nextBand}.`
+          : `Vas como ${band} (${fullScale(rep)}/100) — el nivel más alto de la red.`,
+      };
+    }
     return { label: `Reputación ${fullScale(rep)}/100` };
   }
 

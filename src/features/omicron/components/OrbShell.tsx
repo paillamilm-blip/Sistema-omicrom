@@ -11,7 +11,7 @@ import { OrbHomeGuide } from './OrbHomeGuide';
 import { OrbEstadoDelDia } from './OrbEstadoDelDia';
 import { resolveGreetingName } from '../utils/orbHomeGuide';
 import { pickHomeStatus } from '../utils/homeStatus';
-import { nodeUnlock } from '../utils/nodeUnlock';
+import { nodeUnlock, levelBandFor } from '../utils/nodeUnlock';
 import { shouldShowWelcomeCredencial } from '../utils/welcomeCredencial';
 import { CloudSavedBadge } from './CloudSavedBadge';
 import { PremiumLock } from '@/features/wallet/components/Premium';
@@ -300,10 +300,14 @@ export function OrbShell() {
   const homeStatusLabel = useMemo(() => {
     if (!sbProfile?.id) return null;
     const nextStep = computeSteps(sbProfile, gemeloDigital)[0] ?? null;
+    const rep = sbProfile?.reputation_score ?? null;
     return pickHomeStatus({
       streak: streakDays(),
       nextStep,
-      reputation: sbProfile?.reputation_score ?? null,
+      reputation: rep,
+      // Nivel humano único (Estudiante / Técnico / Arquitecto) derivado de la
+      // reputación real: la voz del núcleo lo muestra como el nivel del usuario.
+      levelBand: typeof rep === 'number' ? levelBandFor(rep) : null,
       axisRose: risenAxisLabel,
     }).label;
   }, [sbProfile, gemeloDigital, risenAxisLabel]);

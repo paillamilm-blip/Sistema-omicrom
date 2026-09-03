@@ -50,7 +50,11 @@ function getJobTags(j: Job): string[] {
   return [];
 }
 
-const LEVEL_LABEL = ['', 'N1 Operativo', 'N2 Core', 'N3 Arquitecto'];
+// Etiqueta del nivel requerido por el empleo (indexada por required_node_level
+// 1/2/3, columna técnica que NO se toca). Se muestra con el vocabulario de
+// nivel único de la app (Estudiante / Técnico / Arquitecto), cero jerga: sin
+// "Operativo/Core". El índice 0 queda vacío (no hay nivel 0).
+const LEVEL_LABEL = ['', 'Estudiante', 'Técnico', 'Arquitecto'];
 
 // ── Geo helpers (sin librerías): distancia haversine + rumbo ──────────────
 const toRad = (d: number) => (d * Math.PI) / 180;
@@ -274,7 +278,7 @@ export function EmpleosTab() {
                 </div>
               )}
               <div style={styles.title}>{j.title}</div>
-              <div style={styles.company}>@{j.company_name ?? names.get(j.company_id) ?? 'empresa'} · {j.source ? `vía ${j.source}` : LEVEL_LABEL[j.required_node_level] ?? 'N1'}</div>
+              <div style={styles.company}>@{j.company_name ?? names.get(j.company_id) ?? 'empresa'} · {j.source ? `vía ${j.source}` : LEVEL_LABEL[j.required_node_level] ?? 'Estudiante'}</div>
               {j.description && <p style={styles.desc}>{j.description}</p>}
 
               <div style={styles.statRow}>
@@ -343,7 +347,7 @@ export function EmpleosTab() {
             <div style={styles.modal} onClick={e => e.stopPropagation()}>
               <button onClick={() => setRadarJob(null)} style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: C.muted, cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
               <div style={{ fontFamily: FR, fontWeight: 700, fontSize: 20, color: C.ink, textTransform: 'uppercase', paddingRight: 24 }}>{j.title}</div>
-              <div style={{ fontFamily: FM, fontSize: 11, color: C.muted, marginTop: 4 }}>@{names.get(j.company_id) ?? 'empresa'} · {LEVEL_LABEL[j.required_node_level] ?? 'N1'}</div>
+              <div style={{ fontFamily: FM, fontSize: 11, color: C.muted, marginTop: 4 }}>@{names.get(j.company_id) ?? 'empresa'} · {LEVEL_LABEL[j.required_node_level] ?? 'Estudiante'}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontFamily: FM, fontSize: 11, color: j.is_remote ? C.green : C.blueHi }}>
                 {j.is_remote ? <><Wifi size={13} /> Remoto</> : <><MapPin size={13} /> {j.location || 'Ubicación'}{dist != null ? ` · a ${fmtDist(dist)}` : ''}</>}
               </div>

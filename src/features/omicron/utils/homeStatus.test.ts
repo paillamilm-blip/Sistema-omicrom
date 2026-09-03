@@ -78,10 +78,44 @@ describe('pickHomeStatus', () => {
     expect(status.label).not.toContain('1 días');
   });
 
-  it('sin paso ni racha pero con reputación la muestra a escala completa', () => {
+  it('sin paso ni racha pero con reputación (sin banda) la muestra a escala completa', () => {
     const status = pickHomeStatus({ streak: 0, nextStep: null, reputation: 65 });
     expect(status.label).toBe('Reputación 65/100');
     expect(status.label).not.toContain('K');
+  });
+
+  it('con banda Técnico + reputación muestra el nivel único e invita a Arquitecto (una línea, N/100)', () => {
+    const status = pickHomeStatus({ streak: 0, nextStep: null, reputation: 63, levelBand: 'Técnico' });
+    expect(status.label).toBe(
+      'Vas como Técnico (63/100) — valida una habilidad para acercarte a Arquitecto.',
+    );
+    // Tuteo neutro (sin voseo) y escala completa.
+    expect(status.label).not.toContain('validá');
+    expect(status.label).toContain('/100');
+  });
+
+  it('con banda Estudiante invita a Técnico', () => {
+    const status = pickHomeStatus({ streak: 0, nextStep: null, reputation: 20, levelBand: 'Estudiante' });
+    expect(status.label).toBe(
+      'Vas como Estudiante (20/100) — valida una habilidad para acercarte a Técnico.',
+    );
+  });
+
+  it('en la banda tope (Arquitecto) reconoce el nivel sin invitar a otra banda', () => {
+    const status = pickHomeStatus({ streak: 0, nextStep: null, reputation: 92, levelBand: 'Arquitecto' });
+    expect(status.label).toBe('Vas como Arquitecto (92/100) — el nivel más alto de la red.');
+    expect(status.label).not.toContain('acercarte');
+  });
+
+  it('el próximo paso tiene prioridad sobre el nivel (una sola voz del núcleo)', () => {
+    const status = pickHomeStatus({
+      streak: 0,
+      nextStep: stepWith('Rinde un examen en Academia'),
+      reputation: 63,
+      levelBand: 'Técnico',
+    });
+    expect(status.label).toBe('Tu próximo paso: Rinde un examen en Academia. ¿Seguimos o quieres hacer otra cosa?');
+    expect(status.label).not.toContain('Vas como');
   });
 
   it('sin datos devuelve el fallback calmo con la marca "Ómicrom"', () => {
