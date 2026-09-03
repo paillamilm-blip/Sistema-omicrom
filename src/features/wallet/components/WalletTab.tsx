@@ -20,6 +20,12 @@ import { firePulse } from '@/shared/components/LivePulseBar';
 import type { WalletTransaction } from '@/types';
 
 // ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────
+// NOTA (FEAT-001, ajuste opción B): el tier por PE es un eje ECONÓMICO (define la
+// comisión de red 15/10/5%), DISTINTO de la banda por reputación (Estudiante /
+// Técnico / Arquitecto) que es el nivel único visible en el resto de la app.
+// Para no afirmar un nivel contradictorio, la billetera NO muestra un nombre de
+// banda: muestra su significado real (la comisión de red). `name` (id del tier),
+// minPE/maxPE/commission/accent y TODA la matemática de tiers quedan BYTE-A-BYTE.
 const NODES = [
   { name: 'Nodo Operativo',  minPE: 0,    maxPE: 499 as number | null,  commission: 15, accent: '#9aa7bd' },
   { name: 'Nodo Core',       minPE: 500,  maxPE: 1999 as number | null, commission: 10, accent: C.cyan },
@@ -144,7 +150,7 @@ export function WalletTab() {
         icon={<Wallet size={17} />}
         accent={C.gold}
         title="Billetera"
-        subtitle={`Nivel ${node.name}`}
+        subtitle={`Comisión de red: ${node.commission}%`}
       />
       <div style={oc.scroll}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
@@ -402,7 +408,7 @@ export function WalletTab() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Layers size={16} style={{ color: active ? n.accent : C.mut }} />
-                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: active ? C.ink : C.mut }}>{n.name}</span>
+                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: active ? C.ink : C.mut }}>Comisión de red: {n.commission}%</span>
                         {active && <Chip color={n.accent} filled>ACTUAL</Chip>}
                       </div>
                       <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 13, color: active ? n.accent : C.mut }}>{n.commission}% fee</span>

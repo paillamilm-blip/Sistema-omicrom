@@ -10,6 +10,8 @@ import { describe, it, expect } from 'vitest';
 import {
   nodeUnlock,
   levelBandFor,
+  bandDisplayFor,
+  bandForNodeLevel,
   unlockHint,
   LEVEL_THRESHOLDS,
   type LevelBand,
@@ -41,6 +43,50 @@ describe('levelBandFor — bandas por reputación (escala completa 0..100)', () 
     expect(LEVEL_THRESHOLDS.Estudiante).toBe(0);
     expect(LEVEL_THRESHOLDS.Técnico).toBe(50);
     expect(LEVEL_THRESHOLDS.Arquitecto).toBe(80);
+  });
+});
+
+describe('bandDisplayFor — nivel visible del usuario (banda + rango 0..100)', () => {
+  it('bordes 0 y 49 → Estudiante con rango "0–49"', () => {
+    expect(bandDisplayFor(0)).toEqual({ band: 'Estudiante', range: '0–49' });
+    expect(bandDisplayFor(49)).toEqual({ band: 'Estudiante', range: '0–49' });
+  });
+
+  it('bordes 50 y 79 → Técnico con rango "50–79"', () => {
+    expect(bandDisplayFor(50)).toEqual({ band: 'Técnico', range: '50–79' });
+    expect(bandDisplayFor(79)).toEqual({ band: 'Técnico', range: '50–79' });
+  });
+
+  it('bordes 80 y 100 → Arquitecto con rango "80–100"', () => {
+    expect(bandDisplayFor(80)).toEqual({ band: 'Arquitecto', range: '80–100' });
+    expect(bandDisplayFor(100)).toEqual({ band: 'Arquitecto', range: '80–100' });
+  });
+
+  it('normaliza fuera de rango y no finitos a los extremos', () => {
+    expect(bandDisplayFor(-10)).toEqual({ band: 'Estudiante', range: '0–49' });
+    expect(bandDisplayFor(Number.NaN)).toEqual({ band: 'Estudiante', range: '0–49' });
+    expect(bandDisplayFor(150)).toEqual({ band: 'Arquitecto', range: '80–100' });
+  });
+
+  it('la banda coincide siempre con levelBandFor (una sola fuente de verdad)', () => {
+    for (const rep of [0, 49, 50, 79, 80, 100]) {
+      expect(bandDisplayFor(rep).band).toBe(levelBandFor(rep));
+    }
+  });
+});
+
+describe('bandForNodeLevel — presentación de node_level (1/2/3) al nivel humano', () => {
+  it('1 → Estudiante, 2 → Técnico, 3 → Arquitecto', () => {
+    expect(bandForNodeLevel(1)).toBe('Estudiante');
+    expect(bandForNodeLevel(2)).toBe('Técnico');
+    expect(bandForNodeLevel(3)).toBe('Arquitecto');
+  });
+
+  it('fuera de 1..3 o nulo cae en Estudiante (nunca rompe el render)', () => {
+    expect(bandForNodeLevel(0)).toBe('Estudiante');
+    expect(bandForNodeLevel(99)).toBe('Estudiante');
+    expect(bandForNodeLevel(null)).toBe('Estudiante');
+    expect(bandForNodeLevel(undefined)).toBe('Estudiante');
   });
 });
 

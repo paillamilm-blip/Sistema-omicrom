@@ -25,6 +25,7 @@ import { JourneyProgress } from '@/features/gemelo/components/JourneyProgress';
 import { DashboardVivo } from '@/features/gemelo/components/DashboardVivo';
 import { PushPermissionBanner } from '@/shared/components/PushPermissionBanner';
 import { useUserColor } from '@/shared/hooks/useUserColor';
+import { bandDisplayFor } from '@/features/omicron/utils/nodeUnlock';
 
 // ── Ejes del Gemelo. El color del eje "Ejecución" se sustituye por el color del usuario en runtime. ──
 const AXIS_META = [
@@ -256,6 +257,8 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
   uc: string;
 }) {
   const SKILL_COLORS = skillColors;
+  // Nivel humano único derivado de la reputación real (solo lectura).
+  const level = bandDisplayFor(reputation);
   return (
     <div style={{
       borderRadius: 999, padding: '20px 16px',
@@ -313,17 +316,31 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
         ))}
       </div>
 
-      {/* Reputación */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        padding: '10px 16px', borderRadius: 999, margin: '0 auto',
-        background: `linear-gradient(135deg, ${uc}14, ${C.purpleFaint})`,
-        border: `1px solid ${C.line}`,
-      }}>
-        <Sparkles size={14} color={C.gold} />
-        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.ink }}>Reputación</span>
-        <span style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 800, color: uc }}><SmoothNumber value={Math.round(reputation)} /></span>
-        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>/100</span>
+      {/* Nivel (banda humana única) + Reputación */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        {/* Nivel: el nombre HUMANO único (Estudiante / Técnico / Arquitecto),
+            derivado de la reputación real. Acento en el color del usuario. */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          padding: '5px 12px', borderRadius: 999,
+          background: `${uc}14`, border: `1px solid ${uc}33`,
+        }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>Nivel</span>
+          <span style={{ fontFamily: FONT.display, fontSize: 12, fontWeight: 700, color: uc }}>{level.band}</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>({level.range}/100)</span>
+        </div>
+        {/* Reputación */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: '10px 16px', borderRadius: 999,
+          background: `linear-gradient(135deg, ${uc}14, ${C.purpleFaint})`,
+          border: `1px solid ${C.line}`,
+        }}>
+          <Sparkles size={14} color={C.gold} />
+          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.ink }}>Reputación</span>
+          <span style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 800, color: uc }}><SmoothNumber value={Math.round(reputation)} /></span>
+          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut }}>/100</span>
+        </div>
       </div>
     </div>
   );

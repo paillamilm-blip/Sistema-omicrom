@@ -13,6 +13,7 @@ import { PublishServiceModal } from '@/features/market/components/PublishService
 import { oc, OmicronHeader, OmicronAction } from '@/shared/components/OmicronChrome';
 import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
+import { levelBandFor } from '@/features/omicron/utils/nodeUnlock';
 import type { MarketService } from '@/types';
 
 type Category = 'todos' | 'dev' | 'diseño' | 'consulta';
@@ -321,7 +322,9 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
   const rep = Math.round(service.seller?.reputation_score ?? 0);
   const val = service.seller?.competencias_validadas ?? 0;
   const repColor = rep >= 70 ? '#3fd0c9' : rep >= 50 ? C.amber : C.muted;
-  const lvl = String(service.seller?.node_level ?? '1').replace(/^N/i, '');
+  // Nivel humano único del vendedor, derivado de su reputación real (solo
+  // lectura). Reemplaza el label de node_type/N-level por el vocabulario único.
+  const sellerBand = levelBandFor(service.seller?.reputation_score ?? 0);
   return (
     <div className="oc-rise" style={styles.card}>
       <Corners color={C.line} />
@@ -347,7 +350,7 @@ function ServiceCard({ service, index, canHire, onHire }: { service: MarketServi
           <span style={styles.trustSep}>·</span>
           <span style={styles.trustChip}><ShieldCheck size={11} style={{ color: C.blueHi }} /> <b style={{ color: C.blueHi }}>{val}</b> validadas</span>
           <span style={styles.trustSep}>·</span>
-          <span style={{ color: C.muted }}>{(service.seller.node_type ?? 'Nodo Operativo').replace('Nodo ', '')} N{lvl}</span>
+          <span style={{ color: C.muted }}>{sellerBand}</span>
         </div>
       )}
 

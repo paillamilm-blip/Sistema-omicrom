@@ -45,6 +45,49 @@ export function levelBandFor(reputation: number): LevelBand {
   return 'Estudiante';
 }
 
+// ── Presentación del nivel del usuario (una sola etiqueta visible) ────
+// El nivel HUMANO (Estudiante / Técnico / Arquitecto) es la ÚNICA etiqueta
+// de nivel que ve la persona en toda la app. Esto compone la banda + su rango
+// 0..100 para mostrarlo junto a la reputación real (ej. "Técnico · 63/100").
+// SOLO LECTURA / PRESENTACIÓN: no toca el servidor ni la lógica económica.
+export interface LevelBandDisplay {
+  /** Banda humana del nivel (Estudiante / Técnico / Arquitecto). */
+  band: LevelBand;
+  /** Rango de reputación de la banda a escala completa (ej. "50–79"). */
+  range: string;
+}
+
+/** Rango 0..100 (inclusivo) de cada banda, en escala completa "N–N"/"N–100". */
+const BAND_RANGE: Record<LevelBand, string> = {
+  Estudiante: '0–49',
+  Técnico: '50–79',
+  Arquitecto: '80–100',
+};
+
+/**
+ * Devuelve la banda de nivel HUMANA + su rango 0..100 para una reputación
+ * 0..100. Reusa levelBandFor()/LEVEL_THRESHOLDS (una sola fuente de verdad).
+ * Determinista y sin efectos secundarios; fuera de rango se normaliza a los
+ * extremos (igual criterio que levelBandFor).
+ */
+export function bandDisplayFor(reputation: number): LevelBandDisplay {
+  const band = levelBandFor(reputation);
+  return { band, range: BAND_RANGE[band] };
+}
+
+/**
+ * Mapa de PRESENTACIÓN de node_level (columna técnica del servidor: 1/2/3) al
+ * nombre HUMANO único de nivel, para que un par cuya reputación no está a mano
+ * (solo su node_level) se lea con el MISMO vocabulario que el resto de la app.
+ * SOLO LECTURA / DISPLAY: no toca node_level ni ninguna otra columna. Fuera de
+ * 1..3 cae en Estudiante (nunca rompe el render).
+ */
+export function bandForNodeLevel(nodeLevel: number | null | undefined): LevelBand {
+  if (nodeLevel === 3) return 'Arquitecto';
+  if (nodeLevel === 2) return 'Técnico';
+  return 'Estudiante';
+}
+
 // ── Mapa de compuertas por nodo hub ──────────────────────────────────
 // CONSERVADOR a propósito: los nodos núcleo / de arranque quedan ABIERTOS
 // desde Estudiante para que una persona recién llegada NUNCA quede varada
