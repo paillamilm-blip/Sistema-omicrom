@@ -15,12 +15,11 @@ export function useMarketServicesQuery(filters?: { category?: string; limit?: nu
     queryFn: async (): Promise<MarketService[]> => {
       let query = supabase
         .from('market_services')
-        // `is_pioneer` se trae porque la transparencia de Comisión Ómicrom lo
-        // necesita: un vendedor Pionero paga 0.5 % de por vida, y sin este
-        // campo el comprador vería la tasa de banda (hasta 1 %), un número
-        // que NO es el real. MarketSeller ya lo declara obligatorio, así que
-        // omitirlo dejaba un `undefined` silencioso en runtime.
-        .select('*, seller:profiles(id, username, full_name, avatar_url, node_type, node_level, reputation_score, is_pioneer)')
+        // `commission_floor_locked_at` se trae porque la transparencia de
+        // Comisión Ómicrom lo necesita: un vendedor que GANÓ el piso paga
+        // 0.5 % permanente, y sin este campo el comprador vería la tasa de
+        // banda (hasta 1 %), un número que NO es el real.
+        .select('*, seller:profiles(id, username, full_name, avatar_url, node_type, node_level, reputation_score, commission_floor_locked_at)')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 

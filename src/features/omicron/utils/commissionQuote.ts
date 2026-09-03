@@ -35,17 +35,29 @@ export const COMMISSION_BPS: Record<LevelBand, number> = {
 };
 
 /**
- * BENEFICIO PIONERO (decisión del fundador): quien es usuario fundador paga
- * SIEMPRE la tasa más baja de la red — 50 bps = 0.5 % — de por vida, sin
- * importar su banda de nivel. Es un piso, no un extra: se aplica como
- * min(tasa de banda, PIONEER_BPS), así que si en el futuro alguna banda
- * bajara de 0.5 % el Pionero conserva la más conveniente para él.
+ * PISO GANADO — 50 bps = 0.5 % PERMANENTE (decisión del fundador).
  *
- * (Sustituye al texto viejo "Comisión 10 % de por vida", que venía del modelo
- * anterior de tramos por PE 15/10/5 y en el modelo real —máximo 1 %— habría
- * sido un castigo, no un beneficio.)
+ * NO es un beneficio de bienvenida: es un PREMIO POR TRAYECTORIA. Se lo gana
+ * "una persona que ya subió todos los niveles, lleva tiempo y participa
+ * activamente". El servidor lo mide con tres requisitos y, el día que se
+ * cumplen los tres, GRABA la fecha en profiles.commission_floor_locked_at:
+ *
+ *   1. reputación >= 80 (Arquitecto)   -> "subió todos los niveles"
+ *   2. antigüedad >= 90 días           -> "lleva tiempo"
+ *   3. >= 5 contratos completados      -> "participa activamente"
+ *
+ * Una vez ganado es PERMANENTE: sigue pagando 0.5 % incluso si su reputación
+ * baja después por una penalización. Ganado es ganado.
+ *
+ * Se aplica como PISO —min(tasa de banda, EARNED_FLOOR_BPS)— así que si alguna
+ * banda bajara de 0.5 %, la persona conserva la más conveniente para ella.
+ *
+ * ⚠️ HISTORIA IMPORTANTE: esto NO se ata a `is_pioneer`. Esa columna es
+ * `not null default true` en el esquema, así que TODOS los usuarios son
+ * Pioneros y atarle el piso habría regalado 0.5 % a toda la base, dejando las
+ * tasas de 1 % y 0.8 % sin efecto. Ver migración 0082.
  */
-export const PIONEER_BPS = 50;
+export const EARNED_FLOOR_BPS = 50;
 
 /** Cotización de comisión para mostrar ANTES de confirmar (solo display). */
 export interface CommissionQuote {
@@ -59,8 +71,8 @@ export interface CommissionQuote {
   net: number;
   /** Banda humana del vendedor (Estudiante / Técnico / Arquitecto). */
   band: LevelBand;
-  /** true si la tasa aplicada es la del beneficio Pionero (0.5 % de por vida). */
-  pioneer: boolean;
+  /** true si se aplicó el piso GANADO de 0.5 % permanente (ver EARNED_FLOOR_BPS). */
+  floorEarned: boolean;
 }
 
 /**
@@ -74,23 +86,24 @@ export interface CommissionQuote {
  *
  * @param amount      monto en tokens enteros.
  * @param reputation  reputación real del vendedor, escala completa 0..100.
- * @param opts        `pioneer: true` aplica el piso del beneficio Pionero
- *                    (0.5 %). Opcional: omitirlo mantiene el comportamiento
- *                    anterior exacto (tasa por banda), por lo que las llamadas
- *                    ya existentes no cambian de resultado.
+ * @param opts        `floorEarned: true` aplica el piso GANADO de 0.5 %
+ *                    permanente (el servidor lo decide y lo graba en
+ *                    profiles.commission_floor_locked_at). Omitirlo mantiene
+ *                    la tasa por banda, así que las llamadas que no lo pasan
+ *                    no cambian de resultado.
  */
 export function commissionQuote(
   amount: number,
   reputation: number,
-  opts?: { pioneer?: boolean },
+  opts?: { floorEarned?: boolean },
 ): CommissionQuote {
   const band = levelBandFor(reputation);
-  // El Pionero paga la tasa más baja de la red: piso de 0.5 % vía min().
-  const pioneer = opts?.pioneer === true;
-  const bps = pioneer ? Math.min(COMMISSION_BPS[band], PIONEER_BPS) : COMMISSION_BPS[band];
+  // Quien ganó el piso nunca paga más de 0.5 %.
+  const floorEarned = opts?.floorEarned === true;
+  const bps = floorEarned ? Math.min(COMMISSION_BPS[band], EARNED_FLOOR_BPS) : COMMISSION_BPS[band];
   const ratePct = bps / 100;
   const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 0;
   const commission = Math.floor((safeAmount * bps) / 10000);
   const net = safeAmount - commission;
-  return { bps, ratePct, commission, net, band, pioneer };
+  return { bps, ratePct, commission, net, band, floorEarned };
 }

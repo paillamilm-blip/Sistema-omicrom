@@ -26,14 +26,14 @@ export function ContractModal({ service, onClose }: Props) {
   // Comisión Ómicrom (Etapa 1, SOLO DISPLAY, no mueve dinero). Tu precio no
   // cambia: solo mostramos, con transparencia, cómo se reparte el pago del
   // profesional. La tasa depende de la reputación real del VENDEDOR (baja al
-  // subir de nivel) y del beneficio Pionero (piso de 0.5 % de por vida). Si no
+  // subir de nivel) y del piso GANADO (0.5 % permanente por trayectoria). Si no
   // tenemos su reputación a mano, mostramos "hasta 1 %" (nunca inventamos una
   // reputación).
   const sellerReputation = service.seller?.reputation_score;
-  const sellerIsPioneer = service.seller?.is_pioneer === true;
+  const sellerFloorEarned = !!service.seller?.commission_floor_locked_at;
   const quote =
     typeof sellerReputation === 'number' && Number.isFinite(sellerReputation)
-      ? commissionQuote(service.price, sellerReputation, { pioneer: sellerIsPioneer })
+      ? commissionQuote(service.price, sellerReputation, { floorEarned: sellerFloorEarned })
       : null;
 
   async function handleHire() {
@@ -157,7 +157,7 @@ export function ContractModal({ service, onClose }: Props) {
                 <div className="flex justify-between text-xs">
                   <span className="text-omicron-subtle">
                     Comisión Ómicrom: {quote.ratePct} %
-                    {quote.pioneer && ' (Pionero)'}
+                    {quote.floorEarned && ' (tarifa permanente)'}
                   </span>
                   <span className="text-omicron-subtle">🪙 {quote.commission}</span>
                 </div>

@@ -19,6 +19,8 @@ export interface MarketSeller {
   location: string | null;
   created_at: string;
   reputation_score?: number;          // Gemelo: reputación 0-100 (sello de confianza)
+  /** Fecha en que ganó el 0.5 % permanente (null/ausente = todavía no). */
+  commission_floor_locked_at?: string | null;
   competencias_validadas?: number;    // nº de competencias validadas por IA (actas)
 }
 
