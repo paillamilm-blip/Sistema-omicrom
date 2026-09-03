@@ -17,7 +17,7 @@ import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '@/shared/comp
 import { SmoothNumber, StaggerList, StaggerItem } from '@/shared/motion';
 import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
-import { commissionQuote, PIONEER_BPS } from '@/features/omicron/utils/commissionQuote';
+import { commissionQuote, EARNED_FLOOR_BPS } from '@/features/omicron/utils/commissionQuote';
 import type { WalletTransaction } from '@/types';
 
 // ── Niveles de nodo (Bitácora V4: 0-499 / 500-1999 / 2000+) ─────────────────
@@ -141,7 +141,6 @@ export function WalletTab() {
   const balance = profile?.token_balance ?? 0;
   const escrow  = profile?.token_escrow  ?? 0;
   const pe      = profile?.pe_points      ?? 0;
-  const pioneer = profile?.is_pioneer     ?? false;
   const node    = getNode(pe);
 
   // UNIFICACIÓN (Etapa A): TODO el nivel visible se mide desde TU REPUTACIÓN
@@ -150,10 +149,18 @@ export function WalletTab() {
   // 0.5 %. Los tramos por PE de abajo son solo tu PROGRESO de experiencia
   // (el PE alimenta tu reputación), NUNCA un segundo nivel.
   const repScore = profile?.reputation_score ?? 0;
-  // El beneficio Pionero es un PISO de 0.5 %: se pasa a la fuente única para
-  // que el encabezado, el banner Pionero y la pantalla de publicar digan
+  // El piso de 0.5 % es GANADO, no regalado: lo decide y lo graba el servidor
+  // (profiles.commission_floor_locked_at). Se pasa a la fuente única para que
+  // el encabezado, la tarjeta de trayectoria y la pantalla de publicar digan
   // exactamente la misma tasa (nunca dos números distintos para lo mismo).
-  const myQuote  = commissionQuote(0, repScore, { pioneer });
+  const floorEarned = !!profile?.commission_floor_locked_at;
+  const myQuote  = commissionQuote(0, repScore, { floorEarned });
+  // Progreso real hacia el 0.5 % permanente (mismos umbrales que la migración
+  // 0082: reputación 80 + 90 días + 5 contratos).
+  const contratos = profile?.total_contracts_completed ?? 0;
+  const diasEnRed = profile?.member_since
+    ? Math.floor((Date.now() - new Date(profile.member_since).getTime()) / 86400000)
+    : null;
 
   return (
     <div style={oc.root}>
@@ -288,17 +295,54 @@ export function WalletTab() {
             </OmicronCard>
           )}
 
-          {/* ── Banner Pionero ── */}
-          {pioneer && (
+          {/* ── TARIFA PERMANENTE: el premio por trayectoria ──────────────
+              Reemplaza al viejo "Banner Pionero". El 0.5 % permanente NO se
+              regala por registrarse: se GANA con nivel máximo + antigüedad +
+              participación (migración 0082). Si ya lo ganó, se celebra. Si no,
+              se muestran los TRES requisitos con su número real y cuánto
+              falta, para que sea una meta clara y no una promesa vaga. */}
+          {!!profile && (
             <OmicronCard accent={C.gold} glow className="oc-rise" style={{ background: `linear-gradient(135deg, ${C.gold}1e, ${C.gold}08)` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                 <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.gold}22`, border: `1px solid ${C.gold}55` }}>
                   <Award size={20} style={{ color: C.gold }} />
                 </div>
-                <div>
-                  <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>Programa Pionero</div>
-                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color: C.ink, marginTop: 2 }}>Comisión {PIONEER_BPS / 100} % de por vida</div>
-                  <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>Por ser usuario fundador pagas siempre la comisión más baja de la red, sin importar tu nivel.</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: C.gold }}>
+                    {floorEarned ? 'Tarifa permanente ganada' : 'Tu meta de tarifa'}
+                  </div>
+                  <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 20, color: C.ink, marginTop: 2 }}>
+                    Comisión {EARNED_FLOOR_BPS / 100} % permanente
+                  </div>
+
+                  {floorEarned ? (
+                    <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>
+                      Ya la ganaste. Nunca vas a pagar más de {EARNED_FLOOR_BPS / 100} %, incluso si tu reputación baja alguna vez.
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.mut, marginTop: 2 }}>
+                        Se gana con trayectoria y no se pierde nunca. Te faltan estos pasos:
+                      </div>
+                      <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {([
+                          [repScore >= 80, `Llegar a reputación 80/100 — tienes ${Math.round(repScore)}/100`],
+                          [contratos >= 5, `Completar 5 contratos — tienes ${contratos}`],
+                          [
+                            diasEnRed !== null && diasEnRed >= 90,
+                            diasEnRed === null
+                              ? 'Cumplir 90 días en Ómicrom'
+                              : `Cumplir 90 días en Ómicrom — llevas ${diasEnRed}`,
+                          ],
+                        ] as const).map(([ok, texto]) => (
+                          <div key={texto} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONT.body, fontSize: 11.5, color: ok ? C.gold : C.mut }}>
+                            <span style={{ flexShrink: 0 }}>{ok ? '✓' : '○'}</span>
+                            <span>{texto}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </OmicronCard>

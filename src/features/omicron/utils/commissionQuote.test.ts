@@ -82,42 +82,42 @@ describe('commissionQuote — guardas de monto no válido', () => {
 });
 
 
-describe('commissionQuote — beneficio Pionero (0.5 % de por vida)', () => {
-  it('un Pionero Estudiante paga 0.5 %, no 1 %', () => {
-    const q = commissionQuote(1000, 10, { pioneer: true });
+describe('commissionQuote — piso GANADO (0.5 % permanente)', () => {
+  it('quien ganó el piso y es Estudiante paga 0.5 %, no 1 %', () => {
+    const q = commissionQuote(1000, 10, { floorEarned: true });
     expect(q.bps).toBe(50);
     expect(q.ratePct).toBe(0.5);
     expect(q.commission).toBe(5);
     expect(q.net).toBe(995);
-    expect(q.pioneer).toBe(true);
+    expect(q.floorEarned).toBe(true);
   });
 
-  it('un Pionero Técnico paga 0.5 %, no 0.8 %', () => {
-    expect(commissionQuote(1000, 60, { pioneer: true })).toMatchObject({ bps: 50, ratePct: 0.5 });
+  it('quien ganó el piso y es Técnico paga 0.5 %, no 0.8 %', () => {
+    expect(commissionQuote(1000, 60, { floorEarned: true })).toMatchObject({ bps: 50, ratePct: 0.5 });
   });
 
   it('conserva la BANDA real del usuario (el nivel no se falsea)', () => {
-    expect(commissionQuote(1000, 10, { pioneer: true }).band).toBe('Estudiante');
-    expect(commissionQuote(1000, 60, { pioneer: true }).band).toBe('Técnico');
+    expect(commissionQuote(1000, 10, { floorEarned: true }).band).toBe('Estudiante');
+    expect(commissionQuote(1000, 60, { floorEarned: true }).band).toBe('Técnico');
   });
 
-  it('a un Arquitecto Pionero no lo empeora: sigue en 0.5 %', () => {
-    expect(commissionQuote(1000, 90, { pioneer: true })).toMatchObject({ bps: 50, commission: 5, net: 995 });
+  it('a un Arquitecto que ganó el piso no lo empeora: sigue en 0.5 %', () => {
+    expect(commissionQuote(1000, 90, { floorEarned: true })).toMatchObject({ bps: 50, commission: 5, net: 995 });
   });
 
   it('omitir opts mantiene EXACTAMENTE la tasa por banda (retrocompatible)', () => {
-    expect(commissionQuote(1000, 10)).toMatchObject({ bps: 100, pioneer: false });
-    expect(commissionQuote(1000, 60)).toMatchObject({ bps: 80, pioneer: false });
-    expect(commissionQuote(1000, 90)).toMatchObject({ bps: 50, pioneer: false });
+    expect(commissionQuote(1000, 10)).toMatchObject({ bps: 100, floorEarned: false });
+    expect(commissionQuote(1000, 60)).toMatchObject({ bps: 80, floorEarned: false });
+    expect(commissionQuote(1000, 90)).toMatchObject({ bps: 50, floorEarned: false });
   });
 
-  it('pioneer:false explícito se comporta como omitirlo', () => {
-    expect(commissionQuote(1000, 10, { pioneer: false }).bps).toBe(100);
+  it('floorEarned:false explícito se comporta como omitirlo', () => {
+    expect(commissionQuote(1000, 10, { floorEarned: false }).bps).toBe(100);
   });
 
   it('sigue conservando tokens: commission + net = monto', () => {
     for (const [amount, rep] of [[1000, 10], [12345, 55], [777, 90]] as const) {
-      const q = commissionQuote(amount, rep, { pioneer: true });
+      const q = commissionQuote(amount, rep, { floorEarned: true });
       expect(q.commission + q.net).toBe(amount);
     }
   });

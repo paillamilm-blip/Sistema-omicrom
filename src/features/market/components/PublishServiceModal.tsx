@@ -38,7 +38,7 @@ export function PublishServiceModal({ onClose, onPublished }: Props) {
   const priceValue = parseInt(form.price, 10);
   const quote =
     Number.isFinite(priceValue) && priceValue >= 10 && profile
-      ? commissionQuote(priceValue, profile.reputation_score, { pioneer: profile.is_pioneer === true })
+      ? commissionQuote(priceValue, profile.reputation_score, { floorEarned: !!profile.commission_floor_locked_at })
       : null;
 
   function addTag() {

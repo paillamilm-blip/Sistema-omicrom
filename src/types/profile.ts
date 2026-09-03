@@ -53,6 +53,10 @@ export interface Profile {
   node_status: NodeStatus;
   node_type: NodeType;
   is_pioneer: boolean;
+  /** Fecha de alta real (migración 0082). Mide la antigüedad para el piso ganado. */
+  member_since?: string | null;
+  /** Día en que ganó el 0.5 % permanente. null = todavía no lo ganó. */
+  commission_floor_locked_at?: string | null;
   last_audit_date?: string;
 
   // === FLAGS ===
