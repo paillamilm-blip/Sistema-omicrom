@@ -266,7 +266,7 @@ export function VaultTab() {
             <div key={d.id} className="oc-rise" style={styles.card}>
               <div style={styles.cardTop} />
               {sim != null && (
-                <div style={styles.simBadge}>{Math.round(sim * 100)}% afín</div>
+                <div style={styles.simBadge}>{Math.round((sim ?? 0) * 100)}% afín</div>
               )}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -374,7 +374,7 @@ function PublishDocModal({ onClose, onDone }: { onClose: () => void; onDone: () 
         {similar ? (
           <>
             <div style={{ fontFamily: FM, fontSize: 11, color: C.amber, background: 'rgba(255, 176, 46,0.08)', border: '1px solid rgba(255, 176, 46,0.3)', borderRadius: 6, padding: '10px 12px', lineHeight: 1.5, marginBottom: 10 }}>
-              ⚠️ Esto es <b>{Math.round(similar.similarity * 100)}%</b> parecido a <b>"{similar.title}"</b>. Se publicará como <b>DERIVADO</b> (Linaje H-07): el <b>20%</b> de las regalías irá al autor original.
+              ⚠️ Esto es <b>{Math.round((similar.similarity ?? 0) * 100)}%</b> parecido a <b>"{similar.title}"</b>. Se publicará como <b>DERIVADO</b> (Linaje H-07): el <b>20%</b> de las regalías irá al autor original.
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setSimilar(null)} style={{ flex: 1, padding: '11px', borderRadius: 8, cursor: 'pointer', background: 'transparent', border: `1px solid ${C.line}`, color: C.muted, fontFamily: FM, fontSize: 11, letterSpacing: 1 }}>VOLVER</button>

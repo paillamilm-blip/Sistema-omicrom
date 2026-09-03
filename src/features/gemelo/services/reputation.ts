@@ -2,7 +2,7 @@
 // Lógica centralizada para cálculos de reputación y Gemelo Digital
 
 import { supabase } from '@/infrastructure/supabase/client';
-import type { Profile, GemeloDigital, ReputationUpdateInput } from '@/types';
+import type { Profile, GemeloDigital } from '@/types';
 
 /**
  * Calcula el Gemelo Digital a partir del perfil.
@@ -98,95 +98,13 @@ export function calculatePEThreshold(currentLevel: number): number {
 }
 
 
-/**
- * @deprecated Escritura de scores desde el CLIENTE. En el modelo canónico los
- * 4 ejes y la reputación se calculan SERVER-SIDE (triggers 0015–0018 + 0050);
- * el trigger `protect_profile_columns` (0007/9999) REVIERTE cualquier escritura
- * del cliente a estas columnas. Por lo tanto este update de scores es un no-op
- * efectivo (solo el log histórico podría persistir). Se conserva por compat.
- * Para mover ejes reales, dispara el evento correspondiente (contrato, examen,
- * calificación, nodo) que ejecuta el trigger server-side.
- */
-export async function updateReputationInDatabase(
-  input: ReputationUpdateInput
-): Promise<boolean> {
-  try {
-    const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', input.user_id)
-      .single();
-
-    if (fetchError || !profile) {
-      console.error('Error fetching profile:', fetchError);
-      return false;
-    }
-
-    const newExecution     = clamp(profile.execution_score     + (input.execution_delta     ?? 0));
-    const newQuality       = clamp(profile.quality_score       + (input.quality_delta       ?? 0));
-    const newTranscendence = clamp(profile.transcendence_score + (input.transcendence_delta ?? 0));
-    const newFoundation    = clamp(profile.foundation_score    + (input.foundation_delta    ?? 0));
-
-    // experiencia = promedio de los 4 ejes; reputación = base(20/80) + momentum(PE).
-    // Nota: el trigger SQL recalcula estos campos server-side; esto es optimista/local.
-    const newExperience = (newExecution + newQuality + newTranscendence + newFoundation) / 4;
-    const newReputationScore = calculateTotalReputation(
-      profile.traditional_score,
-      newExperience,
-      profile.pe_points,
-    );
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        execution_score:     newExecution,
-        quality_score:       newQuality,
-        transcendence_score: newTranscendence,
-        foundation_score:    newFoundation,
-        reputation_score:    newReputationScore,
-        reputation_updated_at: new Date().toISOString(),
-      })
-      .eq('id', input.user_id);
-
-    if (updateError) {
-      console.error('Error updating profile:', updateError);
-      return false;
-    }
-
-
-    // Log histórico (no crítico si falla)
-    const { error: historyError } = await supabase
-      .from('reputation_history')
-      .insert({
-        user_id:               input.user_id,
-        old_reputation:        profile.reputation_score,
-        new_reputation:        newReputationScore,
-        old_execution_score:   profile.execution_score,
-        new_execution_score:   newExecution,
-        old_quality_score:     profile.quality_score,
-        new_quality_score:     newQuality,
-        old_transcendence_score: profile.transcendence_score,
-        new_transcendence_score: newTranscendence,
-        old_foundation_score:  profile.foundation_score,
-        new_foundation_score:  newFoundation,
-        reason:                input.reason,
-        trigger_event_id:      input.trigger_event_id,
-      });
-
-    if (historyError) {
-      console.warn('History log error (non-critical):', historyError);
-    }
-
-    return true;
-  } catch (err) {
-    console.error('Unexpected error in updateReputationInDatabase:', err);
-    return false;
-  }
-}
-
-
-
-
+// NOTA: La reputación es SOLO-LECTURA en el cliente. Los 4 ejes y la
+// reputación se calculan SERVER-SIDE (triggers 0015–0018 + 0050); el trigger
+// `protect_profile_columns` REVIERTE cualquier escritura del cliente a esas
+// columnas. Por eso NO existe aquí ninguna función que escriba *_score /
+// reputation_score en `profiles`. Para mover ejes reales, dispara el evento
+// correspondiente (contrato, examen, calificación, nodo) que ejecuta el
+// trigger server-side. El cliente solo LEE la reputación ya calculada.
 
 /**
  * OBTENER HISTORIAL DE REPUTACIÓN.

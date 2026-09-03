@@ -972,10 +972,13 @@ export function OrbShell() {
                 p_summary: generated.summary || '',
                 p_skills_detail: skillsDetail,
               });
-              // Broadcast "activó su Gemelo Digital" a toda la red
+              // Broadcast "activó su Gemelo Digital" a toda la red.
+              // Fire-and-forget: se cierra el canal tras enviar para no
+              // acumular suscripciones realtime (canal efímero de un solo uso).
               try {
                 const ch = supabase.channel('omicron-live');
-                ch.send({ type: 'broadcast', event: 'activity', payload: { text: `${sbProfile.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } });
+                ch.send({ type: 'broadcast', event: 'activity', payload: { text: `${sbProfile.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } })
+                  .finally(() => { void supabase.removeChannel(ch); });
               } catch { /* silencioso */ }
             }
           } catch (e) {
