@@ -10,7 +10,6 @@ import { EmptyState } from '@/shared/components/EmptyState';
 import { SkeletonList } from '@/shared/components/Skeleton';
 import { useToast } from '@/shared/components/Toast';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
-import { TrabajoTeEncuentra } from '@/features/empleos/components/TrabajoTeEncuentra';
 import { RutaCarrera } from '@/features/empleos/components/RutaCarrera';
 import { FreelanceNeeds } from '@/features/empleos/components/FreelanceNeeds';
 import { CartaPostulacionModal } from '@/features/empleos/components/CartaPostulacionModal';
@@ -233,7 +232,6 @@ export function EmpleosTab() {
 
       {/* Lista */}
       <div style={styles.scroll}>
-        {view === 'list' && <TrabajoTeEncuentra />}
         {view === 'list' && <RutaCarrera />}
         {view === 'list' && <FreelanceNeeds />}
         {view === 'radar' ? (
