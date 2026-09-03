@@ -34,6 +34,19 @@ export const COMMISSION_BPS: Record<LevelBand, number> = {
   Arquitecto: 50,
 };
 
+/**
+ * BENEFICIO PIONERO (decisión del fundador): quien es usuario fundador paga
+ * SIEMPRE la tasa más baja de la red — 50 bps = 0.5 % — de por vida, sin
+ * importar su banda de nivel. Es un piso, no un extra: se aplica como
+ * min(tasa de banda, PIONEER_BPS), así que si en el futuro alguna banda
+ * bajara de 0.5 % el Pionero conserva la más conveniente para él.
+ *
+ * (Sustituye al texto viejo "Comisión 10 % de por vida", que venía del modelo
+ * anterior de tramos por PE 15/10/5 y en el modelo real —máximo 1 %— habría
+ * sido un castigo, no un beneficio.)
+ */
+export const PIONEER_BPS = 50;
+
 /** Cotización de comisión para mostrar ANTES de confirmar (solo display). */
 export interface CommissionQuote {
   /** Puntos básicos de la comisión (100 | 80 | 50). */
@@ -46,6 +59,8 @@ export interface CommissionQuote {
   net: number;
   /** Banda humana del vendedor (Estudiante / Técnico / Arquitecto). */
   band: LevelBand;
+  /** true si la tasa aplicada es la del beneficio Pionero (0.5 % de por vida). */
+  pioneer: boolean;
 }
 
 /**
@@ -59,13 +74,23 @@ export interface CommissionQuote {
  *
  * @param amount      monto en tokens enteros.
  * @param reputation  reputación real del vendedor, escala completa 0..100.
+ * @param opts        `pioneer: true` aplica el piso del beneficio Pionero
+ *                    (0.5 %). Opcional: omitirlo mantiene el comportamiento
+ *                    anterior exacto (tasa por banda), por lo que las llamadas
+ *                    ya existentes no cambian de resultado.
  */
-export function commissionQuote(amount: number, reputation: number): CommissionQuote {
+export function commissionQuote(
+  amount: number,
+  reputation: number,
+  opts?: { pioneer?: boolean },
+): CommissionQuote {
   const band = levelBandFor(reputation);
-  const bps = COMMISSION_BPS[band];
+  // El Pionero paga la tasa más baja de la red: piso de 0.5 % vía min().
+  const pioneer = opts?.pioneer === true;
+  const bps = pioneer ? Math.min(COMMISSION_BPS[band], PIONEER_BPS) : COMMISSION_BPS[band];
   const ratePct = bps / 100;
   const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 0;
   const commission = Math.floor((safeAmount * bps) / 10000);
   const net = safeAmount - commission;
-  return { bps, ratePct, commission, net, band };
+  return { bps, ratePct, commission, net, band, pioneer };
 }

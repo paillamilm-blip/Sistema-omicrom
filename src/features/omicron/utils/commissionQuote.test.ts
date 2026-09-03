@@ -80,3 +80,45 @@ describe('commissionQuote — guardas de monto no válido', () => {
     }
   });
 });
+
+
+describe('commissionQuote — beneficio Pionero (0.5 % de por vida)', () => {
+  it('un Pionero Estudiante paga 0.5 %, no 1 %', () => {
+    const q = commissionQuote(1000, 10, { pioneer: true });
+    expect(q.bps).toBe(50);
+    expect(q.ratePct).toBe(0.5);
+    expect(q.commission).toBe(5);
+    expect(q.net).toBe(995);
+    expect(q.pioneer).toBe(true);
+  });
+
+  it('un Pionero Técnico paga 0.5 %, no 0.8 %', () => {
+    expect(commissionQuote(1000, 60, { pioneer: true })).toMatchObject({ bps: 50, ratePct: 0.5 });
+  });
+
+  it('conserva la BANDA real del usuario (el nivel no se falsea)', () => {
+    expect(commissionQuote(1000, 10, { pioneer: true }).band).toBe('Estudiante');
+    expect(commissionQuote(1000, 60, { pioneer: true }).band).toBe('Técnico');
+  });
+
+  it('a un Arquitecto Pionero no lo empeora: sigue en 0.5 %', () => {
+    expect(commissionQuote(1000, 90, { pioneer: true })).toMatchObject({ bps: 50, commission: 5, net: 995 });
+  });
+
+  it('omitir opts mantiene EXACTAMENTE la tasa por banda (retrocompatible)', () => {
+    expect(commissionQuote(1000, 10)).toMatchObject({ bps: 100, pioneer: false });
+    expect(commissionQuote(1000, 60)).toMatchObject({ bps: 80, pioneer: false });
+    expect(commissionQuote(1000, 90)).toMatchObject({ bps: 50, pioneer: false });
+  });
+
+  it('pioneer:false explícito se comporta como omitirlo', () => {
+    expect(commissionQuote(1000, 10, { pioneer: false }).bps).toBe(100);
+  });
+
+  it('sigue conservando tokens: commission + net = monto', () => {
+    for (const [amount, rep] of [[1000, 10], [12345, 55], [777, 90]] as const) {
+      const q = commissionQuote(amount, rep, { pioneer: true });
+      expect(q.commission + q.net).toBe(amount);
+    }
+  });
+});
