@@ -319,6 +319,9 @@ export function OrbShell() {
   const [inputFocused, setInputFocused] = useState(false);
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
   const [proactiveActions, setProactiveActions] = useState<ProactiveAction[]>([]);
+  // Indicador vivo: mientras Ómicrom consulta la IA, la burbuja "respira"
+  // ("Ómicrom está pensando…") en vez de mostrar texto muerto.
+  const [omicronThinking, setOmicronThinking] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
   const [showConvalida, setShowConvalida] = useState(false);
   const [showCredencial, setShowCredencial] = useState(false);
@@ -543,9 +546,9 @@ export function OrbShell() {
     }
 
     if (intent.kind === 'coach') {
-      flash('Dame un momento, estoy analizando tu perfil…');
+      flash('Ómicrom está pensando…');
       speakLocal('Déjame ver tu Gemelo Digital.');
-      const coachTimer = setTimeout(() => flash('Analizando… la IA puede demorar unos segundos.'), 8000);
+      const coachTimer = setTimeout(() => flash('Ómicrom está tardando más de lo normal… seguí esperando.'), 8000);
       const omCtx: OmicronContext = {
         skills: sbProfile?.skills ?? [],
         cv_summary: sbProfile?.cv_summary ?? '',
@@ -561,17 +564,18 @@ export function OrbShell() {
       };
       if (!checkOmicronLimit()) {
         flash('Alcanzaste el límite diario de consultas. Volvé mañana con energía recargada.');
-        return;
-      }
-      if (!checkOmicronLimit()) {
-        flash('Alcanzaste el límite diario de consultas. Volvé mañana con energía recargada.');
         clearTimeout(coachTimer);
         return;
       }
-      const r = await askOmicron(text, omCtx);
-      clearTimeout(coachTimer);
-      flash(r.text);
-      speakOmicron(r.text);
+      setOmicronThinking(true);
+      try {
+        const r = await askOmicron(text, omCtx);
+        flash(r.text);
+        speakOmicron(r.text);
+      } finally {
+        clearTimeout(coachTimer);
+        setOmicronThinking(false);
+      }
       return;
     }
 
@@ -602,7 +606,7 @@ export function OrbShell() {
     }
 
     // unknown — Ómicrom cerebro unificado (coach + tutor + motivador)
-    flash('Déjame pensar…');
+    flash('Ómicrom está pensando…');
     // Show timeout indicator if AI takes too long
     const slowTimer = setTimeout(() => flash('Ómicrom está tardando más de lo normal… seguí esperando.'), 8000);
     const omCtx: OmicronContext = {
@@ -623,10 +627,15 @@ export function OrbShell() {
       clearTimeout(slowTimer);
       return;
     }
-    const r = await askOmicron(text, omCtx);
-    clearTimeout(slowTimer);
-    flash(r.text);
-    speakOmicron(r.text);
+    setOmicronThinking(true);
+    try {
+      const r = await askOmicron(text, omCtx);
+      flash(r.text);
+      speakOmicron(r.text);
+    } finally {
+      clearTimeout(slowTimer);
+      setOmicronThinking(false);
+    }
   }, [setActiveTab, sbProfile, orbNodesWithLevels, selectedNode, unlockFor]);
 
   // ── Toggle listening (speech recognition) ──────────────────────────
@@ -1693,11 +1702,18 @@ export function OrbShell() {
         </div>
       )}
 
-      {/* ── PROACTIVE MESSAGE (con botones — reemplaza la burbuja plana) ── */}
-      {state === 'orb' && responseMsg && (
+      {/* ── PROACTIVE MESSAGE (con botones — reemplaza la burbuja plana) ──
+          RESPUESTA VIVA (Inc 1): la burbuja persiste SIEMPRE que haya
+          responseMsg, sin importar el estado del shell. Antes se ocultaba
+          con `state === 'orb'`, así que un intent 'navigate' que hace
+          setState('preview') la borraba al instante ("no me aparece nada").
+          Ahora acompaña al usuario en orbe, preview y fullscreen. */}
+      {responseMsg && (
         <ProactiveMessage
           message={responseMsg}
           actions={proactiveActions}
+          userColor={orbColor}
+          thinking={omicronThinking}
           onDismiss={() => { setResponseMsg(null); setProactiveActions([]); }}
         />
       )}
