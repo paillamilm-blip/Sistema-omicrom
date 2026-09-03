@@ -11,6 +11,7 @@ import {
   nodeUnlock,
   levelBandFor,
   bandDisplayFor,
+  bandForNodeLevel,
   unlockHint,
   LEVEL_THRESHOLDS,
   type LevelBand,
