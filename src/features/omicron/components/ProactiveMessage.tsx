@@ -21,15 +21,38 @@
 //    al instante (sin loop, sin animación).
 //  • El auto-cierre de 10s arranca SOLO cuando la revelación termina, para que
 //    el usuario alcance a leer (decisión aprobada por el fundador).
+//
+// EL ORBE LATE AL RITMO DE LA RESPUESTA:
+//  • Este componente ya es dueño de la fase "pensando…" y de la revelación
+//    palabra por palabra, así que es el emisor natural del "latido" del orbe.
+//  • Emitimos un nivel 0..1 (calculado por el helper PURO orbPulse.ts) al canal
+//    EXISTENTE 'oracle:voice' que OrbShell ya escucha (→ setVoiceLevel →
+//    OrbNeuronal lee voiceLevel). Así el orbe pulsa SIN tocar el archivo 3D.
+//  • Todo aditivo y gateado por reduced-motion EN EL EMISOR: bajo
+//    prefers-reduced-motion NO se emite nada nuevo. Los timers se limpian al
+//    desmontar y al cambiar el mensaje; al terminar la fase se emite un 0 calmo
+//    para devolver el control al pipeline de voz/idle (sin loops perpetuos).
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { C, FONT } from '@/theme';
 import { wordPrefixes } from '../utils/typewriter';
+import { thinkingPulseLevel, revealPulseLevel } from '../utils/orbPulse';
 
 // Ritmo del typewriter: ~45ms por palabra da una sensación viva sin marear.
 const REVEAL_STEP_MS = 45;
+// Cadencia del pulso calmo de "pensando…": ligero, ~120ms basta para un latido
+// sereno sin sobrecargar el canal de eventos.
+const THINKING_PULSE_MS = 120;
+
+// Emite un nivel de "latido" al canal EXISTENTE 'oracle:voice' (el mismo que
+// alimenta voiceLevel en OrbShell/OrbNeuronal). No renombra el evento ni añade
+// track()/EventName. Seguro en SSR: no hace nada si no hay window.
+function emitOrbPulse(level: number): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('oracle:voice', { detail: { level } }));
+}
 
 export interface ProactiveAction {
   label: string;
@@ -92,17 +115,47 @@ export function ProactiveMessage({ message, actions, userColor, thinking, stream
     }
     let i = 0;
     setShown(prefixes[0]);
+    // Latido: cada palabra revelada emite un tick que decae (revealPulseLevel)
+    // por el canal 'oracle:voice'. revealActive ya exige !reduceMotion, así que
+    // bajo reduced-motion este bloque no corre y no se emite nada.
+    emitOrbPulse(revealPulseLevel(0, prefixes.length));
     const id = setInterval(() => {
       i += 1;
       if (i >= prefixes.length) {
         setShown(message);
         clearInterval(id);
+        // Fin de la revelación: 0 calmo para devolver el control al pipeline.
+        emitOrbPulse(0);
         return;
       }
       setShown(prefixes[i]);
+      emitOrbPulse(revealPulseLevel(i, prefixes.length));
     }, REVEAL_STEP_MS);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      // Al desmontar o cambiar el mensaje, no dejamos el orbe "colgado".
+      emitOrbPulse(0);
+    };
   }, [message, revealActive]);
+
+  // ── Latido de "pensando…" ───────────────────────────────────────────
+  // Mientras `thinking` es true (y sin reduced-motion), un emisor ligero
+  // alimenta un pulso calmo de búsqueda (thinkingPulseLevel) al canal
+  // 'oracle:voice'. Se limpia al desmontar, al cambiar el mensaje y cuando
+  // thinking pasa a false, emitiendo un 0 calmo para que el pulso de voz/idle
+  // (o la revelación) tome el relevo sin pelea.
+  useEffect(() => {
+    if (!thinking || reduceMotion) return;
+    const start = Date.now();
+    emitOrbPulse(thinkingPulseLevel(0));
+    const id = setInterval(() => {
+      emitOrbPulse(thinkingPulseLevel(Date.now() - start));
+    }, THINKING_PULSE_MS);
+    return () => {
+      clearInterval(id);
+      emitOrbPulse(0);
+    };
+  }, [thinking, reduceMotion, message]);
 
   if (!message || dismissed) return null;
 
