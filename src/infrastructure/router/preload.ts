@@ -17,6 +17,7 @@ const TAB_LOADERS: Partial<Record<TabId, () => Promise<unknown>>> = {
   market:     () => import('@/features/market/components/MarketTab'),
   wallet:     () => import('@/features/wallet/components/WalletTab'),
   chat:       () => import('@/features/chat/components/ChatTab'),
+  contratos:  () => import('@/features/contratos/components/ContratosTab'),
   gobernanza: () => import('@/features/gobernanza/components/GobernanzaTab'),
   maxskill:   () => import('@/features/academia/components/MaxSkillTab'),
   vault:      () => import('@/features/market/components/VaultTab'),

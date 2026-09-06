@@ -57,6 +57,7 @@ import type { TabId, GemeloDigital } from '@/types';
 // ── Lazy tab components ─────────────────────────────────────────────
 const WalletTab     = lazy(() => import('@/features/wallet/components/WalletTab').then(m => ({ default: m.WalletTab })));
 const RedSocialTab  = lazy(() => import('@/features/gemelo/components/RedSocialTab').then(m => ({ default: m.RedSocialTab })));
+const ContratosTab  = lazy(() => import('@/features/contratos/components/ContratosTab').then(m => ({ default: m.ContratosTab })));
 const EmpleosTab    = lazy(() => import('@/features/empleos/components/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
 const MarketTab     = lazy(() => import('@/features/market/components/MarketTab').then(m => ({ default: m.MarketTab })));
 const GemeloTab     = lazy(() => import('@/features/gemelo/components/GemeloTab').then(m => ({ default: m.GemeloTab })));
@@ -81,6 +82,7 @@ const HUB_NODES: OrbNode[] = [
   { id: 'gobernanza',  label: 'Gobernanza',   tab: 'gobernanza', icon: '△' },
   { id: 'habilidades', label: 'Habilidades',  tab: 'maxskill',   icon: '◎' },
   { id: 'billetera',   label: 'Billetera',    tab: 'wallet',     icon: '▽' },
+  { id: 'contratos',   label: 'Mis contratos', tab: 'contratos', icon: '⊙' },
   { id: 'boveda',      label: 'Bóveda',       tab: 'vault',      icon: '⊡' },
 ];
 
@@ -209,6 +211,7 @@ function renderTab(tab: TabId) {
     case 'market':     return <MarketTab />;
     case 'empleos':    return <EmpleosTab />;
     case 'chat':       return <RedSocialTab />;
+    case 'contratos':  return <ContratosTab />;
     case 'wallet':     return <WalletTab />;
     case 'gobernanza': return <GobernanzaTab />;
     case 'vault':      return <VaultTab />;

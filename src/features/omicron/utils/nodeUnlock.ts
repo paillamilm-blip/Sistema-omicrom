@@ -105,6 +105,7 @@ const NODE_GATE: Record<string, LevelBand> = {
   empleos: 'Estudiante', // Empleos
   mensajes: 'Estudiante', // Red Social (chat)
   billetera: 'Estudiante', // Billetera (wallet)
+  contratos: 'Estudiante', // Mis contratos: es TU dinero, nunca se gatea
   // Técnico (50-79) — vender/monetizar y aportar conocimiento:
   mercado: 'Técnico', // Mercado / Servicios (vender ideas)
   boveda: 'Técnico', // Bóveda (aportes de conocimiento)
