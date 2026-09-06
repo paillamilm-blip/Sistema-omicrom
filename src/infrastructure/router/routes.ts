@@ -23,6 +23,7 @@ export const ROUTES: RouteConfig[] = [
   { path: '/mercado',     tab: 'market',     label: 'Mercado' },
   { path: '/boveda',      tab: 'vault',      label: 'Bóveda' },
   { path: '/mensajes',    tab: 'chat',       label: 'Mensajes' },
+  { path: '/contratos',   tab: 'contratos',  label: 'Mis contratos' },
   { path: '/billetera',   tab: 'wallet',     label: 'Billetera' },
   { path: '/gobernanza',  tab: 'gobernanza', label: 'Gobernanza' },
 ];

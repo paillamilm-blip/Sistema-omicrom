@@ -37,8 +37,9 @@ export const HUBS: Hub[] = [
   {
     id: 'mercado', label: 'Mercado', Icon: Store,
     members: [
-      { tab: 'market',  label: 'Servicios' },
-      { tab: 'vault',   label: 'Bóveda' },
+      { tab: 'market',    label: 'Servicios' },
+      { tab: 'contratos', label: 'Mis contratos' },
+      { tab: 'vault',     label: 'Bóveda' },
     ],
   },
   {

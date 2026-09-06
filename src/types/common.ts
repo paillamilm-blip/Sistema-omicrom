@@ -7,7 +7,7 @@ import type { Profile } from './profile';
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'no_access';
 
 // ===== TAB NAVIGATION =====
-export type TabId = 'perfil' | 'maxskill' | 'academia' | 'empleos' | 'chat' | 'market' | 'wallet' | 'gobernanza' | 'vault';
+export type TabId = 'perfil' | 'maxskill' | 'academia' | 'empleos' | 'chat' | 'market' | 'wallet' | 'gobernanza' | 'vault' | 'contratos';
 
 // ===== APP STATE (Context) =====
 export interface AppState {
