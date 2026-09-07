@@ -11,12 +11,18 @@
 //   • No promete un examen que el backend no puede dar (ver useExamenDisponible).
 //   • Si el Fondo está en 0, lo dice; no muestra una recompensa que no existe.
 
-import { C, FONT, SIZE, RADIUS, BORDER } from '@/theme';
+import { forwardRef } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { X } from 'lucide-react';
+import { C, EASING, FONT, SIZE, RADIUS, BORDER, TIMING } from '@/theme';
+import { normalizeSkill } from '../services/gapEngine';
 import { textoEstado, type NodoRed, type RedVivaModel } from '../services/redViva';
 import { useCotizacion, useExamenDisponible } from '../hooks/useNodoDetalle';
 import { useProbarHabilidad } from '../hooks/useProbarHabilidad';
+import { ESTADO_NODO_LABEL, NodoEstadoMarca } from './NodoEstadoMarca';
 
 export interface NodoFichaProps {
+  id: string;
   nodo: NodoRed;
   model: RedVivaModel;
   userColor: string;
@@ -31,14 +37,8 @@ export interface NodoFichaProps {
   onCerrar?: () => void;
 }
 
-const ETIQUETA_ESTADO: Record<NodoRed['estado'], string> = {
-  solido: 'Probada',
-  latiendo: 'Probándola ahora',
-  hueco: 'Solo declarada',
-  ausente: 'No la tenés',
-};
-
-export function NodoFicha({
+export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFicha({
+  id,
   nodo,
   model,
   userColor,
@@ -47,10 +47,11 @@ export function NodoFicha({
   onExamenAbierto,
   onVerEmpleo,
   onCerrar,
-}: NodoFichaProps) {
+}: NodoFichaProps, ref) {
   const esMercado = nodo.estado === 'ausente';
   const acento = esMercado ? C.gold : userColor;
   const yaProbada = nodo.estado === 'solido';
+  const reduceMotion = useReducedMotion();
 
   // Solo se cotiza lo que todavía no está probado: pedir precio de algo ya
   // cobrado sería ruido.
@@ -63,7 +64,7 @@ export function NodoFicha({
 
   /** Oportunidades reales que dependen de esta habilidad. */
   const oportunidades = model.oportunidades.filter((op) =>
-    op.missing.some((m) => m.toLowerCase() === nodo.label.toLowerCase()),
+    op.missing.some((missing) => normalizeSkill(missing) === normalizeSkill(nodo.label)),
   );
 
   /** El texto de la recompensa, siempre honesto. */
@@ -77,7 +78,7 @@ export function NodoFicha({
     // no tenga que adivinar la razón.
     if (cotizacion?.ok && cotizacion.motivo) return cotizacion.motivo;
     if (fondoSaldo === 0) {
-      return 'El Fondo de Conocimiento está en 0 por ahora, así que probarla paga 0. Tus puntajes suben igual.';
+      return 'El Fondo de Conocimiento tiene 0 tokens por ahora, así que probarla paga 0 tokens. Si aprobás, la prueba queda registrada y puede mejorar tus puntajes según el resultado.';
     }
     if (fondoSaldo === null) {
       return 'No pudimos consultar cuánto paga el Fondo en este momento.';
@@ -86,8 +87,20 @@ export function NodoFicha({
   };
 
   return (
-    <section
-      aria-label={`Detalle de ${nodo.label}`}
+    <motion.section
+      ref={ref}
+      id={id}
+      tabIndex={-1}
+      aria-labelledby={`${id}-title`}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && onCerrar) {
+          event.preventDefault();
+          onCerrar();
+        }
+      }}
+      initial={reduceMotion ? false : { opacity: 0, transform: 'translateY(8px)' }}
+      animate={{ opacity: 1, transform: 'translateY(0)' }}
+      transition={reduceMotion ? { duration: 0 } : { duration: Number.parseInt(TIMING.exit, 10) / 1000, ease: EASING.standard }}
       style={{
         borderRadius: RADIUS.lg,
         border: BORDER.default,
@@ -102,20 +115,10 @@ export function NodoFicha({
     >
       {/* ── Encabezado ─────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-        <span
-          aria-hidden="true"
-          style={{
-            width: 12,
-            height: 12,
-            marginTop: 4,
-            flexShrink: 0,
-            borderRadius: '50%',
-            background: yaProbada ? acento : 'transparent',
-            border: `1.5px ${esMercado ? 'dashed' : 'solid'} ${acento}`,
-          }}
-        />
+        <NodoEstadoMarca estado={nodo.estado} color={acento} size={18} style={{ marginTop: 2 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3
+            id={`${id}-title`}
             style={{
               margin: 0,
               fontFamily: FONT.display,
@@ -131,13 +134,13 @@ export function NodoFicha({
             style={{
               margin: '3px 0 0',
               fontFamily: FONT.mono,
-              fontSize: SIZE.xxs,
+              fontSize: SIZE.xs,
               letterSpacing: 0.6,
               textTransform: 'uppercase',
               color: acento,
             }}
           >
-            {ETIQUETA_ESTADO[nodo.estado]}
+            {ESTADO_NODO_LABEL[nodo.estado]}
           </p>
         </div>
         {onCerrar ? (
@@ -149,15 +152,16 @@ export function NodoFicha({
               background: 'transparent',
               border: 'none',
               color: C.mut,
-              fontSize: SIZE.lg,
               cursor: 'pointer',
-              lineHeight: 1,
-              padding: 4,
-              minWidth: 32,
-              minHeight: 32,
+              padding: 0,
+              width: 44,
+              height: 44,
+              display: 'grid',
+              placeItems: 'center',
+              flexShrink: 0,
             }}
           >
-            ✕
+            <X size={20} aria-hidden="true" />
           </button>
         ) : null}
       </div>
@@ -172,23 +176,10 @@ export function NodoFicha({
           lineHeight: 1.5,
         }}
       >
-        {textoEstado(nodo)}
+        {pruebasDisponibles
+          ? textoEstado(nodo)
+          : 'Esta habilidad está registrada. No pudimos consultar si ya tiene una prueba en esta cuenta.'}
       </p>
-
-      {/* Aviso honesto si no se puede distinguir probado de declarado */}
-      {!pruebasDisponibles ? (
-        <p
-          style={{
-            margin: 0,
-            fontFamily: FONT.body,
-            fontSize: SIZE.xs,
-            color: C.mut,
-            lineHeight: 1.45,
-          }}
-        >
-          Todavía no podemos confirmar qué habilidades tenés probadas en esta cuenta.
-        </p>
-      ) : null}
 
       {/* ── La plata ───────────────────────────────────────────────────── */}
       <div
@@ -215,7 +206,7 @@ export function NodoFicha({
             style={{
               margin: '6px 0 0',
               fontFamily: FONT.mono,
-              fontSize: SIZE.xxs,
+              fontSize: SIZE.xs,
               color: C.mut,
             }}
           >
@@ -231,7 +222,7 @@ export function NodoFicha({
             style={{
               margin: 0,
               fontFamily: FONT.mono,
-              fontSize: SIZE.xxs,
+              fontSize: SIZE.xs,
               letterSpacing: 0.6,
               textTransform: 'uppercase',
               color: C.mut,
@@ -328,7 +319,7 @@ export function NodoFicha({
               style={{
                 margin: 0,
                 fontFamily: FONT.body,
-                fontSize: SIZE.xxs,
+                fontSize: SIZE.xs,
                 color: C.mut,
                 lineHeight: 1.45,
                 textAlign: 'center',
@@ -351,6 +342,6 @@ export function NodoFicha({
           La piden en {nodo.demand} {nodo.demand === 1 ? 'empleo abierto' : 'empleos abiertos'}.
         </p>
       ) : null}
-    </section>
+    </motion.section>
   );
-}
+});

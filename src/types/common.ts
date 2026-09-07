@@ -21,6 +21,11 @@ export interface AppState {
   // === NAVIGATION ===
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
+  jobTargetId: string | null;
+  /** Identidad de cada solicitud de navegación a un empleo exacto. */
+  jobTargetRequest: number;
+  openJob: (jobId: string) => void;
+  clearJobTarget: () => void;
 
   // === NOTIFICATIONS ===
   unreadCount: number;
