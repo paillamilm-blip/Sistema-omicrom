@@ -132,6 +132,12 @@ export function RedVivaCanvas({
   const margen = hayEtiquetas ? 37 : 12;
   const medio = radioContenido + margen;
 
+  // Cuántos nodos comparten cada sistema angular. Tus habilidades (probadas y
+  // declaradas) comparten UNA sola secuencia, así que el cupo por slot lo marca
+  // el total, no cuántas hay en cada anillo.
+  const cantidadPropias = Math.max(1, model.nodos.filter((n) => n.anillo !== 2).length);
+  const cantidadAusentes = Math.max(1, model.nodos.filter((n) => n.anillo === 2).length);
+
   const resumenAria =
     model.totales.declaradas === 0
       ? 'Red vacía: todavía no hay habilidades.'
@@ -344,7 +350,15 @@ export function RedVivaCanvas({
         {model.nodos.map((n) => {
           const x = n.x * K;
           const y = n.y * K;
-          const r = 4.6 + n.r * 5.4;
+
+          // Techo de radio según el lugar que hay en el anillo. Sin esto, con 20
+          // habilidades los círculos quedaban exactamente tangentes: 42px de cupo
+          // por slot y 41px de diámetro (se vio en pantalla). El 0.40 deja ~20 %
+          // de aire entre vecinos.
+          const radioAnillo = n.anillo === 0 ? 42 : n.anillo === 1 ? 64 : 92;
+          const vecinos = n.anillo === 2 ? cantidadAusentes : cantidadPropias;
+          const cupo = ((Math.PI * 2) / vecinos) * radioAnillo * 0.4;
+          const r = Math.min(4.6 + n.r * 5.4, Math.max(3.4, cupo));
           const activo = seleccionado === n.id;
           const esMercado = n.estado === 'ausente';
           // Se etiqueta lo ACCIONABLE: lo que te falta (siempre pocos), la jugada
