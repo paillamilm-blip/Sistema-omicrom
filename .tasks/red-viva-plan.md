@@ -71,6 +71,10 @@ ningún archivo del front la llama.** El Fondo es real, auditable… e invisible
 
 ## 4. Qué NO existe todavía (y hay que construir)
 
+> Estado al cerrar el Inc 5: los puntos 1, 2, 3 y 4 de esta tabla ya están resueltos.
+> Queda pendiente el estado LATIENDO (`exam_sessions` no tiene policy de lectura para su
+> dueño, así que el cliente no puede saber que hay un examen en curso).
+
 | Falta | Por qué duele | Cómo se resuelve |
 |---|---|---|
 | Estado de prueba **por nombre de skill** | `user_skill_progress` y `actas_evidencia` van por `node_id uuid`. El libro del Fondo sí tiene `note='skill:<x>'` pero su RLS está **activa sin políticas** → ilegible desde el cliente. **Hoy SÓLIDO es inobservable** | RPC nuevo `omicron_skill_proofs()` (security definer, filtra por `auth.uid()`) |
@@ -99,18 +103,21 @@ ningún archivo del front la llama.** El Fondo es real, auditable… e invisible
 
 ## 6. Incrementos (cada uno mergeable solo)
 
-- [ ] **Inc 1 — El cable.** RPC de pruebas + cotización, `gapEngine` real con tests,
-      modelo de la Red Viva, y el arreglo del `p_score` hardcodeado. Sin esto, todo lo
-      visual sería otra decoración.
-- [ ] **Inc 2 — La red se ve.** Componente 2D con los 3 estados, montado en el centro
-      del home. Muerte de los `%` inventados del `levelMap`.
-- [ ] **Inc 3 — La ficha del nodo.** Al tocar un nodo hueco: qué declaraste, cuánto paga
-      probarlo, qué empleo real desbloquea, y el botón para probarlo ahora.
+- [x] **Inc 1 — El cable.** ✅ PR #392. Registro de pruebas por nombre
+      (`omicron_skill_proofs`), cotización del Fondo (`omicron_fund_quote`), `gapEngine`
+      real con tests, modelo de la Red Viva, y el arreglo del `p_score` hardcodeado.
+- [x] **Inc 5 — Examen de cualquier habilidad.** ✅ Corte #1 roto. `omicron_ensure_skill_node`
+      materializa el nodo al vuelo (uuid real) cuando la habilidad no está en el catálogo,
+      así la Edge Function la encuentra sin necesidad de redeploy. Se hizo antes que el
+      Inc 2 a propósito: un tablero donde la mitad de los nodos dicen "todavía no hay
+      examen" es un tablero que no se puede jugar.
+- [ ] **Inc 2 — La red se ve en el centro.** Promoverla al centro del home + el cajón de
+      navegación explícito. Muerte de los `%` inventados del `levelMap`.
+- [ ] **Inc 3 — La ficha, afinada.** Ya existe (Inc 1); falta pulido y el estado LATIENDO
+      real (hoy no hay forma de saber que un examen está en curso: `exam_sessions` no
+      tiene policy de lectura para el dueño).
 - [ ] **Inc 4 — Los 2 segundos.** La animación de la prueba: el nodo se llena, la arista
       punteada al empleo se solidifica, el Fondo baja y la Billetera sube, a la vista.
-- [ ] **Inc 5 — Examen de cualquier habilidad.** Romper el corte #1 (backend: aceptar
-      skill por nombre o crear el nodo al vuelo). Es lo que hace verdadera la frase
-      "aprendizaje en tiempo real".
 - [ ] **Inc 6 — La Credencial = sombra sólida.** Reusar la misma red, filtrada a probados.
 - [ ] **Inc 7 — Limpieza.** Borrar `config/nodes.ts` y `config/hubs.ts` (muertos, y con
       labels que contradicen al home), `BottomNav`, `HubSubNav`, y unificar el vocabulario

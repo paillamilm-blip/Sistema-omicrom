@@ -17,6 +17,7 @@ import {
   Loader2, MessageCircle,
 } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
+import { asegurarNodoDeExamen } from '@/features/redviva/services/examenSkill';
 import { C, FONT, RADIUS } from '@/theme';
 import {
   oc, OmicronHeader, OmicronCard, ProgressBar,
@@ -163,9 +164,23 @@ export function MaxSkillTab() {
     : 0;
 
   // ── Handlers ─────────────────────────────────────────────────────
-  const handleValidateSkill = useCallback((skillName: string) => {
-    setExamNode(makeVirtualNode(skillName));
-  }, []);
+  // Validar una habilidad del CV: se consigue el uuid REAL del nodo (creándolo
+  // si no existe) para que la Edge Function del simulador lo encuentre. Antes acá
+  // se armaba un nodo 'virtual-*' que el backend rechazaba con 404, así que este
+  // botón no funcionaba para ninguna habilidad fuera del catálogo.
+  const handleValidateSkill = useCallback(async (skillName: string) => {
+    const r = await asegurarNodoDeExamen(skillName);
+    if (r.ok) {
+      setExamNode(makeCatalogNode(r.nodeId, r.titulo));
+      return;
+    }
+    if (r.rpcAusente) {
+      // Migración 10002 sin aplicar: se mantiene el comportamiento anterior.
+      setExamNode(makeVirtualNode(skillName));
+      return;
+    }
+    toast(r.error, 'info');
+  }, [toast]);
 
   // La Red Viva pide probar una habilidad concreta: llega el uuid REAL del
   // catálogo (ya verificado por useExamenDisponible), así que el examen corre.
@@ -356,7 +371,7 @@ export function MaxSkillTab() {
                               </div>
                               <button
                                 style={S.btnValidar}
-                                onClick={(e) => { e.stopPropagation(); handleValidateSkill(skill.name); }}
+                                onClick={(e) => { e.stopPropagation(); void handleValidateSkill(skill.name); }}
                               >
                                 <Brain size={14} />
                                 Validar con Examen IA
@@ -493,7 +508,7 @@ export function MaxSkillTab() {
               style={S.btnRange}
               onClick={() => {
                 const topSkill = skillsDetail[0]?.name ?? 'General';
-                handleValidateSkill(topSkill);
+                void handleValidateSkill(topSkill);
               }}
             >
               <Brain size={15} /> Iniciar Examen de Rango

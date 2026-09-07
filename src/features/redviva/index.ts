@@ -7,6 +7,13 @@ export { RedVivaCanvas } from './components/RedVivaCanvas';
 export { NodoFicha } from './components/NodoFicha';
 export { useRedViva } from './hooks/useRedViva';
 export { useCotizacion, useExamenDisponible } from './hooks/useNodoDetalle';
+export { useProbarHabilidad } from './hooks/useProbarHabilidad';
+export {
+  asegurarNodoDeExamen,
+  pedirExamen,
+  validarTitulo,
+  normalizarTitulo,
+} from './services/examenSkill';
 export {
   buildRedViva,
   resumenRed,

@@ -14,6 +14,7 @@
 import { C, FONT, SIZE, RADIUS, BORDER } from '@/theme';
 import { textoEstado, type NodoRed, type RedVivaModel } from '../services/redViva';
 import { useCotizacion, useExamenDisponible } from '../hooks/useNodoDetalle';
+import { useProbarHabilidad } from '../hooks/useProbarHabilidad';
 
 export interface NodoFichaProps {
   nodo: NodoRed;
@@ -23,8 +24,8 @@ export interface NodoFichaProps {
   fondoSaldo: number | null;
   /** false = migración 10001 sin aplicar: no se puede saber qué está probado. */
   pruebasDisponibles: boolean;
-  /** Abre el examen real de esta habilidad (solo si existe). */
-  onProbar?: (nodeId: string, titulo: string) => void;
+  /** Se llama cuando el examen ya arrancó, para navegar al simulador. */
+  onExamenAbierto?: () => void;
   /** Lleva al detalle del empleo. */
   onVerEmpleo?: (jobId: string) => void;
   onCerrar?: () => void;
@@ -43,7 +44,7 @@ export function NodoFicha({
   userColor,
   fondoSaldo,
   pruebasDisponibles,
-  onProbar,
+  onExamenAbierto,
   onVerEmpleo,
   onCerrar,
 }: NodoFichaProps) {
@@ -54,9 +55,11 @@ export function NodoFicha({
   // Solo se cotiza lo que todavía no está probado: pedir precio de algo ya
   // cobrado sería ruido.
   const { data: cotizacion } = useCotizacion(nodo.label, !yaProbada);
-  const { data: examen, isLoading: cargandoExamen } = useExamenDisponible(
-    !yaProbada ? nodo.label : null,
-  );
+  // El nodo del catálogo ya no decide SI se puede probar (desde la migración
+  // 10002 se puede probar cualquier habilidad). Se sigue consultando solo como
+  // respaldo para el caso de que esa migración no esté aplicada.
+  const { data: examen } = useExamenDisponible(!yaProbada ? nodo.label : null);
+  const { probar, preparando, error: errorExamen } = useProbarHabilidad(onExamenAbierto);
 
   /** Oportunidades reales que dependen de esta habilidad. */
   const oportunidades = model.oportunidades.filter((op) =>
@@ -281,48 +284,60 @@ export function NodoFicha({
         </div>
       ) : null}
 
-      {/* ── La acción ──────────────────────────────────────────────────── */}
+      {/* ── La acción ──────────────────────────────────────────────────────
+          Cualquier habilidad se puede probar. Si no existe en el catálogo, el
+          examen se prepara en el momento (migración 10002). Antes acá había una
+          disculpa: "todavía no hay un examen para esta habilidad". */}
       {!yaProbada ? (
-        cargandoExamen ? (
-          <p style={{ margin: 0, fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut }}>
-            Buscando si hay examen para esta habilidad…
-          </p>
-        ) : examen?.nodeId ? (
+        <>
           <button
             type="button"
-            onClick={() => onProbar?.(examen.nodeId as string, examen.titulo ?? nodo.label)}
+            disabled={preparando}
+            onClick={() => void probar(nodo.label, examen?.nodeId ?? null)}
             style={{
               width: '100%',
               minHeight: 46,
               padding: '12px 0',
               borderRadius: RADIUS.md,
               border: 'none',
-              background: acento,
-              color: C.bg,
+              background: preparando ? C.glass2 : acento,
+              color: preparando ? C.mut : C.bg,
               fontFamily: FONT.body,
               fontSize: SIZE.md,
               fontWeight: 700,
-              cursor: 'pointer',
+              cursor: preparando ? 'progress' : 'pointer',
             }}
           >
-            Probarla ahora
+            {preparando ? 'Preparando tu examen…' : 'Probarla ahora'}
           </button>
-        ) : (
-          // HONESTIDAD: el examen de una habilidad arbitraria del CV todavía no
-          // existe (la Edge Function exige el catálogo). Se dice, no se finge.
-          <p
-            style={{
-              margin: 0,
-              fontFamily: FONT.body,
-              fontSize: SIZE.xs,
-              color: C.mut,
-              lineHeight: 1.45,
-            }}
-          >
-            Todavía no hay un examen para <strong style={{ color: C.ink }}>{nodo.label}</strong>.
-            Se están abriendo exámenes nuevos: cuando esté, lo vas a poder probar desde acá.
-          </p>
-        )
+          {errorExamen ? (
+            <p
+              role="alert"
+              style={{
+                margin: 0,
+                fontFamily: FONT.body,
+                fontSize: SIZE.xs,
+                color: C.red,
+                lineHeight: 1.45,
+              }}
+            >
+              {errorExamen}
+            </p>
+          ) : (
+            <p
+              style={{
+                margin: 0,
+                fontFamily: FONT.body,
+                fontSize: SIZE.xxs,
+                color: C.mut,
+                lineHeight: 1.45,
+                textAlign: 'center',
+              }}
+            >
+              Un caso práctico de tu área. Si lo aprobás, esta habilidad queda probada.
+            </p>
+          )}
+        </>
       ) : nodo.demand > 0 ? (
         <p
           style={{

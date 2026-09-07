@@ -65,14 +65,6 @@ export function RedVivaHome({ onAbrirTab }: RedVivaHomeProps) {
     })).filter((g) => g.nodos.length > 0);
   }, [model.nodos]);
 
-  /** Abre el examen REAL de una habilidad (el uuid ya fue verificado). */
-  const probar = (nodeId: string, titulo: string) => {
-    window.dispatchEvent(
-      new CustomEvent('omicron:probar-skill', { detail: { nodeId, titulo } }),
-    );
-    onAbrirTab?.('maxskill');
-  };
-
   return (
     <div
       style={{
@@ -186,7 +178,7 @@ export function RedVivaHome({ onAbrirTab }: RedVivaHomeProps) {
           userColor={uc}
           fondoSaldo={fondoSaldo}
           pruebasDisponibles={pruebasDisponibles}
-          onProbar={probar}
+          onExamenAbierto={() => onAbrirTab?.('maxskill')}
           onVerEmpleo={() => onAbrirTab?.('empleos')}
           onCerrar={() => setSeleccionado(null)}
         />
