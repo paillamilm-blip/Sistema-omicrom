@@ -74,12 +74,13 @@ PENSAR → PLANEAR → HACER (incremental) → SINERGIA → TESTEAR → LANZAR
 
 ### EMBELLECER: [pantalla]
 ```
-1. impeccable context --target [pantalla]     ← carga PRODUCT.md + DESIGN.md
+1. .kiro/skills/impeccable/scripts/impeccable context --target [pantalla]
+                                              ← carga PRODUCT.md + DESIGN.md
 2. search.py "[patrón]" --domain ux           ← qué dice el dato
 3. Filtrar contra DESIGN.md                   ← qué de eso es legal en Ómicrom
-4. DISEÑAR (impeccable ejecuta)
-5. ANIMACIÓN (animate, si hay motion)
-6. impeccable audit                           ← a11y + responsive + perf
+4. /impeccable polish [pantalla]              ← o critique / layout / typeset / harden
+5. ANIMACIÓN (skill animate, si hay motion)
+6. /impeccable audit [pantalla]               ← a11y + responsive + perf
 7. NAVEGAR (verificar en vivo) → LANZAR
 ```
 **Skills:** UI/UX Pro Max + Impeccable + Animate + Taste (solo superficies Persuade) + Design System + UI Styling + Nova Act + QA + Performance + Verification + Ship

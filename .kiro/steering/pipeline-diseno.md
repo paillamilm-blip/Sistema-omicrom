@@ -13,7 +13,7 @@ Cuatro skills de diseño instaladas. Cada una decide **una** cosa. Si dos parece
 |---|---|---|
 | **ui-ux-pro-max** | Qué opciones existen. Devuelve datos verificados: 192 paletas, 74 pares tipográficos, 119 guías UX, 22 stacks, 25 gráficos. | Cuál elegir para Ómicrom. Es un catálogo, no un veredicto. |
 | **taste-skill** | Dirección visual anti-genérica en superficies de **conversión**. Los tres dials, el "Design Read". | Nada de product UI. Su propio scope lo excluye. |
-| **impeccable** | Ejecución y criterio de craft. 23 comandos (`critique`, `audit`, `polish`, `harden`, `layout`, `typeset`, `clarify`, `bolder`, `distill`, `adapt`, `optimize`, `live`). | Motion. Delegá a `animate`. |
+| **impeccable** | Ejecución y criterio de craft. 23 comandos, invocados como `/impeccable <command> <target>`. | Motion. Delegá a `animate`. |
 | **animate** | Todo el movimiento. Secuencia de 7 pasos, curvas y duraciones de tabla, gating de `prefers-reduced-motion`. | Layout, color, tipografía. |
 
 ## Orden de conflicto (de mayor a menor autoridad)
@@ -47,6 +47,27 @@ node --version   # el launcher no lo necesita, pero el resto del repo sí
 
 Carga `PRODUCT.md`, `DESIGN.md` y el brief de superficie. En Windows: `impeccable.cmd`. La primera corrida baja un binario auto-contenido; si falla, **avisá antes de editar** que el contexto no se cargó.
 
+### Invocar impeccable
+
+```
+/impeccable <command> <target>
+```
+
+Los 23 comandos (`scripts/command-metadata.json` tiene la descripción y el `argumentHint` de cada uno):
+
+| Categoría | Comandos |
+|---|---|
+| Build | `shape` · `init` · `document` · `extract` · `craft` *(alias deprecado)* |
+| Evaluate | `critique` · `audit` |
+| Refine | `polish` · `bolder` · `quieter` · `distill` · `harden` · `onboard` |
+| Enhance | `animate` · `colorize` · `typeset` · `layout` · `delight` · `overdrive` |
+| Fix | `clarify` · `adapt` · `optimize` |
+| Iterate | `live` |
+
+Sin argumento no auto-ejecuta: lee `reference/routing.md` y ofrece el menú.
+
+Atajos: `.kiro/skills/impeccable/scripts/impeccable pin <pin|unpin> <command>` crea un `/<command>` suelto. Aparte están `/impeccable hooks <on|off|status|…>` (detector automático tras editar UI) y `/impeccable doctor` (reporta drift entre `PRODUCT.md`/`DESIGN.md` y lo que la versión instalada lee).
+
 ### Consultar el dato
 
 ```bash
@@ -56,6 +77,10 @@ python3 .kiro/skills/ui-ux-pro-max/scripts/search.py "<query>" --stack react
 
 Dominios útiles acá: `ux`, `icons`, `chart`, `react`. Stack: `react` o `shadcn`.
 
+### taste-skill: origen y versión
+
+Viene de [`Leonxlnx/taste-skill`](https://github.com/Leonxlnx/taste-skill) (`npx skills add https://github.com/Leonxlnx/taste-skill`). La copia del repo está en **v2 (experimental)**, install name `design-taste-frontend`, byte-idéntica a upstream. v2 es un rewrite del original — mantiene los tres dials y agrega reglas duras y skeletons canónicos. `taste-skill-v1` quedó preservada upstream por si algo dependía de su comportamiento exacto; acá no se usa.
+
 ## Cuándo NO usar taste-skill
 
 Su propio scope dice: *landing pages, portfolios y rediseños. No dashboards, no tablas de datos, no product UI multi-paso.*
@@ -64,7 +89,7 @@ Casi todo Ómicrom es product UI en modo **Operate** — `GemeloTab`, `Credencia
 
 Sí va en las superficies **Persuade**: `AuthOverlay`, `NoAccess`, `ResetPasswordOverlay`, `OrbOnboarding` y los 5 actos de `GemeloReveal`. Y aun ahí, sus §4.2 (calibración de color) y §4.1 (tipografía) están **ya resueltos** por `DESIGN.md` — no los reabras.
 
-## `animate` gana sobre `impeccable animate`
+## `animate` gana sobre `/impeccable animate`
 
 `impeccable` tiene un comando `animate` y hay una skill `animate` dedicada. **Gana la skill.** `reference/animate.md` sirve para saber *si* algo debe moverse; la construcción la hace `animate` con su secuencia de 7 pasos.
 
