@@ -10,6 +10,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/infrastructure/supabase/client';
+import { useToast } from '@/shared/components/Toast';
 import {
   Brain, Zap, Shield, TrendingUp, Sparkles, Target,
   ChevronRight, BookOpen, Briefcase, Award, Star,
@@ -114,6 +115,7 @@ const expand = {
 // ── Componente Principal ─────────────────────────────────────────────
 export function MaxSkillTab() {
   const { profile, gemelo, setActiveTab, refreshProfile } = useApp();
+  const { toast } = useToast();
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const [examNode, setExamNode] = useState<SkillTreeNode | null>(null);
   const [coachAdvice, setCoachAdvice] = useState<string | null>(null);
@@ -479,11 +481,23 @@ export function MaxSkillTab() {
             // Sprint B: Exámenes alimentan el Gemelo Digital
             // Registrar éxito del examen → sube ejes de reputación
             try {
-              await supabase.rpc('register_exam_success', {
+              const { data } = await supabase.rpc('register_exam_success', {
                 p_skill: examNode.title || examNode.id,
                 p_score: 80, // El simulador aprueba con ≥70, asumimos 80 como base
                 p_kind: 'mixed',
               });
+              // FONDO DE CONOCIMIENTO: aprobar un examen puede PAGAR tokens
+              // reales (1 token = 1 peso chileno), financiados con la comisión
+              // ya cobrada por la red. Se avisa siempre: si ganó, cuánto; si no
+              // ganó, POR QUÉ (fondo en 0 o recompensa ya cobrada). Nunca se
+              // promete plata que no existe.
+              const r = data as { reward_tokens?: number; reward_reason?: string } | null;
+              const premio = Number(r?.reward_tokens ?? 0);
+              if (premio > 0) {
+                toast(`Ganaste ${premio} tokens del Fondo de Conocimiento`, 'success');
+              } else if (r?.reward_reason) {
+                toast(r.reward_reason, 'info');
+              }
             } catch { /* non-blocking: si falla, al menos el PE ya se otorgó */ }
             void refreshProfile();
             setExamNode(null);
