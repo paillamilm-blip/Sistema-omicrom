@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
-import { type OrbNode } from './OrbNeuronal';
+import { type OrbNode } from '../types';
 import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
 import { OmicronBar } from './OmicronBar';
 import { OmicronPlaceholder2D } from '@/shared/components/OmicronPlaceholder2D';
