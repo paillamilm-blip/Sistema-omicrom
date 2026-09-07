@@ -10,13 +10,13 @@
 |---|-------|---------|--------|
 | 1 | ⚡ **HACER** | "Hacelo: [tarea]" | Ejecutar inmediato sin preguntas innecesarias |
 | 2 | 🧠 **PENSAR** | "Office hours: [idea]" | Validar si vale la pena antes de gastar tiempo |
-| 3 | 🎨 **DISEÑAR** | "Impeccable: [pantalla/componente]" | UI que se ve extraordinaria |
+| 3 | 🎨 **DISEÑAR** | "Impeccable: [pantalla/componente]" | UI que se ve extraordinaria — sigue el [pipeline de diseño](pipeline-diseno.md) |
 | 4 | 🔍 **REVISAR** | "Ultra review" | Encontrar bugs antes de producción |
 | 5 | 🚀 **LANZAR** | "Ship it" | De código listo a producción |
 | 6 | 🐛 **ARREGLAR** | "Superpowers: [pegar error]" | Debugging profundo de cualquier problema |
 | 7 | 🛡️ **PROTEGER** | "Security check de [feature]" | Asegurar que no hay vulnerabilidades |
 | 8 | 🏗️ **FEATURE** | "Office hours → Hacelo → Ultra review → Ship it" | Feature completa de principio a fin |
-| 9 | ✨ **ANIMACIÓN** | "Animá [componente]" | Agregar motion con propósito |
+| 9 | ✨ **ANIMACIÓN** | "Animá [componente]" | Agregar motion con propósito — la skill `animate` manda, con los tokens de `src/theme/animations.ts` |
 | 10 | 🧬 **CV** | [pegar texto de CV] | Generar ADN Digital |
 
 ---
@@ -26,7 +26,7 @@
 | # | Nombre | Pasos |
 |---|--------|-------|
 | 1 | 🏗️ **CONSTRUIR** | Office hours → Hacelo → Ultra review → Ship it |
-| 2 | 🎨 **EMBELLECER** | Impeccable → Animá → Ultra review → Ship it |
+| 2 | 🎨 **EMBELLECER** | Dato (ui-ux-pro-max) → Filtro (DESIGN.md) → Impeccable → Animá → Ultra review → Ship it |
 | 3 | 🐛 **REPARAR** | Superpowers → Hacelo → Ultra review → Ship it |
 | 4 | 🔒 **BLINDAR** | Office hours → Hacelo con cuidado → Security → Ultra review → Ship it |
 | 5 | 🚀 **LANZAR** | Ultra review → Security → Checklist → Ship it |
@@ -61,6 +61,7 @@
 
 ## Reglas de ejecución
 
+0. Todo combo o cadena de **diseño** (DISEÑAR, ANIMACIÓN, EMBELLECER, COMPLETO) pasa por [`pipeline-diseno.md`](pipeline-diseno.md): quién decide qué, el orden de conflicto, y qué es no negociable. `DESIGN.md` y `PRODUCT.md` en la raíz son la ley visual — ui-ux-pro-max y taste-skill son insumo, no veredicto.
 1. Cuando el usuario dice un **nombre de combo** (ej: "HACER: botón de logout"), ejecutar directamente.
 2. Cuando el usuario dice un **nombre de cadena** (ej: "CONSTRUIR: sistema de pagos"), ejecutar paso a paso esperando confirmación entre cada paso.
 3. Los combos directos son de **un solo paso**. Las cadenas son **multi-paso secuencial**.
