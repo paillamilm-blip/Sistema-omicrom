@@ -26,6 +26,7 @@ import { DashboardVivo } from '@/features/gemelo/components/DashboardVivo';
 import { PushPermissionBanner } from '@/shared/components/PushPermissionBanner';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { bandDisplayFor } from '@/features/omicron/utils/nodeUnlock';
+import { RedVivaHome } from '@/features/redviva/components/RedVivaHome';
 
 // ── Ejes del Gemelo. El color del eje "Ejecución" se sustituye por el color del usuario en runtime. ──
 const AXIS_META = [
@@ -229,6 +230,20 @@ export function GemeloTab() {
 
       {/* ═══ SEPARADOR ═══ */}
       <div style={{ width: '100%', padding: '16px 24px 8px', flexShrink: 0 }}>
+        <div style={{ height: 1, background: C.line, borderRadius: 1 }} />
+      </div>
+
+      {/* ═══ RED VIVA: lo declarado vs. lo probado, y la plata que falta ═══
+          Cada nodo es un dato con nombre: hueco = lo dijo tu CV, sólido = está
+          probado, ámbar = el mercado lo paga y no lo tenés. Ver
+          .tasks/red-viva-plan.md. Se monta acá (dentro del Gemelo) a propósito:
+          promoverla al centro del home implica reemplazar la navegación, que
+          hoy vive en los nodos del orbe — eso es un incremento aparte. */}
+      <div style={{ width: '100%', padding: '0 16px 8px', flexShrink: 0 }}>
+        <RedVivaHome onAbrirTab={(tab) => setActiveTab(tab as Parameters<typeof setActiveTab>[0])} />
+      </div>
+
+      <div style={{ width: '100%', padding: '8px 24px', flexShrink: 0 }}>
         <div style={{ height: 1, background: C.line, borderRadius: 1 }} />
       </div>
 
