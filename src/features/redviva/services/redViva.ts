@@ -85,6 +85,12 @@ export interface NodoRed {
   /** Posición en el círculo unitario (-1..1). Determinista. */
   x: number;
   y: number;
+  /**
+   * Ángulo en radianes de su carril radial. La etiqueta se dibuja rotada sobre
+   * este ángulo: es lo que permite que 12 nombres quepan alrededor sin pisarse
+   * (con anillos concéntricos y texto horizontal no caben, medido en pantalla).
+   */
+  angulo: number;
   /** Radio relativo (0..1) — proporcional a la afirmación, la prueba o la demanda. */
   r: number;
   /** 0 = núcleo (probado), 1 = frontera (declarado), 2 = ausente (lo pide el mercado). */
@@ -180,23 +186,31 @@ function ringPosition(
   total: number,
   radius: number,
   seed: string,
-): { x: number; y: number } {
+  options?: { faseMedioPaso?: boolean; sinJitter?: boolean },
+): { x: number; y: number; angulo: number } {
   const step = total > 0 ? (Math.PI * 2) / total : 0;
-  const jitter = (hash01(seed) - 0.5) * step * 0.42;
+  // El jitter se apaga cuando el ángulo tiene que ser exacto: si la etiqueta va
+  // rotada sobre su carril, mover el ángulo desalinea el texto de su nodo.
+  const jitter = options?.sinJitter ? 0 : (hash01(seed) - 0.5) * step * 0.42;
+  // Media fase de desfase: sirve para que un anillo no comparta ángulos con otro.
+  const fase = options?.faseMedioPaso ? step / 2 : 0;
   // -Math.PI/2 arranca arriba (12 en punto), que se lee mejor.
-  const angle = -Math.PI / 2 + index * step + jitter;
-  const rr = radius * (0.94 + hash01(seed + '·r') * 0.12);
-  return { x: Math.cos(angle) * rr, y: Math.sin(angle) * rr };
+  const angulo = -Math.PI / 2 + index * step + fase + jitter;
+  const rr = options?.sinJitter ? radius : radius * (0.94 + hash01(seed + '·r') * 0.12);
+  return { x: Math.cos(angulo) * rr, y: Math.sin(angulo) * rr, angulo };
 }
 
 // ══════════════════════════════════════════════════════════════════════
 // CONSTRUCCIÓN DEL MODELO
 // ══════════════════════════════════════════════════════════════════════
 
-const RADIO_NUCLEO = 0.36;
-const RADIO_FRONTERA = 0.66;
-const RADIO_AUSENTE = 0.92;
-const RADIO_OPORTUNIDAD = 1.34;
+// Radios de cada anillo. La distancia al centro ES el significado: cuanto más
+// adentro, más demostrado. Medidos en pantalla (390px de ancho) para que las
+// etiquetas rotadas tengan carril suficiente y no se pisen.
+const RADIO_NUCLEO = 0.42;      // probado
+const RADIO_FRONTERA = 0.64;    // declarado, sin comprobar
+const RADIO_AUSENTE = 0.92;     // lo que el mercado paga y no tenés
+const RADIO_OPORTUNIDAD = 1.28; // la plata (deja lugar para su etiqueta)
 
 /** Cuántas piezas faltantes se dibujan. Más que esto es ruido, no información. */
 const MAX_AUSENTES = 6;
@@ -275,13 +289,21 @@ export function buildRedViva(input: BuildRedVivaInput): RedVivaModel {
   //       piezas que faltan para alcanzarlas TAMBIÉN son nodos) ─────────────
   const cercanas = gapsRanked.filter((g) => g.missing.length > 0).slice(0, 3);
 
+  // Las oportunidades van en RANURAS FIJAS separadas 120°, no repartidas por el
+  // anillo. Su etiqueta es larga (título del empleo + sueldo), así que si dos
+  // caen cerca, o si una cae en el carril de una habilidad ausente, los textos se
+  // montan uno sobre otro — se vio en pantalla: "Gere Liderazgo racio…".
+  // Con 3 ranuras a 120° eso no puede pasar.
+  const RANURAS = [
+    -Math.PI / 2,       // arriba
+    Math.PI / 6,        // abajo a la derecha
+    (5 * Math.PI) / 6,  // abajo a la izquierda
+  ];
+
   const oportunidades: NodoOportunidad[] = cercanas.map((gap, i) => {
-    const { x, y } = ringPosition(
-      i,
-      Math.max(cercanas.length, 3),
-      RADIO_OPORTUNIDAD,
-      gap.job.id,
-    );
+    const angulo = RANURAS[i % RANURAS.length];
+    const x = Math.cos(angulo) * RADIO_OPORTUNIDAD;
+    const y = Math.sin(angulo) * RADIO_OPORTUNIDAD;
     return {
       id: gap.job.id,
       label: gap.job.title,
@@ -362,7 +384,12 @@ export function buildRedViva(input: BuildRedVivaInput): RedVivaModel {
       radio = anillo === 0 ? RADIO_NUCLEO : RADIO_FRONTERA;
     }
 
-    const { x, y } = ringPosition(index, total, radio, key);
+    // Sin jitter: la etiqueta se dibuja rotada sobre este mismo ángulo, así que
+    // moverlo al azar desalinearía el texto de su nodo.
+    const { x, y, angulo } = ringPosition(index, total, radio, key, {
+      sinJitter: true,
+      faseMedioPaso: anillo === 2,
+    });
 
     nodos.push({
       id: key,
@@ -375,13 +402,23 @@ export function buildRedViva(input: BuildRedVivaInput): RedVivaModel {
       unlocks,
       x,
       y,
-      r: 0.36 + Math.max(0, Math.min(100, base)) / 100 * 0.64,
+      angulo,
+      // Rango ancho a propósito: con 0.36–1.0 la diferencia entre 45/100 y 95/100
+      // quedaba en 1.7px, o sea invisible. El tamaño tiene que decir algo o no
+      // vale la pena calcularlo.
+      r: 0.22 + Math.max(0, Math.min(100, base)) / 100 * 0.78,
       anillo,
     });
   };
 
-  solidasKeys.forEach((key, i) => empujar(key, 0, i, solidasKeys.length));
-  huecasKeys.forEach((key, i) => empujar(key, 1, i, huecasKeys.length));
+  // UNA sola secuencia angular para TODAS tus habilidades: ningún par comparte
+  // ángulo, así cada etiqueta tiene su propio carril radial y caben las 12.
+  // El anillo (la distancia al centro) lo decide el ESTADO, no el orden — por eso
+  // probar una habilidad la hace viajar en línea recta hacia el centro, sin que
+  // se mueva ninguna otra.
+  todasLasClaves.forEach((key, i) => {
+    empujar(key, pruebas.has(key) ? 0 : 1, i, todasLasClaves.length);
+  });
   ausentesKeys.forEach((key, i) => empujar(key, 2, i, ausentesKeys.length));
 
   // ── 5. Aristas ────────────────────────────────────────────────────────

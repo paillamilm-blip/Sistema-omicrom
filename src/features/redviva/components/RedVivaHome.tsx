@@ -15,6 +15,7 @@
 // cualquiera de los dos resalta en ambos. Nada de información escondida.
 
 import { useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { C, FONT, SIZE, RADIUS, BORDER } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { useUserColor } from '@/shared/hooks/useUserColor';
@@ -111,6 +112,13 @@ export function RedVivaHome({ onAbrirTab }: RedVivaHomeProps) {
         seleccionado={seleccionado}
         onSelect={(n) => setSeleccionado(n.id === seleccionado ? null : n.id)}
       />
+
+      {/* ── Leyenda: enseña la gramática en dos segundos ──────────────────
+          Sin esto, los círculos son decoración — que es exactamente el pecado
+          del orbe que reemplaza. No se etiqueta cada nodo (12 nombres no caben
+          en 320px sin pisarse): se explica el lenguaje una vez y la lista de
+          abajo da todos los nombres. */}
+      {!model.vacia ? <Leyenda userColor={uc} hayAusentes={model.totales.ausentes > 0} /> : null}
 
       {/* ── 3. La jugada ─────────────────────────────────────────────── */}
       {model.jugada && nodoJugada ? (
@@ -212,6 +220,46 @@ export function RedVivaHome({ onAbrirTab }: RedVivaHomeProps) {
         </section>
       ))}
     </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// Leyenda del mapa
+// ══════════════════════════════════════════════════════════════════════
+function Leyenda({ userColor, hayAusentes }: { userColor: string; hayAusentes: boolean }) {
+  const items: { estilo: CSSProperties; texto: string }[] = [
+    { estilo: { background: userColor, border: `1.5px solid ${userColor}` }, texto: 'probado' },
+    { estilo: { background: 'transparent', border: `1.5px solid ${userColor}`, opacity: 0.65 }, texto: 'solo declarado' },
+  ];
+  if (hayAusentes) {
+    items.push({
+      estilo: { background: 'transparent', border: `1.5px dashed ${C.gold}` },
+      texto: 'te falta',
+    });
+  }
+
+  return (
+    <ul
+      style={{
+        listStyle: 'none',
+        margin: 0,
+        padding: 0,
+        display: 'flex',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        gap: 14,
+      }}
+    >
+      {items.map((it) => (
+        <li key={it.texto} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span
+            aria-hidden="true"
+            style={{ width: 9, height: 9, borderRadius: '50%', flexShrink: 0, ...it.estilo }}
+          />
+          <span style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut }}>{it.texto}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 

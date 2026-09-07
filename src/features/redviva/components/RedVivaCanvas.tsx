@@ -115,6 +115,29 @@ export function RedVivaCanvas({
       )?.id ?? null
     : null;
 
+  // ── El viewBox se ajusta al contenido ────────────────────────────────
+  // Con un viewBox fijo, un usuario nuevo con 3 habilidades quedaba con tres
+  // circulitos perdidos en una caja enorme (se vio en pantalla). Ahora el encuadre
+  // se cierra cuando hay poco y se abre cuando aparecen oportunidades.
+  //
+  // El margen es chico a propósito: las etiquetas se dibujan FUERA del viewBox
+  // (overflow visible). Si se agrandara el viewBox para contenerlas, todo el
+  // dibujo se haría más chico — justo lo contrario de lo que se busca.
+  const radioContenido = Math.max(
+    50,
+    ...model.nodos.map((n) => Math.hypot(n.x, n.y) * K),
+    ...model.oportunidades.map((o) => Math.hypot(o.x, o.y) * K),
+  );
+  const hayEtiquetas = model.oportunidades.length > 0 || model.totales.ausentes > 0;
+  const margen = hayEtiquetas ? 37 : 12;
+  const medio = radioContenido + margen;
+
+  // Cuántos nodos comparten cada sistema angular. Tus habilidades (probadas y
+  // declaradas) comparten UNA sola secuencia, así que el cupo por slot lo marca
+  // el total, no cuántas hay en cada anillo.
+  const cantidadPropias = Math.max(1, model.nodos.filter((n) => n.anillo !== 2).length);
+  const cantidadAusentes = Math.max(1, model.nodos.filter((n) => n.anillo === 2).length);
+
   const resumenAria =
     model.totales.declaradas === 0
       ? 'Red vacía: todavía no hay habilidades.'
@@ -135,7 +158,7 @@ export function RedVivaCanvas({
       }}
     >
       <svg
-        viewBox="-168 -152 336 304"
+        viewBox={`${-medio} ${-medio} ${medio * 2} ${medio * 2}`}
         width="100%"
         height="100%"
         role="img"
@@ -157,15 +180,18 @@ export function RedVivaCanvas({
           </filter>
         </defs>
 
-        {/* ── Anillos guía: dan a entender que "adentro" es mejor ────────── */}
-        {[36, 66, 92].map((r) => (
+        {/* ── Anillos guía: hacen legible que "adentro" es mejor ──────────
+            Coinciden con los radios de redViva.ts (0.42 / 0.64 / 0.92 × 100).
+            El de 92 (la órbita de lo que te falta) solo se dibuja si hay algo
+            ahí: si no, queda un arco cortado en las esquinas sin significado. */}
+        {[42, 64, ...(model.totales.ausentes > 0 ? [92] : [])].map((r) => (
           <circle
             key={r}
             cx={0}
             cy={0}
             r={r}
             fill="none"
-            stroke={r === 92 ? alpha(C.gold, 0.1) : alpha(uc, 0.07)}
+            stroke={r === 92 ? alpha(C.gold, 0.16) : alpha(uc, 0.08)}
             strokeWidth={0.6}
             strokeDasharray={r === 92 ? '2 4' : undefined}
           />
@@ -243,46 +269,77 @@ export function RedVivaCanvas({
         </text>
         <text
           x={0}
-          y={9}
+          y={9.5}
           textAnchor="middle"
-          style={{ fontFamily: FONT.mono, fontSize: 6, fill: C.mut, letterSpacing: 0.4 }}
+          style={{ fontFamily: FONT.mono, fontSize: 7, fill: alpha(uc, 0.75), letterSpacing: 0.4 }}
         >
           /100
         </text>
 
-        {/* ── Oportunidades: la plata, en ámbar ──────────────────────────── */}
+        {/* ── Oportunidades: la plata, en ámbar ────────────────────────────
+            La etiqueta se ancla hacia ADENTRO cuando el rombo está cerca del
+            borde, para que un título largo no se corte (antes se leía
+            "Gerente de Ope…" pegado al margen). */}
         {model.oportunidades.map((op) => {
           const x = op.x * K;
           const y = op.y * K;
-          const derecha = x >= 0;
+
+          // La etiqueta va CENTRADA y desplazada hacia afuera, no al costado.
+          // Al costado barría ~90 unidades en horizontal y se montaba sobre el
+          // carril vecino. Centrada, su alcance se parte al medio y se aleja de
+          // la red. El eje X se recorta para que no se salga del viewBox.
+          const largo = Math.hypot(x, y) || 1;
+          const ux = x / largo;
+          const uy = y / largo;
+          const haciaArriba = uy < -0.3;
+
+          const cx = Math.max(-124, Math.min(124, x + ux * 8));
+          // El título SIEMPRE arriba del sueldo: el bloque entero se corre hacia
+          // afuera, pero el orden de lectura no se invierte.
+          const yTitulo = haciaArriba ? y + uy * 8 - 17 : y + uy * 8 + 12;
+          const yPago = yTitulo + 9;
+
+          const halo = {
+            paintOrder: 'stroke' as const,
+            stroke: C.bg,
+            strokeWidth: 2.8,
+            strokeLinejoin: 'round' as const,
+          };
+
           return (
             <g key={op.id}>
               <rect
-                x={x - 4}
-                y={y - 4}
-                width={8}
-                height={8}
+                x={x - 4.5}
+                y={y - 4.5}
+                width={9}
+                height={9}
                 transform={`rotate(45 ${x} ${y})`}
-                fill={alpha(C.gold, 0.18)}
+                fill={alpha(C.gold, 0.22)}
                 stroke={C.gold}
-                strokeWidth={1}
+                strokeWidth={1.1}
               />
               <text
-                x={derecha ? x + 8 : x - 8}
-                y={y - 1}
-                textAnchor={derecha ? 'start' : 'end'}
-                style={{ fontFamily: FONT.body, fontSize: 8, fontWeight: 600, fill: C.gold }}
+                x={cx}
+                y={yTitulo}
+                textAnchor="middle"
+                style={{
+                  fontFamily: FONT.body,
+                  fontSize: 8.5,
+                  fontWeight: 700,
+                  fill: C.gold,
+                  ...halo,
+                }}
               >
-                {corto(op.label, 15)}
+                {corto(op.label, 22)}
               </text>
               {op.payLabel ? (
                 <text
-                  x={derecha ? x + 8 : x - 8}
-                  y={y + 7}
-                  textAnchor={derecha ? 'start' : 'end'}
-                  style={{ fontFamily: FONT.mono, fontSize: 7, fill: alpha(C.gold, 0.72) }}
+                  x={cx}
+                  y={yPago}
+                  textAnchor="middle"
+                  style={{ fontFamily: FONT.mono, fontSize: 8, fill: C.gold, ...halo }}
                 >
-                  {corto(op.payLabel, 14)}
+                  {corto(op.payLabel, 16)}
                 </text>
               ) : null}
             </g>
@@ -293,10 +350,21 @@ export function RedVivaCanvas({
         {model.nodos.map((n) => {
           const x = n.x * K;
           const y = n.y * K;
-          const r = 4.6 + n.r * 5.4;
+
+          // Techo de radio según el lugar que hay en el anillo. Sin esto, con 20
+          // habilidades los círculos quedaban exactamente tangentes: 42px de cupo
+          // por slot y 41px de diámetro (se vio en pantalla). El 0.40 deja ~20 %
+          // de aire entre vecinos.
+          const radioAnillo = n.anillo === 0 ? 42 : n.anillo === 1 ? 64 : 92;
+          const vecinos = n.anillo === 2 ? cantidadAusentes : cantidadPropias;
+          const cupo = ((Math.PI * 2) / vecinos) * radioAnillo * 0.4;
+          const r = Math.min(4.6 + n.r * 5.4, Math.max(3.4, cupo));
           const activo = seleccionado === n.id;
-          const mostrarEtiqueta = activo || n.id === jugadaId;
           const esMercado = n.estado === 'ausente';
+          // Se etiqueta lo ACCIONABLE: lo que te falta (siempre pocos), la jugada
+          // recomendada y lo que estás mirando. Los 12 nombres de tus habilidades
+          // no van acá: no caben sin pisarse, y la lista de abajo los da todos.
+          const mostrarEtiqueta = activo || n.id === jugadaId || esMercado;
           const base = esMercado ? C.gold : uc;
           const derecha = x >= 0;
 
@@ -309,67 +377,71 @@ export function RedVivaCanvas({
               {/* Área de toque generosa e invisible */}
               <circle cx={x} cy={y} r={Math.max(r + 8, 13)} fill="transparent" />
 
+              {/* Selección: anillo exterior amplio, para que no se confunda con
+                  el estado del nodo (antes el nodo "latiendo" parecía elegido). */}
               {activo ? (
-                <circle cx={x} cy={y} r={r + 5} fill="none" stroke={alpha(base, 0.5)} strokeWidth={1} />
+                <circle cx={x} cy={y} r={r + 6} fill="none" stroke={alpha(base, 0.55)} strokeWidth={1.2} />
               ) : null}
 
               {n.estado === 'solido' ? (
-                // PROBADO: relleno, con tu color. Lo único que se ve "macizo".
+                // PROBADO: macizo y con brillo. Tiene que ser, sin discusión, lo
+                // más fuerte de la pantalla: es lo único demostrado.
                 <circle
                   cx={x}
                   cy={y}
                   r={r}
                   fill={base}
-                  stroke={alpha(base, 0.9)}
-                  strokeWidth={0.8}
+                  stroke={base}
+                  strokeWidth={1.2}
                   filter="url(#omi-rv-glow)"
                 />
               ) : n.estado === 'latiendo' ? (
-                // EN PRUEBA AHORA: relleno parcial que respira.
+                // EN PRUEBA AHORA: aro fino + corazón que respira. Se lee "en
+                // camino", nunca más fuerte que un probado.
                 <>
-                  <circle cx={x} cy={y} r={r} fill="none" stroke={base} strokeWidth={1.4} />
-                  <circle className="omi-rv-latido" cx={x} cy={y} r={r * 0.55} fill={base} />
+                  <circle cx={x} cy={y} r={r} fill="none" stroke={alpha(base, 0.7)} strokeWidth={1} />
+                  <circle className="omi-rv-latido" cx={x} cy={y} r={r * 0.5} fill={base} />
                 </>
               ) : n.estado === 'ausente' ? (
-                // LO PIDE EL MERCADO Y NO LO TENÉS: punteado ámbar.
+                // LO PIDE EL MERCADO Y NO LO TENÉS: punteado ámbar, sin relleno.
                 <circle
                   cx={x}
                   cy={y}
                   r={r}
-                  fill={alpha(C.gold, 0.07)}
-                  stroke={alpha(C.gold, 0.8)}
-                  strokeWidth={1.1}
+                  fill={alpha(C.gold, 0.1)}
+                  stroke={C.gold}
+                  strokeWidth={1.2}
                   strokeDasharray="2.5 2.5"
                 />
               ) : (
-                // DECLARADO SIN PROBAR: contorno fino, hueco. Es una afirmación.
+                // DECLARADO SIN PROBAR: hueco. Es una afirmación, y se ve como tal.
                 <circle
                   cx={x}
                   cy={y}
                   r={r}
                   fill="none"
-                  stroke={alpha(base, 0.46)}
-                  strokeWidth={1}
+                  stroke={alpha(base, 0.55)}
+                  strokeWidth={1.1}
                 />
               )}
 
               {mostrarEtiqueta ? (
                 <text
-                  x={derecha ? x + r + 4 : x - r - 4}
+                  x={derecha ? x + r + 5 : x - r - 5}
                   y={y + 3}
                   textAnchor={derecha ? 'start' : 'end'}
                   style={{
                     fontFamily: FONT.body,
-                    fontSize: 8.5,
-                    fontWeight: 600,
+                    fontSize: 9,
+                    fontWeight: 700,
                     fill: esMercado ? C.gold : C.ink,
                     paintOrder: 'stroke',
                     stroke: C.bg,
-                    strokeWidth: 2.4,
+                    strokeWidth: 2.8,
                     strokeLinejoin: 'round',
                   }}
                 >
-                  {corto(n.label)}
+                  {corto(n.label, 18)}
                 </text>
               ) : null}
             </g>
