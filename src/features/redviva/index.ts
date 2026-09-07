@@ -11,6 +11,7 @@ export { useProbarHabilidad } from './hooks/useProbarHabilidad';
 export {
   asegurarNodoDeExamen,
   pedirExamen,
+  tomarExamenPendiente,
   validarTitulo,
   normalizarTitulo,
 } from './services/examenSkill';

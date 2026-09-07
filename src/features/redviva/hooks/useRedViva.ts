@@ -24,6 +24,13 @@ import type { RealJob } from '../services/gapEngine';
 const SIN_TABLA = Symbol('sin-tabla-de-pruebas');
 type ProofsResult = SkillProof[] | typeof SIN_TABLA;
 
+// Constantes estables para los casos vacíos. Si acá se escribiera `?? []`, cada
+// render crearía un array NUEVO, las dependencias del useMemo cambiarían siempre y
+// la red se reconstruiría en cada render (ESLint lo marca con react-hooks/
+// exhaustive-deps). Con una referencia fija, el useMemo sirve de verdad.
+const SIN_PRUEBAS: SkillProof[] = [];
+const SIN_EMPLEOS: RealJob[] = [];
+
 export interface RedVivaState {
   model: RedVivaModel;
   isLoading: boolean;
@@ -97,9 +104,16 @@ export function useRedViva(): RedVivaState {
 
   const proofsData = proofsQuery.data;
   const pruebasDisponibles = proofsData !== SIN_TABLA && proofsData !== undefined;
-  const proofs: SkillProof[] = Array.isArray(proofsData) ? proofsData : [];
 
-  const jobs = (jobsQuery.data ?? []) as unknown as RealJob[];
+  const proofs = useMemo<SkillProof[]>(
+    () => (Array.isArray(proofsData) ? proofsData : SIN_PRUEBAS),
+    [proofsData],
+  );
+
+  const jobs = useMemo<RealJob[]>(
+    () => (jobsQuery.data ?? SIN_EMPLEOS) as unknown as RealJob[],
+    [jobsQuery.data],
+  );
 
   const model = useMemo(
     () =>
@@ -109,8 +123,8 @@ export function useRedViva(): RedVivaState {
         proofs,
         jobs,
       }),
-    // Se depende de las referencias de datos, no de objetos recreados en cada
-    // render: profile viene memorizado del contexto.
+    // Todas las dependencias son referencias estables: profile viene memorizado
+    // del contexto, y proofs/jobs están memorizados arriba.
     [profile?.skills_detail, profile?.skills, proofs, jobs],
   );
 

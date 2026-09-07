@@ -17,7 +17,7 @@ import {
   Loader2, MessageCircle,
 } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
-import { asegurarNodoDeExamen } from '@/features/redviva/services/examenSkill';
+import { asegurarNodoDeExamen, tomarExamenPendiente } from '@/features/redviva/services/examenSkill';
 import { C, FONT, RADIUS } from '@/theme';
 import {
   oc, OmicronHeader, OmicronCard, ProgressBar,
@@ -182,12 +182,25 @@ export function MaxSkillTab() {
     toast(r.error, 'info');
   }, [toast]);
 
-  // La Red Viva pide probar una habilidad concreta: llega el uuid REAL del
-  // catálogo (ya verificado por useExamenDisponible), así que el examen corre.
+  // La Red Viva pide probar una habilidad concreta, con el uuid REAL del nodo.
+  //
+  // Se atiende por DOS vías a propósito:
+  //   • Al MONTAR: el pedido llega desde otra pantalla (el Gemelo), así que el
+  //     evento ya se disparó antes de que esta pestaña existiera. El puente en
+  //     sessionStorage es el que hace que no se pierda — mismo aprendizaje que el
+  //     bug del CV del PR #320.
+  //   • Por EVENTO: si esta pestaña ya estaba montada, el examen abre al instante.
   useEffect(() => {
+    const pendiente = tomarExamenPendiente();
+    if (pendiente) {
+      setExamNode(makeCatalogNode(pendiente.nodeId, pendiente.titulo || 'Habilidad'));
+    }
+
     const abrirExamen = (e: Event) => {
       const detail = (e as CustomEvent<{ nodeId?: string; titulo?: string }>).detail;
       if (!detail?.nodeId) return;
+      // Consume el puente para que el examen no se reabra en el próximo montaje.
+      tomarExamenPendiente();
       setExamNode(makeCatalogNode(detail.nodeId, detail.titulo || 'Habilidad'));
     };
     window.addEventListener('omicron:probar-skill', abrirExamen);
