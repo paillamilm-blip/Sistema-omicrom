@@ -7,7 +7,7 @@
 // Ruta de Mejora (Coach IA), y Examen integrado por skill.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useToast } from '@/shared/components/Toast';
@@ -17,6 +17,7 @@ import {
   Loader2, MessageCircle,
 } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
+import { asegurarNodoDeExamen, tomarExamenPendiente } from '@/features/redviva/services/examenSkill';
 import { C, FONT, RADIUS } from '@/theme';
 import {
   oc, OmicronHeader, OmicronCard, ProgressBar,
@@ -78,7 +79,17 @@ function detectSoftSkills(cvSummary: string, skills: string[]): { name: string; 
   return detected.sort((a, b) => b.confidence - a.confidence);
 }
 
-/** Crea un SkillTreeNode virtual para que UniversalSimulator funcione */
+/**
+ * Crea un SkillTreeNode virtual para que UniversalSimulator funcione.
+ *
+ * ⚠️ LIMITACIÓN CONOCIDA: el id 'virtual-*' NO existe en la tabla
+ * skill_tree_nodes, y la Edge Function simulador-universal lo busca ahí
+ * (`.eq('id', nodeId)` sobre una columna uuid) → responde 404 'Nodo no
+ * encontrado'. O sea: examinar una habilidad arbitraria del CV todavía no
+ * funciona de punta a punta. Ver Inc 5 en .tasks/red-viva-plan.md.
+ * Por eso la Red Viva solo ofrece "Probarla ahora" cuando la habilidad SÍ existe
+ * en el catálogo (ver useExamenDisponible) y entra por makeCatalogNode.
+ */
 function makeVirtualNode(skillName: string): SkillTreeNode {
   return {
     id: `virtual-${skillName.toLowerCase().replace(/\s+/g, '-')}`,
@@ -94,6 +105,15 @@ function makeVirtualNode(skillName: string): SkillTreeNode {
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
+}
+
+/**
+ * Nodo de examen que SÍ existe en el catálogo: mismo molde que el virtual pero
+ * con el uuid real, así la Edge Function lo encuentra y el examen corre de
+ * verdad. Lo usa la Red Viva al pedir "Probarla ahora".
+ */
+function makeCatalogNode(nodeId: string, titulo: string): SkillTreeNode {
+  return { ...makeVirtualNode(titulo), id: nodeId, title: titulo };
 }
 
 // ── Animaciones Framer Motion ────────────────────────────────────────
@@ -144,8 +164,47 @@ export function MaxSkillTab() {
     : 0;
 
   // ── Handlers ─────────────────────────────────────────────────────
-  const handleValidateSkill = useCallback((skillName: string) => {
-    setExamNode(makeVirtualNode(skillName));
+  // Validar una habilidad del CV: se consigue el uuid REAL del nodo (creándolo
+  // si no existe) para que la Edge Function del simulador lo encuentre. Antes acá
+  // se armaba un nodo 'virtual-*' que el backend rechazaba con 404, así que este
+  // botón no funcionaba para ninguna habilidad fuera del catálogo.
+  const handleValidateSkill = useCallback(async (skillName: string) => {
+    const r = await asegurarNodoDeExamen(skillName);
+    if (r.ok) {
+      setExamNode(makeCatalogNode(r.nodeId, r.titulo));
+      return;
+    }
+    if (r.rpcAusente) {
+      // Migración 10002 sin aplicar: se mantiene el comportamiento anterior.
+      setExamNode(makeVirtualNode(skillName));
+      return;
+    }
+    toast(r.error, 'info');
+  }, [toast]);
+
+  // La Red Viva pide probar una habilidad concreta, con el uuid REAL del nodo.
+  //
+  // Se atiende por DOS vías a propósito:
+  //   • Al MONTAR: el pedido llega desde otra pantalla (el Gemelo), así que el
+  //     evento ya se disparó antes de que esta pestaña existiera. El puente en
+  //     sessionStorage es el que hace que no se pierda — mismo aprendizaje que el
+  //     bug del CV del PR #320.
+  //   • Por EVENTO: si esta pestaña ya estaba montada, el examen abre al instante.
+  useEffect(() => {
+    const pendiente = tomarExamenPendiente();
+    if (pendiente) {
+      setExamNode(makeCatalogNode(pendiente.nodeId, pendiente.titulo || 'Habilidad'));
+    }
+
+    const abrirExamen = (e: Event) => {
+      const detail = (e as CustomEvent<{ nodeId?: string; titulo?: string }>).detail;
+      if (!detail?.nodeId) return;
+      // Consume el puente para que el examen no se reabra en el próximo montaje.
+      tomarExamenPendiente();
+      setExamNode(makeCatalogNode(detail.nodeId, detail.titulo || 'Habilidad'));
+    };
+    window.addEventListener('omicron:probar-skill', abrirExamen);
+    return () => window.removeEventListener('omicron:probar-skill', abrirExamen);
   }, []);
 
   const handleAskCoach = useCallback(async () => {
@@ -325,7 +384,7 @@ export function MaxSkillTab() {
                               </div>
                               <button
                                 style={S.btnValidar}
-                                onClick={(e) => { e.stopPropagation(); handleValidateSkill(skill.name); }}
+                                onClick={(e) => { e.stopPropagation(); void handleValidateSkill(skill.name); }}
                               >
                                 <Brain size={14} />
                                 Validar con Examen IA
@@ -462,7 +521,7 @@ export function MaxSkillTab() {
               style={S.btnRange}
               onClick={() => {
                 const topSkill = skillsDetail[0]?.name ?? 'General';
-                handleValidateSkill(topSkill);
+                void handleValidateSkill(topSkill);
               }}
             >
               <Brain size={15} /> Iniciar Examen de Rango
@@ -477,13 +536,25 @@ export function MaxSkillTab() {
         <UniversalSimulator
           node={examNode}
           onClose={() => setExamNode(null)}
-          onSuccess={async (_pe) => {
+          onSuccess={async (_pe, puntajeGlobal) => {
             // Sprint B: Exámenes alimentan el Gemelo Digital
             // Registrar éxito del examen → sube ejes de reputación
+            //
+            // EL SCORE ES REAL. Antes acá iba `p_score: 80` fijo, así que la
+            // escala del Fondo (300 tokens con 70 → 500 con 100) NUNCA se
+            // recorría: todos cobraban 366 y dominar pagaba igual que aprobar
+            // raspando. Ahora viaja el puntaje que devolvió el simulador.
+            // Si por algún motivo no llega, se usa 70: es lo único que el
+            // veredicto APROBADO garantiza, y es mejor quedarse corto que
+            // inventar un puntaje alto.
+            const puntajeReal = Number(puntajeGlobal);
+            const score = Number.isFinite(puntajeReal)
+              ? Math.max(0, Math.min(100, Math.round(puntajeReal)))
+              : 70;
             try {
               const { data } = await supabase.rpc('register_exam_success', {
                 p_skill: examNode.title || examNode.id,
-                p_score: 80, // El simulador aprueba con ≥70, asumimos 80 como base
+                p_score: score,
                 p_kind: 'mixed',
               });
               // FONDO DE CONOCIMIENTO: aprobar un examen puede PAGAR tokens

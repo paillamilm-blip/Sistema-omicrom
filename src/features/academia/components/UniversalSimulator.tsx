@@ -31,7 +31,13 @@ const DISP = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', syst
 interface Props {
   node: SkillTreeNode;
   onClose: () => void;
-  onSuccess: (peAwarded: number) => void;
+  /**
+   * @param peAwarded PE otorgados por el reto.
+   * @param puntajeGlobal Puntaje real 0-100 del examen. Se agrega para que quien
+   *   registre el examen pueda usar el score de verdad en vez de un valor fijo
+   *   (la recompensa del Fondo de Conocimiento escala con el puntaje).
+   */
+  onSuccess: (peAwarded: number, puntajeGlobal?: number) => void;
 }
 
 type Phase = 'loading' | 'reto' | 'defensa' | 'evaluando' | 'resultado' | 'error';
@@ -142,7 +148,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
       if (error || data?.error || !data?.ejes) { setErrMsg(data?.error || 'Error al evaluar.'); setPhase('error'); return; }
       setResultado({ ...data, pe_awarded: data.pe_awarded ?? 0 });
       setPhase('resultado');
-      if (data.veredicto === 'APROBADO') onSuccess(data.pe_awarded ?? 0);
+      if (data.veredicto === 'APROBADO') onSuccess(data.pe_awarded ?? 0, data.puntaje_global);
     } catch { setErrMsg('Error de conexión.'); setPhase('error'); }
   }, [sessionId, respuestas, casoRespuesta, defensaRespuesta, stopTimer, onSuccess]);
 
