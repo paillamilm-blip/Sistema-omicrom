@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { X, Copy, ExternalLink, Sparkles, CheckCircle2, FileText } from 'lucide-react';
 import { C as T, FONT as TF } from '@/theme';
 import { useProfile } from '@/store/ProfileContext';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { generarCartaPostulacion, type CartaResult } from '@/features/empleos/services/postulacion';
 
 const C = {
@@ -33,6 +34,7 @@ interface Props {
 
 export function CartaPostulacionModal({ job, onClose, onApplyDone }: Props) {
   const { profile } = useProfile();
+  const uc = useUserColor();
   const [state, setState] = useState<'generating' | 'ready' | 'error'>('generating');
   const [carta, setCarta] = useState<CartaResult | null>(null);
   const [copied, setCopied] = useState(false);
@@ -103,7 +105,7 @@ export function CartaPostulacionModal({ job, onClose, onApplyDone }: Props) {
         <div style={styles.header}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={16} style={{ color: C.gold }} />
-            <span style={{ fontFamily: FM, fontSize: 11, color: C.cyanHi, letterSpacing: 1.5 }}>
+            <span style={{ fontFamily: FM, fontSize: 11, color: uc, letterSpacing: 1.5 }}>
               POSTULA CON TU GEMELO
             </span>
           </div>
@@ -137,7 +139,7 @@ export function CartaPostulacionModal({ job, onClose, onApplyDone }: Props) {
             <p style={{ fontFamily: FM, fontSize: 11, color: '#ff5c7a', marginBottom: 12 }}>
               No se pudo generar la carta. Puedes postular directamente.
             </p>
-            <button onClick={openAndApply} style={styles.primaryBtn}>
+            <button onClick={openAndApply} style={{ ...styles.primaryBtn, background: `linear-gradient(135deg, ${uc}, #008b9e)` }}>
               <ExternalLink size={13} /> Postular sin carta
             </button>
           </div>
@@ -185,11 +187,11 @@ export function CartaPostulacionModal({ job, onClose, onApplyDone }: Props) {
             {/* Acciones */}
             <div style={styles.actions}>
               {job.external_url ? (
-                <button onClick={openAndApply} style={styles.primaryBtn}>
+                <button onClick={openAndApply} style={{ ...styles.primaryBtn, background: `linear-gradient(135deg, ${uc}, #008b9e)` }}>
                   <ExternalLink size={13} /> Abrir postulación
                 </button>
               ) : (
-                <button onClick={() => { onApplyDone(); onClose(); }} style={styles.primaryBtn}>
+                <button onClick={() => { onApplyDone(); onClose(); }} style={{ ...styles.primaryBtn, background: `linear-gradient(135deg, ${uc}, #008b9e)` }}>
                   <CheckCircle2 size={13} /> Marcar como aplicado
                 </button>
               )}

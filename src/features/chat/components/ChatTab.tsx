@@ -8,6 +8,7 @@ import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { useToast } from '@/shared/components/Toast';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
 import { sendSecureMessage, loadSecureMessages } from '@/features/chat/services/secureChat';
 import { DirectChatModal } from '@/features/gemelo/components/RedSocial';
@@ -170,6 +171,7 @@ function NewMessagePicker({ onPick, onClose }: { onPick: (c: Conn) => void; onCl
 
 export function ChatTab() {
   const { profile, setActiveTab } = useApp();
+  const uc = useUserColor();
   const { toast } = useToast();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [dmConvos, setDmConvos] = useState<DMConvo[]>([]);
@@ -536,8 +538,8 @@ export function ChatTab() {
           const own = m.sender_id === profile?.id;
           return (
             <div key={`${m.id}-${i}`} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
-              <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: C.cyanDim, marginBottom: 4 }}>{own ? 'TÚ' : `@${otherName(room)}`} · {fmt(m.created_at)}</span>
-              <div style={{ maxWidth: '85%', padding: '10px 14px', borderRadius: 12, background: own ? 'rgba(0,245,255,0.1)' : C.surface, border: `1px solid ${own ? C.cyanDim : C.cyanFaint}`, borderTopRightRadius: own ? 2 : 10, borderTopLeftRadius: own ? 10 : 2 }}>
+              <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: own ? uc : C.cyanDim, marginBottom: 4 }}>{own ? 'TÚ' : `@${otherName(room)}`} · {fmt(m.created_at)}</span>
+              <div style={{ maxWidth: '85%', padding: '10px 14px', borderRadius: 12, background: own ? `${uc}1a` : C.surface, border: `1px solid ${own ? `${uc}66` : C.cyanFaint}`, borderTopRightRadius: own ? 2 : 10, borderTopLeftRadius: own ? 10 : 2 }}>
                 <p style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontSize: 13, color: '#dbeafe', lineHeight: 1.45 }}>{m.content}</p>
               </div>
             </div>
@@ -553,7 +555,7 @@ export function ChatTab() {
           style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255, 176, 46,0.12)', border: `1px solid ${C.gold}55`, color: C.gold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || aiAssisting ? 0.4 : 1 }}>
           {aiAssisting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
         </button>
-        <button onClick={send} disabled={!input.trim() || sending} style={{ width: 44, height: 44, borderRadius: 12, background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
+        <button onClick={send} disabled={!input.trim() || sending} style={{ width: 44, height: 44, borderRadius: 12, background: `${uc}22`, border: `1px solid ${uc}66`, color: uc, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
           <Send size={16} />
         </button>
       </div>

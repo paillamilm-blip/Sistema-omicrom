@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT } from '@/theme';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 
 interface RankRow {
   user_id: string;
@@ -26,6 +27,7 @@ interface RawRow {
 
 export function LiveRanking() {
   const { profile } = useApp();
+  const uc = useUserColor();
   const [rows, setRows] = useState<RankRow[]>([]);
   const [pulse, setPulse] = useState(false);
   const reloadTimer = useRef<number | null>(null);
@@ -78,7 +80,7 @@ export function LiveRanking() {
               gap: 8,
               padding: '6px 6px',
               borderBottom: `1px solid ${C.cyanFaint}`,
-              background: isSelf ? 'rgba(255, 176, 46,0.08)' : 'transparent',
+              background: isSelf ? `${uc}16` : 'transparent',
               borderRadius: isSelf ? 8 : 0,
             }}
           >

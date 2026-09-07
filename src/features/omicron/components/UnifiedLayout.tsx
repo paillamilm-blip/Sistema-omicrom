@@ -6,6 +6,7 @@
 import { ReactNode } from 'react';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { C, FONT } from '@/theme';
 
 interface UnifiedLayoutProps {
@@ -26,6 +27,8 @@ export function UnifiedLayout({
   fullHeight = false,
 }: UnifiedLayoutProps) {
   const { setActiveTab } = useApp();
+  // Acento del botón "Volver" = color del usuario (su propia navegación).
+  const userColor = useUserColor();
 
   const handleBack = () => {
     if (onBack) {
@@ -46,7 +49,11 @@ export function UnifiedLayout({
         <div style={S.header}>
           <div style={S.headerContent}>
             {showBackButton && (
-              <button onClick={handleBack} style={S.backBtn} aria-label="Volver">
+              <button
+                onClick={handleBack}
+                style={{ ...S.backBtn, border: `1px solid ${userColor}`, color: userColor }}
+                aria-label="Volver"
+              >
                 <ArrowLeft size={18} />
               </button>
             )}
@@ -154,8 +161,8 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     background: 'rgba(160,174,192,0.1)',
-    border: `1px solid ${C.cyanDim}`,
-    color: C.cyan,
+    border: `1px solid ${C.line}`,
+    color: C.ink,
     cursor: 'pointer',
     transition: 'all 0.2s',
   },

@@ -14,6 +14,7 @@ import { askOmicron } from '@/features/omicron/services/brain';
 import { gemeloActions, getProfile, bestNextStep } from '@/features/gemelo/services/profile';
 import { speak } from '@/infrastructure/voice/engine';
 import { remember, inferPersonality, generateContextualGreeting } from '@/features/gemelo/services/memory';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { C, FONT } from '@/theme';
 
 type SpeechRecognitionCtor = new () => {
@@ -251,7 +252,9 @@ export function OraculoBar() {
     return () => { if (hideTimer.current) clearTimeout(hideTimer.current); };
   }, []);
 
-  const R = C.cyan;
+  // Acento = color del usuario: es su propia voz ("TÚ ▸") y su micrófono.
+  // El prefijo "ORÁCULO ▸" (la voz del sistema) se mantiene en C.gold.
+  const R = useUserColor();
 
   return (
     <div style={{ position: 'fixed', right: 14, bottom: 78, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
@@ -287,7 +290,7 @@ export function OraculoBar() {
             style={{
               width: 56, height: 56, borderRadius: '50%', cursor: 'pointer',
               display: 'grid', placeItems: 'center',
-              background: listening ? `${C.red}22` : 'linear-gradient(135deg, #a0aec0, #5e5ce6)',
+              background: listening ? `${C.red}22` : `linear-gradient(135deg, ${R}, #5e5ce6)`,
               border: `1px solid ${listening ? C.red : R}`,
               color: listening ? C.red : '#fff',
               boxShadow: listening ? `0 0 22px ${C.red}88` : `0 0 22px ${R}66`,
@@ -307,7 +310,7 @@ export function OraculoBar() {
           style={{
             width: 52, height: 52, borderRadius: '50%', cursor: 'pointer',
             display: 'grid', placeItems: 'center',
-            background: 'linear-gradient(135deg, #a0aec0, #5e5ce6)', border: `1px solid ${R}`,
+            background: `linear-gradient(135deg, ${R}, #5e5ce6)`, border: `1px solid ${R}`,
             color: '#fff', boxShadow: '0 10px 28px rgba(94,92,230,0.5)',
           }}
         >

@@ -38,6 +38,7 @@ function Bar({ pct, color }: { pct: number; color: string }) {
 // Tutor IA: gratis para siempre, sin candado Premium.
 function TutorModal({ lesson, onClose }: { lesson: { title: string; content: string }; onClose: () => void }) {
   const { profile } = useApp();
+  const uc = useUserColor();
   const [msgs, setMsgs] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -101,8 +102,8 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
               <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
                 <div style={{
                   maxWidth: '85%', padding: '10px 13px', borderRadius: 12,
-                  background: own ? 'rgba(160,174,192,0.12)' : `${C.gold}12`,
-                  border: `1px solid ${own ? C.cyanDim : C.gold + '40'}`,
+                  background: own ? `${uc}1f` : `${C.gold}12`,
+                  border: `1px solid ${own ? `${uc}66` : C.gold + '40'}`,
                   borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3,
                 }}>
                   <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: '#e6f1fb', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</p>
@@ -352,12 +353,12 @@ export function AcademiaTab() {
           <button onClick={() => setCoachOpen(true)} style={{
             width: '100%', textAlign: 'left', cursor: 'pointer',
             borderRadius: RADIUS.xl, padding: 16, marginBottom: 16, position: 'relative', overflow: 'hidden',
-            background: `linear-gradient(135deg, ${C.cyan}1a, ${C.gold}12)`,
-            border: `1px solid ${C.cyan}55`,
+            background: `linear-gradient(135deg, ${uc}1a, ${C.gold}12)`,
+            border: `1px solid ${uc}55`,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 13, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.cyan}18`, border: `1px solid ${C.cyan}55` }}>
-                <GraduationCap size={22} style={{ color: C.cyan }} />
+              <div style={{ width: 44, height: 44, borderRadius: 13, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${uc}18`, border: `1px solid ${uc}55` }}>
+                <GraduationCap size={22} style={{ color: uc }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Coach IA · ¿Qué estudio ahora?</div>
@@ -420,7 +421,7 @@ export function AcademiaTab() {
                   </div>
                 );
               })()}
-              <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyan, marginBottom: 12 }}>◆ NÚCLEO DE APRENDIZAJE</div>
+              <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: uc, marginBottom: 12 }}>◆ NÚCLEO DE APRENDIZAJE</div>
 
               {/* Sistema Solar del Aprendizaje · mismo Núcleo de partículas de toda la app (Ómicrom unificado) */}
               <div style={{ position: 'relative', width: 110, height: 110, margin: '0 auto 6px' }}
@@ -428,8 +429,8 @@ export function AcademiaTab() {
                 <GeodesicOrb size={110} nodes={totalAll && totalDone >= totalAll ? 42 : 12} color={uc} spinning={20} intensity={totalAll && totalDone >= totalAll ? 0.9 : 0.5} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <div style={{ textAlign: 'center', lineHeight: 1 }}>
-                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 8, color: C.cyan, letterSpacing: 2 }}>NÚCLEO</span>
-                    <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 32, color: '#ffffff', margin: '3px 0', textShadow: `0 0 18px ${C.cyan}` }}>{totalAll ? Math.round((totalDone / totalAll) * 100) : 0}%</span>
+                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 8, color: uc, letterSpacing: 2 }}>NÚCLEO</span>
+                    <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 32, color: '#ffffff', margin: '3px 0', textShadow: `0 0 18px ${uc}` }}>{totalAll ? Math.round((totalDone / totalAll) * 100) : 0}%</span>
                     <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 7.5, color: 'rgba(255,255,255,0.75)', letterSpacing: 1 }}>{completed}/{courses.length} CURSOS</span>
                   </div>
                 </div>
@@ -645,14 +646,14 @@ export function AcademiaTab() {
                   return (
                     <button key={oi} onClick={() => setAnswers({ ...answers, [q.id]: oi })} style={{
                       width: '100%', textAlign: 'left', marginBottom: 7, padding: '11px 13px', borderRadius: 12, cursor: 'pointer',
-                      background: sel ? `${C.cyan}18` : 'rgba(20,30,52,0.7)',
-                      border: `1px solid ${sel ? C.cyan : 'rgba(255,255,255,0.08)'}`,
+                      background: sel ? `${uc}18` : 'rgba(20,30,52,0.7)',
+                      border: `1px solid ${sel ? uc : 'rgba(255,255,255,0.08)'}`,
                       color: sel ? '#e2f3ff' : '#b9d4e6', fontFamily: FONT.body, fontSize: 13,
                       display: 'flex', alignItems: 'center', gap: 8,
                     }}>
                       <span style={{
                         width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-                        border: `2px solid ${sel ? C.cyan : C.cyanDim}`, background: sel ? C.cyan : 'transparent',
+                        border: `2px solid ${sel ? uc : C.cyanDim}`, background: sel ? uc : 'transparent',
                       }} />
                       {opt}
                     </button>

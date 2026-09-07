@@ -11,6 +11,7 @@ import { useApp } from '@/store/AppContext';
 import { useRealtime } from '@/store/RealtimeContext';
 import { supabase } from '@/infrastructure/supabase/client';
 import { C, FONT } from '@/theme';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
 import { GemeloGuidance } from '@/features/gemelo/components/Guidance';
 import { RedPanel, DirectChatModal, PublicCredentialModal } from '@/features/gemelo/components/RedSocial';
@@ -21,6 +22,7 @@ type Section = 'feed' | 'online' | 'ranking' | 'dms' | 'sugerencias';
 
 export function RedSocialTab() {
   const { profile, setActiveTab } = useApp();
+  const uc = useUserColor();
   const { nodes, events, onlineCount, connected } = useRealtime();
   const [section, setSection] = useState<Section>('feed');
   const [viewUser, setViewUser] = useState<string | null>(null);
@@ -98,9 +100,9 @@ export function RedSocialTab() {
           return (
             <button key={t.id} onClick={() => setSection(t.id)} style={{
               ...S.tab,
-              background: active ? 'rgba(160,174,192,0.1)' : 'transparent',
-              borderColor: active ? C.cyan : 'rgba(160,174,192,0.15)',
-              color: active ? C.cyan : C.mut,
+              background: active ? `${uc}1a` : 'transparent',
+              borderColor: active ? uc : 'rgba(160,174,192,0.15)',
+              color: active ? uc : C.mut,
             }}>
               {t.icon}
               <span>{t.label}</span>

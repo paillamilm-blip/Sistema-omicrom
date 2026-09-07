@@ -13,6 +13,7 @@ import { notifyOrb } from '@/features/omicron/services/notify';
 // Si Stripe no está configurado en el backend, el modal muestra un aviso amable.
 const STRIPE_ENABLED = import.meta.env.VITE_STRIPE_ENABLED !== 'false';
 import { C, FONT } from '@/theme';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { oc, OmicronHeader, OmicronCard, ProgressBar, Chip } from '@/shared/components/OmicronChrome';
 import { SmoothNumber, StaggerList, StaggerItem } from '@/shared/motion';
 import { audioTick, audioPing } from '@/shared/utils/spatialAudio';
@@ -58,6 +59,7 @@ function formatDate(iso: string) {
 
 export function WalletTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
+  const uc = useUserColor();
   const [txs, setTxs]                   = useState<WalletTransaction[]>([]);
   const [loading, setLoading]           = useState(true);
   const [view, setView]                 = useState<'movimientos' | 'niveles'>('movimientos');
@@ -222,7 +224,7 @@ export function WalletTab() {
                 borderRadius: 14, cursor: 'pointer', fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
                 background: C.glass2, border: `1px solid ${C.line}`, color: C.ink,
               }}>
-                <ArrowDownLeft size={16} style={{ color: C.cyan }} /> Recibir
+                <ArrowDownLeft size={16} style={{ color: uc }} /> Recibir
               </button>
             </div>
 

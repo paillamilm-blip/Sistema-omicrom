@@ -3,6 +3,7 @@ import { Gavel, TrendingUp, Users, ShieldAlert, Scale, Check, Lock, Unlock, Shie
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, cx } from '@/theme';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import {
   CyberCard, CyberButton, SectionLabel,
   StatGrid, StatCard, CyberToast, Divider, DetailPanel, LoadingScreen,
@@ -23,6 +24,7 @@ const DISPUTE_COLOR: Record<string, string> = { OPENED: C.gold, IN_REVIEW: C.cya
 
 export function GobernanzaTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
+  const uc = useUserColor();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [stakes, setStakes] = useState<Stake[]>([]);
@@ -293,7 +295,7 @@ export function GobernanzaTab() {
           <StatGrid cols={3} style={{ marginBottom: 12 }}>
             <StatCard label="Puedo apelar" value={String(appealableDisputes.length)} color={C.gold} />
             <StatCard label="Como árbitro" value={String(myAppealCases.length)} color={C.purple} />
-            <StatCard label="Mis abiertas" value={String(myOpenAppeals.length)} color={C.cyan} />
+            <StatCard label="Mis abiertas" value={String(myOpenAppeals.length)} color={uc} />
           </StatGrid>
           {appealableDisputes.length > 0 && (
             <CyberButton variant="primary" onClick={() => setPanel('appeal')} style={{ borderColor: C.goldDim, color: C.gold }}>
@@ -329,7 +331,7 @@ export function GobernanzaTab() {
                   </p>
 
                   {myVote ? (
-                    <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(160,174,192, 0.08)', border: `1px solid ${C.cyanFaint}` }}>
+                    <div style={{ padding: '8px 12px', borderRadius: 8, background: `${uc}14`, border: `1px solid ${uc}66` }}>
                       <span style={{ fontFamily: FONT.mono, fontSize: 11, color: myVote.verdict === 'UPHOLD' ? C.green : C.gold }}>
                         Tu voto: {myVote.verdict === 'UPHOLD' ? '✓ CONFIRMAR FALLO' : '↩ REVERTIR FALLO'}
                       </span>

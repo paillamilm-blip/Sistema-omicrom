@@ -8,6 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo } from 'react';
 import { C, FONT } from '@/theme';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 
 interface JourneyStep {
   id: string;
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export function JourneyProgress({ profile, hasConnections = false, onNavigate }: Props) {
+  const uc = useUserColor();
   const steps = useMemo((): JourneyStep[] => {
     if (!profile) return [];
     const hasCv = !!profile.cv_summary;
@@ -62,7 +64,7 @@ export function JourneyProgress({ profile, hasConnections = false, onNavigate }:
 
       {/* Progress bar */}
       <div style={S.bar}>
-        <div style={{ ...S.barFill, width: `${pct}%` }} />
+        <div style={{ ...S.barFill, width: `${pct}%`, background: `linear-gradient(90deg, ${C.purple}, ${uc})` }} />
       </div>
 
       {/* Steps */}
