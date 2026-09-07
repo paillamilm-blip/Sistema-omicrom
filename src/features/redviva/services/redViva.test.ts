@@ -108,6 +108,12 @@ describe('vacío y respaldos', () => {
     expect(resumenRed(model)).toContain('Subí tu CV');
   });
 
+  it('sin habilidades sigue vacía aunque haya mercado cargado', () => {
+    const model = buildRedViva({ jobs, proofs: [] });
+    expect(model.vacia).toBe(true);
+    expect(model.totales.declaradas).toBe(0);
+  });
+
   it('sin skills_detail usa skills[] y NO inventa un pct', () => {
     const model = buildRedViva({ skills: ['Excel', 'SAP'], jobs });
     const mias = model.nodos.filter((n) => n.anillo !== 2);
@@ -180,6 +186,40 @@ describe('layout — estable y sin reordenar al crecer', () => {
     expect(v).toBeLessThan(1);
   });
 
+  it('dispersa identidades comunes sin perder estabilidad', () => {
+    const model = buildRedViva({
+      skillsDetail: [{ name: 'Python', pct: 70 }, { name: 'TypeScript', pct: 70 }],
+      jobs: [],
+    });
+    const python = model.nodos.find((n) => n.id === 'python')!;
+    const typescript = model.nodos.find((n) => n.id === 'typescript')!;
+    expect(Math.abs(python.angulo - typescript.angulo)).toBeGreaterThan(0.1);
+  });
+
+  it('agregar habilidades no cambia el ángulo de una habilidad existente', () => {
+    const antes = buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 95 }], jobs: [] });
+    const despues = buildRedViva({
+      skillsDetail: [{ name: 'Excel', pct: 95 }, { name: 'SAP', pct: 60 }, { name: 'Python', pct: 70 }],
+      jobs: [],
+    });
+    expect(despues.nodos.find((n) => n.id === 'excel')!.angulo)
+      .toBeCloseTo(antes.nodos.find((n) => n.id === 'excel')!.angulo, 12);
+  });
+
+  it('pasar de hueco a sólido conserva el ángulo y solo reduce el radio', () => {
+    const antes = buildRedViva({ skillsDetail, jobs, proofs: [] });
+    const despues = buildRedViva({
+      skillsDetail,
+      jobs,
+      proofs: [{ skill_key: 'excel', skill_label: 'Excel', best_score: 90 }],
+    });
+    const excelAntes = antes.nodos.find((n) => n.id === 'excel')!;
+    const excelDespues = despues.nodos.find((n) => n.id === 'excel')!;
+    expect(excelDespues.angulo).toBeCloseTo(excelAntes.angulo, 12);
+    expect(Math.hypot(excelDespues.x, excelDespues.y))
+      .toBeLessThan(Math.hypot(excelAntes.x, excelAntes.y));
+  });
+
   it('probar una habilidad la MUEVE de la frontera al núcleo', () => {
     const antes = buildRedViva({ skillsDetail, jobs, proofs: [] });
     const despues = buildRedViva({
@@ -250,6 +290,27 @@ describe('textos — cero jerga, cada número con contexto', () => {
     const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
     expect(resumenRed(model)).toBe(
       'Declaraste 3 habilidades y todavía no probaste ninguna. Probá una y empieza a valer.',
+    );
+  });
+
+  it('el resumen parcial evita jerga visual como “hueca”', () => {
+    const model = buildRedViva({
+      skillsDetail,
+      jobs,
+      proofs: [{ skill_key: 'excel', skill_label: 'Excel', best_score: 88 }],
+    });
+    expect(resumenRed(model)).toBe(
+      'Probaste 1 de 3 habilidades. Las 2 restantes todavía no tienen una prueba.',
+    );
+  });
+
+  it('el resumen completo habla de habilidades registradas, aunque una prueba no venga del CV', () => {
+    const model = buildRedViva({
+      proofs: [{ skill_key: 'autocad', skill_label: 'AutoCAD', best_score: 90 }],
+      jobs: [],
+    });
+    expect(resumenRed(model)).toBe(
+      'Probaste la habilidad registrada. Tiene una prueba registrada.',
     );
   });
 

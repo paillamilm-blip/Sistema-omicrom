@@ -29,7 +29,7 @@ import { streakDays } from '@/features/gemelo/services/profile';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { motion, useReducedMotion } from 'framer-motion';
-import { C, FONT, SIZE } from '@/theme';
+import { C, EASE, FONT, SIZE, TIMING } from '@/theme';
 import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
 import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
@@ -221,7 +221,7 @@ function renderTab(tab: TabId) {
 
 
 export function OrbShell() {
-  const { setActiveTab, unreadCount } = useNavigation();
+  const { setActiveTab, unreadCount, jobTargetId, jobTargetRequest } = useNavigation();
   const { profile } = useGemeloProfile();
   // Get full Supabase profile for fields not on GemeloProfile (skills_detail, display_name, etc.)
   const { profile: sbFull } = useProfile();
@@ -343,6 +343,22 @@ export function OrbShell() {
   const [showCredencial, setShowCredencial] = useState(false);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
+
+  // Intenciones de navegación con destino exacto abren la superficie real, no
+  // solo cambian un valor de contexto que el shell no esté mostrando.
+  useEffect(() => {
+    if (!jobTargetId) return;
+    const empleosNode = HUB_NODES.find((node) => node.tab === 'empleos');
+    if (!empleosNode) return;
+    setSelectedNode(empleosNode);
+    setState('fullscreen');
+  }, [jobTargetId, jobTargetRequest]);
+
+  useEffect(() => {
+    const abrirCv = () => setShowConvalida(true);
+    window.addEventListener('omicron:request-cv', abrirCv);
+    return () => window.removeEventListener('omicron:request-cv', abrirCv);
+  }, []);
 
   // Idle escalation — si no interactúa, escalamos
   const { helpMessage, resetIdle } = useIdleEscalation(state === 'orb');
@@ -1406,7 +1422,7 @@ export function OrbShell() {
         </div>
 
         {/* Tab content — with page transition */}
-        <div key={selectedNode?.tab ?? 'none'} style={{ flex: 1, overflow: 'auto', animation: 'pageEnter 0.28s cubic-bezier(0.32, 0.72, 0, 1) both' }}>
+        <div key={selectedNode?.tab ?? 'none'} style={{ flex: 1, overflow: 'auto', animation: prefersReducedMotion ? 'none' : `pageEnter ${TIMING.normal} ${EASE.default} both` }}>
           <Suspense fallback={<TabLoader />}>
             {selectedNode && renderTab(selectedNode.tab)}
           </Suspense>

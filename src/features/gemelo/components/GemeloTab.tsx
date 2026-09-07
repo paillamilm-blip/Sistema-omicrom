@@ -48,7 +48,7 @@ const slideVariants = {
 };
 
 export function GemeloTab() {
-  const { profile, setActiveTab } = useApp();
+  const { profile, setActiveTab, openJob } = useApp();
   const gemelo = useGemeloDigital();
   const uc = useUserColor();
   const [[currentSlide, direction], setSlide] = useState([0, 0]);
@@ -240,7 +240,11 @@ export function GemeloTab() {
           promoverla al centro del home implica reemplazar la navegación, que
           hoy vive en los nodos del orbe — eso es un incremento aparte. */}
       <div style={{ width: '100%', padding: '0 16px 8px', flexShrink: 0 }}>
-        <RedVivaHome onAbrirTab={(tab) => setActiveTab(tab as Parameters<typeof setActiveTab>[0])} />
+        <RedVivaHome
+          onAbrirTab={(tab) => setActiveTab(tab as Parameters<typeof setActiveTab>[0])}
+          onVerEmpleo={openJob}
+          onSubirCv={() => window.dispatchEvent(new CustomEvent('omicron:request-cv'))}
+        />
       </div>
 
       <div style={{ width: '100%', padding: '8px 24px', flexShrink: 0 }}>

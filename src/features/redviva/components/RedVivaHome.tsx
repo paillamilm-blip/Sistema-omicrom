@@ -1,30 +1,21 @@
 // features/redviva/components/RedVivaHome.tsx
-// LA PANTALLA. Compone la Red Viva completa: el mapa, la jugada y la lista.
-//
-// ESTRUCTURA (y por qué):
-//   1. UNA FRASE      → qué estado tiene tu red, en lenguaje humano.
-//   2. EL MAPA        → la vista de conjunto. Se entiende de un vistazo si sos
-//                       mayormente hueco (declaré) o mayormente sólido (probé).
-//   3. LA JUGADA      → la única acción recomendada. Un producto que te dice
-//                       "hacé esto" vale más que uno que te muestra 10 opciones.
-//   4. LA LISTA       → el mapa en palabras. Es el camino accesible de verdad
-//                       (filas de 44px, foco de teclado); el SVG es el resumen.
-//   5. LA FICHA       → al elegir un nodo: cuánto paga probarlo y qué te abre.
-//
-// El mapa y la lista son EL MISMO objeto con dos representaciones: tocar en
-// cualquiera de los dos resalta en ambos. Nada de información escondida.
+// Cartografía de evidencia: mapa y lista representan el mismo modelo real.
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { Upload } from 'lucide-react';
 import { C, FONT, SIZE, RADIUS, BORDER } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import type { TabId } from '@/types/common';
 import { useRedViva } from '../hooks/useRedViva';
+import { normalizeSkill } from '../services/gapEngine';
 import { resumenRed, type EstadoNodo, type NodoRed } from '../services/redViva';
 import { RedVivaCanvas } from './RedVivaCanvas';
 import { NodoFicha } from './NodoFicha';
+import { ESTADO_NODO_LABEL, NodoEstadoMarca } from './NodoEstadoMarca';
 
+const INSPECTOR_ID = 'red-viva-inspector';
 const ORDEN_ESTADOS: EstadoNodo[] = ['ausente', 'hueco', 'latiendo', 'solido'];
 
 const TITULO_GRUPO: Record<EstadoNodo, string> = {
@@ -35,141 +26,174 @@ const TITULO_GRUPO: Record<EstadoNodo, string> = {
 };
 
 export interface RedVivaHomeProps {
-  /** Navega a una sección de la app (se usa para abrir el examen y los empleos). */
   onAbrirTab?: (tab: TabId) => void;
+  onVerEmpleo?: (jobId: string) => void;
+  onSubirCv?: () => void;
 }
 
-export function RedVivaHome({ onAbrirTab }: RedVivaHomeProps) {
+export function RedVivaHome({ onAbrirTab, onVerEmpleo, onSubirCv }: RedVivaHomeProps) {
   const { profile, gemelo } = useApp();
   const uc = useUserColor();
   const { model, isLoading, fondoSaldo, pruebasDisponibles } = useRedViva();
   const [seleccionado, setSeleccionado] = useState<string | null>(null);
+  const fichaRef = useRef<HTMLElement>(null);
+  const inspectorEnfocadoRef = useRef<string | null>(null);
+  const disparadorRef = useRef<HTMLElement | null>(null);
+  const filaRefs = useRef(new Map<string, HTMLButtonElement>());
+  const jugadaRef = useRef<HTMLButtonElement>(null);
 
   const reputacion = gemelo?.overallReputation ?? profile?.reputation_score ?? 0;
-
   const nodoActivo = useMemo(
     () => model.nodos.find((n) => n.id === seleccionado) ?? null,
     [model.nodos, seleccionado],
   );
-
-  /** El nodo de la jugada recomendada, para poder resaltarlo desde la tarjeta. */
   const nodoJugada = useMemo(() => {
     if (!model.jugada) return null;
-    const objetivo = model.jugada.skill.toLowerCase();
-    return model.nodos.find((n) => n.label.toLowerCase() === objetivo) ?? null;
+    const objetivo = normalizeSkill(model.jugada.skill);
+    return model.nodos.find((n) => normalizeSkill(n.label) === objetivo) ?? null;
   }, [model.jugada, model.nodos]);
-
-  const grupos = useMemo(() => {
-    return ORDEN_ESTADOS.map((estado) => ({
+  const grupos = useMemo(
+    () => ORDEN_ESTADOS.map((estado) => ({
       estado,
       nodos: model.nodos.filter((n) => n.estado === estado),
-    })).filter((g) => g.nodos.length > 0);
-  }, [model.nodos]);
+    })).filter((grupo) => grupo.nodos.length > 0),
+    [model.nodos],
+  );
 
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-        padding: '4px 2px 20px',
-      }}
-    >
-      {/* ── 1. Una frase ─────────────────────────────────────────────── */}
-      <header style={{ textAlign: 'center', padding: '0 8px' }}>
-        {!model.vacia ? (
-          <p
-            style={{
-              margin: '0 0 4px',
-              fontFamily: FONT.mono,
-              fontSize: SIZE.xxs,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-              color: C.mut,
-            }}
-          >
-            {model.totales.probadas}/{model.totales.declaradas} habilidades probadas
-          </p>
-        ) : null}
-        <p
+  const cerrarInspector = useCallback(() => {
+    const disparador = disparadorRef.current;
+    setSeleccionado(null);
+    disparadorRef.current = null;
+    window.requestAnimationFrame(() => disparador?.focus({ preventScroll: true }));
+  }, []);
+
+  const seleccionar = useCallback((id: string, disparador?: HTMLElement | null) => {
+    if (id === seleccionado) {
+      cerrarInspector();
+      return;
+    }
+    disparadorRef.current = disparador ?? filaRefs.current.get(id) ?? null;
+    setSeleccionado(id);
+  }, [cerrarInspector, seleccionado]);
+
+  useEffect(() => {
+    if (!seleccionado) return;
+    if (!model.nodos.some((n) => n.id === seleccionado)) cerrarInspector();
+  }, [cerrarInspector, model.nodos, seleccionado]);
+
+  useLayoutEffect(() => {
+    if (!seleccionado || !fichaRef.current) {
+      inspectorEnfocadoRef.current = null;
+      return;
+    }
+    if (inspectorEnfocadoRef.current === seleccionado) return;
+    fichaRef.current.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+    fichaRef.current.focus({ preventScroll: true });
+    inspectorEnfocadoRef.current = seleccionado;
+  }, [seleccionado]);
+
+  const registrarFila = useCallback((id: string, element: HTMLButtonElement | null) => {
+    if (element) filaRefs.current.set(id, element);
+    else filaRefs.current.delete(id);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <section aria-busy="true" aria-label="Mapa de habilidades" style={styles.estadoCentro}>
+        <p style={styles.textoEstado}>Armando tu red con tus datos…</p>
+      </section>
+    );
+  }
+
+  if (model.vacia) {
+    return (
+      <section aria-label="Mapa de habilidades vacío" style={{ ...styles.estadoCentro, border: BORDER.default, borderRadius: RADIUS.lg, background: C.surface, padding: 20 }}>
+        <h2 style={{ margin: 0, fontFamily: FONT.display, fontSize: SIZE.lg, color: C.ink }}>
+          Todavía no vemos tus habilidades
+        </h2>
+        <p style={{ ...styles.textoEstado, maxWidth: 420 }}>
+          Subí tu CV para identificar tus habilidades declaradas y separarlas de las que ya tienen una prueba. Así vas a ver qué podés demostrar y qué oportunidades reales se acercan.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            if (onSubirCv) onSubirCv();
+            else window.dispatchEvent(new CustomEvent('omicron:request-cv'));
+          }}
           style={{
-            margin: 0,
+            minHeight: 44,
+            padding: '10px 16px',
+            border: 'none',
+            borderRadius: RADIUS.md,
+            background: uc,
+            color: C.bg,
             fontFamily: FONT.body,
             fontSize: SIZE.sm,
-            color: C.ink,
-            lineHeight: 1.5,
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
           }}
         >
-          {isLoading ? 'Armando tu red…' : resumenRed(model)}
+          <Upload size={18} aria-hidden="true" />
+          Subir mi CV
+        </button>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-label="Mapa de habilidades" style={styles.raiz}>
+      <header style={{ textAlign: 'center', padding: '0 8px' }}>
+        <p style={{ margin: '0 0 4px', fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.8, textTransform: 'uppercase', color: C.mut }}>
+          {pruebasDisponibles
+            ? `${model.totales.probadas}/${model.totales.declaradas} habilidades probadas`
+            : `${model.totales.declaradas} ${model.totales.declaradas === 1 ? 'habilidad registrada' : 'habilidades registradas'}`}
+        </p>
+        <p style={styles.textoEstado}>
+          {pruebasDisponibles
+            ? resumenRed(model)
+            : 'No pudimos consultar tu historial de pruebas. Tus habilidades siguen visibles, pero no vamos a afirmar cuáles están probadas.'}
         </p>
       </header>
 
-      {/* ── 2. El mapa ───────────────────────────────────────────────── */}
       <RedVivaCanvas
         model={model}
         userColor={uc}
         reputacion={reputacion}
         seleccionado={seleccionado}
-        onSelect={(n) => setSeleccionado(n.id === seleccionado ? null : n.id)}
+        onSelect={(nodo) => seleccionar(nodo.id, filaRefs.current.get(nodo.id))}
       />
 
-      {/* ── Leyenda: enseña la gramática en dos segundos ──────────────────
-          Sin esto, los círculos son decoración — que es exactamente el pecado
-          del orbe que reemplaza. No se etiqueta cada nodo (12 nombres no caben
-          en 320px sin pisarse): se explica el lenguaje una vez y la lista de
-          abajo da todos los nombres. */}
-      {!model.vacia ? <Leyenda userColor={uc} hayAusentes={model.totales.ausentes > 0} /> : null}
+      <Leyenda
+        userColor={uc}
+        estados={new Set(model.nodos.map((nodo) => nodo.estado))}
+        hayOportunidades={model.oportunidades.length > 0}
+        hayPuentes={model.aristas.some((arista) => arista.tipo === 'puente')}
+        pruebasDisponibles={pruebasDisponibles}
+      />
 
-      {/* ── 3. La jugada ─────────────────────────────────────────────── */}
       {model.jugada && nodoJugada ? (
         <button
+          ref={jugadaRef}
           type="button"
-          onClick={() => setSeleccionado(nodoJugada.id)}
+          aria-expanded={nodoJugada.id === seleccionado}
+          aria-controls={nodoJugada.id === seleccionado ? INSPECTOR_ID : undefined}
+          onClick={() => seleccionar(nodoJugada.id, jugadaRef.current)}
           style={{
-            display: 'block',
-            width: '100%',
-            textAlign: 'left',
-            padding: '13px 15px',
-            borderRadius: RADIUS.lg,
-            border: BORDER.gold,
-            background: C.goldFaint,
-            cursor: 'pointer',
+            display: 'block', width: '100%', minHeight: 44, textAlign: 'left', padding: '13px 15px',
+            borderRadius: RADIUS.lg, border: BORDER.gold, background: C.goldFaint, cursor: 'pointer',
           }}
         >
-          <span
-            style={{
-              display: 'block',
-              fontFamily: FONT.mono,
-              fontSize: SIZE.xxs,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-              color: C.gold,
-              marginBottom: 5,
-            }}
-          >
+          <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.8, textTransform: 'uppercase', color: C.gold, marginBottom: 5 }}>
             Tu próxima jugada
           </span>
-          <span
-            style={{
-              display: 'block',
-              fontFamily: FONT.display,
-              fontSize: SIZE.lg,
-              fontWeight: 700,
-              color: C.ink,
-              marginBottom: 4,
-            }}
-          >
+          <span style={{ display: 'block', fontFamily: FONT.display, fontSize: SIZE.lg, fontWeight: 700, color: C.ink, marginBottom: 4 }}>
             Probá {model.jugada.skill}
           </span>
-          <span
-            style={{
-              display: 'block',
-              fontFamily: FONT.body,
-              fontSize: SIZE.xs,
-              color: C.mut,
-              lineHeight: 1.45,
-            }}
-          >
+          <span style={{ display: 'block', fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut, lineHeight: 1.45 }}>
             {model.jugada.isOneStep
               ? `Es lo único que te falta para ${model.jugada.bestJob.job.title}`
               : `La piden en ${model.jugada.mentions} ${model.jugada.mentions === 1 ? 'empleo abierto' : 'empleos abiertos'}`}
@@ -178,183 +202,150 @@ export function RedVivaHome({ onAbrirTab }: RedVivaHomeProps) {
         </button>
       ) : null}
 
-      {/* ── 5. La ficha del nodo elegido ─────────────────────────────── */}
       {nodoActivo ? (
         <NodoFicha
+          ref={fichaRef}
+          id={INSPECTOR_ID}
           nodo={nodoActivo}
           model={model}
           userColor={uc}
           fondoSaldo={fondoSaldo}
           pruebasDisponibles={pruebasDisponibles}
           onExamenAbierto={() => onAbrirTab?.('maxskill')}
-          onVerEmpleo={() => onAbrirTab?.('empleos')}
-          onCerrar={() => setSeleccionado(null)}
+          onVerEmpleo={onVerEmpleo}
+          onCerrar={cerrarInspector}
         />
       ) : null}
 
-      {/* ── 4. La lista: el mapa en palabras ─────────────────────────── */}
       {grupos.map((grupo) => (
         <section key={grupo.estado} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <h3
-            style={{
-              margin: 0,
-              fontFamily: FONT.mono,
-              fontSize: SIZE.xxs,
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              color: grupo.estado === 'ausente' ? C.gold : C.mut,
-              fontWeight: 600,
-            }}
-          >
-            {TITULO_GRUPO[grupo.estado]} · {grupo.nodos.length}
+          <h3 style={{ margin: 0, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.7, textTransform: 'uppercase', color: grupo.estado === 'ausente' ? C.gold : C.mut, fontWeight: 600 }}>
+            {(!pruebasDisponibles && grupo.estado !== 'ausente')
+              ? 'Pruebas no consultables'
+              : TITULO_GRUPO[grupo.estado]} · {grupo.nodos.length}
           </h3>
-          {grupo.nodos.map((n) => (
+          {grupo.nodos.map((nodo) => (
             <FilaNodo
-              key={n.id}
-              nodo={n}
+              key={nodo.id}
+              refCallback={(element) => registrarFila(nodo.id, element)}
+              nodo={nodo}
               userColor={uc}
-              activo={n.id === seleccionado}
-              onClick={() => setSeleccionado(n.id === seleccionado ? null : n.id)}
+              activo={nodo.id === seleccionado}
+              inspectorId={INSPECTOR_ID}
+              onClick={(element) => seleccionar(nodo.id, element)}
             />
           ))}
         </section>
       ))}
-    </div>
+    </section>
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// Leyenda del mapa
-// ══════════════════════════════════════════════════════════════════════
-function Leyenda({ userColor, hayAusentes }: { userColor: string; hayAusentes: boolean }) {
-  const items: { estilo: CSSProperties; texto: string }[] = [
-    { estilo: { background: userColor, border: `1.5px solid ${userColor}` }, texto: 'probado' },
-    { estilo: { background: 'transparent', border: `1.5px solid ${userColor}`, opacity: 0.65 }, texto: 'solo declarado' },
-  ];
-  if (hayAusentes) {
-    items.push({
-      estilo: { background: 'transparent', border: `1.5px dashed ${C.gold}` },
-      texto: 'te falta',
-    });
-  }
+function Leyenda({
+  userColor,
+  estados,
+  hayOportunidades,
+  hayPuentes,
+  pruebasDisponibles,
+}: {
+  userColor: string;
+  estados: Set<EstadoNodo>;
+  hayOportunidades: boolean;
+  hayPuentes: boolean;
+  pruebasDisponibles: boolean;
+}) {
+  const visibles = ORDEN_ESTADOS.filter((estado) => estado !== 'ausente' || estados.has('ausente'))
+    .filter((estado) => estado !== 'latiendo' || estados.has('latiendo'));
+  const itemStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: 6 };
+  const labelStyle: CSSProperties = { fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut };
 
   return (
-    <ul
-      style={{
-        listStyle: 'none',
-        margin: 0,
-        padding: 0,
-        display: 'flex',
-        justifyContent: 'center',
-        flexWrap: 'wrap',
-        gap: 14,
-      }}
-    >
-      {items.map((it) => (
-        <li key={it.texto} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span
-            aria-hidden="true"
-            style={{ width: 9, height: 9, borderRadius: '50%', flexShrink: 0, ...it.estilo }}
-          />
-          <span style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut }}>{it.texto}</span>
+    <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '8px 14px' }}>
+      {visibles.map((estado) => (
+        <li key={estado} style={itemStyle}>
+          <NodoEstadoMarca estado={estado} color={estado === 'ausente' ? C.gold : userColor} size={14} />
+          <span style={labelStyle}>
+            {(!pruebasDisponibles && estado !== 'ausente')
+              ? 'prueba no consultable'
+              : ESTADO_NODO_LABEL[estado].toLocaleLowerCase('es-CL')}
+          </span>
         </li>
       ))}
+      {hayOportunidades ? (
+        <li style={itemStyle}>
+          <span
+            aria-hidden="true"
+            style={{ width: 9, height: 9, border: `1.5px solid ${C.gold}`, transform: 'rotate(45deg)', flexShrink: 0 }}
+          />
+          <span style={labelStyle}>empleo abierto</span>
+        </li>
+      ) : null}
+      {hayPuentes ? (
+        <li style={itemStyle}>
+          <span aria-hidden="true" style={{ width: 18, borderTop: `1.5px dashed ${C.gold}`, flexShrink: 0 }} />
+          <span style={labelStyle}>lo que te falta para llegar</span>
+        </li>
+      ) : null}
     </ul>
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// Fila de la lista — 44px de alto real, tocable y navegable con teclado
-// ══════════════════════════════════════════════════════════════════════
 function FilaNodo({
   nodo,
   userColor,
   activo,
+  inspectorId,
   onClick,
+  refCallback,
 }: {
   nodo: NodoRed;
   userColor: string;
   activo: boolean;
-  onClick: () => void;
+  inspectorId: string;
+  onClick: (element: HTMLButtonElement) => void;
+  refCallback: (element: HTMLButtonElement | null) => void;
 }) {
   const esMercado = nodo.estado === 'ausente';
   const acento = esMercado ? C.gold : userColor;
-
-  /** El número que corresponde a este estado, con su escala. Nunca pelado. */
-  const cifra = (): string | null => {
-    if (nodo.estado === 'solido') {
-      return nodo.provenScore === null ? 'probada' : `${nodo.provenScore}/100`;
-    }
-    if (esMercado) {
-      return nodo.unlocks > 0
-        ? `abre ${nodo.unlocks}`
-        : nodo.demand > 0
-          ? `en ${nodo.demand}`
-          : null;
-    }
-    return nodo.declaredPct !== null && nodo.declaredPct > 0
-      ? `dice ${nodo.declaredPct}/100`
-      : null;
-  };
-
+  const cifra = cifraNodo(nodo);
   return (
     <button
+      ref={refCallback}
       type="button"
-      onClick={onClick}
-      aria-pressed={activo}
+      onClick={(event) => onClick(event.currentTarget)}
+      aria-expanded={activo}
+      aria-controls={activo ? inspectorId : undefined}
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        width: '100%',
-        minHeight: 44,
-        padding: '8px 12px',
-        borderRadius: RADIUS.md,
+        display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 44,
+        padding: '8px 12px', borderRadius: RADIUS.md,
         border: activo ? `1px solid ${acento}` : BORDER.faint,
-        background: activo ? C.glass2 : C.glass,
-        cursor: 'pointer',
-        textAlign: 'left',
+        background: activo ? C.glass2 : C.glass, cursor: 'pointer', textAlign: 'left',
       }}
     >
-      <span
-        aria-hidden="true"
-        style={{
-          width: 10,
-          height: 10,
-          flexShrink: 0,
-          borderRadius: '50%',
-          background: nodo.estado === 'solido' ? acento : 'transparent',
-          border: `1.5px ${esMercado ? 'dashed' : 'solid'} ${acento}`,
-          opacity: nodo.estado === 'hueco' ? 0.6 : 1,
-        }}
-      />
-      <span
-        style={{
-          flex: 1,
-          minWidth: 0,
-          fontFamily: FONT.body,
-          fontSize: SIZE.sm,
-          color: C.ink,
-          fontWeight: nodo.estado === 'solido' ? 600 : 500,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
+      <NodoEstadoMarca estado={nodo.estado} color={acento} size={16} />
+      <span style={{ flex: 1, minWidth: 0, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, fontWeight: nodo.estado === 'solido' ? 600 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {nodo.label}
       </span>
-      {cifra() ? (
-        <span
-          style={{
-            fontFamily: FONT.mono,
-            fontSize: SIZE.xxs,
-            color: esMercado ? C.gold : C.mut,
-            flexShrink: 0,
-          }}
-        >
-          {cifra()}
+      {cifra ? (
+        <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: esMercado ? C.gold : C.mut, flexShrink: 0 }}>
+          {cifra}
         </span>
       ) : null}
     </button>
   );
 }
+
+function cifraNodo(nodo: NodoRed): string | null {
+  if (nodo.estado === 'solido') return nodo.provenScore === null ? 'probada' : `${nodo.provenScore}/100`;
+  if (nodo.estado === 'ausente') {
+    if (nodo.unlocks > 0) return `abre ${nodo.unlocks} ${nodo.unlocks === 1 ? 'empleo' : 'empleos'}`;
+    return nodo.demand > 0 ? `en ${nodo.demand} ${nodo.demand === 1 ? 'empleo' : 'empleos'}` : null;
+  }
+  return nodo.declaredPct !== null && nodo.declaredPct > 0 ? `dice ${nodo.declaredPct}/100` : null;
+}
+
+const styles: Record<string, CSSProperties> = {
+  raiz: { display: 'flex', flexDirection: 'column', gap: 14, padding: '4px 2px 20px' },
+  estadoCentro: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, textAlign: 'center', minHeight: 180 },
+  textoEstado: { margin: 0, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.5 },
+};

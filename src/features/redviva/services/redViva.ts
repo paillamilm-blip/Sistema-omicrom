@@ -20,9 +20,9 @@
 //      era una habilidad. Acá cada nodo ES un dato con nombre.
 //   2. Sus etiquetas flotaban en posiciones Fibonacci DISTINTAS de los puntos
 //      dibujados. Acá etiqueta y nodo comparten una sola coordenada.
-//   3. Sus posiciones se recalculaban con la cantidad de nodos, así que el mapa
-//      se reordenaba al crecer el perfil. Acá el orden es DETERMINISTA por
-//      nombre: una habilidad nueva se inserta sin mover a las demás de anillo.
+//   3. Su ángulo se deriva SOLO de su identidad normalizada, así que sumar una
+//      habilidad o cambiar su estado no mueve a las demás. Acá etiqueta y nodo
+//      comparten una coordenada estable.
 //
 // 100 % puro: sin React, sin Supabase, sin acceso a red.
 
@@ -171,33 +171,23 @@ export function hash01(text: string): number {
     h ^= s.charCodeAt(i);
     h = Math.imul(h, 0x01000193);
   }
-  // >>> 0 para volver a un entero sin signo antes de normalizar
-  return ((h >>> 0) % 100000) / 100000;
+  // Usa todo el espacio de 32 bits. Truncarlo con un módulo pequeño acercaba
+  // identidades comunes que en FNV-1a completo están bien dispersas.
+  return (h >>> 0) / 0x100000000;
 }
 
 /**
- * Reparte N elementos en un anillo. El ángulo base es uniforme (para que nunca
- * se apiñen) y el hash solo aporta un jitter acotado, así que:
- *   • no hay superposición aunque haya muchos nodos,
- *   • agregar un nodo NO reordena los demás de forma caótica.
+ * Posición polar estable por identidad. El ángulo depende únicamente de la
+ * clave normalizada; nunca del índice, del total de nodos ni del estado. Cambiar
+ * de estado solo cambia el radio y por eso el nodo viaja por el mismo carril.
  */
-function ringPosition(
-  index: number,
-  total: number,
-  radius: number,
-  seed: string,
-  options?: { faseMedioPaso?: boolean; sinJitter?: boolean },
-): { x: number; y: number; angulo: number } {
-  const step = total > 0 ? (Math.PI * 2) / total : 0;
-  // El jitter se apaga cuando el ángulo tiene que ser exacto: si la etiqueta va
-  // rotada sobre su carril, mover el ángulo desalinea el texto de su nodo.
-  const jitter = options?.sinJitter ? 0 : (hash01(seed) - 0.5) * step * 0.42;
-  // Media fase de desfase: sirve para que un anillo no comparta ángulos con otro.
-  const fase = options?.faseMedioPaso ? step / 2 : 0;
-  // -Math.PI/2 arranca arriba (12 en punto), que se lee mejor.
-  const angulo = -Math.PI / 2 + index * step + fase + jitter;
-  const rr = options?.sinJitter ? radius : radius * (0.94 + hash01(seed + '·r') * 0.12);
-  return { x: Math.cos(angulo) * rr, y: Math.sin(angulo) * rr, angulo };
+function ringPosition(radius: number, seed: string): { x: number; y: number; angulo: number } {
+  const angulo = -Math.PI / 2 + hash01(seed) * Math.PI * 2;
+  return {
+    x: Math.cos(angulo) * radius,
+    y: Math.sin(angulo) * radius,
+    angulo,
+  };
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -356,7 +346,7 @@ export function buildRedViva(input: BuildRedVivaInput): RedVivaModel {
 
   const nodos: NodoRed[] = [];
 
-  const empujar = (key: string, anillo: 0 | 1 | 2, index: number, total: number) => {
+  const empujar = (key: string, anillo: 0 | 1 | 2) => {
     const decl = declaradas.get(key);
     const proof = pruebas.get(key);
     const demand = demanda.get(key) ?? 0;
@@ -384,12 +374,8 @@ export function buildRedViva(input: BuildRedVivaInput): RedVivaModel {
       radio = anillo === 0 ? RADIO_NUCLEO : RADIO_FRONTERA;
     }
 
-    // Sin jitter: la etiqueta se dibuja rotada sobre este mismo ángulo, así que
-    // moverlo al azar desalinearía el texto de su nodo.
-    const { x, y, angulo } = ringPosition(index, total, radio, key, {
-      sinJitter: true,
-      faseMedioPaso: anillo === 2,
-    });
+    // Identidad angular absoluta: el estado únicamente decide el radio.
+    const { x, y, angulo } = ringPosition(radio, key);
 
     nodos.push({
       id: key,
@@ -411,15 +397,13 @@ export function buildRedViva(input: BuildRedVivaInput): RedVivaModel {
     });
   };
 
-  // UNA sola secuencia angular para TODAS tus habilidades: ningún par comparte
-  // ángulo, así cada etiqueta tiene su propio carril radial y caben las 12.
-  // El anillo (la distancia al centro) lo decide el ESTADO, no el orden — por eso
-  // probar una habilidad la hace viajar en línea recta hacia el centro, sin que
-  // se mueva ninguna otra.
-  todasLasClaves.forEach((key, i) => {
-    empujar(key, pruebas.has(key) ? 0 : 1, i, todasLasClaves.length);
+  // El ángulo de cada habilidad nace de su identidad normalizada. El anillo (la
+  // distancia al centro) lo decide el ESTADO: probarla la mueve radialmente sin
+  // cambiar su ángulo ni el de ninguna otra habilidad.
+  todasLasClaves.forEach((key) => {
+    empujar(key, pruebas.has(key) ? 0 : 1);
   });
-  ausentesKeys.forEach((key, i) => empujar(key, 2, i, ausentesKeys.length));
+  ausentesKeys.forEach((key) => empujar(key, 2));
 
   // ── 5. Aristas ────────────────────────────────────────────────────────
   const aristas: AristaRed[] = [];
@@ -501,9 +485,10 @@ export function resumenRed(model: RedVivaModel): string {
     return `Declaraste ${declaradas} ${declaradas === 1 ? 'habilidad' : 'habilidades'} y todavía no probaste ninguna. Probá una y empieza a valer.`;
   }
   if (probadas === declaradas) {
-    return `Probaste las ${probadas} ${probadas === 1 ? 'habilidad' : 'habilidades'} que declaraste. Tu red es sólida entera.`;
+    return `Probaste ${probadas === 1 ? 'la habilidad registrada' : `las ${probadas} habilidades registradas`}. ${probadas === 1 ? 'Tiene' : 'Todas tienen'} una prueba registrada.`;
   }
-  return `Probaste ${probadas} de ${declaradas} habilidades. Las ${declaradas - probadas} huecas siguen siendo solo una afirmación.`;
+  const restantes = declaradas - probadas;
+  return `Probaste ${probadas} de ${declaradas} habilidades. ${restantes === 1 ? 'La restante todavía no tiene' : `Las ${restantes} restantes todavía no tienen`} una prueba.`;
 }
 
 /**

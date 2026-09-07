@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Briefcase, Plus, Flame, Clock, CheckCircle2, X, Star, Send, Radar, MapPin, Navigation, Wifi, LocateFixed } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
+import { useReducedMotion } from 'framer-motion';
 import { C as T, FONT as TF } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { EmptyState } from '@/shared/components/EmptyState';
@@ -73,7 +74,8 @@ function bearingDeg(lat1: number, lng1: number, lat2: number, lng2: number): num
 function fmtDist(km: number): string { return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(km < 10 ? 1 : 0)} km`; }
 
 export function EmpleosTab() {
-  const { profile, setActiveTab } = useApp();
+  const { profile, setActiveTab, jobTargetId, clearJobTarget } = useApp();
+  const reduceMotion = useReducedMotion();
   const { toast } = useToast();
   const { blurStyle } = useProgressiveBlur('empleos');
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -83,6 +85,7 @@ export function EmpleosTab() {
   const [filter, setFilter] = useState<'all' | 'matched' | 'applied'>('all');
   const [visibleCount, setVisibleCount] = useState(15);
   const [loading, setLoading] = useState(true);
+  const [jobsLoadFailed, setJobsLoadFailed] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'radar'>('list');
@@ -90,6 +93,12 @@ export function EmpleosTab() {
   const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'denied'>('idle');
   const [radarJob, setRadarJob] = useState<Job | null>(null);
   const [cartaJob, setCartaJob] = useState<Job | null>(null);
+  const [highlightedJobId, setHighlightedJobId] = useState<string | null>(null);
+  const [focusedJobId, setFocusedJobId] = useState<string | null>(null);
+  const jobCardRefs = useRef(new Map<string, HTMLDivElement>());
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadGenerationRef = useRef(0);
+  const failedTargetNotifiedRef = useRef<string | null>(null);
 
   // Local fallback: si no hay matches del servidor, calculamos sugerencias locales
   const [localSuggestions, setLocalSuggestions] = useState<Map<string, number>>(new Map());
@@ -105,27 +114,49 @@ export function EmpleosTab() {
   }, []);
 
   const load = useCallback(async () => {
-    if (!profile) return;
-    const { data: js } = await supabase
+    const generation = ++loadGenerationRef.current;
+    if (!profile) {
+      setJobs([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const { data: js, error: jobsError } = await supabase
       .from('job_postings').select('*').eq('status', 'OPEN').order('published_at', { ascending: false });
+    if (generation !== loadGenerationRef.current) return;
+    if (jobsError) {
+      setJobsLoadFailed(true);
+      setLoading(false);
+      return;
+    }
     const list = (js as Job[]) ?? [];
-    setJobs(list);
 
     const ids = [...new Set(list.map(j => j.company_id))];
+    let nextNames = new Map<string, string>();
     if (ids.length) {
       const { data: p } = await supabase.from('profiles').select('id,username').in('id', ids);
-      setNames(new Map(((p as { id: string; username: string }[]) ?? []).map(x => [x.id, x.username])));
+      if (generation !== loadGenerationRef.current) return;
+      nextNames = new Map(((p as { id: string; username: string }[]) ?? []).map(x => [x.id, x.username]));
     }
     const { data: m } = await supabase.from('job_matches').select('job_id,rank').eq('user_id', profile.id);
-    setMyMatches(new Map(((m as { job_id: string; rank: number }[]) ?? []).map(x => [x.job_id, x.rank])));
-
+    if (generation !== loadGenerationRef.current) return;
     const { data: a } = await supabase.from('job_applications').select('job_id').eq('applicant_id', profile.id);
-    setApplied(new Set(((a as { job_id: string }[]) ?? []).map(x => x.job_id)));
+    if (generation !== loadGenerationRef.current) return;
 
+    setJobs(list);
+    setNames(nextNames);
+    setMyMatches(new Map(((m as { job_id: string; rank: number }[]) ?? []).map(x => [x.job_id, x.rank])));
+    setApplied(new Set(((a as { job_id: string }[]) ?? []).map(x => x.job_id)));
+    setJobsLoadFailed(false);
     setLoading(false);
   }, [profile]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    void load();
+    return () => {
+      loadGenerationRef.current += 1;
+    };
+  }, [load]);
 
   // ── Fallback local: cuando el servidor no tiene matches, calculamos localmente
   useEffect(() => {
@@ -193,6 +224,52 @@ export function EmpleosTab() {
     return scoreB - scoreA;
   });
 
+  useEffect(() => {
+    if (!jobTargetId || loading) {
+      if (!jobTargetId) failedTargetNotifiedRef.current = null;
+      return;
+    }
+    if (jobsLoadFailed) {
+      if (failedTargetNotifiedRef.current !== jobTargetId) {
+        toast('No pudimos cargar los empleos. Conservamos tu selección para reintentar.', 'info');
+        failedTargetNotifiedRef.current = jobTargetId;
+      }
+      return;
+    }
+    failedTargetNotifiedRef.current = null;
+    const target = jobs.find((job) => job.id === jobTargetId);
+    if (!target) {
+      toast('Ese empleo ya no está disponible.', 'info');
+      clearJobTarget();
+      return;
+    }
+    const ordered = [...jobs].sort((a, b) => {
+      const scoreA = myMatches.has(a.id) ? 1000 - (myMatches.get(a.id) ?? 99) : localSuggestions.get(a.id) ?? 0;
+      const scoreB = myMatches.has(b.id) ? 1000 - (myMatches.get(b.id) ?? 99) : localSuggestions.get(b.id) ?? 0;
+      return scoreB - scoreA;
+    });
+    const index = ordered.findIndex((job) => job.id === jobTargetId);
+    setView('list');
+    setFilter('all');
+    setVisibleCount((count) => Math.max(count, index + 1));
+  }, [clearJobTarget, jobTargetId, jobs, jobsLoadFailed, loading, localSuggestions, myMatches, toast]);
+
+  useEffect(() => {
+    if (!jobTargetId || loading || jobsLoadFailed || filter !== 'all' || view !== 'list') return;
+    const card = jobCardRefs.current.get(jobTargetId);
+    if (!card) return;
+    card.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+    card.focus({ preventScroll: true });
+    setHighlightedJobId(jobTargetId);
+    clearJobTarget();
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = setTimeout(() => setHighlightedJobId(null), reduceMotion ? 900 : 1600);
+  }, [clearJobTarget, filter, jobTargetId, jobsLoadFailed, loading, reduceMotion, view, visibleCount]);
+
+  useEffect(() => () => {
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+  }, []);
+
   return (
     <div style={{ ...oc.root, ...blurStyle }}>
       {/* Header Ómicrom unificado */}
@@ -213,7 +290,7 @@ export function EmpleosTab() {
           y CERO datos inventados. Si la red no tiene ofertas, lo dice.
           No se muestra mientras carga, para no afirmar "no hay ofertas"
           antes de saberlo. */}
-      {!loading && (() => {
+      {!loading && !jobsLoadFailed && (() => {
         const bridge = opportunityBridge({
           openJobs: jobs.length,
           matchedJobs: myMatches.size || localSuggestions.size,
@@ -236,7 +313,7 @@ export function EmpleosTab() {
       })()}
 
       {/* Filtros */}
-      <div style={styles.filterRow}>
+      {!jobsLoadFailed ? <div style={styles.filterRow}>
         {([['all', `Todos (${jobs.length})`], ['matched', `Match (${myMatches.size || localSuggestions.size})`], ['applied', `Aplicados (${applied.size})`]] as const).map(([k, label]) => {
           const active = filter === k;
           return (
@@ -248,10 +325,10 @@ export function EmpleosTab() {
             }}>{k === 'matched' && <Flame size={11} />}{label}</button>
           );
         })}
-      </div>
+      </div> : null}
 
       {/* Vista: Lista / Radar */}
-      <div style={styles.viewRow}>
+      {!jobsLoadFailed ? <div style={styles.viewRow}>
         {([['list', 'Lista'], ['radar', 'Radar']] as const).map(([k, label]) => {
           const active = view === k;
           return (
@@ -263,13 +340,21 @@ export function EmpleosTab() {
         })}
         <span style={{ flex: 1 }} />
         <span style={{ fontFamily: FM, fontSize: 8.5, color: C.muted, letterSpacing: 1 }}>OPORTUNIDADES POR CERCANÍA</span>
-      </div>
+      </div> : null}
 
       {/* Lista */}
       <div style={styles.scroll}>
-        {view === 'list' && <RutaCarrera />}
-        {view === 'list' && <FreelanceNeeds />}
-        {view === 'radar' ? (
+        {view === 'list' && !jobsLoadFailed && <RutaCarrera />}
+        {view === 'list' && !jobsLoadFailed && <FreelanceNeeds />}
+        {jobsLoadFailed ? (
+          <EmptyState
+            icon={<Briefcase size={30} />}
+            title="No pudimos cargar los empleos"
+            hint="Tu selección sigue guardada. Reintenta para buscar el empleo exacto sin perderla."
+            ctaLabel="Reintentar"
+            onCta={() => void load()}
+          />
+        ) : view === 'radar' ? (
           <RadarView jobs={jobs} userPos={userPos} geoStatus={geoStatus} onRequestGeo={requestGeo} onPick={setRadarJob} />
         ) : loading ? (
           <SkeletonList count={4} />
@@ -297,8 +382,28 @@ export function EmpleosTab() {
           const rank = myMatches.get(j.id);
           const isApplied = applied.has(j.id);
           const mine = j.company_id === profile?.id;
+          const isHighlighted = highlightedJobId === j.id;
+          const isFocused = focusedJobId === j.id;
           return (
-            <div key={j.id} className="oc-rise" style={styles.card}>
+            <div
+              key={j.id}
+              ref={(element) => {
+                if (element) jobCardRefs.current.set(j.id, element);
+                else jobCardRefs.current.delete(j.id);
+              }}
+              tabIndex={-1}
+              className="oc-rise"
+              onFocus={() => setFocusedJobId(j.id)}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusedJobId(null);
+              }}
+              style={{
+                ...styles.card,
+                ...(isHighlighted ? { borderColor: C.amber, background: T.goldFaint } : {}),
+                outline: isFocused ? `2px solid ${C.blueHi}` : 'none',
+                outlineOffset: isFocused ? 2 : 0,
+              }}
+            >
               <div style={styles.cardTop} />
               {rank && (
                 <div style={styles.matchBadge}><Star size={9} style={{ fill: C.amber, color: C.amber }} /> MATCH #{rank}</div>

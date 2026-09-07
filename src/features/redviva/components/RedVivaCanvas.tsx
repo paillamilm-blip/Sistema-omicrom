@@ -9,19 +9,22 @@
 // las posiciones al crecer el perfil, así que el mapa se reordenaba solo.
 // Acá: etiqueta y nodo comparten UNA coordenada, y el layout es determinista.
 //
-// GRAMÁTICA DE COLOR (se aprende en un vistazo, sin leyenda):
-//   • TU COLOR  → lo tuyo.      Relleno = probado. Contorno = solo declarado.
-//   • ÁMBAR     → el mercado.   Lo que pagan y no tenés, y las oportunidades.
-// Nada más. Un nodo relleno con tu color es conocimiento demostrado; un contorno
-// es una afirmación; un punteado ámbar es plata esperando.
+// GRAMÁTICA VISUAL (también funciona sin color):
+//   • TU COLOR  → lo tuyo. Círculo con marca = probado; aro = declarado;
+//                  doble aro = en prueba.
+//   • ÁMBAR     → el mercado. Hexágono discontinuo = ausente; rombo = empleo.
+// El color acompaña la lectura, pero ninguna categoría depende solo de él.
 //
 // ACCESIBILIDAD: el mapa es la vista de conjunto, pero NO es el único camino.
 // La interacción principal vive en la lista de RedVivaHome (filas de 44px, foco
 // de teclado). Acá el SVG se anuncia como imagen con su resumen en aria-label.
 
-import { useEffect, useMemo } from 'react';
-import { C, FONT, SIZE } from '@/theme';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { C, EASE, EASING, FONT, TIMING } from '@/theme';
+import { normalizeSkill } from '../services/gapEngine';
 import type { NodoRed, RedVivaModel } from '../services/redViva';
+import { NodoEstadoFormaSvg } from './NodoEstadoMarca';
 
 const CSS_ID = 'omicron-redviva-css';
 
@@ -43,14 +46,9 @@ function useRedVivaCss(): void {
   0%, 100% { opacity: 0.42; transform: scale(1); }
   50%      { opacity: 0.95; transform: scale(1.14); }
 }
-@keyframes omi-rv-puente {
-  to { stroke-dashoffset: -18; }
-}
-.omi-rv-latido { animation: omi-rv-latido 2.1s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-.omi-rv-puente { animation: omi-rv-puente 1.5s linear infinite; }
+.omi-rv-latido { animation: omi-rv-latido 2.1s ${EASE.default} infinite; transform-origin: center; transform-box: fill-box; }
 @media (prefers-reduced-motion: reduce) {
-  .omi-rv-latido, .omi-rv-puente { animation: none; }
-  .omi-rv-latido { opacity: 0.8; }
+  .omi-rv-latido { animation: none; opacity: 0.8; }
 }
 `;
     document.head.appendChild(style);
@@ -75,6 +73,91 @@ function corto(text: string, max = 16): string {
   return t.length <= max ? t : `${t.slice(0, max - 1)}…`;
 }
 
+/**
+ * El mapa solo ofrece selección directa cuando los objetivos de 44 px no se
+ * pisan. En redes densas sigue siendo una imagen fiel y la lista inferior —con
+ * botones reales de 44 px— es el camino de interacción sin ambigüedad.
+ */
+export function canvasTargetsAreDistinct(
+  nodos: NodoRed[],
+  renderedWidth: number,
+  viewBoxWidth: number,
+): boolean {
+  const scale = Math.max(1, renderedWidth) / Math.max(1, viewBoxWidth);
+  for (let i = 0; i < nodos.length; i += 1) {
+    for (let j = i + 1; j < nodos.length; j += 1) {
+      const distanceCss = Math.hypot(
+        (nodos[i].x - nodos[j].x) * K * scale,
+        (nodos[i].y - nodos[j].y) * K * scale,
+      );
+      if (distanceCss < 44) return false;
+    }
+  }
+  return true;
+}
+
+function nodeVisualRadius(nodo: NodoRed, ownCount: number, absentCount: number): number {
+  const ringRadius = nodo.anillo === 0 ? 42 : nodo.anillo === 1 ? 64 : 92;
+  const neighbours = nodo.anillo === 2 ? absentCount : ownCount;
+  const availableArc = ((Math.PI * 2) / Math.max(1, neighbours)) * ringRadius * 0.4;
+  return Math.min(4.6 + nodo.r * 5.4, Math.max(3.4, availableArc));
+}
+
+/**
+ * Agrupa formas que se pisan visualmente sin moverlas: el ángulo sigue siendo
+ * memoria estable de la identidad. El canvas marca cada grupo con “+N” y la
+ * lista accesible conserva los nombres y acciones de todos sus integrantes.
+ */
+export function canvasOverlapClusters(
+  nodos: NodoRed[],
+  renderedWidth: number,
+  viewBoxWidth: number,
+): string[][] {
+  const scale = Math.max(1, renderedWidth) / Math.max(1, viewBoxWidth);
+  const ownCount = nodos.filter((nodo) => nodo.anillo !== 2).length;
+  const absentCount = nodos.filter((nodo) => nodo.anillo === 2).length;
+  const radii = nodos.map((nodo) => nodeVisualRadius(nodo, ownCount, absentCount));
+  const parent = nodos.map((_, index) => index);
+  const find = (index: number): number => {
+    let root = index;
+    while (parent[root] !== root) root = parent[root];
+    while (parent[index] !== index) {
+      const next = parent[index];
+      parent[index] = root;
+      index = next;
+    }
+    return root;
+  };
+  const union = (a: number, b: number) => {
+    const rootA = find(a);
+    const rootB = find(b);
+    if (rootA !== rootB) parent[rootB] = rootA;
+  };
+
+  for (let i = 0; i < nodos.length; i += 1) {
+    for (let j = i + 1; j < nodos.length; j += 1) {
+      const distanceCss = Math.hypot(
+        (nodos[i].x - nodos[j].x) * K * scale,
+        (nodos[i].y - nodos[j].y) * K * scale,
+      );
+      const minimumClearanceCss = (radii[i] + radii[j]) * scale + 2;
+      if (distanceCss < minimumClearanceCss) union(i, j);
+    }
+  }
+
+  const groups = new Map<number, string[]>();
+  nodos.forEach((nodo, index) => {
+    const root = find(index);
+    const group = groups.get(root) ?? [];
+    group.push(nodo.id);
+    groups.set(root, group);
+  });
+  return [...groups.values()]
+    .filter((group) => group.length > 1)
+    .map((group) => group.sort())
+    .sort((a, b) => a[0].localeCompare(b[0]));
+}
+
 export interface RedVivaCanvasProps {
   model: RedVivaModel;
   /** Color elegido por el usuario para su Gemelo Digital. */
@@ -97,6 +180,19 @@ export function RedVivaCanvas({
   size = 320,
 }: RedVivaCanvasProps) {
   useRedVivaCss();
+  const reduceMotion = useReducedMotion();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [renderedWidth, setRenderedWidth] = useState(size);
+
+  useEffect(() => {
+    const element = wrapperRef.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry?.contentRect.width) setRenderedWidth(entry.contentRect.width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   const uc = userColor;
   const porNodo = useMemo(
@@ -111,7 +207,7 @@ export function RedVivaCanvas({
   /** La jugada recomendada, para que su etiqueta esté SIEMPRE visible. */
   const jugadaId = model.jugada
     ? model.nodos.find(
-        (n) => n.label.toLowerCase() === model.jugada!.skill.toLowerCase(),
+        (n) => normalizeSkill(n.label) === normalizeSkill(model.jugada!.skill),
       )?.id ?? null
     : null;
 
@@ -120,9 +216,8 @@ export function RedVivaCanvas({
   // circulitos perdidos en una caja enorme (se vio en pantalla). Ahora el encuadre
   // se cierra cuando hay poco y se abre cuando aparecen oportunidades.
   //
-  // El margen es chico a propósito: las etiquetas se dibujan FUERA del viewBox
-  // (overflow visible). Si se agrandara el viewBox para contenerlas, todo el
-  // dibujo se haría más chico — justo lo contrario de lo que se busca.
+  // El viewBox incluye el contenido y sus etiquetas; el SVG recorta cualquier
+  // residuo para no depender de overflow visible en pantallas angostas.
   const radioContenido = Math.max(
     50,
     ...model.nodos.map((n) => Math.hypot(n.x, n.y) * K),
@@ -131,6 +226,22 @@ export function RedVivaCanvas({
   const hayEtiquetas = model.oportunidades.length > 0 || model.totales.ausentes > 0;
   const margen = hayEtiquetas ? 37 : 12;
   const medio = radioContenido + margen;
+  const viewBoxWidth = medio * 2;
+  // 44 CSS px mínimos, convertidos a las unidades reales del viewBox.
+  const hitRadius = (44 / 2) * (viewBoxWidth / Math.max(1, renderedWidth));
+  const canSelect = Boolean(onSelect);
+  const mapInteractive = useMemo(
+    () => canSelect && canvasTargetsAreDistinct(model.nodos, renderedWidth, viewBoxWidth),
+    [canSelect, model.nodos, renderedWidth, viewBoxWidth],
+  );
+  const overlapClusters = useMemo(
+    () => canvasOverlapClusters(model.nodos, renderedWidth, viewBoxWidth),
+    [model.nodos, renderedWidth, viewBoxWidth],
+  );
+  const overlapCountByAnchor = useMemo(
+    () => new Map(overlapClusters.map((group) => [group[0], group.length])),
+    [overlapClusters],
+  );
 
   // Cuántos nodos comparten cada sistema angular. Tus habilidades (probadas y
   // declaradas) comparten UNA sola secuencia, así que el cupo por slot lo marca
@@ -139,20 +250,24 @@ export function RedVivaCanvas({
   const cantidadAusentes = Math.max(1, model.nodos.filter((n) => n.anillo === 2).length);
 
   const resumenAria =
-    model.totales.declaradas === 0
+    (model.totales.declaradas === 0
       ? 'Red vacía: todavía no hay habilidades.'
       : `Red de ${model.totales.declaradas} habilidades: ${model.totales.probadas} probadas, ` +
         `${model.totales.declaradas - model.totales.probadas} solo declaradas` +
         (model.totales.ausentes > 0
           ? `, y ${model.totales.ausentes} que el mercado pide y no tenés.`
-          : '.');
+          : '.')) +
+    (overlapClusters.length > 0
+      ? ` ${overlapClusters.length} ${overlapClusters.length === 1 ? 'grupo reúne' : 'grupos reúnen'} habilidades cercanas; la lista muestra cada una por separado.`
+      : '');
 
   return (
     <div
+      ref={wrapperRef}
       style={{
-        width: size,
-        height: size,
-        maxWidth: '100%',
+        width: '100%',
+        maxWidth: size,
+        aspectRatio: '1 / 1',
         position: 'relative',
         margin: '0 auto',
       }}
@@ -163,7 +278,8 @@ export function RedVivaCanvas({
         height="100%"
         role="img"
         aria-label={resumenAria}
-        style={{ overflow: 'visible', display: 'block' }}
+        data-map-interactive={mapInteractive ? 'true' : 'false'}
+        style={{ overflow: 'hidden', display: 'block' }}
       >
         <defs>
           <radialGradient id="omi-rv-core">
@@ -171,13 +287,6 @@ export function RedVivaCanvas({
             <stop offset="70%" stopColor={alpha(uc, 0.14)} />
             <stop offset="100%" stopColor={alpha(uc, 0)} />
           </radialGradient>
-          <filter id="omi-rv-glow" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="2.6" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
         </defs>
 
         {/* ── Anillos guía: hacen legible que "adentro" es mejor ──────────
@@ -243,7 +352,6 @@ export function RedVivaCanvas({
             return (
               <line
                 key={`p${i}`}
-                className="omi-rv-puente"
                 x1={from.x * K}
                 y1={from.y * K}
                 x2={op.x * K}
@@ -350,86 +458,75 @@ export function RedVivaCanvas({
         {model.nodos.map((n) => {
           const x = n.x * K;
           const y = n.y * K;
-
-          // Techo de radio según el lugar que hay en el anillo. Sin esto, con 20
-          // habilidades los círculos quedaban exactamente tangentes: 42px de cupo
-          // por slot y 41px de diámetro (se vio en pantalla). El 0.40 deja ~20 %
-          // de aire entre vecinos.
-          const radioAnillo = n.anillo === 0 ? 42 : n.anillo === 1 ? 64 : 92;
-          const vecinos = n.anillo === 2 ? cantidadAusentes : cantidadPropias;
-          const cupo = ((Math.PI * 2) / vecinos) * radioAnillo * 0.4;
-          const r = Math.min(4.6 + n.r * 5.4, Math.max(3.4, cupo));
+          const r = nodeVisualRadius(n, cantidadPropias, cantidadAusentes);
           const activo = seleccionado === n.id;
+          const stackedCount = overlapCountByAnchor.get(n.id) ?? 0;
           const esMercado = n.estado === 'ausente';
-          // Se etiqueta lo ACCIONABLE: lo que te falta (siempre pocos), la jugada
-          // recomendada y lo que estás mirando. Los 12 nombres de tus habilidades
-          // no van acá: no caben sin pisarse, y la lista de abajo los da todos.
-          const mostrarEtiqueta = activo || n.id === jugadaId || esMercado;
+          // Solo se rotula la acción recomendada y lo seleccionado. En redes
+          // densas, nombrar además todas las ausentes tapa oportunidades; la
+          // lista inferior ya ofrece cada nombre en un objetivo táctil de 44 px.
+          const mostrarEtiqueta = activo || n.id === jugadaId;
           const base = esMercado ? C.gold : uc;
           const derecha = x >= 0;
+          const haciaDentro = Math.abs(x) > medio * 0.45;
+          const labelX = haciaDentro
+            ? (derecha ? -r - 5 : r + 5)
+            : (derecha ? r + 5 : -r - 5);
+          const labelAnchor = haciaDentro
+            ? (derecha ? 'end' : 'start')
+            : (derecha ? 'start' : 'end');
 
           return (
-            <g
+            <motion.g
               key={n.id}
-              onClick={() => onSelect?.(n)}
-              style={{ cursor: onSelect ? 'pointer' : 'default' }}
+              initial={false}
+              animate={{ transform: `translate(${x}px, ${y}px)`, opacity: 1 }}
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : { duration: Number.parseInt(TIMING.normal, 10) / 1000, ease: EASING.standard }
+              }
+              onClick={mapInteractive ? () => onSelect?.(n) : undefined}
+              style={{ cursor: mapInteractive ? 'pointer' : 'default' }}
             >
-              {/* Área de toque generosa e invisible */}
-              <circle cx={x} cy={y} r={Math.max(r + 8, 13)} fill="transparent" />
+              <circle
+                cx={0}
+                cy={0}
+                r={Math.max(r + 3, hitRadius)}
+                fill="transparent"
+                pointerEvents={mapInteractive ? 'auto' : 'none'}
+              />
 
-              {/* Selección: anillo exterior amplio, para que no se confunda con
-                  el estado del nodo (antes el nodo "latiendo" parecía elegido). */}
               {activo ? (
-                <circle cx={x} cy={y} r={r + 6} fill="none" stroke={alpha(base, 0.55)} strokeWidth={1.2} />
+                <circle cx={0} cy={0} r={r + 6} fill="none" stroke={alpha(base, 0.55)} strokeWidth={1.2} />
               ) : null}
 
-              {n.estado === 'solido' ? (
-                // PROBADO: macizo y con brillo. Tiene que ser, sin discusión, lo
-                // más fuerte de la pantalla: es lo único demostrado.
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={r}
-                  fill={base}
-                  stroke={base}
-                  strokeWidth={1.2}
-                  filter="url(#omi-rv-glow)"
-                />
-              ) : n.estado === 'latiendo' ? (
-                // EN PRUEBA AHORA: aro fino + corazón que respira. Se lee "en
-                // camino", nunca más fuerte que un probado.
-                <>
-                  <circle cx={x} cy={y} r={r} fill="none" stroke={alpha(base, 0.7)} strokeWidth={1} />
-                  <circle className="omi-rv-latido" cx={x} cy={y} r={r * 0.5} fill={base} />
-                </>
-              ) : n.estado === 'ausente' ? (
-                // LO PIDE EL MERCADO Y NO LO TENÉS: punteado ámbar, sin relleno.
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={r}
-                  fill={alpha(C.gold, 0.1)}
-                  stroke={C.gold}
-                  strokeWidth={1.2}
-                  strokeDasharray="2.5 2.5"
-                />
-              ) : (
-                // DECLARADO SIN PROBAR: hueco. Es una afirmación, y se ve como tal.
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={r}
-                  fill="none"
-                  stroke={alpha(base, 0.55)}
-                  strokeWidth={1.1}
-                />
-              )}
+              <NodoEstadoFormaSvg
+                estado={n.estado}
+                color={base}
+                r={r}
+                className={n.estado === 'latiendo' ? 'omi-rv-latido' : undefined}
+              />
+
+              {stackedCount > 1 ? (
+                <g aria-hidden="true" transform={`translate(${r + 5} ${-r - 5})`}>
+                  <circle r={6.5} fill={C.bg} stroke={base} strokeWidth={1} />
+                  <text
+                    x={0}
+                    y={2.5}
+                    textAnchor="middle"
+                    style={{ fontFamily: FONT.mono, fontSize: 6.5, fontWeight: 700, fill: C.ink }}
+                  >
+                    +{stackedCount - 1}
+                  </text>
+                </g>
+              ) : null}
 
               {mostrarEtiqueta ? (
                 <text
-                  x={derecha ? x + r + 5 : x - r - 5}
-                  y={y + 3}
-                  textAnchor={derecha ? 'start' : 'end'}
+                  x={labelX}
+                  y={3}
+                  textAnchor={labelAnchor}
                   style={{
                     fontFamily: FONT.body,
                     fontSize: 9,
@@ -444,40 +541,10 @@ export function RedVivaCanvas({
                   {corto(n.label, 18)}
                 </text>
               ) : null}
-            </g>
+            </motion.g>
           );
         })}
       </svg>
-
-      {/* Estado vacío: la pantalla dice qué hacer, no se queda muda. */}
-      {model.vacia ? (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
-            padding: 24,
-            pointerEvents: 'none',
-          }}
-        >
-          <p
-            style={{
-              fontFamily: FONT.body,
-              fontSize: SIZE.sm,
-              color: C.mut,
-              lineHeight: 1.5,
-              margin: 0,
-            }}
-          >
-            Subí tu CV y tus habilidades
-            <br />
-            aparecen acá.
-          </p>
-        </div>
-      ) : null}
     </div>
   );
 }

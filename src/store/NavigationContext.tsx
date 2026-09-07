@@ -8,6 +8,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useState,
   useEffect,
@@ -20,6 +21,11 @@ import type { TabId } from '../types';
 export interface NavigationContextState {
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
+  jobTargetId: string | null;
+  /** Cambia en cada openJob, incluso si se vuelve a pedir el mismo empleo. */
+  jobTargetRequest: number;
+  openJob: (jobId: string) => void;
+  clearJobTarget: () => void;
   unreadCount: number;
   setUnreadCount: (count: number) => void;
 }
@@ -28,6 +34,8 @@ const NavigationContext = createContext<NavigationContextState | null>(null);
 
 export function NavigationProvider({ profileId, children }: { profileId?: string; children: ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabId>('perfil');
+  const [jobTargetId, setJobTargetId] = useState<string | null>(null);
+  const [jobTargetRequest, setJobTargetRequest] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
   const isMounted = useRef(true);
 
@@ -39,7 +47,10 @@ export function NavigationProvider({ profileId, children }: { profileId?: string
   }, []);
 
   useEffect(() => {
-    if (!profileId) setUnreadCount(0);
+    if (!profileId) {
+      setUnreadCount(0);
+      setJobTargetId(null);
+    }
   }, [profileId]);
 
   // Notificaciones no leídas (con manejo de errores robusto)
@@ -81,9 +92,20 @@ export function NavigationProvider({ profileId, children }: { profileId?: string
     };
   }, [profileId]);
 
+  const openJob = useCallback((jobId: string) => {
+    setJobTargetId(jobId);
+    setJobTargetRequest((request) => request + 1);
+    setActiveTab('empleos');
+  }, []);
+  const clearJobTarget = useCallback(() => setJobTargetId(null), []);
+
   const value: NavigationContextState = {
     activeTab,
     setActiveTab,
+    jobTargetId,
+    jobTargetRequest,
+    openJob,
+    clearJobTarget,
     unreadCount,
     setUnreadCount,
   };
