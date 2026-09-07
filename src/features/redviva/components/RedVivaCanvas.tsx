@@ -23,8 +23,45 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { C, EASE, EASING, FONT, TIMING } from '@/theme';
 import { normalizeSkill } from '../services/gapEngine';
-import type { NodoRed, RedVivaModel } from '../services/redViva';
-import { NodoEstadoFormaSvg } from './NodoEstadoMarca';
+import type { EstadoNodo, NodoRed, RedVivaModel } from '../services/redViva';
+import { NodoEstadoFormaSvg, type VarianteNodo } from './NodoEstadoMarca';
+
+/**
+ * El micro-momento de logro ("encaje") solo debe dispararse cuando un nodo
+ * PASA a estado 'solido' (probado) desde otro estado, no en cada render ni al
+ * montar. Además se anula bajo prefers-reduced-motion.
+ *
+ * Función pura y testeable: dado el estado previo, el nuevo y si el usuario
+ * pide movimiento reducido, decide si corresponde reproducir el encaje.
+ *
+ *  • prev undefined  → primer render / nodo recién montado: NO anima (evita un
+ *    "encaje" masivo al abrir la pantalla con habilidades ya probadas).
+ *  • prev === 'solido' → ya estaba encajado: NO reanima.
+ *  • reduceMotion    → nunca anima.
+ */
+export function shouldAnimateEncaje(
+  prev: EstadoNodo | undefined,
+  next: EstadoNodo,
+  reduceMotion: boolean,
+): boolean {
+  if (reduceMotion) return false;
+  if (next !== 'solido') return false;
+  if (prev === undefined) return false;
+  return prev !== 'solido';
+}
+
+/**
+ * Lee la preferencia de movimiento reducido directamente del media query. Es
+ * el mismo valor que consulta el CSS (@media prefers-reduced-motion). Se usa
+ * junto a useReducedMotion() de framer-motion porque este último inicializa su
+ * valor al montar y en entornos como jsdom no siempre relee un matchMedia
+ * cambiado tras el montaje; consultar el media query en cada render garantiza
+ * que la preferencia efectiva se respete de forma observable.
+ */
+function prefersReducedMotionNow(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 const CSS_ID = 'omicron-redviva-css';
 
@@ -53,6 +90,22 @@ function useRedVivaCss(): void {
 `;
     document.head.appendChild(style);
   }, []);
+}
+
+/**
+ * Oro del MERCADO. Normalmente es el ámbar de marca (C.gold). Pero si el
+ * usuario ELIGIÓ Oro como su color, lo suyo y lo del mercado (ausente/puentes)
+ * compartirían el mismo tono y la distinción caería solo en la forma. Para no
+ * perder legibilidad por color, cuando hay colisión el mercado usa un ámbar más
+ * PROFUNDO/tostado (mismo hue, menor luminosidad): sigue siendo Oro —nunca el
+ * gris de marca Silver Ice— pero se separa del Oro brillante del usuario.
+ *
+ * Función pura y testeable: dado el color del usuario, decide el tono del
+ * mercado. Sin colisión devuelve C.gold tal cual.
+ */
+export function marketGold(userColor: string): string {
+  const normalize = (hex: string) => hex.trim().toLowerCase();
+  return normalize(userColor) === normalize(C.gold) ? '#c77d1a' : C.gold;
 }
 
 /** Convierte un hex (#rrggbb) a rgba con el alfa pedido. */
@@ -169,6 +222,12 @@ export interface RedVivaCanvasProps {
   onSelect?: (nodo: NodoRed) => void;
   /** Lado del cuadrado en px. El SVG es responsivo dentro de eso. */
   size?: number;
+  /**
+   * Skin del nodo. 'circulo' (default) conserva la gramática original; 'pieza'
+   * activa el "sabor A": el estado probado se dibuja como pieza de rompecabezas
+   * encajada y su llegada a 'solido' reproduce la micro-animación de encaje.
+   */
+  varianteNodo?: VarianteNodo;
 }
 
 export function RedVivaCanvas({
@@ -178,9 +237,17 @@ export function RedVivaCanvas({
   seleccionado,
   onSelect,
   size = 320,
+  varianteNodo = 'circulo',
 }: RedVivaCanvasProps) {
   useRedVivaCss();
   const reduceMotion = useReducedMotion();
+  // Combina el hook de framer-motion con la lectura directa del media query:
+  // basta con que cualquiera indique movimiento reducido para anular el encaje.
+  const reduceMotionValue = (reduceMotion ?? false) || prefersReducedMotionNow();
+  // Memoria del estado anterior de cada nodo para detectar la transición a
+  // 'solido'. No se dibuja: solo alimenta shouldAnimateEncaje. Se actualiza en
+  // un efecto tras el render para no leer/escribir durante el mismo.
+  const estadoPrevioRef = useRef<Map<string, EstadoNodo>>(new Map());
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [renderedWidth, setRenderedWidth] = useState(size);
 
@@ -195,6 +262,10 @@ export function RedVivaCanvas({
   }, []);
 
   const uc = userColor;
+  // Tono del mercado (ausente/puentes/oportunidades). Igual a C.gold salvo
+  // cuando el usuario eligió Oro: entonces es un ámbar más profundo para no
+  // colisionar con el Oro del usuario (sigue siendo Oro, nunca Silver Ice).
+  const oroMercado = marketGold(userColor);
   const porNodo = useMemo(
     () => new Map(model.nodos.map((n) => [n.id, n])),
     [model.nodos],
@@ -242,6 +313,23 @@ export function RedVivaCanvas({
     () => new Map(overlapClusters.map((group) => [group[0], group.length])),
     [overlapClusters],
   );
+
+  // Qué nodos acaban de pasar a 'solido' en este render: son los únicos que
+  // reproducen el encaje. Se calcula contra el estado previo memorizado.
+  const encajeByNodo = useMemo(() => {
+    const previo = estadoPrevioRef.current;
+    return new Map(
+      model.nodos.map((n) => [
+        n.id,
+        shouldAnimateEncaje(previo.get(n.id), n.estado, reduceMotionValue),
+      ]),
+    );
+  }, [model.nodos, reduceMotionValue]);
+
+  // Tras pintar, la foto de estados pasa a ser el "previo" del próximo render.
+  useEffect(() => {
+    estadoPrevioRef.current = new Map(model.nodos.map((n) => [n.id, n.estado]));
+  }, [model.nodos]);
 
   // Cuántos nodos comparten cada sistema angular. Tus habilidades (probadas y
   // declaradas) comparten UNA sola secuencia, así que el cupo por slot lo marca
@@ -300,7 +388,7 @@ export function RedVivaCanvas({
             cy={0}
             r={r}
             fill="none"
-            stroke={r === 92 ? alpha(C.gold, 0.16) : alpha(uc, 0.08)}
+            stroke={r === 92 ? alpha(oroMercado, 0.16) : alpha(uc, 0.08)}
             strokeWidth={0.6}
             strokeDasharray={r === 92 ? '2 4' : undefined}
           />
@@ -356,7 +444,7 @@ export function RedVivaCanvas({
                 y1={from.y * K}
                 x2={op.x * K}
                 y2={op.y * K}
-                stroke={alpha(C.gold, 0.34)}
+                stroke={alpha(oroMercado, 0.34)}
                 strokeWidth={0.9}
                 strokeDasharray="3 5"
               />
@@ -475,6 +563,7 @@ export function RedVivaCanvas({
           const labelAnchor = haciaDentro
             ? (derecha ? 'end' : 'start')
             : (derecha ? 'start' : 'end');
+          const animarEncaje = encajeByNodo.get(n.id) ?? false;
 
           return (
             <motion.g
@@ -501,12 +590,34 @@ export function RedVivaCanvas({
                 <circle cx={0} cy={0} r={r + 6} fill="none" stroke={alpha(base, 0.55)} strokeWidth={1.2} />
               ) : null}
 
-              <NodoEstadoFormaSvg
-                estado={n.estado}
-                color={base}
-                r={r}
-                className={n.estado === 'latiendo' ? 'omi-rv-latido' : undefined}
-              />
+              {/* La FORMA es un hijo animable aparte: al pasar a 'solido' hace el
+                  micro-momento de "encaje" (SOLO transform/opacity, <=300ms, con
+                  un leve overshoot). El translate del carril lo maneja la <g>
+                  padre; acá solo hay escala+opacidad, sin loops permanentes.
+                  Bajo prefers-reduced-motion, animarEncaje ya es false. */}
+              <motion.g
+                // data-encaje expone el resultado del cableado memo+ref+efecto:
+                // 'true' SOLO en los nodos que acaban de transicionar a probado
+                // (los únicos que reproducen el micro-momento). Es el gancho que
+                // permite testear a nivel de render que solo esos animan.
+                data-encaje={animarEncaje ? 'true' : 'false'}
+                initial={animarEncaje ? { scale: 0.7, opacity: 0.35 } : false}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={
+                  animarEncaje
+                    ? { duration: Number.parseInt(TIMING.normal, 10) / 1000, ease: EASING.spring }
+                    : { duration: 0 }
+                }
+                style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+              >
+                <NodoEstadoFormaSvg
+                  estado={n.estado}
+                  color={base}
+                  r={r}
+                  variante={varianteNodo}
+                  className={n.estado === 'latiendo' ? 'omi-rv-latido' : undefined}
+                />
+              </motion.g>
 
               {stackedCount > 1 ? (
                 <g aria-hidden="true" transform={`translate(${r + 5} ${-r - 5})`}>
