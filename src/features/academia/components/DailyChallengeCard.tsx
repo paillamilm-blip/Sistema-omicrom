@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { C, FONT } from '@/theme';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import {
   getDailyChallenge,
   isChallengeCompleted,
@@ -23,6 +24,7 @@ interface Props {
 
 export function DailyChallengeCard({ onNavigate }: Props) {
   const { gemelo } = useApp();
+  const uc = useUserColor();
   const challenge = getDailyChallenge(gemelo);
   const [completed, setCompleted] = useState(challenge ? isChallengeCompleted(challenge.id) : false);
   const [justCompleted, setJustCompleted] = useState(false);
@@ -85,7 +87,7 @@ export function DailyChallengeCard({ onNavigate }: Props) {
       <div style={S.header}>
         <span style={S.emoji}>{challenge.icon}</span>
         <div style={S.headerText}>
-          <span style={S.label}>RETO DEL DÍA</span>
+          <span style={{ ...S.label, color: uc }}>RETO DEL DÍA</span>
           <span style={S.time}>{challenge.duration}</span>
         </div>
         <span style={S.reward}>+{challenge.reward.pe} PE</span>

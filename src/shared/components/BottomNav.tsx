@@ -1,6 +1,7 @@
 import { useApp } from '@/store/AppContext';
 import { HUBS, hubForTab } from '@/config/hubs';
 import { C, FONT } from '@/theme';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 
 // ═══════════════════════════════════════════════════════════════════════
 // BottomNav — Navegación inferior con los 6 hubs del ecosistema.
@@ -10,6 +11,7 @@ import { C, FONT } from '@/theme';
 export function BottomNav() {
   const { activeTab, setActiveTab } = useApp();
   const currentHub = hubForTab(activeTab);
+  const uc = useUserColor();
 
   return (
     <nav
@@ -31,8 +33,8 @@ export function BottomNav() {
           <div key={hub.id} style={{ flex: 1, maxWidth: 72 }}>
             <div style={{
               height: '100%',
-              background: currentHub.id === hub.id ? C.cyan : 'transparent',
-              boxShadow: currentHub.id === hub.id ? `0 0 10px ${C.cyan}` : 'none',
+              background: currentHub.id === hub.id ? uc : 'transparent',
+              boxShadow: currentHub.id === hub.id ? `0 0 10px ${uc}` : 'none',
               transition: 'background 0.3s ease, box-shadow 0.3s ease',
               borderRadius: '0 0 2px 2px',
             }} />
@@ -74,9 +76,9 @@ export function BottomNav() {
             >
               <Icon
                 size={22}
-                color={active ? C.cyan : C.mut}
+                color={active ? uc : C.mut}
                 style={{
-                  filter: active ? `drop-shadow(0 0 6px ${C.cyan})` : 'none',
+                  filter: active ? `drop-shadow(0 0 6px ${uc})` : 'none',
                   transition: 'color 0.25s ease, filter 0.25s ease',
                 }}
               />
@@ -85,7 +87,7 @@ export function BottomNav() {
                 fontSize: 9,
                 fontWeight: active ? 700 : 500,
                 letterSpacing: 0.3,
-                color: active ? C.cyan : C.mut,
+                color: active ? uc : C.mut,
                 transition: 'color 0.25s ease',
               }}>
                 {hub.label}

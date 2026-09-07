@@ -85,6 +85,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
   username: string; fullName?: string; onClose: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const uc = useUserColor();
   const link = profileLink(username);
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=${encodeURIComponent(link)}`;
 
@@ -134,7 +135,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
       <CloseBtn onClose={onClose} />
       <div style={{ padding: 22 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <Share2 size={16} style={{ color: C.cyan }} />
+          <Share2 size={16} style={{ color: uc }} />
           <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: '#eaf4ff' }}>
             Comparte tu credencial
           </span>
@@ -144,7 +145,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-          <div style={{ padding: 12, borderRadius: 16, background: '#fff', boxShadow: `0 0 22px ${C.cyan}33` }}>
+          <div style={{ padding: 12, borderRadius: 16, background: '#fff', boxShadow: `0 0 22px ${uc}33` }}>
             <img
               src={qrSrc}
               alt="Código QR de tu credencial"
@@ -166,7 +167,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
           onClick={nativeShare}
           style={{
             width: '100%', padding: '13px', borderRadius: RADIUS.lg, cursor: 'pointer',
-            background: C.cyan, border: 'none', color: '#021018',
+            background: uc, border: 'none', color: '#021018',
             fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10,
           }}
@@ -177,7 +178,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
           onClick={copy}
           style={{
             width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer',
-            background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.cyanDim}`, color: C.cyan,
+            background: 'rgba(255,255,255,0.05)', border: `1px solid ${uc}66`, color: uc,
             fontFamily: FONT.mono, fontSize: 12, letterSpacing: 0.5,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
@@ -628,6 +629,7 @@ export function DirectChatModal({ other, onClose }: {
   onClose: () => void;
 }) {
   const { profile } = useApp();
+  const uc = useUserColor();
   const [msgs, setMsgs] = useState<DMsg[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -713,8 +715,8 @@ export function DirectChatModal({ other, onClose }: {
               <div key={`${m.id}-${i}`} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
                 <div style={{
                   maxWidth: '82%', padding: '9px 13px', borderRadius: 12,
-                  background: own ? 'rgba(160,174,192,0.12)' : 'rgba(255,255,255,0.05)',
-                  border: `1px solid ${own ? C.cyanDim : 'rgba(255,255,255,0.08)'}`,
+                  background: own ? `${uc}1f` : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${own ? `${uc}66` : 'rgba(255,255,255,0.08)'}`,
                   borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3,
                 }}>
                   <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: '#dbeafe', lineHeight: 1.4 }}>{m.content}</p>
@@ -734,7 +736,7 @@ export function DirectChatModal({ other, onClose }: {
             style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 13, outline: 'none' }}
           />
           <button onClick={send} disabled={!input.trim() || sending}
-            style={{ width: 44, height: 44, borderRadius: 11, background: C.cyan, border: 'none', color: '#021018', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
+            style={{ width: 44, height: 44, borderRadius: 11, background: uc, border: 'none', color: '#021018', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
             <Send size={16} />
           </button>
         </div>

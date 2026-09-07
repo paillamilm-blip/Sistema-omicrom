@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, Clock, Users, MapPin, Wifi, Send, CheckCircle2, X } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useProfile } from '@/store/ProfileContext';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { C, FONT } from '@/theme';
 
 interface FreelanceNeed {
@@ -50,6 +51,7 @@ const URGENCY_LABEL: Record<string, { label: string; color: string }> = {
 
 export function FreelanceNeeds() {
   const { profile } = useProfile();
+  const uc = useUserColor();
   const [needs, setNeeds] = useState<FreelanceNeed[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPublish, setShowPublish] = useState(false);
@@ -116,7 +118,7 @@ export function FreelanceNeeds() {
 
       {/* Filtros por categoría */}
       <div style={S.filterRow}>
-        <button onClick={() => setFilter('all')} style={{ ...S.filterChip, ...(filter === 'all' ? S.filterActive : {}) }}>
+        <button onClick={() => setFilter('all')} style={{ ...S.filterChip, ...(filter === 'all' ? { ...S.filterActive, borderColor: uc, color: uc } : {}) }}>
           Todas ({needs.length})
         </button>
         {CATEGORIES.slice(0, 5).map(cat => {
@@ -124,7 +126,7 @@ export function FreelanceNeeds() {
           if (count === 0) return null;
           return (
             <button key={cat.value} onClick={() => setFilter(cat.value)}
-              style={{ ...S.filterChip, ...(filter === cat.value ? S.filterActive : {}) }}>
+              style={{ ...S.filterChip, ...(filter === cat.value ? { ...S.filterActive, borderColor: uc, color: uc } : {}) }}>
               {cat.emoji} {cat.label.split('/')[0]} ({count})
             </button>
           );
@@ -191,8 +193,8 @@ export function FreelanceNeeds() {
                 disabled={isOwn || hasApplied}
                 style={{
                   ...S.applyBtn,
-                  background: hasApplied ? 'transparent' : isOwn ? 'transparent' : `linear-gradient(135deg, ${C.cyan}, #008b9e)`,
-                  border: `1px solid ${hasApplied ? C.green : isOwn ? C.mut + '44' : C.cyan}`,
+                  background: hasApplied ? 'transparent' : isOwn ? 'transparent' : `linear-gradient(135deg, ${uc}, #008b9e)`,
+                  border: `1px solid ${hasApplied ? C.green : isOwn ? C.mut + '44' : uc}`,
                   color: hasApplied ? C.green : isOwn ? C.mut : '#04121f',
                   cursor: isOwn || hasApplied ? 'default' : 'pointer',
                 }}
@@ -216,6 +218,7 @@ export function FreelanceNeeds() {
 // ── MODAL: Publicar necesidad ────────────────────────────────────────
 function PublishNeedModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const { profile } = useProfile();
+  const uc = useUserColor();
   const [f, setF] = useState({ title: '', description: '', category: 'desarrollo', budgetMin: '', budgetMax: '', days: '7', skills: '', is_remote: true, urgency: 'normal' });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -290,7 +293,7 @@ function PublishNeedModal({ onClose, onDone }: { onClose: () => void; onDone: ()
 
         {err && <div style={{ fontFamily: FONT.mono, fontSize: 11, color: '#ff5c7a', marginBottom: 10 }}>{err}</div>}
 
-        <button onClick={submit} disabled={saving} style={S.submitBtn}>
+        <button onClick={submit} disabled={saving} style={{ ...S.submitBtn, background: `linear-gradient(135deg, ${uc}, #008b9e)` }}>
           {saving ? 'Publicando...' : '📋 Publicar necesidad'}
         </button>
       </div>
@@ -300,6 +303,7 @@ function PublishNeedModal({ onClose, onDone }: { onClose: () => void; onDone: ()
 
 // ── MODAL: Postular a necesidad ──────────────────────────────────────
 function ApplyModal({ need, onClose, onDone }: { need: FreelanceNeed; onClose: () => void; onDone: () => void }) {
+  const uc = useUserColor();
   const [message, setMessage] = useState('');
   const [budget, setBudget] = useState('');
   const [days, setDays] = useState('');
@@ -338,7 +342,7 @@ function ApplyModal({ need, onClose, onDone }: { need: FreelanceNeed; onClose: (
 
         {err && <div style={{ fontFamily: FONT.mono, fontSize: 11, color: '#ff5c7a', marginBottom: 10 }}>{err}</div>}
 
-        <button onClick={submit} disabled={sending} style={S.submitBtn}>
+        <button onClick={submit} disabled={sending} style={{ ...S.submitBtn, background: `linear-gradient(135deg, ${uc}, #008b9e)` }}>
           {sending ? 'Enviando...' : '🚀 Enviar postulación'}
         </button>
       </div>

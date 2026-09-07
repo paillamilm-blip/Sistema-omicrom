@@ -120,7 +120,7 @@ export function GemeloTab() {
         </p>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('omicron:request-auth'))}
-          style={{ marginTop: 8, padding: '12px 24px', borderRadius: 12, background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: `0 4px 16px ${C.cyan}44` }}
+          style={{ marginTop: 8, padding: '12px 24px', borderRadius: 12, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: `0 4px 16px ${uc}44` }}
         >
           Crear cuenta / Iniciar sesión
         </button>

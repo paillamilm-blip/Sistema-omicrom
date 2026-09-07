@@ -7,6 +7,7 @@ import { Download, X, CreditCard } from 'lucide-react';
 import { useGemeloProfile } from '@/features/gemelo/hooks/useGemeloProfile';
 import type { GemeloProfile, GemeloAxes } from '@/features/gemelo/services/profile';
 import { C, FONT, RADIUS } from '@/theme';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 
 function drawPassport(cv: HTMLCanvasElement, p: GemeloProfile, tierName: string) {
   const x = cv.getContext('2d');
@@ -48,6 +49,7 @@ function drawPassport(cv: HTMLCanvasElement, p: GemeloProfile, tierName: string)
 
 export function PasaporteGemelo() {
   const { profile, tier } = useGemeloProfile();
+  const uc = useUserColor();
   const [open, setOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -73,7 +75,7 @@ export function PasaporteGemelo() {
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           padding: '11px 0', marginBottom: 14, borderRadius: RADIUS.lg, cursor: 'pointer',
-          background: 'rgba(160,174,192,0.08)', border: `1px solid ${C.cyanDim}`, color: C.cyan,
+          background: `${uc}14`, border: `1px solid ${uc}66`, color: uc,
           fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
         }}
       >

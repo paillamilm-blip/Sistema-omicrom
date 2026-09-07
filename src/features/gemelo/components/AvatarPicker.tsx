@@ -9,6 +9,7 @@ import { useRef, useState } from 'react';
 import { Plus, Loader2 } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { C } from '@/theme';
 import type { AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
 
@@ -31,6 +32,7 @@ export function AvatarPicker({ selected, onChange }: Props) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { profile } = useApp();
+  const uc = useUserColor();
 
   function handleGradientSelect(index: number) {
     onChange({ type: 'grad', v: index });
@@ -144,8 +146,8 @@ export function AvatarPicker({ selected, onChange }: Props) {
                 backgroundImage: `url(${selected.v})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                border: `1.5px solid ${C.cyan}`,
-                boxShadow: `0 0 0 3px rgba(160,174,192,0.25)`,
+                border: `1.5px solid ${uc}`,
+                boxShadow: `0 0 0 3px ${uc}40`,
               }
             : {
                 borderStyle: 'dashed',
@@ -167,8 +169,8 @@ export function AvatarPicker({ selected, onChange }: Props) {
             style={{
               ...S.slot,
               background: `linear-gradient(140deg, ${c1}, ${c2})`,
-              border: isSelected ? `1.5px solid ${C.cyan}` : `1.5px solid ${C.line}`,
-              boxShadow: isSelected ? `0 0 0 3px rgba(160,174,192,0.25)` : 'none',
+              border: isSelected ? `1.5px solid ${uc}` : `1.5px solid ${C.line}`,
+              boxShadow: isSelected ? `0 0 0 3px ${uc}40` : 'none',
             }}
             aria-label={`Gradiente ${i + 1}`}
           />
