@@ -15,12 +15,12 @@ inclusion: always
 |--------------|---------|------------------|
 | **HACER:** [qué] | Lo implemento inmediato | GSD + Ponytail + Claude Mem + Verification + Sinergia |
 | **PENSAR:** [idea/problema] | Te digo si conviene, cómo, y el plan | Superpowers + Context Mode + Doubt-Driven + Autoplan |
-| **DISEÑAR:** [pantalla/componente] | Te diseño una UI increíble | Design System + UI/UX Pro Max + Taste Skill + Animate + Impeccable + UI Styling |
+| **DISEÑAR:** [pantalla/componente] | Te diseño una UI increíble (ver `pipeline-diseno.md`) | UI/UX Pro Max (dato) → DESIGN.md (filtro) → Taste Skill (solo si es superficie de conversión) → Impeccable (ejecuta) → Animate (motion) |
 | **REVISAR** | Reviso tu código buscando bugs y mejoras | Code Review Ultra + Ponytail Review + Performance + Security + Sinergia |
 | **LANZAR** | Preparo todo para producción | Ship + Shipping & Launch + Security + Performance + QA + Sinergia + Verification |
 | **ARREGLAR:** [problema] | Encuentro el problema y lo soluciono | Systematic Debugging + QA Memoria + GSD + Ponytail + Verification |
 | **PROTEGER:** [módulo/feature] | Verifico seguridad completa | CSO + Security & Hardening + Code Review Ultra |
-| **ANIMACIÓN:** [elemento] | Le agrego movimiento profesional | Animate + Taste Skill + Impeccable + Performance |
+| **ANIMACIÓN:** [elemento] | Le agrego movimiento profesional | Animate (manda) + Impeccable + Performance — curvas y duraciones de `src/theme/animations.ts`, nunca inventadas |
 | **CV:** [pegas el texto] | Genero el ADN Digital completo | ADN Digital + Superpowers + Systematic Debugging + Performance + Sinergia + Verification |
 | **SINERGIA** | Verifico que todo esté conectado (7 checks) | Sinergia + Verification |
 | **LIMPIAR:** [módulo/todo] | Elimino código muerto y simplifico | Ponytail Audit + Code Simplification + Ponytail Review + Ponytail Debt + Sinergia |
@@ -74,10 +74,16 @@ PENSAR → PLANEAR → HACER (incremental) → SINERGIA → TESTEAR → LANZAR
 
 ### EMBELLECER: [pantalla]
 ```
-DISEÑAR → ANIMACIÓN → CV (si toca gemelo) → NAVEGAR (verificar) → LANZAR
+1. impeccable context --target [pantalla]     ← carga PRODUCT.md + DESIGN.md
+2. search.py "[patrón]" --domain ux           ← qué dice el dato
+3. Filtrar contra DESIGN.md                   ← qué de eso es legal en Ómicrom
+4. DISEÑAR (impeccable ejecuta)
+5. ANIMACIÓN (animate, si hay motion)
+6. impeccable audit                           ← a11y + responsive + perf
+7. NAVEGAR (verificar en vivo) → LANZAR
 ```
-**Skills:** Design System + UI/UX Pro Max + Taste + Animate + Impeccable + UI Styling + Nova Act + QA + Performance + Verification + Ship
-**Potencia:** 14/34 skills
+**Skills:** UI/UX Pro Max + Impeccable + Animate + Taste (solo superficies Persuade) + Design System + UI Styling + Nova Act + QA + Performance + Verification + Ship
+**Orden de conflicto:** DESIGN.md → src/theme/ → impeccable/animate → ui-ux-pro-max/taste. Detalle en `pipeline-diseno.md`.
 
 ---
 
