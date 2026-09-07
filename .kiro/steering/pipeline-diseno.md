@@ -14,7 +14,7 @@ Cuatro skills de diseño instaladas. Cada una decide **una** cosa. Si dos parece
 | **ui-ux-pro-max** | Qué opciones existen. Devuelve datos verificados: 192 paletas, 74 pares tipográficos, 119 guías UX, 22 stacks, 25 gráficos. | Cuál elegir para Ómicrom. Es un catálogo, no un veredicto. |
 | **taste-skill** | Dirección visual anti-genérica en superficies de **conversión**. Los tres dials, el "Design Read". | Nada de product UI. Su propio scope lo excluye. |
 | **impeccable** | Ejecución y criterio de craft. 23 comandos, invocados como `/impeccable <command> <target>`. | Motion. Delegá a `animate`. |
-| **animate** | Todo el movimiento. Secuencia de 7 pasos, curvas y duraciones de tabla, gating de `prefers-reduced-motion`. | Layout, color, tipografía. |
+| **animate** *(+3 hermanas)* | Todo el movimiento. Construir (`animate`), criticar (`review-animations`), auditar el codebase (`improve-animations`), encontrar oportunidades (`find-animation-opportunities`). | Layout, color, tipografía. |
 
 ## Orden de conflicto (de mayor a menor autoridad)
 
@@ -33,7 +33,8 @@ Cuatro skills de diseño instaladas. Cada una decide **una** cosa. Si dos parece
 3. taste/impeccable → dirección   (¿cómo se ve, en este mundo?)
 4. impeccable     →  ejecución    (escribir el código)
 5. animate        →  movimiento   (si hay motion, y solo entonces)
-6. impeccable audit → verificación (a11y, responsive, perf)
+   └ review-animations → verificá el motion que acabás de escribir
+6. impeccable audit → verificación (a11y, responsive, perf — no cubre motion)
 ```
 
 Pasos 1 y 2 son baratos y evitan reescribir. No los saltees.
@@ -89,13 +90,38 @@ Casi todo Ómicrom es product UI en modo **Operate** — `GemeloTab`, `Credencia
 
 Sí va en las superficies **Persuade**: `AuthOverlay`, `NoAccess`, `ResetPasswordOverlay`, `OrbOnboarding` y los 5 actos de `GemeloReveal`. Y aun ahí, sus §4.2 (calibración de color) y §4.1 (tipografía) están **ya resueltos** por `DESIGN.md` — no los reabras.
 
-## `animate` gana sobre `/impeccable animate`
+## Motion: 4 skills, una por trabajo
 
-`impeccable` tiene un comando `animate` y hay una skill `animate` dedicada. **Gana la skill.** `reference/animate.md` sirve para saber *si* algo debe moverse; la construcción la hace `animate` con su secuencia de 7 pasos.
+Todas de [`emilkowalski/skills`](https://github.com/emilkowalski/skills). Cada una hace **una** cosa y se delegan entre sí explícitamente:
 
-Motion en este repo sale de `src/theme/animations.ts` — `EASE`, `TIMING`, `SPRING`, `KEYFRAMES`. La regla 3 de `animate` ("extendé los tokens del codebase, no los bifurques") apunta ahí.
+| Skill | Trabajo | Escribe código |
+|---|---|---|
+| **`animate`** | Construir una animación desde cero. Secuencia de 7 pasos. | Sí |
+| **`review-animations`** | Criticar motion existente contra el bar de craft. `STANDARDS.md` es la tabla de reglas. Por defecto marca; la aprobación se gana. | No |
+| **`improve-animations`** | Auditar el motion de todo el codebase y emitir planes priorizados auto-contenidos que otro agente (o un modelo más barato) ejecuta. | No |
+| **`find-animation-opportunities`** | Barrer la UI buscando momentos que **deberían** moverse y no se mueven — y rechazar los que no. Read-only, propone con valores exactos. | No |
 
-> ⚠️ **Conflicto real, sin resolver.** `EASING.standard` en `animations.ts` es `[0.4, 0, 0.2, 1]` — exactamente la curva que la tabla "Never Ship" de `animate` prohíbe por nombre. `EASE.default` (`cubic-bezier(0.32, 0.72, 0, 1)`, la curva iOS) es la correcta. Usá `EASE`/`TIMING`; no propagues `EASING.standard` a código nuevo. Migrar los usos existentes es un cambio aparte, con su propio diff.
+`animation-vocabulary` es el complemento de entrada: glosario de búsqueda inversa que traduce una descripción vaga a su término exacto ("el efecto rebotón cuando abre el popover" → *Pop in*). Útil para arrancar cuando no sabés cómo se llama lo que querés.
+
+**`animate-expo` NO está instalada a propósito** — es para React Native y Ómicrom es web (`PRODUCT.md` → `Platform: web`).
+
+### `animate` gana sobre `/impeccable animate`
+
+`impeccable` tiene un comando `animate` y hay una skill `animate` dedicada. **Gana la skill.** `reference/animate.md` sirve para saber *si* algo debe moverse; la construcción la hace `animate`. Para verificar lo construido, `review-animations` — no el `audit` de impeccable, que no cubre motion.
+
+### El estado real del motion en este repo
+
+> ⚠️ **Los tokens de motion existen y nadie los usa.** `EASE`, `TIMING`, `SPRING` y `EASING` en `src/theme/animations.ts` tienen **cero consumidores** fuera de su propia declaración, aunque el barrel los re-exporta. Mientras tanto hay **12 `cubic-bezier` hardcodeados** en componentes y 86 `transition:` inline.
+>
+> Lo bueno: las curvas hardcodeadas son **casi todas las correctas** — `(0.32, 0.72, 0, 1)` ×6 (iOS, = `EASE.default`) y `(0.23,1,0.32,1)` ×6 (el ease-out fuerte que prescribe `review-animations/STANDARDS.md`). Quien las escribió conocía la filosofía.
+>
+> Lo que hay que arreglar, y es trabajo de `improve-animations`:
+> 1. **Importar de `EASE` en vez de hardcodear.** La regla 3 de `animate` ("extendé los tokens del codebase, no los bifurques") hoy no se puede cumplir porque nadie los usa.
+> 2. **Dos grafías de la misma curva** — `(0.23,1,0.32,1)` sin espacios ×6 vs `(0.23, 1, 0.32, 1)` con espacios ×1. No es greppable como una sola cosa.
+> 3. **`cubic-bezier(0.2, 0.9, 0.25, 1)` ×2 no está en ningún token.** Curva inventada, justo lo que la regla 2 de `animate` prohíbe.
+> 4. **`EASING` es código muerto y contiene una curva prohibida** — `EASING.standard` es `[0.4, 0, 0.2, 1]`, exactamente la que la tabla "Never Ship" de `animate` veta por nombre. Cero usos: se borra, no se migra. `EASE.default` es la correcta.
+>
+> Hasta que eso se limpie: **código nuevo importa de `EASE`/`TIMING`/`SPRING`**, nunca hardcodea, y nunca toca `EASING`.
 
 ## No negociable, venga de donde venga
 

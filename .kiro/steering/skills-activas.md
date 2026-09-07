@@ -20,7 +20,8 @@ inclusion: always
 | **LANZAR** | Preparo todo para producción | Ship + Shipping & Launch + Security + Performance + QA + Sinergia + Verification |
 | **ARREGLAR:** [problema] | Encuentro el problema y lo soluciono | Systematic Debugging + QA Memoria + GSD + Ponytail + Verification |
 | **PROTEGER:** [módulo/feature] | Verifico seguridad completa | CSO + Security & Hardening + Code Review Ultra |
-| **ANIMACIÓN:** [elemento] | Le agrego movimiento profesional | Animate (manda) + Impeccable + Performance — curvas y duraciones de `src/theme/animations.ts`, nunca inventadas |
+| **ANIMACIÓN:** [elemento] | Le agrego movimiento profesional | Animate (construye) → Review Animations (verifica) + Performance — curvas de `EASE`/`TIMING`/`SPRING`, nunca inventadas |
+| **AUDITAR MOTION** | Audito todas las animaciones del repo y emito planes priorizados | Improve Animations + Find Animation Opportunities + Review Animations |
 | **CV:** [pegas el texto] | Genero el ADN Digital completo | ADN Digital + Superpowers + Systematic Debugging + Performance + Sinergia + Verification |
 | **SINERGIA** | Verifico que todo esté conectado (7 checks) | Sinergia + Verification |
 | **LIMPIAR:** [módulo/todo] | Elimino código muerto y simplifico | Ponytail Audit + Code Simplification + Ponytail Review + Ponytail Debt + Sinergia |
