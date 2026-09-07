@@ -1,7 +1,12 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
-import OrbNeuronal, { type OrbNode } from './OrbNeuronal';
+import { type OrbNode } from './OrbNeuronal';
 import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
-import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
+import { OmicronBar } from './OmicronBar';
+import { OmicronPlaceholder2D } from '@/shared/components/OmicronPlaceholder2D';
+import { RedVivaCanvas } from '@/features/redviva/components/RedVivaCanvas';
+import { useRedViva } from '@/features/redviva/hooks/useRedViva';
+import { textoLecturaOmicron, tabParaNodo } from '@/features/omicron/services/omicronLectura';
+import type { NodoRed } from '@/features/redviva/services/redViva';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 // NOTE ("Matar el Escritorio" Inc 2): ProactiveCards y OrbContextLabel se
 // DESMONTARON del shell para consolidar el Home en UNA sola voz ambiental
@@ -29,7 +34,7 @@ import { streakDays } from '@/features/gemelo/services/profile';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { motion, useReducedMotion } from 'framer-motion';
-import { C, EASE, FONT, SIZE, TIMING } from '@/theme';
+import { C, EASE, FONT, TIMING } from '@/theme';
 import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
 import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
@@ -196,7 +201,7 @@ function TabLoader() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: C.bg }}>
       <div style={{ width: 64, height: 64 }}>
-        <GeodesicOrb size={64} nodes={8} color={getUserColor()} spinning={15} />
+        <OmicronPlaceholder2D size={64} color={getUserColor()} />
       </div>
       <p style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Cargando...</p>
     </div>
@@ -221,7 +226,7 @@ function renderTab(tab: TabId) {
 
 
 export function OrbShell() {
-  const { setActiveTab, unreadCount, jobTargetId, jobTargetRequest } = useNavigation();
+  const { setActiveTab, jobTargetId, jobTargetRequest } = useNavigation();
   const { profile } = useGemeloProfile();
   // Get full Supabase profile for fields not on GemeloProfile (skills_detail, display_name, etc.)
   const { profile: sbFull } = useProfile();
@@ -229,6 +234,16 @@ export function OrbShell() {
   const orbColor = useUserColor();
   // Respetar prefers-reduced-motion para el micro-feedback de las etiquetas
   const prefersReducedMotion = useReducedMotion();
+
+  // ── FUSIÓN ORBE + RED VIVA (una sola cosa) ──────────────────────────
+  // El home YA no renderiza el orbe 3D (OrbNeuronal): renderiza la Red Viva
+  // (motor B con sabor A, varianteNodo='pieza') alimentada por datos reales.
+  // El centro = la reputación del usuario. La red representa su EVIDENCIA, no
+  // las tabs; la navegación por tabs sigue por la barra de voz/texto y por la
+  // selección de nodos del mapa (tabParaNodo → setActiveTab).
+  const { model: redVivaModel } = useRedViva();
+  // Nodo enfocado en el mapa del home (para la lectura de Ómicrom y la nav).
+  const [nodoRedSel, setNodoRedSel] = useState<string | null>(null);
 
   // ── Build GemeloDigital from Supabase profile for omicronCoach ──────
   const sbProfile = sbFull; // Supabase profile (has execution_score, skills_detail, etc.)
@@ -322,11 +337,8 @@ export function OrbShell() {
 
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
-  const [voiceLevel, setVoiceLevel] = useState(0);
-  const [spectrum, setSpectrum] = useState<{ bass: number; mid: number; treble: number } | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [nodePositions, setNodePositions] = useState<{ id: string; x: number; y: number; depth: number }[]>([]);
   const [inputText, setInputText] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
@@ -342,7 +354,6 @@ export function OrbShell() {
   const [showConvalida, setShowConvalida] = useState(false);
   const [showCredencial, setShowCredencial] = useState(false);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rafRef = useRef<number | null>(null);
 
   // Intenciones de navegación con destino exacto abren la superficie real, no
   // solo cambian un valor de contexto que el shell no esté mostrando.
@@ -709,7 +720,6 @@ export function OrbShell() {
   const toggleListening = useCallback(async () => {
     if (isListening) {
       setIsListening(false);
-      setVoiceLevel(0);
       window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
       return;
     }
@@ -722,7 +732,6 @@ export function OrbShell() {
     }
 
     setIsListening(true);
-    setVoiceLevel(0.4);
     window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: true } }));
 
     const handle = startSpeechRecognition({
@@ -734,12 +743,10 @@ export function OrbShell() {
       },
       onEnd: () => {
         setIsListening(false);
-        setVoiceLevel(0);
         window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
       },
       onError: () => {
         setIsListening(false);
-        setVoiceLevel(0);
         window.dispatchEvent(new CustomEvent('oracle:listening', { detail: { listening: false } }));
       },
     });
@@ -794,39 +801,65 @@ export function OrbShell() {
     }
   }, [state]);
 
-  // ── Projected positions callback (from OrbNeuronal 3D → 2D) ────────
-  const handleProjected = useCallback((positions: { id: string; x: number; y: number; depth: number }[]) => {
-    setNodePositions(positions);
-  }, []);
+  // ── Selección de un nodo de la Red Viva del home ───────────────────
+  // La red del home representa la EVIDENCIA del usuario (habilidades), no las
+  // tabs. Al seleccionar un nodo: (1) lo marcamos para que Ómicrom lo LEA en
+  // modo lectura, y (2) abrimos la superficie donde ese nodo se acciona
+  // (tabParaNodo: ausente→empleos, resto→maxskill) reutilizando el mismo flujo
+  // de navegación que el resto del shell (setSelectedNode + preview + tab).
+  const handleRedNodeSelect = useCallback((nodo: NodoRed) => {
+    // Toggle: volver a tocar el nodo activo cierra su foco (y su lectura).
+    setNodoRedSel((prev) => (prev === nodo.id ? null : nodo.id));
+    if (nodoRedSel === nodo.id) return;
+    hapticMedium();
+    firePulse('user');
+    const tab = tabParaNodo(nodo);
+    const hubNode = HUB_NODES.find((h) => h.tab === tab);
+    if (!hubNode) return;
+    setSelectedNode({ ...hubNode, label: nodo.label });
+    setState('preview');
+    setActiveTab(tab);
+    window.dispatchEvent(new CustomEvent('omicron:node-tap'));
+  }, [nodoRedSel, setActiveTab]);
+
+  // ── Lectura de Ómicrom (modo 'lectura' de la barra en el home) ──────
+  // Ómicrom LEE la red con textos REALES (resumenRed/textoEstado vía el helper
+  // puro textoLecturaOmicron): resumen global si no hay nodo enfocado, o la
+  // línea del nodo enfocado. Sin jerga y sin inventar. Solo se muestra en el
+  // home (state 'orb') y cuando NO hay una respuesta reactiva activa
+  // (responseMsg), para no pisar la burbuja de ProactiveMessage.
+  const nodoRedActivo = useMemo(
+    () => redVivaModel.nodos.find((n) => n.id === nodoRedSel) ?? null,
+    [redVivaModel.nodos, nodoRedSel],
+  );
+  const lecturaOmicron = useMemo(
+    () => (redVivaModel.vacia ? null : textoLecturaOmicron(redVivaModel, nodoRedActivo)),
+    [redVivaModel, nodoRedActivo],
+  );
 
   // ── B: Connect real OraculoBar voice state ──────────────────────────
-  // Listen for custom events dispatched by OraculoBar when listening starts/stops
+  // Listen for custom events dispatched by OraculoBar when listening starts/stops.
+  // Los eventos ('oracle:listening'/'oracle:voice'/'oracle:spectrum'/'omicron:
+  // speaking') se CONSERVAN (otros módulos los emiten/oyen). Con el home ya en
+  // 2D (Red Viva), el nivel de voz y el espectro ya no alimentan un render 3D,
+  // así que estos handlers solo mantienen el estado que el shell todavía usa
+  // (isListening → barra Ómicrom; isSpeaking → pausa el idle). No se renombra ni
+  // se retira ningún evento.
   useEffect(() => {
     const handleOracleListening = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      setIsListening(detail.listening);
-      if (detail.listening) setVoiceLevel(0.4); // initial pulse when mic activates
+      setIsListening(!!detail?.listening);
     };
-    const handleOracleVoice = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      setVoiceLevel(detail.level);
-    };
-    // Ecualizador esférico: bandas de frecuencia (bass/mid/treble) — Inc 2.
-    const handleSpectrum = (e: Event) => {
-      const detail = (e as CustomEvent).detail as
-        | { bass: number; mid: number; treble: number }
-        | undefined;
-      setSpectrum(detail ?? null);
-    };
+    // Handlers no-op conservados para no retirar los eventos de voz existentes.
+    const handleOracleVoice = () => { /* nivel de voz ya no alimenta un render */ };
+    const handleSpectrum = () => { /* bandas de frecuencia ya no se dibujan */ };
     window.addEventListener('oracle:listening', handleOracleListening);
     window.addEventListener('oracle:voice', handleOracleVoice);
     window.addEventListener('oracle:spectrum', handleSpectrum);
-    // Escuchar cuando speakAI está hablando para vibrar el orbe
+    // Escuchar cuando speakAI está hablando (pausa el respiro ocioso del home).
     const handleSpeaking = (e: Event) => {
       const active = (e as CustomEvent).detail?.active;
-      setVoiceLevel(active ? 0.3 : 0);
       setIsSpeaking(!!active);
-      if (!active) setSpectrum(null);
     };
     window.addEventListener('omicron:speaking', handleSpeaking);
     return () => {
@@ -935,27 +968,10 @@ export function OrbShell() {
     return () => window.removeEventListener('omicron:audio-unlocked', handleUnlock);
   }, []); // deps vacío — usa ref para evitar stale closure
 
-  // Fix 2: Idle breathing — throttled state update (2 Hz, cosmetic only)
-  useEffect(() => {
-    // Mientras Ómicrom habla, el analizador de voz alimenta voiceLevel en vivo
-    // vía 'oracle:voice'; no correr la respiración senoidal para no pisarlo.
-    if (state !== 'orb' || isListening || isSpeaking) return;
-    let running = true;
-    let last = 0;
-    const throttled = (ts: number) => {
-      if (!running) return;
-      if (ts - last > 500) {
-        last = ts;
-        setVoiceLevel(Math.sin(ts * 0.002) * 0.05 + 0.05);
-      }
-      rafRef.current = requestAnimationFrame(throttled);
-    };
-    rafRef.current = requestAnimationFrame(throttled);
-    return () => {
-      running = false;
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [state, isListening, isSpeaking]);
+  // El "respiro ocioso" que alimentaba voiceLevel del orbe 3D se retiró: el home
+  // ya es la Red Viva 2D y no consume nivel de voz. El único movimiento
+  // permanente permitido es el estado real 'latiendo' de un nodo y la lucecita
+  // de presencia de la barra (cp-breathe), ambos gobernados por reduced-motion.
 
   // ── Onboarding handler (R3: intent-first routing) ────────────────────
   const handleOnboardingComplete = useCallback((_choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar') => {
@@ -1029,14 +1045,15 @@ export function OrbShell() {
         zIndex: 1,
       }}>
         {/*
-          Caja ESTABLE sin escala: el orbe ya NO aplica un scale CSS desde
-          voiceLevel. clientWidth (usado para proyectar los nodos) es el
-          tamaño de layout SIN transformar; si escalábamos aquí, el orbe
-          visible y las coordenadas proyectadas se desincronizaban y las
-          etiquetas dejaban de caer sobre el orbe. La sensación de
-          ecualizador se conserva con la reactividad INTERNA de OrbNeuronal
-          (rotación/shake/bandas + un breathing sutil de las mallas),
-          guardada por prefers-reduced-motion.
+          FUSIÓN ORBE + RED VIVA: el home ES la Red Viva (motor B, constelación
+          2D SVG con sabor A: varianteNodo='pieza'). Cada nodo es una habilidad
+          real del usuario; el centro es su reputación NN/100 en su color. Ya no
+          hay render 3D acá. La caja mantiene el mismo encuadre centrado que el
+          orbe anterior (ORB_SIZE_VMIN / ORB_MAX) para no mover el layout.
+
+          NAVEGACIÓN: seleccionar un nodo del mapa abre la superficie donde ESE
+          nodo se acciona (tabParaNodo → handleRedNodeSelect), sin romper el
+          flujo por voz/texto. Bajo prefers-reduced-motion la red no anima.
         */}
         <div
           style={{
@@ -1047,16 +1064,13 @@ export function OrbShell() {
             transformOrigin: 'center',
           }}
         >
-          <OrbNeuronal
-            nodes={orbNodesWithLevels}
-            activeNodeId={selectedNode?.id ?? null}
-            onNodeTap={handleNodeTap}
-            voiceLevel={voiceLevel}
-            spectrum={spectrum}
-            isListening={isListening}
-            onProjectedPositions={handleProjected}
-            notifications={unreadCount > 0 ? { mensajes: unreadCount } : undefined}
-            userColor={getUserColor()}
+          <RedVivaCanvas
+            model={redVivaModel}
+            userColor={orbColor}
+            reputacion={realReputation}
+            seleccionado={nodoRedSel}
+            onSelect={handleRedNodeSelect}
+            varianteNodo="pieza"
           />
         </div>
       </div>
@@ -1441,110 +1455,15 @@ export function OrbShell() {
         />
       )}
 
-      {/* ── NODE LABELS (HTML overlay projected from 3D) ────────────── */}
-      {/*
-        La caja de etiquetas ocupa EXACTAMENTE la misma caja centrada que el
-        orbe (ORB_SIZE_VMIN / ORB_MAX). Las coordenadas proyectadas pos.x/pos.y
-        vienen en el espacio de la caja del orbe (0..box), así que este contenedor
-        centrado hace que left:pos.x/top:pos.y caiga sobre el orbe visible.
-      */}
+      {/* ── ANUNCIO ACCESIBLE DEL MAPA ───────────────────────────────
+          El orbe 3D proyectaba etiquetas HTML sobre las que se navegaba; con la
+          Red Viva 2D ese overlay se retiró (el propio SVG ya se anuncia con su
+          resumen en aria-label, y la selección de nodos es directa sobre el
+          mapa). Se conserva una región aria-live que anuncia el nodo enfocado
+          para lectores de pantalla. */}
       {state !== 'fullscreen' && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: `${ORB_SIZE_VMIN}vmin`,
-          height: `${ORB_SIZE_VMIN}vmin`,
-          maxWidth: ORB_MAX,
-          maxHeight: ORB_MAX,
-          pointerEvents: 'none',
-          zIndex: 2,
-        }}>
-          {/* P1: aria-live announces active node to screen readers */}
-          <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
-            {selectedNode ? `${selectedNode.label} seleccionado. ${selectedNode.nextStep || ''}` : 'Orbe de navegación. Usa Tab para explorar.'}
-          </div>
-          {nodePositions.map((pos: { id: string; x: number; y: number; depth: number }) => {
-            const node = orbNodesWithLevels.find((n: OrbNode) => n.id === pos.id);
-            if (!node) return null;
-            const isActive = node.id === selectedNode?.id;
-            const isHub = HUB_NODES.findIndex(n => n.id === node.id) >= 0;
-            if (!isHub && !isActive) return null;
-            // BLOQUEADO / DESBLOQUEADO (Inc 4): los nodos hub bloqueados se
-            // leen TENUES / lejanos (menor opacidad), así la red se percibe
-            // "armada" con lo desbloqueado. Solo aplica a hubs; el gate es
-            // read-only sobre la reputación real. Presentación aditiva:
-            // los nodos desbloqueados se ven EXACTAMENTE como hasta hoy.
-            const gate = isHub ? unlockFor(node.id) : null;
-            const isLocked = !!gate && !gate.unlocked;
-            // ── El orbe como MAPA VIVO, no como menú ──────────────────
-            // En vez del corte binario anterior (frente 0.7 / atrás 0),
-            // la opacidad de cada etiqueta hub es una función CONTINUA de
-            // su profundidad proyectada (pos.depth: 0=frente .. 1=atrás):
-            // las de adelante quedan nítidas y las de atrás se retiran.
-            // Así el orbe se lee como un mapa vivo y solo destacan los
-            // pocos nodos frontales, en lugar de mostrar las 9 etiquetas
-            // con el mismo peso (efecto "grilla de menú"). Todos los
-            // botones hub se siguen renderizando para tap/lectores.
-            const depthOpacity = Math.max(0.06, 0.85 - pos.depth * 0.79);
-            // Los nodos bloqueados se retiran un paso más (atenuación
-            // multiplicativa) para leerse "lejanos", pero siguen visibles y
-            // TAPPABLES: tocarlos revela la pista de cómo abrirlos.
-            const lockedDim = isLocked ? 0.42 : 1;
-            const labelOpacity = isActive ? 1 : depthOpacity * lockedDim;
-            // El nodo activo siempre es tappable; los demás lo son cuando
-            // su etiqueta es legible (evita capturar taps de nodos casi
-            // invisibles del hemisferio trasero). Un hub bloqueado del frente
-            // sigue siendo tappable (depthOpacity>0.2) y, al tocarlo, revela
-            // la pista en vez de navegar. La navegación por voz/texto y el
-            // resto del flujo quedan intactos.
-            const tappable = isActive || depthOpacity > 0.2;
-            return (
-              <button
-                key={node.id}
-                onClick={() => { handleNodeTap(node); }}
-                aria-label={isLocked && gate?.hint
-                  ? `${node.label}, bloqueado. ${gate.hint}`
-                  : `${node.label}${node.level ? ` ${Math.round(node.level * 100)}%` : ''}: ${node.nextStep || 'Explorar'}`}
-                style={{
-                  position: 'absolute',
-                  left: pos.x,
-                  top: pos.y,
-                  transform: 'translate(-50%, -140%)',
-                  opacity: labelOpacity,
-                  transition: prefersReducedMotion ? 'none' : 'opacity 0.2s ease',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 2,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                  pointerEvents: tappable ? 'auto' : 'none',
-                }}
-              >
-                <motion.span
-                  whileTap={isActive && !prefersReducedMotion ? { scale: 0.96 } : undefined}
-                  transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                  style={{
-                    fontFamily: FONT.mono,
-                    fontSize: isActive ? SIZE.xs : SIZE.xxs,
-                    fontWeight: isActive ? 700 : 500,
-                    letterSpacing: isActive ? 1.4 : 1.2,
-                    color: isActive ? orbColor : C.mut,
-                    textTransform: 'uppercase',
-                    textShadow: isActive ? `0 0 8px ${orbColor}` : 'none',
-                    whiteSpace: 'nowrap',
-                    transition: prefersReducedMotion ? 'none' : 'color 0.15s ease, font-size 0.15s ease',
-                  }}
-                >
-                  {isLocked ? '🔒 ' : ''}{node.label}{!isLocked && node.level !== undefined && node.level > 0 ? ` ${Math.round(node.level * 100)}%` : ''}
-                </motion.span>
-              </button>
-            );
-          })}
+        <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+          {selectedNode ? `${selectedNode.label} seleccionado. ${selectedNode.nextStep || ''}` : 'Mapa de tu red. Tocá un nodo o escribí abajo qué querés hacer.'}
         </div>
       )}
 
@@ -1570,104 +1489,33 @@ export function OrbShell() {
           </div>
         )}
 
-        {/* Input bar — morphs on focus */}
-        <form
-          onSubmit={(e: { preventDefault: () => void }) => {
-            e.preventDefault();
+        {/* Barra Ómicrom (extraída a OmicronBar). En el home entra en modo
+            'lectura' — Ómicrom lee la red con resumenRed()/textoEstado() y luce
+            la lucecita de presencia — salvo cuando hay una respuesta reactiva
+            activa (responseMsg), que ya la muestra ProactiveMessage. En
+            fullscreen queda en modo 'ordenes'. Toda la lógica (handleTextInput,
+            toggleListening, isListening, inputFocused, resetIdle) sigue acá. */}
+        <OmicronBar
+          mode={state === 'orb' && !responseMsg ? 'lectura' : 'ordenes'}
+          orbColor={orbColor}
+          inputText={inputText}
+          onInputChange={setInputText}
+          onSubmit={() => {
             if (!inputText.trim()) return;
             audioTick();
             handleTextInput(inputText.trim());
             setInputText('');
             resetIdle();
           }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            background: inputFocused ? 'rgba(12,16,30,0.95)' : C.surface,
-            border: `1px solid ${inputFocused ? orbColor + '77' : C.line}`,
-            borderRadius: 999,
-            padding: inputFocused ? '10px 16px' : '8px 12px',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            boxShadow: inputFocused
-              ? `0 0 20px ${orbColor}33, 0 0 8px ${orbColor}22, 0 8px 32px rgba(0,0,0,0.3)`
-              // En reposo la barra es el CONTROL PRIMARIO: halo de color de
-              // usuario un poco más presente (solo box-shadow, sin nuevos
-              // loops; el breathe existente ya lo neutraliza reduced-motion).
-              : (!inputText && !responseMsg ? `0 0 18px ${orbColor}33, 0 0 6px ${orbColor}1a, 0 4px 20px rgba(0,0,0,0.28)` : 'none'),
-            transform: inputFocused ? 'scale(1.02)' : 'scale(1)',
-            transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            animation: !inputText && !responseMsg && !inputFocused ? 'cp-breathe 3s ease-in-out infinite' : 'none',
-          }}
-        >
-          {/* Mic button */}
-          <button
-            type="button"
-            onClick={toggleListening}
-            aria-label={isListening ? 'Dejar de escuchar' : 'Hablar al Oráculo'}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              border: `1px solid ${isListening ? C.red : C.line}`,
-              background: isListening ? 'rgba(255,92,122,0.15)' : C.glass2,
-              color: isListening ? C.red : orbColor,
-              cursor: 'pointer',
-              display: 'grid',
-              placeItems: 'center',
-              fontSize: 13,
-              flexShrink: 0,
-              animation: isListening ? 'cp-pulse 1.2s ease-in-out infinite' : 'none',
-            }}
-          >
-            🎤
-          </button>
-
-          {/* Text input */}
-          <input
-            value={inputText}
-            onChange={(e: { target: { value: string } }) => setInputText(e.target.value)}
-            onFocus={() => setInputFocused(true)}
-            onBlur={() => setInputFocused(false)}
-            placeholder={state === 'fullscreen' ? 'Pregunta a Ómicrom…' : '¿Qué quieres hacer hoy? Habla o escríbeme…'}
-            aria-label="Escribir comando al Oráculo"
-            inputMode="text"
-            autoComplete="off"
-            style={{
-              flex: 1,
-              border: 'none',
-              outline: 'none',
-              background: 'transparent',
-              fontFamily: FONT.body,
-              fontSize: 15,
-              color: C.ink,
-            }}
-          />
-
-          {/* Send button */}
-          <button
-            type="submit"
-            disabled={!inputText.trim()}
-            aria-label="Enviar"
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              border: 'none',
-              background: inputText.trim() ? orbColor : C.glass2,
-              color: inputText.trim() ? '#000' : C.mut,
-              cursor: inputText.trim() ? 'pointer' : 'default',
-              display: 'grid',
-              placeItems: 'center',
-              fontSize: 13,
-              flexShrink: 0,
-              transition: 'background 0.15s ease, color 0.15s ease',
-            }}
-          >
-            ➤
-          </button>
-        </form>
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
+          inputFocused={inputFocused}
+          hasResponse={!!responseMsg}
+          isListening={isListening}
+          onToggleListening={toggleListening}
+          fullscreen={state === 'fullscreen'}
+          lectura={lecturaOmicron}
+        />
 
         {/* Suggestion Chips removed — la voz del núcleo (OrbEstadoDelDia) guía */}
       </div>}
@@ -1835,7 +1683,7 @@ export function OrbShell() {
         <ErrorBoundary section="Credencial">
           <Suspense fallback={
             <div style={{ position: 'fixed', inset: 0, zIndex: 95, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)' }}>
-              <GeodesicOrb size={80} nodes={8} color={getUserColor()} spinning={0} intensity={0.55} breathing />
+              <OmicronPlaceholder2D size={80} color={getUserColor()} />
             </div>
           }>
             <CredencialModal
@@ -1852,7 +1700,7 @@ export function OrbShell() {
           <Suspense fallback={
             <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
               <button onClick={() => setShowConvalida(false)} aria-label="Cerrar" style={{ position: 'absolute', top: 16, right: 20, width: 44, height: 44, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>✕</button>
-              <GeodesicOrb size={80} nodes={5} color={getUserColor()} spinning={20} intensity={0.5} breathing />
+              <OmicronPlaceholder2D size={80} color={getUserColor()} />
               <p style={{ marginTop: 16, fontFamily: FONT.mono, fontSize: 12, color: C.mut }}>Cargando módulo CV…</p>
             </div>
           }>

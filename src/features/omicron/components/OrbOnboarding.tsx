@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/store/AppContext';
 import { speakOmicron } from '@/features/omicron/services/voice';
 import { C, FONT, RADIUS } from '@/theme';
-import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
+import { OmicronPlaceholder2D } from '@/shared/components/OmicronPlaceholder2D';
 import { ColorPicker, COLOR_OPTIONS, type ColorOption } from '@/shared/components/ColorPicker';
 import { TextReveal } from '@/shared/motion/TextReveal';
 import { CelebrationBurst } from '@/shared/motion/CelebrationBurst';
@@ -316,20 +316,19 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
 
       {/* ═══ TOP: THE ORB (grows through the journey) ═══ */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+        {/* Placeholder 2D ligero (antes GeodesicOrb): un pulso sobrio en el
+            color elegido que CRECE a lo largo del onboarding vía el scale del
+            motion.div. Solo transform/opacity; reduced-motion lo neutraliza. */}
         <motion.div
           animate={{
-            scale: step === 'awakening' ? 0.4 : step === 'color' ? 0.7 : step === 'ask' ? 0.85 : 1,
+            // El nacimiento del Gemelo: el pulso crece por paso y, en la fase
+            // final, un pelín más a medida que "aparecen los nodos" (orbNodes).
+            scale: (step === 'awakening' ? 0.4 : step === 'color' ? 0.7 : step === 'ask' ? 0.85 : 1)
+              + Math.min(0.12, orbNodes * 0.005),
           }}
           transition={{ type: 'spring', stiffness: 150, damping: 20 }}
         >
-          <GeodesicOrb
-            nodes={orbNodes}
-            color={chosenColor}
-            size={240}
-            spinning={step === 'awakening' ? 30 : 18}
-            intensity={step === 'awakening' ? 0.3 : step === 'born' ? 1 : 0.7}
-            breathing={true}
-          />
+          <OmicronPlaceholder2D size={240} color={chosenColor} />
         </motion.div>
       </div>
 
