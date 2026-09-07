@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { C } from '@/theme';
 import { buildRedViva } from '../services/redViva';
 import {
   canvasOverlapClusters,
   canvasTargetsAreDistinct,
+  marketGold,
   shouldAnimateEncaje,
 } from './RedVivaCanvas';
 
@@ -70,5 +72,26 @@ describe('shouldAnimateEncaje — el encaje solo se dispara al PASAR a probado',
   it('respeta prefers-reduced-motion: nunca anima aunque haya transición a solido', () => {
     expect(shouldAnimateEncaje('hueco', 'solido', true)).toBe(false);
     expect(shouldAnimateEncaje('latiendo', 'solido', true)).toBe(false);
+  });
+});
+
+describe('marketGold — el mercado se distingue del usuario incluso si eligió Oro', () => {
+  it('sin colisión (colores no-Oro) el mercado conserva el Oro de marca C.gold', () => {
+    expect(marketGold('#7dd3fc')).toBe(C.gold); // Hielo (default)
+    expect(marketGold('#ff6b9d')).toBe(C.gold); // Rosa
+    expect(marketGold('#84cc16')).toBe(C.gold); // Lima
+  });
+
+  it('con el usuario en Oro devuelve un ámbar más profundo, distinto del Oro del usuario', () => {
+    const oroMercado = marketGold(C.gold);
+    expect(oroMercado).not.toBe(C.gold);
+    // Sigue siendo Oro/ámbar (mismo hue, más tostado), NUNCA el gris de marca.
+    expect(oroMercado.toLowerCase()).not.toBe(C.cyan.toLowerCase());
+    expect(oroMercado).toBe('#c77d1a');
+  });
+
+  it('normaliza el hex del usuario (mayúsculas/espacios) al detectar la colisión', () => {
+    expect(marketGold('  #FFB02E  ')).toBe('#c77d1a');
+    expect(marketGold('#FFB02E')).toBe('#c77d1a');
   });
 });

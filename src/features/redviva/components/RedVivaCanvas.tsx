@@ -79,6 +79,22 @@ function useRedVivaCss(): void {
   }, []);
 }
 
+/**
+ * Oro del MERCADO. Normalmente es el ámbar de marca (C.gold). Pero si el
+ * usuario ELIGIÓ Oro como su color, lo suyo y lo del mercado (ausente/puentes)
+ * compartirían el mismo tono y la distinción caería solo en la forma. Para no
+ * perder legibilidad por color, cuando hay colisión el mercado usa un ámbar más
+ * PROFUNDO/tostado (mismo hue, menor luminosidad): sigue siendo Oro —nunca el
+ * gris de marca Silver Ice— pero se separa del Oro brillante del usuario.
+ *
+ * Función pura y testeable: dado el color del usuario, decide el tono del
+ * mercado. Sin colisión devuelve C.gold tal cual.
+ */
+export function marketGold(userColor: string): string {
+  const normalize = (hex: string) => hex.trim().toLowerCase();
+  return normalize(userColor) === normalize(C.gold) ? '#c77d1a' : C.gold;
+}
+
 /** Convierte un hex (#rrggbb) a rgba con el alfa pedido. */
 function alpha(hex: string, a: number): string {
   const h = hex.replace('#', '');
@@ -231,6 +247,10 @@ export function RedVivaCanvas({
   }, []);
 
   const uc = userColor;
+  // Tono del mercado (ausente/puentes/oportunidades). Igual a C.gold salvo
+  // cuando el usuario eligió Oro: entonces es un ámbar más profundo para no
+  // colisionar con el Oro del usuario (sigue siendo Oro, nunca Silver Ice).
+  const oroMercado = marketGold(userColor);
   const porNodo = useMemo(
     () => new Map(model.nodos.map((n) => [n.id, n])),
     [model.nodos],
@@ -353,7 +373,7 @@ export function RedVivaCanvas({
             cy={0}
             r={r}
             fill="none"
-            stroke={r === 92 ? alpha(C.gold, 0.16) : alpha(uc, 0.08)}
+            stroke={r === 92 ? alpha(oroMercado, 0.16) : alpha(uc, 0.08)}
             strokeWidth={0.6}
             strokeDasharray={r === 92 ? '2 4' : undefined}
           />
@@ -409,7 +429,7 @@ export function RedVivaCanvas({
                 y1={from.y * K}
                 x2={op.x * K}
                 y2={op.y * K}
-                stroke={alpha(C.gold, 0.34)}
+                stroke={alpha(oroMercado, 0.34)}
                 strokeWidth={0.9}
                 strokeDasharray="3 5"
               />
@@ -561,6 +581,11 @@ export function RedVivaCanvas({
                   padre; acá solo hay escala+opacidad, sin loops permanentes.
                   Bajo prefers-reduced-motion, animarEncaje ya es false. */}
               <motion.g
+                // data-encaje expone el resultado del cableado memo+ref+efecto:
+                // 'true' SOLO en los nodos que acaban de transicionar a probado
+                // (los únicos que reproducen el micro-momento). Es el gancho que
+                // permite testear a nivel de render que solo esos animan.
+                data-encaje={animarEncaje ? 'true' : 'false'}
                 initial={animarEncaje ? { scale: 0.7, opacity: 0.35 } : false}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={

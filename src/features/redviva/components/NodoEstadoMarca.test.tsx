@@ -65,20 +65,42 @@ describe('NodoEstadoMarca — variante de nodo (sabor A / pieza)', () => {
     expect(check?.getAttribute('fill')).toBe('none');
   });
 
-  it("variante='pieza' NO altera la forma de los demás estados", () => {
-    // hueco: sigue siendo aro (círculo sin relleno), sin pieza.
+  it("variante='pieza' extiende la metáfora de puzzle a TODOS los estados conservando la semántica por forma", () => {
+    // hueco: contorno de pieza SIN encajar (silueta de puzzle hueca), ya no aro.
     const hueco = render(<NodoEstadoMarca estado="hueco" color={userColor} variante="pieza" />).container;
-    expect(hueco.querySelector('[data-node-state="hueco"] circle')?.getAttribute('fill')).toBe('none');
+    const grupoHueco = hueco.querySelector('[data-node-state="hueco"]');
+    expect(grupoHueco?.getAttribute('data-node-variant')).toBe('pieza');
+    // Es un contorno (path con curvas de tab/blank), sin relleno, sin círculo.
+    expect(grupoHueco?.querySelector('circle')).toBeNull();
+    const contornoHueco = grupoHueco?.querySelector('path');
+    expect(contornoHueco?.getAttribute('fill')).toBe('none');
+    expect(contornoHueco?.getAttribute('d')).toContain('C');
     cleanup();
 
-    // latiendo: sigue siendo doble aro + punto (3 círculos).
+    // latiendo: pieza exterior + pieza interior que late + punto. Silueta de
+    // puzzle (paths con curvas), no aros; conserva el punto central.
     const latiendo = render(<NodoEstadoMarca estado="latiendo" color={userColor} variante="pieza" />).container;
-    expect(latiendo.querySelectorAll('[data-node-state="latiendo"] circle')).toHaveLength(3);
+    const grupoLat = latiendo.querySelector('[data-node-state="latiendo"]');
+    expect(grupoLat?.getAttribute('data-node-variant')).toBe('pieza');
+    const pathsLat = grupoLat?.querySelectorAll('path');
+    expect(pathsLat?.length).toBe(2); // contorno + interior
+    expect(pathsLat?.[0].getAttribute('d')).toContain('C');
+    // El punto central se conserva (único elemento circle).
+    expect(grupoLat?.querySelectorAll('circle')).toHaveLength(1);
     cleanup();
 
-    // ausente: sigue siendo hexágono discontinuo + cruz.
+    // ausente: silueta de puzzle DISCONTINUA + cruz, en Oro (mercado intacto).
     const ausente = render(<NodoEstadoMarca estado="ausente" color={C.gold} variante="pieza" />).container;
-    expect(ausente.querySelector('[data-node-state="ausente"] polygon')).not.toBeNull();
+    const grupoAus = ausente.querySelector('[data-node-state="ausente"]');
+    expect(grupoAus?.getAttribute('data-node-variant')).toBe('pieza');
+    // Ya no es un polígono/hexágono: es un contorno de pieza discontinuo.
+    expect(grupoAus?.querySelector('polygon')).toBeNull();
+    const paths = grupoAus?.querySelectorAll('path');
+    expect(paths?.length).toBe(2); // contorno de pieza + cruz
+    const contornoAus = paths?.[0];
+    expect(contornoAus?.getAttribute('d')).toContain('C');
+    expect(contornoAus?.getAttribute('stroke-dasharray')).toBeTruthy();
+    expect(contornoAus?.getAttribute('stroke')).toBe(C.gold);
   });
 
   it('piezaRompecabezasPath produce un contorno cerrado con curvas de tab/blank', () => {
