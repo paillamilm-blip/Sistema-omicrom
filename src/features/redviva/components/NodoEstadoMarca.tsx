@@ -52,6 +52,7 @@ export function NodoEstadoMarca({
     <svg
       aria-hidden="true"
       data-node-state={estado}
+      data-node-variant={variante}
       viewBox={`0 0 ${size} ${size}`}
       width={size}
       height={size}

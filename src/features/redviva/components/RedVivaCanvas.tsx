@@ -50,6 +50,19 @@ export function shouldAnimateEncaje(
   return prev !== 'solido';
 }
 
+/**
+ * Lee la preferencia de movimiento reducido directamente del media query. Es
+ * el mismo valor que consulta el CSS (@media prefers-reduced-motion). Se usa
+ * junto a useReducedMotion() de framer-motion porque este último inicializa su
+ * valor al montar y en entornos como jsdom no siempre relee un matchMedia
+ * cambiado tras el montaje; consultar el media query en cada render garantiza
+ * que la preferencia efectiva se respete de forma observable.
+ */
+function prefersReducedMotionNow(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 const CSS_ID = 'omicron-redviva-css';
 
 /** Escala del modelo (círculo unitario) a unidades del viewBox. */
@@ -228,7 +241,9 @@ export function RedVivaCanvas({
 }: RedVivaCanvasProps) {
   useRedVivaCss();
   const reduceMotion = useReducedMotion();
-  const reduceMotionValue = reduceMotion ?? false;
+  // Combina el hook de framer-motion con la lectura directa del media query:
+  // basta con que cualquiera indique movimiento reducido para anular el encaje.
+  const reduceMotionValue = (reduceMotion ?? false) || prefersReducedMotionNow();
   // Memoria del estado anterior de cada nodo para detectar la transición a
   // 'solido'. No se dibuja: solo alimenta shouldAnimateEncaje. Se actualiza en
   // un efecto tras el render para no leer/escribir durante el mismo.
