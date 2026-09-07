@@ -307,7 +307,7 @@ export function OrbShell() {
     // invitación honesta que aplica sin datos suyos: activar su Gemelo con el
     // CV. Sin inventar números (no tiene reputación ni ejes todavía).
     if (!sbProfile?.id) return 'Estás explorando sin cuenta. Sube tu CV y activa tu Gemelo Digital en 1 minuto.';
-    const nextStep = computeSteps(sbProfile, gemeloDigital)[0] ?? null;
+    const nextStep = computeSteps(sbProfile, gemeloDigital, orbColor)[0] ?? null;
     const rep = sbProfile?.reputation_score ?? null;
     return pickHomeStatus({
       streak: streakDays(),
@@ -318,7 +318,7 @@ export function OrbShell() {
       levelBand: typeof rep === 'number' ? levelBandFor(rep) : null,
       axisRose: risenAxisLabel,
     }).label;
-  }, [sbProfile, gemeloDigital, risenAxisLabel]);
+  }, [sbProfile, gemeloDigital, risenAxisLabel, orbColor]);
 
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
@@ -887,7 +887,7 @@ export function OrbShell() {
           if (isAudioUnlocked()) speakLocal(msg.length > 200 ? msg.slice(0, 200) : msg);
         } else {
           // Perfil completo o ya preguntó hoy → consejo de mejora
-          const steps = computeSteps(sbProfile, gemeloDigital);
+          const steps = computeSteps(sbProfile, gemeloDigital, orbColor);
           const top = steps[0];
           const msg = top
             ? `${saludo}, ${name}. ${top.why.slice(0, 140)} ¿Vamos con eso?`
@@ -1124,8 +1124,8 @@ export function OrbShell() {
             width: 44,
             height: 44,
             borderRadius: '50%',
-            border: `1.5px solid ${C.cyanDim}`,
-            background: 'radial-gradient(circle at 32% 26%, rgba(160,174,192,0.14), rgba(6,10,22,0.85))',
+            border: `1.5px solid ${orbColor}`,
+            background: `radial-gradient(circle at 32% 26%, ${orbColor}22, rgba(6,10,22,0.85))`,
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
             cursor: 'pointer',
@@ -1133,7 +1133,7 @@ export function OrbShell() {
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
-            boxShadow: `0 0 12px ${C.cyanFaint}, 0 4px 14px rgba(0,0,0,0.4)`,
+            boxShadow: `0 0 12px ${orbColor}33, 0 4px 14px rgba(0,0,0,0.4)`,
             // El transform lo gobierna framer-motion (whileTap); mantenemos
             // solo la transición de box-shadow para no competir por transform.
             transition: 'box-shadow 0.15s ease',
@@ -1151,7 +1151,7 @@ export function OrbShell() {
               fontFamily: FONT.display,
               fontWeight: 800,
               fontSize: 13,
-              color: C.cyan,
+              color: orbColor,
               letterSpacing: -0.3,
             }}>
               {(sbProfile?.display_name || sbProfile?.full_name || sbProfile?.username || 'N')
@@ -1243,7 +1243,7 @@ export function OrbShell() {
                 {hubNodes.map((n: OrbNode, i: number) => (
                   <div key={n.id} style={{
                     width: i === currentIdx ? 16 : 5, height: 5, borderRadius: 3,
-                    background: i === currentIdx ? C.cyan : `${C.cyan}33`,
+                    background: i === currentIdx ? orbColor : `${orbColor}33`,
                     transition: 'width 0.2s ease, background 0.2s ease',
                   }} />
                 ))}
@@ -1259,10 +1259,10 @@ export function OrbShell() {
                 </h3>
                 {selectedNode.level !== undefined && selectedNode.level > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    <div style={{ flex: 1, height: 4, borderRadius: 2, background: `${C.cyan}22` }}>
-                      <div style={{ height: '100%', width: `${Math.round(selectedNode.level * 100)}%`, borderRadius: 2, background: C.cyan, boxShadow: `0 0 6px ${C.cyan}66` }} />
+                    <div style={{ flex: 1, height: 4, borderRadius: 2, background: `${orbColor}22` }}>
+                      <div style={{ height: '100%', width: `${Math.round(selectedNode.level * 100)}%`, borderRadius: 2, background: orbColor, boxShadow: `0 0 6px ${orbColor}66` }} />
                     </div>
-                    <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan, fontWeight: 700 }}>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 11, color: orbColor, fontWeight: 700 }}>
                       {Math.round(selectedNode.level * 100)}%
                     </span>
                   </div>
@@ -1341,9 +1341,9 @@ export function OrbShell() {
               onClick={handlePreviewClick}
               style={{
                 width: '100%', padding: '12px 0', borderRadius: 14, border: 'none', cursor: 'pointer',
-                background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`,
+                background: `linear-gradient(135deg, ${orbColor}, ${C.purple})`,
                 color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
-                boxShadow: `0 8px 24px rgba(160,174,192,0.3)`,
+                boxShadow: `0 8px 24px ${orbColor}4d`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >
@@ -1395,7 +1395,7 @@ export function OrbShell() {
               borderRadius: '50%',
               background: C.glass2,
               border: `1px solid ${C.line}`,
-              color: C.cyan,
+              color: orbColor,
               cursor: 'pointer',
               display: 'grid',
               placeItems: 'center',
@@ -1612,7 +1612,7 @@ export function OrbShell() {
               borderRadius: '50%',
               border: `1px solid ${isListening ? C.red : C.line}`,
               background: isListening ? 'rgba(255,92,122,0.15)' : C.glass2,
-              color: isListening ? C.red : C.cyan,
+              color: isListening ? C.red : orbColor,
               cursor: 'pointer',
               display: 'grid',
               placeItems: 'center',
@@ -1655,7 +1655,7 @@ export function OrbShell() {
               height: 44,
               borderRadius: '50%',
               border: 'none',
-              background: inputText.trim() ? C.cyan : C.glass2,
+              background: inputText.trim() ? orbColor : C.glass2,
               color: inputText.trim() ? '#000' : C.mut,
               cursor: inputText.trim() ? 'pointer' : 'default',
               display: 'grid',

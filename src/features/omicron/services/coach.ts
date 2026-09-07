@@ -32,8 +32,15 @@ const r = (n: number) => Math.round(n);
 /**
  * Calcula la ruta de mejora priorizada según los datos reales del usuario.
  * Devuelve los pasos ordenados por impacto (el primero es el más importante).
+ *
+ * `userColor` pinta el acento de los pasos que representan al PROPIO usuario
+ * (subir CV, ejecución, postular, explorar). El componente consumidor pasa
+ * el color elegido por el usuario (`getUserColor()` / `useUserColor()`); por
+ * defecto usa el acento neutro de marca para no romper contextos sin color.
+ * Los ejes con color semántico propio (Calidad, Trascendencia, Fundamento)
+ * conservan su color de categoría.
  */
-export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | null): NextStep[] {
+export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | null, userColor: string = C.cyan): NextStep[] {
   const steps: (NextStep & { score: number })[] = [];
   const skills = profile?.skills ?? [];
   const topSkill = skills[0] || 'tu especialidad';
@@ -41,7 +48,7 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
   // 1) Sin CV / sin skills → base de todo. Máxima prioridad.
   if (skills.length === 0) {
     steps.push({
-      id: 'cv', score: 100, tab: 'perfil', accent: C.cyan, cv: true, metric: 'Fundamento',
+      id: 'cv', score: 100, tab: 'perfil', accent: userColor, cv: true, metric: 'Fundamento',
       title: 'Convalida tu CV real',
       actionLabel: 'Subir mi CV',
       why: 'Ómicrom todavía no conoce tu experiencia. Sube tu CV (PDF o Word) y calculo tu nivel, tus habilidades y tus 4 ejes al instante.',
@@ -52,7 +59,7 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
   if (gemelo) {
     const axes: { key: string; val: number; tab: TabId; accent: string; label: string; title: string; actionLabel: string; why: string; cv?: boolean }[] = [
       {
-        key: 'execution', val: gemelo.execution, tab: 'maxskill', accent: C.cyan, label: 'Ejecución',
+        key: 'execution', val: gemelo.execution, tab: 'maxskill', accent: userColor, label: 'Ejecución',
         title: 'Valida tu próximo nodo de habilidad',
         actionLabel: 'Ir a Habilidades',
         why: `Tu Ejecución está en ${r(gemelo.execution)}. Supera un reto en Habilidades para demostrar tu velocidad — cada nodo que validas abre el siguiente.`,
@@ -95,7 +102,7 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
   // 4) Sinergia: si ya tienes reputación suficiente, monetiza / postula.
   if (gemelo && gemelo.overallReputation >= 45 && skills.length > 0) {
     steps.push({
-      id: 'jobs', score: 42, tab: 'empleos', accent: C.cyan, metric: `Reputación ${r(gemelo.overallReputation)}`,
+      id: 'jobs', score: 42, tab: 'empleos', accent: userColor, metric: `Reputación ${r(gemelo.overallReputation)}`,
       title: 'Postula a una oportunidad',
       actionLabel: 'Ver Empleos',
       why: `Con reputación ${r(gemelo.overallReputation)} ya eres candidato real. Apunta a vacantes que pidan ${topSkill} — deja que el trabajo te encuentre.`,
@@ -113,7 +120,7 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
   // Garantía: SIEMPRE al menos un paso de mejora
   if (steps.length === 0) {
     steps.push({
-      id: 'explore', score: 10, tab: 'maxskill', accent: C.cyan,
+      id: 'explore', score: 10, tab: 'maxskill', accent: userColor,
       title: 'Explora tu siguiente nodo',
       actionLabel: 'Ir a Habilidades',
       why: 'Tu Gemelo Digital siempre puede mejorar. Valida una habilidad para subir tu Ejecución y desbloquear oportunidades.',
@@ -124,6 +131,6 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
 }
 
 /** El paso de mayor impacto (o null si no hay datos). */
-export function topStep(profile: Profile | null, gemelo: GemeloDigital | null): NextStep | null {
-  return computeSteps(profile, gemelo)[0] ?? null;
+export function topStep(profile: Profile | null, gemelo: GemeloDigital | null, userColor: string = C.cyan): NextStep | null {
+  return computeSteps(profile, gemelo, userColor)[0] ?? null;
 }
