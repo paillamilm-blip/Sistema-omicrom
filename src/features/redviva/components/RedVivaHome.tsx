@@ -27,11 +27,10 @@ const TITULO_GRUPO: Record<EstadoNodo, string> = {
 
 export interface RedVivaHomeProps {
   onAbrirTab?: (tab: TabId) => void;
-  onVerEmpleo?: (jobId: string) => void;
   onSubirCv?: () => void;
 }
 
-export function RedVivaHome({ onAbrirTab, onVerEmpleo, onSubirCv }: RedVivaHomeProps) {
+export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
   const { profile, gemelo } = useApp();
   const uc = useUserColor();
   const { model, isLoading, fondoSaldo, pruebasDisponibles } = useRedViva();
@@ -212,7 +211,6 @@ export function RedVivaHome({ onAbrirTab, onVerEmpleo, onSubirCv }: RedVivaHomeP
           fondoSaldo={fondoSaldo}
           pruebasDisponibles={pruebasDisponibles}
           onExamenAbierto={() => onAbrirTab?.('maxskill')}
-          onVerEmpleo={onVerEmpleo}
           onCerrar={cerrarInspector}
         />
       ) : null}

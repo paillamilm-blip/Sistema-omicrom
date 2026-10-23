@@ -16,7 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/infrastructure/supabase/client';
 import { queryKeys } from '@/infrastructure/query/keys';
 import { useApp } from '@/store/AppContext';
-import { useJobsQuery } from '@/features/empleos/hooks/useJobsQuery';
+import { useJobsQuery } from '@/features/redviva/hooks/useJobsQuery';
 import { buildRedViva, type RedVivaModel, type SkillProof } from '../services/redViva';
 import type { RealJob } from '../services/gapEngine';
 

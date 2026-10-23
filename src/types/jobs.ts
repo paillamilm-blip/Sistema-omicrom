@@ -1,5 +1,6 @@
 // types/jobs.ts
-// Empleos, contratos y escrow
+// La fila que lee la Red Viva para medir la brecha. El match y el escrow
+// salieron con el recorte de la Fase 5: no tienen pantalla ni tabla en uso.
 
 import type { NodeLevel } from './profile';
 
@@ -18,28 +19,4 @@ export interface JobPosting {
   status: JobStatus;
   created_at: string;
   published_at: string;
-}
-
-export interface JobMatch {
-  id: string;
-  job_id: string;
-  user_id: string;
-  match_score: number; // 0-100
-  rank: number; // 1, 2, 3
-  match_reason: string;
-  sent_at: string;
-}
-
-// ===== ESCROW =====
-export interface EscrowContract {
-  id: string;
-  job_id: string;
-  payer_id: string;
-  payee_id: string;
-  amount_usd: number;
-  amount_tokens: number;
-  status: 'LOCKED' | 'APPROVED' | 'RELEASED' | 'REFUNDED' | 'DISPUTED';
-  ghost_approval_deadline: string;
-  created_at: string;
-  released_at?: string;
 }

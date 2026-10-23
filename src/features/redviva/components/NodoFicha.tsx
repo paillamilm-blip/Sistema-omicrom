@@ -32,8 +32,6 @@ export interface NodoFichaProps {
   pruebasDisponibles: boolean;
   /** Se llama cuando el examen ya arrancó, para navegar al simulador. */
   onExamenAbierto?: () => void;
-  /** Lleva al detalle del empleo. */
-  onVerEmpleo?: (jobId: string) => void;
   onCerrar?: () => void;
 }
 
@@ -45,7 +43,6 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
   fondoSaldo,
   pruebasDisponibles,
   onExamenAbierto,
-  onVerEmpleo,
   onCerrar,
 }: NodoFichaProps, ref) {
   const esMercado = nodo.estado === 'ausente';
@@ -231,10 +228,8 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
             {nodo.unlocks > 0 ? 'Es lo único que te falta para' : 'Te acerca a'}
           </p>
           {oportunidades.map((op) => (
-            <button
+            <div
               key={op.id}
-              type="button"
-              onClick={() => onVerEmpleo?.(op.id)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -246,7 +241,6 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
                 borderRadius: RADIUS.md,
                 border: BORDER.faint,
                 background: C.glass,
-                cursor: onVerEmpleo ? 'pointer' : 'default',
                 textAlign: 'left',
               }}
             >
@@ -270,7 +264,7 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
               >
                 {op.payLabel ?? 'Sin pago informado'}
               </span>
-            </button>
+            </div>
           ))}
         </div>
       ) : null}

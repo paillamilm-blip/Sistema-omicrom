@@ -1,10 +1,11 @@
-// features/empleos/hooks/useJobsQuery.ts
-// TanStack Query hooks for job listings and matches.
+// features/redviva/hooks/useJobsQuery.ts
+// Lee los empleos publicados: son la fuente contra la que la Red Viva mide la
+// brecha. Ya no hay pantalla de Empleos — estas filas solo alimentan evidencia.
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/infrastructure/supabase/client';
 import { queryKeys } from '@/infrastructure/query/keys';
-import type { JobPosting, JobMatch } from '@/types/jobs';
+import type { JobPosting } from '@/types/jobs';
 
 /**
  * Fetch available job postings with caching.
@@ -30,25 +31,5 @@ export function useJobsQuery(filters?: { status?: string; limit?: number }) {
       return (data ?? []) as JobPosting[];
     },
     staleTime: 2 * 60 * 1000, // Jobs refresh every 2 min
-  });
-}
-
-/**
- * Fetch job matches for a specific user.
- */
-export function useJobMatchesQuery(userId: string | undefined) {
-  return useQuery({
-    queryKey: queryKeys.jobs.matches(userId ?? ''),
-    queryFn: async (): Promise<JobMatch[]> => {
-      if (!userId) return [];
-      const { data, error } = await supabase
-        .from('job_matches')
-        .select('*')
-        .eq('user_id', userId)
-        .order('sent_at', { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as JobMatch[];
-    },
-    enabled: !!userId,
   });
 }

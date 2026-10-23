@@ -35,8 +35,8 @@ describe('tabParaNodo — cablea un nodo de la Red Viva a su tab de acción', ()
     tokensEarned: 0, demand: 0, unlocks: 0, x: 0, y: 0, angulo: 0, r: 0.5, anillo: 1,
   };
 
-  it('una habilidad ausente lleva a Empleos (donde el puente apunta)', () => {
-    expect(tabParaNodo({ ...base, estado: 'ausente', anillo: 2 })).toBe('empleos');
+  it('una habilidad ausente lleva a Academia (lo que no tenés, se aprende)', () => {
+    expect(tabParaNodo({ ...base, estado: 'ausente', anillo: 2 })).toBe('academia');
   });
 
   it('una habilidad tuya (probada/declarada/en prueba) lleva a Habilidades', () => {

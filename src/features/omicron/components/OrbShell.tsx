@@ -19,7 +19,6 @@ import { pickHomeStatus } from '../utils/homeStatus';
 import { nodeUnlock, levelBandFor } from '../utils/nodeUnlock';
 import { shouldShowWelcomeCredencial } from '../utils/welcomeCredencial';
 import { CloudSavedBadge } from './CloudSavedBadge';
-import { PremiumLock } from '@/features/wallet/components/Premium';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { useNavigation } from '@/store/NavigationContext';
 import { useProfile } from '@/store/ProfileContext';
@@ -61,16 +60,9 @@ import type { TabId, GemeloDigital } from '@/types';
 // =====================================================================
 
 // ── Lazy tab components ─────────────────────────────────────────────
-const WalletTab     = lazy(() => import('@/features/wallet/components/WalletTab').then(m => ({ default: m.WalletTab })));
-const RedSocialTab  = lazy(() => import('@/features/gemelo/components/RedSocialTab').then(m => ({ default: m.RedSocialTab })));
-const ContratosTab  = lazy(() => import('@/features/contratos/components/ContratosTab').then(m => ({ default: m.ContratosTab })));
-const EmpleosTab    = lazy(() => import('@/features/empleos/components/EmpleosTab').then(m => ({ default: m.EmpleosTab })));
-const MarketTab     = lazy(() => import('@/features/market/components/MarketTab').then(m => ({ default: m.MarketTab })));
 const GemeloTab     = lazy(() => import('@/features/gemelo/components/GemeloTab').then(m => ({ default: m.GemeloTab })));
 const MaxSkillTab   = lazy(() => import('@/features/academia/components/MaxSkillTab').then(m => ({ default: m.MaxSkillTab })));
 const AcademiaTab   = lazy(() => import('@/features/academia/components/AcademiaTab').then(m => ({ default: m.AcademiaTab })));
-const GobernanzaTab = lazy(() => import('@/features/gobernanza/components/GobernanzaTab').then(m => ({ default: m.GobernanzaTab })));
-const VaultTab      = lazy(() => import('@/features/market/components/VaultTab').then(m => ({ default: m.VaultTab })));
 const ConvalidaOmicron = lazy(() => import('./ConvalidaOmicron'));
 const CredencialModal = lazy(() => import('@/features/gemelo/components/CredencialModal').then(m => ({ default: m.CredencialModal })));
 
@@ -78,18 +70,14 @@ const CredencialModal = lazy(() => import('@/features/gemelo/components/Credenci
 // Los primeros 9 son los HUBS navegables de la app.
 // El resto son NODOS DE CONOCIMIENTO: cada partícula es una posibilidad
 // de integrar conocimiento al Gemelo Digital.
-// ── Hub nodes (always present — the 9 app sections) ─────────────────
+// ── Hub nodes (the 3 sections of the learning path) ────────────────
+// El recorte de la Fase 5 dejó tres nodos: mirar tu Gemelo, aprender y
+// validar. Los siete hubs económicos salieron de la navegación porque las
+// tablas que los alimentan tienen 0 filas de usuarios reales.
 const HUB_NODES: OrbNode[] = [
-  { id: 'inicio',      label: 'Mi Gemelo',    tab: 'perfil',     icon: '⬡' },
-  { id: 'academia',    label: 'Academia',     tab: 'academia',   icon: '◈' },
-  { id: 'empleos',     label: 'Empleos',      tab: 'empleos',    icon: '◇' },
-  { id: 'mercado',     label: 'Mercado',      tab: 'market',     icon: '⬢' },
-  { id: 'mensajes',    label: 'Red Social',   tab: 'chat',       icon: '🌐' },
-  { id: 'gobernanza',  label: 'Gobernanza',   tab: 'gobernanza', icon: '△' },
-  { id: 'habilidades', label: 'Habilidades',  tab: 'maxskill',   icon: '◎' },
-  { id: 'billetera',   label: 'Billetera',    tab: 'wallet',     icon: '▽' },
-  { id: 'contratos',   label: 'Mis contratos', tab: 'contratos', icon: '⊙' },
-  { id: 'boveda',      label: 'Bóveda',       tab: 'vault',      icon: '⊡' },
+  { id: 'inicio',      label: 'Mi Gemelo',   tab: 'perfil',   icon: '⬡' },
+  { id: 'academia',    label: 'Academia',    tab: 'academia', icon: '◈' },
+  { id: 'habilidades', label: 'Habilidades', tab: 'maxskill', icon: '◎' },
 ];
 
 // ── Shared orb box dimensions ───────────────────────────────────────
@@ -104,10 +92,6 @@ const INVITATION_NODES: OrbNode[] = [
   { id: 'inv-cv',       label: 'Sube tu CV',        tab: 'perfil',   icon: '📄' },
   { id: 'inv-skills',   label: 'Descubre skills',   tab: 'maxskill', icon: '✦' },
   { id: 'inv-curso',    label: 'Primer curso',      tab: 'academia', icon: '📚' },
-  { id: 'inv-empleo',   label: 'Tu primer match',   tab: 'empleos',  icon: '🎯' },
-  { id: 'inv-servicio', label: 'Ofrece un servicio', tab: 'market',  icon: '💡' },
-  { id: 'inv-token',    label: 'Gana tokens',       tab: 'wallet',   icon: '⚡' },
-  { id: 'inv-connect',  label: 'Conecta',           tab: 'chat',     icon: '🤝' },
   { id: 'inv-valida',   label: 'Valida expertise',  tab: 'maxskill', icon: '🏆' },
 ];
 
@@ -183,15 +167,9 @@ function buildSkillNodes(
 /** Categorize a skill string into the most appropriate tab */
 function categorizeSkill(skill: string): TabId {
   const s = skill.toLowerCase();
-  // Tech/dev skills → maxskill
-  if (/react|vue|angular|node|python|java|typescript|javascript|css|html|docker|kubernetes|aws|git|sql|rust|go|flutter|swift|kotlin|c\+\+|php|ruby/.test(s)) return 'maxskill';
-  // Data/AI/science → academia
+  // Datos / IA / ciencia: se aprenden en la Academia (hay lecciones y quiz).
   if (/machine learning|ml|ia|inteligencia|data|ciencia|investigaci|estadist|analytics|deep learning|nlp|ai/.test(s)) return 'academia';
-  // Business/management/soft → empleos
-  if (/gesti[oó]n|liderazgo|management|project|scrum|agile|negocio|emprendim|marketing|ventas|comercial/.test(s)) return 'empleos';
-  // Design/creative → market (servicios)
-  if (/dise[nñ]o|design|ux|ui|figma|creative|ilustra|photoshop|branding/.test(s)) return 'market';
-  // Fallback: maxskill (most skills are competencies)
+  // El resto es una competencia declarada: el paso es validarla en Habilidades.
   return 'maxskill';
 }
 
@@ -211,23 +189,16 @@ function TabLoader() {
 
 function renderTab(tab: TabId) {
   switch (tab) {
-    case 'perfil':     return <GemeloTab />;
-    case 'maxskill':   return <MaxSkillTab />;
-    case 'academia':   return <AcademiaTab />;
-    case 'market':     return <MarketTab />;
-    case 'empleos':    return <EmpleosTab />;
-    case 'chat':       return <RedSocialTab />;
-    case 'contratos':  return <ContratosTab />;
-    case 'wallet':     return <WalletTab />;
-    case 'gobernanza': return <GobernanzaTab />;
-    case 'vault':      return <VaultTab />;
-    default:           return null;
+    case 'perfil':   return <GemeloTab />;
+    case 'academia': return <AcademiaTab />;
+    case 'maxskill': return <MaxSkillTab />;
+    default:         return null;
   }
 }
 
 
 export function OrbShell() {
-  const { setActiveTab, jobTargetId, jobTargetRequest } = useNavigation();
+  const { setActiveTab } = useNavigation();
   const { profile } = useGemeloProfile();
   // Get full Supabase profile for fields not on GemeloProfile (skills_detail, display_name, etc.)
   const { profile: sbFull } = useProfile();
@@ -353,20 +324,9 @@ export function OrbShell() {
   // Indicador vivo: mientras Ómicrom consulta la IA, la burbuja "respira"
   // ("Ómicrom está pensando…") en vez de mostrar texto muerto.
   const [omicronThinking, setOmicronThinking] = useState(false);
-  const [showPremium, setShowPremium] = useState(false);
   const [showConvalida, setShowConvalida] = useState(false);
   const [showCredencial, setShowCredencial] = useState(false);
   const responseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Intenciones de navegación con destino exacto abren la superficie real, no
-  // solo cambian un valor de contexto que el shell no esté mostrando.
-  useEffect(() => {
-    if (!jobTargetId) return;
-    const empleosNode = HUB_NODES.find((node) => node.tab === 'empleos');
-    if (!empleosNode) return;
-    setSelectedNode(empleosNode);
-    setState('fullscreen');
-  }, [jobTargetId, jobTargetRequest]);
 
   useEffect(() => {
     const abrirCv = () => setShowConvalida(true);
@@ -443,7 +403,6 @@ export function OrbShell() {
       alreadyShown,
       showConvalida,
       showCredencial,
-      showPremium,
     });
 
     if (!shouldOpen) return;
@@ -455,10 +414,10 @@ export function OrbShell() {
       sessionStorage.setItem('omicron_welcome_credencial_shown', '1');
     } catch { /* noop */ }
     setShowCredencial(true);
-  }, [sbProfile?.id, state, onboardingDone, showConvalida, showCredencial, showPremium]);
+  }, [sbProfile?.id, state, onboardingDone, showConvalida, showCredencial]);
 
   // ── Build orb nodes dynamically from user's real skills ─────────────
-  // The 9 hubs are always present. Knowledge nodes come FROM the user's CV.
+  // The 3 hubs are always present. Knowledge nodes come FROM the user's CV.
   // Now uses skills_detail (from AI analysis) for real domination %.
   const dynamicOrbNodes = useMemo((): OrbNode[] => {
     const userSkills: string[] = sbProfile?.skills ?? profile.skills ?? [];
@@ -500,34 +459,23 @@ export function OrbShell() {
     // Normalize axes to 0-1
     const execNorm = (axes.execution ?? 0) / 100;
     const qualNorm = (axes.quality ?? 0) / 100;
-    const transNorm = (axes.transcendence ?? 0) / 100;
     const foundNorm = (axes.foundation ?? 0) / 100;
 
     // Helper: check if a skill keyword appears in validated skills
     const hasSkill = (keywords: string[]) =>
       keywords.some(k => validatedSkills.some(s => s.toLowerCase().includes(k.toLowerCase())));
 
-    // Level map for HUB NODES only (the 9 app sections).
+    // Level map for HUB NODES only (los 3 nodos del camino de aprendizaje).
     // Skill nodes (skill-0-xxx) get their levels from buildSkillNodes() directly
     // — they use real AI analysis data (skills_detail pct) not this static map.
     const levelMap: Record<string, { level: number; nextStep: string }> = {
       inicio:      { level: Math.min(1, rep / 100), nextStep: nodeGuidance('perfil', sbProfile, gemeloDigital) || (rep < 50 ? 'Completa tu perfil' : '¡Perfil sólido!') },
       academia:    { level: execNorm * 0.5 + foundNorm * 0.5, nextStep: nodeGuidance('academia', sbProfile, gemeloDigital) },
-      empleos:     { level: execNorm, nextStep: nodeGuidance('empleos', sbProfile, gemeloDigital) },
-      mercado:     { level: transNorm, nextStep: nodeGuidance('market', sbProfile, gemeloDigital) },
-      mensajes:    { level: transNorm * 0.5 + execNorm * 0.5, nextStep: nodeGuidance('chat', sbProfile, gemeloDigital) },
-      gobernanza:  { level: foundNorm, nextStep: nodeGuidance('gobernanza', sbProfile, gemeloDigital) },
       habilidades: { level: qualNorm, nextStep: nodeGuidance('maxskill', sbProfile, gemeloDigital) },
-      billetera:   { level: Math.min(1, (profile.vault ?? 0) / 5), nextStep: nodeGuidance('wallet', sbProfile, gemeloDigital) },
-      boveda:      { level: Math.min(1, (profile.vault ?? 0) / 5), nextStep: nodeGuidance('vault', sbProfile, gemeloDigital) },
       // Invitation nodes (when user has no skills)
       'inv-cv':       { level: hasSkill(['cv', 'curriculum']) ? 0.9 : 0.1, nextStep: '¡Sube tu CV para activar tu Gemelo!' },
       'inv-skills':   { level: qualNorm, nextStep: 'Descubre tus habilidades ocultas' },
       'inv-curso':    { level: foundNorm * 0.5, nextStep: 'Empieza tu primer curso' },
-      'inv-empleo':   { level: execNorm * 0.3, nextStep: 'Encuentra tu primer match' },
-      'inv-servicio': { level: transNorm * 0.3, nextStep: 'Ofrece tu primer servicio' },
-      'inv-token':    { level: Math.min(1, (profile.vault ?? 0) / 3), nextStep: 'Gana tokens participando' },
-      'inv-connect':  { level: transNorm * 0.4, nextStep: 'Conecta con otros profesionales' },
       'inv-valida':   { level: qualNorm * 0.5, nextStep: 'Valida tu expertise' },
     };
 
@@ -895,7 +843,7 @@ export function OrbShell() {
       if (event) {
         setResponseMsg(event.message);
         setProactiveActions([
-          { label: 'Ver empleos', emoji: '💼', primary: true, onClick: () => { setActiveTab('empleos'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'empleos'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
+          { label: 'Aprender hoy', emoji: '◈', primary: true, onClick: () => { setActiveTab('academia'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'academia'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
           { label: 'Mi perfil', emoji: '📈', onClick: () => { setActiveTab('perfil'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'inicio'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
         ]);
         // Voz proactiva: hablar si el audio ya está desbloqueado (el usuario ya tocó)
@@ -1179,7 +1127,7 @@ export function OrbShell() {
       {state === 'preview' && selectedNode && (() => {
         // ── Swipe: encontrar nodos adyacentes para navegar
         const hubNodes = orbNodesWithLevels.filter((n: OrbNode) =>
-          ['inicio','academia','empleos','mercado','mensajes','gobernanza','habilidades','billetera','boveda'].includes(n.id)
+          ['inicio','academia','habilidades'].includes(n.id)
         );
         const currentIdx = hubNodes.findIndex((n: OrbNode) => n.id === selectedNode.id);
         const canSwipe = currentIdx >= 0;
@@ -1434,8 +1382,11 @@ export function OrbShell() {
           )}
         </div>
 
-        {/* Tab content — with page transition */}
-        <div key={selectedNode?.tab ?? 'none'} style={{ flex: 1, overflow: 'auto', animation: prefersReducedMotion ? 'none' : `pageEnter ${TIMING.normal} ${EASE.default} both` }}>
+        {/* Tab content — with page transition.
+            El padding inferior es el aire que necesita la barra del Oráculo, que
+            va fija encima de este contenedor: sin él, la última tarjeta de
+            cualquier lista quedaba tapada y sin zona clicable. */}
+        <div key={selectedNode?.tab ?? 'none'} style={{ flex: 1, overflow: 'auto', paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 88px)', animation: prefersReducedMotion ? 'none' : `pageEnter ${TIMING.normal} ${EASE.default} both` }}>
           <Suspense fallback={<TabLoader />}>
             {selectedNode && renderTab(selectedNode.tab)}
           </Suspense>
@@ -1673,9 +1624,6 @@ export function OrbShell() {
           </div>
         </div>
       )}
-
-      {/* ── PREMIUM UPSELL (cuando llega al límite de IA) ──────────── */}
-      {showPremium && <PremiumLock feature="Coach IA" onClose={() => setShowPremium(false)} />}
 
       {/* ── CREDENCIAL ÓMICROM (abierta desde el avatar) ───────────── */}
       {showCredencial && (

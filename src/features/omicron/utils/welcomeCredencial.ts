@@ -24,8 +24,6 @@ export interface WelcomeCredencialInput {
   showConvalida: boolean;
   /** La Credencial ya está abierta (evita reabrir/duplicar). */
   showCredencial: boolean;
-  /** Upsell premium abierto. */
-  showPremium: boolean;
 }
 
 /**
@@ -37,7 +35,7 @@ export interface WelcomeCredencialInput {
  *   - el onboarding está completo, y
  *   - todavía no se mostró en esta sesión, y
  *   - no hay ningún flujo/modal en conflicto abierto
- *     (ConvalidaOmicron, la propia Credencial ni el upsell premium).
+ *     (ConvalidaOmicron ni la propia Credencial).
  *
  * En cualquier otro caso devuelve false. Nunca se abre para invitados,
  * ni a mitad de un flujo, ni en estados 'preview' / 'fullscreen'.
@@ -49,7 +47,6 @@ export function shouldShowWelcomeCredencial(input: WelcomeCredencialInput): bool
     input.onboardingDone &&
     !input.alreadyShown &&
     !input.showConvalida &&
-    !input.showCredencial &&
-    !input.showPremium
+    !input.showCredencial
   );
 }

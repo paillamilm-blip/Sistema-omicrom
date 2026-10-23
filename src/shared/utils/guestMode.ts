@@ -1,8 +1,8 @@
 // src/lib/guestMode.ts
 // ═══════════════════════════════════════════════════════════════════════
 // GUEST MODE — Helpers para el modo invitado (sin auth).
-// El usuario puede ver el orbe, hacer onboarding, ver empleos y ranking
-// sin registrarse. Auth se pide solo cuando quiere guardar/persistir.
+// El usuario puede ver el orbe, hacer onboarding y leer la Academia sin
+// registrarse. Auth se pide solo cuando quiere guardar/persistir.
 // ═══════════════════════════════════════════════════════════════════════
 
 import type { AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';

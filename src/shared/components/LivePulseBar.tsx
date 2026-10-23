@@ -103,10 +103,12 @@ export function LivePulseBar({ state = 'calm', returnDelay = 3000 }: Props) {
         right: 0,
         height: 2,
         zIndex: 9999,
-        background: GRADIENTS[current],
+        // backgroundImage, no el atajo `background`: mezclar el atajo con
+        // `backgroundSize` hace que React avise en cada cambio de estado.
+        backgroundImage: GRADIENTS[current],
         backgroundSize: '200% 100%',
         animation: ANIMATIONS[current],
-        transition: 'background 0.6s ease',
+        transition: 'background-image 0.6s ease',
         pointerEvents: 'none',
       }}
     />

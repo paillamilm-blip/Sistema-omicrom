@@ -83,7 +83,7 @@ describe('computeSteps — eje más débil primero', () => {
     const byId = new Map(steps.map((s) => [s.id, s]));
     expect(byId.get('execution')?.tab).toBe('maxskill');
     expect(byId.get('quality')?.tab).toBe('academia');
-    expect(byId.get('transcendence')?.tab).toBe('vault');
+    expect(byId.get('transcendence')?.tab).toBe('academia');
     expect(byId.get('foundation')?.tab).toBe('perfil');
   });
 });
@@ -106,18 +106,16 @@ describe('computeSteps — credenciales bajas', () => {
 });
 
 describe('computeSteps — sinergia con reputación alta', () => {
-  it('reputación >= 45 y con skills sugiere postular a empleos y publicar en el mercado', () => {
+  it('reputación >= 45 y con skills sugiere consolidar en Habilidades, no dispersar', () => {
     const gemelo = makeGemelo({ overallReputation: 60 });
     const steps = computeSteps(makeProfile({ skills: ['react'] }), gemelo);
-    expect(steps.some((s) => s.id === 'jobs')).toBe(true);
-    expect(steps.some((s) => s.id === 'market')).toBe(true);
+    expect(steps.some((s) => s.id === 'mastery')).toBe(true);
   });
 
-  it('reputación baja (< 45) NO sugiere postular ni publicar', () => {
+  it('reputación baja (< 45) NO sugiere consolidar', () => {
     const gemelo = makeGemelo({ overallReputation: 30 });
     const steps = computeSteps(makeProfile({ skills: ['react'] }), gemelo);
-    expect(steps.some((s) => s.id === 'jobs')).toBe(false);
-    expect(steps.some((s) => s.id === 'market')).toBe(false);
+    expect(steps.some((s) => s.id === 'mastery')).toBe(false);
   });
 });
 
@@ -156,19 +154,20 @@ describe('nodeGuidance — mensajes por tab', () => {
     expect(msg).toContain('42');
   });
 
-  it('empleos invita a postular si la reputación es >= 45', () => {
-    const msg = nodeGuidance('empleos', makeProfile(), makeGemelo({ overallReputation: 50 }));
-    expect(msg).toMatch(/ya puedes postular/i);
+  it('maxskill menciona la Ejecución actual cuando hay gemelo', () => {
+    const msg = nodeGuidance('maxskill', makeProfile(), makeGemelo({ execution: 37 }));
+    expect(msg).toContain('37');
   });
 
-  it('empleos invita a subir reputación si es < 45', () => {
-    const msg = nodeGuidance('empleos', makeProfile(), makeGemelo({ overallReputation: 20 }));
-    expect(msg).toMatch(/sube tu reputación/i);
+  it('perfil sin skills empuja a subir el CV', () => {
+    const msg = nodeGuidance('perfil', makeProfile({ skills: [] }), null);
+    expect(msg).toMatch(/Sube tu CV/i);
   });
 
-  it('wallet muestra cuántos PE faltan para el siguiente nivel', () => {
-    const msg = nodeGuidance('wallet', makeProfile({ pe_points: 100 }), null);
-    expect(msg).toContain('400'); // faltan 500 - 100 = 400
+  it('perfil con skills habla del Fundamento, no de dinero', () => {
+    const msg = nodeGuidance('perfil', makeProfile(), makeGemelo({ foundation: 55 }));
+    expect(msg).toContain('55');
+    expect(msg).not.toMatch(/token/i);
   });
 
   it('tab desconocido devuelve string genérico (no crashea)', () => {

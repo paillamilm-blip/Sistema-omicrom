@@ -29,11 +29,14 @@ export interface DailyChallenge {
 
 // ── Catálogo de retos por eje ────────────────────────────────────────
 
+// Cada reto tiene que aterrizar en una pantalla que EXISTE y que suma al
+// aprendizaje. Antes, 7 de los 13 retos mandaban a Empleos, Bóveda, Red
+// Social, Mercado o Gobernanza — superficies con 0 filas en la base.
 const EXECUTION_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
-  { title: 'Documenta un logro', description: 'Escribe 3 líneas sobre un proyecto que completaste. Cualquiera sirve.', action: 'Escribe en la Bóveda', duration: '3 min', reward: { pe: 5, axis: 'execution', delta: 2 }, icon: '🚀', targetTab: 'vault' },
-  { title: 'Postula a un empleo', description: 'Elige una oferta de la pestaña Empleos y postula con carta IA.', action: 'Postula con carta IA', duration: '5 min', reward: { pe: 8, axis: 'execution', delta: 3 }, icon: '💼', targetTab: 'empleos' },
-  { title: 'Conecta con alguien', description: 'Envía una solicitud de conexión a alguien con skills complementarias.', action: 'Conecta en la Red', duration: '2 min', reward: { pe: 3, axis: 'execution', delta: 1 }, icon: '🤝', targetTab: 'chat' },
-  { title: 'Ofrece un servicio', description: 'Publica un micro-servicio en el Marketplace basado en tu skill más fuerte.', action: 'Publica en Mercado', duration: '5 min', reward: { pe: 10, axis: 'execution', delta: 3 }, icon: '💡', targetTab: 'market' },
+  { title: 'Cierra un ciclo de aprendizaje', description: 'Termina una lección de la Academia y aprueba su quiz. Es el único movimiento que sube tu Gemelo y avisa a la red.', action: 'Ir a la Academia', duration: '5 min', reward: { pe: 8, axis: 'execution', delta: 3 }, icon: '📚', targetTab: 'academia' },
+  { title: 'Valida un nodo de habilidad', description: 'Elegí una skill declarada de tu Gemelo y rendí su examen. Declarar no vale: solo la evidencia sube tu Ejecución.', action: 'Validar en Habilidades', duration: '5 min', reward: { pe: 10, axis: 'execution', delta: 3 }, icon: '◎', targetTab: 'maxskill' },
+  { title: 'Sube tu CV', description: 'Ómicrom lo analiza, detecta competencias y actualiza tus ejes. Es el paso que activa tu Gemelo Digital.', action: 'Subir CV', duration: '3 min', reward: { pe: 5, axis: 'execution', delta: 2 }, icon: '📄', targetTab: 'perfil' },
+  { title: 'Sostén la racha', description: 'Un ciclo corto hoy alcanza: una lección leída y tu racha de días seguidos sigue creciendo.', action: 'Empezar hoy', duration: '3 min', reward: { pe: 3, axis: 'execution', delta: 1 }, icon: '🔥', targetTab: 'academia' },
 ];
 
 const QUALITY_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
@@ -43,15 +46,15 @@ const QUALITY_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
 ];
 
 const TRANSCENDENCE_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
-  { title: 'Publica conocimiento', description: 'Comparte una solución técnica en la Bóveda. Puede ser breve — un truco, un patrón, un aprendizaje.', action: 'Publicar en Bóveda', duration: '5 min', reward: { pe: 12, axis: 'transcendence', delta: 4 }, icon: '💎', targetTab: 'vault' },
-  { title: 'Responde a alguien', description: 'Busca una pregunta en la Red Social y respóndela con tu experiencia.', action: 'Ayuda en la Red', duration: '3 min', reward: { pe: 5, axis: 'transcendence', delta: 2 }, icon: '🌟', targetTab: 'chat' },
+  { title: 'Aprueba el quiz de un curso', description: 'Termina las lecciones del curso y aprobá su quiz: el nodo queda validado con evidencia, no con palabras.', action: 'Aprobar quiz', duration: '5 min', reward: { pe: 12, axis: 'transcendence', delta: 4 }, icon: '💎', targetTab: 'academia' },
+  { title: 'Consolidá tu skill más fuerte', description: 'Rendí el examen del nodo que mejor domines. Un nodo probado pesa más que cinco declarados.', action: 'Examen de nodo', duration: '5 min', reward: { pe: 5, axis: 'transcendence', delta: 2 }, icon: '🏆', targetTab: 'maxskill' },
   { title: 'Comparte tu perfil', description: 'Envía tu Pasaporte Gemelo a alguien que pueda validarte.', action: 'Compartir Pasaporte', duration: '2 min', reward: { pe: 3, axis: 'transcendence', delta: 1 }, icon: '🔗', targetTab: 'perfil' },
 ];
 
 const FOUNDATION_CHALLENGES: Omit<DailyChallenge, 'id'>[] = [
-  { title: 'Micro-curso adaptativo', description: 'Toma un micro-curso generado por IA sobre tu skill más débil.', action: 'Curso en Academia', duration: '5 min', reward: { pe: 8, axis: 'foundation', delta: 3 }, icon: '🧠', targetTab: 'academia' },
+  { title: 'Ataca tu eje más flojo', description: 'Entrá a la Academia y elegí la lección que mueva el eje que tenés abajo. Aprender con intención suma más que leer de paso.', action: 'Lección con propósito', duration: '5 min', reward: { pe: 8, axis: 'foundation', delta: 3 }, icon: '🧠', targetTab: 'academia' },
   { title: 'Actualiza tu perfil', description: 'Agrega un dato nuevo: ubicación, bio, o una credencial verificable.', action: 'Editar Perfil', duration: '2 min', reward: { pe: 3, axis: 'foundation', delta: 1 }, icon: '✏️', targetTab: 'perfil' },
-  { title: 'Explora la Gobernanza', description: 'Lee cómo funciona el Tribunal de Pares. Entender el sistema = fundamento.', action: 'Ver Gobernanza', duration: '3 min', reward: { pe: 3, axis: 'foundation', delta: 1 }, icon: '⚖️', targetTab: 'gobernanza' },
+  { title: 'Leé tu Gemelo y preguntá', description: 'Mirá tus cuatro ejes y escribile al Oráculo qué querés subir primero. La respuesta te deja el siguiente paso listo.', action: 'Preguntar al Oráculo', duration: '3 min', reward: { pe: 3, axis: 'foundation', delta: 1 }, icon: '⬡', targetTab: 'perfil' },
 ];
 
 const ALL_CHALLENGES: Record<string, Omit<DailyChallenge, 'id'>[]> = {
