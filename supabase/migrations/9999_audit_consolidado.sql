@@ -5,27 +5,23 @@
 -- =====================================================================
 
 -- ── 1) HALLAZGO #1: blindaje del perfil ──────────────────────────────
-create or replace function public.protect_profile_columns()
-returns trigger language plpgsql as $$
-begin
-  if current_user in ('postgres','supabase_admin','service_role','supabase_auth_admin') then
-    return new;
-  end if;
-  new.token_balance:=old.token_balance; new.token_escrow:=old.token_escrow;
-  new.reputation_score:=old.reputation_score; new.reputation_updated_at:=old.reputation_updated_at;
-  new.execution_score:=old.execution_score; new.quality_score:=old.quality_score;
-  new.transcendence_score:=old.transcendence_score; new.foundation_score:=old.foundation_score;
-  new.traditional_score:=old.traditional_score; new.experience_score:=old.experience_score;
-  new.pe_points:=old.pe_points; new.node_type:=old.node_type; new.node_level:=old.node_level;
-  new.node_status:=old.node_status; new.is_verified_professional:=old.is_verified_professional;
-  new.can_receive_contracts:=old.can_receive_contracts; new.total_earnings:=old.total_earnings;
-  new.total_contracts_completed:=old.total_contracts_completed; new.is_pioneer:=old.is_pioneer;
-  new.last_audit_date:=old.last_audit_date;
-  return new;
-end; $$;
-drop trigger if exists trg_protect_profile on public.profiles;
-create trigger trg_protect_profile before update on public.profiles
-  for each row execute function public.protect_profile_columns();
+-- MOVIDO A 0083_perfil_lista_blanca.sql.
+--
+-- Acá había una copia de protect_profile_columns() idéntica a la de 0007:
+-- lista NEGRA, enumerando las 21 columnas prohibidas. 0083 la reemplaza por
+-- una lista BLANCA (enumera lo editable y revierte todo lo demás), porque la
+-- lista negra dejaba desprotegida cualquier columna agregada después —
+-- fueron once, entre ellas is_premium, competencias_validadas, skills_detail
+-- y commission_floor_locked_at.
+--
+-- El bloque se quita en vez de actualizarse porque este archivo, al llamarse
+-- 9999, corre DESPUÉS de 0083 en un apply desde cero: si mantuviera su
+-- propia definición, pisaría la lista blanca y reintroduciría el agujero.
+-- Es el mismo cuidado que ya se había tomado con recalc_reputation respecto
+-- de 0050 (ver la nota en la sección 3).
+--
+-- No hace falta hacer nada más acá: 0083 define la función y recrea el
+-- trigger trg_protect_profile.
 
 -- ── 2) QUICK WINS: índices + realtime + username ─────────────────────
 create index if not exists ix_messages_network_created on public.messages(network_id, created_at);
