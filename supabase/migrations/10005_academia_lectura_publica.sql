@@ -32,8 +32,13 @@ create policy lessons_read on public.course_lessons
 grant select on public.academy_courses to anon;
 grant select on public.course_lessons  to anon;
 
--- Los quiz no se tocan: `course_quiz_questions` sigue sin política de select y
--- `get_course_quiz` solo está ejecutable por `authenticated` (nunca por `anon`),
--- así que un invitado no puede pedir preguntas ni ver respuestas.
+-- Los quiz: al abrir la lectura pública hay que cerrar esta puerta. Verificado
+-- en vivo: `get_course_quiz` respondía a una llamada SIN sesión y devolvía las
+-- preguntas con sus opciones (no el `correct_index`, pero igual era un banco de
+-- preguntas raspable por cualquiera). `security definer` salta RLS, así que la
+-- única barrera real es el GRANT de ejecución.
+revoke execute on function public.get_course_quiz(uuid) from anon;
+revoke execute on function public.get_course_quiz(uuid) from public;
+grant execute on function public.get_course_quiz(uuid) to authenticated;
 
 notify pgrst, 'reload schema';

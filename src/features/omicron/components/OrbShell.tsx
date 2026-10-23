@@ -1382,8 +1382,11 @@ export function OrbShell() {
           )}
         </div>
 
-        {/* Tab content — with page transition */}
-        <div key={selectedNode?.tab ?? 'none'} style={{ flex: 1, overflow: 'auto', animation: prefersReducedMotion ? 'none' : `pageEnter ${TIMING.normal} ${EASE.default} both` }}>
+        {/* Tab content — with page transition.
+            El padding inferior es el aire que necesita la barra del Oráculo, que
+            va fija encima de este contenedor: sin él, la última tarjeta de
+            cualquier lista quedaba tapada y sin zona clicable. */}
+        <div key={selectedNode?.tab ?? 'none'} style={{ flex: 1, overflow: 'auto', paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 88px)', animation: prefersReducedMotion ? 'none' : `pageEnter ${TIMING.normal} ${EASE.default} both` }}>
           <Suspense fallback={<TabLoader />}>
             {selectedNode && renderTab(selectedNode.tab)}
           </Suspense>

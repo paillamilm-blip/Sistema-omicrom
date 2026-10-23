@@ -533,7 +533,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
 
           <div style={S.secure}>
             <Shield size={12} />
-            <span>Cifrado E2E · Red segura Ómicrom</span>
+            <span>Tu Gemelo solo muestra lo que pudiste probar</span>
           </div>
         </motion.div>
 
