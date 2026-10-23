@@ -22,7 +22,7 @@ export function OrbContextLabel({ visible = true }: Props) {
 
   const label = useMemo(() => {
     const hasSkills = profile?.skills && profile.skills.length > 0;
-    const streak = streakDays();
+    const streak = profile?.streak_days ?? streakDays();
     const rep = profile?.reputation_score ?? 0;
     const hour = new Date().getHours();
 

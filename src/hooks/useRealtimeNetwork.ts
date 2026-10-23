@@ -66,8 +66,11 @@ export function useRealtimeNetwork(
   // Mantiene el meta actualizado sin re-suscribir el canal en cada render.
   const metaRef = useRef<RealtimeMeta>(meta);
   metaRef.current = meta;
-  // Throttle para broadcasts (evita spam a la red)
-  const lastBroadcastRef = useRef<number>(0);
+  // Cola FIFO de emisión: el throttle viejo DESCARTABA eventos (un quiz
+  // aprobado dispara lección + curso + reputación en <2 s y la red perdía
+  // los posteriores). Ahora todos salen, espaciados 300 ms entre sí.
+  const queueRef = useRef<Array<{ text: string; kind: LiveEventKind }>>([]);
+  const drainingRef = useRef(false);
 
   const pushEvent = useCallback((text: string, kind: LiveEventKind) => {
     setEvents((prev) =>
@@ -80,15 +83,24 @@ export function useRealtimeNetwork(
 
   const broadcast = useCallback(
     (text: string, kind: LiveEventKind = 'action') => {
-      const ch = channelRef.current;
-      if (ch) {
-        // Throttle: máximo 1 broadcast cada 2 segundos para no colapsar la red
-        const now = Date.now();
-        if (now - lastBroadcastRef.current < 2000) return;
-        lastBroadcastRef.current = now;
-        void ch.send({ type: 'broadcast', event: 'activity', payload: { text, kind } });
-      }
       pushEvent(text, kind);
+      const ch = channelRef.current;
+      if (!ch) return;
+      queueRef.current.push({ text, kind });
+      // Techo de cola: ante un flood, lo más viejo ya fue visto localmente.
+      if (queueRef.current.length > 12) queueRef.current.shift();
+      if (drainingRef.current) return;
+      drainingRef.current = true;
+      const drain = () => {
+        const next = queueRef.current.shift();
+        if (!next) {
+          drainingRef.current = false;
+          return;
+        }
+        void ch.send({ type: 'broadcast', event: 'activity', payload: { text: next.text, kind: next.kind } });
+        setTimeout(drain, 300);
+      };
+      drain();
     },
     [pushEvent],
   );

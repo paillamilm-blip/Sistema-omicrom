@@ -5,6 +5,7 @@ import {
   Bot, Send, X,
 } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
+import { useBroadcastAchievement } from '@/hooks/useBroadcastAchievement';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, BASE, RADIUS, GLOW, cx } from '@/theme';
 import { audioAscend } from '@/shared/utils/spatialAudio';
@@ -222,6 +223,7 @@ function CoachModal({ onClose }: { onClose: () => void }) {
 export function AcademiaTab() {
   const { profile, refreshProfile, setActiveTab } = useApp();
   const { toast } = useToast();
+  const { broadcastAchievement } = useBroadcastAchievement();
   const uc = useUserColor();
   const [courses, setCourses] = useState<Course[]>([]);
   const [prog, setProg] = useState<Map<string, Prog>>(new Map());
@@ -296,7 +298,12 @@ export function AcademiaTab() {
   }
 
   async function completeLesson(lessonId: string) {
-    await supabase.rpc('mark_lesson_complete', { p_lesson_id: lessonId });
+    const { error } = await supabase.rpc('mark_lesson_complete', { p_lesson_id: lessonId });
+    if (error) {
+      toast('No se pudo completar la lección: ' + error.message, 'error');
+      return;
+    }
+    broadcastAchievement('lesson_completed', course?.title);
     setDoneLessons(prev => new Set(prev).add(lessonId));
     const idx = lessons.findIndex(l => l.id === lessonId);
     const next = lessons[idx + 1];
@@ -321,7 +328,10 @@ export function AcademiaTab() {
       const r = Array.isArray(data) ? data[0] : data;
       setResult({ score: r.score, passed: r.passed });
       await loadCourses();
-      if (r.passed) { audioAscend(); firePulse('success'); await refreshProfile(); }
+      if (r.passed) {
+        broadcastAchievement('course_completed', course.title);
+        audioAscend(); firePulse('success'); await refreshProfile();
+      }
     } catch (e) {
       toast('No se pudo enviar el quiz: ' + ((e as Error).message ?? e), 'error');
     } finally {

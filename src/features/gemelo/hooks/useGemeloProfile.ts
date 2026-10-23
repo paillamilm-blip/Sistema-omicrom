@@ -45,7 +45,7 @@ export function useGemeloProfile() {
     actions: gemeloActions,
     tier,
     history,
-    streak: streakDays(),
+    streak: sb?.streak_days ?? streakDays(),
     next: bestNextStep(profile),
   };
 }

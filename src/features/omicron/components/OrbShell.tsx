@@ -28,6 +28,7 @@ import { speakOmicron } from '@/features/omicron/services/voice';
 import { askOmicron, checkOmicronLimit, type OmicronContext } from '@/features/omicron/services/brain';
 import { stopAI, isAudioUnlocked, speakLocal } from '@/infrastructure/voice/voiceAI';
 import { useGemeloProfile } from '@/features/gemelo/hooks/useGemeloProfile';
+import { useRealtime } from '@/store/RealtimeContext';
 import { useIdleEscalation } from '@/hooks/useIdleEscalation';
 import { computeSteps, nodeGuidance } from '@/features/omicron/services/coach';
 import { streakDays } from '@/features/gemelo/services/profile';
@@ -230,6 +231,8 @@ export function OrbShell() {
   const { profile } = useGemeloProfile();
   // Get full Supabase profile for fields not on GemeloProfile (skills_detail, display_name, etc.)
   const { profile: sbFull } = useProfile();
+  // Una sola conexión de red para todos los broadcasts (nada de canales efímeros).
+  const { broadcast: netBroadcast } = useRealtime();
   // User's accent color for input bar glow and UI accents
   const orbColor = useUserColor();
   // Respetar prefers-reduced-motion para el micro-feedback de las etiquetas
@@ -325,7 +328,7 @@ export function OrbShell() {
     const nextStep = computeSteps(sbProfile, gemeloDigital, orbColor)[0] ?? null;
     const rep = sbProfile?.reputation_score ?? null;
     return pickHomeStatus({
-      streak: streakDays(),
+      streak: sbProfile?.streak_days ?? streakDays(),
       nextStep,
       reputation: rep,
       // Nivel humano único (Estudiante / Técnico / Arquitecto) derivado de la
@@ -1016,14 +1019,10 @@ export function OrbShell() {
                 p_summary: generated.summary || '',
                 p_skills_detail: skillsDetail,
               });
-              // Broadcast "activó su Gemelo Digital" a toda la red.
-              // Fire-and-forget: se cierra el canal tras enviar para no
-              // acumular suscripciones realtime (canal efímero de un solo uso).
-              try {
-                const ch = supabase.channel('omicron-live');
-                ch.send({ type: 'broadcast', event: 'activity', payload: { text: `${sbProfile.username ?? 'Un nodo'} activó su Gemelo Digital`, kind: 'action' } })
-                  .finally(() => { void supabase.removeChannel(ch); });
-              } catch { /* silencioso */ }
+              // Broadcast "activó su Gemelo Digital" a toda la red por la
+              // conexión única de RealtimeContext (antes abría un canal
+              // efímero duplicado del mismo 'omicron-live').
+              netBroadcast(`${sbProfile.username ?? 'Un nodo'} activó su Gemelo Digital`, 'action');
             }
           } catch (e) {
             console.warn('[onboarding] Error guardando perfil:', e);

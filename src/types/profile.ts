@@ -34,6 +34,10 @@ export interface Profile {
   // === PUNTOS DE EXPERIENCIA ===
   pe_points: number;
 
+  /** Racha canónica server-side (migración 10004). La mantiene
+   *  register_daily_activity; el cliente solo la lee. */
+  streak_days?: number;
+
   // === REPUTACIÓN (0-100) ===
   reputation_score: number;
   reputation_updated_at: string;

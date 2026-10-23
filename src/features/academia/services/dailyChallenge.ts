@@ -106,30 +106,6 @@ export function markChallengeCompleted(challengeId: string): void {
   localStorage.setItem(`challenge_done_${challengeId}`, '1');
 }
 
-/**
- * Streak actual (días consecutivos completando retos).
- */
-export function getCurrentStreak(): number {
-  const raw = localStorage.getItem('omicron_challenge_streak');
-  if (!raw) return 0;
-  try {
-    const { date, count } = JSON.parse(raw);
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    const today = new Date().toISOString().slice(0, 10);
-    if (date === today || date === yesterday) return count;
-    return 0; // Streak broken
-  } catch { return 0; }
-}
-
-/**
- * Incrementa el streak (llamar al completar el reto).
- */
-export function incrementStreak(): void {
-  const today = new Date().toISOString().slice(0, 10);
-  const current = getCurrentStreak();
-  localStorage.setItem('omicron_challenge_streak', JSON.stringify({ date: today, count: current + 1 }));
-}
-
 // ── Helpers ──────────────────────────────────────────────────────────
 
 function hashCode(str: string): number {
