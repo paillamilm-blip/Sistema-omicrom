@@ -35,9 +35,11 @@ const VOICES: Record<string, string> = {
   male: 'es_male',      // S2.1: español masculino (neutro LatAm)
 };
 
-const CORS = corsHeaders();
-
 Deno.serve(async (req) => {
+  // CORS POR REQUEST: corsHeaders() sin el Request refleja siempre el origen
+  // de producción y bloquea el dev local. Hay que pasarle el request para que
+  // localhost:5173 (lista en _shared/cors.ts) sea reflejado correctamente.
+  const CORS = corsHeaders(req);
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
   try {

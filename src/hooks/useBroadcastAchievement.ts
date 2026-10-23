@@ -12,6 +12,7 @@ import { useApp } from '../store/AppContext';
 export type AchievementType =
   | 'cv_uploaded'
   | 'skill_validated'
+  | 'lesson_completed'
   | 'course_completed'
   | 'level_up'
   | 'service_published'
@@ -23,6 +24,7 @@ export type AchievementType =
 const ACHIEVEMENT_TEMPLATES: Record<AchievementType, (name: string, detail?: string) => string> = {
   cv_uploaded: (name) => `${name} activó su Gemelo Digital`,
   skill_validated: (name, detail) => `${name} certificó ${detail ?? 'una skill'}`,
+  lesson_completed: (name, detail) => `${name} completó una lección de ${detail ?? 'la Academia'}`,
   course_completed: (name, detail) => `${name} completó ${detail ?? 'un curso'}`,
   level_up: (name, detail) => `🏆 ${name} ascendió a ${detail ?? 'un nuevo nivel'}`,
   service_published: (name, detail) => `${name} publicó: ${detail ?? 'un nuevo servicio'}`,

@@ -11,6 +11,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useToast } from '@/shared/components/Toast';
+import { useBroadcastAchievement } from '@/hooks/useBroadcastAchievement';
 import {
   Brain, Zap, Shield, TrendingUp, Sparkles, Target,
   ChevronRight, BookOpen, Briefcase, Award, Star,
@@ -136,6 +137,7 @@ const expand = {
 export function MaxSkillTab() {
   const { profile, gemelo, setActiveTab, refreshProfile } = useApp();
   const { toast } = useToast();
+  const { broadcastAchievement } = useBroadcastAchievement();
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const [examNode, setExamNode] = useState<SkillTreeNode | null>(null);
   const [coachAdvice, setCoachAdvice] = useState<string | null>(null);
@@ -570,6 +572,7 @@ export function MaxSkillTab() {
                 toast(r.reward_reason, 'info');
               }
             } catch { /* non-blocking: si falla, al menos el PE ya se otorgó */ }
+            broadcastAchievement('skill_validated', examNode.title || examNode.id);
             void refreshProfile();
             setExamNode(null);
           }}

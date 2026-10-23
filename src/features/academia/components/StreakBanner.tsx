@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { C, FONT } from '@/theme';
+import { useApp } from '@/store/AppContext';
 import { streakDays } from '@/features/gemelo/services/profile';
 
 /** Multiplicador PE basado en la racha */
@@ -26,12 +27,12 @@ function getStreakBadge(streak: number): string | null {
 }
 
 export function StreakBanner() {
-  const [streak, setStreak] = useState(0);
+  const { profile } = useApp();
   const [showDetail, setShowDetail] = useState(false);
 
-  useEffect(() => {
-    setStreak(streakDays());
-  }, []);
+  // Fuente canónica: la racha server-side del perfil (llega por Realtime).
+  // El conteo local es solo degradación para invitados / sin sesión.
+  const streak = profile?.streak_days ?? streakDays();
 
   // Registrar actividad del día actual + server-side streak
   useEffect(() => {
@@ -98,9 +99,8 @@ export function StreakBanner() {
   );
 }
 
-/** Aplica multiplicador de racha a PE ganados */
-export function applyStreakMultiplier(basePe: number): number {
-  const streak = streakDays();
+/** Aplica multiplicador de racha a PE ganados (racha canónica server-side) */
+export function applyStreakMultiplier(basePe: number, streak: number): number {
   const { mult } = getMultiplier(streak);
   return Math.round(basePe * mult);
 }

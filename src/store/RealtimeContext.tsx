@@ -39,15 +39,24 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   }, [profile?.id]);
 
   // Progresión real → evento en vivo para toda la red.
-  const prevRef = useRef<{ rep: number; level: number } | null>(null);
+  const prevRef = useRef<{ rep: number; level: number; streak: number } | null>(null);
   useEffect(() => {
     if (!profile) {
       prevRef.current = null;
       return;
     }
-    const cur = { rep: profile.reputation_score ?? 0, level: profile.node_level ?? 1 };
+    const cur = {
+      rep: profile.reputation_score ?? 0,
+      level: profile.node_level ?? 1,
+      streak: profile.streak_days ?? 0,
+    };
     const prev = prevRef.current;
     if (prev) {
+      // Hitos de racha (3/7/14/30): solo se anuncia el cruce, no cada día.
+      const tierCrossed = [3, 7, 14, 30].find(t => prev.streak < t && cur.streak >= t);
+      if (tierCrossed) {
+        net.broadcast(`🔥 ${profile.username} lleva ${tierCrossed} días seguidos`, 'action');
+      }
       if (cur.level > prev.level) {
         net.broadcast(`${profile.username} evolucionó a ${profile.node_type}`, 'level');
       } else if (cur.rep > prev.rep) {
@@ -57,7 +66,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     prevRef.current = cur;
     // net.broadcast es estable (useCallback); dependemos solo del cambio de perfil.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.reputation_score, profile?.node_level, profile?.node_type, profile?.username]);
+  }, [profile?.reputation_score, profile?.node_level, profile?.node_type, profile?.username, profile?.streak_days]);
 
   return <RealtimeContext.Provider value={net}>{children}</RealtimeContext.Provider>;
 }

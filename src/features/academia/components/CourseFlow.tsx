@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, ChevronDown, CheckCircle2, Lock, Award, Loader2, Sparkles, Bot, Send } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
+import { useBroadcastAchievement } from '@/hooks/useBroadcastAchievement';
 import { C, FONT, RADIUS } from '@/theme';
 
 interface Course { id: string; title: string; description: string; passing_score: number; }
@@ -105,6 +106,7 @@ export function CourseFlowModal({ nodeId, onClose, onValidated }: { nodeId: stri
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
   const loadedRef = useRef(false);
+  const { broadcastAchievement } = useBroadcastAchievement();
 
   const load = useCallback(async () => {
     const { data: cs } = await supabase
@@ -131,7 +133,9 @@ export function CourseFlowModal({ nodeId, onClose, onValidated }: { nodeId: stri
   useEffect(() => { if (!loadedRef.current) { loadedRef.current = true; load(); } }, [load]);
 
   async function completeLesson(id: string) {
-    await supabase.rpc('mark_lesson_complete', { p_lesson_id: id });
+    const { error } = await supabase.rpc('mark_lesson_complete', { p_lesson_id: id });
+    if (error) return;
+    broadcastAchievement('lesson_completed', course?.title);
     setDoneLessons(prev => new Set(prev).add(id));
     const idx = lessons.findIndex(l => l.id === id);
     setExpanded(lessons[idx + 1]?.id ?? null);
@@ -152,7 +156,10 @@ export function CourseFlowModal({ nodeId, onClose, onValidated }: { nodeId: stri
       if (error) throw error;
       const r = Array.isArray(data) ? data[0] : data;
       setResult({ score: r.score, passed: r.passed });
-      if (r.passed) onValidated();
+      if (r.passed) {
+        broadcastAchievement('course_completed', course.title);
+        onValidated();
+      }
     } catch {
       setResult({ score: 0, passed: false });
     } finally {

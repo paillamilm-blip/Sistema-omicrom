@@ -4,14 +4,13 @@
 // Aparece en el perfil / shell principal.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { C, FONT } from '@/theme';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import {
   getDailyChallenge,
   isChallengeCompleted,
   markChallengeCompleted,
-  getCurrentStreak,
 } from '@/features/academia/services/dailyChallenge';
 import { applyStreakMultiplier } from './StreakBanner';
 import { supabase } from '@/infrastructure/supabase/client';
@@ -23,22 +22,41 @@ interface Props {
 }
 
 export function DailyChallengeCard({ onNavigate }: Props) {
-  const { gemelo } = useApp();
+  const { gemelo, profile } = useApp();
   const uc = useUserColor();
   const challenge = getDailyChallenge(gemelo);
-  const [completed, setCompleted] = useState(challenge ? isChallengeCompleted(challenge.id) : false);
+  // Fuente canónica: daily_activity de hoy (solo la fila propia, por RLS).
+  // null = aún sin confirmar con el servidor; el flag local solo degrada
+  // a invitados/sin sesión.
+  const [completedToday, setCompletedToday] = useState<boolean | null>(null);
   const [justCompleted, setJustCompleted] = useState(false);
-  const cStreak = getCurrentStreak();
+  const cStreak = profile?.streak_days ?? 0;
   const { broadcast } = useRealtime();
 
+  useEffect(() => {
+    if (!profile?.id) return;
+    const today = new Date().toISOString().slice(0, 10);
+    supabase
+      .from('daily_activity')
+      .select('challenge_completed')
+      .eq('user_id', profile.id)
+      .eq('activity_date', today)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setCompletedToday(data.challenge_completed === true);
+      });
+  }, [profile?.id]);
+
   if (!challenge) return null;
+
+  const completed = completedToday ?? isChallengeCompleted(challenge.id);
 
   function handleComplete() {
     if (!challenge) return;
     markChallengeCompleted(challenge.id);
+    setCompletedToday(true);
     const basePe = challenge.reward.pe;
-    const finalPe = applyStreakMultiplier(basePe);
-    setCompleted(true);
+    const finalPe = applyStreakMultiplier(basePe, cStreak);
     setJustCompleted(true);
 
     // Navegar según el tipo de challenge
