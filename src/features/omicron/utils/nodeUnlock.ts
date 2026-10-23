@@ -89,37 +89,25 @@ export function bandForNodeLevel(nodeLevel: number | null | undefined): LevelBan
 }
 
 // ── Mapa de compuertas por nodo hub ──────────────────────────────────
-// CONSERVADOR a propósito: los nodos núcleo / de arranque quedan ABIERTOS
-// desde Estudiante para que una persona recién llegada NUNCA quede varada
-// (puede usar el corazón de la app de inmediato). Solo los nodos de mayor
-// valor se abren más adelante. Ante la duda, un nodo se deja desbloqueado.
+// Tras el recorte de la Fase 5 quedaron tres hubs y los tres se abren desde
+// Estudiante: varamos a alguien fuera de Academia o de Habilidades le cortaríamos
+// el único camino que existe. La compuerta se conserva como mecanismo (los nodos
+// de habilidad del orbe podrían gatearse en el futuro), no como pantalla vacía.
 //
 // Clave = id del nodo hub en OrbShell.HUB_NODES (no el TabId).
 // Un id ausente de este mapa se considera DESBLOQUEADO (nunca varamos al
 // usuario por un nodo nuevo que no gateamos explícitamente).
 const NODE_GATE: Record<string, LevelBand> = {
-  // Estudiante (0-49) — corazón de la app, siempre disponible:
   inicio: 'Estudiante', // Mi Gemelo (perfil)
   academia: 'Estudiante', // Academia
   habilidades: 'Estudiante', // Habilidades (maxskill)
-  empleos: 'Estudiante', // Empleos
-  mensajes: 'Estudiante', // Red Social (chat)
-  billetera: 'Estudiante', // Billetera (wallet)
-  contratos: 'Estudiante', // Mis contratos: es TU dinero, nunca se gatea
-  // Técnico (50-79) — vender/monetizar y aportar conocimiento:
-  mercado: 'Técnico', // Mercado / Servicios (vender ideas)
-  boveda: 'Técnico', // Bóveda (aportes de conocimiento)
-  // Arquitecto (80-100) — gobernar la red:
-  gobernanza: 'Arquitecto', // Gobernanza
 };
 
 // ── Etiqueta humana de "qué se abre" por nodo (cero jerga) ────────────
-// Frase corta y concreta de QUÉ es el nodo, en tuteo neutro LatAm.
-const NODE_UNLOCK_NAME: Record<string, string> = {
-  mercado: 'Vender tus ideas y servicios',
-  boveda: 'Aportar a la Bóveda de conocimiento',
-  gobernanza: 'Participar en la Gobernanza de la red',
-};
+// Frase corta y concreta de QUÉ es el nodo, en tuteo neutro LatAm. Solo hace
+// falta cuando un nodo tiene una compuerta real; con los tres hubs actuales
+// ninguna lo está, así que el mapa queda vacío a propósito.
+const NODE_UNLOCK_NAME: Record<string, string> = {};
 
 /** Reputación mínima (escala completa) en que empieza una banda. */
 function repFor(band: LevelBand): number {

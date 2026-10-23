@@ -22,20 +22,20 @@ describe('interpret — navegación', () => {
     expect(interpret('llevame a la academia')).toEqual({ kind: 'navigate', tab: 'academia', label: 'Academia' });
   });
 
-  it('detecta "billetera" → tab wallet', () => {
-    expect(interpret('abrí mi billetera')).toEqual({ kind: 'navigate', tab: 'wallet', label: 'Billetera' });
+  it('"billetera" ya no tiene pantalla: cae a unknown (la IA responde, no se abre nada vacío)', () => {
+    expect(interpret('abrí mi billetera')).toEqual({ kind: 'unknown' });
   });
 
-  it('detecta "empleos" → tab empleos', () => {
-    expect(interpret('quiero ver empleos')).toEqual({ kind: 'navigate', tab: 'empleos', label: 'Empleos' });
+  it('"empleos" lleva a la Red Viva, que es donde hoy vive la evidencia del mercado', () => {
+    expect(interpret('quiero ver empleos')).toEqual({ kind: 'navigate', tab: 'perfil', label: 'La Red Viva' });
   });
 
-  it('detecta "bóveda" (con tilde) → tab vault', () => {
-    expect(interpret('llevame a la bóveda')).toEqual({ kind: 'navigate', tab: 'vault', label: 'Bóveda' });
+  it('"bóveda" sin verbo de convalidación aterriza en Academia (no hay pantalla de Bóveda)', () => {
+    expect(interpret('llevame a la bóveda')).toEqual({ kind: 'navigate', tab: 'academia', label: 'Academia' });
   });
 
-  it('detecta "gobernanza" → tab gobernanza', () => {
-    expect(interpret('quiero votar en gobernanza')).toEqual({ kind: 'navigate', tab: 'gobernanza', label: 'Gobernanza' });
+  it('"gobernanza" ya no tiene pantalla: cae a unknown', () => {
+    expect(interpret('quiero votar en gobernanza')).toEqual({ kind: 'unknown' });
   });
 
   it('es case-insensitive', () => {
@@ -57,32 +57,28 @@ describe('interpret — órdenes naturales (Jarvis)', () => {
     expect(interpret('muéstrame un reto')).toEqual({ kind: 'navigate', tab: 'maxskill', label: 'Habilidades' });
   });
 
-  it('"vender una idea" → Servicios (market)', () => {
-    expect(interpret('vender una idea')).toEqual({ kind: 'navigate', tab: 'market', label: 'Servicios' });
+  it('"vender una idea" ya no tiene Mercado: cae a unknown', () => {
+    expect(interpret('vender una idea')).toEqual({ kind: 'unknown' });
   });
 
-  it('"quiero monetizar mi servicio" → Servicios (market)', () => {
-    expect(interpret('quiero monetizar mi servicio')).toEqual({ kind: 'navigate', tab: 'market', label: 'Servicios' });
+  it('"quiero monetizar mi servicio" ya no tiene Mercado: cae a unknown', () => {
+    expect(interpret('quiero monetizar mi servicio')).toEqual({ kind: 'unknown' });
   });
 
-  it('"buscar trabajo freelance" → Servicios (market; freelance = vender tu servicio)', () => {
-    expect(interpret('buscar trabajo freelance')).toEqual({ kind: 'navigate', tab: 'market', label: 'Servicios' });
+  it('"buscar trabajo freelance" → la Red Viva (es lo que el mercado pide)', () => {
+    expect(interpret('buscar trabajo freelance')).toEqual({ kind: 'navigate', tab: 'perfil', label: 'La Red Viva' });
   });
 
-  it('"tengo un trabajo por proyecto" → Servicios (market)', () => {
-    expect(interpret('tengo un trabajo por proyecto')).toEqual({ kind: 'navigate', tab: 'market', label: 'Servicios' });
+  it('"ver mi ranking" → Mi Gemelo (ahí está la reputación de la red)', () => {
+    expect(interpret('ver mi ranking')).toEqual({ kind: 'navigate', tab: 'perfil', label: 'Inicio' });
   });
 
-  it('"ver mi ranking" → Mensajes (RedSocialTab tiene la sección Ranking)', () => {
-    expect(interpret('ver mi ranking')).toEqual({ kind: 'navigate', tab: 'chat', label: 'Mensajes' });
+  it('"cuál es mi posición en la tabla" → Mi Gemelo', () => {
+    expect(interpret('cuál es mi posición en la tabla')).toEqual({ kind: 'navigate', tab: 'perfil', label: 'Inicio' });
   });
 
-  it('"cuál es mi posición en la tabla" → Mensajes (ranking)', () => {
-    expect(interpret('cuál es mi posición en la tabla')).toEqual({ kind: 'navigate', tab: 'chat', label: 'Mensajes' });
-  });
-
-  it('regresión: "buscar empleo" (sin freelance) sigue yendo a Empleos', () => {
-    expect(interpret('buscar empleo')).toEqual({ kind: 'navigate', tab: 'empleos', label: 'Empleos' });
+  it('regresión: "buscar empleo" (sin freelance) también va a la Red Viva', () => {
+    expect(interpret('buscar empleo')).toEqual({ kind: 'navigate', tab: 'perfil', label: 'La Red Viva' });
   });
 });
 
@@ -103,8 +99,8 @@ describe('interpret — convalidación', () => {
     expect(interpret('carga un aporte a la bóveda')).toEqual({ kind: 'convalidate', item: 'vault' });
   });
 
-  it('verbo de convalidación sin objeto reconocible cae a unknown (no revienta)', () => {
-    expect(interpret('convalida algo random sin sentido')).toEqual({ kind: 'unknown' });
+  it('verbo de convalidación sin objeto reconocible no revienta: cae a Habilidades, donde se valida una skill', () => {
+    expect(interpret('convalida algo random sin sentido')).toEqual({ kind: 'navigate', tab: 'maxskill', label: 'Habilidades' });
   });
 });
 

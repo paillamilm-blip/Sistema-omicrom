@@ -88,10 +88,10 @@ describe('buildHomeActions', () => {
     expect(cv).toEqual({ tab: 'cv', label: 'Actualizar CV' });
   });
 
-  it('siempre incluye los tabs empleos y academia', () => {
+  it('siempre incluye los tabs academia y maxskill (el camino, no la economía)', () => {
     for (const hasCv of [false, true]) {
       const tabs = buildHomeActions(hasCv).map(a => a.tab);
-      expect(tabs).toContain('empleos');
+      expect(tabs).toContain('maxskill');
       expect(tabs).toContain('academia');
     }
   });

@@ -19,7 +19,6 @@ function baseInput(): WelcomeCredencialInput {
     alreadyShown: false,
     showConvalida: false,
     showCredencial: false,
-    showPremium: false,
   };
 }
 
@@ -55,12 +54,6 @@ describe('shouldShowWelcomeCredencial', () => {
   it('credencial ya abierta (showCredencial=true) -> false (evita reabrir)', () => {
     expect(
       shouldShowWelcomeCredencial({ ...baseInput(), showCredencial: true }),
-    ).toBe(false);
-  });
-
-  it('upsell premium abierto (showPremium=true) -> false', () => {
-    expect(
-      shouldShowWelcomeCredencial({ ...baseInput(), showPremium: true }),
     ).toBe(false);
   });
 

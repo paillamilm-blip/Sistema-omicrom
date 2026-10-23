@@ -7,7 +7,10 @@ import type { Profile } from './profile';
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'no_access';
 
 // ===== TAB NAVIGATION =====
-export type TabId = 'perfil' | 'maxskill' | 'academia' | 'empleos' | 'chat' | 'market' | 'wallet' | 'gobernanza' | 'vault' | 'contratos';
+// El recorte (Fase 5) deja UN solo camino: Gemelo → Academia → Habilidades.
+// Empleos, Mercado, Bóveda, Red Social, Billetera, Contratos y Gobernanza
+// salieron de la navegación: tienen 0 filas de usuarios reales.
+export type TabId = 'perfil' | 'academia' | 'maxskill';
 
 // ===== APP STATE (Context) =====
 export interface AppState {
@@ -21,15 +24,6 @@ export interface AppState {
   // === NAVIGATION ===
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
-  jobTargetId: string | null;
-  /** Identidad de cada solicitud de navegación a un empleo exacto. */
-  jobTargetRequest: number;
-  openJob: (jobId: string) => void;
-  clearJobTarget: () => void;
-
-  // === NOTIFICATIONS ===
-  unreadCount: number;
-  setUnreadCount: (count: number) => void;
 
   // === ACTIONS ===
   refreshProfile: () => Promise<void>;

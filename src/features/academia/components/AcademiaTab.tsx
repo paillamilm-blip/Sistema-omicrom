@@ -245,19 +245,26 @@ export function AcademiaTab() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
 
+  // El catálogo es público: un invitado también lo ve. Lo único que se saltea
+  // es el progreso, que necesita un user_id. Antes el early-return por falta de
+  // perfil dejaba `loading` en true para siempre y el invitado nunca llegaba a
+  // la primera lección.
   const loadCourses = useCallback(async () => {
-    if (!profile) return;
     const { data: cs } = await supabase
       .from('academy_courses').select('*').eq('is_published', true).order('order_index');
     const courseList = (cs as Course[]) ?? [];
     setCourses(courseList);
 
-    const { data: ps } = await supabase
-      .from('user_course_progress').select('course_id,status,quiz_passed').eq('user_id', profile.id);
+    const { data: ps } = profile
+      ? await supabase
+        .from('user_course_progress').select('course_id,status,quiz_passed').eq('user_id', profile.id)
+      : { data: null };
     setProg(new Map(((ps as Prog[]) ?? []).map(p => [p.course_id, p])));
 
     const { data: allLessons } = await supabase.from('course_lessons').select('id,course_id');
-    const { data: doneRows } = await supabase.from('user_lesson_progress').select('lesson_id');
+    const { data: doneRows } = profile
+      ? await supabase.from('user_lesson_progress').select('lesson_id')
+      : { data: null };
     const doneSet = new Set(((doneRows as { lesson_id: string }[]) ?? []).map(d => d.lesson_id));
     const m = new Map<string, { total: number; done: number }>();
     ((allLessons as { id: string; course_id: string }[]) ?? []).forEach(l => {
@@ -298,6 +305,7 @@ export function AcademiaTab() {
   }
 
   async function completeLesson(lessonId: string) {
+    if (!profile) { window.dispatchEvent(new Event('omicron:request-auth')); return; }
     const { error } = await supabase.rpc('mark_lesson_complete', { p_lesson_id: lessonId });
     if (error) {
       toast('No se pudo completar la lección: ' + error.message, 'error');
@@ -312,6 +320,7 @@ export function AcademiaTab() {
 
   async function startQuiz() {
     if (!course) return;
+    if (!profile) { window.dispatchEvent(new Event('omicron:request-auth')); return; }
     const { data } = await supabase.rpc('get_course_quiz', { p_course_id: course.id });
     setQuestions((data as QuizQ[]) ?? []);
     setAnswers({});
@@ -359,6 +368,22 @@ export function AcademiaTab() {
           subtitle="Aprende y valida tus nodos"
         />
         <div style={cx(BASE.scrollArea, { padding: '12px 2px 20px' })}>
+          {!profile && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+              borderRadius: RADIUS.lg, padding: 12, marginBottom: 14,
+              background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyan}44`,
+            }}>
+              <span style={{ fontFamily: FONT.body, fontSize: 11.5, color: C.cyanDim, flex: 1, minWidth: 160, lineHeight: 1.4 }}>
+                Estás como invitado: podés leer los cursos, pero crear tu cuenta es lo que guarda tu progreso en el Gemelo.
+              </span>
+              <button onClick={() => window.dispatchEvent(new Event('omicron:request-auth'))} style={{
+                padding: '7px 12px', borderRadius: 10, cursor: 'pointer', flexShrink: 0,
+                background: uc, border: 'none', color: '#05070d',
+                fontFamily: FONT.display, fontWeight: 700, fontSize: 11.5,
+              }}>Crear cuenta</button>
+            </div>
+          )}
 
           <button onClick={() => setCoachOpen(true)} style={{
             width: '100%', textAlign: 'left', cursor: 'pointer',

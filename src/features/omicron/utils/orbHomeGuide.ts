@@ -85,11 +85,11 @@ export interface HomeAction {
 }
 
 /**
- * Construye hasta 3 chips de acción tocables.
+ * Construye hasta 3 chips de acción tocables: el camino de aprendizaje en
+ * orden. 'cv' no es un tab — OrbShell lo traduce a la Convalida de CV.
  * - Si NO hay CV: el primer chip es { label: 'Sube tu CV', tab: 'cv' }.
  * - Si HAY CV: se incluye { label: 'Actualizar CV', tab: 'cv' }.
- * - Siempre se incluyen 'Ver empleos que te calzan' (empleos) y
- *   'Subir tu reputación' (academia).
+ * - Le sigue la lección (academia) y después la prueba (maxskill).
  * El arreglo se limita a 3 chips como máximo.
  */
 export function buildHomeActions(hasCv: boolean): HomeAction[] {
@@ -98,8 +98,8 @@ export function buildHomeActions(hasCv: boolean): HomeAction[] {
     : { label: 'Sube tu CV', tab: 'cv' };
   const actions: HomeAction[] = [
     cvChip,
-    { label: 'Ver empleos que te calzan', tab: 'empleos' },
-    { label: 'Subir tu reputación', tab: 'academia' },
+    { label: 'Aprender una lección', tab: 'academia' },
+    { label: 'Probar una habilidad', tab: 'maxskill' },
   ];
   return actions.slice(0, 3);
 }

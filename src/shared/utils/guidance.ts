@@ -30,37 +30,13 @@ export function levelInfo(pe: number): { tier: string; next: string | null; toNe
  * Devuelve una frase concreta con los números reales del usuario.
  */
 export function nodeGuidance(tab: TabId, profile: Profile | null, gemelo: GemeloDigital | null): string {
-  const pe = profile?.pe_points ?? 0;
   const skills = profile?.skills ?? [];
-  const topSkill = skills[0] || 'tu especialidad';
-  const rep = gemelo ? r(gemelo.overallReputation) : 0;
 
   switch (tab) {
     case 'academia':
       return `Cada curso valida un nodo real. Aprueba su examen para subir tu Calidad${gemelo ? ` (hoy ${r(gemelo.quality)})` : ''} con evidencia.`;
     case 'maxskill':
       return `Valida tu próximo nodo para subir tu Ejecución${gemelo ? ` (hoy ${r(gemelo.execution)})` : ''}. Cada nodo que superas abre el siguiente.`;
-    case 'empleos':
-      return rep >= 45
-        ? `Con reputación ${rep} ya puedes postular. Busca vacantes que pidan ${topSkill}.`
-        : 'Sube tu reputación validando nodos y pronto el trabajo te va a encontrar.';
-    case 'market':
-      return `Publica un servicio con tu experticia en ${topSkill} y empieza a ganar tokens.`;
-    case 'vault':
-      return `Sube un aporte para subir tu Trascendencia${gemelo ? ` (hoy ${r(gemelo.transcendence)})` : ''} y ganar regalías.`;
-    case 'wallet': {
-      // UNIFICACIÓN (Etapa A): tu NIVEL se mide SOLO desde tu reputación
-      // (una sola medición). El PE es el motor que la alimenta, así que acá
-      // hablamos de PE como progreso, nunca como un segundo nivel.
-      const li = levelInfo(pe);
-      return li.next
-        ? `Tienes ${pe} PE y suman a tu reputación (${rep}/100). Con ${li.toNext} PE más aceleras tu próximo nivel.`
-        : `Tienes ${pe} PE: el máximo del tramo. Sigue ganando tokens con tu experticia.`;
-    }
-    case 'gobernanza':
-      return 'Participa como árbitro o vota propuestas: la gobernanza refuerza tu reputación en la red.';
-    case 'chat':
-      return 'Coordina tus contratos aquí. Cada acuerdo queda protegido en la caja negra.';
     case 'perfil':
       return skills.length === 0
         ? 'Sube tu CV para activar tu Gemelo Digital. Es la base de todo: habilidades, ejes y reputación.'

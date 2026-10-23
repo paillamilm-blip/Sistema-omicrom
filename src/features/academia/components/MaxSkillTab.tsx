@@ -14,7 +14,7 @@ import { useToast } from '@/shared/components/Toast';
 import { useBroadcastAchievement } from '@/hooks/useBroadcastAchievement';
 import {
   Brain, Zap, Shield, TrendingUp, Sparkles, Target,
-  ChevronRight, BookOpen, Briefcase, Award, Star,
+  ChevronRight, BookOpen, Award, Star,
   Loader2, MessageCircle,
 } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
@@ -491,9 +491,6 @@ export function MaxSkillTab() {
             <div style={S.shortcuts}>
               <button style={S.shortcutBtn} onClick={() => setActiveTab('academia')}>
                 <BookOpen size={13} /> Academia
-              </button>
-              <button style={S.shortcutBtn} onClick={() => setActiveTab('empleos')}>
-                <Briefcase size={13} /> Mercado laboral
               </button>
             </div>
           </OmicronCard>

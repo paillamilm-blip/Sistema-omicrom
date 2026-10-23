@@ -1,10 +1,10 @@
 // components/shared/JourneyProgress.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// "TU CAMINO" — 5 pasos visibles post-onboarding.
+// "TU CAMINO" — 4 pasos visibles post-onboarding.
 //
 // Muestra un progress bar sutil con los pasos que el usuario necesita
-// completar para estar "activado". Se oculta cuando completa los 5.
-// Cada paso completado desaparece con animación. Gamificado con PE bonus.
+// completar para estar "activado". Se oculta cuando los completa todos.
+// Cada paso lleva a la única pantalla donde se acciona. Gamificado con PE bonus.
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo } from 'react';
 import { C, FONT } from '@/theme';
@@ -24,28 +24,26 @@ interface Props {
     cv_summary?: string | null;
     reputation_score?: number | null;
     pe_points?: number | null;
-    total_contracts_completed?: number | null;
+    streak_days?: number | null;
   } | null;
-  hasConnections?: boolean;
   onNavigate?: (tab: string) => void;
 }
 
-export function JourneyProgress({ profile, hasConnections = false, onNavigate }: Props) {
+export function JourneyProgress({ profile, onNavigate }: Props) {
   const uc = useUserColor();
   const steps = useMemo((): JourneyStep[] => {
     if (!profile) return [];
     const hasCv = !!profile.cv_summary;
-    const hasRep = (profile.reputation_score ?? 0) > 40;
+    const hasLesson = (profile.streak_days ?? 0) >= 1;
     const hasPe = (profile.pe_points ?? 0) >= 50;
 
     return [
       { id: 'profile', label: 'Crear perfil', emoji: '⬡', completed: true }, // Si ve esto, ya tiene perfil
       { id: 'cv', label: 'Subir CV', emoji: '📄', completed: hasCv, action: 'perfil' },
+      { id: 'leccion', label: 'Primera lección', emoji: '◈', completed: hasLesson, action: 'academia' },
       { id: 'skill', label: 'Validar 1 skill', emoji: '🎯', completed: hasPe, action: 'maxskill' },
-      { id: 'match', label: 'Primer match', emoji: '💼', completed: hasRep, action: 'empleos' },
-      { id: 'connect', label: 'Conectar', emoji: '🤝', completed: hasConnections, action: 'chat' },
     ];
-  }, [profile, hasConnections]);
+  }, [profile]);
 
   const completed = steps.filter(s => s.completed).length;
   const total = steps.length;

@@ -32,13 +32,13 @@ export function textoLecturaOmicron(
  * Traduce un nodo de la Red Viva a la tab de navegación que le corresponde.
  * La Red Viva ya NO es un menú de tabs: es la evidencia del usuario. Pero al
  * seleccionar un nodo, Ómicrom abre la superficie donde ESE nodo se acciona:
- *   • ausente  → 'empleos': lo que te falta se persigue desde los empleos que
- *                lo piden (el puente ámbar apunta ahí).
+ *   • ausente  → 'academia': lo que todavía no tenés se aprende. Antes mandaba
+ *                a Empleos, una pantalla con 0 ofertas.
  *   • resto    → 'maxskill': una habilidad tuya (probada / declarada / en
  *                prueba) se acciona probándola en Habilidades.
  * Es determinista y no depende del color ni del layout.
  */
 export function tabParaNodo(nodo: NodoRed): TabId {
-  if (nodo.estado === 'ausente') return 'empleos';
+  if (nodo.estado === 'ausente') return 'academia';
   return 'maxskill';
 }

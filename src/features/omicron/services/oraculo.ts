@@ -16,34 +16,26 @@ export type OraculoIntent =
 
 // Intenciones NATURALES: órdenes en lenguaje del fundador que deben aterrizar
 // en el módulo REAL correcto (verificado contra el código, sin inventar
-// pantallas). Se evalúan ANTES de NAV para que ganen sobre palabras genéricas
-// (p. ej. "trabajo freelance / por proyecto" → market, no al empleos genérico
-// de la palabra suelta "trabajo", porque es OFRECER tu servicio, no buscar
-// vacante; "buscar empleo" sin freelance sigue cayendo en empleos vía NAV).
-//   · jugar/reto/partida  → maxskill  (MaxSkillTab hospeda los retos:
-//                                       DailyChallengeCard / SimulatorChallenge).
-//   · vender/monetizar/servicio/freelance/proyecto → market
-//                                       (MarketTab = Servicios: vender ideas,
-//                                        servicios y trabajo freelance/por proyecto).
-//   · ranking/posición/clasificación   → chat
-//                                       (RedSocialTab tiene la sección "Ranking"
-//                                        con el leaderboard de reputación).
+// pantallas). Se evalúan ANTES de NAV para que ganen sobre palabras genéricas.
+//   · jugar/reto/partida → maxskill (MaxSkillTab hospeda el reto diario y el
+//     simulador de examen).
 const NAV_NATURAL: { keys: string[]; tab: TabId; label: string }[] = [
   { keys: ['jugar', 'juego', 'juega', 'reto', 'desaf', 'partida', 'simulad'], tab: 'maxskill', label: 'Habilidades' },
-  { keys: ['ranking', 'posici', 'posición', 'clasificaci', 'tabla', 'leaderboard', 'top 10', 'top diez'], tab: 'chat', label: 'Mensajes' },
-  { keys: ['vender', 'vende', 'monetiz', 'freelance', 'free lance', 'por proyecto', 'ofrecer un servicio', 'ofrecer servicio', 'ofrecer mi servicio'], tab: 'market', label: 'Servicios' },
 ];
 
+// El recorte de la Fase 5 dejó tres destinos reales: Mi Gemelo (donde vive la
+// Red Viva), Academia y Habilidades. Empleos, Mercado, Bóveda, Red Social,
+// Billetera y Gobernanza salieron de la navegación porque las tablas que los
+// alimentan tienen 0 filas de usuarios reales: llevar el "quiero trabajo" a
+// una pantalla con 0 ofertas era peor que no entender el pedido.
+//   · jugar/reto/partida   → 'maxskill' (hospeda el reto diario y el simulador).
+//   · empleo/trabajo/oferta → 'perfil' (la Red Viva ES la evidencia del mercado:
+//     nodos ámbar, demanda y la próxima jugada; ya no hay bolsa de empleos).
 const NAV: { keys: string[]; tab: TabId; label: string }[] = [
-  { keys: ['inicio', 'gemelo', 'perfil', 'principal', 'home'], tab: 'perfil', label: 'Inicio' },
-  { keys: ['habilidad', 'skill', 'competenc', 'maxskill', 'destreza'], tab: 'maxskill', label: 'Habilidades' },
-  { keys: ['academia', 'aprend', 'curso', 'estudi', 'arbol', 'árbol'], tab: 'academia', label: 'Academia' },
-  { keys: ['servicio', 'mercado', 'market'], tab: 'market', label: 'Servicios' },
-  { keys: ['empleo', 'trabajo', 'oferta', 'vacante'], tab: 'empleos', label: 'Empleos' },
-  { keys: ['mensaje', 'chat', 'conversac'], tab: 'chat', label: 'Mensajes' },
-  { keys: ['billetera', 'wallet', 'token', 'saldo', 'dinero', 'ganancia', 'plata'], tab: 'wallet', label: 'Billetera' },
-  { keys: ['gobern', 'voto', 'arbitr', 'propuesta', 'camara', 'cámara'], tab: 'gobernanza', label: 'Gobernanza' },
-  { keys: ['boveda', 'bóveda', 'vault', 'conocimiento', 'oraculo', 'oráculo'], tab: 'vault', label: 'Bóveda' },
+  { keys: ['inicio', 'gemelo', 'perfil', 'principal', 'home', 'ranking', 'posici', 'posición', 'reputaci', 'fama'], tab: 'perfil', label: 'Inicio' },
+  { keys: ['habilidad', 'skill', 'competenc', 'maxskill', 'destreza', 'examen', 'valida', 'nodo'], tab: 'maxskill', label: 'Habilidades' },
+  { keys: ['empleo', 'trabajo', 'oferta', 'vacante', 'mercado', 'demanda', 'viva'], tab: 'perfil', label: 'La Red Viva' },
+  { keys: ['academia', 'aprend', 'curso', 'estudi', 'arbol', 'árbol', 'lecci', 'conocimiento', 'boveda', 'bóveda'], tab: 'academia', label: 'Academia' },
 ];
 
 const COACH_TRIGGERS = [

@@ -14,8 +14,3 @@ export * from './common';
 export * from './profile';
 export * from './skills';
 export * from './jobs';
-export * from './chat';
-export * from './notifications';
-export * from './governance';
-export * from './market';
-export * from './wallet';

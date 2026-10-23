@@ -2,15 +2,14 @@
 // ═══════════════════════════════════════════════════════════════════════
 // ÓMICROM · MOTOR DE PROACTIVIDAD — El Gemelo que se anticipa
 // Detecta momentos para intervenir ANTES de que el usuario pregunte.
-// Contexto: hora, red en vivo, oportunidades, inactividad, logros.
+// Contexto: hora, red en vivo, inactividad, logros.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { getPatterns, getGoals, generateContextualGreeting } from './memory';
+import { getGoals, generateContextualGreeting } from './memory';
 import { getProfile, bestNextStep } from './profile';
 
 export type ProactiveEventType = 
   | 'greeting'           // Saludo contextual al abrir
-  | 'opportunity'        // Nueva oportunidad con alto match
   | 'network_surge'      // Muchos nodos nuevos en línea
   | 'milestone'          // Logro alcanzado (nivel, PE, etc)
   | 'reminder'           // Recordatorio de goal/tarea pendiente
@@ -44,7 +43,6 @@ interface ProactiveContext {
 
 const LAST_GREETING_KEY = 'omicron_last_greeting';
 const LAST_NETWORK_CHECK_KEY = 'omicron_last_network_check';
-const LAST_OPPORTUNITY_CHECK_KEY = 'omicron_last_opportunity_check';
 
 // ══════════════════════════════════════════════════════════════════════
 // DETECTORES DE EVENTOS PROACTIVOS
@@ -99,7 +97,7 @@ export function detectNetworkSurge(context: ProactiveContext): ProactiveEvent | 
     const surge = context.onlineCount - context.lastOnlineCount;
     
     if (surge >= 3) {
-      const message = `${surge} nodos nuevos entraron a la red. La actividad está alta, es buen momento para conectar.`;
+      const message = `${surge} nodos nuevos entraron a la red. La actividad está alta: es buen momento para probar una habilidad.`;
       
       return {
         type: 'network_surge',
@@ -107,44 +105,6 @@ export function detectNetworkSurge(context: ProactiveContext): ProactiveEvent | 
         message,
         emotion: 'excited',
         timestamp: Date.now(),
-      };
-    }
-    
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Detecta nueva oportunidad de empleo con match alto.
- */
-export function detectOpportunity(
-  context: ProactiveContext,
-  opportunities: Array<{ title: string; company: string; match: number }>
-): ProactiveEvent | null {
-  try {
-    const lastCheck = localStorage.getItem(LAST_OPPORTUNITY_CHECK_KEY);
-    const now = Date.now();
-    
-    // Solo notificar nuevas oportunidades cada 2 horas
-    if (lastCheck && now - parseInt(lastCheck) < 2 * 60 * 60 * 1000) {
-      return null;
-    }
-    
-    const topOpportunity = opportunities.find(opp => opp.match >= 90);
-    
-    if (topOpportunity) {
-      localStorage.setItem(LAST_OPPORTUNITY_CHECK_KEY, now.toString());
-      
-      const message = `Nueva oportunidad: ${topOpportunity.title} en ${topOpportunity.company} con ${topOpportunity.match}% de match. ¿Postulo por ti?`;
-      
-      return {
-        type: 'opportunity',
-        priority: 5,
-        message,
-        emotion: 'alert',
-        timestamp: now,
       };
     }
     
@@ -173,7 +133,7 @@ export function detectMilestone(context: ProactiveContext): ProactiveEvent | nul
         return {
           type: 'milestone',
           priority: 4,
-          message: '¡Subiste a Nodo 2! Tu reputación es 50+. Nuevas oportunidades premium disponibles.',
+          message: '¡Subiste a Nodo 2! Tu reputación es 50+. Ya podés rendir el examen de tu habilidad más fuerte.',
           emotion: 'celebrating',
           timestamp: Date.now(),
         };
@@ -186,7 +146,7 @@ export function detectMilestone(context: ProactiveContext): ProactiveEvent | nul
         return {
           type: 'milestone',
           priority: 5,
-          message: '¡NODO 3 ALCANZADO! Eres élite. Contratos senior y gobernanza completa desbloqueados.',
+          message: '¡NODO 3 ALCANZADO! Eres élite: tu Gemelo Digital está sostenido por evidencia, no por lo que dijiste de vos.',
           emotion: 'celebrating',
           timestamp: Date.now(),
         };
@@ -210,7 +170,7 @@ export function detectMilestone(context: ProactiveContext): ProactiveEvent | nul
           return {
             type: 'milestone',
             priority: 3,
-            message: `¡${currentPE.toLocaleString()} PE acumulados! Cada punto aumenta tu match con oportunidades premium.`,
+            message: `¡${currentPE.toLocaleString()} PE acumulados! Cada prueba que aprobás suma al Gemelo, no al discurso.`,
             emotion: 'celebrating',
             timestamp: Date.now(),
           };
@@ -303,26 +263,8 @@ export function detectInactivity(context: ProactiveContext): ProactiveEvent | nu
  */
 export function detectSuggestion(context: ProactiveContext): ProactiveEvent | null {
   try {
-    const patterns = getPatterns();
     const profile = getProfile();
-    
-    // Si detecta patrón de consultar empleos los lunes por la mañana
-    if (context.dayOfWeek === 1 && context.currentHour >= 9 && context.currentHour < 12) {
-      const employPattern = patterns.find(p => p.pattern.includes('consulta_empleos_lunes'));
-      
-      if (employPattern && employPattern.frequency >= 2) {
-        const message = 'Veo que sueles revisar empleos los lunes. Hay 3 oportunidades nuevas con match >85%. ¿Las vemos?';
-        
-        return {
-          type: 'suggestion',
-          priority: 3,
-          message,
-          emotion: 'excited',
-          timestamp: Date.now(),
-        };
-      }
-    }
-    
+
     // Si está en horario nocturno y tiene cursos pendientes
     if (context.currentHour >= 20 && context.currentHour < 23) {
       const next = bestNextStep(profile);
@@ -354,8 +296,7 @@ export function detectSuggestion(context: ProactiveContext): ProactiveEvent | nu
  * Evalúa todos los detectores y retorna el evento proactivo de mayor prioridad.
  */
 export function evaluateProactiveEvents(
-  context: ProactiveContext,
-  opportunities?: Array<{ title: string; company: string; match: number }>
+  context: ProactiveContext
 ): ProactiveEvent | null {
   const events: ProactiveEvent[] = [];
   
@@ -368,11 +309,6 @@ export function evaluateProactiveEvents(
   
   const networkSurge = detectNetworkSurge(context);
   if (networkSurge) events.push(networkSurge);
-  
-  if (opportunities && opportunities.length > 0) {
-    const opportunity = detectOpportunity(context, opportunities);
-    if (opportunity) events.push(opportunity);
-  }
   
   const reminder = detectReminder(context);
   if (reminder) events.push(reminder);
@@ -419,7 +355,6 @@ export function getDaysSinceLastLogin(): number {
 export function resetProactiveState(): void {
   localStorage.removeItem(LAST_GREETING_KEY);
   localStorage.removeItem(LAST_NETWORK_CHECK_KEY);
-  localStorage.removeItem(LAST_OPPORTUNITY_CHECK_KEY);
   localStorage.removeItem('omicron_previous_rep');
   localStorage.removeItem('omicron_previous_pe');
 }

@@ -48,7 +48,7 @@ const slideVariants = {
 };
 
 export function GemeloTab() {
-  const { profile, setActiveTab, openJob } = useApp();
+  const { profile, setActiveTab } = useApp();
   const gemelo = useGemeloDigital();
   const uc = useUserColor();
   const [[currentSlide, direction], setSlide] = useState([0, 0]);
@@ -233,16 +233,13 @@ export function GemeloTab() {
         <div style={{ height: 1, background: C.line, borderRadius: 1 }} />
       </div>
 
-      {/* ═══ RED VIVA: lo declarado vs. lo probado, y la plata que falta ═══
+      {/* ═══ RED VIVA: lo declarado vs. lo probado ═══
           Cada nodo es un dato con nombre: hueco = lo dijo tu CV, sólido = está
-          probado, ámbar = el mercado lo paga y no lo tenés. Ver
-          .tasks/red-viva-plan.md. Se monta acá (dentro del Gemelo) a propósito:
-          promoverla al centro del home implica reemplazar la navegación, que
-          hoy vive en los nodos del orbe — eso es un incremento aparte. */}
+          probado, ámbar = el mercado lo pide y no lo tenés. Ver
+          .tasks/red-viva-plan.md. */}
       <div style={{ width: '100%', padding: '0 16px 8px', flexShrink: 0 }}>
         <RedVivaHome
           onAbrirTab={(tab) => setActiveTab(tab as Parameters<typeof setActiveTab>[0])}
-          onVerEmpleo={openJob}
           onSubirCv={() => window.dispatchEvent(new CustomEvent('omicron:request-cv'))}
         />
       </div>

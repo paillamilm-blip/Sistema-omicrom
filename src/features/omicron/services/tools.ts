@@ -20,10 +20,8 @@ import { supabase } from '@/infrastructure/supabase/client';
 export type ToolName =
   | 'start_exam'        // Iniciar examen de una skill
   | 'search_vault'      // Buscar en la Bóveda
-  | 'generate_carta'    // Generar carta de postulación
   | 'navigate'          // Navegar a un tab
   | 'show_challenge'    // Mostrar el reto del día
-  | 'search_jobs'       // Buscar empleos con matching
   | 'upload_cv';        // Abrir upload de CV
 
 export interface ToolCall {
@@ -41,13 +39,15 @@ export interface ToolResult {
 /**
  * Catálogo de herramientas — se inyecta al prompt de omicronBrain
  * para que la IA sepa qué puede hacer.
+ *
+ * El recorte de la Fase 5 sacó [CARTA] y [EMPLEOS]: ofrecer una carta de
+ * postulación o una bolsa de empleos abría una pantalla con 0 filas. Lo que
+ * queda es lo que el producto puede cumplir hoy.
  */
 export const TOOL_CATALOG = `
 HERRAMIENTAS DISPONIBLES (puedes sugerirlas al usuario):
 - [EXAMEN]: Sugerir que valide una skill con un examen IA
 - [BÓVEDA]: Recomendar buscar o publicar en la Bóveda de Conocimiento  
-- [CARTA]: Ofrecer generar una carta de postulación
-- [EMPLEOS]: Dirigir a ver oportunidades de empleo
 - [CV]: Sugerir subir o actualizar el CV
 - [RETO]: Mencionar el reto diario si no lo ha completado
 - [ACADEMIA]: Recomendar un curso de la academia
@@ -58,7 +58,7 @@ Ejemplo: "Te recomiendo validar React con un examen. [EXAMEN:react]"
 
 /**
  * Parsea si la respuesta de Ómicrom contiene un tool call.
- * Busca patrones como [EXAMEN:react] o [EMPLEOS] al final.
+ * Busca patrones como [EXAMEN:react] o [ACADEMIA] al final.
  */
 export function parseToolCall(response: string): ToolCall | null {
   const match = response.match(/\[([A-ZÁÉÍÓÚ]+)(?::([^\]]*))?\]\s*$/);
@@ -69,8 +69,6 @@ export function parseToolCall(response: string): ToolCall | null {
     'EXAMEN': 'start_exam',
     'BÓVEDA': 'search_vault',
     'BOVEDA': 'search_vault',
-    'CARTA': 'generate_carta',
-    'EMPLEOS': 'navigate',
     'CV': 'upload_cv',
     'RETO': 'show_challenge',
     'ACADEMIA': 'navigate',
@@ -80,7 +78,6 @@ export function parseToolCall(response: string): ToolCall | null {
   if (!tool) return null;
 
   const tabMap: Record<string, string> = {
-    'EMPLEOS': 'empleos',
     'ACADEMIA': 'academia',
   };
 
@@ -107,9 +104,6 @@ export async function executeTool(tool: ToolCall): Promise<ToolResult> {
         body: { query, user_skills: [] },
       });
       return { success: true, data };
-    }
-    case 'search_jobs': {
-      return { success: true, message: 'Navegar a empleos con filtro' };
     }
     default:
       // Herramientas de UI se manejan en el frontend

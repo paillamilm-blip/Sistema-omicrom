@@ -43,7 +43,6 @@ const r = (n: number) => Math.round(n);
 export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | null, userColor: string = C.cyan): NextStep[] {
   const steps: (NextStep & { score: number })[] = [];
   const skills = profile?.skills ?? [];
-  const topSkill = skills[0] || 'tu especialidad';
 
   // 1) Sin CV / sin skills → base de todo. Máxima prioridad.
   if (skills.length === 0) {
@@ -71,10 +70,10 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
         why: `Tu Calidad está en ${r(gemelo.quality)}. Aprueba un curso y su examen para validar un nodo con evidencia real y subir tu calidad técnica.`,
       },
       {
-        key: 'transcendence', val: gemelo.transcendence, tab: 'vault', accent: C.gold, label: 'Trascendencia',
-        title: 'Sube un aporte a la Bóveda',
-        actionLabel: 'Ir a la Bóveda',
-        why: `Tu Trascendencia está en ${r(gemelo.transcendence)}. Compartir conocimiento multiplica tu impacto en la red y te genera regalías.`,
+        key: 'transcendence', val: gemelo.transcendence, tab: 'academia', accent: C.gold, label: 'Trascendencia',
+        title: 'Cierra un ciclo de aprendizaje',
+        actionLabel: 'Ir a Academia',
+        why: `Tu Trascendencia está en ${r(gemelo.transcendence)}. Termina un curso y aprueba su quiz: es el movimiento que deja evidencia en la red, no solo horas de lectura.`,
       },
       {
         key: 'foundation', val: gemelo.foundation, tab: 'perfil', accent: C.green, label: 'Fundamento', cv: true,
@@ -99,19 +98,13 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
     });
   }
 
-  // 4) Sinergia: si ya tienes reputación suficiente, monetiza / postula.
+  // 4) Reputación ya alta: el siguiente salto es consolidar, no dispersionar.
   if (gemelo && gemelo.overallReputation >= 45 && skills.length > 0) {
     steps.push({
-      id: 'jobs', score: 42, tab: 'empleos', accent: userColor, metric: `Reputación ${r(gemelo.overallReputation)}`,
-      title: 'Postula a una oportunidad',
-      actionLabel: 'Ver Empleos',
-      why: `Con reputación ${r(gemelo.overallReputation)} ya eres candidato real. Apunta a vacantes que pidan ${topSkill} — deja que el trabajo te encuentre.`,
-    });
-    steps.push({
-      id: 'market', score: 38, tab: 'market', accent: C.purple, metric: 'Capital intelectual',
-      title: `Publica un servicio de ${topSkill}`,
-      actionLabel: 'Ir al Mercado',
-      why: `Monetiza tu experticia en ${topSkill}: publica un servicio en el Mercado y empieza a ganar tokens en la red.`,
+      id: 'mastery', score: 42, tab: 'maxskill', accent: userColor, metric: `Reputación ${r(gemelo.overallReputation)}`,
+      title: 'Pon a prueba tu competencia más fuerte',
+      actionLabel: 'Ir a Habilidades',
+      why: `Con reputación ${r(gemelo.overallReputation)} ya tenés nodos que sostienen tu perfil. Rendí el examen del nodo que mejor domines: un nodo probado pesa más que cinco declarados.`,
     });
   }
 
