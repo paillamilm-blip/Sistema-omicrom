@@ -56,6 +56,10 @@ const MODEL_ABORT_MS = 20000;
 // corte la conexión con su propio TIMEOUT genérico.
 const SERVER_BUDGET_MS = 27000;
 const MIN_USEFUL_ATTEMPT_MS = 4000;
+// Huella de la versión desplegada. Un GET responde estos números en <1s y sin
+// gastar créditos: es la única forma de comprobar que el pegado del dashboard
+// realmente reemplazó la función (los timeouts viejos se cuelan igual).
+const BUILD = '6d-budget-27s';
 
 // Cache de modelos muertos (por instancia de la Edge Function — ~5min lifetime)
 const DEAD_MODELS: Map<string, number> = new Map();
@@ -97,8 +101,13 @@ Deno.serve(async (req) => {
   const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
       status,
-      headers: { ...cors, 'Content-Type': 'application/json' },
+      headers: { ...cors, 'Content-Type': 'application/json', 'x-omicron-build': BUILD },
     });
+
+  // Health/huella de versión: sin tocar OpenRouter ni los créditos.
+  if (req.method === 'GET') {
+    return json({ build: BUILD, budgetMs: SERVER_BUDGET_MS, abortMs: MODEL_ABORT_MS, firstModel: FREE_MODELS[0], models: FREE_MODELS.length });
+  }
 
   // CORS preflight
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
