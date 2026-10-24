@@ -95,8 +95,8 @@ describe('interpret — convalidación', () => {
     expect(interpret('suma un año de experiencia')).toEqual({ kind: 'convalidate', item: 'year' });
   });
 
-  it('"carga un aporte a la bóveda" → convalidate vault', () => {
-    expect(interpret('carga un aporte a la bóveda')).toEqual({ kind: 'convalidate', item: 'vault' });
+  it('"carga un aporte a la bóveda" ya no es convalidable: la Bóveda salió del producto, aterriza en Academia', () => {
+    expect(interpret('carga un aporte a la bóveda')).toEqual({ kind: 'navigate', tab: 'academia', label: 'Academia' });
   });
 
   it('verbo de convalidación sin objeto reconocible no revienta: cae a Habilidades, donde se valida una skill', () => {

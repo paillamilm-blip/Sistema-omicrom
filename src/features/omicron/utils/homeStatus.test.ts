@@ -47,11 +47,11 @@ describe('pickHomeStatus', () => {
   it('el alza de eje tiene prioridad sobre la racha (una sola voz del núcleo)', () => {
     const status = pickHomeStatus({
       streak: 5,
-      nextStep: stepWith('Sube un aporte a la Bóveda'),
+      nextStep: stepWith('Valida un nodo en Habilidades'),
       axisRose: 'Calidad',
     });
     expect(status.label).toBe(
-      'Hoy tu Calidad subió · Tu próximo paso: Sube un aporte a la Bóveda. ¿Seguimos o quieres hacer otra cosa?',
+      'Hoy tu Calidad subió · Tu próximo paso: Valida un nodo en Habilidades. ¿Seguimos o quieres hacer otra cosa?',
     );
     // No debe caer en la rama de "próximo paso + racha".
     expect(status.label).not.toContain('Racha de 5 días');

@@ -27,7 +27,7 @@ import { extractCVText } from '@/features/gemelo/services/cvExtract';
 import { savePendingCvAnalysis, getPendingCvAnalysis, clearPendingCvAnalysis, hasPendingCvAnalysis } from '@/shared/utils/guestMode';
 import { C } from '@/theme';
 
-type Kind = 'cv' | 'title' | 'year' | 'vault';
+type Kind = 'cv' | 'title' | 'year';
 export type Phase = 'upload' | 'syncing' | 'reveal';
 export interface Push { id: number; label: string; delta: number; color: string }
 
@@ -55,7 +55,6 @@ export function useGemeloActivation() {
   const [cvFileName, setCvFileName] = useState('');
   const [msg, setMsg] = useState('Sube tu CV y Ómicrom activa todo automáticamente.');
   const [pushes, setPushes] = useState<Push[]>([]);
-  const [synergies, setSynergies] = useState<string[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
   const [pendingPersist, setPendingPersist] = useState(false);
   const [persisted, setPersisted] = useState(false);
@@ -114,17 +113,6 @@ export function useGemeloActivation() {
         emitPush('Fundamento', 4, C.green);
       }
     } catch (err) { console.warn('[Omicron] convalidar year failed:', err); }
-    await new Promise((r) => setTimeout(r, 400));
-
-    setCurrentStep(3);
-    try {
-      const { data } = await supabase.rpc('convalidar_credencial', { p_kind: 'vault' });
-      const res = data as { ok?: boolean } | null;
-      if (res?.ok) {
-        setCompletedSteps((p) => [...p, 'vault']);
-        emitPush('Trascendencia', 12, C.gold);
-      }
-    } catch (err) { console.warn('[Omicron] convalidar vault failed:', err); }
 
     await refreshProfile();
   }, [emitPush, refreshProfile]);
@@ -264,21 +252,6 @@ export function useGemeloActivation() {
     toast('Análisis cancelado', 'info');
   }, [toast]);
 
-  // ── Detect synergies from analyzed profile ───────────────────────
-  const detectSynergies = useCallback((analyzed: AnalyzedProfile): string[] => {
-    const results: string[] = [];
-    if (analyzed.years >= 5 && analyzed.skills.length >= 4) {
-      results.push(`${analyzed.skills.slice(0, 3).join(' + ')} + ${analyzed.years} años → 3 empleos potenciales`);
-    }
-    if (analyzed.skills.includes('react') || analyzed.skills.includes('typescript')) {
-      results.push('Stack moderno detectado → acceso a proyectos premium en Servicios');
-    }
-    if (analyzed.axes.trans > 40) {
-      results.push('Alta trascendencia → publica en la Bóveda para generar regalías');
-    }
-    return results;
-  }, []);
-
   // ── Rescate del puente localStorage tras el remount guest→auth ───
   // Cubre el caso donde App.tsx remonta el árbol al autenticarse: el
   // dossier en memoria se pierde, pero quedó en localStorage al analizar
@@ -299,13 +272,12 @@ export function useGemeloActivation() {
         rescueAttemptedRef.current = true;
         setDossier(rescued);
         dossierRef.current = rescued;
-        setSynergies(detectSynergies(rescued));
         setAi({ loading: false, text: rescued.summary });
         setPhase('reveal');
         void persistAnalysis(rescued);
       }
     }
-  }, [profile?.id, pendingPersist, persistAnalysis, detectSynergies]);
+  }, [profile?.id, pendingPersist, persistAnalysis]);
 
   // ── Read CV file ─────────────────────────────────────────────────
   const onCVFile = useCallback(async (file: File) => {
@@ -450,7 +422,6 @@ export function useGemeloActivation() {
         axes: analyzed.axes,
         summaryPreview: analyzed.summary?.slice(0, 100),
       });
-      setSynergies(detectSynergies(analyzed));
       setDossier(analyzed);
       // Puente localStorage: si es guest, guardar el análisis para que
       // sobreviva el remount guest→auth (App.tsx) y las recargas. Se
@@ -491,12 +462,12 @@ export function useGemeloActivation() {
       setPhase('upload');
       isProcessingRef.current = false;
     }
-  }, [cvText, detectSynergies, toast, profile?.id, persistAnalysis]);
+  }, [cvText, toast, profile?.id, persistAnalysis]);
 
   return {
     // State
     phase, currentStep, completedSteps, dossier, ai,
-    cvText, setCvText, cvFileName, msg, pushes, synergies,
+    cvText, setCvText, cvFileName, msg, pushes,
     rep, hasExistingCV, gemelo, profile, lastError,
     isProcessing: isProcessingRef.current,
     pendingPersist, persisted, persisting, persistError,

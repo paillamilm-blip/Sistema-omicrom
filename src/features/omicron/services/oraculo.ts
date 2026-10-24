@@ -10,7 +10,7 @@ import type { TabId } from '@/types';
 export type OraculoIntent =
   | { kind: 'navigate'; tab: TabId; label: string }
   | { kind: 'coach' }
-  | { kind: 'convalidate'; item: 'cv' | 'title' | 'year' | 'vault' }
+  | { kind: 'convalidate'; item: 'cv' | 'title' | 'year' }
   | { kind: 'fact'; topic: 'reputacion' | 'tokens' | 'pe' | 'ayuda' }
   | { kind: 'unknown' };
 
@@ -50,11 +50,13 @@ export function interpret(raw: string): OraculoIntent {
   if (!q) return { kind: 'unknown' };
 
   // Convalidar datos por voz (requiere un verbo de aporte + un objeto).
+  // Solo hay tres cosas convalidables: CV, título y años. La Bóveda salió del
+  // producto con la Fase 6, así que "aporta a la bóveda" ya no es una
+  // convalidación: cae al NAV de abajo y aterriza en Academia.
   if (/(convalida|valida|sube|aporta|suma|agrega|añade|anade|carga|registra)/.test(q)) {
     if (/(cv|curr[íi]culum)/.test(q)) return { kind: 'convalidate', item: 'cv' };
     if (/(t[íi]tulo|certificaci|grado|diploma)/.test(q)) return { kind: 'convalidate', item: 'title' };
     if (/(a[ñn]o|experiencia|trayectoria)/.test(q)) return { kind: 'convalidate', item: 'year' };
-    if (/(b[óo]veda|conocimiento|mentor[íi]?a?|aporte)/.test(q)) return { kind: 'convalidate', item: 'vault' };
   }
 
   if (COACH_TRIGGERS.some((k) => q.includes(k))) return { kind: 'coach' };

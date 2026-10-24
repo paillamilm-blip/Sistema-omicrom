@@ -631,7 +631,7 @@ export function OrbShell() {
         setState('preview');
         setActiveTab('perfil');
       }
-      const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia', vault: 'un aporte a la Bóveda' };
+      const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia' };
       const msg = `Para convalidar ${names[intent.item]}, abre tu perfil y usa el botón de convalidación.`;
       flash(msg);
       speakLocal(msg);
