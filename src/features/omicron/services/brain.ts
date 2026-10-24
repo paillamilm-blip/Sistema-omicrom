@@ -194,12 +194,12 @@ export async function askOmicron(
       ? await callAIStream(messages, onToken, {
           maxTokens: 512,
           temperature: 0.75,
-          timeout: 28000,
+          timeout: 30000,
         })
       : await callAI(messages, {
           maxTokens: 512,
           temperature: 0.75,
-          timeout: 28000,
+          timeout: 30000,
         });
 
     if (!text) {

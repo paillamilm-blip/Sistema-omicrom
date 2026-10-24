@@ -59,7 +59,10 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
     const raw = await callAI([
       { role: 'system', content: SYS },
       { role: 'user', content: 'CV COMPLETO:\n\n' + text },
-    ], { maxTokens: 2000, temperature: 0.3, jsonMode: true, timeout: 25000 });
+    // 30s = el presupuesto por defecto de callAI. Con el ladder server-side
+    // (abort 12s por modelo, tope 27s) esto deja caber DOS modelos gratis
+    // dentro del espera-del-usuario; 25s solo alcanzaba para uno.
+    ], { maxTokens: 2000, temperature: 0.3, jsonMode: true, timeout: 30000 });
 
     if (!raw) {
       return { ok: false, error: 'IA no disponible. Intenta de nuevo en unos minutos.', errorCode: 'empty_response' };

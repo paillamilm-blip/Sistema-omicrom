@@ -33,15 +33,26 @@ const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicr
 import { corsHeaders } from '../_shared/cors.ts';
 
 // Modelos gratis CONFIRMADOS disponibles (verificado 27-ago-2026 con /api/v1/models)
-// Ordenados por capacidad: los primeros son más potentes para análisis de CV
+// Ordenados por VELOCIDAD de respuesta, no por tamaño: con un presupuesto de
+// ~27s por request (ver SERVER_BUDGET_MS) solo caben 2 intentos, así que
+// primero van los que contestan rápido. glm-5.2 medía 24.8s para un prompt
+// trivial: consume el presupuesto entero y el usuario ve "La IA no pudo...".
 const FREE_MODELS = [
-  'z-ai/glm-5.2:free',                        // Potente, buen JSON
   'minimax/minimax-m3:free',                  // Rápido y confiable
   'google/gemma-4-31b-it:free',               // Google, buen español
+  'z-ai/glm-5.2:free',                        // Potente, buen JSON, lento
   'nvidia/nemotron-3-super-120b-a12b:free',   // NVIDIA, 120B
   'google/gemma-4-26b-a4b-it:free',           // Fallback Google
   'nvidia/nemotron-3-ultra-550b-a55b:free',   // Último recurso (550B, más lento)
 ];
+
+// Por modelo: 12s (antes 25s = un solo intento dentro del presupuesto).
+const MODEL_ABORT_MS = 12000;
+// Presupuesto total del server. Debe quedar DEBAJO de los 30s de client.ts
+// para que el error estructurado llegue al usuario antes de que el cliente
+// corte la conexión con su propio TIMEOUT genérico.
+const SERVER_BUDGET_MS = 27000;
+const MIN_USEFUL_ATTEMPT_MS = 4000;
 
 // Cache de modelos muertos (por instancia de la Edge Function — ~5min lifetime)
 const DEAD_MODELS: Map<string, number> = new Map();
@@ -139,6 +150,7 @@ Deno.serve(async (req) => {
 
     // ── Try OpenRouter (PRIMARY) ──────────────────────────────────────
     const debugLog: string[] = [];
+    const serverDeadline = Date.now() + SERVER_BUDGET_MS;
     debugLog.push(`OPENROUTER_KEY: ${OPENROUTER_KEY ? `present (${OPENROUTER_KEY.slice(0, 12)}...)` : 'MISSING'}`);
     debugLog.push(`GEMINI_KEY: ${GEMINI_KEY ? `present (${GEMINI_KEY.slice(0, 8)}...)` : 'MISSING'}`);
 
@@ -148,9 +160,17 @@ Deno.serve(async (req) => {
       const modelsToTry = aliveModels.length > 0 ? aliveModels : FREE_MODELS;
 
       for (const model of modelsToTry) {
+        // El cliente ya cortó la conexión a los 30s: seguir probando modelos
+        // quema créditos IA para nadie.
+        const budgetLeft = serverDeadline - Date.now();
+        if (budgetLeft < MIN_USEFUL_ATTEMPT_MS) {
+          debugLog.push(`presupuesto agotado tras ${model} → corte de la ladder`);
+          break;
+        }
+        const abortAfter = Math.min(MODEL_ABORT_MS, budgetLeft);
         try {
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 25000);
+          const timer = setTimeout(() => controller.abort(), abortAfter);
 
           const resp = await fetch(OR_URL, {
             method: 'POST',
@@ -190,7 +210,7 @@ Deno.serve(async (req) => {
           debugLog.push(`${model} → 200 but empty response`);
           continue;
         } catch (e) {
-          const errMsg = (e as Error).name === 'AbortError' ? 'timeout 25s' : String(e).slice(0, 100);
+          const errMsg = (e as Error).name === 'AbortError' ? `abort a los ${Math.round(abortAfter / 1000)}s` : String(e).slice(0, 100);
           debugLog.push(`${model} → threw: ${errMsg}`);
           console.error(`[proxy-ai] ${model} threw:`, errMsg);
           continue;
@@ -199,7 +219,8 @@ Deno.serve(async (req) => {
     }
 
     // ── Try Gemini (FALLBACK only if OpenRouter failed) ───────────────
-    if (GEMINI_KEY) {
+    const geminiBudget = serverDeadline - Date.now();
+    if (GEMINI_KEY && geminiBudget >= MIN_USEFUL_ATTEMPT_MS) {
       try {
         const contents = body.messages.map((msg) => {
           const role = msg.role === 'assistant' ? 'model' : 'user';
@@ -217,7 +238,7 @@ Deno.serve(async (req) => {
         };
 
         const geminiController = new AbortController();
-        const geminiTimer = setTimeout(() => geminiController.abort(), 40000);
+        const geminiTimer = setTimeout(() => geminiController.abort(), Math.min(40000, geminiBudget));
         const geminiResp = await fetch(GEMINI_URL, {
           method: 'POST',
           headers: {
