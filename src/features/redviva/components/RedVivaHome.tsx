@@ -9,17 +9,15 @@ import { useApp } from '@/store/AppContext';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import type { TabId } from '@/types/common';
 import { useRedViva } from '../hooks/useRedViva';
-import { normalizeSkill } from '../services/gapEngine';
 import { resumenRed, type EstadoNodo, type NodoRed } from '../services/redViva';
 import { RedVivaCanvas } from './RedVivaCanvas';
 import { NodoFicha } from './NodoFicha';
 import { ESTADO_NODO_LABEL, NodoEstadoMarca } from './NodoEstadoMarca';
 
 const INSPECTOR_ID = 'red-viva-inspector';
-const ORDEN_ESTADOS: EstadoNodo[] = ['ausente', 'hueco', 'latiendo', 'solido'];
+const ORDEN_ESTADOS: EstadoNodo[] = ['hueco', 'latiendo', 'solido'];
 
 const TITULO_GRUPO: Record<EstadoNodo, string> = {
-  ausente: 'Te falta y lo están pagando',
   hueco: 'Lo declaraste — sin comprobar',
   latiendo: 'Lo estás probando ahora',
   solido: 'Probado',
@@ -39,18 +37,12 @@ export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
   const inspectorEnfocadoRef = useRef<string | null>(null);
   const disparadorRef = useRef<HTMLElement | null>(null);
   const filaRefs = useRef(new Map<string, HTMLButtonElement>());
-  const jugadaRef = useRef<HTMLButtonElement>(null);
 
   const reputacion = gemelo?.overallReputation ?? profile?.reputation_score ?? 0;
   const nodoActivo = useMemo(
     () => model.nodos.find((n) => n.id === seleccionado) ?? null,
     [model.nodos, seleccionado],
   );
-  const nodoJugada = useMemo(() => {
-    if (!model.jugada) return null;
-    const objetivo = normalizeSkill(model.jugada.skill);
-    return model.nodos.find((n) => normalizeSkill(n.label) === objetivo) ?? null;
-  }, [model.jugada, model.nodos]);
   const grupos = useMemo(
     () => ORDEN_ESTADOS.map((estado) => ({
       estado,
@@ -111,7 +103,7 @@ export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
           Todavía no vemos tus habilidades
         </h2>
         <p style={{ ...styles.textoEstado, maxWidth: 420 }}>
-          Subí tu CV para identificar tus habilidades declaradas y separarlas de las que ya tienen una prueba. Así vas a ver qué podés demostrar y qué oportunidades reales se acercan.
+          Subí tu CV para identificar tus habilidades declaradas y separarlas de las que ya tienen una prueba. Así vas a ver qué podés demostrar primero.
         </p>
         <button
           type="button"
@@ -169,44 +161,14 @@ export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
       <Leyenda
         userColor={uc}
         estados={new Set(model.nodos.map((nodo) => nodo.estado))}
-        hayOportunidades={model.oportunidades.length > 0}
-        hayPuentes={model.aristas.some((arista) => arista.tipo === 'puente')}
         pruebasDisponibles={pruebasDisponibles}
       />
-
-      {model.jugada && nodoJugada ? (
-        <button
-          ref={jugadaRef}
-          type="button"
-          aria-expanded={nodoJugada.id === seleccionado}
-          aria-controls={nodoJugada.id === seleccionado ? INSPECTOR_ID : undefined}
-          onClick={() => seleccionar(nodoJugada.id, jugadaRef.current)}
-          style={{
-            display: 'block', width: '100%', minHeight: 44, textAlign: 'left', padding: '13px 15px',
-            borderRadius: RADIUS.lg, border: BORDER.gold, background: C.goldFaint, cursor: 'pointer',
-          }}
-        >
-          <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.8, textTransform: 'uppercase', color: C.gold, marginBottom: 5 }}>
-            Tu próxima jugada
-          </span>
-          <span style={{ display: 'block', fontFamily: FONT.display, fontSize: SIZE.lg, fontWeight: 700, color: C.ink, marginBottom: 4 }}>
-            Probá {model.jugada.skill}
-          </span>
-          <span style={{ display: 'block', fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut, lineHeight: 1.45 }}>
-            {model.jugada.isOneStep
-              ? `Es lo único que te falta para ${model.jugada.bestJob.job.title}`
-              : `La piden en ${model.jugada.mentions} ${model.jugada.mentions === 1 ? 'empleo abierto' : 'empleos abiertos'}`}
-            {model.jugada.bestJob.payLabel ? ` — ${model.jugada.bestJob.payLabel}` : ''}
-          </span>
-        </button>
-      ) : null}
 
       {nodoActivo ? (
         <NodoFicha
           ref={fichaRef}
           id={INSPECTOR_ID}
           nodo={nodoActivo}
-          model={model}
           userColor={uc}
           pruebasDisponibles={pruebasDisponibles}
           onExamenAbierto={() => onAbrirTab?.('maxskill')}
@@ -216,10 +178,8 @@ export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
 
       {grupos.map((grupo) => (
         <section key={grupo.estado} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <h3 style={{ margin: 0, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.7, textTransform: 'uppercase', color: grupo.estado === 'ausente' ? C.gold : C.mut, fontWeight: 600 }}>
-            {(!pruebasDisponibles && grupo.estado !== 'ausente')
-              ? 'Pruebas no consultables'
-              : TITULO_GRUPO[grupo.estado]} · {grupo.nodos.length}
+          <h3 style={{ margin: 0, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.7, textTransform: 'uppercase', color: C.mut, fontWeight: 600 }}>
+            {!pruebasDisponibles ? 'Pruebas no consultables' : TITULO_GRUPO[grupo.estado]} · {grupo.nodos.length}
           </h3>
           {grupo.nodos.map((nodo) => (
             <FilaNodo
@@ -241,18 +201,13 @@ export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
 function Leyenda({
   userColor,
   estados,
-  hayOportunidades,
-  hayPuentes,
   pruebasDisponibles,
 }: {
   userColor: string;
   estados: Set<EstadoNodo>;
-  hayOportunidades: boolean;
-  hayPuentes: boolean;
   pruebasDisponibles: boolean;
 }) {
-  const visibles = ORDEN_ESTADOS.filter((estado) => estado !== 'ausente' || estados.has('ausente'))
-    .filter((estado) => estado !== 'latiendo' || estados.has('latiendo'));
+  const visibles = ORDEN_ESTADOS.filter((estado) => estado !== 'latiendo' || estados.has('latiendo'));
   const itemStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: 6 };
   const labelStyle: CSSProperties = { fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut };
 
@@ -260,29 +215,14 @@ function Leyenda({
     <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '8px 14px' }}>
       {visibles.map((estado) => (
         <li key={estado} style={itemStyle}>
-          <NodoEstadoMarca estado={estado} color={estado === 'ausente' ? C.gold : userColor} size={14} />
+          <NodoEstadoMarca estado={estado} color={userColor} size={14} />
           <span style={labelStyle}>
-            {(!pruebasDisponibles && estado !== 'ausente')
+            {!pruebasDisponibles
               ? 'prueba no consultable'
               : ESTADO_NODO_LABEL[estado].toLocaleLowerCase('es-CL')}
           </span>
         </li>
       ))}
-      {hayOportunidades ? (
-        <li style={itemStyle}>
-          <span
-            aria-hidden="true"
-            style={{ width: 9, height: 9, border: `1.5px solid ${C.gold}`, transform: 'rotate(45deg)', flexShrink: 0 }}
-          />
-          <span style={labelStyle}>empleo abierto</span>
-        </li>
-      ) : null}
-      {hayPuentes ? (
-        <li style={itemStyle}>
-          <span aria-hidden="true" style={{ width: 18, borderTop: `1.5px dashed ${C.gold}`, flexShrink: 0 }} />
-          <span style={labelStyle}>lo que te falta para llegar</span>
-        </li>
-      ) : null}
     </ul>
   );
 }
@@ -302,8 +242,7 @@ function FilaNodo({
   onClick: (element: HTMLButtonElement) => void;
   refCallback: (element: HTMLButtonElement | null) => void;
 }) {
-  const esMercado = nodo.estado === 'ausente';
-  const acento = esMercado ? C.gold : userColor;
+  const acento = userColor;
   const cifra = cifraNodo(nodo);
   return (
     <button
@@ -324,7 +263,7 @@ function FilaNodo({
         {nodo.label}
       </span>
       {cifra ? (
-        <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: esMercado ? C.gold : C.mut, flexShrink: 0 }}>
+        <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut, flexShrink: 0 }}>
           {cifra}
         </span>
       ) : null}
@@ -334,10 +273,6 @@ function FilaNodo({
 
 function cifraNodo(nodo: NodoRed): string | null {
   if (nodo.estado === 'solido') return nodo.provenScore === null ? 'probada' : `${nodo.provenScore}/100`;
-  if (nodo.estado === 'ausente') {
-    if (nodo.unlocks > 0) return `abre ${nodo.unlocks} ${nodo.unlocks === 1 ? 'empleo' : 'empleos'}`;
-    return nodo.demand > 0 ? `en ${nodo.demand} ${nodo.demand === 1 ? 'empleo' : 'empleos'}` : null;
-  }
   return nodo.declaredPct !== null && nodo.declaredPct > 0 ? `dice ${nodo.declaredPct}/100` : null;
 }
 

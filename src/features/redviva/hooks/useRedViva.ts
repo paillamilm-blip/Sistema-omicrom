@@ -13,28 +13,23 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/infrastructure/supabase/client';
 import { queryKeys } from '@/infrastructure/query/keys';
 import { useApp } from '@/store/AppContext';
-import { useJobsQuery } from '@/features/redviva/hooks/useJobsQuery';
 import { buildRedViva, type RedVivaModel, type SkillProof } from '../services/redViva';
-import type { RealJob } from '../services/gapEngine';
 
 /** Marcador de "la migración 10001 todavía no está aplicada en esta base". */
 const SIN_TABLA = Symbol('sin-tabla-de-pruebas');
 type ProofsResult = SkillProof[] | typeof SIN_TABLA;
 
-// Constantes estables para los casos vacíos. Si acá se escribiera `?? []`, cada
-// render crearía un array NUEVO, las dependencias del useMemo cambiarían siempre y
-// la red se reconstruiría en cada render (ESLint lo marca con react-hooks/
+// Constante estable para el caso vacío. Si acá se escribiera `?? []`, cada render
+// crearía un array NUEVO, las dependencias del useMemo cambiarían siempre y la
+// red se reconstruiría en cada render (ESLint lo marca con react-hooks/
 // exhaustive-deps). Con una referencia fija, el useMemo sirve de verdad.
 const SIN_PRUEBAS: SkillProof[] = [];
-const SIN_EMPLEOS: RealJob[] = [];
 
 export interface RedVivaState {
   model: RedVivaModel;
   isLoading: boolean;
   /** false = la migración 10001 no está aplicada: no se puede saber qué probaste. */
   pruebasDisponibles: boolean;
-  /** true = hay empleos publicados contra los que medir la brecha. */
-  hayMercado: boolean;
 }
 
 /**
@@ -70,8 +65,6 @@ export function useRedViva(): RedVivaState {
   const { profile } = useApp();
   const userId = profile?.id;
 
-  // Solo empleos ABIERTOS: no se mide una brecha contra un empleo cerrado.
-  const jobsQuery = useJobsQuery({ status: 'OPEN', limit: 60 });
   const proofsQuery = useSkillProofs(userId);
 
   const proofsData = proofsQuery.data;
@@ -82,28 +75,21 @@ export function useRedViva(): RedVivaState {
     [proofsData],
   );
 
-  const jobs = useMemo<RealJob[]>(
-    () => (jobsQuery.data ?? SIN_EMPLEOS) as unknown as RealJob[],
-    [jobsQuery.data],
-  );
-
   const model = useMemo(
     () =>
       buildRedViva({
         skillsDetail: profile?.skills_detail ?? null,
         skills: profile?.skills ?? null,
         proofs,
-        jobs,
       }),
     // Todas las dependencias son referencias estables: profile viene memorizado
-    // del contexto, y proofs/jobs están memorizados arriba.
-    [profile?.skills_detail, profile?.skills, proofs, jobs],
+    // del contexto, y proofs está memorizado arriba.
+    [profile?.skills_detail, profile?.skills, proofs],
   );
 
   return {
     model,
-    isLoading: jobsQuery.isLoading || proofsQuery.isLoading,
+    isLoading: proofsQuery.isLoading,
     pruebasDisponibles,
-    hayMercado: jobs.length > 0,
   };
 }

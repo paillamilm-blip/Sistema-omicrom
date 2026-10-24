@@ -24,7 +24,7 @@ function proofDe(nombre: string): SkillProof {
 
 describe('RedVivaCanvas — cableado del encaje a nivel de render', () => {
   it('en el PRIMER render ningún nodo anima el encaje (aunque ya esté probado)', () => {
-    const model = buildRedViva({ skillsDetail: SKILLS, proofs: [proofDe('Excel')], jobs: [] });
+    const model = buildRedViva({ skillsDetail: SKILLS, proofs: [proofDe('Excel')] });
     const { container } = render(
       <RedVivaCanvas model={model} userColor="#7dd3fc" reputacion={60} varianteNodo="pieza" />,
     );
@@ -39,14 +39,14 @@ describe('RedVivaCanvas — cableado del encaje a nivel de render', () => {
 
   it('SOLO el nodo que pasa a probado anima; los demás no', () => {
     // Render 1: Excel y Python declaradas, ninguna probada (ambas 'hueco').
-    const model1 = buildRedViva({ skillsDetail: SKILLS, proofs: [], jobs: [] });
+    const model1 = buildRedViva({ skillsDetail: SKILLS, proofs: [] });
     const { container, rerender } = render(
       <RedVivaCanvas model={model1} userColor="#7dd3fc" reputacion={60} varianteNodo="pieza" />,
     );
     // Tras el primer render el efecto guarda la foto de estados (hueco/hueco).
 
     // Render 2: ahora Excel tiene prueba -> transiciona a 'solido'. Python sigue hueco.
-    const model2 = buildRedViva({ skillsDetail: SKILLS, proofs: [proofDe('Excel')], jobs: [] });
+    const model2 = buildRedViva({ skillsDetail: SKILLS, proofs: [proofDe('Excel')] });
     rerender(
       <RedVivaCanvas model={model2} userColor="#7dd3fc" reputacion={60} varianteNodo="pieza" />,
     );
@@ -75,11 +75,11 @@ describe('RedVivaCanvas — cableado del encaje a nivel de render', () => {
     })) as unknown as typeof window.matchMedia;
 
     try {
-      const model1 = buildRedViva({ skillsDetail: SKILLS, proofs: [], jobs: [] });
+      const model1 = buildRedViva({ skillsDetail: SKILLS, proofs: [] });
       const { container, rerender } = render(
         <RedVivaCanvas model={model1} userColor="#7dd3fc" reputacion={60} varianteNodo="pieza" />,
       );
-      const model2 = buildRedViva({ skillsDetail: SKILLS, proofs: [proofDe('Excel')], jobs: [] });
+      const model2 = buildRedViva({ skillsDetail: SKILLS, proofs: [proofDe('Excel')] });
       rerender(
         <RedVivaCanvas model={model2} userColor="#7dd3fc" reputacion={60} varianteNodo="pieza" />,
       );

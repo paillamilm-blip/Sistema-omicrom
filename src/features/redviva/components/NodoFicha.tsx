@@ -9,15 +9,13 @@
 //   • Cero jerga: se explica QUÉ hacer + POR QUÉ + QUÉ GANÁS.
 //   • Todo número con su escala ("88/100", nunca "88").
 //   • No promete un examen que el backend no puede dar (ver useExamenDisponible).
-//   • Lo que ganás es evidencia, no tokens: el Fondo de Conocimiento salió del
-//     producto porque nunca tuvo un token adentro.
+//   • Lo que ganás es evidencia, no tokens.
 
 import { forwardRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { C, EASING, FONT, SIZE, RADIUS, BORDER, TIMING } from '@/theme';
-import { normalizeSkill } from '../services/gapEngine';
-import { textoEstado, type NodoRed, type RedVivaModel } from '../services/redViva';
+import { textoEstado, type NodoRed } from '../services/redViva';
 import { useExamenDisponible } from '../hooks/useNodoDetalle';
 import { useProbarHabilidad } from '../hooks/useProbarHabilidad';
 import { ESTADO_NODO_LABEL, NodoEstadoMarca } from './NodoEstadoMarca';
@@ -25,7 +23,6 @@ import { ESTADO_NODO_LABEL, NodoEstadoMarca } from './NodoEstadoMarca';
 export interface NodoFichaProps {
   id: string;
   nodo: NodoRed;
-  model: RedVivaModel;
   userColor: string;
   /** false = migración 10001 sin aplicar: no se puede saber qué está probado. */
   pruebasDisponibles: boolean;
@@ -37,14 +34,12 @@ export interface NodoFichaProps {
 export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFicha({
   id,
   nodo,
-  model,
   userColor,
   pruebasDisponibles,
   onExamenAbierto,
   onCerrar,
 }: NodoFichaProps, ref) {
-  const esMercado = nodo.estado === 'ausente';
-  const acento = esMercado ? C.gold : userColor;
+  const acento = userColor;
   const yaProbada = nodo.estado === 'solido';
   const reduceMotion = useReducedMotion();
 
@@ -53,11 +48,6 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
   // respaldo para el caso de que esa migración no esté aplicada.
   const { data: examen } = useExamenDisponible(!yaProbada ? nodo.label : null);
   const { probar, preparando, error: errorExamen } = useProbarHabilidad(onExamenAbierto);
-
-  /** Oportunidades reales que dependen de esta habilidad. */
-  const oportunidades = model.oportunidades.filter((op) =>
-    op.missing.some((missing) => normalizeSkill(missing) === normalizeSkill(nodo.label)),
-  );
 
   /** Qué se gana probando: siempre honesto, nunca una promesa de tokens. */
   const textoRecompensa = (): string => {
@@ -186,63 +176,6 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
         </p>
       </div>
 
-      {/* ── Qué te abre ────────────────────────────────────────────────── */}
-      {oportunidades.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <p
-            style={{
-              margin: 0,
-              fontFamily: FONT.mono,
-              fontSize: SIZE.xs,
-              letterSpacing: 0.6,
-              textTransform: 'uppercase',
-              color: C.mut,
-            }}
-          >
-            {nodo.unlocks > 0 ? 'Es lo único que te falta para' : 'Te acerca a'}
-          </p>
-          {oportunidades.map((op) => (
-            <div
-              key={op.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-                width: '100%',
-                minHeight: 44,
-                padding: '9px 11px',
-                borderRadius: RADIUS.md,
-                border: BORDER.faint,
-                background: C.glass,
-                textAlign: 'left',
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: FONT.body,
-                  fontSize: SIZE.sm,
-                  color: C.ink,
-                  fontWeight: 600,
-                }}
-              >
-                {op.label}
-              </span>
-              <span
-                style={{
-                  fontFamily: FONT.mono,
-                  fontSize: SIZE.xs,
-                  color: C.gold,
-                  flexShrink: 0,
-                }}
-              >
-                {op.payLabel ?? 'Sin pago informado'}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
       {/* ── La acción ──────────────────────────────────────────────────────
           Cualquier habilidad se puede probar. Si no existe en el catálogo, el
           examen se prepara en el momento (migración 10002). Antes acá había una
@@ -297,18 +230,6 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
             </p>
           )}
         </>
-      ) : nodo.demand > 0 ? (
-        <p
-          style={{
-            margin: 0,
-            fontFamily: FONT.body,
-            fontSize: SIZE.xs,
-            color: C.mut,
-            lineHeight: 1.45,
-          }}
-        >
-          La piden en {nodo.demand} {nodo.demand === 1 ? 'empleo abierto' : 'empleos abiertos'}.
-        </p>
       ) : null}
     </motion.section>
   );

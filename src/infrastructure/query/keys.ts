@@ -4,17 +4,10 @@
 // Pattern: each domain exports a key factory that produces consistent
 // arrays for use with useQuery/useMutation/queryClient.invalidateQueries.
 //
-// Solo viven los grupos que hoy tiene la app: los empleos que alimentan la
-// Red Viva y la propia Red Viva. El recorte de la Fase 5 borró los del
-// mercado, la billetera y el chat junto con sus pantallas.
+// Solo vive la Red Viva: el recorte de la Fase 5 borró las pantallas del mercado,
+// la billetera y el chat, y la Fase 6B sacó los empleos que la alimentaban.
 
 export const queryKeys = {
-  // === JOBS (fuente de evidencia de la Red Viva; ya no hay pantalla de Empleos) ===
-  jobs: {
-    all: ['jobs'] as const,
-    list: (filters?: Record<string, unknown>) => ['jobs', 'list', filters] as const,
-  },
-
   // === RED VIVA ===
   redviva: {
     all: ['redviva'] as const,

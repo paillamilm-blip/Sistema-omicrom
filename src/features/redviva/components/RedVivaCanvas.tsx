@@ -10,10 +10,11 @@
 // Acá: etiqueta y nodo comparten UNA coordenada, y el layout es determinista.
 //
 // GRAMÁTICA VISUAL (también funciona sin color):
-//   • TU COLOR  → lo tuyo. Círculo con marca = probado; aro = declarado;
-//                  doble aro = en prueba.
-//   • ÁMBAR     → el mercado. Hexágono discontinuo = ausente; rombo = empleo.
-// El color acompaña la lectura, pero ninguna categoría depende solo de él.
+//   • TU COLOR → lo tuyo. Círculo con marca = probado; aro = declarado;
+//                doble aro = en prueba.
+//   • DISTANCIA al centro = qué tan demostrado está. Núcleo = probado;
+//                frontera = declarado sin comprobar.
+// Ninguna categoría depende solo del color: la forma y el radio la distinguen.
 //
 // ACCESIBILIDAD: el mapa es la vista de conjunto, pero NO es el único camino.
 // La interacción principal vive en la lista de RedVivaHome (filas de 44px, foco
@@ -22,7 +23,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { C, EASE, EASING, FONT, TIMING } from '@/theme';
-import { normalizeSkill } from '../services/gapEngine';
 import type { EstadoNodo, NodoRed, RedVivaModel } from '../services/redViva';
 import { NodoEstadoFormaSvg, type VarianteNodo } from './NodoEstadoMarca';
 
@@ -68,6 +68,10 @@ const CSS_ID = 'omicron-redviva-css';
 /** Escala del modelo (círculo unitario) a unidades del viewBox. */
 const K = 100;
 
+/** Radios de los dos carriles, en unidades del viewBox. */
+const RADIO_NUCLEO = 42;
+const RADIO_FRONTERA = 64;
+
 /**
  * Inyecta las animaciones una sola vez. Respeta prefers-reduced-motion: con
  * movimiento reducido, el latido se congela en su estado visible (no desaparece
@@ -90,22 +94,6 @@ function useRedVivaCss(): void {
 `;
     document.head.appendChild(style);
   }, []);
-}
-
-/**
- * Oro del MERCADO. Normalmente es el ámbar de marca (C.gold). Pero si el
- * usuario ELIGIÓ Oro como su color, lo suyo y lo del mercado (ausente/puentes)
- * compartirían el mismo tono y la distinción caería solo en la forma. Para no
- * perder legibilidad por color, cuando hay colisión el mercado usa un ámbar más
- * PROFUNDO/tostado (mismo hue, menor luminosidad): sigue siendo Oro —nunca el
- * gris de marca Silver Ice— pero se separa del Oro brillante del usuario.
- *
- * Función pura y testeable: dado el color del usuario, decide el tono del
- * mercado. Sin colisión devuelve C.gold tal cual.
- */
-export function marketGold(userColor: string): string {
-  const normalize = (hex: string) => hex.trim().toLowerCase();
-  return normalize(userColor) === normalize(C.gold) ? '#c77d1a' : C.gold;
 }
 
 /** Convierte un hex (#rrggbb) a rgba con el alfa pedido. */
@@ -149,10 +137,9 @@ export function canvasTargetsAreDistinct(
   return true;
 }
 
-function nodeVisualRadius(nodo: NodoRed, ownCount: number, absentCount: number): number {
-  const ringRadius = nodo.anillo === 0 ? 42 : nodo.anillo === 1 ? 64 : 92;
-  const neighbours = nodo.anillo === 2 ? absentCount : ownCount;
-  const availableArc = ((Math.PI * 2) / Math.max(1, neighbours)) * ringRadius * 0.4;
+function nodeVisualRadius(nodo: NodoRed, ownCount: number): number {
+  const ringRadius = nodo.anillo === 0 ? RADIO_NUCLEO : RADIO_FRONTERA;
+  const availableArc = ((Math.PI * 2) / Math.max(1, ownCount)) * ringRadius * 0.4;
   return Math.min(4.6 + nodo.r * 5.4, Math.max(3.4, availableArc));
 }
 
@@ -167,9 +154,8 @@ export function canvasOverlapClusters(
   viewBoxWidth: number,
 ): string[][] {
   const scale = Math.max(1, renderedWidth) / Math.max(1, viewBoxWidth);
-  const ownCount = nodos.filter((nodo) => nodo.anillo !== 2).length;
-  const absentCount = nodos.filter((nodo) => nodo.anillo === 2).length;
-  const radii = nodos.map((nodo) => nodeVisualRadius(nodo, ownCount, absentCount));
+  const ownCount = nodos.length;
+  const radii = nodos.map((nodo) => nodeVisualRadius(nodo, ownCount));
   const parent = nodos.map((_, index) => index);
   const find = (index: number): number => {
     let root = index;
@@ -262,40 +248,13 @@ export function RedVivaCanvas({
   }, []);
 
   const uc = userColor;
-  // Tono del mercado (ausente/puentes/oportunidades). Igual a C.gold salvo
-  // cuando el usuario eligió Oro: entonces es un ámbar más profundo para no
-  // colisionar con el Oro del usuario (sigue siendo Oro, nunca Silver Ice).
-  const oroMercado = marketGold(userColor);
-  const porNodo = useMemo(
-    () => new Map(model.nodos.map((n) => [n.id, n])),
-    [model.nodos],
-  );
-  const porOportunidad = useMemo(
-    () => new Map(model.oportunidades.map((o) => [`empleo:${o.id}`, o])),
-    [model.oportunidades],
-  );
-
-  /** La jugada recomendada, para que su etiqueta esté SIEMPRE visible. */
-  const jugadaId = model.jugada
-    ? model.nodos.find(
-        (n) => normalizeSkill(n.label) === normalizeSkill(model.jugada!.skill),
-      )?.id ?? null
-    : null;
 
   // ── El viewBox se ajusta al contenido ────────────────────────────────
   // Con un viewBox fijo, un usuario nuevo con 3 habilidades quedaba con tres
-  // circulitos perdidos en una caja enorme (se vio en pantalla). Ahora el encuadre
-  // se cierra cuando hay poco y se abre cuando aparecen oportunidades.
-  //
-  // El viewBox incluye el contenido y sus etiquetas; el SVG recorta cualquier
-  // residuo para no depender de overflow visible en pantallas angostas.
-  const radioContenido = Math.max(
-    50,
-    ...model.nodos.map((n) => Math.hypot(n.x, n.y) * K),
-    ...model.oportunidades.map((o) => Math.hypot(o.x, o.y) * K),
-  );
-  const hayEtiquetas = model.oportunidades.length > 0 || model.totales.ausentes > 0;
-  const margen = hayEtiquetas ? 37 : 12;
+  // circulitos perdidos en una caja enorme (se vio en pantalla). Ahora el
+  // encuadre se cierra cuando hay poco.
+  const radioContenido = Math.max(50, ...model.nodos.map((n) => Math.hypot(n.x, n.y) * K));
+  const margen = 12;
   const medio = radioContenido + margen;
   const viewBoxWidth = medio * 2;
   // 44 CSS px mínimos, convertidos a las unidades reales del viewBox.
@@ -331,20 +290,15 @@ export function RedVivaCanvas({
     estadoPrevioRef.current = new Map(model.nodos.map((n) => [n.id, n.estado]));
   }, [model.nodos]);
 
-  // Cuántos nodos comparten cada sistema angular. Tus habilidades (probadas y
-  // declaradas) comparten UNA sola secuencia, así que el cupo por slot lo marca
-  // el total, no cuántas hay en cada anillo.
-  const cantidadPropias = Math.max(1, model.nodos.filter((n) => n.anillo !== 2).length);
-  const cantidadAusentes = Math.max(1, model.nodos.filter((n) => n.anillo === 2).length);
+  // Tus habilidades (probadas y declaradas) comparten UNA sola secuencia angular,
+  // así que el cupo por slot lo marca el total, no cuántas hay en cada anillo.
+  const cantidadPropias = Math.max(1, model.nodos.length);
 
   const resumenAria =
     (model.totales.declaradas === 0
       ? 'Red vacía: todavía no hay habilidades.'
       : `Red de ${model.totales.declaradas} habilidades: ${model.totales.probadas} probadas, ` +
-        `${model.totales.declaradas - model.totales.probadas} solo declaradas` +
-        (model.totales.ausentes > 0
-          ? `, y ${model.totales.ausentes} que el mercado pide y no tenés.`
-          : '.')) +
+        `${model.totales.declaradas - model.totales.probadas} solo declaradas.`) +
     (overlapClusters.length > 0
       ? ` ${overlapClusters.length} ${overlapClusters.length === 1 ? 'grupo reúne' : 'grupos reúnen'} habilidades cercanas; la lista muestra cada una por separado.`
       : '');
@@ -378,78 +332,33 @@ export function RedVivaCanvas({
         </defs>
 
         {/* ── Anillos guía: hacen legible que "adentro" es mejor ──────────
-            Coinciden con los radios de redViva.ts (0.42 / 0.64 / 0.92 × 100).
-            El de 92 (la órbita de lo que te falta) solo se dibuja si hay algo
-            ahí: si no, queda un arco cortado en las esquinas sin significado. */}
-        {[42, 64, ...(model.totales.ausentes > 0 ? [92] : [])].map((r) => (
+            Coinciden con los radios de redViva.ts (0.42 / 0.64 × 100). */}
+        {[RADIO_NUCLEO, RADIO_FRONTERA].map((r) => (
           <circle
             key={r}
             cx={0}
             cy={0}
             r={r}
             fill="none"
-            stroke={r === 92 ? alpha(oroMercado, 0.16) : alpha(uc, 0.08)}
+            stroke={alpha(uc, 0.08)}
             strokeWidth={0.6}
-            strokeDasharray={r === 92 ? '2 4' : undefined}
           />
         ))}
 
-        {/* ── Aristas ────────────────────────────────────────────────────── */}
+        {/* ── Radios: el centro sos vos; todo lo tuyo cuelga de ahí ──────── */}
         <g>
-          {model.aristas.map((a, i) => {
-            // Radios: del centro (vos) a cada cosa tuya.
-            if (a.tipo === 'radio') {
-              const n = porNodo.get(a.to);
-              if (!n || n.estado === 'ausente') return null;
-              return (
-                <line
-                  key={`r${i}`}
-                  x1={0}
-                  y1={0}
-                  x2={n.x * K}
-                  y2={n.y * K}
-                  stroke={alpha(uc, n.estado === 'solido' ? 0.22 : 0.09)}
-                  strokeWidth={n.estado === 'solido' ? 1 : 0.7}
-                  strokeDasharray={a.punteada ? '1.5 3' : undefined}
-                />
-              );
-            }
-
-            // Mercado: dos habilidades que un mismo empleo pide juntas.
-            if (a.tipo === 'mercado') {
-              const from = porNodo.get(a.from);
-              const to = porNodo.get(a.to);
-              if (!from || !to) return null;
-              return (
-                <line
-                  key={`m${i}`}
-                  x1={from.x * K}
-                  y1={from.y * K}
-                  x2={to.x * K}
-                  y2={to.y * K}
-                  stroke={alpha(uc, 0.06)}
-                  strokeWidth={0.6}
-                />
-              );
-            }
-
-            // Puente: de la pieza que falta a la plata que desbloquea.
-            const from = porNodo.get(a.from);
-            const op = porOportunidad.get(a.to);
-            if (!from || !op) return null;
-            return (
-              <line
-                key={`p${i}`}
-                x1={from.x * K}
-                y1={from.y * K}
-                x2={op.x * K}
-                y2={op.y * K}
-                stroke={alpha(oroMercado, 0.34)}
-                strokeWidth={0.9}
-                strokeDasharray="3 5"
-              />
-            );
-          })}
+          {model.nodos.map((n) => (
+            <line
+              key={`r${n.id}`}
+              x1={0}
+              y1={0}
+              x2={n.x * K}
+              y2={n.y * K}
+              stroke={alpha(uc, n.estado === 'solido' ? 0.22 : 0.09)}
+              strokeWidth={n.estado === 'solido' ? 1 : 0.7}
+              strokeDasharray={n.estado === 'hueco' ? '1.5 3' : undefined}
+            />
+          ))}
         </g>
 
         {/* ── El centro sos vos ──────────────────────────────────────────── */}
@@ -472,89 +381,17 @@ export function RedVivaCanvas({
           /100
         </text>
 
-        {/* ── Oportunidades: la plata, en ámbar ────────────────────────────
-            La etiqueta se ancla hacia ADENTRO cuando el rombo está cerca del
-            borde, para que un título largo no se corte (antes se leía
-            "Gerente de Ope…" pegado al margen). */}
-        {model.oportunidades.map((op) => {
-          const x = op.x * K;
-          const y = op.y * K;
-
-          // La etiqueta va CENTRADA y desplazada hacia afuera, no al costado.
-          // Al costado barría ~90 unidades en horizontal y se montaba sobre el
-          // carril vecino. Centrada, su alcance se parte al medio y se aleja de
-          // la red. El eje X se recorta para que no se salga del viewBox.
-          const largo = Math.hypot(x, y) || 1;
-          const ux = x / largo;
-          const uy = y / largo;
-          const haciaArriba = uy < -0.3;
-
-          const cx = Math.max(-124, Math.min(124, x + ux * 8));
-          // El título SIEMPRE arriba del sueldo: el bloque entero se corre hacia
-          // afuera, pero el orden de lectura no se invierte.
-          const yTitulo = haciaArriba ? y + uy * 8 - 17 : y + uy * 8 + 12;
-          const yPago = yTitulo + 9;
-
-          const halo = {
-            paintOrder: 'stroke' as const,
-            stroke: C.bg,
-            strokeWidth: 2.8,
-            strokeLinejoin: 'round' as const,
-          };
-
-          return (
-            <g key={op.id}>
-              <rect
-                x={x - 4.5}
-                y={y - 4.5}
-                width={9}
-                height={9}
-                transform={`rotate(45 ${x} ${y})`}
-                fill={alpha(C.gold, 0.22)}
-                stroke={C.gold}
-                strokeWidth={1.1}
-              />
-              <text
-                x={cx}
-                y={yTitulo}
-                textAnchor="middle"
-                style={{
-                  fontFamily: FONT.body,
-                  fontSize: 8.5,
-                  fontWeight: 700,
-                  fill: C.gold,
-                  ...halo,
-                }}
-              >
-                {corto(op.label, 22)}
-              </text>
-              {op.payLabel ? (
-                <text
-                  x={cx}
-                  y={yPago}
-                  textAnchor="middle"
-                  style={{ fontFamily: FONT.mono, fontSize: 8, fill: C.gold, ...halo }}
-                >
-                  {corto(op.payLabel, 16)}
-                </text>
-              ) : null}
-            </g>
-          );
-        })}
-
         {/* ── Los nodos ──────────────────────────────────────────────────── */}
         {model.nodos.map((n) => {
           const x = n.x * K;
           const y = n.y * K;
-          const r = nodeVisualRadius(n, cantidadPropias, cantidadAusentes);
+          const r = nodeVisualRadius(n, cantidadPropias);
           const activo = seleccionado === n.id;
           const stackedCount = overlapCountByAnchor.get(n.id) ?? 0;
-          const esMercado = n.estado === 'ausente';
-          // Solo se rotula la acción recomendada y lo seleccionado. En redes
-          // densas, nombrar además todas las ausentes tapa oportunidades; la
-          // lista inferior ya ofrece cada nombre en un objetivo táctil de 44 px.
-          const mostrarEtiqueta = activo || n.id === jugadaId;
-          const base = esMercado ? C.gold : uc;
+          // Solo se rotula lo seleccionado: la lista inferior ya ofrece cada
+          // nombre en un objetivo táctil de 44 px y rotular todo tapa el mapa.
+          const mostrarEtiqueta = activo;
+          const base = uc;
           const derecha = x >= 0;
           const haciaDentro = Math.abs(x) > medio * 0.45;
           const labelX = haciaDentro
@@ -642,7 +479,7 @@ export function RedVivaCanvas({
                     fontFamily: FONT.body,
                     fontSize: 9,
                     fontWeight: 700,
-                    fill: esMercado ? C.gold : C.ink,
+                    fill: C.ink,
                     paintOrder: 'stroke',
                     stroke: C.bg,
                     strokeWidth: 2.8,

@@ -33,8 +33,6 @@ vi.mock('./NodoFicha', async () => {
   };
 });
 
-const mercado = [{ id: 'job-1', title: 'Analista', required_skills: ['Excel'], status: 'OPEN' }];
-
 beforeEach(() => {
   Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
     configurable: true,
@@ -56,10 +54,10 @@ afterEach(() => {
 });
 
 describe('RedVivaHome — estados y foco', () => {
-  it('el empty con mercado hace early return y conserva el CTA real', () => {
+  it('el estado vacío hace early return y conserva el CTA real', () => {
     const onSubirCv = vi.fn();
     mocks.useRedViva.mockReturnValue({
-      model: buildRedViva({ jobs: mercado }),
+      model: buildRedViva({}),
       isLoading: false,
       pruebasDisponibles: true,
     });
@@ -101,7 +99,7 @@ describe('RedVivaHome — estados y foco', () => {
 
   it('si el historial no está disponible no afirma que hay cero pruebas', () => {
     mocks.useRedViva.mockReturnValue({
-      model: buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 90 }], jobs: [] }),
+      model: buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 90 }] }),
       isLoading: false,
       pruebasDisponibles: false,
     });
@@ -115,7 +113,7 @@ describe('RedVivaHome — estados y foco', () => {
 
   it('desde SVG enfoca el inspector y al cerrar devuelve foco a la fila', () => {
     mocks.useRedViva.mockReturnValue({
-      model: buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 90 }], jobs: [] }),
+      model: buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 90 }] }),
       isLoading: false,
       pruebasDisponibles: true,
     });
@@ -130,7 +128,7 @@ describe('RedVivaHome — estados y foco', () => {
     const cerrar = screen.getByRole('button', { name: 'Cerrar detalle' });
     cerrar.focus();
     mocks.useRedViva.mockReturnValue({
-      model: buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 91 }], jobs: [] }),
+      model: buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 91 }] }),
       isLoading: false,
       pruebasDisponibles: true,
     });
