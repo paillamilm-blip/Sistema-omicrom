@@ -1,15 +1,16 @@
 // features/redviva/components/NodoFicha.tsx
-// LA FICHA DEL NODO — qué es, cuánto vale probarlo y qué te abre.
+// LA FICHA DEL NODO — qué es, qué prueba tenés encima y qué te falta.
 //
-// Es la pantalla donde el CV deja de ser un documento y se vuelve una tarea con
-// plata encima. Se muestra debajo del mapa (no encima) a propósito: mientras leés
+// Es la pantalla donde el CV deja de ser un documento y se vuelve una tarea
+// concreta. Se muestra debajo del mapa (no encima) a propósito: mientras leés
 // la ficha, seguís viendo el nodo resaltado en la red.
 //
 // REGLAS QUE CUMPLE:
 //   • Cero jerga: se explica QUÉ hacer + POR QUÉ + QUÉ GANÁS.
 //   • Todo número con su escala ("88/100", nunca "88").
 //   • No promete un examen que el backend no puede dar (ver useExamenDisponible).
-//   • Si el Fondo está en 0, lo dice; no muestra una recompensa que no existe.
+//   • Lo que ganás es evidencia, no tokens: el Fondo de Conocimiento salió del
+//     producto porque nunca tuvo un token adentro.
 
 import { forwardRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -17,7 +18,7 @@ import { X } from 'lucide-react';
 import { C, EASING, FONT, SIZE, RADIUS, BORDER, TIMING } from '@/theme';
 import { normalizeSkill } from '../services/gapEngine';
 import { textoEstado, type NodoRed, type RedVivaModel } from '../services/redViva';
-import { useCotizacion, useExamenDisponible } from '../hooks/useNodoDetalle';
+import { useExamenDisponible } from '../hooks/useNodoDetalle';
 import { useProbarHabilidad } from '../hooks/useProbarHabilidad';
 import { ESTADO_NODO_LABEL, NodoEstadoMarca } from './NodoEstadoMarca';
 
@@ -26,8 +27,6 @@ export interface NodoFichaProps {
   nodo: NodoRed;
   model: RedVivaModel;
   userColor: string;
-  /** Saldo del Fondo. null = no se pudo leer (distinto de 0 = vacío). */
-  fondoSaldo: number | null;
   /** false = migración 10001 sin aplicar: no se puede saber qué está probado. */
   pruebasDisponibles: boolean;
   /** Se llama cuando el examen ya arrancó, para navegar al simulador. */
@@ -40,7 +39,6 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
   nodo,
   model,
   userColor,
-  fondoSaldo,
   pruebasDisponibles,
   onExamenAbierto,
   onCerrar,
@@ -50,9 +48,6 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
   const yaProbada = nodo.estado === 'solido';
   const reduceMotion = useReducedMotion();
 
-  // Solo se cotiza lo que todavía no está probado: pedir precio de algo ya
-  // cobrado sería ruido.
-  const { data: cotizacion } = useCotizacion(nodo.label, !yaProbada);
   // El nodo del catálogo ya no decide SI se puede probar (desde la migración
   // 10002 se puede probar cualquier habilidad). Se sigue consultando solo como
   // respaldo para el caso de que esa migración no esté aplicada.
@@ -64,23 +59,14 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
     op.missing.some((missing) => normalizeSkill(missing) === normalizeSkill(nodo.label)),
   );
 
-  /** El texto de la recompensa, siempre honesto. */
+  /** Qué se gana probando: siempre honesto, nunca una promesa de tokens. */
   const textoRecompensa = (): string => {
     if (yaProbada) {
-      return nodo.tokensEarned > 0
-        ? `Esta habilidad ya te pagó ${nodo.tokensEarned.toLocaleString('es-CL')} tokens del Fondo de Conocimiento.`
-        : 'Ya está probada. La recompensa del Fondo se cobra una sola vez por habilidad.';
+      return nodo.provenScore === null
+        ? 'Ya está probada, aunque esa prueba no dejó puntaje registrado.'
+        : `Ya está probada con ${nodo.provenScore}/100. La prueba quedó registrada con fecha.`;
     }
-    // El motivo lo escribe la base de datos (omicron_fund_quote) para que la app
-    // no tenga que adivinar la razón.
-    if (cotizacion?.ok && cotizacion.motivo) return cotizacion.motivo;
-    if (fondoSaldo === 0) {
-      return 'El Fondo de Conocimiento tiene 0 tokens por ahora, así que probarla paga 0 tokens. Si aprobás, la prueba queda registrada y puede mejorar tus puntajes según el resultado.';
-    }
-    if (fondoSaldo === null) {
-      return 'No pudimos consultar cuánto paga el Fondo en este momento.';
-    }
-    return `Probarla paga del Fondo de Conocimiento, que hoy tiene ${fondoSaldo.toLocaleString('es-CL')} tokens.`;
+    return 'Probarla deja evidencia en tu red: el nodo pasa de declarado a probado, y eso es lo que pesa en tu reputación.';
   };
 
   return (
@@ -178,7 +164,7 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
           : 'Esta habilidad está registrada. No pudimos consultar si ya tiene una prueba en esta cuenta.'}
       </p>
 
-      {/* ── La plata ───────────────────────────────────────────────────── */}
+      {/* ── Qué ganás ──────────────────────────────────────────────────── */}
       <div
         style={{
           borderRadius: RADIUS.md,
@@ -198,18 +184,6 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
         >
           {textoRecompensa()}
         </p>
-        {!yaProbada && cotizacion?.ok && (cotizacion.estimado_max ?? 0) > 0 ? (
-          <p
-            style={{
-              margin: '6px 0 0',
-              fontFamily: FONT.mono,
-              fontSize: SIZE.xs,
-              color: C.mut,
-            }}
-          >
-            El Fondo se alimenta del 30 % de cada comisión cobrada en la red.
-          </p>
-        ) : null}
       </div>
 
       {/* ── Qué te abre ────────────────────────────────────────────────── */}

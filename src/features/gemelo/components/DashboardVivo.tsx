@@ -1,8 +1,11 @@
 // components/shared/DashboardVivo.tsx
 // ═══════════════════════════════════════════════════════════════════════
-// DASHBOARD VIVO — 3 números que CAMBIAN cada día.
+// DASHBOARD VIVO — 2 números que CAMBIAN cada día.
 // "Si nada cambia, no hay motivo para volver."
-// Muestra deltas: rep +/- , ranking posición, ofertas nuevas.
+// Muestra deltas: rep +/- y posición de ranking.
+// Estaba el "Nuevas hoy" de ofertas de trabajo: con 0 ofertas publicadas
+// nunca en la historia del proyecto, mostraba un 0 permanente que se leía
+// como "no hay demanda" cuando en realidad no hay producto de ofertas.
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
@@ -15,7 +18,6 @@ interface DashboardData {
   repDelta: number;
   ranking: number;
   rankDelta: number;
-  newJobs: number;
 }
 
 export function DashboardVivo() {
@@ -55,19 +57,7 @@ export function DashboardVivo() {
       localStorage.setItem(lastRankKey, String(ranking));
     } catch { /* ignore */ }
 
-    // Ofertas nuevas (últimas 24h)
-    let newJobs = 0;
-    try {
-      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { count } = await supabase
-        .from('job_postings')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'OPEN')
-        .gt('published_at', yesterday);
-      newJobs = count ?? 0;
-    } catch { /* ignore */ }
-
-    setData({ reputation: rep, repDelta, ranking, rankDelta, newJobs });
+    setData({ reputation: rep, repDelta, ranking, rankDelta });
   }
 
   if (!data) return null;
@@ -93,17 +83,6 @@ export function DashboardVivo() {
           <div style={{ ...S.delta, color: data.rankDelta > 0 ? C.green : '#ff5c7a' }}>
             {data.rankDelta > 0 ? `↑${data.rankDelta}` : `↓${Math.abs(data.rankDelta)}`}
           </div>
-        )}
-      </div>
-
-      {/* Ofertas nuevas */}
-      <div style={S.stat}>
-        <div style={{ ...S.statValue, color: data.newJobs > 0 ? C.gold : C.mut }}>
-          {data.newJobs}
-        </div>
-        <div style={S.statLabel}>Nuevas hoy</div>
-        {data.newJobs > 0 && (
-          <div style={{ ...S.delta, color: C.gold }}>💼</div>
         )}
       </div>
     </div>

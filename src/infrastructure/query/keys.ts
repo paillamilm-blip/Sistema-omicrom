@@ -20,9 +20,5 @@ export const queryKeys = {
     all: ['redviva'] as const,
     /** Habilidades DEMOSTRADAS por nombre (tabla omicron_skill_proofs). */
     proofs: (userId: string) => ['redviva', 'proofs', userId] as const,
-    /** Saldo del Fondo de Conocimiento (RPC omicron_fund_balance). */
-    fondo: () => ['redviva', 'fondo'] as const,
-    /** Cotización de la recompensa de una habilidad (RPC omicron_fund_quote). */
-    quote: (skill: string) => ['redviva', 'quote', skill] as const,
   },
 } as const;

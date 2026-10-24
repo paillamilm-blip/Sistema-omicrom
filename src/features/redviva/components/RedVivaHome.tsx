@@ -33,7 +33,7 @@ export interface RedVivaHomeProps {
 export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
   const { profile, gemelo } = useApp();
   const uc = useUserColor();
-  const { model, isLoading, fondoSaldo, pruebasDisponibles } = useRedViva();
+  const { model, isLoading, pruebasDisponibles } = useRedViva();
   const [seleccionado, setSeleccionado] = useState<string | null>(null);
   const fichaRef = useRef<HTMLElement>(null);
   const inspectorEnfocadoRef = useRef<string | null>(null);
@@ -208,7 +208,6 @@ export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
           nodo={nodoActivo}
           model={model}
           userColor={uc}
-          fondoSaldo={fondoSaldo}
           pruebasDisponibles={pruebasDisponibles}
           onExamenAbierto={() => onAbrirTab?.('maxskill')}
           onCerrar={cerrarInspector}

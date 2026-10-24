@@ -551,23 +551,14 @@ export function MaxSkillTab() {
               ? Math.max(0, Math.min(100, Math.round(puntajeReal)))
               : 70;
             try {
-              const { data } = await supabase.rpc('register_exam_success', {
+              // El RPC devuelve también el pago del Fondo de Conocimiento; se
+              // ignora a propósito: el Fondo nunca tuvo tokens y la recompensa
+              // real de aprobar es la prueba registrada + el PE.
+              await supabase.rpc('register_exam_success', {
                 p_skill: examNode.title || examNode.id,
                 p_score: score,
                 p_kind: 'mixed',
               });
-              // FONDO DE CONOCIMIENTO: aprobar un examen puede PAGAR tokens
-              // reales (1 token = 1 peso chileno), financiados con la comisión
-              // ya cobrada por la red. Se avisa siempre: si ganó, cuánto; si no
-              // ganó, POR QUÉ (fondo en 0 o recompensa ya cobrada). Nunca se
-              // promete plata que no existe.
-              const r = data as { reward_tokens?: number; reward_reason?: string } | null;
-              const premio = Number(r?.reward_tokens ?? 0);
-              if (premio > 0) {
-                toast(`Ganaste ${premio} tokens del Fondo de Conocimiento`, 'success');
-              } else if (r?.reward_reason) {
-                toast(r.reward_reason, 'info');
-              }
             } catch { /* non-blocking: si falla, al menos el PE ya se otorgó */ }
             broadcastAchievement('skill_validated', examNode.title || examNode.id);
             void refreshProfile();

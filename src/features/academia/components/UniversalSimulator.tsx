@@ -34,8 +34,7 @@ interface Props {
   /**
    * @param peAwarded PE otorgados por el reto.
    * @param puntajeGlobal Puntaje real 0-100 del examen. Se agrega para que quien
-   *   registre el examen pueda usar el score de verdad en vez de un valor fijo
-   *   (la recompensa del Fondo de Conocimiento escala con el puntaje).
+   *   registre el examen pueda guardar el score de verdad en vez de un valor fijo.
    */
   onSuccess: (peAwarded: number, puntajeGlobal?: number) => void;
 }
