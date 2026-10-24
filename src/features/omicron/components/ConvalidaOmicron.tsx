@@ -291,7 +291,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           <Zap size={18} /> Activar Gemelo Completo <ArrowRight size={17} />
         </motion.button>
         <p style={{ textAlign: 'center', margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>
-          Analiza CV + valida titulo + años + aportes — todo automático
+          Analiza tu CV y convalida título y años — todo automático
         </p>
       </motion.div>
     </div>
