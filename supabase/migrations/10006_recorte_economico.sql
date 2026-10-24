@@ -53,6 +53,19 @@
 --   No hay rollback de datos: se dropean tablas vacías. Para volver atrás hay
 --   que recrear el esquema desde 10000/10001 y las migraciones de mercado.
 --   Por eso el candado de 0 filas es la única red de seguridad, y está primero.
+--
+-- ── LO QUE QUEDA DEL LADO DEL DESPLIEGUE (no es SQL, es su entorno) ───
+--   Tres Edge Functions leen tablas que acá se sueltan, y NINGUNA es invocada
+--   desde la app (verificado contra src/ y contra las 5 funciones que sí se
+--   llaman: credential, proxy-ai, proxy-tts, simulador-universal, vault-oracle):
+--     • supabase/functions/ghost-approval  (notifications, contracts, wallet_transactions)
+--     • supabase/functions/market-match    (market_services)
+--     • supabase/functions/_shared/blackbox.ts (chat_room_keys, contracts — huérfano:
+--       ningún índice lo importa)
+--   Siguen desplegadas y son superficie de ataque aunque el producto no las use.
+--   Cuando él decida, se retiran con:  supabase functions delete ghost-approval market-match
+--   (blackbox.ts es un compartido, se borra del repo junto con el chat en 6B).
+--   proxy-ai menciona "messages": es el campo del cuerpo de la petición, no la tabla.
 -- ══════════════════════════════════════════════════════════════════════
 
 
