@@ -32,18 +32,17 @@ const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicr
 
 import { corsHeaders } from '../_shared/cors.ts';
 
-// Modelos gratis CONFIRMADOS disponibles (verificado 27-ago-2026 con /api/v1/models)
-// Ordenados por VELOCIDAD, no por tamaño: con el presupuesto de SERVER_BUDGET_MS
-// cabe UN intento serio de 20s y media reconciliación, así que el primero de la
-// lista es el que decide la experiencia. glm-5.2 medía 24.8s para un prompt
-// trivial: se comía todo el presupuesto y el usuario veía "La IA no pudo...".
+// Orden medido el 2026-10-24 contra este proyecto, no suposiciones:
+// un CV completo devolvió JSON válido SOLO con los dos nemotron (el ultra
+// también contestó un trivial en 3,4s). glm-5.2 llegó a tardar 24,8s en un
+// prompt trivial y minimax/gemma nunca dieron el CV dentro de la ventana.
 const FREE_MODELS = [
-  'minimax/minimax-m3:free',                  // Rápido y confiable
-  'google/gemma-4-31b-it:free',               // Google, buen español
-  'z-ai/glm-5.2:free',                        // Potente, buen JSON, lento
-  'nvidia/nemotron-3-super-120b-a12b:free',   // NVIDIA, 120B
-  'google/gemma-4-26b-a4b-it:free',           // Fallback Google
-  'nvidia/nemotron-3-ultra-550b-a55b:free',   // Último recurso (550B, más lento)
+  'nvidia/nemotron-3-ultra-550b-a55b:free',   // El único que devolvió el CV completo
+  'nvidia/nemotron-3-super-120b-a12b:free',   // Mismo proveedor, más chico
+  'google/gemma-4-31b-it:free',               // Fallback Google
+  'google/gemma-4-26b-a4b-it:free',
+  'minimax/minimax-m3:free',
+  'z-ai/glm-5.2:free',                        // 24,8s medidos en un trivial: último
 ];
 
 // Abort por modelo. Medido 2026-10-24: glm-5.2 tardó 24.8s en un prompt
