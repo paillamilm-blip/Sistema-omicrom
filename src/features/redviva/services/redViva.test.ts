@@ -48,13 +48,12 @@ describe('REGLA DE INTEGRIDAD — sólido = probado, jamás deducido', () => {
 
   it('una habilidad con prueba registrada va al núcleo y es sólida', () => {
     const proofs: SkillProof[] = [
-      { skill_key: 'excel', skill_label: 'Excel', best_score: 88, tokens_earned: 366 },
+      { skill_key: 'excel', skill_label: 'Excel', best_score: 88 },
     ];
     const model = buildRedViva({ skillsDetail, jobs, proofs });
     const excel = model.nodos.find((n) => n.id === 'excel')!;
     expect(excel.estado).toBe('solido');
     expect(excel.provenScore).toBe(88);
-    expect(excel.tokensEarned).toBe(366);
     expect(excel.anillo).toBe(0); // núcleo
   });
 
@@ -79,13 +78,12 @@ describe('REGLA DE INTEGRIDAD — sólido = probado, jamás deducido', () => {
 describe('totales — el 20/80 hecho número', () => {
   it('cuenta probadas sobre declaradas', () => {
     const proofs: SkillProof[] = [
-      { skill_key: 'excel', skill_label: 'Excel', best_score: 90, tokens_earned: 400 },
+      { skill_key: 'excel', skill_label: 'Excel', best_score: 90 },
     ];
     const model = buildRedViva({ skillsDetail, jobs, proofs });
     expect(model.totales.declaradas).toBe(3);
     expect(model.totales.probadas).toBe(1);
     expect(model.totales.pctProbado).toBe(33);
-    expect(model.totales.tokensGanados).toBe(400);
   });
 
   it('una habilidad probada que no estaba en el CV también cuenta', () => {

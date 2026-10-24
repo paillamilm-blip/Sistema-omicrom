@@ -1,6 +1,6 @@
 // features/redviva/hooks/useNodoDetalle.ts
-// Todo lo que hay que saber de UNA habilidad antes de decidir probarla:
-// cuánto paga el Fondo y si el examen existe de verdad.
+// Lo que hay que saber de UNA habilidad antes de decidir probarla: si el
+// examen existe de verdad.
 //
 // LA REGLA QUE ESTE ARCHIVO PROTEGE: no prometer lo que el backend no puede
 // cumplir. Hoy el examen (Edge Function simulador-universal) exige una fila en
@@ -9,54 +9,18 @@
 // CV todavía. Antes de mostrar un botón "Probarla ahora" se verifica que el
 // examen exista; si no existe, la ficha lo dice en vez de mandar al usuario a
 // una pared.
+//
+// (Estaba también la cotización del Fondo de Conocimiento —`omicron_fund_quote`—
+// para decir cuánto paga probar una habilidad. El Fondo nunca tuvo tokens, así
+// que la cotización solo podía responder "0". Se fue con el Fondo.)
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/infrastructure/supabase/client';
-import { queryKeys } from '@/infrastructure/query/keys';
-
-/** Respuesta de omicron_fund_quote (migración 10001). */
-export interface CotizacionFondo {
-  ok: boolean;
-  skill?: string | null;
-  saldo_fondo?: number;
-  ya_cobrada?: boolean;
-  probada?: boolean;
-  tope_diario_restante?: number;
-  estimado_min?: number;
-  estimado_max?: number;
-  /** Motivo en español, escrito por la base. Se muestra tal cual. */
-  motivo?: string;
-  error?: string;
-}
 
 export interface ExamenDisponible {
   /** null = no hay examen para esta habilidad todavía. */
   nodeId: string | null;
   titulo: string | null;
-}
-
-/**
- * Cotiza la recompensa por probar una habilidad, ANTES de dar el examen.
- * Devuelve null si la migración 10001 no está aplicada (degradación elegante).
- */
-export function useCotizacion(skill: string | null | undefined, enabled = true) {
-  return useQuery({
-    queryKey: queryKeys.redviva.quote(skill ?? ''),
-    enabled: !!skill && enabled,
-    staleTime: 60 * 1000,
-    retry: false,
-    queryFn: async (): Promise<CotizacionFondo | null> => {
-      const { data, error } = await supabase.rpc('omicron_fund_quote', { p_skill: skill });
-      if (error) {
-        console.info(
-          '[Omicron] Cotización del Fondo no disponible (migración 10001 sin aplicar):',
-          error.message,
-        );
-        return null;
-      }
-      return (data ?? null) as CotizacionFondo | null;
-    },
-  });
 }
 
 /**

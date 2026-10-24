@@ -56,7 +56,6 @@ export interface SkillProof {
   /** null = probada sin score registrado (prueba histórica). NO se inventa. */
   best_score: number | null;
   proofs_count?: number;
-  tokens_earned?: number;
   last_proven_at?: string | null;
 }
 
@@ -76,8 +75,6 @@ export interface NodoRed {
   declaredPct: number | null;
   /** Score real de la prueba (0-100). null = probada sin score registrado. */
   provenScore: number | null;
-  /** Tokens que esta habilidad ya te pagó del Fondo. */
-  tokensEarned: number;
   /** En cuántos empleos abiertos la piden. 0 = el mercado no la pide hoy. */
   demand: number;
   /** Empleos donde esta habilidad es lo ÚNICO que falta. */
@@ -129,7 +126,6 @@ export interface RedVivaModel {
     probadas: number;
     /** 0-100. El 20/80 hecho número: cuánto de lo que afirmás está probado. */
     pctProbado: number;
-    tokensGanados: number;
     /** Piezas que el mercado pide y no tenés (nodos fantasma en pantalla). */
     ausentes: number;
   };
@@ -383,7 +379,6 @@ export function buildRedViva(input: BuildRedVivaInput): RedVivaModel {
       estado,
       declaredPct: decl ? decl.pct : null,
       provenScore: proof ? proof.best_score : null,
-      tokensEarned: Number(proof?.tokens_earned ?? 0) || 0,
       demand,
       unlocks,
       x,
@@ -446,10 +441,6 @@ export function buildRedViva(input: BuildRedVivaInput): RedVivaModel {
   // ── 6. Totales ────────────────────────────────────────────────────────
   const probadas = solidasKeys.length;
   const totalUniverso = todasLasClaves.length;
-  const tokensGanados = [...pruebas.values()].reduce(
-    (sum, p) => sum + (Number(p.tokens_earned) || 0),
-    0,
-  );
 
   return {
     nodos,
@@ -459,7 +450,6 @@ export function buildRedViva(input: BuildRedVivaInput): RedVivaModel {
       declaradas: totalUniverso,
       probadas,
       pctProbado: totalUniverso === 0 ? 0 : Math.round((probadas / totalUniverso) * 100),
-      tokensGanados,
       ausentes: ausentesKeys.length,
     },
     jugada,

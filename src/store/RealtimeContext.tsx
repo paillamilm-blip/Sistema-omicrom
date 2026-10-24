@@ -6,7 +6,6 @@
 import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';
 import { useApp } from './AppContext';
 import { injectKeyframes } from '../theme';
-import { syncFromSupabase } from '@/features/gemelo/services/profile';
 import { useRealtimeNetwork, type RealtimeNetwork } from '../hooks/useRealtimeNetwork';
 
 const RealtimeContext = createContext<RealtimeNetwork | null>(null);
@@ -31,12 +30,6 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     injectKeyframes();
   }, []);
-
-  // Persistencia real del Gemelo: al iniciar sesión, hidrata desde Supabase
-  // (antes solo escribía; nunca leía → se perdía el estado entre dispositivos).
-  useEffect(() => {
-    if (profile?.id) void syncFromSupabase();
-  }, [profile?.id]);
 
   // Progresión real → evento en vivo para toda la red.
   const prevRef = useRef<{ rep: number; level: number; streak: number } | null>(null);

@@ -1,12 +1,13 @@
 // components/perfil/RedSocial.tsx
-// Red de contactos de Ómicrom: compartir credencial (QR + link),
-// ver credencial pública de otra persona, conectar (con match mutuo),
-// bandeja de solicitudes + mi red, y chat directo (DM) entre conexiones.
+// La credencial pública: compartir la propia (QR + link) y ver la de otra
+// persona por deep-link ?perfil=. Acá ya no se conecta ni se chatea con nadie:
+// la red de contactos y los mensajes directos salieron del producto porque
+// nunca tuvo usuarios suficientes como para existir.
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  X, Share2, Copy, Check, QrCode, UserPlus, Users, Clock,
-  BadgeCheck, MapPin, Shield, ShieldCheck, Loader2, MessageCircle, Send,
+  X, Share2, Copy, Check, QrCode,
+  BadgeCheck, MapPin, Shield, ShieldCheck, Loader2,
 } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
@@ -231,27 +232,12 @@ interface PublicCred {
   skills_detail?: { name: string; pct: number }[];
 }
 
-type ConnState = 'none' | 'pending_sent' | 'pending_received' | 'accepted' | 'rejected';
-
 export function PublicCredentialModal({ username, onClose }: { username: string; onClose: () => void }) {
   const { profile } = useApp();
   const uc = useUserColor();
   const [cred, setCred] = useState<PublicCred | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [conn, setConn] = useState<ConnState>('none');
-  const [connId, setConnId] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const loadStatus = useCallback(async (otherId: string) => {
-    const { data } = await supabase.rpc('connection_status', { p_other: otherId });
-    const row = Array.isArray(data) ? data[0] : null;
-    if (!row) { setConn('none'); setConnId(null); return; }
-    setConnId(row.connection_id ?? null);
-    if (row.status === 'accepted') setConn('accepted');
-    else if (row.status === 'rejected') setConn('rejected');
-    else if (row.status === 'pending') setConn(row.direction === 'sent' ? 'pending_sent' : 'pending_received');
-  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -293,25 +279,9 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
       };
       setCred(c);
       setLoading(false);
-      if (profile && profile.id !== c.id) loadStatus(c.id);
     })();
     return () => { alive = false; };
-  }, [username, profile, loadStatus]);
-
-  async function connect() {
-    if (!cred) return;
-    setBusy(true);
-    try {
-      if (conn === 'pending_received' && connId) {
-        await supabase.rpc('respond_connection_request', { p_connection_id: connId, p_accept: true });
-      } else {
-        await supabase.rpc('send_connection_request', { p_addressee: cred.id });
-      }
-      await loadStatus(cred.id);
-    } finally {
-      setBusy(false);
-    }
-  }
+  }, [username]);
 
   const isSelf = !!(profile && cred && profile.id === cred.id);
 
@@ -511,47 +481,11 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             );
           })()}
 
-          {isSelf ? (
+          {isSelf && (
             <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, padding: 8 }}>
               Esta es tu propia credencial
             </div>
-          ) : !profile ? (
-            <div style={{ textAlign: 'center', fontFamily: FONT.body, fontSize: 12.5, color: C.cyanDim, padding: 8 }}>
-              Inicia sesión para conectar con {cred.full_name}.
-            </div>
-          ) : conn === 'accepted' ? (
-            <div style={{
-              padding: '13px', borderRadius: RADIUS.lg, background: C.greenFaint, border: `1px solid ${C.greenDim}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.green,
-            }}>
-              <Check size={16} /> ¡Conectados!
-            </div>
-          ) : conn === 'pending_sent' ? (
-            <div style={{
-              padding: '13px', borderRadius: RADIUS.lg, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanDim}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim, letterSpacing: 0.5,
-            }}>
-              <Clock size={15} /> SOLICITUD ENVIADA
-            </div>
-          ) : (
-            <button
-              onClick={connect}
-              disabled={busy}
-              style={{
-                width: '100%', padding: '13px', borderRadius: RADIUS.lg, cursor: busy ? 'wait' : 'pointer',
-                background: r.color, border: 'none', color: '#021018',
-                fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                opacity: busy ? 0.7 : 1,
-              }}
-            >
-              {busy ? <Loader2 size={16} style={{ animation: 'redSpin 0.9s linear infinite' }} /> : <UserPlus size={16} />}
-              {conn === 'pending_received' ? 'Aceptar solicitud' : 'Conectar'}
-            </button>
           )}
-          <style>{`@keyframes redSpin { to { transform: rotate(360deg) } }`}</style>
         </div>
       )}
     </Overlay>
@@ -585,325 +519,3 @@ export function PublicProfileGate() {
   return <PublicCredentialModal username={target} onClose={close} />;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// 4) PANEL "MI RED" + chat directo (DM)
-// ════════════════════════════════════════════════════════════════════════════
-interface Req { connection_id: string; user_id: string; username: string; full_name: string; avatar_url: string | null; node_type: string; reputation_score: number; }
-
-// Filas crudas devueltas por las funciones RPC de Supabase (sin tipar por el schema).
-interface RawConnRow { connection_id?: string; user_id: string; username: string; full_name?: string | null; avatar_url?: string | null; node_type?: string | null; reputation_score?: number | string | null; }
-interface LeaderboardRow { user_id: string; username: string; full_name?: string | null; avatar_url?: string | null; reputation_score?: number | string | null; }
-
-function PersonRow({ name, username, avatar, rep, right }: {
-  name: string; username: string; avatar: string | null; rep: number; right?: React.ReactNode;
-}) {
-  const r = rango(rep);
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
-      <div style={{
-        width: 42, height: 42, borderRadius: 12, overflow: 'hidden', flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: avatar ? '#0a1120' : `linear-gradient(135deg, ${r.color}, ${C.cyan})`,
-        color: '#060a12', fontWeight: 700, fontSize: 15, fontFamily: FONT.display,
-      }}>
-        {avatar ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initialsOf(name)}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {name}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>@{username}</span>
-          <span style={{ fontFamily: FONT.mono, fontSize: 9, color: r.color }}>{r.emoji} {rep.toFixed(0)}</span>
-        </div>
-      </div>
-      {right}
-    </div>
-  );
-}
-
-interface DMsg { id: string; sender_id: string; recipient_id: string; content: string; created_at: string; }
-
-export function DirectChatModal({ other, onClose }: {
-  other: { id: string; name: string; username: string; avatar: string | null };
-  onClose: () => void;
-}) {
-  const { profile } = useApp();
-  const uc = useUserColor();
-  const [msgs, setMsgs] = useState<DMsg[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  const load = useCallback(async () => {
-    const { data } = await supabase.rpc('get_direct_thread', { p_other: other.id });
-    setMsgs((data as DMsg[]) ?? []);
-    setLoading(false);
-    supabase.rpc('mark_dm_read', { p_other: other.id });
-  }, [other.id]);
-
-  useEffect(() => { load(); }, [load]);
-
-  useEffect(() => {
-    if (!profile) return;
-    const ch = supabase.channel(`dm-${profile.id}`)
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${profile.id}` },
-        (payload) => {
-          const m = payload.new as DMsg;
-          if (m.sender_id === other.id) {
-            setMsgs(prev => prev.some(x => x.id === m.id) ? prev : [...prev, m]);
-            supabase.rpc('mark_dm_read', { p_other: other.id });
-          }
-        })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [profile, other.id]);
-
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs]);
-
-  async function send() {
-    const content = input.trim();
-    if (!content || !profile || sending) return;
-    setInput('');
-    setSending(true);
-    const opt: DMsg = { id: crypto.randomUUID(), sender_id: profile.id, recipient_id: other.id, content, created_at: new Date().toISOString() };
-    setMsgs(prev => [...prev, opt]);
-    try {
-      await supabase.rpc('send_direct_message', { p_recipient: other.id, p_content: content });
-      await load();
-    } catch {
-      setInput(content);
-      setMsgs(prev => prev.filter(x => x.id !== opt.id));
-    } finally {
-      setSending(false);
-    }
-  }
-
-  return (
-    <Overlay onClose={onClose}>
-      <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '92vh' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px', borderBottom: `1px solid ${C.cyanFaint}` }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 11, overflow: 'hidden', flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: other.avatar ? '#0a1120' : `linear-gradient(135deg, ${C.cyan}, ${C.green})`,
-            color: '#060a12', fontWeight: 700, fontSize: 13, fontFamily: FONT.display,
-          }}>
-            {other.avatar ? <img src={other.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initialsOf(other.name)}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>{other.name}</div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>@{other.username} · mensaje directo</div>
-          </div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
-            <X size={16} />
-          </button>
-        </div>
-
-        <div style={{ flex: 1, minHeight: 220, maxHeight: '58vh', overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 24, fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>CARGANDO...</div>
-          ) : msgs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 24, fontFamily: FONT.body, fontSize: 12.5, color: C.cyanDim }}>
-              Inicia la conversación con {other.name} 👋
-            </div>
-          ) : msgs.map((m, i) => {
-            const own = m.sender_id === profile?.id;
-            return (
-              <div key={`${m.id}-${i}`} style={{ display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '82%', padding: '9px 13px', borderRadius: 12,
-                  background: own ? `${uc}1f` : 'rgba(255,255,255,0.05)',
-                  border: `1px solid ${own ? `${uc}66` : 'rgba(255,255,255,0.08)'}`,
-                  borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3,
-                }}>
-                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: '#dbeafe', lineHeight: 1.4 }}>{m.content}</p>
-                </div>
-              </div>
-            );
-          })}
-          <div ref={bottomRef} />
-        </div>
-
-        <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
-          <input
-            type="text" value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) send(); }}
-            placeholder="Escribe un mensaje..."
-            style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 13, outline: 'none' }}
-          />
-          <button onClick={send} disabled={!input.trim() || sending}
-            style={{ width: 44, height: 44, borderRadius: 11, background: uc, border: 'none', color: '#021018', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || sending ? 0.4 : 1 }}>
-            <Send size={16} />
-          </button>
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-
-export function RedPanel() {
-  const [requests, setRequests] = useState<Req[]>([]);
-  const [contacts, setContacts] = useState<Req[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [dmWith, setDmWith] = useState<Req | null>(null);
-  const [top, setTop] = useState<LeaderboardRow[]>([]);
-  const [viewUser, setViewUser] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    const [rq, cn, lb] = await Promise.all([
-      supabase.rpc('my_pending_requests'),
-      supabase.rpc('my_connections'),
-      supabase.rpc('get_leaderboard', { p_limit: 10 }),
-    ]);
-    setTop((lb.data as LeaderboardRow[]) ?? []);
-    const norm = (rows: RawConnRow[]): Req[] => (rows ?? []).map(x => ({
-      connection_id: x.connection_id ?? '',
-      user_id: x.user_id,
-      username: x.username,
-      full_name: x.full_name ?? x.username,
-      avatar_url: x.avatar_url ?? null,
-      node_type: x.node_type ?? 'Nodo Operativo',
-      reputation_score: Number(x.reputation_score ?? 0),
-    }));
-    setRequests(norm(rq.data as RawConnRow[]));
-    setContacts(norm(cn.data as RawConnRow[]));
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  async function respond(connId: string, accept: boolean) {
-    setBusyId(connId);
-    try {
-      await supabase.rpc('respond_connection_request', { p_connection_id: connId, p_accept: accept });
-      await load();
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  return (
-    <div style={{
-      position: 'relative', borderRadius: RADIUS.xl, padding: 16, marginBottom: 14,
-      background: 'rgba(12,20,38,0.95)', border: '1px solid rgba(160,174,192,0.14)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-        <Users size={16} style={{ color: C.cyan }} />
-        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Mi red</span>
-      </div>
-      <p style={{ margin: '0 0 14px', fontFamily: FONT.body, fontSize: 11, color: C.cyanDim }}>
-        Conecta con técnicos y clientes escaneando su QR o aceptando solicitudes.
-      </p>
-
-      {loading && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 14, color: C.cyanDim, fontFamily: FONT.mono, fontSize: 11 }}>
-          <Loader2 size={14} style={{ animation: 'redSpin 0.9s linear infinite' }} /> CARGANDO...
-          <style>{`@keyframes redSpin { to { transform: rotate(360deg) } }`}</style>
-        </div>
-      )}
-
-      {!loading && (
-        <>
-          {top.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.gold, letterSpacing: 1.5, marginBottom: 6 }}>🏆 RANKING DE NODOS</div>
-              {top.map((t, idx) => {
-                const rr = rango(Number(t.reputation_score) || 0);
-                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
-                return (
-                  <button key={t.user_id} onClick={() => setViewUser(t.username)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px', background: 'none', border: 'none', borderBottom: `1px solid ${C.cyanFaint}`, cursor: 'pointer', textAlign: 'left' }}>
-                    <span style={{ width: 26, textAlign: 'center', fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: idx < 3 ? C.gold : C.cyanDim }}>{medal}</span>
-                    <div style={{ width: 34, height: 34, borderRadius: 9, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: t.avatar_url ? '#0a1120' : `linear-gradient(135deg, ${rr.color}, ${C.cyan})`, color: '#060a12', fontWeight: 700, fontFamily: FONT.display, fontSize: 13 }}>
-                      {t.avatar_url ? <img src={t.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (t.full_name || t.username || 'U').slice(0, 1).toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.full_name || t.username}</div>
-                      <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>@{t.username}</div>
-                    </div>
-                    <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: rr.color }}>{(Number(t.reputation_score) || 0).toFixed(0)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {requests.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.gold, letterSpacing: 1.5, marginBottom: 4 }}>
-                SOLICITUDES ({requests.length})
-              </div>
-              {requests.map(req => (
-                <PersonRow
-                  key={req.connection_id}
-                  name={req.full_name} username={req.username} avatar={req.avatar_url} rep={req.reputation_score}
-                  right={
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button
-                        onClick={() => respond(req.connection_id, true)}
-                        disabled={busyId === req.connection_id}
-                        title="Aceptar"
-                        style={{ width: 34, height: 34, borderRadius: 9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.greenFaint, border: `1px solid ${C.greenDim}`, color: C.green }}
-                      >
-                        <Check size={15} />
-                      </button>
-                      <button
-                        onClick={() => respond(req.connection_id, false)}
-                        disabled={busyId === req.connection_id}
-                        title="Rechazar"
-                        style={{ width: 34, height: 34, borderRadius: 9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.redFaint, border: `1px solid ${C.redDim}`, color: C.red }}
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-                  }
-                />
-              ))}
-            </div>
-          )}
-
-          <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, letterSpacing: 1.5, marginBottom: 4 }}>
-            CONECTADOS ({contacts.length})
-          </div>
-          {contacts.length === 0 ? (
-            <div style={{ padding: '14px 0', textAlign: 'center', fontFamily: FONT.body, fontSize: 12, color: C.cyanDim }}>
-              Aún no tienes conexiones. Comparte tu QR para empezar tu red. 🔗
-            </div>
-          ) : (
-            contacts.map(c => (
-              <PersonRow key={c.connection_id} name={c.full_name} username={c.username} avatar={c.avatar_url} rep={c.reputation_score}
-                right={
-                  <button
-                    onClick={() => setDmWith(c)}
-                    title={`Enviar mensaje a ${c.full_name}`}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 9, cursor: 'pointer',
-                      background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, color: C.cyan,
-                      fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5,
-                    }}
-                  >
-                    <MessageCircle size={14} /> MENSAJE
-                  </button>
-                } />
-            ))
-          )}
-        </>
-      )}
-
-      {viewUser && (
-        <PublicCredentialModal username={viewUser} onClose={() => { setViewUser(null); load(); }} />
-      )}
-      {dmWith && (
-        <DirectChatModal
-          other={{ id: dmWith.user_id, name: dmWith.full_name, username: dmWith.username, avatar: dmWith.avatar_url }}
-          onClose={() => setDmWith(null)}
-        />
-      )}
-    </div>
-  );
-}

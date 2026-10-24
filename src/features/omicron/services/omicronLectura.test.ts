@@ -32,7 +32,7 @@ describe('textoLecturaOmicron — Ómicrom lee la red con textos reales', () => 
 describe('tabParaNodo — cablea un nodo de la Red Viva a su tab de acción', () => {
   const base: NodoRed = {
     id: 'x', label: 'X', estado: 'hueco', declaredPct: 50, provenScore: null,
-    tokensEarned: 0, demand: 0, unlocks: 0, x: 0, y: 0, angulo: 0, r: 0.5, anillo: 1,
+    demand: 0, unlocks: 0, x: 0, y: 0, angulo: 0, r: 0.5, anillo: 1,
   };
 
   it('una habilidad ausente lleva a Academia (lo que no tenés, se aprende)', () => {

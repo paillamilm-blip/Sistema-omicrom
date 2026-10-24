@@ -312,23 +312,4 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// ── Sincronización con Supabase (lectura) ───────────────────────────────
-
-/** Hidrata la caché local desde Supabase (si hay sesión y tabla). */
-export async function syncFromSupabase(): Promise<void> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data, error } = await supabase
-      .from('gemelo_profiles').select('*').eq('user_id', user.id).maybeSingle();
-    if (error || !data) return;
-    current = recompute({
-      ...base(),
-      cv: !!data.cv, titles: data.titles ?? 0, years: data.years ?? 0, vault: data.vault ?? 0,
-    });
-    try { localStorage.setItem(KEY, JSON.stringify(current)); } catch { /* noop */ }
-    notify();
-  } catch { /* sin backend: se ignora */ }
-}
-
 

@@ -61,7 +61,6 @@ describe('RedVivaHome — estados y foco', () => {
     mocks.useRedViva.mockReturnValue({
       model: buildRedViva({ jobs: mercado }),
       isLoading: false,
-      fondoSaldo: null,
       pruebasDisponibles: true,
     });
 
@@ -77,7 +76,6 @@ describe('RedVivaHome — estados y foco', () => {
     mocks.useRedViva.mockReturnValue({
       model: buildRedViva({}),
       isLoading: true,
-      fondoSaldo: null,
       pruebasDisponibles: false,
     });
 
@@ -91,7 +89,6 @@ describe('RedVivaHome — estados y foco', () => {
     mocks.useRedViva.mockReturnValue({
       model: buildRedViva({}),
       isLoading: false,
-      fondoSaldo: null,
       pruebasDisponibles: true,
     });
     const dispatch = vi.spyOn(window, 'dispatchEvent');
@@ -106,7 +103,6 @@ describe('RedVivaHome — estados y foco', () => {
     mocks.useRedViva.mockReturnValue({
       model: buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 90 }], jobs: [] }),
       isLoading: false,
-      fondoSaldo: null,
       pruebasDisponibles: false,
     });
 
@@ -121,7 +117,6 @@ describe('RedVivaHome — estados y foco', () => {
     mocks.useRedViva.mockReturnValue({
       model: buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 90 }], jobs: [] }),
       isLoading: false,
-      fondoSaldo: 0,
       pruebasDisponibles: true,
     });
 
@@ -137,7 +132,6 @@ describe('RedVivaHome — estados y foco', () => {
     mocks.useRedViva.mockReturnValue({
       model: buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 91 }], jobs: [] }),
       isLoading: false,
-      fondoSaldo: 0,
       pruebasDisponibles: true,
     });
     rendered.rerender(<RedVivaHome />);
