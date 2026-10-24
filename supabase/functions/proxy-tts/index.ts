@@ -5,12 +5,13 @@
 // Protege la API key (nunca en el frontend). Usa un único motor TTS.
 // Retorna audio stream (mp3 o pcm) directo al browser para reproducción.
 //
-// VOZ UNIFICADA (una sola): Fish Audio S2.1 Pro Free, multilingüe y
-// expresivo. Acento español latinoamericano NEUTRO (el texto de la app
-// ya está neutralizado, sin voseo). Si Fish Audio falla, se retorna
-// { fallback: true } para que el navegador use su voz local como
-// emergencia offline (ver voiceAI.ts). Kokoro fue removido para evitar
-// cambios de voz a mitad de conversación.
+// VOZ DECLARADA: Fish Audio S2.1 Pro Free — pero el 2026-10-24 se midió el
+// catálogo público de OpenRouter (469 modelos) y ESE MODELO NO ESTÁ: cero ids
+// con 'fish' y ninguna salida de audio gratuita. El endpoint /audio/speech sí
+// existe (400 sin auth, no 404), así que la llamada rebate y la función
+// devuelve { fallback: true } → habla la voz del navegador. No se cambió el
+// modelo: elegir la voz del producto es una decisión de él, no de esta rama.
+// Kokoro ya había salido antes para no mezclar voces a mitad de sesión.
 //
 // El frontend envía texto oración por oración → reproduce al instante.
 // ═══════════════════════════════════════════════════════════════════════

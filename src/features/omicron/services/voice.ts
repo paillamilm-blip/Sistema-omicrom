@@ -9,8 +9,10 @@
 //   4. Mientras suena, ya se está generando el audio de la siguiente
 //   5. El orbe vibra con el evento 'omicron:speaking'
 //
-// Si proxy-tts falla: fallback silencioso (no se habla, solo texto).
-// NO usa Web Speech API — la voz es IA real (Fish Audio S2.1 Pro Free).
+// Si proxy-tts devuelve { fallback: true } —que es lo que devuelve hoy,
+// porque el modelo de voz declarado ya no está en el catálogo de OpenRouter—
+// habla la voz del navegador (Web Speech API). Medido 2026-10-24: sale
+// "Microsoft Raul - Spanish (Mexico)" en localhost.
 // ═══════════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/infrastructure/supabase/client';
