@@ -1,0 +1,152 @@
+name: Strix · Pentest IA
+
+# ═══════════════════════════════════════════════════════════════════════
+# Strix (https://github.com/usestrix/strix) es un agente de IA que hace
+# pentesting: NO es un linter de patrones. Levanta el código en un sandbox
+# Docker, lo ataca, y valida cada hallazgo con una prueba de concepto real.
+#
+# Corre acá y no en el sandbox de desarrollo porque Strix necesita:
+#   · red abierta (descargar el paquete + imágenes Docker)
+#   · Docker corriendo (crea los entornos aislados de testing)
+#   · una API key de LLM
+#
+# CONFIGURACIÓN REQUERIDA (una sola vez):
+#   Settings → Secrets and variables → Actions → New repository secret
+#     Nombre: STRIX_LLM_API_KEY
+#     Valor:  tu API key de OpenRouter (sk-or-v1-...)
+#
+#   Mientras el secret no exista, el job se salta solo (no marca el CI en
+#   rojo). Ver el paso "Verificar configuración".
+#
+# COSTO: cada corrida gasta tokens del LLM. Por eso NO corre en cada push
+# a main — solo en PRs, una vez por semana, y a mano.
+# ═══════════════════════════════════════════════════════════════════════
+
+on:
+  pull_request:
+    branches: [main]
+  schedule:
+    # Lunes 03:00 UTC — barrido profundo semanal de todo el repo.
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      scan_mode:
+        description: 'Profundidad del escaneo'
+        type: choice
+        options: [quick, standard, deep]
+        default: standard
+      instruction:
+        description: 'Instrucción extra para el agente (opcional)'
+        type: string
+        default: ''
+
+# Un solo escaneo por rama/PR a la vez. Cancela el anterior: a diferencia
+# del CI de tipos, acá cancelar AHORRA dinero (tokens de LLM).
+concurrency:
+  group: strix-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pentest:
+    name: Pentest IA (Strix)
+    runs-on: ubuntu-latest
+    # Los PRs desde forks no reciben secrets, así que el escaneo no puede
+    # correr. Se saltea en vez de fallar. (Además: NUNCA cambiar esto por
+    # `pull_request_target`, porque expondría la API key a código de
+    # terceros sin revisar.)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 45
+
+    env:
+      # Modelo. El proyecto ya usa OpenRouter para proxy-ai, así que la
+      # misma cuenta sirve. OJO: Strix necesita un modelo con buen
+      # razonamiento — los `:free` que usa proxy-ai para analizar CVs no
+      # rinden acá y suelen tener rate limits agresivos.
+      STRIX_LLM: openrouter/z-ai/glm-5.3
+      LLM_API_KEY: ${{ secrets.STRIX_LLM_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # Cortocircuito amable: sin key no hay escaneo, pero tampoco error.
+      - name: Verificar configuración
+        id: check
+        run: |
+          if [ -z "${LLM_API_KEY}" ]; then
+            echo "configurado=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "### Strix no está configurado todavía"
+              echo
+              echo "Falta el secret \`STRIX_LLM_API_KEY\`."
+              echo "Agregalo en **Settings → Secrets and variables → Actions**"
+              echo "con tu API key de OpenRouter para activar el pentest automático."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Falta el secret STRIX_LLM_API_KEY — escaneo salteado."
+          else
+            echo "configurado=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Python
+        if: steps.check.outputs.configurado == 'true'
+        uses: actions/setup-python@v6
+        with:
+          # Strix requiere Python 3.12 o superior.
+          python-version: '3.12'
+
+      - name: Instalar Strix
+        if: steps.check.outputs.configurado == 'true'
+        # El paquete en PyPI se llama `strix-agent`; el comando es `strix`.
+        # Se usa pip en vez del script de instalación (curl | bash) para
+        # que la corrida sea reproducible y auditable.
+        run: |
+          python -m pip install --upgrade pip
+          pip install strix-agent
+          strix --version
+
+      # Decide profundidad según el evento:
+      #   PR       → quick    (feedback rápido y barato en cada revisión)
+      #   schedule → deep     (barrido profundo semanal)
+      #   manual   → lo que elija quien lo dispare
+      - name: Definir modo de escaneo
+        if: steps.check.outputs.configurado == 'true'
+        id: modo
+        run: |
+          case "${{ github.event_name }}" in
+            pull_request) modo=quick ;;
+            schedule)     modo=deep ;;
+            *)            modo="${{ inputs.scan_mode }}" ;;
+          esac
+          echo "scan_mode=${modo}" >> "$GITHUB_OUTPUT"
+          echo "Modo de escaneo: ${modo}"
+
+      - name: Correr Strix
+        if: steps.check.outputs.configurado == 'true'
+        # No bloquea el merge todavía. Primero hay que ver qué reporta y
+        # calibrar; recién después conviene quitar esta línea para que un
+        # hallazgo crítico frene el PR.
+        continue-on-error: true
+        run: |
+          strix \
+            --target . \
+            --scan-mode "${{ steps.modo.outputs.scan_mode }}" \
+            --instruction-file .security/strix-instructions.md \
+            --non-interactive
+        # STRIX_LLM y LLM_API_KEY ya vienen del `env` del job.
+
+      # Los resultados quedan como artifact descargable del run.
+      # `if: always()` para conservarlos incluso si el escaneo se cortó.
+      - name: Guardar resultados
+        if: always() && steps.check.outputs.configurado == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: strix-resultados-${{ github.run_id }}
+          path: |
+            agent_runs/
+            strix_runs/
+            *.sarif
+          if-no-files-found: ignore
+          retention-days: 30
