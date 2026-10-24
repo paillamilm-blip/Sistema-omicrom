@@ -5,7 +5,7 @@
 // FLUJO NUEVO:
 //   1. Upload (cualquier usuario) → sube CV o pega texto
 //   2. Syncing (análisis IA o local, sin auth)
-//   3. GemeloReveal (experiencia WOW de 5 actos — sin auth)
+//   3. GemeloReveal (experiencia WOW de 4 actos — sin auth)
 //      → Al final el usuario elige "Activar" → persiste (pide auth si falta)
 //
 // Ya no existe la fase "dossier" vieja. GemeloReveal la reemplaza completamente.
@@ -65,7 +65,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   };
 
   // ══════════════════════════════════════════════════════════════════════
-  // PHASE: REVEAL — GemeloReveal (5 actos WOW)
+  // PHASE: REVEAL — GemeloReveal (4 actos WOW)
   // ══════════════════════════════════════════════════════════════════════
   if (phase === 'reveal' && dossier) {
     return (

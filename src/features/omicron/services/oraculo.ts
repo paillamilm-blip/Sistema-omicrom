@@ -29,8 +29,8 @@ const NAV_NATURAL: { keys: string[]; tab: TabId; label: string }[] = [
 // alimentan tienen 0 filas de usuarios reales: llevar el "quiero trabajo" a
 // una pantalla con 0 ofertas era peor que no entender el pedido.
 //   · jugar/reto/partida   → 'maxskill' (hospeda el reto diario y el simulador).
-//   · empleo/trabajo/oferta → 'perfil' (la Red Viva ES la evidencia del mercado:
-//     nodos ámbar, demanda y la próxima jugada; ya no hay bolsa de empleos).
+//   · empleo/trabajo/oferta → 'perfil' (la Red Viva es la evidencia de lo que
+//     sabés hacer; la bolsa de empleos se fue con la Fase 6B).
 const NAV: { keys: string[]; tab: TabId; label: string }[] = [
   { keys: ['inicio', 'gemelo', 'perfil', 'principal', 'home', 'ranking', 'posici', 'posición', 'reputaci', 'fama'], tab: 'perfil', label: 'Inicio' },
   { keys: ['habilidad', 'skill', 'competenc', 'maxskill', 'destreza', 'examen', 'valida', 'nodo'], tab: 'maxskill', label: 'Habilidades' },

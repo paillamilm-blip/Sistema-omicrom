@@ -37,7 +37,7 @@ export function getNextProfileQuestion(profile: Profile | null): ProfileQuestion
     {
       priority: 4,
       field: 'location',
-      question: '¿Desde dónde trabajas? Así te conecto con oportunidades cercanas.',
+      question: '¿Desde dónde trabajas? Lo dejo en tu perfil.',
     },
   ];
 
