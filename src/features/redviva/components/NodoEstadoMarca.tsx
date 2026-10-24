@@ -6,7 +6,6 @@ export const ESTADO_NODO_LABEL: Record<EstadoNodo, string> = {
   solido: 'Probada',
   latiendo: 'En prueba',
   hueco: 'Solo declarada',
-  ausente: 'No la tenés',
 };
 
 /**
@@ -19,10 +18,9 @@ export const ESTADO_NODO_LABEL: Record<EstadoNodo, string> = {
  *   • solido   → pieza ENCAJADA (contorno relleno + check).
  *   • hueco    → contorno de pieza SIN encajar (silueta hueca, radio punteado).
  *   • latiendo → pieza entrando: contorno + pieza interior que late + punto.
- *   • ausente  → pieza que FALTA (contorno discontinuo + cruz, en Oro).
  *
  * El mapeo estado -> semántica NO cambia y la distinción por FORMA se conserva
- * en escala de grises (relleno / hueco / doble / discontinuo). El único
+ * en escala de grises (relleno / hueco / doble). El único
  * movimiento permanente sigue siendo el latido del estado 'latiendo'.
  */
 export type VarianteNodo = 'circulo' | 'pieza';
@@ -37,7 +35,7 @@ interface NodoEstadoMarcaProps {
 
 /**
  * Marca compartida por leyenda, filas e inspector. Cada estado cambia la forma
- * y el patrón, no solo el color: círculo con marca, aro, doble aro o hexágono.
+ * y el patrón, no solo el color: círculo con marca, aro o doble aro.
  */
 export function NodoEstadoMarca({
   estado,
@@ -181,52 +179,6 @@ export function NodoEstadoFormaSvg({
           strokeWidth={1}
         />
         <circle cx={x} cy={y} r={Math.max(0.8, r * 0.14)} fill={color} />
-      </g>
-    );
-  }
-
-  if (estado === 'ausente') {
-    // La pieza que FALTA. En 'pieza' es una silueta de puzzle discontinua con
-    // la cruz; en 'circulo' es el hexágono discontinuo original. El Oro y la
-    // cruz se conservan en ambas (semántica de mercado intacta).
-    const cruz = (
-      <path
-        d={`M ${x - r * 0.3} ${y - r * 0.3} L ${x + r * 0.3} ${y + r * 0.3} M ${x + r * 0.3} ${y - r * 0.3} L ${x - r * 0.3} ${y + r * 0.3}`}
-        stroke={color}
-        strokeWidth={Math.max(0.8, r * 0.16)}
-        strokeLinecap="round"
-      />
-    );
-    if (variante === 'pieza') {
-      return (
-        <g data-node-state={estado} data-node-variant="pieza">
-          <path
-            d={piezaRompecabezasPath(x, y, r * 0.92)}
-            fill="none"
-            stroke={color}
-            strokeWidth={1.3}
-            strokeDasharray={`${Math.max(1.5, r * 0.45)} ${Math.max(1.2, r * 0.3)}`}
-            strokeLinejoin="round"
-          />
-          {cruz}
-        </g>
-      );
-    }
-    const points = Array.from({ length: 6 }, (_, index) => {
-      const angle = -Math.PI / 2 + index * Math.PI / 3;
-      return `${x + Math.cos(angle) * r},${y + Math.sin(angle) * r}`;
-    }).join(' ');
-    return (
-      <g data-node-state={estado}>
-        <polygon
-          points={points}
-          fill="none"
-          stroke={color}
-          strokeWidth={1.2}
-          strokeDasharray={`${Math.max(1.5, r * 0.45)} ${Math.max(1.2, r * 0.3)}`}
-          strokeLinejoin="round"
-        />
-        {cruz}
       </g>
     );
   }

@@ -5,7 +5,7 @@
 // FLUJO NUEVO:
 //   1. Upload (cualquier usuario) → sube CV o pega texto
 //   2. Syncing (análisis IA o local, sin auth)
-//   3. GemeloReveal (experiencia WOW de 5 actos — sin auth)
+//   3. GemeloReveal (experiencia WOW de 4 actos — sin auth)
 //      → Al final el usuario elige "Activar" → persiste (pide auth si falta)
 //
 // Ya no existe la fase "dossier" vieja. GemeloReveal la reemplaza completamente.
@@ -24,8 +24,10 @@ import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 // Mismo valor que BEAT_EASE en GemeloReveal.tsx para mantener el lenguaje.
 const SCAN_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-// Número de pasos reales del análisis (currentStep va 0 -> 1 -> 2 -> 3).
-const SCAN_STEPS = 4;
+// Número de pasos reales del análisis (currentStep va 0 -> 1 -> 2).
+// Eran 4 hasta la Fase 6C: el cuarto convalidaba "un aporte a la Bóveda",
+// credencial de una función que ya no existe, y el contador nunca terminaba.
+const SCAN_STEPS = 3;
 
 export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   const uc = getUserColor();
@@ -65,7 +67,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   };
 
   // ══════════════════════════════════════════════════════════════════════
-  // PHASE: REVEAL — GemeloReveal (5 actos WOW)
+  // PHASE: REVEAL — GemeloReveal (4 actos WOW)
   // ══════════════════════════════════════════════════════════════════════
   if (phase === 'reveal' && dossier) {
     return (
@@ -86,7 +88,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   // PHASE: SYNCING — La orbe crece mientras analiza
   // ══════════════════════════════════════════════════════════════════════
   if (phase === 'syncing') {
-    const orbNodes = 5 + Math.round((currentStep / 4) * 12);
+    const orbNodes = 5 + Math.round((currentStep / (SCAN_STEPS - 1)) * 12);
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: C.bg }}>
         {/* Header */}
@@ -289,7 +291,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           <Zap size={18} /> Activar Gemelo Completo <ArrowRight size={17} />
         </motion.button>
         <p style={{ textAlign: 'center', margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>
-          Analiza CV + valida titulo + años + aportes — todo automático
+          Analiza tu CV y convalida título y años — todo automático
         </p>
       </motion.div>
     </div>

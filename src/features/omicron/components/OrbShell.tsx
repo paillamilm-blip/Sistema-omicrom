@@ -5,7 +5,7 @@ import { OmicronBar } from './OmicronBar';
 import { OmicronPlaceholder2D } from '@/shared/components/OmicronPlaceholder2D';
 import { RedVivaCanvas } from '@/features/redviva/components/RedVivaCanvas';
 import { useRedViva } from '@/features/redviva/hooks/useRedViva';
-import { textoLecturaOmicron, tabParaNodo } from '@/features/omicron/services/omicronLectura';
+import { textoLecturaOmicron } from '@/features/omicron/services/omicronLectura';
 import type { NodoRed } from '@/features/redviva/services/redViva';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 // NOTE ("Matar el Escritorio" Inc 2): ProactiveCards y OrbContextLabel se
@@ -79,6 +79,11 @@ const HUB_NODES: OrbNode[] = [
   { id: 'academia',    label: 'Academia',    tab: 'academia', icon: '◈' },
   { id: 'habilidades', label: 'Habilidades', tab: 'maxskill', icon: '◎' },
 ];
+
+// Todo nodo de la Red Viva es UNA HABILIDAD TUYA: se acciona probándola, y eso
+// vive en Habilidades. (El viejo 'ausente → Empleos' se fue con la capa de
+// mercado de la Fase 6B: ya no hay ofertas que mostrar.)
+const HABILIDADES_HUB = HUB_NODES.find((h) => h.tab === 'maxskill')!;
 
 // ── Shared orb box dimensions ───────────────────────────────────────
 // El orbe y la capa de etiquetas (labels HTML proyectadas desde 3D)
@@ -214,7 +219,7 @@ export function OrbShell() {
   // (motor B con sabor A, varianteNodo='pieza') alimentada por datos reales.
   // El centro = la reputación del usuario. La red representa su EVIDENCIA, no
   // las tabs; la navegación por tabs sigue por la barra de voz/texto y por la
-  // selección de nodos del mapa (tabParaNodo → setActiveTab).
+  // selección de nodos del mapa (→ Habilidades).
   const { model: redVivaModel } = useRedViva();
   // Nodo enfocado en el mapa del home (para la lectura de Ómicrom y la nav).
   const [nodoRedSel, setNodoRedSel] = useState<string | null>(null);
@@ -601,7 +606,16 @@ export function OrbShell() {
     if (intent.kind === 'fact') {
       let msg = '';
       if (intent.topic === 'reputacion') msg = `Tu reputación va en ${Math.round(sbProfile?.reputation_score ?? 0)} de 100. ${(sbProfile?.reputation_score ?? 0) >= 50 ? '¡Vas bien!' : 'Validando skills la subimos juntos.'}`;
-      else if (intent.topic === 'tokens') msg = `Tienes ${(sbProfile?.token_balance ?? 0).toLocaleString()} tokens en tu billetera.`;
+      else if (intent.topic === 'tokens') {
+        // Los tokens no compran nada hoy: no hay checkout, ni transferencias,
+        // ni retiros en la app (y la cuota de IA usa otro sistema). Decirlo es
+        // más útil que recitar un saldo que no se puede usar.
+        const tokens = sbProfile?.token_balance ?? 0;
+        const rep = Math.round(sbProfile?.reputation_score ?? 0);
+        msg = tokens > 0
+          ? `Tenés ${tokens.toLocaleString()} tokens, pero todavía no hay nada que comprar con ellos. Lo que pesa acá es tu reputación: ${rep} de 100.`
+          : `Todavía no tenés tokens, y no compran nada: lo que pesa acá es tu reputación, ${rep} de 100.`;
+      }
       else if (intent.topic === 'pe') msg = `Llevas ${(sbProfile?.pe_points ?? 0).toLocaleString()} puntos de experiencia. Cada nodo que valides suma más.`;
       else msg = 'Puedes decirme cosas como: "abre academia", "dame un consejo", "cuánta reputación tengo", o simplemente tocar un nodo del orbe. Estoy aquí para lo que necesites.';
       flash(msg);
@@ -617,7 +631,7 @@ export function OrbShell() {
         setState('preview');
         setActiveTab('perfil');
       }
-      const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia', vault: 'un aporte a la Bóveda' };
+      const names = { cv: 'tu CV', title: 'un título', year: 'un año de experiencia' };
       const msg = `Para convalidar ${names[intent.item]}, abre tu perfil y usa el botón de convalidación.`;
       flash(msg);
       speakLocal(msg);
@@ -755,8 +769,8 @@ export function OrbShell() {
   // ── Selección de un nodo de la Red Viva del home ───────────────────
   // La red del home representa la EVIDENCIA del usuario (habilidades), no las
   // tabs. Al seleccionar un nodo: (1) lo marcamos para que Ómicrom lo LEA en
-  // modo lectura, y (2) abrimos la superficie donde ese nodo se acciona
-  // (tabParaNodo: ausente→empleos, resto→maxskill) reutilizando el mismo flujo
+  // modo lectura, y (2) abrimos Habilidades, la superficie donde toda
+  // habilidad se acciona, reutilizando el mismo flujo
   // de navegación que el resto del shell (setSelectedNode + preview + tab).
   const handleRedNodeSelect = useCallback((nodo: NodoRed) => {
     // Toggle: volver a tocar el nodo activo cierra su foco (y su lectura).
@@ -764,12 +778,10 @@ export function OrbShell() {
     if (nodoRedSel === nodo.id) return;
     hapticMedium();
     firePulse('user');
-    const tab = tabParaNodo(nodo);
-    const hubNode = HUB_NODES.find((h) => h.tab === tab);
-    if (!hubNode) return;
+    const hubNode = HABILIDADES_HUB;
     setSelectedNode({ ...hubNode, label: nodo.label });
     setState('preview');
-    setActiveTab(tab);
+    setActiveTab(hubNode.tab);
     window.dispatchEvent(new CustomEvent('omicron:node-tap'));
   }, [nodoRedSel, setActiveTab]);
 
@@ -998,8 +1010,8 @@ export function OrbShell() {
           hay render 3D acá. La caja mantiene el mismo encuadre centrado que el
           orbe anterior (ORB_SIZE_VMIN / ORB_MAX) para no mover el layout.
 
-          NAVEGACIÓN: seleccionar un nodo del mapa abre la superficie donde ESE
-          nodo se acciona (tabParaNodo → handleRedNodeSelect), sin romper el
+          NAVEGACIÓN: seleccionar un nodo del mapa abre Habilidades, donde se
+          acciona (handleRedNodeSelect), sin romper el
           flujo por voz/texto. Bajo prefers-reduced-motion la red no anima.
         */}
         <div

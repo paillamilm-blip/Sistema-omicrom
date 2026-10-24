@@ -7,10 +7,8 @@
 //
 //   import type { Profile } from '@/types/profile';
 //   import type { SkillTreeNode } from '@/types/skills';
-//   import type { JobPosting } from '@/types/jobs';
 // ═══════════════════════════════════════════════════════════════════════
 
 export * from './common';
 export * from './profile';
 export * from './skills';
-export * from './jobs';

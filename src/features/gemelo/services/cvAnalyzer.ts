@@ -323,7 +323,7 @@ export function analyzeCV(text: string): AnalyzedProfile {
     `Ejecución ${axes.exec}/100 · Calidad ${axes.qual}/100 · ` +
     `Trascendencia ${axes.trans}/100 · Fundamento ${axes.fund}/100. ` +
     `Estos valores se calculan de la evidencia encontrada en el CV. ` +
-    `Suben con contratos completados, aportes a la Bóveda y validaciones de pares.`;
+    `Suben con lecciones completadas, quizzes aprobados y nodos de habilidad validados.`;
 
   return {
     name,

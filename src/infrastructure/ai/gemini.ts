@@ -59,7 +59,12 @@ export async function analyzeCVWithGemini(cvText: string): Promise<{ ok: boolean
     const raw = await callAI([
       { role: 'system', content: SYS },
       { role: 'user', content: 'CV COMPLETO:\n\n' + text },
-    ], { maxTokens: 2000, temperature: 0.3, jsonMode: true, timeout: 25000 });
+    // 75s: proxy-ai (build 6e) se da 70 s — 40 s de carrera entre dos ne-
+    // motron con el razonamiento apagado, más el fallback. El cliente SIEMPRE
+    // tiene que esperar más que el server para que el error estructurado del
+    // 503 (con el debug de qué modelo cayó) llegue a la UI antes del TIMEOUT
+    // genérico local.
+    ], { maxTokens: 2000, temperature: 0.3, jsonMode: true, timeout: 75000 });
 
     if (!raw) {
       return { ok: false, error: 'IA no disponible. Intenta de nuevo en unos minutos.', errorCode: 'empty_response' };

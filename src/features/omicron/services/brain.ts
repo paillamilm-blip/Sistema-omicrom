@@ -95,17 +95,14 @@ function buildSystemPrompt(ctx: OmicronContext): string {
     ? `Resumen CV: ${ctx.cv_summary.slice(0, 300)}`
     : 'Sin CV analizado.';
 
-  // Contexto según la pantalla activa
+  // Contexto según la pantalla activa. Tras el recorte solo existen tres
+  // pestañas (ver TabId); describir aquí Empleos, Mercado, Bóveda, Red Social,
+  // Billetera o Gobernanza sería ponerle al modelo pantallas que el usuario
+  // no puede abrir.
   const tabContext: Record<string, string> = {
     perfil: 'Está mirando su perfil. Si le falta algo, sugiérele completarlo.',
     maxskill: 'Está en el árbol de habilidades. Guíale sobre qué validar o aprender.',
     academia: 'Está en la academia. Recomiéndale un curso o ayúdale con dudas de aprendizaje.',
-    empleos: 'Está mirando empleos. Ayúdale a entender su match y cómo mejorar su perfil para postular.',
-    market: 'Está en el marketplace de servicios. Aconséjale qué ofrecer según sus skills.',
-    chat: 'Está en la red social. Sugiérele a quién conectar o cómo presentarse.',
-    wallet: 'Está en la billetera. Explícale cómo ganar más tokens o para qué usarlos.',
-    gobernanza: 'Está en gobernanza. Explica el sistema de disputas y staking si pregunta.',
-    vault: 'Está en la bóveda. Sugiérele publicar conocimiento o consultar soluciones.',
   };
 
   return `Eres Ómicrom, el cerebro vivo de la aplicación Sistema Ómicrom.
@@ -197,12 +194,12 @@ export async function askOmicron(
       ? await callAIStream(messages, onToken, {
           maxTokens: 512,
           temperature: 0.75,
-          timeout: 28000,
+          timeout: 30000,
         })
       : await callAI(messages, {
           maxTokens: 512,
           temperature: 0.75,
-          timeout: 28000,
+          timeout: 30000,
         });
 
     if (!text) {

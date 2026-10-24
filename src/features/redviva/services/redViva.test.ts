@@ -7,11 +7,11 @@ import { describe, it, expect } from 'vitest';
 import {
   buildRedViva,
   hash01,
+  normalizeSkill,
   resumenRed,
   textoEstado,
   type SkillProof,
 } from './redViva';
-import type { RealJob } from './gapEngine';
 
 const skillsDetail = [
   { name: 'Excel', pct: 95 },        // afirmación altísima, sin prueba
@@ -19,26 +19,9 @@ const skillsDetail = [
   { name: 'Lean Manufacturing', pct: 70 },
 ];
 
-const jobs: RealJob[] = [
-  {
-    id: 'j1',
-    title: 'Analista de Operaciones',
-    required_skills: ['Excel', 'SAP'],
-    salary_range: '$850.000',
-    status: 'OPEN',
-  },
-  {
-    id: 'j2',
-    title: 'Jefe de Planta',
-    required_skills: ['SAP', 'Lean Manufacturing', 'Presupuestos'],
-    salary_range: '$1.400.000',
-    status: 'OPEN',
-  },
-];
-
 describe('REGLA DE INTEGRIDAD — sólido = probado, jamás deducido', () => {
   it('un pct de 95 SIN prueba se dibuja HUECO, no sólido', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
+    const model = buildRedViva({ skillsDetail, proofs: [] });
     const excel = model.nodos.find((n) => n.id === 'excel')!;
     expect(excel.estado).toBe('hueco');
     expect(excel.provenScore).toBeNull();
@@ -50,7 +33,7 @@ describe('REGLA DE INTEGRIDAD — sólido = probado, jamás deducido', () => {
     const proofs: SkillProof[] = [
       { skill_key: 'excel', skill_label: 'Excel', best_score: 88 },
     ];
-    const model = buildRedViva({ skillsDetail, jobs, proofs });
+    const model = buildRedViva({ skillsDetail, proofs });
     const excel = model.nodos.find((n) => n.id === 'excel')!;
     expect(excel.estado).toBe('solido');
     expect(excel.provenScore).toBe(88);
@@ -61,7 +44,7 @@ describe('REGLA DE INTEGRIDAD — sólido = probado, jamás deducido', () => {
     const proofs: SkillProof[] = [
       { skill_key: 'excel', skill_label: 'Excel', best_score: null },
     ];
-    const model = buildRedViva({ skillsDetail, jobs, proofs });
+    const model = buildRedViva({ skillsDetail, proofs });
     const excel = model.nodos.find((n) => n.id === 'excel')!;
     expect(excel.estado).toBe('solido');
     expect(excel.provenScore).toBeNull();
@@ -69,9 +52,27 @@ describe('REGLA DE INTEGRIDAD — sólido = probado, jamás deducido', () => {
   });
 
   it('marca latiendo solo cuando hay una prueba en curso', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [], enCurso: ['sap'] });
+    const model = buildRedViva({ skillsDetail, proofs: [], enCurso: ['sap'] });
     expect(model.nodos.find((n) => n.id === 'sap')!.estado).toBe('latiendo');
     expect(model.nodos.find((n) => n.id === 'excel')!.estado).toBe('hueco');
+  });
+});
+
+describe('normalizeSkill — la identidad que sostiene el layout', () => {
+  it('quita acentos, espacios sobrantes y mayúsculas', () => {
+    expect(normalizeSkill('  Automatización  ')).toBe('automatizacion');
+    expect(normalizeSkill('Diseño   Industrial')).toBe('diseno industrial');
+  });
+
+  it('con texto vacío o nulo devuelve cadena vacía, no null', () => {
+    expect(normalizeSkill('')).toBe('');
+    expect(normalizeSkill(undefined as unknown as string)).toBe('');
+  });
+
+  it('la clave del nodo es normalizada y la etiqueta respeta al usuario', () => {
+    const model = buildRedViva({ skillsDetail: [{ name: 'Automatización', pct: 60 }] });
+    expect(model.nodos[0].id).toBe('automatizacion');
+    expect(model.nodos[0].label).toBe('Automatización');
   });
 });
 
@@ -80,17 +81,16 @@ describe('totales — el 20/80 hecho número', () => {
     const proofs: SkillProof[] = [
       { skill_key: 'excel', skill_label: 'Excel', best_score: 90 },
     ];
-    const model = buildRedViva({ skillsDetail, jobs, proofs });
+    const model = buildRedViva({ skillsDetail, proofs });
     expect(model.totales.declaradas).toBe(3);
     expect(model.totales.probadas).toBe(1);
-    expect(model.totales.pctProbado).toBe(33);
   });
 
   it('una habilidad probada que no estaba en el CV también cuenta', () => {
     const proofs: SkillProof[] = [
       { skill_key: 'autocad', skill_label: 'AutoCAD', best_score: 75 },
     ];
-    const model = buildRedViva({ skillsDetail, jobs, proofs });
+    const model = buildRedViva({ skillsDetail, proofs });
     expect(model.totales.declaradas).toBe(4); // 3 del CV + 1 probada aparte
     const autocad = model.nodos.find((n) => n.id === 'autocad')!;
     expect(autocad.declaredPct).toBeNull(); // no la afirmó el CV
@@ -106,71 +106,17 @@ describe('vacío y respaldos', () => {
     expect(resumenRed(model)).toContain('Subí tu CV');
   });
 
-  it('sin habilidades sigue vacía aunque haya mercado cargado', () => {
-    const model = buildRedViva({ jobs, proofs: [] });
-    expect(model.vacia).toBe(true);
-    expect(model.totales.declaradas).toBe(0);
-  });
-
   it('sin skills_detail usa skills[] y NO inventa un pct', () => {
-    const model = buildRedViva({ skills: ['Excel', 'SAP'], jobs });
-    const mias = model.nodos.filter((n) => n.anillo !== 2);
-    expect(mias).toHaveLength(2);
-    expect(mias.every((n) => n.declaredPct === 0)).toBe(true);
-  });
-});
-
-describe('AUSENTES — la pieza que el mercado paga y no tenés', () => {
-  it('crea nodo fantasma para lo que falta, sin contarlo como tuyo', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
-    const presupuestos = model.nodos.find((n) => n.id === 'presupuestos');
-    expect(presupuestos).toBeDefined();
-    expect(presupuestos!.estado).toBe('ausente');
-    expect(presupuestos!.anillo).toBe(2);
-    expect(presupuestos!.declaredPct).toBeNull(); // no es una afirmación tuya
-    expect(presupuestos!.provenScore).toBeNull();
-    // Y NO ensucia el 20/80: las ausentes no son habilidades tuyas.
-    expect(model.totales.declaradas).toBe(3);
-    expect(model.totales.ausentes).toBe(1);
-  });
-
-  it('el nodo ausente vive más afuera que la frontera declarada', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
-    const radio = (id: string) => {
-      const n = model.nodos.find((x) => x.id === id)!;
-      return Math.hypot(n.x, n.y);
-    };
-    expect(radio('presupuestos')).toBeGreaterThan(radio('excel'));
-  });
-
-  it('explica en lenguaje claro por qué te conviene', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
-    const presupuestos = model.nodos.find((n) => n.id === 'presupuestos')!;
-    expect(textoEstado(presupuestos)).toBe(
-      'No la tenés. Es lo único que te falta para 1 empleo.',
-    );
-  });
-
-  it('la jugada recomendada SIEMPRE está dibujada en pantalla', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
-    expect(model.jugada).not.toBeNull();
-    const dibujada = model.nodos.some(
-      (n) => n.id === model.jugada!.skill.toLowerCase(),
-    );
-    expect(dibujada).toBe(true);
-  });
-
-  it('sin empleos publicados no hay nodos ausentes (no se inventa mercado)', () => {
-    const model = buildRedViva({ skillsDetail, jobs: [], proofs: [] });
-    expect(model.nodos.every((n) => n.estado !== 'ausente')).toBe(true);
-    expect(model.totales.ausentes).toBe(0);
+    const model = buildRedViva({ skills: ['Excel', 'SAP'] });
+    expect(model.nodos).toHaveLength(2);
+    expect(model.nodos.every((n) => n.declaredPct === 0)).toBe(true);
   });
 });
 
 describe('layout — estable y sin reordenar al crecer', () => {
   it('la misma habilidad cae siempre en la misma posición', () => {
-    const a = buildRedViva({ skillsDetail, jobs, proofs: [] });
-    const b = buildRedViva({ skillsDetail, jobs, proofs: [] });
+    const a = buildRedViva({ skillsDetail, proofs: [] });
+    const b = buildRedViva({ skillsDetail, proofs: [] });
     const excelA = a.nodos.find((n) => n.id === 'excel')!;
     const excelB = b.nodos.find((n) => n.id === 'excel')!;
     expect(excelA.x).toBeCloseTo(excelB.x, 10);
@@ -187,7 +133,6 @@ describe('layout — estable y sin reordenar al crecer', () => {
   it('dispersa identidades comunes sin perder estabilidad', () => {
     const model = buildRedViva({
       skillsDetail: [{ name: 'Python', pct: 70 }, { name: 'TypeScript', pct: 70 }],
-      jobs: [],
     });
     const python = model.nodos.find((n) => n.id === 'python')!;
     const typescript = model.nodos.find((n) => n.id === 'typescript')!;
@@ -195,20 +140,18 @@ describe('layout — estable y sin reordenar al crecer', () => {
   });
 
   it('agregar habilidades no cambia el ángulo de una habilidad existente', () => {
-    const antes = buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 95 }], jobs: [] });
+    const antes = buildRedViva({ skillsDetail: [{ name: 'Excel', pct: 95 }] });
     const despues = buildRedViva({
       skillsDetail: [{ name: 'Excel', pct: 95 }, { name: 'SAP', pct: 60 }, { name: 'Python', pct: 70 }],
-      jobs: [],
     });
     expect(despues.nodos.find((n) => n.id === 'excel')!.angulo)
       .toBeCloseTo(antes.nodos.find((n) => n.id === 'excel')!.angulo, 12);
   });
 
   it('pasar de hueco a sólido conserva el ángulo y solo reduce el radio', () => {
-    const antes = buildRedViva({ skillsDetail, jobs, proofs: [] });
+    const antes = buildRedViva({ skillsDetail, proofs: [] });
     const despues = buildRedViva({
       skillsDetail,
-      jobs,
       proofs: [{ skill_key: 'excel', skill_label: 'Excel', best_score: 90 }],
     });
     const excelAntes = antes.nodos.find((n) => n.id === 'excel')!;
@@ -219,10 +162,9 @@ describe('layout — estable y sin reordenar al crecer', () => {
   });
 
   it('probar una habilidad la MUEVE de la frontera al núcleo', () => {
-    const antes = buildRedViva({ skillsDetail, jobs, proofs: [] });
+    const antes = buildRedViva({ skillsDetail, proofs: [] });
     const despues = buildRedViva({
       skillsDetail,
-      jobs,
       proofs: [{ skill_key: 'excel', skill_label: 'Excel', best_score: 90 }],
     });
     const radioAntes = Math.hypot(
@@ -237,55 +179,16 @@ describe('layout — estable y sin reordenar al crecer', () => {
   });
 
   it('todos los nodos caen dentro del círculo unitario', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
+    const model = buildRedViva({ skillsDetail, proofs: [] });
     for (const n of model.nodos) {
       expect(Math.hypot(n.x, n.y)).toBeLessThanOrEqual(1);
     }
   });
 });
 
-describe('oportunidades y puentes', () => {
-  it('conecta la habilidad que falta con la oportunidad que desbloquea', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
-    const puentes = model.aristas.filter((a) => a.tipo === 'puente');
-    expect(puentes.length).toBeGreaterThan(0);
-    expect(puentes.every((p) => p.punteada)).toBe(true); // aún no cruzado
-  });
-
-  it('relaciona habilidades que un mismo empleo pide juntas', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
-    const mercado = model.aristas.filter((a) => a.tipo === 'mercado');
-    const par = mercado.find(
-      (a) =>
-        (a.from === 'excel' && a.to === 'sap') || (a.from === 'sap' && a.to === 'excel'),
-    );
-    expect(par).toBeDefined(); // j1 pide Excel y SAP juntas
-  });
-
-  it('sin empleos publicados no hay oportunidades ni jugada inventada', () => {
-    const model = buildRedViva({ skillsDetail, jobs: [], proofs: [] });
-    expect(model.oportunidades).toEqual([]);
-    expect(model.jugada).toBeNull();
-    expect(model.brechas).toEqual([]);
-  });
-
-  it('la jugada apunta a lo que el mercado pide y no tengo', () => {
-    // El usuario tiene Excel y SAP probados; falta "Presupuestos" para j2.
-    const model = buildRedViva({
-      skillsDetail: [{ name: 'Excel', pct: 90 }, { name: 'SAP', pct: 80 }, { name: 'Lean Manufacturing', pct: 70 }],
-      jobs,
-      proofs: [],
-    });
-    expect(model.jugada).not.toBeNull();
-    expect(model.jugada!.skill.toLowerCase()).toBe('presupuestos');
-    expect(model.jugada!.isOneStep).toBe(true);
-    expect(model.jugada!.bestJob.job.id).toBe('j2');
-  });
-});
-
 describe('textos — cero jerga, cada número con contexto', () => {
   it('el resumen dice la verdad incómoda cuando no hay nada probado', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
+    const model = buildRedViva({ skillsDetail, proofs: [] });
     expect(resumenRed(model)).toBe(
       'Declaraste 3 habilidades y todavía no probaste ninguna. Probá una y empieza a valer.',
     );
@@ -294,7 +197,6 @@ describe('textos — cero jerga, cada número con contexto', () => {
   it('el resumen parcial evita jerga visual como “hueca”', () => {
     const model = buildRedViva({
       skillsDetail,
-      jobs,
       proofs: [{ skill_key: 'excel', skill_label: 'Excel', best_score: 88 }],
     });
     expect(resumenRed(model)).toBe(
@@ -305,7 +207,6 @@ describe('textos — cero jerga, cada número con contexto', () => {
   it('el resumen completo habla de habilidades registradas, aunque una prueba no venga del CV', () => {
     const model = buildRedViva({
       proofs: [{ skill_key: 'autocad', skill_label: 'AutoCAD', best_score: 90 }],
-      jobs: [],
     });
     expect(resumenRed(model)).toBe(
       'Probaste la habilidad registrada. Tiene una prueba registrada.',
@@ -313,7 +214,7 @@ describe('textos — cero jerga, cada número con contexto', () => {
   });
 
   it('un nodo hueco muestra la escala completa, no un número pelado', () => {
-    const model = buildRedViva({ skillsDetail, jobs, proofs: [] });
+    const model = buildRedViva({ skillsDetail, proofs: [] });
     const excel = model.nodos.find((n) => n.id === 'excel')!;
     expect(textoEstado(excel)).toBe('Tu CV dice 95/100. Nadie lo comprobó todavía.');
   });
@@ -321,7 +222,6 @@ describe('textos — cero jerga, cada número con contexto', () => {
   it('un nodo probado muestra su puntaje real sobre 100', () => {
     const model = buildRedViva({
       skillsDetail,
-      jobs,
       proofs: [{ skill_key: 'sap', skill_label: 'SAP', best_score: 82 }],
     });
     const sap = model.nodos.find((n) => n.id === 'sap')!;

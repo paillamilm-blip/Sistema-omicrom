@@ -27,19 +27,25 @@ import { extractCVText } from '@/features/gemelo/services/cvExtract';
 import { savePendingCvAnalysis, getPendingCvAnalysis, clearPendingCvAnalysis, hasPendingCvAnalysis } from '@/shared/utils/guestMode';
 import { C } from '@/theme';
 
-type Kind = 'cv' | 'title' | 'year' | 'vault';
+type Kind = 'cv' | 'title' | 'year';
 export type Phase = 'upload' | 'syncing' | 'reveal';
 export interface Push { id: number; label: string; delta: number; color: string }
 
-/** Safety timeout (ms) — if AI doesn't respond within this, forcibly reset. */
-const SAFETY_TIMEOUT_MS = 30_000;
+/**
+ * Safety timeout (ms) — if AI doesn't respond within this, forcibly reset.
+ * Debe ser MAYOR que el presupuesto de callAI (75s en gemini.ts, que cubre
+ * los 70s del server): si este timer vencía antes, el análisis que llegaba a
+ * los 47s igual terminaba en "La IA tardó demasiado". 90s = 75s de IA +
+ * guardado + cadena de convalidación.
+ */
+const SAFETY_TIMEOUT_MS = 90_000;
 
 /** Progress messages shown during AI wait to keep the user informed. */
 const PROGRESS_MESSAGES = [
   'Conectando con la IA…',
   'Analizando habilidades y experiencia…',
   'Calculando ejes del Gemelo Digital…',
-  'Casi listo, procesando resultados…',
+  'Es un modelo gratuito: puede tardar hasta 70 segundos…',
 ];
 
 export function useGemeloActivation() {
@@ -55,7 +61,6 @@ export function useGemeloActivation() {
   const [cvFileName, setCvFileName] = useState('');
   const [msg, setMsg] = useState('Sube tu CV y Ómicrom activa todo automáticamente.');
   const [pushes, setPushes] = useState<Push[]>([]);
-  const [synergies, setSynergies] = useState<string[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
   const [pendingPersist, setPendingPersist] = useState(false);
   const [persisted, setPersisted] = useState(false);
@@ -114,17 +119,6 @@ export function useGemeloActivation() {
         emitPush('Fundamento', 4, C.green);
       }
     } catch (err) { console.warn('[Omicron] convalidar year failed:', err); }
-    await new Promise((r) => setTimeout(r, 400));
-
-    setCurrentStep(3);
-    try {
-      const { data } = await supabase.rpc('convalidar_credencial', { p_kind: 'vault' });
-      const res = data as { ok?: boolean } | null;
-      if (res?.ok) {
-        setCompletedSteps((p) => [...p, 'vault']);
-        emitPush('Trascendencia', 12, C.gold);
-      }
-    } catch (err) { console.warn('[Omicron] convalidar vault failed:', err); }
 
     await refreshProfile();
   }, [emitPush, refreshProfile]);
@@ -264,21 +258,6 @@ export function useGemeloActivation() {
     toast('Análisis cancelado', 'info');
   }, [toast]);
 
-  // ── Detect synergies from analyzed profile ───────────────────────
-  const detectSynergies = useCallback((analyzed: AnalyzedProfile): string[] => {
-    const results: string[] = [];
-    if (analyzed.years >= 5 && analyzed.skills.length >= 4) {
-      results.push(`${analyzed.skills.slice(0, 3).join(' + ')} + ${analyzed.years} años → 3 empleos potenciales`);
-    }
-    if (analyzed.skills.includes('react') || analyzed.skills.includes('typescript')) {
-      results.push('Stack moderno detectado → acceso a proyectos premium en Servicios');
-    }
-    if (analyzed.axes.trans > 40) {
-      results.push('Alta trascendencia → publica en la Bóveda para generar regalías');
-    }
-    return results;
-  }, []);
-
   // ── Rescate del puente localStorage tras el remount guest→auth ───
   // Cubre el caso donde App.tsx remonta el árbol al autenticarse: el
   // dossier en memoria se pierde, pero quedó en localStorage al analizar
@@ -299,13 +278,12 @@ export function useGemeloActivation() {
         rescueAttemptedRef.current = true;
         setDossier(rescued);
         dossierRef.current = rescued;
-        setSynergies(detectSynergies(rescued));
         setAi({ loading: false, text: rescued.summary });
         setPhase('reveal');
         void persistAnalysis(rescued);
       }
     }
-  }, [profile?.id, pendingPersist, persistAnalysis, detectSynergies]);
+  }, [profile?.id, pendingPersist, persistAnalysis]);
 
   // ── Read CV file ─────────────────────────────────────────────────
   const onCVFile = useCallback(async (file: File) => {
@@ -355,14 +333,14 @@ export function useGemeloActivation() {
     // ── Safety timeout ───────────────────────────────────────────────
     safetyTimerRef.current = setTimeout(() => {
       if (!isProcessingRef.current || cancelledRef.current) return;
-      console.warn('[Omicron] Safety timeout reached (30s). Using local fallback.');
+      console.warn(`[Omicron] Safety timeout reached (${SAFETY_TIMEOUT_MS / 1000}s). Resetting UI.`);
       isProcessingRef.current = false;
       if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
       // Timeout — show error instead of wrong local data
       isProcessingRef.current = false;
       setMsg('La IA tardó demasiado. Intenta de nuevo.');
       setLastError('timeout');
-      toast('Timeout: la IA no respondió en 30s. Reintenta.', 'error');
+      toast('Timeout: la IA no respondió. Reintenta.', 'error');
       setPhase('upload');
     }, SAFETY_TIMEOUT_MS);
 
@@ -450,7 +428,6 @@ export function useGemeloActivation() {
         axes: analyzed.axes,
         summaryPreview: analyzed.summary?.slice(0, 100),
       });
-      setSynergies(detectSynergies(analyzed));
       setDossier(analyzed);
       // Puente localStorage: si es guest, guardar el análisis para que
       // sobreviva el remount guest→auth (App.tsx) y las recargas. Se
@@ -491,12 +468,12 @@ export function useGemeloActivation() {
       setPhase('upload');
       isProcessingRef.current = false;
     }
-  }, [cvText, detectSynergies, toast, profile?.id, persistAnalysis]);
+  }, [cvText, toast, profile?.id, persistAnalysis]);
 
   return {
     // State
     phase, currentStep, completedSteps, dossier, ai,
-    cvText, setCvText, cvFileName, msg, pushes, synergies,
+    cvText, setCvText, cvFileName, msg, pushes,
     rep, hasExistingCV, gemelo, profile, lastError,
     isProcessing: isProcessingRef.current,
     pendingPersist, persisted, persisting, persistError,

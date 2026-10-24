@@ -29,7 +29,6 @@ export interface GemeloProfile {
   cv: boolean;
   titles: number;
   years: number;
-  vault: number;
   pe: number;
   rep: number;
   axes: GemeloAxes;
@@ -39,7 +38,7 @@ const KEY = 'omicron_gemelo';
 
 function base(): GemeloProfile {
   return {
-    cv: false, titles: 0, years: 0, vault: 0,
+    cv: false, titles: 0, years: 0,
     pe: 120, rep: 34,
     axes: { execution: 40, quality: 50, transcendence: 18, foundation: 25 },
   };
@@ -52,7 +51,6 @@ export function recompute(p: GemeloProfile): GemeloProfile {
   if (p.cv) { pe += 200; ax.execution += 10; ax.quality += 6; }
   pe += p.titles * 250; ax.foundation += p.titles * 12;
   pe += p.years * 60; ax.execution += p.years * 2; ax.quality += p.years * 2;
-  pe += p.vault * 150; ax.transcendence += p.vault * 14;
   (Object.keys(ax) as (keyof GemeloAxes)[]).forEach((k) => (ax[k] = Math.min(100, ax[k])));
   const avg = (ax.execution + ax.quality + ax.transcendence + ax.foundation) / 4;
   const traditional = Math.min(60, (p.cv ? 6 : 0) + p.titles * 5 + p.years * 4);
@@ -134,7 +132,7 @@ export function streakDays(): number {
 }
 
 // ── Motor "Siguiente mejor paso" (SOLO SIMULACIÓN — NO muta estado) ────
-export type NextAction = 'cv' | 'title' | 'year' | 'vault';
+export type NextAction = 'cv' | 'title' | 'year';
 export interface NextStep { action: NextAction; label: string; dRep: number; dPe: number; }
 
 /** Simula cada acción posible y devuelve la de mayor retorno. NO modifica nada. */
@@ -148,7 +146,6 @@ export function bestNextStep(p: GemeloProfile = current): NextStep | null {
   if (!p.cv) trial('cv', 'Sube tu CV', (q) => ({ ...q, cv: true }));
   if (p.titles < 10) trial('title', 'Valida un título', (q) => ({ ...q, titles: q.titles + 1 }));
   if (p.years < 15) trial('year', 'Acredita 1 año de experiencia', (q) => ({ ...q, years: q.years + 1 }));
-  trial('vault', 'Aporta a la Bóveda', (q) => ({ ...q, vault: q.vault + 1 }));
   opts.sort((a, z) => (z.dRep * 12 + z.dPe) - (a.dRep * 12 + a.dPe));
   return opts[0] ?? null;
 }
@@ -160,8 +157,7 @@ export interface Route { steps: RouteStep[]; endRep: number; endPe: number; endT
 function applyAction(p: GemeloProfile, a: NextAction): GemeloProfile {
   if (a === 'cv') return { ...p, cv: true };
   if (a === 'title') return { ...p, titles: p.titles + 1 };
-  if (a === 'year') return { ...p, years: p.years + 1 };
-  return { ...p, vault: p.vault + 1 };
+  return { ...p, years: p.years + 1 };
 }
 
 export function routeToNextTier(p: GemeloProfile = current): Route {
@@ -269,31 +265,11 @@ export const gemeloActions = {
     }
   },
 
-  /** Registra un aporte declarado a la Bóveda (p_kind: 'vault'). */
-  async addVault(): Promise<boolean> {
-    try {
-      const { data, error } = await supabase.rpc('convalidar_credencial', { p_kind: 'vault' });
-      if (error) {
-        console.error('[gemeloActions.addVault] RPC error:', error.message);
-        return false;
-      }
-      const result = data as { ok: boolean; error?: string } | null;
-      if (!result?.ok) return false;
-      updateLocalCache({ vault: current.vault + 1 });
-      logEvent('Aporte a la Bóveda');
-      return true;
-    } catch (err) {
-      console.error('[gemeloActions.addVault] Error:', err);
-      return false;
-    }
-  },
-
   /** Ejecuta una acción por su identificador. */
   async run(action: NextAction): Promise<boolean> {
     if (action === 'cv') return this.addCV();
     if (action === 'title') return this.addTitle();
-    if (action === 'year') return this.addYear();
-    return this.addVault();
+    return this.addYear();
   },
 
   /** Reset solo para desarrollo/testing. */

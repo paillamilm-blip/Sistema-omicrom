@@ -73,7 +73,7 @@ export function useIdleEscalation(enabled: boolean = true): IdleEscalationResult
   }, [enabled, stage]);
 
   const helpMessage = stage === 'help_offer'
-    ? '¿Necesitas ayuda? Prueba diciendo "busco trabajo" o toca un chip abajo.'
+    ? '¿Necesitas ayuda? Prueba diciendo "aprender una lección" o toca un chip abajo.'
     : null;
 
   return { stage, helpMessage, resetIdle };

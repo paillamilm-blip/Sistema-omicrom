@@ -3,8 +3,8 @@
 // ÓMICROM TOOLS — Herramientas que el cerebro puede invocar.
 //
 // Cuando omicronBrain detecta que necesita una acción específica
-// (examen, búsqueda en bóveda, carta, etc.), puede "llamar" una
-// herramienta en vez de solo responder con texto.
+// (examen, reto, CV), puede "llamar" una herramienta en vez de solo
+// responder con texto.
 //
 // El flujo:
 //   1. omicronBrain analiza el intent
@@ -15,11 +15,8 @@
 // Esto convierte a Ómicrom de chatbot → agente real.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { supabase } from '@/infrastructure/supabase/client';
-
 export type ToolName =
   | 'start_exam'        // Iniciar examen de una skill
-  | 'search_vault'      // Buscar en la Bóveda
   | 'navigate'          // Navegar a un tab
   | 'show_challenge'    // Mostrar el reto del día
   | 'upload_cv';        // Abrir upload de CV
@@ -30,24 +27,20 @@ export interface ToolCall {
   reason: string; // Por qué Ómicrom decidió usar esta herramienta
 }
 
-export interface ToolResult {
-  success: boolean;
-  data?: unknown;
-  message?: string;
-}
-
 /**
  * Catálogo de herramientas — se inyecta al prompt de omicronBrain
  * para que la IA sepa qué puede hacer.
  *
  * El recorte de la Fase 5 sacó [CARTA] y [EMPLEOS]: ofrecer una carta de
- * postulación o una bolsa de empleos abría una pantalla con 0 filas. Lo que
- * queda es lo que el producto puede cumplir hoy.
+ * postulación o una bolsa de empleos abría una pantalla con 0 filas. La
+ * [BÓVEDA] salió con la Fase 6 por el mismo motivo — y era peor, porque este
+ * catálogo se manda al prompt del modelo: la IA estaba instruida para
+ * recomendar una función que ya no existe en la base.
+ * Queda solo lo que el producto puede cumplir hoy.
  */
 export const TOOL_CATALOG = `
 HERRAMIENTAS DISPONIBLES (puedes sugerirlas al usuario):
 - [EXAMEN]: Sugerir que valide una skill con un examen IA
-- [BÓVEDA]: Recomendar buscar o publicar en la Bóveda de Conocimiento  
 - [CV]: Sugerir subir o actualizar el CV
 - [RETO]: Mencionar el reto diario si no lo ha completado
 - [ACADEMIA]: Recomendar un curso de la academia
@@ -67,8 +60,6 @@ export function parseToolCall(response: string): ToolCall | null {
   const [, action, param] = match;
   const toolMap: Record<string, ToolName> = {
     'EXAMEN': 'start_exam',
-    'BÓVEDA': 'search_vault',
-    'BOVEDA': 'search_vault',
     'CV': 'upload_cv',
     'RETO': 'show_challenge',
     'ACADEMIA': 'navigate',
@@ -89,24 +80,4 @@ export function parseToolCall(response: string): ToolCall | null {
     },
     reason: `Ómicrom sugirió: ${action}${param ? ` (${param})` : ''}`,
   };
-}
-
-/**
- * Ejecuta una herramienta (server-side si es necesario).
- * El frontend maneja la UI (navegación, modales).
- */
-export async function executeTool(tool: ToolCall): Promise<ToolResult> {
-  switch (tool.tool) {
-    case 'search_vault': {
-      const query = tool.params.skill as string || '';
-      if (!query) return { success: false, message: 'Sin query' };
-      const { data } = await supabase.functions.invoke('vault-oracle', {
-        body: { query, user_skills: [] },
-      });
-      return { success: true, data };
-    }
-    default:
-      // Herramientas de UI se manejan en el frontend
-      return { success: true, message: `Tool ${tool.tool} ready` };
-  }
 }
