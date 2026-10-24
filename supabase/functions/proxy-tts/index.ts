@@ -41,11 +41,18 @@ function getAllowedOrigin(requestOrigin: string | null): string {
   return PROD_ORIGIN;
 }
 
+// Huella de build: un OPTIONS desde localhost devuelve esta cabecera SI el
+// codigo nuevo esta corriendo, y `Access-Control-Allow-Origin: <el origin>`
+// si ademas el CORS inline esta vivo. Sin esto no se puede distinguir
+// "no se despliego" de "se despliego y no anda".
+const BUILD = '6f-cors-inline';
+
 function corsHeaders(req?: Request): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': getAllowedOrigin(req?.headers?.get('origin') ?? null),
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'x-omicron-build': BUILD,
     'Vary': 'Origin',
   };
 }
