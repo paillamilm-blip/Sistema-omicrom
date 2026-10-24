@@ -1,8 +1,12 @@
 -- ══════════════════════════════════════════════════════════════════════
 -- 10007_recorte_mercado.sql — Fase 6B: la base deja de sostener el mercado
 --
--- EL HECHO: jobs / job_postings / job_applications / job_matches responden con
---   0 filas (verificado en vivo: 214 ms, `[]`). Nadie publicó nunca una oferta.
+-- EL HECHO: jobs / job_postings / job_applications responden con 0 filas
+--   (verificado en vivo: 214 ms, `[]`). Nadie publicó nunca una oferta.
+--   ⚠ CORREGIDO POR 10008: ese "0 filas" se leyó por la API, y RLS filtra el
+--   select — `[]` no prueba vacío. job_matches sí tenía 373 filas, y
+--   freelance_needs 5 (el seed de 0069). El candado las conservó; la evidencia
+--   de esta cabecera estaba mal medida.
 --   El código que las mostraba ya salió del repo en la rama
 --   fase-6-recorte-datos (commits ab0e215 + 1eacd0d): gapEngine,
 --   useJobsQuery, commissionQuote y el anillo de ofertas de la Red Viva.
@@ -26,6 +30,9 @@
 --
 --     transaction_type | filas | desde      | hasta      | neto_tokens
 --     purchase         | 1     | 2026-07-24 | 2026-07-24 | 25000
+--
+--   (Ejecutada el 2026-10-24: dropeó 5 de 7 y conservó freelance_needs +
+--    job_matches por el candado. El cierre es 10008_recorte_mercado_cierre.sql.)
 --
 --   Un saldo de 25.000 tokens que no compra nada: no hay checkout, no hay
 --   transferencias, no hay retiros, y la cuota de IA usa otro sistema
