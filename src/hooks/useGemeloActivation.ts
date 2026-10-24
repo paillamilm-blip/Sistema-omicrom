@@ -33,18 +33,18 @@ export interface Push { id: number; label: string; delta: number; color: string 
 
 /**
  * Safety timeout (ms) — if AI doesn't respond within this, forcibly reset.
- * Debe ser MAYOR que el presupuesto de callAI (30s en gemini.ts): si este
- * timer vencía al mismo tiempo, el análisis que llegaba a los 29s igual
- * terminaba en "La IA tardó demasiado". 45s = 30s de IA + guardado + cadena.
+ * Debe ser MAYOR que el presupuesto de callAI (48s en gemini.ts): si este
+ * timer vencía antes, el análisis que llegaba a los 47s igual terminaba en
+ * "La IA tardó demasiado". 60s = 48s de IA + guardado + cadena.
  */
-const SAFETY_TIMEOUT_MS = 45_000;
+const SAFETY_TIMEOUT_MS = 60_000;
 
 /** Progress messages shown during AI wait to keep the user informed. */
 const PROGRESS_MESSAGES = [
   'Conectando con la IA…',
   'Analizando habilidades y experiencia…',
   'Calculando ejes del Gemelo Digital…',
-  'Casi listo, procesando resultados…',
+  'Es un modelo gratuito: puede tardar hasta 45 segundos…',
 ];
 
 export function useGemeloActivation() {

@@ -45,20 +45,22 @@ const FREE_MODELS = [
   'z-ai/glm-5.2:free',                        // 24,8s medidos en un trivial: último
 ];
 
-// Abort por modelo. Medido 2026-10-24: glm-5.2 tardó 24.8s en un prompt
-// trivial y el análisis de CV (jsonMode, 2000 tokens) NO respondió en 30s.
-// 20s deja un intento serio por modelo dentro del presupuesto de 27s;
-// los modelos muertos (404/429/402) devuelven en <1s y no lo consumen.
-const MODEL_ABORT_MS = 20000;
-// Presupuesto total del server. Debe quedar DEBAJO de los 30s de client.ts
-// para que el error estructurado llegue al usuario antes de que el cliente
-// corte la conexión con su propio TIMEOUT genérico.
-const SERVER_BUDGET_MS = 27000;
+// Abort por modelo. Medido el 2026-10-24 con el MISMO prompt de CV cinco
+// veces: 13,3s · 16,0s · 23,7s · 49,9s · 89,6s (todos JSON completo, siempre
+// nemotron-ultra). Es una lotería de cola, no un problema de tamaño de
+// respuesta: por eso el primer modelo se queda con el presupuesto entero y
+// los demás solo reciben un intento corto (los muertos contestan en <1s).
+const FIRST_MODEL_ABORT_MS = 45000;
+const MODEL_ABORT_MS = 10000;
+// Presupuesto total del server. Debe quedar DEBAJO del presupuesto del
+// cliente (48s en gemini.ts) para que el error estructurado llegue al
+// usuario antes de que el cliente corte la conexión con su TIMEOUT genérico.
+const SERVER_BUDGET_MS = 45000;
 const MIN_USEFUL_ATTEMPT_MS = 4000;
 // Huella de la versión desplegada. Un GET responde estos números en <1s y sin
 // gastar créditos: es la única forma de comprobar que el pegado del dashboard
 // realmente reemplazó la función (los timeouts viejos se cuelan igual).
-const BUILD = '6d-budget-27s';
+const BUILD = '6d-body-45s';
 
 // Cache de modelos muertos (por instancia de la Edge Function — ~5min lifetime)
 const DEAD_MODELS: Map<string, number> = new Map();
@@ -171,20 +173,25 @@ Deno.serve(async (req) => {
       if (aliveModels.length === 0) DEAD_MODELS.clear();
       const modelsToTry = aliveModels.length > 0 ? aliveModels : FREE_MODELS;
 
-      for (const model of modelsToTry) {
-        // El cliente ya cortó la conexión a los 30s: seguir probando modelos
-        // quema créditos IA para nadie.
+      for (let mi = 0; mi < modelsToTry.length; mi++) {
+        const model = modelsToTry[mi];
+        // Si el cliente ya cortó, seguir probando modelos quema créditos IA
+        // para nadie.
         const budgetLeft = serverDeadline - Date.now();
         if (budgetLeft < MIN_USEFUL_ATTEMPT_MS) {
           debugLog.push(`presupuesto agotado tras ${model} → corte de la ladder`);
           break;
         }
-        const abortAfter = Math.min(MODEL_ABORT_MS, budgetLeft);
+        const abortAfter = Math.min(mi === 0 ? FIRST_MODEL_ABORT_MS : MODEL_ABORT_MS, budgetLeft);
         const attemptStart = Date.now();
         const latency = () => `${Date.now() - attemptStart}ms`;
+        const controller = new AbortController();
+        // El timer se suelta recién en el finally. Soltarlo al recibir las
+        // cabeceras dejaba el CUERPO sin timeout — y el cuerpo es donde
+        // OpenRouter se queda esperando: medido en 49,9s y 89,6s con un abort
+        // que decía 20s.
+        const timer = setTimeout(() => controller.abort(), abortAfter);
         try {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), abortAfter);
 
           const resp = await fetch(OR_URL, {
             method: 'POST',
@@ -203,8 +210,6 @@ Deno.serve(async (req) => {
             }),
             signal: controller.signal,
           });
-
-          clearTimeout(timer);
 
           if (!resp.ok) {
             const status = resp.status;
@@ -229,6 +234,8 @@ Deno.serve(async (req) => {
           debugLog.push(`${model} → threw: ${errMsg}`);
           console.error(`[proxy-ai] ${model} threw:`, errMsg);
           continue;
+        } finally {
+          clearTimeout(timer);
         }
       }
     }
@@ -236,6 +243,8 @@ Deno.serve(async (req) => {
     // ── Try Gemini (FALLBACK only if OpenRouter failed) ───────────────
     const geminiBudget = serverDeadline - Date.now();
     if (GEMINI_KEY && geminiBudget >= MIN_USEFUL_ATTEMPT_MS) {
+      const geminiController = new AbortController();
+      const geminiTimer = setTimeout(() => geminiController.abort(), Math.min(40000, geminiBudget));
       try {
         const contents = body.messages.map((msg) => {
           const role = msg.role === 'assistant' ? 'model' : 'user';
@@ -252,8 +261,6 @@ Deno.serve(async (req) => {
           },
         };
 
-        const geminiController = new AbortController();
-        const geminiTimer = setTimeout(() => geminiController.abort(), Math.min(40000, geminiBudget));
         const geminiResp = await fetch(GEMINI_URL, {
           method: 'POST',
           headers: {
@@ -263,7 +270,6 @@ Deno.serve(async (req) => {
           body: JSON.stringify(geminiBody),
           signal: geminiController.signal,
         });
-        clearTimeout(geminiTimer);
 
         if (geminiResp.ok) {
           const geminiData = await geminiResp.json();
@@ -274,6 +280,10 @@ Deno.serve(async (req) => {
         }
       } catch (e) {
         console.warn('[proxy-ai] Gemini fallback also failed:', String(e).slice(0, 100));
+      } finally {
+        // Igual que en la ladder: el timeout tiene que cubrir la lectura del
+        // cuerpo, no solo las cabeceras.
+        clearTimeout(geminiTimer);
       }
     }
 
