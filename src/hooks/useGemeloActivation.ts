@@ -31,8 +31,13 @@ type Kind = 'cv' | 'title' | 'year';
 export type Phase = 'upload' | 'syncing' | 'reveal';
 export interface Push { id: number; label: string; delta: number; color: string }
 
-/** Safety timeout (ms) — if AI doesn't respond within this, forcibly reset. */
-const SAFETY_TIMEOUT_MS = 30_000;
+/**
+ * Safety timeout (ms) — if AI doesn't respond within this, forcibly reset.
+ * Debe ser MAYOR que el presupuesto de callAI (30s en gemini.ts): si este
+ * timer vencía al mismo tiempo, el análisis que llegaba a los 29s igual
+ * terminaba en "La IA tardó demasiado". 45s = 30s de IA + guardado + cadena.
+ */
+const SAFETY_TIMEOUT_MS = 45_000;
 
 /** Progress messages shown during AI wait to keep the user informed. */
 const PROGRESS_MESSAGES = [
@@ -334,7 +339,7 @@ export function useGemeloActivation() {
       isProcessingRef.current = false;
       setMsg('La IA tardó demasiado. Intenta de nuevo.');
       setLastError('timeout');
-      toast('Timeout: la IA no respondió en 30s. Reintenta.', 'error');
+      toast('Timeout: la IA no respondió. Reintenta.', 'error');
       setPhase('upload');
     }, SAFETY_TIMEOUT_MS);
 

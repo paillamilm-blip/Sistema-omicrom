@@ -33,10 +33,10 @@ const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicr
 import { corsHeaders } from '../_shared/cors.ts';
 
 // Modelos gratis CONFIRMADOS disponibles (verificado 27-ago-2026 con /api/v1/models)
-// Ordenados por VELOCIDAD de respuesta, no por tamaño: con un presupuesto de
-// ~27s por request (ver SERVER_BUDGET_MS) solo caben 2 intentos, así que
-// primero van los que contestan rápido. glm-5.2 medía 24.8s para un prompt
-// trivial: consume el presupuesto entero y el usuario ve "La IA no pudo...".
+// Ordenados por VELOCIDAD, no por tamaño: con el presupuesto de SERVER_BUDGET_MS
+// cabe UN intento serio de 20s y media reconciliación, así que el primero de la
+// lista es el que decide la experiencia. glm-5.2 medía 24.8s para un prompt
+// trivial: se comía todo el presupuesto y el usuario veía "La IA no pudo...".
 const FREE_MODELS = [
   'minimax/minimax-m3:free',                  // Rápido y confiable
   'google/gemma-4-31b-it:free',               // Google, buen español
@@ -46,8 +46,11 @@ const FREE_MODELS = [
   'nvidia/nemotron-3-ultra-550b-a55b:free',   // Último recurso (550B, más lento)
 ];
 
-// Por modelo: 12s (antes 25s = un solo intento dentro del presupuesto).
-const MODEL_ABORT_MS = 12000;
+// Abort por modelo. Medido 2026-10-24: glm-5.2 tardó 24.8s en un prompt
+// trivial y el análisis de CV (jsonMode, 2000 tokens) NO respondió en 30s.
+// 20s deja un intento serio por modelo dentro del presupuesto de 27s;
+// los modelos muertos (404/429/402) devuelven en <1s y no lo consumen.
+const MODEL_ABORT_MS = 20000;
 // Presupuesto total del server. Debe quedar DEBAJO de los 30s de client.ts
 // para que el error estructurado llegue al usuario antes de que el cliente
 // corte la conexión con su propio TIMEOUT genérico.
@@ -151,8 +154,9 @@ Deno.serve(async (req) => {
     // ── Try OpenRouter (PRIMARY) ──────────────────────────────────────
     const debugLog: string[] = [];
     const serverDeadline = Date.now() + SERVER_BUDGET_MS;
-    debugLog.push(`OPENROUTER_KEY: ${OPENROUTER_KEY ? `present (${OPENROUTER_KEY.slice(0, 12)}...)` : 'MISSING'}`);
-    debugLog.push(`GEMINI_KEY: ${GEMINI_KEY ? `present (${GEMINI_KEY.slice(0, 8)}...)` : 'MISSING'}`);
+    // NUNCA incluir caracteres de las keys: debugLog viaja al cliente en el 503.
+    debugLog.push(`OPENROUTER_KEY: ${OPENROUTER_KEY ? 'present' : 'MISSING'}`);
+    debugLog.push(`GEMINI_KEY: ${GEMINI_KEY ? 'present' : 'MISSING'}`);
 
     if (OPENROUTER_KEY) {
       const aliveModels = FREE_MODELS.filter(isModelAlive);
@@ -168,6 +172,8 @@ Deno.serve(async (req) => {
           break;
         }
         const abortAfter = Math.min(MODEL_ABORT_MS, budgetLeft);
+        const attemptStart = Date.now();
+        const latency = () => `${Date.now() - attemptStart}ms`;
         try {
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), abortAfter);
@@ -195,7 +201,7 @@ Deno.serve(async (req) => {
           if (!resp.ok) {
             const status = resp.status;
             const errBody = await resp.text().catch(() => '');
-            debugLog.push(`${model} → ${status}: ${errBody.slice(0, 150)}`);
+            debugLog.push(`${model} → ${status} en ${latency()}: ${errBody.slice(0, 150)}`);
             console.error(`[proxy-ai] ${model} failed ${status}: ${errBody.slice(0, 200)}`);
             if (status === 404 || status === 402) { DEAD_MODELS.set(model, Date.now()); continue; }
             if (status === 429) continue;
@@ -205,12 +211,13 @@ Deno.serve(async (req) => {
           const data = await resp.json();
           const text = data?.choices?.[0]?.message?.content ?? '';
           if (text) {
+            console.log(`[proxy-ai] ${model} OK en ${latency()} (${text.length} chars)`);
             return json({ text: text.trim(), model });
           }
-          debugLog.push(`${model} → 200 but empty response`);
+          debugLog.push(`${model} → 200 but empty response en ${latency()}`);
           continue;
         } catch (e) {
-          const errMsg = (e as Error).name === 'AbortError' ? `abort a los ${Math.round(abortAfter / 1000)}s` : String(e).slice(0, 100);
+          const errMsg = (e as Error).name === 'AbortError' ? `abort a los ${Math.round(abortAfter / 1000)}s (real ${latency()})` : `${String(e).slice(0, 100)} (${latency()})`;
           debugLog.push(`${model} → threw: ${errMsg}`);
           console.error(`[proxy-ai] ${model} threw:`, errMsg);
           continue;
@@ -263,6 +270,7 @@ Deno.serve(async (req) => {
     }
 
     // All failed — return debug info so we can see WHAT failed
+    debugLog.push(`total intentado en ${Date.now() - (serverDeadline - SERVER_BUDGET_MS)}ms`);
     console.error('[proxy-ai] ALL FAILED. Debug:', debugLog.join(' | '));
     return json({
       error: 'IA no disponible. Todos los modelos fallaron.',
