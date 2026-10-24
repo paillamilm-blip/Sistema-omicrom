@@ -4,7 +4,7 @@
 -- EL HECHO: jobs / job_postings / job_applications / job_matches responden con
 --   0 filas (verificado en vivo: 214 ms, `[]`). Nadie publicó nunca una oferta.
 --   El código que las mostraba ya salió del repo en la rama
---   fase-6b-mercado-red-viva (commits ab0e215 + 1eacd0d): gapEngine,
+--   fase-6-recorte-datos (commits ab0e215 + 1eacd0d): gapEngine,
 --   useJobsQuery, commissionQuote y el anillo de ofertas de la Red Viva.
 --
 -- ── PUERTA OBLIGATORIA ────────────────────────────────────────────────
