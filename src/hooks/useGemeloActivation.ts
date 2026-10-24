@@ -33,18 +33,19 @@ export interface Push { id: number; label: string; delta: number; color: string 
 
 /**
  * Safety timeout (ms) — if AI doesn't respond within this, forcibly reset.
- * Debe ser MAYOR que el presupuesto de callAI (48s en gemini.ts): si este
- * timer vencía antes, el análisis que llegaba a los 47s igual terminaba en
- * "La IA tardó demasiado". 60s = 48s de IA + guardado + cadena.
+ * Debe ser MAYOR que el presupuesto de callAI (75s en gemini.ts, que cubre
+ * los 70s del server): si este timer vencía antes, el análisis que llegaba a
+ * los 47s igual terminaba en "La IA tardó demasiado". 90s = 75s de IA +
+ * guardado + cadena de convalidación.
  */
-const SAFETY_TIMEOUT_MS = 60_000;
+const SAFETY_TIMEOUT_MS = 90_000;
 
 /** Progress messages shown during AI wait to keep the user informed. */
 const PROGRESS_MESSAGES = [
   'Conectando con la IA…',
   'Analizando habilidades y experiencia…',
   'Calculando ejes del Gemelo Digital…',
-  'Es un modelo gratuito: puede tardar hasta 45 segundos…',
+  'Es un modelo gratuito: puede tardar hasta 70 segundos…',
 ];
 
 export function useGemeloActivation() {
@@ -332,7 +333,7 @@ export function useGemeloActivation() {
     // ── Safety timeout ───────────────────────────────────────────────
     safetyTimerRef.current = setTimeout(() => {
       if (!isProcessingRef.current || cancelledRef.current) return;
-      console.warn('[Omicron] Safety timeout reached (30s). Using local fallback.');
+      console.warn(`[Omicron] Safety timeout reached (${SAFETY_TIMEOUT_MS / 1000}s). Resetting UI.`);
       isProcessingRef.current = false;
       if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
       // Timeout — show error instead of wrong local data
