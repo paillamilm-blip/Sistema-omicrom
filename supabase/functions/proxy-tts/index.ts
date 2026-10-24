@@ -15,11 +15,44 @@
 // El frontend envía texto oración por oración → reproduce al instante.
 // ═══════════════════════════════════════════════════════════════════════
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { corsHeaders } from '../_shared/cors.ts';
+
+// EL CORS VA INLINNEADO, NO IMPORTADO DESDE _shared.
+// Este proyecto se despliega pegando index.ts en el editor del dashboard, y
+// el dashboard congela una copia de `_shared/` en el momento en que la
+// función se creó: actualizar el import no actualiza esa copia. Se midió el
+// 2026-10-24 — proxy-ai (snapshot nuevo) refleja `localhost:5173`, proxy-tts
+// (snapshot viejo) devuelve siempre el origen de producción y el browser
+// bloquea la voz en desarrollo. Un solo archivo = lo pegado = lo que corre.
+const PROD_ORIGIN = 'https://sistema-omicrom.vercel.app';
+const ALLOWED_ORIGINS = [
+  PROD_ORIGIN,
+  Deno.env.get('PUBLIC_SITE_URL') || '',
+  'http://localhost:5173', // Vite dev
+  'http://localhost:3000',
+].filter(Boolean);
+
+function getAllowedOrigin(requestOrigin: string | null): string {
+  if (!requestOrigin) return PROD_ORIGIN;
+  if (ALLOWED_ORIGINS.includes(requestOrigin)) return requestOrigin;
+  // previews de Vercel del proyecto (con y sin la 'm' final del nombre viejo)
+  if (requestOrigin.endsWith('.vercel.app') && /sistema-omicro[nm]/.test(requestOrigin)) {
+    return requestOrigin;
+  }
+  return PROD_ORIGIN;
+}
+
+function corsHeaders(req?: Request): Record<string, string> {
+  return {
+    'Access-Control-Allow-Origin': getAllowedOrigin(req?.headers?.get('origin') ?? null),
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  };
+}
 
 const OPENROUTER_KEY = Deno.env.get('OPENROUTER_KEY') ?? '';
 const TTS_URL = 'https://openrouter.ai/api/v1/audio/speech';
-const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicrom.vercel.app';
+const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || PROD_ORIGIN;
 
 // Motor TTS ÚNICO: Fish Audio S2.1 Pro Free (multilingüe, expresivo).
 // Sin fallback a otros modelos → una sola voz coherente en toda la sesión.
@@ -36,9 +69,8 @@ const VOICES: Record<string, string> = {
 };
 
 Deno.serve(async (req) => {
-  // CORS POR REQUEST: corsHeaders() sin el Request refleja siempre el origen
-  // de producción y bloquea el dev local. Hay que pasarle el request para que
-  // localhost:5173 (lista en _shared/cors.ts) sea reflejado correctamente.
+  // Se le pasa el request: sin eso getAllowedOrigin() cae al default de
+  // producción y el browser bloquea localhost:5173.
   const CORS = corsHeaders(req);
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
